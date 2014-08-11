@@ -1,0 +1,30 @@
+$read-headers
+$read-content
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+
+<?xml version="1.0" encoding="utf-8" ?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+  <ComplexUnittestMethodResponse xmlns="http://cisco.com/Unittest/">
+      <ComplexUnittestMethodResult>REBOOT</ComplexUnittestMethodResult>
+      <IntOutputArg>223344</IntOutputArg>
+      <StringOutArg>hi there.</StringOutArg>
+      <OptionalStructOutputArg>
+        <StringMember>output string member</StringMember>
+        <IntMember>99999</IntMember>
+        <BoolMember>true</BoolMember>
+        <DateTimeMember>2007-12-06T09:20:11Z</DateTimeMember>
+        <IPAddressMember>12.12.31.1</IPAddressMember>
+        <MACAddressMember>04:08:15:16:32:43</MACAddressMember>
+        <EnumMember>EnumValue0</EnumMember>
+        <StringArrayMember>
+            <string>output string 1</string>
+            <string>output string 2</string>
+            <string>output string 3</string>
+        </StringArrayMember>
+      </OptionalStructOutputArg>
+  </ComplexUnittestMethodResponse>
+</soap:Body>
+</soap:Envelope>

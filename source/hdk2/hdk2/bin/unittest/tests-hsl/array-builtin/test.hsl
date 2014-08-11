@@ -1,0 +1,10 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct BuiltinArrays
+    int[] intArray
+    string[] stringArray
+    bool[] boolArray
+    long[] longArray
+    datetime[] datetimeArray
+    IPAddress[] IPAddressArray
+    MACAddress[] MACAddressArray

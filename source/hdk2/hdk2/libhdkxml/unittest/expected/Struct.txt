@@ -1,0 +1,23 @@
+Get before set: 0 (expect 0)
+Set result: 1 (expect 1)
+Set int in struct: 39 (expect 39)
+Set struct in struct: 1 (expect 1)
+Set int in struct: 40 (expect 40)
+AppendEx result: 1 (expect 1)
+Set int in 2nd struct: 41 (expect 41)
+Get outer int: 39 (expect 39)
+Get 2nd outer int: 41 (expect 41)
+Get inner int: 40 (expect 40)
+Get 2nd inner int: 40 (expect 40)
+Append result: 1 (expect 1)
+Set result: 1 (expect 1), equal 1st struct? 1 (expect 1)
+Get outer int: 0 (expect 0)
+SetEx result: 1 (expect 1), equal 1st struct? 1 (expect 1)
+Get outer int: 41 (expect 41)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 12 times
+malloc_interposer.c - exit: free called 12 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 216
+malloc_interposer.c - exit: malloc max = 164
+malloc_interposer.c - ************************************************************

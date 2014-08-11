@@ -1,0 +1,5 @@
+namespace "http://cisco.com/HNAPExt/"
+
+enum MyEnum
+    "Value1"
+    "Value2"

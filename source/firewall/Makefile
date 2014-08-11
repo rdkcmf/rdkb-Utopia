@@ -1,0 +1,70 @@
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+#Makefile for utopia firewall code
+include $(CCSP_ROOT_DIR)/arch/ccsp_common.mk
+
+CFLAGS += $(addprefix -I,$(INCPATH))
+CFLAGS += -fno-exceptions 
+CFLAGS += -Os 
+CFLAGS += -Wall -Wextra
+ifndef NO_TRIGGER
+CFLAGS += -DCONFIG_BUILD_TRIGGER
+endif
+
+LDFLAGS += -lsyscfg
+LDFLAGS += -lsysevent
+LDFLAGS += -lulog
+LDFLAGS += -lccsp_common
+# The following libraries are required for nfq_handler.
+#LDFLAGS += -lnetfilter_queue -lnfnetlink -lssl
+
+targets_firewall := firewall
+targets_firewall := $(addprefix $(ComponentBuildDir)/,$(targets_firewall))
+
+source_files_firewall := firewall.c
+source_files_firewall += $(call add_files_from_board,,firewall_priv.c)
+obj_files_firewall := $(addprefix $(ComponentBuildDir)/,$(source_files_firewall:%.c=%.o))
+
+$(targets_firewall): $(obj_files_firewall)
+
+targets_nfq_handler := nfq_handler
+targets_nfq_handler := $(addprefix $(ComponentBuildDir)/,$(targets_nfq_handler))
+
+source_files_nfq_handler := nfq_handler.c raw_socket_send.c
+obj_files_nfq_handler := $(addprefix $(ComponentBuildDir)/,$(source_files_nfq_handler:%.c=%.o))
+
+$(targets_nfq_handler: $(obj_files_nfq_handler)
+
+all: $(targets_firewall) install
+
+clean: 
+	rm -f $(ComponentBuildDir)
+
+install:
+	@echo "Copying...[$(targets_firewall) to SBIN directory]"
+	@install -d -m 0755 $(CCSP_INSTALL_ROOT)/usr/sbin
+	@install -m 0755 $(targets_firewall) $(CCSP_INSTALL_ROOT)/usr/sbin/
+
+.PHONY : all clean install
+
+#
+# include custom post makefile, if exists
+#
+ifneq ($(findstring $(CCSP_CMPNT_BUILD_CUSTOM_MK_POST), $(wildcard $(ComponentBoardDir)/*.mk)), )
+    include $(ComponentBoardDir)/$(CCSP_CMPNT_BUILD_CUSTOM_MK_POST)
+endif
+

@@ -1,0 +1,75 @@
+structDefaultConstructor
+  IsNull: false
+  Element:  (-1)
+
+structElementConstructor
+  IsNull: false
+  Element: Struct (13)
+<?xml version="1.0" encoding="utf-8"?>
+<Struct xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</Struct>
+
+structNull
+  IsNull: true
+  Element:  (-1)
+(const HDK_XML_Struct*)structNull == (const HDK_XML_Struct*)HDK::Struct::Null()
+
+structHdkStructConstructor
+  IsNull: false
+  Element: Struct (13)
+(const HDK_XML_Struct*)structHdkStructConstructor == &sHdk
+<?xml version="1.0" encoding="utf-8"?>
+<Struct xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<int>5</int>
+<long>-123</long>
+</Struct>
+
+structCopyConstructor
+  IsNull: false
+  Element: Struct (13)
+(const HDK_XML_Struct*)structCopyConstructor != (const HDK_XML_Struct*)structHdkStructConstructor
+<?xml version="1.0" encoding="utf-8"?>
+<Struct xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<int>5</int>
+<long>-123</long>
+</Struct>
+
+structCopyConstructorFromNull
+  IsNull: true
+  Element:  (-1)
+(const HDK_XML_Struct*)structCopyConstructorFromNull == (const HDK_XML_Struct*)structNull
+
+structAssignmentOperator
+  IsNull: false
+  Element: Struct (13)
+(const HDK_XML_Struct*)structAssignmentOperator != (const HDK_XML_Struct*)structHdkStructConstructor
+<?xml version="1.0" encoding="utf-8"?>
+<Struct xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<int>5</int>
+<long>-123</long>
+</Struct>
+
+structAssignmentOperatorFromNull
+  IsNull: true
+  Element:  (-1)
+(const HDK_XML_Struct*)structAssignmentOperatorFromNull == (const HDK_XML_Struct*)structNull
+
+unittestStruct
+  IsNull: false
+  Element:  (-1)
+{
+    Enum: __UNKNOWN__
+    Int: 0
+    Long: 0
+    IPAddress: 
+    MACAddress: 
+    EnumArray: [ ]
+    String: (null)
+}
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 13 times
+malloc_interposer.c - exit: free called 13 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 236
+malloc_interposer.c - exit: malloc max = 196
+malloc_interposer.c - ************************************************************

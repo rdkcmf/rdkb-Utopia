@@ -1,0 +1,36 @@
+Missing end element:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLUnexpectedElement
+
+Missing start element:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalid
+
+Malformed element:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalid
+
+Mismatched elements:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalid
+
+Unknown element:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLUnexpectedElement
+
+Unexpected top-level element:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLUnexpectedElement
+
+Unexpected element:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLUnexpectedElement
+
+Missing final element:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalid
+
+Wrong namespace:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLUnexpectedElement
+
+Wrong namespace (nested):
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLUnexpectedElement
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 283 times
+malloc_interposer.c - exit: free called 283 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 76634
+malloc_interposer.c - exit: malloc max = 7926
+malloc_interposer.c - ************************************************************

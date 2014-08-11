@@ -1,0 +1,9 @@
+namespace "http://cisco.com/HNAPExt/"
+
+action MyAction
+    input
+        [optional] \    # Comment
+            int\
+            # Another comment
+            a
+        int b

@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 264
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<IsDeviceReadyResponse xmlns="http://purenetworks.com/HNAP1/">
+<IsDeviceReadyResult>ERROR</IsDeviceReadyResult>
+</IsDeviceReadyResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 72 times
+malloc_interposer.c - exit: free called 72 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 16723
+malloc_interposer.c - exit: malloc max = 8537
+malloc_interposer.c - ************************************************************

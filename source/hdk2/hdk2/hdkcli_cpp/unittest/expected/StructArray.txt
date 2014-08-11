@@ -1,0 +1,108 @@
+structArrayRead (size: 3, empty: false)
+structArrayCopy (size: 4, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<StructArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<Struct>
+<Enum>UnittestEnum_Value3</Enum>
+<int>1984</int>
+<long>-3334</long>
+<IPAddress>239.255.255.254</IPAddress>
+<MACAddress>00:11:BB:5A:C4:01</MACAddress>
+<EnumArray>
+<Enum>UnittestEnum_Value1</Enum>
+<Enum>UnittestEnum_Value4</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value3</Enum>
+</EnumArray>
+<string>This is the first struct in the struct array!</string>
+</Struct>
+<Struct>
+<Enum>UnittestEnum_Value0</Enum>
+<int>4815</int>
+<long>162342</long>
+<IPAddress>4.8.15.16</IPAddress>
+<MACAddress>23:42:23:16:15:80</MACAddress>
+<EnumArray>
+<Enum>UnittestEnum_Value2</Enum>
+<Enum>UnittestEnum_Value2</Enum>
+<Enum>UnittestEnum_Value1</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+</EnumArray>
+<string>This is the second (yep, #2) struct in the struct array!</string>
+<Struct>
+<string>This is a string in the optional sub-struct element</string>
+</Struct>
+</Struct>
+<Struct>
+<Enum>UnittestEnum_Value4</Enum>
+<int>1122</int>
+<long>2233</long>
+<IPAddress>55.1.19.21</IPAddress>
+<MACAddress>00:FF:00:BE:EF:11</MACAddress>
+<EnumArray>
+<Enum>UnittestEnum_Value4</Enum>
+<Enum>UnittestEnum_Value4</Enum>
+<Enum>UnittestEnum_Value4</Enum>
+<Enum>UnittestEnum_Value4</Enum>
+</EnumArray>
+<string>This is the third (yes 3rd) struct in the struct array!</string>
+</Struct>
+<Struct>
+<Enum>UnittestEnum_Value3</Enum>
+<int>1984</int>
+<long>-3334</long>
+<IPAddress>239.255.255.254</IPAddress>
+<MACAddress>00:11:BB:5A:C4:01</MACAddress>
+<EnumArray>
+<Enum>UnittestEnum_Value1</Enum>
+<Enum>UnittestEnum_Value4</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value3</Enum>
+</EnumArray>
+<string>This is the first struct in the struct array!</string>
+</Struct>
+</StructArray>
+[
+{
+    Enum: UnittestEnum_Value3
+    Int: 1984
+    Long: -3334
+    IPAddress: 239.255.255.254
+    MACAddress: 00:11:BB:5A:C4:01
+    EnumArray: [ UnittestEnum_Value1, UnittestEnum_Value4, UnittestEnum_Value0, UnittestEnum_Value3 ]
+    String: This is the first struct in the struct array!
+},
+{
+    Enum: UnittestEnum_Value0
+    Int: 4815
+    Long: 162342
+    IPAddress: 4.8.15.16
+    MACAddress: 23:42:23:16:15:80
+    EnumArray: [ UnittestEnum_Value2, UnittestEnum_Value2, UnittestEnum_Value1, UnittestEnum_Value0 ]
+    String: This is the second (yep, #2) struct in the struct array!
+    SubStruct:
+    {
+        String: This is a string in the optional sub-struct element
+    }
+},
+{
+    Enum: UnittestEnum_Value4
+    Int: 1122
+    Long: 2233
+    IPAddress: 55.1.19.21
+    MACAddress: 00:FF:00:BE:EF:11
+    EnumArray: [ UnittestEnum_Value4, UnittestEnum_Value4, UnittestEnum_Value4, UnittestEnum_Value4 ]
+    String: This is the third (yes 3rd) struct in the struct array!
+}
+]
+structArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<StructArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</StructArray>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 143 times
+malloc_interposer.c - exit: free called 143 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 14348
+malloc_interposer.c - exit: malloc max = 12579
+malloc_interposer.c - ************************************************************

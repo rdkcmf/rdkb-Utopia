@@ -1,0 +1,14 @@
+namespace "http://purenetworks.com/HNAP1/"
+
+enum MyEnum
+    "Value1"
+    "Value2"
+    "Value3"
+
+struct MyStruct
+    int a
+    string b
+
+struct EnumsAndStructArrays
+    MyEnum[] a
+    MyStruct[] b

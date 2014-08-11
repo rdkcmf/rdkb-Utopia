@@ -1,0 +1,1956 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+namespace "http://purenetworks.com/HNAP1/"
+
+
+#@@ top Top
+#@ <img class="logo" src="@images/cisco_logo.png" width="151" height="80" alt="CISCO" />
+#@@ end
+
+#@@ title Routers
+#@@ version 1.2 (Rev 18)
+#@@ date February 2010
+
+#@@ abstract Abstract
+#@ This document describes the details of the HNAP 1.2 protocol specification
+#@ targeted at routers and access points.
+#@@ end
+
+#@@ copyright Copyright Notice
+#@ Copyright &copy; 2002-2010<br/>
+#@ Cisco Systems, Inc.<br/>
+#@ 1201 3rd Avenue, Suite 900<br/>
+#@ Seattle, WA 98101, U.S.A.<br/>
+#@ All rights reserved.
+#@@ end
+
+#@@ h2 Change History
+#@ <table summary="Revision History">
+#@ <tr><th>Revision<th>Date<th>Notes
+#@ <tr><td>7<td>2009-06-24<td>
+#@ Added <tt>ERROR_REMOTE_SSL_NEEDS_SSL</tt> code
+#@ <tr><td>8<td>2009-07-30<td>
+#@ Clarified automatic channel width and wide channels
+#@ <tr><td>9<td>2009-08-13<td>
+#@ Corrected <tt>GetWanSettings</tt> example; clarified <tt>DNSSettings</tt> <tt>Tertiary</tt> element.
+#@ <tr><td>10<td>2009-09-08<td>
+#@ Added <tt>WEP-AUTO</tt>, fixed ref to QoS standard
+#@ <tr><td>11<td>2009-10-07<td>
+#@ Added <tt>DETECTING</tt> state for <tt>AutoDetectType</tt>.
+#@ <tr><td>12<td>2009-10-07<td>
+#@ Updated MTU explanation and table
+#@ <tr><td>13<td>2009-10-12<td>
+#@ Correct MTU table
+#@ <tr><td>14<td>2009-10-13<td>
+#@ Added <tt>WPA-AUTO-PSK</tt>
+#@ <tr><td>15<td>2009-12-09<td>
+#@ Add restriction on interaction between 802.11n and WiFi security
+#@ <tr><td>16<td>2010-01-11<td>
+#@ Clarify connection status
+#@ <tr><td>17<td>2010-02-16<td>
+#@ Re-written in HSL
+#@ <tr><td>18<td>2010-02-24<td>
+#@ Allow SetRouterLanSettings2 to return "REBOOT"
+#@ Added "WPA-AUTO-RADIUS" to WiFiSecurity
+#@ </table>
+#@@ end
+
+#@@ h2 Introduction
+#@ Home Network Administration Protocol (HNAP) is an HTTP-SOAP based protocol
+#@ that can be implemented inside of network devices
+#@ to allow advanced programmatic configuration and management by remote entities.
+#@
+#@ HNAP was designed to be a simple light weight protocol
+#@ that is easy to implement inside of small cost-constrained hardware
+#@ such as network routers, cameras and other small devices.
+#@ As the protocol is based on top of existing HTTP-SOAP standards,
+#@ it is very flexible and easily extensible to new scenarios.
+#@
+#@ By implementing HNAP, device vendors can provide added value for devices
+#@ by allowing management entities (for example, Network Magic) to discover and interact with them.
+#@
+#@ This document describes the set of HNAP methods
+#@ for configuration of settings inside of router or access point devices.
+#@ This document is part of the HNAP 1.2 series and may require implementation of other parts of HNAP 1.2.
+#@@ end
+
+#@@ h3 Base HNAP Methods for Routers and Access Points
+#@ In addition to the router-specific methods listed in this document,
+#@ an HNAP-compliant router MUST implement several base HNAP methods and functionality for core devices.
+#@ These are:
+#@
+#@ <table summary="core methods">
+#@ <tr><th>Core Method<th>Purpose
+#@ <tr><td><tt>GetDeviceSettings</tt>
+#@ <td>A router MUST fully implement this method,
+#@ including identifying its device type as a router or access point and listing the SOAPActions that it supports.
+#@ <tr><td><tt>SetDeviceSettings</tt>
+#@ <td>It is strongly recommended that a router require authenticated security.
+#@ If so it MUST implement this method to allow modification of the administration password.
+#@ <tr><td><tt>GetDeviceSettings2</tt><br />
+#@ <tt>SetDeviceSettings2</tt>
+#@ <td>Depending on the capabilities of the router,
+#@ these methods MAY be implemented to provide configuration of Timezone, administration account, and SSL settings.
+#@ <tr><td><tt>IsDeviceReady</tt>
+#@ <td>MUST be implemented.
+#@ <tr><td><tt>Reboot</tt>
+#@ <td>MUST be implemented.
+#@ <tr><td><tt>GetFirmwareSettings</tt><br />
+#@ <tt>FirmwareUpload</tt>
+#@ <td>Implement these methods if the router is to take advantage of firmware updates.
+#@ <tr><td><tt>DownloadSpeedTest</tt>
+#@ <td>This is an optional method that measures the router's network performance.
+#@ It is strongly recommended to implement this method to allow HNAP clients to perform optimization tests.
+#@ </table>
+#@@ end
+
+#@@ h3 Core Routers Methods Overview
+#@ All routers should implement the methods listed below to handle basic routing functionality.
+#@
+#@ <table summary="router methods">
+#@ <tr><th>Method<th>Purpose
+#@ <tr><td><tt>GetWanSettings</tt><br />
+#@ <tt>SetWanSettings</tt>
+#@ <td>Used to configure WAN connection information for routers and modems.
+#@ <tr><td><tt>GetWanInfo</tt>
+#@ <td>Determines the connection state of the WAN side of the router.
+#@ <tr><td><tt>RenewWanConnection</tt>
+#@ <td>Forces a router to renew its WAN connection.
+#@ <tr><td><tt>SetAccessPointMode</tt>
+#@ <td>Configures a router into and out of access point mode.
+#@ When in access point mode, the router will disable its internal DHCP server and act as a bridge.
+#@ <tr><td><tt>GetPortMappings</tt><br />
+#@ <tt>AddPortMapping</tt><br />
+#@ <tt>DeletePortMapping</tt>
+#@ <td>Allows for configuration of port mappings in a router or device that supports port forwarding.
+#@ <tr><td><tt>GetMACFilters2</tt><br />
+#@ <tt>SetMACFilters2</tt>
+#@ <td>Allows discovery and configuration of MAC Address filtering, controlling access to the network.
+#@ <tr><td><tt>GetRouterLanSettings2</tt><br />
+#@ <tt>SetRouterLanSettings2</tt>
+#@ <td>Obtains and allows configuration of the current LAN configuration information for a network device.
+#@ <tr><td><tt>GetConnectedDevices
+#@ <td>Obtains a list of all connected devices on a device that acts as a switch or hub.
+#@ Allows for accurate topology mapping and reporting of wired vs. wireless segments.
+#@ <tr><td><tt>GetNetworkStats</tt><br />
+#@ <tt>GetClientStats</tt>
+#@ <td>Returns bandwidth and usage information of traffic flowing through a given device,
+#@ also allows for enumeration of RSSI information for wirelessly connected clients.
+#@ <tr><td><tt>GetRouterSettings</tt><br />
+#@ <tt>SetRouterSettings</tt>
+#@ <td>Allows configuration of router specific settings.
+#@ </table>
+
+#@@ h3 Wireless Radio Methods Overview
+#@ All wireless routers should implement the methods listed below to handle wireless radio configuration.
+#@
+#@ <table summary="wireless methods">
+#@ <tr><th>Method<th>Purpose
+#@ <tr><td>
+#@ <tt>GetWLanRadios</tt><br />
+#@ <tt>GetWLanRadioSettings</tt><br />
+#@ <tt>SetWLanRadioSettings</tt><br />
+#@ <tt>GetWLanRadioSecurity</tt><br />
+#@ <tt>SetWLanRadioSecurity</tt>
+#@ <td>Allows configuration of wireless settings and wireless security for a given device.
+#@ Can be implemented by Access Points, or devices that can connect to wireless networks.
+#@ </table>
+#@@ end
+
+#@@ h3 XML Namespace
+#@ All router-specific HNAP methods in this document
+#@ are based in the same HNAP Namespace as the core device specification.
+#@ This namespace is:
+#@
+#@ <tt>http://purenetworks.com/HNAP1/</tt>
+#@@ end
+
+
+#
+# Enumerations
+#
+
+enum IPProtocol
+    "UDP"
+    "TCP"
+
+
+enum LANConnection
+    #@ wired Ethernet LAN port
+    "LAN"
+    #@ wireless LAN port
+    "WLAN 802.11a"
+    #@ wireless LAN port
+    "WLAN 802.11b"
+    #@ wireless LAN port
+    "WLAN 802.11g"
+    #@ wireless LAN port
+    "WLAN 802.11n"
+    #@ WAN port
+    "WAN"
+
+
+enum WANStatus
+
+    #@ The WAN port is not connected at layer 2, and is not in the process of negotiating connectivity.
+    "DISCONNECTED"
+
+    #@ The WAN port is connected at layer 2,
+    #@ but it cannot send and receive IP packets and is not in the process of negotiating IP connectivity.
+    #@ Examples:
+    #@
+    #@ <ul>
+    #@ <li>if a DSL modem succeeds to make a handshake with the ISP but cannot route to the Internet
+    #@
+    #@ <li>if a Router is configured for DHCP and fails to get an upstream response,
+    #@ but it still has an ethernet connection
+    #@ </ul>
+    "LIMITED_CONNECTION"
+
+    #@ The WAN port is in the process of negotiating IP connectivity (for example, using DHCP).
+    #@ In some instances, such as DSL gateways, the WAN connection can take considerable time with rate estimating.
+    #@
+    #@ An HNAP client should assume the device is busy and try polling for the WAN status at a later point in time.
+    "CONNECTING"
+
+    #@ The device can send and receive IP packets on the WAN.
+    "CONNECTED"
+
+    #@ The device cannot determine its connected state.
+    "UNKNOWN"
+
+
+enum WANType
+    "BigPond"
+    "DHCP"
+    "DHCPPPPoE"
+    "DynamicL2TP"
+    "DynamicPPTP"
+    "Static"
+    "StaticL2TP"
+    "StaticPPPoE"
+    "StaticPPTP"
+    "BridgedOnly"
+    "Static1483Bridged"
+    "Dynamic1483Bridged"
+    "Static1483Routed"
+    "StaticPPPOA"
+    "DynamicPPPOA"
+    "StaticIPOA"
+    "UNKNOWN"
+    "DETECTING"
+
+
+enum WiFiEncryption
+    "WEP-64"
+    "WEP-128"
+    "AES"
+    "TKIP"
+    "TKIPORAES"
+    ""
+
+
+enum WiFiMode
+    "802.11a"
+    "802.11b"
+    "802.11g"
+    "802.11n"
+    "802.11bg"
+    "802.11bn"
+    "802.11bgn"
+    "802.11gn"
+    "802.11an"
+    ""
+
+
+enum WiFiSecurity
+    "WEP-OPEN"
+    "WEP-SHARED"
+    "WEP-RADIUS"
+    "WPA-PSK"
+    "WPA-RADIUS"
+    "WPA2-PSK"
+    "WPA2-RADIUS"
+    "WPA-AUTO-PSK"
+    "WPA-AUTO-RADIUS"
+    "WEP-AUTO"
+    "WEP"
+    ""
+
+#
+# Structures
+#
+
+struct ClientStat
+
+    #@ The MAC address.
+    MACAddress MacAddress
+
+    #@ whether the client uses a wireless connection
+    bool Wireless
+
+    #@ The data rate of the inbound link to this client.
+    #@
+    #@ Note that in wired Ethernet cases, the inbound and outbound speeds are usually symmetrical.
+    #@ In the case of wireless or homeplug technologies, these rates may be different.
+    #@
+    #@ If the link speed is unknown, the implementer should return 0.
+    int LinkSpeedIn
+
+    #@ The data rate of the outbound link to this client.
+    #@
+    #@ If the link speed is unknown, the implementer should return 0.
+    int LinkSpeedOut
+
+    #@ If <tt>Wireless</tt> is set to true,
+    #@ this should return the Received Signal Strength Indicator as a percentage of maximum possible strength.
+    #@
+    #@ While RSSI is typically measured in dB, the boundaries of these values are vendor-specific.
+    #@ The device should map the vendor specific range into a percentage for this call.
+    #@
+    #@ If the connection is not wireless this value should be set to 0.
+    #@
+    #@ Valid values are 0-100.
+    int SignalStrength
+
+
+struct ConnectedClient
+
+    #@ Either of the following, whichever shows up first:
+    #@
+    #@ <ul>
+    #@ <li>The last time the device connected.
+    #@
+    #@ <li>The first time the device showed up in DHCP or ARP table.
+    #@ </ul>
+    #@
+    #@ This is the earliest time this specific device was not connected.
+    #@
+    #@ A <tt>datetime</tt> typed field is represented in ISO 8601 UTC format:
+    #@
+    #@ Example: <tt>2005-05-31T17:23:18</tt>
+    #@
+    #@ Following <tt>T</tt> is the time in HH:MM:SS format.
+    datetime ConnectTime
+
+    #@ The MAC address.
+    MACAddress MacAddress
+
+    #@ The device name, if known (usually through DHCP), otherwise blank.
+    string DeviceName
+
+    #@ The port this client is connected to. If there are multiple ports, all get returned separately.
+    #@
+    #@ Example 1: 802.11g and 802.11n are supersets of 802.11b,
+    #@ so you would return 802.11g or 802.11n instead of 802.11b.
+    #@
+    #@ Example 2: You can have both an 802.11a port and an 802.11g port.
+    LANConnection PortName
+
+    #@ whether the client uses a wireless connection
+    bool Wireless
+
+    #@ whether this device is currently connected on the network.
+    #@
+    #@ Some devices might still be listed even if they are currently inaccessible.
+    #@
+    #@ Device management software using this string will represent
+    #@ devices which are <tt>Active</tt>=<tt>true</tt> as <q>online</q>
+    #@ and devices for which <q>Active=false</q> as <q>offline</q>.
+    #@
+    #@ <tt>true</tt> implies the router has seen a packet from the device in the last 5 seconds
+    #@ or it can tell the device is available by a physical connection on the LAN port.
+    bool Active
+
+
+#@ This structure is used to represent a DHCP reservation mapping.
+#@ It is used by <tt>Get</tt>/<tt>SetRouterLanSettings2</tt>.
+struct DHCPReservation
+
+    #@ The device name if known, otherwise empty.
+    string DeviceName
+
+    #@ The IP address for this entry in <tt>x.x.x.x</tt> format.
+    IPAddress IPAddress
+
+    #@ The MAC address in <tt>xx:xx:xx:xx:xx:xx</tt> hexadecimal form.
+    MACAddress MacAddress
+
+
+struct DNSSettings
+
+    #@ IP address for the primary DNS entry.
+    IPAddress Primary
+
+    #@ IP address for the secondary DNS entry.
+    IPAddress Secondary
+
+    #@ IP address for the third DNS entry.
+    #@ This field is optional.
+    [optional] IPAddress Tertiary
+
+
+struct MACInfo
+
+    #@ The MAC Address of the host.
+    MACAddress MacAddress
+
+    #@ An optional human-readable string describing the device.
+    #@ For example, <q>Network Camera</q> or <q>Office PC</q>.
+    #@ Can also be an empty string.
+    string DeviceName
+
+
+struct NetworkStats
+
+    #@ Name of the port to which these set of stats refer to.
+    LANConnection PortName
+
+    #@ Number of packets received by this port.
+    long PacketsReceived
+
+    #@ Number of packets sent by this port.
+    long PacketsSent
+
+    #@ Number of bytes received by this port.
+    #@
+    #@ For WAN connections this metric refers to the number of bytes received or downloaded from the internet.
+    #@
+    #@ For LAN or WLAN connections
+    #@ this metric refers to the number of bytes received by the router from a device on the LAN.
+    long BytesReceived
+
+    #@ Number of bytes sent by this port.
+    #@
+    #@ For WAN connections this metric refers to the number of bytes sent to or uploaded to the internet.
+    #@
+    #@ For LAN or WLAN connections
+    #@ this metric refers to the number of bytes sent by the router to a device on the LAN.
+    long BytesSent
+
+
+struct PortMapping
+
+    #@ Provides a descriptive human-readable string explaining the usage of the port mapping.
+    #@ For example, Port 80 might be represented as <q>Web Server</q>.
+    string PortMappingDescription
+
+    #@ This is the address of the destination host
+    #@ that traffic assigned to this port from the WAN will be mapped to on the LAN.
+    IPAddress InternalClient
+
+    #@ The specific IP protocol type that this port is mapped for.
+    IPProtocol PortMappingProtocol
+
+    #@ The port number that an external host will connect to on the WAN side of the router that will be mapped.
+    int ExternalPort
+
+    #@ The port number that will be used on the destination host.
+    int InternalPort
+
+
+#@ The RadioFrequencyInfo structure is used to represent
+#@ the settable frequencies associated with a wireless radio in a given device.
+struct RadioFrequencyInfo
+
+    #@ The radio's ID - see the <tt>RadioInfo</tt> structure for more information.
+    string RadioID
+
+    #@ The radio frequency - see the <tt>RadioInfo</tt> structure for more information.
+    int[] Frequencies
+
+
+#@ Used to represent a wide channel setting,
+#@ which contains a single primary channel
+#@ and an associated list of secondary channels that are available for the primary channel.
+struct WideChannel
+
+    #@ Indicates a valid primary channel that is supported by this device in 40 MHz or automatic channel width mode.
+    #@
+    #@ The primary channel is typically a subset of the available standard channels
+    #@ and the secondary channel is selected in relation to the primary channel.
+    #@ The secondary and primary channels are always next to each other.
+    #@
+    #@ The supported channel values are dependant on the frequency of the radio (2.4 or 5 GHz).
+    #@
+    #@ Channel 0 is used to indicate <q>automatic</q> channel selection.
+    #@ If a device supports selecting its own channel automatically,
+    #@ it should offer this as one of the valid values for a channel,
+    #@ otherwise only the explicit channel numbers should be returned.
+    int Channel
+
+    #@ List of secondary channels that may be configured
+    #@ when used in combination with the primary channel indicated above.
+    #@
+    #@ If the device supports automatic selection of secondary channel for this primary channel,
+    #@ it should include a 0 value in this array.
+    #@
+    #@ When channel 0 is being used as the primary channel to indicate automatic selection,
+    #@ then an array of Secondary channels should also be included containing a single item whose value is also zero.
+    int[] SecondaryChannels
+
+
+#@ Used to represent a single security setting supported by a given device.
+#@ A security setting is a given security type and an associated list of encryptions supported by this type.
+struct SecurityInfo
+
+    #@ Type of security supported.
+    WiFiSecurity SecurityType
+
+    #@ List of valid encryptions supported by this security type.
+    #@
+    #@ Using the security information field,
+    #@ a given router can determine its own matrix of supported type/encryption mappings.
+    #@ An example of what a matrix might look like for a typical router is shown below:
+    #@
+    #@ <table summary="Encyptions">
+    #@ <tr><th>Type<th>Encryption
+    #@ <tr><td>WEP-OPEN<td>WEP-64, WEP-128
+    #@ <tr><td>WEP-SHARED<td>WEP-64, WEP-128
+    #@ <tr><td>WPA-PSK<td>TKIP
+    #@ <tr><td>WPA-RADIUS<td>TKIP
+    #@ <tr><td>WPA2-PSK<td>AES, TKIPORAES
+    #@ <tr><td>WPA2-RADIUS<td>AES
+    #@ </table>
+    WiFiEncryption[] Encryptions
+
+
+#@ Used to represent all the settings associated with a wireless radio in a given device.
+struct RadioInfo
+
+    #@ Provides a unique identifier for each radio contained in the device.
+    #@ A <tt>RadioID</tt> must be unique for each radio in the router and never change for the lifetime of the router.
+    #@ This information may be persisted by HNAP clients
+    #@ and used to directly communicate with other methods without calling this method each time.
+    #@
+    #@ Some examples of valid RadioIDs might be <tt>RADIO_0</tt> and <tt>RADIO_1</tt>,
+    #@ or <tt>RADIO_2.4GHz</tt> and <tt>RADIO_5GHz</tt> etc.
+    #@
+    #@ A setting that may change (such as the SSID) should never be used for this value.
+    #@
+    #@ The value <tt>SimpleWirelessStation</tt> is reserved for special use,
+    #@ router and access point implementers should not use this <tt>RadioID</tt>.
+    string RadioID
+
+    #@ The frequency of the wireless radio in MHz. Valid values are:
+    #@
+    #@ 2 - Used for 2.4 GHz radios such as 802.11b, 802.11g, and some 802.11n.
+    #@
+    #@ 5 - Used for 5 GHz radios such as 802.11a, and some 802.11n.
+    int Frequency
+
+    #@ Returns a list of 802.11 modes supported by this radio.
+    WiFiMode[] SupportedModes
+
+    #@ Returns a list of standard 20 MHz width channels supported by this radio.
+    #@
+    #@ This allows an HNAP client to interrogate a device to determine
+    #@ what valid channels can be passed to the Channel parameter <tt>SetWLanRadioSettings</tt> method.
+    #@
+    #@ The supported channel values are dependant on
+    #@ the frequency of the radio (2.4 or 5 GHz)
+    #@ and the desired <tt>ChannelWidth</tt> setting.
+    #@
+    #@ This setting may also depend on the specific locale that the device is configured for.
+    #@ Note also, that if a device supports modification of locale settings,
+    #@ the array of valid channels may change after modification of the locale.
+    #@
+    #@ Note
+    #@
+    #@ Channel 0 is used to indicate <q>automatic</q> channel selection.
+    #@ If a device supports selecting its own channel automatically,
+    #@ it should offer this as one of the valid values for a channel,
+    #@ otherwise the explicit channel numbers should be shown.
+    int[] Channels
+
+    #@ Returns a list of wide channels supported by this radio.
+    #@ Each wide channel has a primary channel and a secondary channel.
+    #@ The primary channel is typically a subset of the available standard channels
+    #@ and the secondary channel is selected in relation to the primary channel.
+    #@ The secondary and primary channels are always next to each other.
+    #@
+    #@ This allows an HNAP client to interrogate a device
+    #@ to determine what valid combinations can be passed in
+    #@ the <tt>Channel</tt> and <tt>SecondaryChannel</tt> parameters to the
+    #@ <tt>SetWLanRadioSettings</tt> method.
+    #@
+    #@ The supported channel values are dependant on the frequency of the radio (2.4 or 5 GHz)
+    #@ and the desired <tt>ChannelWidth</tt> setting.
+    #@
+    #@ This setting may also depend on the specific locale that the device is configured for.
+    #@ Note also, that if a device supports modification of locale settings,
+    #@ the array of valid channels may change after modification of the locale.
+    #@
+    #@ If a given device does not implement 40 MHz wide channel selection or automatic channel width selection,
+    #@ it should return a zero length array.
+    WideChannel[] WideChannels
+
+    #@ A list of security type/encryption combinations.
+    #@ This can be used by an HNAP client to interrogate the security modes that are supported by a given device
+    #@ to determine legal values to pass to the <tt>SetWLanRadioSecurity</tt> method.
+    #@
+    #@ A device should return a single SecurityInfo structure for each security mode that is supported,
+    #@ corresponding with a list of encryptions allowed for that mode.
+    SecurityInfo[] SupportedSecurity
+
+
+#
+# Actions
+#
+
+#@ Use this method to add a new port mapping or to modify an existing port mapping on a device that supports port forwarding.
+#@ Typically this will be a router or residential gateway.
+#@
+#@ For ease of implementation, the Port Mapping APIs in HNAP closely mirror those in the UPnP standard.
+#@ This allows router OEMs to easily map the calls to existing code paths.
+#@ This method has been slightly simplified from the UPnP method and the following rules should help an implementer map the two:
+#@
+#@ <ul>
+#@ <li>The UPnP RemoteHost parameter has been omitted, it should be assumed to be any source IP address.
+#@
+#@ <li>The UPnP PortMappingEnabled parameter has been omitted,
+#@ it should assumed to be always enabled if a given port mapping is present.
+#@
+#@ <li>The UPnP PortMappingLeaseDuration parameter has been omitted,
+#@ it should assume to be set to an infinite lease duration.
+#@ </ul>
+#@
+#@ For routers that do not support different internal and external ports;
+#@ any call which requests such a mapping MUST return an <tt>ERROR</tt>.
+#@
+#@ If the requested port mapping (uniquely identified by <tt>ExternalPort</tt> and <tt>PortMappingProtocol</tt>)
+#@ is already in use, the router MUST return <tt>ERROR</tt>.
+#@
+#@ The PortMappingDescription string may or may not be unique.
+#@ That is, some implementations may choose to fail a call to <tt>AddPortMapping</tt>
+#@ if a duplicate mapping with this description already exists, other implementations may allow this behavior.
+#@ In the event that a router chooses to disallow duplicate descriptions,
+#@ it should behave as if the combination of (Port, Protocol) already exists and return <tt>ERROR</tt>.
+#@
+#@ If the client wishes to force override a particular port mapping,
+#@ it should call <tt>DeletePortMapping</tt> with the same <tt>ExternalPort</tt> and <tt>PortMappingProtocol</tt> entries,
+#@ and then call <tt>AddPortMapping</tt>.
+action AddPortMapping
+
+    input
+
+        #@ A descriptive human-readable string explaining the usage of the port mapping.
+        #@ For example, Port 80 might be represented as <q>Web Server</q>.
+        #@ If the device chooses to only allow unique descriptions
+        #@ it MUST return <tt>ERROR</tt> if the description already exists.
+        string PortMappingDescription
+
+        #@ The IP address of the destination host that traffic assigned to this port from the WAN
+        #@ will be mapped to on the LAN.
+        IPAddress InternalClient
+
+        #@ The specific IP protocol type that this port is mapped for.
+        IPProtocol PortMappingProtocol
+
+        #@ The port number that an external host will connect to on the WAN side of the router that will be mapped.
+        int ExternalPort
+
+        #@ The port number that will be used on the destination host.
+        int InternalPort
+
+    result
+
+        "REBOOT"
+
+
+#@ Use this method to delete an existing port mapping on a device that supports port forwarding.
+#@ Typically this will be a router or residential gateway.
+#@
+#@ This method requires only the external port and the protocol to remove a port mapping, as the combination of the two indicates a unique entry.
+action DeletePortMapping
+
+    input
+
+        #@ The specific IP protocol type for which this port is mapped.
+        IPProtocol PortMappingProtocol
+
+        #@ The port number that an external host will connect to on the WAN side of the router that will be mapped.
+        int ExternalPort
+
+
+#@ Use this method to obtain statistics about connected devices.
+#@ If a router has the capability of supplying per-client performance data, it should implement this method.
+#@ Each device connected to the router is represented as a <tt>ClientStat</tt> structure.
+#@
+#@ This may include inactive devices, and is not required to match up with GetConnectedDevices.
+action GetClientStats
+
+    output
+
+        #@ Array of client statistic information.
+        ClientStat[] ClientStats
+
+
+#@ Use this method to obtain information about which devices are connected to this router.
+#@ Each device currently active on the LAN is represented as a ConnectedClient.
+#@
+#@ This API allows clients to understand at a more granular level the exact topology of connected devices.
+#@ This can be very useful when drawing a graphical topology map to the end-user
+#@ to show which hosts are connected wirelessly vs. wired etc.
+#@ It is recommended that this be implemented by router vendors wishing to have a more accurate network map.
+action GetConnectedDevices
+
+    output
+
+        #@ Array of currently-connected clients.
+        ConnectedClient[] ConnectedClients
+
+
+#@ Use this method to obtain the current list of clients (by MAC address)
+#@ that are configured in the MAC address filtering table of a device that supports restricted access via MAC filtering.
+#@ Typically this will be a router or residential gateway.
+action GetMACFilters2
+
+    output
+
+        #@ Specifies whether filters are enabled (true or false).
+        bool Enabled
+
+        #@ <tt>true</tt> - The list of MAC addresses entries supplied are allowed to connect to the network.
+        #@ Any connecting devices that are not in the list will be denied connection.
+        #@
+        #@ <tt>false</tt> - The list of MAC addresses entries supplied
+        #@ are black-listed from the network and not allowed to join.
+        #@ Any connecting devices that are not in the list will be allowed to connect to the network.
+        bool IsAllowList
+
+        #@ A list of structures describing the MAC address table entries.
+        #@ Note that each entry in the table has both a MAC address and an optional device name associated.
+        MACInfo[] MACList
+
+
+#@ Use this to query a router or residential gateway device about connection statistics,
+#@ including bytes sent and received on a specific network interface.
+#@
+#@ Each interface on the router maps to one NetworkStats entry.
+#@ For example, for a wired router, only one <tt>NetworkStats</tt> entry would be returned - for <tt>LAN</tt>.
+#@ For a wireless-g router, <tt>LAN</tt>, <tt>WLAN 802.11b</tt> and <tt>WLAN 80211g</tt> would be returned.
+action GetNetworkStats
+
+    output
+
+        #@ An array of NetworkStats for each network interface associated with the device.
+        #@ Each NetworkStat structure describes traffic flow counters for that interface.
+        NetworkStats[] Stats
+
+
+#@ Use this method to query for the list of port mappings currently enabled on a device that supports port forwarding.
+#@ Typically this will be a router or residential gateway.
+#@
+#@ <tt>GetPortMappings</tt> returns one entry in <tt>PortMappings</tt>
+#@ for each enabled port mapping currently defined in the router.
+#@ The concept is that this is the same list of mappings
+#@ that are created by <tt>AddPortMapping</tt> and removed by <tt>DeletePortMapping</tt>.
+#@ Other mappings defined in the router but which are not <q>enabled</q> will not be affected by these APIs.
+#@
+#@ Some routers refer to these port mappings as <q>virtual servers</q>.
+#@
+#@ If a port has been mapped both for UDP and TCP, it MUST be returned as two separate entries in <tt>PortMappings</tt>.
+action GetPortMappings
+
+    output
+
+        #@ An Array of PortMapping structures describe each port mapping in the table.
+        PortMapping[] PortMappings
+
+
+#@ Use this method to query the LAN configuration settings on a router or residential gateway,
+#@ including its IP address, subnet, and DHCP server settings.
+action GetRouterLanSettings2
+
+    output
+
+        #@ The IP address of the router on the LAN.
+        IPAddress RouterIPAddress
+
+        #@ The subnet mask of the router on the LAN.
+        IPAddress RouterSubnetMask
+
+        #@ Whether the router is acting as a DHCP server for other devices on the LAN.
+        #@ If DHCPServerEnabled is <tt>true</tt> the router's internal DHCP server is enabled.
+        bool DHCPServerEnabled
+
+        #@ First IP address in the range of addresses allocated by the DHCP server.
+        IPAddress IPAddressFirst
+
+        #@ Last IP address in the range of addresses allocated by the DHCP server.
+        IPAddress IPAddressLast
+
+        #@ Length of time, in minutes, for which a new DHCP lease is valid. Must not be zero.
+        int LeaseTime
+
+        #@ Returns the list of DHCP reservations this device has configured.
+        DHCPReservation[] DHCPReservations
+
+
+#@ This method is implemented by routers or gateways that have a WAN based-interface
+#@ and allows management over that WAN-based interface.
+action GetRouterSettings
+
+    output
+
+        #@ whether the administrative interface and HNAP interfaces are accessible from the WAN side of the router.
+        bool ManageRemote
+
+        #@ whether the administrative interface and HNAP interfaces are accessible from a wireless client on the WLAN.
+        bool ManageWireless
+
+        #@ the port number that can be used to access the router management interface from the WAN side.
+        int RemotePort
+
+        #@ whether the secure SSL port is available for this device.
+        #@
+        #@ <tt>true</tt> - the remote port specified by RemotePort will ONLY accept SSL connections.
+        #@
+        #@ <tt>false</tt> - the remote port specified by RemotePort will NOT accept SSL connections.
+        bool RemoteSSL
+
+        #@ Returns a domain name associated with the WAN interface for this device.
+        #@ This domain may be left blank.
+        #@
+        #@ A domain name is sometimes used by ISPs to provide reverse-lookup on the WAN IP address of the router.
+        string DomainName
+
+        #@ whther QoS for the wired ports is enabled.
+        #@
+        #@ When enabled, each packet is examined for the presence of a valid IEEE 802.1p priority tag
+        #@ and handled accordingly.
+        bool WiredQoS
+
+        #@ If this device supports WPS, it should return the WPS PIN value in this field.
+        #@ Otherwise this value can be left blank.
+        string WPSPin
+
+
+#@ <tt>GetWLanRadios</tt> only reports a single radio frequency per radio.
+#@ Some devices, however, allow a radio's frequency to be set to more than one setting.
+#@ <tt>GetWLanRadioFrequencies</tt> reports which frequencies are available for each physical radio in the device.
+#@ This method should only be implemented
+#@ if a device has more than one settable radio frequency for one or more physical radios.
+#@ <tt>GetWLanRadioFrequencies</tt> should return
+#@ the supported frequencies for each <tt>RadioID</tt> reported by <tt>GetWLanRadios</tt>.
+action GetWLanRadioFrequencies
+
+    output
+
+        #@ Returns a structure containing the list of available frequencies for each radio in the device.
+        RadioFrequencyInfo[] RadioFrequencyInfos
+
+
+#@ Use this method to obtain the security settings for wireless connections.
+#@ These settings apply to both the 2.4 GHz and 5 GHz frequencies.
+action GetWLanRadioSecurity
+
+    input
+
+        #@ Pass the <tt>RadioID</tt> of the radio whose settings are to be obtained.
+        #@ This value can be obtained from <tt>GetWLanRadios</tt>.
+        string RadioID
+
+    output
+
+        #@ Specifies whether security is enabled (true or false).
+        #@ When this is set to false, any other values returned in the other parameters will be ignored.
+        bool Enabled
+
+        #@ The type of wireless security used:
+        #@
+        #@ This value may be blank in the event that security is disabled.
+        WiFiSecurity Type
+
+        #@ Encryption method used.
+        #@
+        #@ Note that valid encryption methods are based on the Type of security being used.
+        #@ An HNAP client should use the <tt>GetWLanRadios</tt> method
+        #@ to determine the valid encryption values supported for the value of <tt>Type</tt>.
+        #@
+        #@ This value may be blank in the event that security is disabled.
+        WiFiEncryption Encryption
+
+        #@ This value depends on the value of <tt>Type</tt>. The semantics are defined as follows:
+        #@
+        #@ <table summary="security key types">
+        #@ <tr><th>Type<th>Key
+        #@ <tr><td><tt>WEP-</tt>*
+        #@ <td>WEP key in hexadecimal form (any upper/lower case),
+        #@ 64 or 128 bits depending on <tt>Encryption</tt>
+        #@ <tr><td><tt>WPA-</tt>*
+        #@ <td>WPA passphrase with length in standard WPA range of 8 to 63 characters
+        #@ or exactly 64 hex characters
+        #@ </table>
+        #@
+        #@ This value may be blank in the event that security is disabled.
+        string Key
+
+        #@ Time in seconds of the WPA key renewal period.
+        #@
+        #@ This value may be zero (0) in the event that security is disabled or the Type is not a WPA vairant.
+        int KeyRenewal
+
+        #@ If RADIUS is used, type the primary/preferred RADIUS server's IP address.
+        #@
+        #@ If RADIUS is not being used, return a blank string.
+        #@
+        #@ This value may be blank in the event that WPA(2)-RADIUS is not the Type or security is disabled.
+        IPAddress RadiusIP1
+
+        #@ The RADIUS server port number.
+        #@ This should still be returned even if wireless security is currently disabled.
+        #@
+        #@ This value may be zero (0) in the event that WPA(2)-RADIUS is not the Type
+        int RadiusPort1
+
+        #@ Shared secret to use with first set of RADIUS servers.
+        #@
+        #@ This value may be blank in the event that WPA(2)-RADIUS is not the Type
+        string RadiusSecret1
+
+        #@ If RADIUS is used, type the secondary/fallback RADIUS server's IP address.
+        #@ HNAP uses this only if the RadiusIP1 (above) is not responding.
+        #@
+        #@ If RADIUS is not being used, return a blank string.
+        #@
+        #@ This value may be blank in the event that WPA(2)-RADIUS is not the Type or security is disabled.
+        IPAddress RadiusIP2
+
+        #@ The secondary/fallback RADIUS server's port number.
+        #@ This should still be returned even if wireless security is currently disabled.
+        #@
+        #@ This value may be zero (0) in the event that WPA(2)-RADIUS is not the Type
+        int RadiusPort2
+
+        #@ Shared secret to use with second set of RADIUS servers.
+        #@
+        #@ This value may be blank in the event that WPA(2)-RADIUS is not the Type
+        string RadiusSecret2
+
+    result
+
+        #@ Returned if the RadioID parameter is not known.
+        "ERROR_BAD_RADIOID"
+
+
+#@ Use this method with wireless (Wi-Fi) routers and access points
+#@ to obtain the settings on the wireless interface (for example, the SSID).
+#@ The settings obtained are the last settings configured;
+#@ note that these might not be the current, active settings if a reboot is pending.
+action GetWLanRadioSettings
+
+    input
+
+        #@ Pass the <tt>RadioID</tt> of the radio whose settings are to be obtained.
+        #@ This value can be obtained from <tt>GetWLanRadios</tt>.
+        string RadioID
+
+    output
+
+        #@ whether the wireless radio is enabled.
+        #@ If set to false, the radio is turned off and is not sending or receiving.
+        bool Enabled
+
+        #@ the 802.11 mode that the router is currently configured for.
+        WiFiMode Mode
+
+        #@ The MAC address for this interface.
+        #@ This must still be returned even if the WLAN interface is currently disabled.
+        MACAddress MacAddress
+
+        #@ The wireless network name (SSID) for this wireless band.
+        #@ This must still be returned even if the WLAN interface is currently disabled.
+        string SSID
+
+        #@ whether the device is broadcasting the wireless network name (SSID) for network detection.
+        #@ This must still be returned even if the WLAN interface is currently disabled.
+        bool SSIDBroadcast
+
+        #@ Width of each channel. This corresponds to the 802.11n channel width standard. Valid values are:
+        #@
+        #@ 0 - Automatic selection mode
+        #@
+        #@ 20 - 20 MHz channel width
+        #@
+        #@ 40 - 40 MHz channel width
+        #@
+        #@ It is not possible for an HNAP client to interrogate
+        #@ the currently selected channel width of a router configured in automatic mode.
+        int ChannelWidth
+
+        #@ Channel number the radio is currently set to.
+        #@
+        #@ The valid range of values depends on the configuration and type of the device.
+        #@
+        #@ The full range of channels for a given device can be interrogated using <tt>GetWLanRadios</tt>.
+        #@
+        #@ This should still be returned even if the WLAN interface is currently disabled.
+        #@
+        #@ A channel value of zero (0) indicates that the router should automatically select the channel.
+        #@
+        #@ Devices that do not allow channel configuration should return zero (0) (for example, a wireless client).
+        int Channel
+
+        #@ Returns the secondary channel being used by the device
+        #@
+        #@ Notes
+        #@
+        #@ If not configured in 20 MHz channel width,
+        #@ a value of zero (0) indicates that the router is automatically selecting the secondary channel.
+        #@
+        #@ If configured in 20 MHz channel width, the device should return zero.
+        int SecondaryChannel
+
+        #@ whether wireless quality of service (as defined by 802.11e) is enabled
+        bool QoS
+
+    result
+
+        #@ Returned if the RadioID parameter is not known.
+        "ERROR_BAD_RADIOID"
+
+
+#@ HNAP includes support for devices with multiple radios, or devices with just a single radio.
+#@ Each radio can have its own independent basic settings and security settings.
+#@
+#@ This method is used to determine how many WLan radios a particular router or access point supports.
+#@ It returns a list of RadioIDs that must be used to invoke other <tt>Set</tt>/<tt>GetWLanRadio</tt>* methods.
+action GetWLanRadios
+
+    output
+
+        #@ Returns a structure containing information and capabilities for each radio in the device.
+        #@
+        #@ An HNAP client must call this method to obtain a <tt>RadioID</tt>
+        #@ to be able to call other <tt>WLanRadio</tt>* methods and understand the capabilities of the radio.
+        RadioInfo[] RadioInfos
+
+
+#@ Use this method to discover information about the WAN side of a residential gateway or router device.
+#@
+#@ Notes
+#@
+#@ Used to determine a list of the WAN types supported by a given device.
+#@
+#@ Used to determine the type of the current WAN connection.
+#@
+#@ Used to determine the connection status of the WAN connection.
+#@ This method replaces the <tt>GetWanStatus</tt> method in HNAP 1.1, which has been deprecated.
+action GetWanInfo
+
+    output
+
+        #@ Returns a list of WAN types supported by this device.
+        #@ The possible list of returned values corresponds to the Type parameter of GetWanSettings.
+        #@ A client should check the list of supported types
+        #@ before calling <tt>SetWanSettings</tt> to ensure the type is supported.
+        WANType[] SupportedTypes
+
+        #@ Returns the WAN type that the router believes is currently connected upstream of the device.
+        #@
+        #@ The possible list of returned values corresponds to the Type parameter of GetWanSettings.
+        #@
+        #@ In addition to one of the Type values, a device may also return <tt>UNKNOWN</tt>
+        #@ to indicate that it is unable to automatically detect the type of the current WAN connection.
+        #@
+        #@ The device may also return <tt>DETECTING</tt>
+        #@ if it is in the process of detecting the type of the current WAN connection.
+        WANType AutoDetectType
+
+        #@ Returns status information about the current WAN connection of the router.
+        #@
+        #@ One example use case for this method is a Router Setup application.
+        #@ At the end of the setup process, once the device is configured and a connection attempt is initiated,
+        #@ Router Setup may poll the WAN status until it sees that
+        #@ that status is in either a connected or disconnected state.
+        #@ Once the correct state is obtained,
+        #@ it issues its final connectivity check with a well known resource on the Internet.
+        WANStatus Status
+
+
+#@ This method can be used to query WAN configuration information in a router or residential gateway.
+#@ It will return connection information detailing such things as static or dynamic IP, DNS servers etc.
+#@
+#@ This table shows how the parameters relating to service depend on <tt>Type</tt>:
+#@
+#@ <table summary="WanSettings Service Parameters">
+#@ <tr><th><tt>Type</tt>
+#@ <th><tt>Username</tt><br /><tt>Password</tt>
+#@ <th><tt>ServiceName</tt>
+#@ <th><tt>AutoReconnect</tt><br /><tt>MaxIdleTime</tt>
+#@ <tr>
+#@ <td><tt>BridgedOnly</tt><br />
+#@ <tt>Static</tt><br />
+#@ <tt>DHCP</tt><br />
+#@ <tt>Static1438Bridged</tt><br />
+#@ <tt>Dynamic1483Bridged</tt><br />
+#@ <tt>Static1483Routed</tt><br />
+#@ <tt>StaticIPOA</tt>
+#@ <td>empty
+#@ <td>empty
+#@ <td><tt>false</tt><br />0
+#@ <tr>
+#@ <td><tt>StaticPPPoE</tt><br /><tt>DHCPPPPoE</tt><br />
+#@ <tt>StaticPPPOA</tt><br /><tt>DynamicPPPOA</tt>
+#@ <td>required
+#@ <td>name (optional)
+#@ <td>required
+#@ <tr>
+#@ <td><tt>StaticL2TP</tt><br /><tt>DynamicL2TP</tt><br />
+#@ <tt>StaticPPTP</tt><br /><tt>DynamicPPTP</tt><br />
+#@ <tt>BigPond</tt>
+#@ <td>required
+#@ <td>IP address
+#@ <td>required
+#@ </table>
+#@
+#@ This table shows how the parameters relating to IP depend on <tt>Type</tt>:
+#@
+#@ <table summary="WanSettings IP Parameters">
+#@ <tr><th><tt>Type</tt>
+#@ <th><tt>IPAddress</tt>
+#@ <th><tt>SubnetMask</tt><br /><tt>Gateway</tt>
+#@ <th><tt>DNS</tt>
+#@ <tr><td><tt>BridgedOnly</tt>
+#@ <td>empty<td>empty<td>empty
+#@ <tr><td><tt>Static</tt>
+#@ <td>required<td>required<td>DNS.Primary required,<br />others optional
+#@ <tr><td><tt>StaticPPPoE</tt><br /><tt>StaticPPPOA</tt>
+#@ <td>required<td>empty<td>optional
+#@ <tr><td><tt>StaticL2TP</tt><br />
+#@ <tt>StaticPPTP</tt><br />
+#@ <tt>Static1438Bridged</tt><br />
+#@ <tt>Static1483Routed</tt><br />
+#@ <tt>StaticIPOA</tt>
+#@ <td>required<td>required<td>optional
+#@ <tr><td><tt>DHCP</tt>
+#@ <td>required<td>required<td>optional
+#@ <tr><td><tt>DHCPPPPoE</tt><br /><tt>BigPond</tt><br /><tt>DynamicPPPOA</tt>
+#@ <td>required<td>empty<td>optional
+#@ <tr><td><tt>DynamicL2TP</tt><br />
+#@ <tt>DynamicPPTP</tt><br />
+#@ <tt>Dynamic1483Bridged</tt>
+#@ <td>required<td>required<td>optional
+#@ </table>
+action GetWanSettings
+
+    output
+
+        #@ The type of configuration.
+        WANType Type
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt> or <tt>BigPond</tt>,
+        #@ the login user name should be returned.
+        #@
+        #@ Otherwise, clients should leave blank, servers should ignore.
+        string Username
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt> or <tt>BigPond</tt>,
+        #@ the login password is returned.
+        #@
+        #@ Otherwise, clients should leave blank, servers should ignore.
+        string Password
+
+        #@ Defines the maximum time that the WAN connection should be idle before it is automatically disconnected.
+        #@
+        #@ This setting is typically used for pay-per-minute connections to ensure the broadband connection is disconnected when not in use.
+        #@
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt> or <tt>BigPond</tt>,
+        #@ then this value should be returned.
+        #@
+        #@ This value is specified in seconds. A value of 0 (zero), indicates that there is no time-out.
+        int MaxIdleTime
+
+        #@ The maximum packet size (maximum transmission unit (MTU)) in octets currently set for the protocol type.
+        int MTU
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt> or <tt>*PPPOA</tt>, the service name for the PPP connection is returned.
+        #@
+        #@ If <tt>Type</tt> is <tt>*L2TP</tt>, <tt>*PPTP</tt> or <tt>BigPond</tt>,
+        #@ this is the IP address of the server.
+        #@
+        #@ Otherwise, this must be empty.
+        string ServiceName
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt>, or <tt>BigPond</tt>,
+        #@ this will be <tt>true</tt> if the device will automatically reconnect when the connection is dropped.
+        #@
+        #@ Otherwise, this must be <tt>false</tt>.
+        bool AutoReconnect
+
+        #@ The IP address for this router on the WAN.
+        #@
+        #@ If <tt>Type</tt> is
+        #@ <tt>DHCP</tt>, <tt>DHCPPPPoE</tt>, <tt>Dynamic1483Bridged</tt>, <tt>DynamicL2TP</tt>, <tt>DynamicPPTP</tt>,
+        #@ <tt>DynamicPPPOA</tt>, or <tt>BigPond</tt>,
+        #@ this returns the DHCP-configured value.
+        #@ If DHCP has not acquired an address yet, this should return <tt>0.0.0.0</tt>.
+        IPAddress IPAddress
+
+        #@ The subnet mask IP address for this router on the WAN.
+        #@
+        #@ If <tt>Type</tt> is
+        #@ <tt>DHCP</tt>, <tt>Dynamic1483Bridged</tt>, <tt>DynamicL2TP</tt> or <tt>DynamicPPTP</tt>,
+        #@ this returns the DHCP-configured value.
+        #@ If DHCP has not acquired an address yet, this should return <tt>0.0.0.0</tt>.
+        IPAddress SubnetMask
+
+        #@ The upstream gateway IP address on the WAN.
+        #@
+        #@ If <tt>Type</tt> is
+        #@ <tt>DHCP</tt>, <tt>Dynamic1483Bridged</tt>, <tt>DynamicL2TP</tt> or <tt>DynamicPPTP</tt>,
+        #@ this returns the DHCP-configured value.
+        #@ If DHCP has not acquired an address yet, this should return <tt>0.0.0.0</tt>.
+        IPAddress Gateway
+
+        #@ The DNS settings for this router on the WAN.
+        #@ The <tt>Tertiary</tt> element is optional and may be omitted entirely, even its tags
+        #@ if the router has less than three DNS settings configured.
+        #@
+        #@ If <tt>Type</tt> is
+        #@ <tt>DHCP</tt>, <tt>DHCPPPPoE</tt>, <tt>Dynamic1483Bridged</tt>, <tt>DynamicL2TP</tt>, <tt>DynamicPPTP</tt>,
+        #@ <tt>DynamicPPPOA</tt>, or <tt>BigPond</tt>,
+        #@ the device should return DNS settings it may have obtained from the lease,
+        #@ or blank in the event that there is no current lease.
+        #@
+        #@ For non-dynamic WAN Types, these settings should always be valid.
+        DNSSettings DNS
+
+        #@ The MAC address on the WAN interface.
+        MACAddress MacAddress
+
+
+#@ Use this method to renew the router's WAN connection.
+#@
+#@ Notes
+#@
+#@ If the router is configured for DHCP,
+#@ <tt>RenewWanConnection</tt> should drop the current DHCP lease and attempt to acquire a new one.
+#@ The call should return OK prior to the lease being obtained.
+#@
+#@ If the router is configured in a static mode, it should return <tt>OK</tt> to indicate a no-op.
+#@
+#@ If the router is configured for PPPoE, <tt>RenewWanConnection</tt> renews the PPPoE connection.
+#@
+#@ Optionally, you can use this method to restart the internal WAN driver.
+#@ The router should make every attempt possible to fix its upstream connection without disturbing the LAN side at all.
+#@
+#@ After a <tt>RenewWanConnection call</tt>,
+#@ a client may periodically poll <tt>GetWanInfo</tt> to determine when the WAN is <tt>CONNECTED</tt>
+#@ and then check <tt>GetWanSettings</tt> to determine what the new lease settings are.
+#@
+#@ This MUST stay distinct from the <tt>Reboot</tt> method.
+#@ <tt>RenewWanConnection</tt> keeps all LAN DHCP information intact
+#@ and has less impact on the device than the <tt>Reboot</tt> method would.
+action RenewWanConnection
+
+    input
+
+        #@ This value is deprecated and should always be set to 120 by the client, and ignored by the router.
+        int RenewTimeout
+
+
+#@ This method is used to configure a wireless router into either "access point mode" or "router mode."
+#@
+#@ This API is designed to solve the problem of installing a router behind a Residential Gateway or another router.
+#@ For example, a client may detect a double NAT configuration and use this API to convert the router into AP mode.
+#@ With double NAT configuration, port-forwarding is very difficult and confusing for most consumers.
+#@ This call allows the client to put the new router into a mode
+#@ whereby the original router is still serving DHCP addresses and providing firewall functions.
+#@ The new router is serving as a wireless access point and source of more LAN ports.
+#@
+#@ If the router returns <tt>REBOOT</tt>, the client MUST obtain a new DHCP lease for itself
+#@ (as the DHCP server will have changed)
+#@ and then locate the router again by using the IP address returned in the <tt>NewIPAddress</tt> out parameter.
+#@
+#@ When <tt>IsAccessPoint</tt> is <tt>true</tt>,
+#@ the router will turn off its internal DHCP server
+#@ and acquire an IP address from the DHCP server connected to the WAN port.
+#@ The router will then act as a bridge
+#@ relaying all packets across the LAN ports, the WAN port and the wireless network.
+#@ In addition, it should respond to HNAP calls on the WAN port in this mode.
+#@
+#@ For Wireless routers, the value of <tt>Type</tt> returned by <tt>GetDeviceSettings</tt>
+#@ will change from <tt>GatewayWithWiFi</tt> to <tt>WiFiAccessPoint</tt>.
+#@ For wired routers the Type field will change from Gateway to WiredBridge.
+#@
+#@ The list of <tt>SOAPActions</tt> should remain the same.
+#@ The device should still respond to all the regular HNAP APIs such as <tt>SetWLanRadioSettings</tt>.
+#@
+#@ When <tt>IsAccessPoint</tt> is false, the router will return to full router mode
+#@ and enable the internal DHCP server and the firewall between WAN and LAN ports.
+#@ <tt>Type</tt> should be returned to <tt>GatewayWithWifi</tt> or <tt>Gateway</tt> as appropriate
+#@ and HNAP calls should again be rejected on the WAN port.
+#@
+#@ The LAN IP of the router after this call should be the same as the WAN IP of the router previously
+#@ (as it is getting a DHCP lease from the same upstream router).
+#@
+#@ This call MUST NOT affect any other wireless settings, for example SSID, security mode, keys etc.
+action SetAccessPointMode
+
+    input
+
+        #@ Set to true to force the router to behave as an access point.
+        #@
+        #@ Set to false to force the router to behave as a router.
+        bool IsAccessPoint
+
+    output
+
+        #@ The IP address that the router will have on the LAN after the call and subsequent reboot completes.
+        #@
+        #@ If this cannot be determined before the response is sent, then an empty string should be returned.
+        #@
+        #@ When <tt>IsAccessPoint</tt> is false,
+        #@ the IP address returned should be the same as that returned from <tt>GetRouterLanSettings2</tt>.
+        #@
+        #@ When <tt>IsAccessPoint</tt> is true,
+        #@ the IP address returned should be in the DHCP lease range of the upstream router.
+        IPAddress NewIPAddress
+
+    result
+        "REBOOT"
+
+
+#@ Use this method to configure the current list of clients (by MAC address)
+#@ that are configured in the MAC address filtering table of a device that supports restricted access via MAC filtering.
+#@ Typically this will be a router or residential gateway.
+#@
+#@ Notes
+#@
+#@ Some router implementations may only support white listing or black listing but not both.
+#@ If this is the case, the router may fail the call for the method that is not supported.
+action SetMACFilters2
+
+    input
+
+        #@ Specifies whether filters are enabled (true or false).
+        bool Enabled
+
+        #@ true - The list of MAC addresses supplied are allowed to connect to the network.
+        #@ Any connecting devices that are not in the list will be denied connection.
+        #@
+        #@ false - The list of MAC addresses supplied are black-listed from the network and not allowed to join.
+        #@ Any connecting devices that are not in the list will be allowed to connect to the network.
+        bool IsAllowList
+
+        #@ A list of structures describing the MAC address table entries.
+        #@ Note that each entry in the table has both a MAC address and an optional device name associated with it.
+        MACInfo[] MACList
+
+    result
+        "REBOOT"
+
+
+#@ Use this method to configure the LAN configuration settings on a router or residential gateway.
+#@ It can be used to turn on and off the DHCP server in the router and to set the IP address of the router on the LAN,
+#@ and thus (if DHCP server is enabled) the subnet for the DHCP leases.
+#@
+#@ Notes
+#@
+#@ New Method for HNAP 1.2
+#@
+#@ While the range of IP addresses may include a wide range,
+#@ the DHCP server should be careful to exclude the following IP addresses within this range
+#@ and not offer them to DHCP clients:
+#@
+#@ <ul>
+#@ <li>The IP address of the device itself (<tt>RouterIPAddress</tt>)
+#@
+#@ <li>Any IP addresses that are listed in the DHCP reservation list used for static mappings.
+#@ These can only be offered to the corresponding DHCP client listed.
+#@ </ul>
+#@
+#@ The combination of the <tt>RouterIPAddress</tt> and <tt>RouterSubnetMask</tt> parameters
+#@ define the valid range of IP addresses for the network.
+#@ <tt>IPAddressFirst</tt> and <tt>IPAddressLast</tt> and all addresses contained inside <tt>DHCPReservations</tt>
+#@ should be consistent with the range, otherwise a router should fail the call.
+action SetRouterLanSettings2
+
+    input
+
+        #@ The desired IP address of the router on the LAN in w.x.y.z dot notation.
+        IPAddress RouterIPAddress
+
+        #@ The desired subnet mask of the router on the LAN in w.x.y.z dot notation.
+        IPAddress RouterSubnetMask
+
+        #@ Whether the router should act as the DHCP server for other devices on the LAN.
+        #@ If DHCPServerEnabled is <q>true</q> the router's internal DHCP server should be enabled.
+        bool DHCPServerEnabled
+
+        #@ First IP address in the range of addresses allocated by the DHCP server.
+        #@
+        #@ Note: The range of IP addresses used by the DHCP server to allocated to clients must be within the device subnet.
+        IPAddress IPAddressFirst
+
+        #@ Last IP address in the range of addresses allocated by the DHCP server.
+        #@
+        #@ Note: The range of IP addresses used by the DHCP server to allocated to clients must be within the device subnet.
+        IPAddress IPAddressLast
+
+        #@ Length of time, in minutes, for which a new DHCP lease is valid. Must not be zero.
+        int LeaseTime
+
+        #@ A list of DHCP reservations to be allocated to new devices.
+        #@
+        #@ Passing entries in this array will configure the list of static DHCP reservations.
+        #@ A static DHCP reservation ensures that a given device always receives the same IP address via DHCP requests.
+        #@
+        #@ Notes
+        #@
+        #@ It is possible to reserve an IP address
+        #@ that is outside of the range of those allocated by the DHCP server settings,
+        #@ but it must be within the same subnet.
+        #@ E.g. A router might be configured to hand out IPs in the range 192.168.1.10-192.168.1.100,
+        #@ a reservation might be configured to assign 192.168.1.105 to a well known network device.
+        #@
+        #@ A device may choose to reject a reservation list for several reasons.
+        #@ See the <tt>ERROR_BAD_RESERVATION</tt> code below for details.
+        DHCPReservation[] DHCPReservations
+
+    result
+
+        "REBOOT"
+
+        #@ Returned if a device rejects a DHCP reservation range due to one or more bad entries in the list.
+        #@
+        #@ A device might reject reservations for the following reasons:
+        #@
+        #@ An IP address given is the IP address of the device itself.
+        #@
+        #@ An IP address specified is not part of the subnet accepted by the router.
+        #@
+        #@ More than one reservation is included for the same IP address or MAC address.
+        "ERROR_BAD_RESERVATION"
+
+        #@ Returned if a given device does not allow DHCP reservations.
+        #@ If a client gets this error, it should retry with an empty <tt>DHCPReservations</tt> array.
+        "ERROR_RESERVATIONS_NOT_SUPPORTED"
+
+        #@ Returned if the subnet requested is invalid or out of range (too broad) for the given device.
+        "ERROR_BAD_SUBNET"
+
+        #@ Returned if the IP address requested is invalid.
+        "ERROR_BAD_IP_ADDRESS"
+
+        #@ Returned if the IP ranges passed to IPAddressFirst and IPAddressLast are not valid.
+        #@
+        #@ A device might consider a range to not be valid for a number of reasons, including, but not limited to:
+        #@
+        #@ The scope of the range is too large.
+        #@
+        #@ The addresses do not conform to the routers subnet.
+        #@
+        #@ IPAddressFirst > IPAddressLast
+        "ERROR_BAD_IP_RANGE"
+
+
+#@ This method is implemented by routers or gateways that have a WAN-based interface
+#@ and allows management over that WAN-based interface.
+#@ This method is used to configure of modify router settings.
+#@
+#@ If a given device does not support remote management settings,
+#@ it should return <tt>ERROR_REMOTE_MANAGE_NOT_SUPPORTED</tt>
+#@ if an HNAP client attempts to change
+#@ any of the <tt>ManageRemote</tt>, <tt>ManageWireless</tt>, <tt>RemotePort</tt> or <tt>RemoteSSL</tt> settings
+#@ from their defaults.
+action SetRouterSettings
+
+    input
+
+        #@ whether the administrative management interface and HNAP interfaces
+        #@ are accessible from the WAN side of the router
+        bool ManageRemote
+
+        #@ whether the administrative management interface and HNAP interfaces
+        #@ are accessible from a wireless client on the WLAN
+        bool ManageWireless
+
+        #@ the port number that can be used to access the router management interface from the WAN side
+        int RemotePort
+
+        #@ whether the secure SSL port is available for this device
+        bool RemoteSSL
+
+        #@ Allows an HNAP client to associate a domain name with the WAN interface for this device
+        string DomainName
+
+        #@ Enables QoS according to DSCP and 802.1p.
+        #@ This applies to the wired ports only.
+        #@ For wireless QoS, see the SetWLanRadioSettings method.
+        #@
+        #@ When enabled, each packet is examined for the presence of a valid IEEE 802.1p priority tag
+        #@ and handled accordingly.
+        bool WiredQoS
+
+    result
+
+        "REBOOT"
+
+        #@ Used in case modification of remote management settings is not supported.
+        "ERROR_REMOTE_MANAGE_NOT_SUPPORTED"
+
+        #@ Used in case a client attempts to enable QoS for a device that does not support it.
+        "ERROR_QOS_NOT_SUPPORTED"
+
+        #@ Used in case a router does not support domain name setting.
+        "ERROR_DOMAIN_NOT_SUPPORTED"
+
+        #@ Used in case a router does not support SSL for remote management.
+        "ERROR_REMOTE_SSL_NOT_SUPPORTED"
+
+        #@ Used in case RemoteSSL cannot be switched on while
+        #@ <tt>SSL</tt> (in <tt>SetDeviceSettings2</tt>) is switched off.
+        "ERROR_REMOTE_SSL_NEEDS_SSL"
+
+        #@ Used in case where a router does support remote management, but ONLY on the SSL port.
+        #@ This error is returned if a client attempts to set RemoteSSL to false.
+        "ERROR_REMOTE_MANAGE_MUST_BE_SSL"
+
+        #@ May be returned if an HNAP client is attempting to enable remote management
+        #@ and the router rejects this action due to the router still having the factory default password set.
+        #@ If an HNAP client wishes to continue, it should change the password first.
+        "ERROR_REMOTE_MANAGE_DEFAULT_PASSWORD"
+
+
+#@ Set the frequency of a radio reported by <tt>GetWLanRadioFrequencies</tt>.
+#@ This method should only be implemented
+#@ if a device has more than one settable radio frequencies for one or more physical radio.
+#@
+#@ A client should be prepared for the values returned by
+#@ <tt>GetWLanRadioSettings</tt> and <tt>GetWLanRadioSecurity</tt> to change
+#@ as a result of a successful call to SetWLanRadioFrequency.
+#@ For example, this can occur when a device implements separate wlan configurations for each band it supports.
+action SetWLanRadioFrequency
+
+    input
+
+        #@ The <tt>RadioID</tt> of the radio whose settings are to be modified.
+        #@ This value can be obtained from <tt>GetWLanRadios</tt> or <tt>GetWLanRadioFrequencies</tt>.
+        string RadioID
+
+        #@ A frequency reported by <tt>GetWLanRadioFrequencies</tt>.
+        int Frequency
+
+    result
+
+        "REBOOT"
+
+        #@ Returned if the <tt>RadioID</tt> parameter is not known.
+        "ERROR_BAD_RADIOID"
+
+
+#@ Use this method to specify the security settings for wireless connections.
+action SetWLanRadioSecurity
+
+    input
+
+        #@ The <tt>RadioID</tt> of the radio whose settings are to be modified.
+        #@ This value can be obtained from <tt>GetWLanRadios</tt>.
+        string RadioID
+
+        #@ whether security is enabled.
+        #@ When this is set to <tt>false</tt>, any other security settings can remain in place but will be ignored.
+        bool Enabled
+
+        #@ The type of wireless security to be used.
+        #@ A blank value can be passed in the event that security is disabled.
+        #@
+        #@ If the radio is in 802.11n mode and security in enabled,
+        #@ then only <tt>WPA2-PSK</tt> and <tt>WPA2-RADIUS</tt> are allowed.
+        WiFiSecurity Type
+
+        #@ Encryption method to be used.
+        #@
+        #@ Note that valid encryption methods are based on the type of security being used.
+        #@ An HNAP client should use the <tt>GetWLanRadios</tt> method to determine
+        #@ the valid encryption values supported for <tt>Type</tt>.
+        #@
+        #@ This value may be blank in the event that security is disabled.
+        #@
+        #@ If the radio is in 802.11n mode and security in enabled, then only <tt>AES</tt> is allowed.
+        WiFiEncryption Encryption
+
+        #@ This value depends on <tt>Type</tt>.
+        #@
+        #@ The semantics are defined as follows:
+        #@
+        #@ <table summary="security key types">
+        #@ <tr><th>Type<th>Key
+        #@ <tr><td><tt>WEP-</tt>*
+        #@ <td>WEP key in hexadecimal form (any upper/lower case),
+        #@ 64 or 128 bits depending on <tt>Encryption</tt>
+        #@ <tr><td><tt>WPA-</tt>*
+        #@ <td>WPA passphrase with length in standard WPA range of 8 to 63 characters
+        #@ or exactly 64 hex characters
+        #@ </table>
+        #@
+        #@ This value may be blank in the event that security is disabled.
+        string Key
+
+        #@ Time in seconds of the WPA key renewal period. Ignored if security type is not a WPA variant.
+        int KeyRenewal
+
+        #@ The primary RADIUS server's IP address, or blank if RADIUS is not used.
+        IPAddress RadiusIP1
+
+        #@ The primary RADIUS server port number, or 0 if RADIUS is not used.
+        int RadiusPort1
+
+        #@ Shared secret to use with the primary RADIUS server, or blank if RADIUS is not used.
+        string RadiusSecret1
+
+        #@ The secondary RADIUS server's IP address, or blank if RADIUS is not used.
+        IPAddress RadiusIP2
+
+        #@ The secondary RADIUS server port number, or 0 if RADIUS is not used.
+        int RadiusPort2
+
+        #@ Shared secret to use with the secondary RADIUS server, or blank if RADIUS is not used.
+        string RadiusSecret2
+
+    result
+
+        "REBOOT"
+
+        #@ <tt>Encryption</tt> value is not supported by this device
+        "ERROR_ENCRYPTION_NOT_SUPPORTED"
+
+        #@ <tt>Key</tt> value is not supported by this device
+        "ERROR_ILLEGAL_KEY_VALUE"
+
+        #@ One of the RADIUS values is not supported by this device
+        "ERROR_BAD_RADIUS_VALUES"
+
+        #@ <tt>KeyRenewal</tt> value is not supported by this device
+        "ERROR_KEY_RENEWAL_BAD_VALUE"
+
+        #@ <tt>Type</tt> value is not supported by this device
+        "ERROR_TYPE_NOT_SUPPORTED"
+
+        #@ unknown <tt>RadioID</tt> value
+        "ERROR_BAD_RADIOID"
+
+
+#@ Use this method with wireless (Wi-Fi) routers and access points to change or configure the settings on the wireless interface (for example, the SSID).
+action SetWLanRadioSettings
+    input
+
+        #@ Pass the RadioID of the radio whose settings are to be modified. This value can be obtained from GetWLanRadios.
+        string RadioID
+
+        #@ Specifies whether the wireless radio is enabled (true or false).
+        bool Enabled
+
+        #@ Specifies the 802.11 mode that the router is to be configured for.
+        #@
+        #@ Note: The supported modes may vary for a particular instance of a device.
+        #@ An HNAP client should be sure to check the SupportedModes value returned by GetWLanRadios.
+        #@
+        #@ Note: 802.11n mode is only supported if security is disabled, or if security Type is WPA2-PSK or WPA2-RADIUS and security Encryption is AES.
+        WiFiMode Mode
+
+        #@ The wireless network name (SSID) to be used for this wireless radio.
+        string SSID
+
+        #@ Configures whether the device is broadcasting the wireless network name (SSID) for network detection (true or false).
+        bool SSIDBroadcast
+
+        #@ Width of channel. Valid values are:
+        #@
+        #@ 0 - Automatic
+        #@
+        #@ 20 - 20 MHz channel width
+        #@
+        #@ 40 - 40 MHz channel width
+        #@
+        #@ Note
+        #@
+        #@ Automatic mode allows the router to determine the best channel width.
+        int ChannelWidth
+
+        #@ Channel number to set the radio to.
+        #@ The valid range of values depends on the Frequency of the radio, and the value of the ChannelWidth parameter.
+        #@
+        #@ A channel value of zero (0) indicates that the router should automatically select a channel.
+        #@ The range of channels for a given device can be discovered using the GetWLanRadios method.
+        int Channel
+
+        #@ Used when the device is configured in wide-channel mode (40 MHz channel width).
+        #@
+        #@ Once the primary channel has been specified in the Channel parameter, this parameter configures the secondary channel.
+        #@
+        #@ A value of 0 (zero) indicates that the router should automatically select the secondary channel.
+        #@ The range of secondary channels for a given primary channel can be discovered using the GetWLanRadios method.
+        #@
+        #@ If passing 20 for the <tt>ChannelWidth</tt> parameter, this value is ignored.
+        int SecondaryChannel
+
+        #@ Setting to allow configuration of wireless quality of service setting as defined by 802.11e.
+        #@
+        #@ true - QoS is enabled
+        #@
+        #@ false - QoS is disabled
+        bool QoS
+    result
+        "REBOOT"
+
+        #@ The channel width value passed is out of range or not supported by this device.
+        "ERROR_BAD_CHANNEL_WIDTH"
+
+        #@ The SSID passed is not valid according to the device. For example - an empty or too long SSID string might cause a device to return this error.
+        "ERROR_BAD_SSID"
+
+        #@ Returned if the RadioID parameter is not known.
+        "ERROR_BAD_RADIOID"
+
+        #@ The mode value passed is out of range or not supported by this device.
+        "ERROR_BAD_MODE"
+
+        #@ The secondary channel passed is out of range or not supported by this device.
+        "ERROR_BAD_SECONDARY_CHANNEL"
+
+        #@ The primary channel passed is out of range or not supported by this device.
+        "ERROR_BAD_CHANNEL"
+
+
+#@ This method is typically implemented by routers or residential gateways.
+#@ It can be used to configure connection information to the WAN port.
+#@
+#@ This table shows how the parameters relating to service depend on <tt>Type</tt>:
+#@
+#@ <table summary="WanSettings Service Parameters">
+#@ <tr><th><tt>Type</tt>
+#@ <th><tt>Username</tt><br /><tt>Password</tt>
+#@ <th><tt>ServiceName</tt>
+#@ <th><tt>AutoReconnect</tt><br /><tt>MaxIdleTime</tt>
+#@ <tr>
+#@ <td><tt>BridgedOnly</tt><br />
+#@ <tt>Static</tt><br />
+#@ <tt>DHCP</tt><br />
+#@ <tt>Static1438Bridged</tt><br />
+#@ <tt>Dynamic1483Bridged</tt><br />
+#@ <tt>Static1483Routed</tt><br />
+#@ <tt>StaticIPOA</tt>
+#@ <td>empty
+#@ <td>empty
+#@ <td><tt>false</tt><br />0
+#@ <tr>
+#@ <td><tt>StaticPPPoE</tt><br /><tt>DHCPPPPoE</tt><br />
+#@ <tt>StaticPPPOA</tt><br /><tt>DynamicPPPOA</tt>
+#@ <td>required
+#@ <td>name (optional)
+#@ <td>required
+#@ <tr>
+#@ <td><tt>StaticL2TP</tt><br /><tt>DynamicL2TP</tt><br />
+#@ <tt>StaticPPTP</tt><br /><tt>DynamicPPTP</tt><br />
+#@ <tt>BigPond</tt>
+#@ <td>required
+#@ <td>IP address
+#@ <td>required
+#@ </table>
+#@
+#@ This table shows how the parameters relating to IP depend on <tt>Type</tt>:
+#@
+#@ <table summary="WanSettings IP Parameters">
+#@ <tr><th><tt>Type</tt>
+#@ <th><tt>IPAddress</tt>
+#@ <th><tt>SubnetMask</tt><br /><tt>Gateway</tt>
+#@ <th><tt>DNS</tt>
+#@ <tr><td><tt>BridgedOnly</tt>
+#@ <td>empty<td>empty<td>empty
+#@ <tr><td><tt>Static</tt>
+#@ <td>required<td>required<td>DNS.Primary required,<br />others optional
+#@ <tr><td><tt>StaticPPPoE</tt><br /><tt>StaticPPPOA</tt>
+#@ <td>required<td>empty<td>optional
+#@ <tr><td><tt>StaticL2TP</tt><br />
+#@ <tt>StaticPPTP</tt><br />
+#@ <tt>Static1438Bridged</tt><br />
+#@ <tt>Static1483Routed</tt><br />
+#@ <tt>StaticIPOA</tt>
+#@ <td>required<td>required<td>optional
+#@ <tr><td><tt>DHCP</tt>
+#@ <td>empty<td>empty<td>optional
+#@ <tr><td><tt>DHCPPPPoE</tt><br /><tt>BigPond</tt><br /><tt>DynamicPPPOA</tt>
+#@ <td>empty<td>empty<td>optional
+#@ <tr><td><tt>DynamicL2TP</tt><br />
+#@ <tt>DynamicPPTP</tt><br />
+#@ <tt>Dynamic1483Bridged</tt>
+#@ <td>empty<td>empty<td>optional
+#@ </table>
+action SetWanSettings
+    input
+
+        #@ The type of configuration:
+        WANType Type
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt>, or <tt>BigPond</tt>,
+        #@ then include the login user name.
+        #@
+        #@ Otherwise, clients should leave blank, servers should ignore.
+        string Username
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt>, or <tt>BigPond</tt>,
+        #@ then include the login password.
+        #@
+        #@ Otherwise, clients should leave blank, servers should ignore.
+        string Password
+
+        #@ Defines the maximum time that the WAN connection should be idle before it is automatically disconnected.
+        #@
+        #@ This setting is typically used for pay-per-minute connections
+        #@ to ensure the broadband connection is disconnected when not in use.
+        #@
+        #@ The value is specified in seconds.
+        #@ A value of 0 (zero), indicates that there is no time-out and <tt>AutoReconnect</tt> MUST be set to true.
+        #@
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt>, or <tt>BigPond</tt>,
+        #@ then this value should be passed.
+        #@
+        #@ For all other Types, this value MUST be zero (0).
+        #@
+        #@ Always zero (0) for DHCP, Static, BridgedOnly, *1483Bridged, *1483Routed, or StaticIPOA.
+        int MaxIdleTime
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt> or <tt>*PPPOA</tt>,
+        #@
+        #@ <ul>
+        #@ <li>If a service name is required, include the service name for the connection.
+        #@
+        #@ <li>If a service name is not required, clients should leave blank.
+        #@ </ul>
+        #@
+        #@ If <tt>Type</tt> is <tt>*L2TP</tt>, <tt>*PPTP</tt> or <tt>BigPond</tt>,
+        #@ this is the IP address of the server.
+        #@
+        #@ Otherwise, this must be empty.
+        string ServiceName
+
+        #@ If <tt>Type</tt> is <tt>*PPPoE</tt>, <tt>*PPPOA</tt>, <tt>*L2TP</tt>, <tt>*PPTP</tt>, or <tt>BigPond</tt>,
+        #@ then set this to <tt>true</tt>
+        #@ if you want the connection to automatically reconnect when the connection is dropped.
+        #@ If this setting is set to <tt>true</tt> then <tt>MaxIdleTime</tt> MUST be set to zero (0).
+        #@
+        #@ Otherwise, this must be <tt>false</tt>.
+        bool AutoReconnect
+
+        #@ If <tt>Type</tt> is <tt>Static*</tt>,
+        #@ this is the IP address for this router on the WAN.
+        #@
+        #@ Otherwise, this must be empty.
+        IPAddress IPAddress
+
+        #@ If <tt>Type</tt> is <tt>Static*</tt> and not a point-to-point protocol (<tt>PPPoE</tt>, <tt>PPPOA</tt>),
+        #@ this is the subnet mask for this router on the WAN.
+        #@
+        #@ Otherwise, this must be empty.
+        IPAddress SubnetMask
+
+        #@ If <tt>Type</tt> is <tt>Static*</tt> and not a point-to-point protocol (<tt>PPPoE</tt>, <tt>PPPOA</tt>),
+        #@ this is the upstream gateway on the WAN.
+        #@
+        #@ Otherwise, this must be empty.
+        IPAddress Gateway
+
+        #@ The DNS settings for this router on the WAN.
+        #@ The <tt>Tertiary</tt> element is optional and may be omitted entirely, even its tags.
+        #@ This is for compatibility with older clients, which may not be aware of the <tt>Tertiary</tt> element.
+        #@
+        #@ If <tt>Type</tt> is <tt>BridgedOnly</tt>, the fields must be blank.
+        #@
+        #@ If <tt>Type</tt> is <tt>Static</tt>, the <tt>Primary</tt> address must be set.
+        #@
+        #@ For all other types, the fields are optional and may either be provided or left blank.
+        #@
+        #@ If the fields are blank, this signifies auto-configuration.
+        #@
+        #@ If the device is configured for DHCP prior to the call and has a current automatic DHCP lease,
+        #@ and the call does not change WAN type or DNS settings,
+        #@ the device should continue to assume that the DNS settings are in automatic mode
+        #@ and not override future leases with these values.
+        #@
+        #@ DNS settings may be set for DHCP or PPPoE, and will override the DHCP-supplied servers.
+        DNSSettings DNS
+
+        #@ The MAC address on the WAN interface.
+        MACAddress MacAddress
+
+        #@ If the router supports configurable maximum transmission units (MTUs), specify the maximum packet size in octets.
+        #@ This value MAY exceed what the router supports but SHOULD NOT exceed the maximum value specified by the protocol (see below).
+        #@ In the case where the router's max MTU for a Type is exceeded,
+        #@ the router should limit the value to its maximum.
+        #@ A value of 0 (zero) indicates that the client would prefer a device to automatically configure the MTU.
+        #@
+        #@ In <tt>BridgedOnly</tt> mode, the device bridges frames rather than routes packets, so the MTU does not apply.
+        #@ It should be set to zero and ignored.
+        #@
+        #@ The minimum possible MTU is 68, though most routers set the minimum to 128.
+        #@
+        #@ Packets routed from the LAN are limited by the MTU of the LAN network (typically Ethernet with 1500).
+        #@ Setting the WAN MTU higher (as allowed by ATM AAL5 networks) will have no effect on them.
+        #@ These are the maximum possible MTU values for relevant connection types, though some routers may allow less:
+        #@
+        #@ <table summary="maximum MTU">
+        #@ <tr><th>Type<th>Maximum possible MTU
+        #@ <tr><td><tt>Static</tt><br />
+        #@ <tt>DHCP</tt>
+        #@ <td>1500
+        #@ <tr><td><tt>StaticPPPoE</tt><br />
+        #@ <tt>DHCPPPoE</tt>
+        #@ <td>1492
+        #@ <tr><td><tt>BigPond</tt>
+        #@ <td>1500
+        #@ <tr><td><tt>StaticL2TP</tt><br />
+        #@ <tt>DynamicL2TP</tt>
+        #@ <td>1460
+        #@ <tr><td><tt>StaticPPTP</tt><br />
+        #@ <tt>DynamicPPTP</tt>
+        #@ <td>1464
+        #@ <tr><td><tt>BridgedOnly</tt>
+        #@ <td>n/a
+        #@ <tr><td><tt>Dynamic1483Bridged</tt><br />
+        #@ <tt>Static1483Bridged</tt><br />
+        #@ <tt>Static1483Routed</tt><br />
+        #@ <tt>StaticPPPOA</tt><br />
+        #@ <tt>DynamicPPPOA</tt><br />
+        #@ <tt>StaticIPOA</tt>
+        #@ <td>9180, but see note above
+        #@ </table>
+        int MTU
+
+    result
+
+        "REBOOT"
+
+        #@ the caller passes a Type parameter that is not supported by this device.
+        "ERROR_BAD_WANTYPE"
+
+        #@ the device cannot supported settings an MTU of zero.
+        "ERROR_AUTO_MTU_NOT_SUPPORTED"

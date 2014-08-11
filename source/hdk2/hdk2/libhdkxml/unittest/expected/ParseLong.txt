@@ -1,0 +1,14 @@
+Parsed '-12382734932' into HDK_XML_Long
+Parsed '0' into HDK_XML_Long
+Parsed '124453453452' into HDK_XML_Long
+Failed to parse 'foo'
+Failed to parse '
+'
+Failed to parse ''
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

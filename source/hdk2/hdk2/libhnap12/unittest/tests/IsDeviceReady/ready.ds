@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+
+  <!-- IsDeviceReady -->
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>IsDeviceReady</Name>
+    <Value>true</Value>
+  </State>
+</Simulator>

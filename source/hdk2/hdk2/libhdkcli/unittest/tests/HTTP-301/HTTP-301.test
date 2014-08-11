@@ -1,0 +1,7 @@
+#
+# HTTP-301.test
+#   Verify libhdkcli handles a HTTP 301 server response.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod
+platform-expected

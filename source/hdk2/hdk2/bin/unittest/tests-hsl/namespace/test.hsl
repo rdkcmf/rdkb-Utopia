@@ -1,0 +1,21 @@
+namespace "http://cisco.com/HNAPExt"
+
+enum Enum
+    "Value1"
+    "Value2"
+
+struct Struct
+    string a
+
+action Action
+
+namespace "http://cisco.com/HNAPExt/Other/"
+
+enum Enum
+    "Value1"
+    "Value2"
+
+struct Struct
+    string a
+
+action Action

@@ -1,0 +1,44 @@
+namespace "http://cisco.com/HNAPExt/"
+
+enum CiscoEnum
+    "Value1"
+    "Value2"
+
+struct CiscoStruct
+    int a
+    string b
+
+namespace "http://cisco.com/HNAPExt/Other/"
+
+namespace CiscoExt "http://cisco.com/HNAPExt/"
+
+struct CiscoOtherStruct
+    int a
+    string b
+    CiscoExt:CiscoStruct c
+    CiscoExt:CiscoEnum d
+
+action CiscoOtherAction
+    input
+        int a
+        string b
+        CiscoExt:CiscoStruct c
+        CiscoExt:CiscoEnum d
+    output
+        int a
+        string b
+        CiscoExt:CiscoStruct c
+        CiscoExt:CiscoEnum d
+
+# Members are defined in namespace of parent struct, types are looked-up
+# in the active namespace
+
+struct CiscoOtherStruct2
+    int a
+    string b
+namespace "http://cisco.com/HNAPExt/"
+    CiscoStruct c
+    CiscoEnum d
+
+struct CiscoStruct2
+    int a

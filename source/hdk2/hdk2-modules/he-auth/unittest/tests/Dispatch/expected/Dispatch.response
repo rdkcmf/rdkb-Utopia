@@ -1,0 +1,40 @@
+Calling Notify to: 
+	NORef: {2AC21B80-442F-11DF-9879-0800200C9A66,7E94DAC0-4729-11DF-9879-0800200C9B67}
+	ControlURL: http://192.168.1.103/HNAP1/
+
+Notify
+{
+	EventURI: http://cisco.com/he/registrar/Registered
+	Source: {2AC21B80-442F-11DF-9879-0800200C9A70,2AC21B80-442F-11DF-9879-0800200C9A71}
+	EventData: Hello, world!
+}
+Calling Notify to: 
+	NORef: {2AC21B80-442F-11DF-9879-0800200C9A64,7E94DAC0-4729-11DF-9879-0800200C9B66}
+	ControlURL: http://192.168.1.102/HNAP1/
+
+Notify
+{
+	EventURI: http://cisco.com/he/registrar/Registered
+	Source: {2AC21B80-442F-11DF-9879-0800200C9A70,2AC21B80-442F-11DF-9879-0800200C9A71}
+	EventData: Hello, world!
+}
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 237
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<DispatchResponse xmlns="http://cisco.com/he/event/">
+<DispatchResult>OK</DispatchResult>
+</DispatchResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 671 times
+malloc_interposer.c - exit: free called 671 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 87829
+malloc_interposer.c - exit: malloc max = 22803
+malloc_interposer.c - ************************************************************

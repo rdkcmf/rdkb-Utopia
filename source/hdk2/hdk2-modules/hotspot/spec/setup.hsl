@@ -1,0 +1,100 @@
+#
+# setup.hnap
+#
+# HNAP specifications for the efficient setup of the Cisco Home HotSpot.
+#
+
+namespace "http://cisco.com/HNAPExt/HotSpot/"
+
+
+#
+# Actions
+#
+
+#@ Set the admin password, wireless SSID and security for the purposes of router
+#@ setup.
+#@
+#@ Specifically:
+#@
+#@ 1. Set the admin password to the provided Key parameter.
+#@
+#@ 2. For each radio set the follwing settings:
+#@
+#@ <ul>
+#@ <li>Enabled = true</li>
+#@ <li>Mode = 802.11bgn</li>
+#@ <li>SSIDBroadcast = true</li>
+#@ <li>ChannelWidth = 20 for 2.4GHz radio, 0 for all other radios</li>
+#@ <li>Channel = 0</li>
+#@ <li>SecondaryChannel = 0</li>
+#@ <li>QoS = true</li>
+#@ <li>Security Enabled = true</li>
+#@ <li>Security Type = WPA-AUTO-PSK</li>
+#@ <li>Encryption = TKIPORAES</li>
+#@ <li>Key Renewal = 3600</li>
+#@ <li>Band = 2.4GHz (for selectable band devices)</li>
+#@ <li>SSID = Provided SSID parameter</li>
+#@ <li>WPA2 key = Provided Key parameter</li>
+#@ </ul>
+#@
+#@ 3. Set the guest network properties GuestEnabled, GuestSSID, GuestPassword,
+#@ and MaxGuestsAllowed.  See the SetGuestNetwork action for more details.
+action SetDefaultWireless
+
+    input
+
+        #@ The network SSID.
+        string SSID
+
+        #@ The WPA2 key.
+        string Key
+
+        #@ "true" if the guest network enabled.  "false" if the guest network
+        #@ disabled.
+        bool GuestEnabled
+
+        #@ The guest network SSID.  The guest SSID must not be the same as the
+        #@ private SSID.
+        string GuestSSID
+
+        #@ The guest network password.  A valid password must be of length 4-32
+        #@ characters and only contain letters and numbers ([A-Za-z0-9]).
+        string GuestPassword
+
+        #@ The maximum number of users allowed on the guest network
+        #@ simultaneously.  This value must be greater than 0.
+        int MaxGuestsAllowed
+
+    result
+
+        #@ Success and network connectivity will be interrupted.
+        "REBOOT"
+
+        #@ An invalid SSID or GuestSSID was provided.
+        "ERROR_INVALID_SSID"
+
+        #@ An invalid Key was provided.
+        "ERROR_ILLEGAL_KEY_VALUE"
+
+        #@ An invalid GuestPassword was provided.
+        "ERROR_INVALID_PASSWORD"
+
+        #@ An invalid MaxGuestsAllowed was provided.
+        "ERROR_INVALID_MAXGUESTSALLOWED"
+
+
+#@ Add a device to the to the web GUI authentication exemption list.  Devices in
+#@ the exemption list are not prompted for web GUI authentication for the
+#@ duration of their exemption.  At least 5 devices can have exemptions
+#@ concurrently.  The authentication exemption only applies to the web GUI and
+#@ not other HTTP/HTTPS interfaces (e.g. HNAP).
+action AddWebGUIAuthExemption
+
+    input
+
+        #@ The MAC address of the device to exempt from web GUI authentication.
+        MACAddress MACAddress
+
+        #@ The amount of time in minutes (from now) to exempt the device from
+        #@ web GUI authentication.  This value must be in the rage of 1 and 1440.
+        int Duration

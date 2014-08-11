@@ -1,0 +1,252 @@
+Actions:
+
+  http://cisco.com/HNAPExt/Action
+
+    namespace: http://cisco.com/HNAPExt
+    name: Action
+    resultMember: http://cisco.com/HNAPExt/ActionResult
+    inputMember:
+
+      http://cisco.com/HNAPExt/Action
+
+        name: Action
+        namespace: http://cisco.com/HNAPExt
+        type: http://cisco.com/HNAPExt/Action
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/Action
+
+        namespace: http://cisco.com/HNAPExt
+        name: Action
+        schemaName: Action
+        parserOrder: 2
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/ActionResponse
+
+        name: ActionResponse
+        namespace: http://cisco.com/HNAPExt
+        type: http://cisco.com/HNAPExt/ActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/ActionResponse
+
+        namespace: http://cisco.com/HNAPExt
+        name: ActionResponse
+        schemaName: ActionResponse
+        parserOrder: 2
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/ActionResult
+
+            name: ActionResult
+            namespace: http://cisco.com/HNAPExt
+            type: http://cisco.com/HNAPExt/ActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+  http://cisco.com/HNAPExt/Other/Action
+
+    namespace: http://cisco.com/HNAPExt/Other/
+    name: Action
+    resultMember: http://cisco.com/HNAPExt/Other/ActionResult
+    inputMember:
+
+      http://cisco.com/HNAPExt/Other/Action
+
+        name: Action
+        namespace: http://cisco.com/HNAPExt/Other/
+        type: http://cisco.com/HNAPExt/Other/Action
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/Other/Action
+
+        namespace: http://cisco.com/HNAPExt/Other/
+        name: Action
+        schemaName: Action
+        parserOrder: 5
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/Other/ActionResponse
+
+        name: ActionResponse
+        namespace: http://cisco.com/HNAPExt/Other/
+        type: http://cisco.com/HNAPExt/Other/ActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/Other/ActionResponse
+
+        namespace: http://cisco.com/HNAPExt/Other/
+        name: ActionResponse
+        schemaName: ActionResponse
+        parserOrder: 5
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/Other/ActionResult
+
+            name: ActionResult
+            namespace: http://cisco.com/HNAPExt/Other/
+            type: http://cisco.com/HNAPExt/Other/ActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+Types:
+
+  http://cisco.com/HNAPExt/ActionResult (all_types)
+
+    namespace: http://cisco.com/HNAPExt
+    name: ActionResult
+    schemaName: ActionResult
+    parserOrder: 2
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/Enum
+
+    namespace: http://cisco.com/HNAPExt
+    name: Enum
+    schemaName: Enum
+    parserOrder: 0
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "Value1"
+      "Value2"
+
+  http://cisco.com/HNAPExt/Struct
+
+    namespace: http://cisco.com/HNAPExt
+    name: Struct
+    schemaName: Struct
+    parserOrder: 1
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/Other/ActionResult (all_types)
+
+    namespace: http://cisco.com/HNAPExt/Other/
+    name: ActionResult
+    schemaName: ActionResult
+    parserOrder: 5
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/Other/Enum
+
+    namespace: http://cisco.com/HNAPExt/Other/
+    name: Enum
+    schemaName: Enum
+    parserOrder: 3
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "Value1"
+      "Value2"
+
+  http://cisco.com/HNAPExt/Other/Struct
+
+    namespace: http://cisco.com/HNAPExt/Other/
+    name: Struct
+    schemaName: Struct
+    parserOrder: 4
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/Other/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt/Other/
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://www.w3.org/2001/XMLSchema/string (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: string
+    schemaName: string
+    parserOrder: -3
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False

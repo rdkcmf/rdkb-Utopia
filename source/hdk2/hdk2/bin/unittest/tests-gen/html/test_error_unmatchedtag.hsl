@@ -1,0 +1,7 @@
+#@@ h3 Section
+#@ Unmatched /p tag is allowed, since there's an implied p.</p>
+#@@ end
+
+#@@ h3 Section
+#@ Unmatched /li tag is not.</li>
+#@@ end

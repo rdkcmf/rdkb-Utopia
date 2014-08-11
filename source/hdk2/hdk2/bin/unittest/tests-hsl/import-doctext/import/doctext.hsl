@@ -1,0 +1,14 @@
+namespace "http://cisco.com/HNAPExt/"
+
+#@@ h1 Their section
+
+#@ Their section text
+
+#@@ h2 Their sub-section
+
+#@ Their sub-section text
+
+#@@ end
+
+#@ Their action
+action TheirAction

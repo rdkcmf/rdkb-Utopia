@@ -1,0 +1,40 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 811
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWanInfoResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWanInfoResult>OK</GetWanInfoResult>
+<SupportedTypes>
+<string>BigPond</string>
+<string>DHCP</string>
+<string>DHCPPPPoE</string>
+<string>DynamicL2TP</string>
+<string>DynamicPPTP</string>
+<string>Static</string>
+<string>StaticL2TP</string>
+<string>StaticPPPoE</string>
+<string>StaticPPTP</string>
+<string>BridgedOnly</string>
+<string>Static1483Bridged</string>
+<string>Dynamic1483Bridged</string>
+<string>Static1483Routed</string>
+<string>StaticPPPOA</string>
+<string>DynamicPPPOA</string>
+<string>StaticIPOA</string>
+</SupportedTypes>
+<AutoDetectType>DHCP</AutoDetectType>
+<Status>CONNECTED</Status>
+</GetWanInfoResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 615 times
+malloc_interposer.c - exit: free called 615 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34422
+malloc_interposer.c - exit: malloc max = 21726
+malloc_interposer.c - ************************************************************

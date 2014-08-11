@@ -1,0 +1,54 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 1048
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWirelessClientCapabilitiesResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWirelessClientCapabilitiesResult>OK</GetWirelessClientCapabilitiesResult>
+<SupportedNetworkType>
+<string>ADHOC</string>
+<string>INFRASTRUCTURE</string>
+</SupportedNetworkType>
+<SupportedSecurity>
+<SecurityInfo>
+<SecurityType>WEP-OPEN</SecurityType>
+<Encryptions>
+<string>WEP-64</string>
+<string>WEP-128</string>
+</Encryptions>
+</SecurityInfo>
+<SecurityInfo>
+<SecurityType>WEP</SecurityType>
+<Encryptions>
+<string>WEP-64</string>
+<string>WEP-128</string>
+</Encryptions>
+</SecurityInfo>
+<SecurityInfo>
+<SecurityType>WPA-AUTO-PSK</SecurityType>
+<Encryptions>
+<string>AES</string>
+<string>TKIP</string>
+</Encryptions>
+</SecurityInfo>
+<SecurityInfo>
+<SecurityType>WPA2-PSK</SecurityType>
+<Encryptions>
+<string>AES</string>
+<string>TKIPORAES</string>
+</Encryptions>
+</SecurityInfo>
+</SupportedSecurity>
+</GetWirelessClientCapabilitiesResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 974 times
+malloc_interposer.c - exit: free called 974 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 42109
+malloc_interposer.c - exit: malloc max = 28908
+malloc_interposer.c - ************************************************************

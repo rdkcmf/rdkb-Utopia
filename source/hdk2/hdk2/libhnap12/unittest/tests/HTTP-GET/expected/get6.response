@@ -1,0 +1,8 @@
+Request not handled.
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 125 times
+malloc_interposer.c - exit: free called 125 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10156
+malloc_interposer.c - exit: malloc max = 9804
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+source /etc/utopia/service.d/ulog_functions.sh
+
+#echo "[utopia] [dhcp server script] action: $1  MAC: $2  IP: $3  HOSTNAME: $4" > /dev/console
+ulog lan dhcpserver "action: $1  MAC: $2  IP: $3  HOSTNAME: $4 VendorClass: $DNSMASQ_VENDOR_CLASS"
+

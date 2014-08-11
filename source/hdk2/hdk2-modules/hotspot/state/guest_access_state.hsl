@@ -1,0 +1,77 @@
+import "guest_access.hsl"
+
+import "core_state.hsl"
+import "router_state.hsl"
+
+namespace "http://cisco.com/HNAPExt/HotSpot/"
+namespace hnap12 "http://purenetworks.com/HNAP1/"
+
+
+#
+# State definitions
+#
+
+#@ "true" if the guest network enabled; "false" otherwise.
+state bool GuestNetwork_Enabled
+
+#@ The guest network SSID.
+state string GuestNetwork_SSID
+
+#@ The guest network password.
+state string GuestNetwork_Password
+
+#@ The maximum number of users allowed on the guest network
+#@ simultaneously.
+state int GuestNetwork_MaxGuestsAllowed
+
+#@ The maximum number of guests the device allows.
+state int GuestNetwork_MaxGuestsDeviceAllows
+
+#@ "true" if the guest network can be active in the current device
+#@ configuration; "false" otherwise.  For example, if the 2.4GHz radio of
+#@ the device is disabled then the guest network cannot be active.
+state bool GuestNetwork_CanBeActive
+
+#@ The guest network's IP address.
+state IPAddress GuestNetwork_IPAddress
+
+#@ The guest network's IP subnet mask.
+state IPAddress GuestNetwork_SubnetMask
+
+#@ The start of the guest network's DHCP IP address range.
+state IPAddress GuestNetwork_IPAddressFirst
+
+#@ The end of the guest network's DHCP IP address range.
+state IPAddress GuestNetwork_IPAddressLast
+
+
+#
+# Actions states
+#
+
+action_state GetGuestNetwork
+    state
+        [get] GuestNetwork_Enabled
+        [get] GuestNetwork_SSID
+        [get] GuestNetwork_Password
+        [get] GuestNetwork_MaxGuestsAllowed
+        [get] hnap12:WLanRadioInfos
+        [get] hnap12:WLanEnabled
+        [get] hnap12:WLanSSID
+
+action_state SetGuestNetwork
+    state
+        [set] GuestNetwork_Enabled
+        [set] GuestNetwork_SSID
+        [set] GuestNetwork_Password
+        [set] GuestNetwork_MaxGuestsAllowed
+        [get] GuestNetwork_MaxGuestsDeviceAllows
+        [get] hnap12:WLanRadioInfos
+        [get] hnap12:WLanSSID
+
+action_state GetGuestNetworkLANSettings
+    state
+        [get] GuestNetwork_IPAddress
+        [get] GuestNetwork_SubnetMask
+        [get] GuestNetwork_IPAddressFirst
+        [get] GuestNetwork_IPAddressLast

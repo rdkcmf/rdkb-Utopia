@@ -1,0 +1,5 @@
+$read-headers
+HTTP/1.1 307 Temporary Redirect
+Connection: close
+Location: http://localhost:8080/Redirect
+

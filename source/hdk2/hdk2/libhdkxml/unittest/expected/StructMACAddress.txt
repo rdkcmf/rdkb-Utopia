@@ -1,0 +1,17 @@
+Get before set: 0 (expect 0)
+GetEx before set: 1.2.3.4.5.6 (expect 1.2.3.4.5.6)
+Set result: 1.2.3.4.5.6 (expect 1.2.3.4.5.6)
+Get after set: 1.2.3.4.5.6 (expect 1.2.3.4.5.6)
+GetEx after set: 1.2.3.4.5.6 (expect 1.2.3.4.5.6)
+2nd set result: 6.5.4.3.2.1 (expect 6.5.4.3.2.1)
+Get after 2nd set: 6.5.4.3.2.1 (expect 6.5.4.3.2.1)
+Append result: 9.7.5.3.1.0 (expect 9.7.5.3.1.0)
+Get after append: 6.5.4.3.2.1 (expect 6.5.4.3.2.1)
+Get next member: 9.7.5.3.1.0 (expect 9.7.5.3.1.0)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 2 times
+malloc_interposer.c - exit: free called 2 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 40
+malloc_interposer.c - exit: malloc max = 40
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,11 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct string
+    int a
+
+struct IPAddress
+    string b
+
+enum long
+    "value2"
+    "value1"

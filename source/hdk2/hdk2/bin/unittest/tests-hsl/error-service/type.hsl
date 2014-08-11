@@ -1,0 +1,39 @@
+namespace "http://cisco.com/HNAPExt/"
+
+service MyService
+    actions
+    MyServiceAction
+
+service MyService
+    actions
+        MyOtherServiceAction
+
+service MyUnindentedService
+# Unindented service object definitions
+actions
+    ServiceObjectAction
+
+service MyUnindentedServiceAction
+    actions
+UnindentedAction
+
+action ServiceAction
+
+service MyDuplicatedActionService
+    actions
+        ServiceAction
+        ServiceAction
+
+service MyDuplicatedActionService2
+    actions
+        ServiceAction
+    actions
+        ServiceAction
+
+service MyInvalidNamespaceService
+    actions
+        :BogusNamespaceAction
+
+service MyInvalidNamespaceService2
+    actions
+        UndefinedNamespaceAlias:SomeAction

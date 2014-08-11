@@ -1,0 +1,51 @@
+uuidDefaultConstructor: 00000000-0000-0000-0000-000000000000
+  IsZero(): true
+uuidDefaultConstructor == uuidZero
+
+uuidHdkConstructor: 00010203-0405-0607-0809-0a0b0c0d0e0f
+  IsZero(): false
+uuidHdkConstructor != uuidZero
+
+uuidHdkNullConstructor: 00000000-0000-0000-0000-000000000000
+  IsZero(): true
+uuidHdkNullConstructor == uuidZero
+
+uuidHdkRefConstructor: 00010203-0405-0607-0809-0a0b0c0d0e0f
+  IsZero(): false
+uuidHdkRefConstructor != uuidZero
+
+uuidCopyConstructor: 00010203-0405-0607-0809-0a0b0c0d0e0f
+  IsZero(): false
+uuidCopyConstructor != uuidZero
+uuidCopyConstructor == uuidHdkRefConstructor
+
+HDK::UUID::Zero(): 00000000-0000-0000-0000-000000000000
+  IsZero(): true
+
+FromString():
+  '00000000-0000-0000-0000-000000000000' --> valid (00000000-0000-0000-0000-000000000000)
+  '00000000-0000-0000-0000-00000000000' --> NOT valid
+  '01234567-89AB-CDEF-1234-0123456789AB' --> valid (01234567-89ab-cdef-1234-0123456789ab)
+  '01234567-89AB-CDEF-1234-G123456789AB' --> NOT valid
+  '0-0-7-2' --> NOT valid
+  '    01234567-89AB-1234-CDEF-0123456789AB' --> valid (01234567-89ab-1234-cdef-0123456789ab)
+  ' 	 
+01234567-89AB-3334-CDEF-0123456789AB 	 
+' --> valid (01234567-89ab-3334-cdef-0123456789ab)
+  'asfawdt iajsgl;ksjfklalsdfkasl;dfla;ldas' --> NOT valid
+  '      ' --> NOT valid
+  '  
+ 	 	' --> NOT valid
+  ' 	   6 
+ b' --> NOT valid
+  '0   1234567 - 89  AB -CDEF 
+ -0123456789AB' --> NOT valid
+  '- - - -' --> NOT valid
+  '(null)' --> NOT valid
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 10 times
+malloc_interposer.c - exit: free called 10 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 610
+malloc_interposer.c - exit: malloc max = 61
+malloc_interposer.c - ************************************************************

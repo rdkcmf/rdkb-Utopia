@@ -1,0 +1,7 @@
+namespace "http://cisco.com/HNAPExt/"
+
+import "import-noparse.hsl"
+
+action MyAction
+    output
+        MyEnum a

@@ -1,0 +1,28 @@
+import "device_list.hsl"
+
+namespace "http://cisco.com/HNAPExt/HotSpot/"
+
+
+#
+# State definitions
+#
+
+#@ The device information array.  The array must contain only one
+#@ structure per device (unique MAC address).  All newly connected
+#@ devices are added to the list.  Devices connected to the guest network
+#@ are only added to the list after they are added to the guest network
+#@ approval list.
+state DeviceInfo[] DeviceList_DeviceInfos
+
+
+#
+# Action States
+#
+
+action_state GetDeviceInfo
+    state 
+        [get] DeviceList_DeviceInfos
+
+action_state SetDeviceInfo
+    state 
+        [get,set] DeviceList_DeviceInfos

@@ -1,0 +1,20 @@
+# tests-gen/simple/hnap.gen
+
+namespace "http://cisco.com/HNAPExt/"
+
+action MyAction
+    input
+        int a
+    output
+        bool[] b
+
+event MyRealEvent
+    int[] stuff
+    bool someFlag
+
+service MyService
+    actions
+        MyAction
+    events
+        MyRealEvent
+        MyMissingEvent

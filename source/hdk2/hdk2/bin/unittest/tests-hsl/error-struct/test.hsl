@@ -1,0 +1,7 @@
+namespace "http://cisco.com/HNAPExt/"
+
+# Recursive structure definitions are not allowed!
+struct MyStruct
+    int a
+    MyStruct b
+    string c

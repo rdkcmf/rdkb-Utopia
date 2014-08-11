@@ -1,0 +1,30 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct MyStruct
+    IPAddress a
+    long b
+
+action MyAction
+    input
+        int a
+        string[] b
+        MyStruct c
+    output
+        MACAddress a
+
+#@ MyEvent blah blah...
+event MyEvent
+
+#@ MyEvent2 blah blah...
+event MyEvent2
+    int a               #@ Member a blah blah...
+    MyStruct b          #@ Member b blah blah...
+    blob c              #@ Member c blah blah...
+
+#@ My service...
+service MyService
+    actions
+        MyAction
+    events
+        MyEvent
+        MyEvent2

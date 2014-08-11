@@ -1,0 +1,126 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+import "wificlient.hsl"
+
+namespace "http://purenetworks.com/HNAP1/"
+
+#
+# State definitions
+#
+
+# WirelessClientCapabilities
+
+#@ An array of network modes supported by this device - either ADHOC or INFRASTRUCTURE.
+state WiFiClientNetworkType[]  WiFiClientSupportedNetworkType
+#@ Returns a list of security type/encryption combinations. This can be used by an HNAP client
+#@ to interrogate the security modes that are supported by a given device to determine legal
+#@ values to pass to the SetWirelessClientSettings method.
+state SecurityInfo[] WiFiClientSupportedSecurity
+
+# WirelessClientConnectionInfo
+
+#@ The wireless network name (SSID) to be used for this wireless device.
+state string         WiFiClientSSID
+#@ The frequency of the wireless radio in GHz. 2 for 2.4GHz or 5 for 5GHz.
+state int            WiFiClientFrequency
+#@ Specifies the 802.11 mode or band that the radio is configured for.
+state WiFiMode       WiFiClientMode
+#@ Width of channel being used. This corresponds to the 802.11n channel width standard.
+#@ 20 for 20 MHz channel, 40 for 40 MHz channel.
+state int            WiFiClientChannelWidth
+#@ Channel number the radio is currently set to.
+state int            WiFiClientChannel
+#@ The Received Signal Strength Indicator as a percentage of maximum possible strength.
+state int            WiFiClientSignalStrength
+#@ The Noise as a percentage of maximum possible strength.
+state int            WiFiClientNoise
+#@ The data rate (kbps) of the inbound link to this client.
+state int            WiFiClientLinkSpeedIn
+#@ The data rate (kbps) of the outbound link to this client.
+state int            WiFiClientLinkSpeedOut
+#@ Returns True if WMM is enabled on the device, otherwise False.
+state bool           WiFiClientWmmEnabled
+
+# WirelessClientSettings
+
+#@ NetworkType. ADHOC - the device communicates directly with other peers. INFRASCRUCTURE -
+#@ the device should communicate with an access point.
+state WiFiClientNetworkType WiFiClientNetworkType
+#@ Indicates whether or not security is enabled.
+state bool                  WiFiClientSecurityEnabled
+#@ The type of wireless security being used.
+state WiFiSecurity          WiFiClientSecurityType
+#@ The type of wireless encryption being used.
+state WiFiEncryption        WiFiClientEncryption
+#@ The wireless security key.
+state string                WiFiClientKey
+#@ The connection state of the wireless device.
+state bool                  WiFiClientConnected
+
+
+#
+# Action States
+#
+
+action_state GetWirelessClientCapabilities
+    state
+        [get] WiFiClientSupportedNetworkType
+        [get] WiFiClientSupportedSecurity
+
+action_state GetWirelessClientConnectionInfo
+    state
+        [get] WiFiClientSSID
+        [get] WiFiClientFrequency
+        [get] WiFiClientMode
+        [get] WiFiClientChannelWidth
+        [get] WiFiClientChannel
+        [get] WiFiClientSignalStrength
+        [get] WiFiClientNoise
+        [get] WiFiClientLinkSpeedIn
+        [get] WiFiClientLinkSpeedOut
+        [get] WiFiClientWmmEnabled
+
+action_state GetWirelessClientSettings
+    state
+        [get] WiFiClientSSID
+        [get] WiFiClientNetworkType
+        [get] WiFiClientSecurityEnabled
+        [get] WiFiClientSecurityType
+        [get] WiFiClientEncryption
+        [get] WiFiClientKey
+        [get] WiFiClientConnected
+
+action_state SetWirelessClientSettings
+    state
+        [set] WiFiClientSSID
+        [set] WiFiClientNetworkType
+        [set] WiFiClientSecurityEnabled
+        [set] WiFiClientSecurityType
+        [set] WiFiClientEncryption
+        [set] WiFiClientKey
+        [get] WiFiClientSupportedNetworkType
+        [get] WiFiClientSupportedSecurity

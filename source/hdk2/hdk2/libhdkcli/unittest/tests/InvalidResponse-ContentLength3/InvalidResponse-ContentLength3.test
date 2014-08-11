@@ -1,0 +1,10 @@
+#
+# InvalidResponse-ContentLength3.test
+#   Test the handling of a smaller (incorrect) actual Content-Length header value than expected.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod
+host: http://127.0.0.1:8080
+username: admin
+password: password
+timeout: 8

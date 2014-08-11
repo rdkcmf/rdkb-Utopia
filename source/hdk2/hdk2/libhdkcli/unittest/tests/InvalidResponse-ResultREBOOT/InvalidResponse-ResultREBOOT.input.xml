@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+
+<!--
+   Copyright [2014] [Cisco Systems, Inc.]
+
+   Licensed under the Apache License, Version 2.0 (the \"License\");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an \"AS IS\" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+    <ComplexUnittestMethod xmlns="http://cisco.com/Unittest/">
+        <StructInputArg>
+            <StringMember>P___ C______ (feat. P___ B_____)</StringMember>
+            <IntMember>0</IntMember>
+            <BoolMember>false</BoolMember>
+            <DateTimeMember>1985-05-27T00:00:01Z</DateTimeMember>
+            <IPAddressMember>127.0.0.1</IPAddressMember>
+            <MACAddressMember>04:08:15:16:23:42</MACAddressMember>
+            <EnumMember>EnumValue1</EnumMember>
+            <StringArrayMember>
+                <string>Better forget it ....</string>
+                <string>You&apos;ll never get it...</string>
+                <string>Oh she&apos;ll say there&apos;s no other...</string>
+                <string>.. until she finds another...</string>
+                <string>...</string>
+                <string>...</string>
+                <string>She&apos;s an easy lover</string>
+                <string>She&apos;ll get a hold on you believe it!</string>
+            </StringArrayMember>
+        </StructInputArg>
+        <StringInputArg>????</StringInputArg>
+        <BoolInputArg>true</BoolInputArg>
+    </ComplexUnittestMethod>
+</soap:Body>
+</soap:Envelope>

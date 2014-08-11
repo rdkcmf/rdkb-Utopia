@@ -1,0 +1,54 @@
+#!/bin/sh
+
+#------------------------------------------------------------------
+# Copyright (c) 2008 by Cisco Systems, Inc. All Rights Reserved.
+#
+# This work is subject to U.S. and international copyright laws and
+# treaties. No part of this work may be used, practiced, performed,
+# copied, distributed, revised, modified, translated, abridged, condensed,
+# expanded, collected, compiled, linked, recast, transformed or adapted
+# without the prior written consent of Cisco Systems, Inc. Any use or
+# exploitation of this work without authorization could subject the
+# perpetrator to criminal and civil liability.
+#------------------------------------------------------------------
+
+RESOLV_CONF=/etc/resolv.conf
+
+
+#-----------------------------------------------------------------
+# set the resolv.conf file
+#-----------------------------------------------------------------
+
+prepare_resolv_conf () {
+   WAN_DOMAIN=`syscfg get  wan_domain`
+   NAMESERVER1=`syscfg get nameserver1`
+   NAMESERVER2=`syscfg get nameserver2`
+   IPv6_NAMESERVERS=`cat /etc/resolv.conf  | grep nameserver | grep :`
+   
+   echo -n  > $RESOLV_CONF
+
+   WAN_DNS=
+   if [ "" != "$WAN_DOMAIN" ] ; then
+      echo "search $WAN_DOMAIN" >> $RESOLV_CONF
+   fi
+   if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
+      echo "nameserver $NAMESERVER1" >> $RESOLV_CONF
+      WAN_DNS=`echo $WAN_DNS $NAMESERVER1`
+   fi
+   if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
+      echo "nameserver $NAMESERVER2" >> $RESOLV_CONF
+      WAN_DNS=`echo $WAN_DNS $NAMESERVER2`
+   fi
+   if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
+      echo "nameserver $NAMESERVER3" >> $RESOLV_CONF
+      WAN_DNS=`echo $WAN_DNS $NAMESERVER3`
+   fi
+
+   sysevent set wan_dhcp_dns "${WAN_DNS}"
+   sysevent set dhcp_server-restart
+
+   echo $IPv6_NAMESERVERS >> $RESOLV_CONF
+}
+
+prepare_resolv_conf
+

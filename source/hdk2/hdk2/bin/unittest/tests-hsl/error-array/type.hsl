@@ -1,0 +1,19 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct MyStruct
+    int a
+
+struct MyStruct2
+    MyStruct[] a
+
+struct ArrayOfMyStruct
+    int a
+
+struct ArrayOfMyStruct3
+    int a
+
+struct MyStruct3
+    int a
+
+struct MyStruct4
+    MyStruct3[] a

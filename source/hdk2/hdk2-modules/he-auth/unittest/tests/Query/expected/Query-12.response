@@ -1,0 +1,29 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 509
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<QueryResponse xmlns="http://cisco.com/he/registrar/">
+<QueryResult>OK</QueryResult>
+<QueryResults>
+<QueryMatch>
+<NetworkObjectRef>
+<DeviceID>2AC21B80-442F-11DF-9879-0800200C9A66</DeviceID>
+<NetworkObjectID>7E94DAC0-4729-11DF-9879-0800200C9B67</NetworkObjectID>
+</NetworkObjectRef>
+<ControlURL>http://192.168.1.103/HNAP1/</ControlURL>
+</QueryMatch>
+</QueryResults>
+</QueryResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 339 times
+malloc_interposer.c - exit: free called 339 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 55241
+malloc_interposer.c - exit: malloc max = 20893
+malloc_interposer.c - ************************************************************

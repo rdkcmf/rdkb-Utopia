@@ -1,0 +1,10 @@
+The syseventd will listen for client connections on all INADDR_ANY by default, but this
+may be changed at compile time by changing syseventd_main.c::LISTEN_IP_ADDR.
+
+It will listen on port 18667 by default, but this can be changed at compile time
+by changing lib/sysevent.h:SE_SERVER_WELL_KNOWN_PORT, or at runtime by 
+specifying --port on the command line.
+
+The syseventd could reinitialze by sending syseventd the signal
+SIGUSR1 except that syseventd doesn't do anything. Feel free to 
+think up something useful you could do with a signal handler

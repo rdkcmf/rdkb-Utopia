@@ -1,0 +1,50 @@
+namespace "http://cisco.com/HNAP/"
+
+#
+# Auto-array type can't redefine a user type
+#
+
+enum Enum1
+    "1"
+
+enum ArrayOfEnum1
+    "1"
+
+struct Struct1
+    Enum1[] Member                      # Redefinition of ArrayOfEnum1
+
+
+#
+# Auto-array type can't redefine an action result enum type
+#
+
+action ArrayOfAction2
+
+enum Action2Result
+    "2"
+
+struct Struct2
+    Action2Result[] Member              # Redefinition of ArrayOfAction2Result
+
+
+#
+# Action result enum type can't redefine a user type
+#
+
+struct Action3Result
+    int Member
+
+action Action3                          # Redefinition of Action3Result
+
+
+#
+# Action result enum type can't redefine an auto-array type
+#
+
+enum Action4Result
+    "4"
+
+struct Struct4
+    Action4Result[] Member
+
+action ArrayOfAction4                   # Redefinition of ArrayOfAction4Result

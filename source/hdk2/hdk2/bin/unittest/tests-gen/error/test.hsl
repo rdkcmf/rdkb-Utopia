@@ -1,0 +1,19 @@
+namespace "http://cisco.com/HNAPExt"
+
+struct MyStruct
+    int a
+    int b
+
+action MyAction
+    input
+        int a
+        string b
+    output
+        int c
+        int[] d
+        MyStruct e
+        MyStruct[] f
+        [error] int g
+        [error] int[] h
+        [error] MyStruct i
+        [error] MyStruct[] j

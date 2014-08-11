@@ -1,0 +1,32 @@
+macaddressArrayRead (size: 3, empty: false)
+[
+"00:11:22:33:44:55",
+"67:89:1A:BC:DE:F0",
+"00:01:E4:B6:77:01"
+]
+macaddressArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<MACAddress xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</MACAddress>
+macaddressArrayWrite (size: 3, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<MACAddress xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<MACAddress>33:54:FE:A2:57:00</MACAddress>
+<MACAddress>10:21:32:43:54:65</MACAddress>
+<MACAddress>00:00:0C:90:E2:33</MACAddress>
+</MACAddress>
+macaddressArrayCopy (size: 4, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<MACAddress xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<MACAddress>33:54:FE:A2:57:00</MACAddress>
+<MACAddress>10:21:32:43:54:65</MACAddress>
+<MACAddress>00:00:0C:90:E2:33</MACAddress>
+<MACAddress>33:54:FE:A2:57:00</MACAddress>
+</MACAddress>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 48 times
+malloc_interposer.c - exit: free called 48 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10148
+malloc_interposer.c - exit: malloc max = 9686
+malloc_interposer.c - ************************************************************

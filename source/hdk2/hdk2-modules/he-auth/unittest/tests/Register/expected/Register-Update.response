@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 241
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<RegisterResponse xmlns="http://cisco.com/he/registrar/">
+<RegisterResult>OK</RegisterResult>
+</RegisterResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 473 times
+malloc_interposer.c - exit: free called 473 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 55674
+malloc_interposer.c - exit: malloc max = 17089
+malloc_interposer.c - ************************************************************

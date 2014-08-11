@@ -1,0 +1,10 @@
+
+Handled = 0
+Error = 0
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 0 times
+malloc_interposer.c - exit: free called 0 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 0
+malloc_interposer.c - exit: malloc max = 0
+malloc_interposer.c - ************************************************************

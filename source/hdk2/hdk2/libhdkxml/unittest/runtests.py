@@ -1,0 +1,120 @@
+#!/usr/bin/python
+
+###########################################################################
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+###########################################################################
+
+import optparse
+import os
+import sys
+import unittest
+import platform
+
+# Import HDK modules
+sys.path.append(os.path.join(os.path.dirname(sys.argv[0]), "..", "..", "bin", "lib"))
+from hdk.testutil import BuildSuite, UnittestSuite
+
+
+#
+# Main
+#
+def main():
+
+    # Command line options
+    cmdParser = optparse.OptionParser()
+    cmdParser.add_option("-r", action = "store_true", dest = "bNoClean",
+                         help = "No clean build")
+    cmdParser.add_option("-m", action = "store_true", dest = "bCheckMallocStats",
+                         help = "Check malloc statistics")
+    cmdParser.add_option("-t", action = "append", dest = "testsIncluded",
+                         help = "Run specified tests", metavar = "test")
+    cmdParser.add_option("-u", action = "store_true", dest = "bUpdateExpected",
+                         help = "Update expected output")
+    cmdParser.add_option("--debug", action = "store_true", dest = "bDebug",
+                         help = "Build debug binaries")
+    (cmdOptions, cmdArgs) = cmdParser.parse_args()
+
+    # The unittest directory
+    unittestDir = os.path.dirname(sys.argv[0])
+    if not unittestDir:
+        unittestDir = '.'
+
+    # Create the test runner
+    runner = unittest.TextTestRunner(verbosity = 2)
+
+    bWindowsPlatform = (platform.system() == 'Windows')
+    bDarwinPlatform = (platform.system() == 'Darwin')
+
+    # Build test suite
+    buildDirs = []
+    for buildDir, bSupported in  ((os.path.join("build", "libhdkxml-expat"), True),
+                                  (os.path.join("build", "libhdkxml-libxml2"), not bWindowsPlatform),
+                                  (os.path.join("build", "libhdkxml-expat-c++"), True),
+                                  (os.path.join("build", "libhdkxml-libxml2-c++"), not bWindowsPlatform),
+                                  (os.path.join("build", "libhdkxml-expat-nologging"), True)):
+        if bSupported:
+            buildDirs.append(buildDir)
+
+    # Build target (platform dependant)
+    if bWindowsPlatform:
+        buildTarget = "libhdkxml.dll"
+    elif bDarwinPlatform:
+        buildTarget = "libhdkxml.dylib"
+    else:
+        buildTarget = "libhdkxml.so"
+
+    buildSuite = BuildSuite(unittestDir, buildDirs, buildTarget,
+                            not cmdOptions.bNoClean, cmdOptions.bDebug, cmdOptions.bUpdateExpected)
+    if not runner.run(buildSuite).wasSuccessful():
+        return 1
+
+    # C unit test suite
+    unittestSuite = UnittestSuite()
+    for buildDir, bSupported in ((os.path.join("build", "unittest-expat"), True),
+                                 (os.path.join("build", "unittest-libxml2"), not bWindowsPlatform),
+                                 (os.path.join("build", "unittest-expat-c++"), True),
+                                 (os.path.join("build", "unittest-libxml2-c++"), not bWindowsPlatform)):
+
+        if bSupported:
+            unittestSuite.addTest(unittestDir, buildDir, "unittest",
+                                  cmdOptions.bCheckMallocStats, cmdOptions.bUpdateExpected)
+
+        # Only update expected results with gold (first build dir)
+        if cmdOptions.bUpdateExpected:
+            break
+
+    if not runner.run(unittestSuite).wasSuccessful():
+        return 1
+
+    # Success
+    return 0
+
+
+######################################################################
+
+if __name__ == "__main__":
+    sys.exit(main())

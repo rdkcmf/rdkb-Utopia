@@ -1,0 +1,4 @@
+_HDK_CLI_Cleanup
+_HDK_CLI_Init
+_HDK_CLI_RegisterLoggingCallback
+_HDK_CLI_Request

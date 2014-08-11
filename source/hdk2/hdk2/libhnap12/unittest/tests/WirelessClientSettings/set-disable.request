@@ -1,0 +1,17 @@
+SOAPAction: "http://purenetworks.com/HNAP1/SetWirelessClientSettings"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <SetWirelessClientSettings xmlns="http://purenetworks.com/HNAP1/">
+      <SSID>My Home Network</SSID> 
+      <NetworkType>ADHOC</NetworkType>
+      <SecurityEnabled>false</SecurityEnabled>
+      <SecurityType></SecurityType>
+      <Encryption></Encryption>
+      <Key></Key> 
+    </SetWirelessClientSettings>
+  </soap:Body>
+</soap:Envelope>

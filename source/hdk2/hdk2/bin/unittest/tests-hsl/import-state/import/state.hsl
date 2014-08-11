@@ -1,0 +1,5 @@
+namespace "http://cisco.com/HNAPExt/"
+
+import "type.hsl"
+
+state MyStruct MyState

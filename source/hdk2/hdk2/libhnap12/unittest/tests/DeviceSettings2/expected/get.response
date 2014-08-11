@@ -1,0 +1,37 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 698
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetDeviceSettings2Response xmlns="http://purenetworks.com/HNAP1/">
+<GetDeviceSettings2Result>OK</GetDeviceSettings2Result>
+<SerialNumber>LKK23LS3HSL9</SerialNumber>
+<TimeZone>UTC-8:00</TimeZone>
+<AutoAdjustDST>true</AutoAdjustDST>
+<Locale>en-us</Locale>
+<SupportedLocales>
+<string>en-us</string>
+<string>de-de</string>
+<string>da-dk</string>
+<string>sv-se</string>
+<string>es-es</string>
+<string>it-it</string>
+<string>fr-fr</string>
+<string>nl-nl</string>
+<string>pt-pt</string>
+<string>fr-ca</string>
+</SupportedLocales>
+<SSL>false</SSL>
+</GetDeviceSettings2Response>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 639 times
+malloc_interposer.c - exit: free called 639 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34690
+malloc_interposer.c - exit: malloc max = 21726
+malloc_interposer.c - ************************************************************

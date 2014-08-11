@@ -1,0 +1,3 @@
+result = 0
+Generating "./actual_methods.c" ...
+

@@ -1,0 +1,50 @@
++++++++ Request Headers +++++++
+HTTP/1.1 GET /HNAP1
+Connection: Close
+Authorization: Basic Og==
+SOAPAction: "http://cisco.com/Unittest/HttpGetMethod"
+Host: 127.0.0.1:8080
+
+
+------- Response -------
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+    <HttpGetMethodResponse xmlns="http://cisco.com/Unittest/">
+        <HttpGetMethodResult>OK</HttpGetMethodResult>
+        <IntOutputArg0>-1000</IntOutputArg0>
+    </HttpGetMethodResponse>
+</soap:Body>
+</soap:Envelope>
+
+
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/HttpGetMethod
+        HTTP host: http://127.0.0.1:8080
+Network Object ID: (null)
+    HTTP username: (null)
+    HTTP password: (null)
+          timeout: 0
+       HNAP input: (null)
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<HttpGetMethodResponse xmlns="http://cisco.com/Unittest/">
+<HttpGetMethodResult>OK</HttpGetMethodResult>
+<IntOutputArg0>-1000</IntOutputArg0>
+</HttpGetMethodResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 29 times
+malloc_interposer.c - exit: free called 29 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 6983
+malloc_interposer.c - exit: malloc max = 6901
+malloc_interposer.c - ************************************************************

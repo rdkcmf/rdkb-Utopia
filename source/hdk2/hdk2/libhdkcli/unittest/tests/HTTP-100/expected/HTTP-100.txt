@@ -1,0 +1,116 @@
++++++++ Request Headers +++++++
+HTTP/1.1 POST /HNAP1
+Connection: Close
+Content-Type: text/xml; charset="utf-8"
+Content-Length: 1678
+Authorization: Basic Og==
+SOAPAction: "http://cisco.com/Unittest/SimpleUnittestMethod"
+Host: localhost:8080
+Expect: 100-continue
+
+
+------- Response -------
+HTTP/1.1 100 Continue
+
++++++++ Request Data +++++++
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SimpleUnittestMethod xmlns="http://cisco.com/Unittest/">
+<StringArg0>
+          This is going to be a really long string.  It is really long so the HTTP clients with include the Expect: 100-Continue header
+          in their POST HTTP request.  If the POST data is not large enough clients, such as libCURL, will simply include all the POST
+          data in the request.
+          1
+          22
+          333
+          4444
+          55555
+          666666
+          7777777
+          8888888
+          99999999
+
+
+
+                  |  ,
+              `   | ,
+                ` |,
+             ~~~~ * ~~~~
+                , | `
+               ,  |   `
+                  |     `
+
+
+
+                       ^
+                      / \`
+                     /   \,`
+                    /     \,,`
+                   /       \,,,`
+                  /         \,,,,`
+                 /           \,,,,,`
+                /             \,,,,,,`
+               /               \,,,,,,,`
+              /                 \,,,,,,,,`....
+             /                   \,,,,,,,..........
+            /                     \,,,,,..............
+           /                       \,,,............
+          /                         \,..........
+         /                           \.......
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            +-+
+           /   \
+          /     \
+          \     /
+           \   /
+            \ /
+             &apos;
+        </StringArg0>
+<BoolArg0>true</BoolArg0>
+<IntArg0>-1000</IntArg0>
+</SimpleUnittestMethod>
+</Body>
+</Envelope>
+
+
+------- Response -------
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 321
+
+<?xml version="1.0" encoding="utf-8" ?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+  <SimpleUnittestMethodResponse xmlns="http://cisco.com/Unittest/">
+      <SimpleUnittestMethodResult>OK</SimpleUnittestMethodResult>
+  </SimpleUnittestMethodResponse>
+</soap:Body>
+</soap:Envelope>
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/SimpleUnittestMethod
+        HTTP host: http://localhost:8080
+Network Object ID: (null)
+    HTTP username: (null)
+    HTTP password: (null)
+          timeout: 0
+       HNAP input: HTTP-100.input.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SimpleUnittestMethodResponse xmlns="http://cisco.com/Unittest/">
+<SimpleUnittestMethodResult>OK</SimpleUnittestMethodResult>
+</SimpleUnittestMethodResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 78 times
+malloc_interposer.c - exit: free called 78 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 26031
+malloc_interposer.c - exit: malloc max = 14695
+malloc_interposer.c - ************************************************************

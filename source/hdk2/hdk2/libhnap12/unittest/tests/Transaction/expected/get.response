@@ -1,0 +1,64 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 2013
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<TransactionResponse xmlns="http://cisco.com/HNAP/">
+<TransactionResult>OK</TransactionResult>
+<Responses>
+<TransactionResponse>
+<Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+<Response>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;Envelope xmlns=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+&lt;Body&gt;
+&lt;GetWLanRadioSettingsResponse xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+&lt;GetWLanRadioSettingsResult&gt;OK&lt;/GetWLanRadioSettingsResult&gt;
+&lt;Enabled&gt;true&lt;/Enabled&gt;
+&lt;Mode&gt;802.11g&lt;/Mode&gt;
+&lt;MacAddress&gt;FF:FF:FF:FF:FF:FF&lt;/MacAddress&gt;
+&lt;SSID&gt;SSID&lt;/SSID&gt;
+&lt;SSIDBroadcast&gt;true&lt;/SSIDBroadcast&gt;
+&lt;ChannelWidth&gt;40&lt;/ChannelWidth&gt;
+&lt;Channel&gt;3&lt;/Channel&gt;
+&lt;SecondaryChannel&gt;5&lt;/SecondaryChannel&gt;
+&lt;QoS&gt;true&lt;/QoS&gt;
+&lt;/GetWLanRadioSettingsResponse&gt;
+&lt;/Body&gt;
+&lt;/Envelope&gt;
+</Response>
+</TransactionResponse>
+<TransactionResponse>
+<Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+<Response>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;Envelope xmlns=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+&lt;Body&gt;
+&lt;GetWLanRadioSettingsResponse xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+&lt;GetWLanRadioSettingsResult&gt;OK&lt;/GetWLanRadioSettingsResult&gt;
+&lt;Enabled&gt;false&lt;/Enabled&gt;
+&lt;Mode&gt;&lt;/Mode&gt;
+&lt;MacAddress&gt;EE:EE:EE:EE:EE:EE&lt;/MacAddress&gt;
+&lt;SSID&gt;&lt;/SSID&gt;
+&lt;SSIDBroadcast&gt;false&lt;/SSIDBroadcast&gt;
+&lt;ChannelWidth&gt;0&lt;/ChannelWidth&gt;
+&lt;Channel&gt;0&lt;/Channel&gt;
+&lt;SecondaryChannel&gt;0&lt;/SecondaryChannel&gt;
+&lt;QoS&gt;false&lt;/QoS&gt;
+&lt;/GetWLanRadioSettingsResponse&gt;
+&lt;/Body&gt;
+&lt;/Envelope&gt;
+</Response>
+</TransactionResponse>
+</Responses>
+</TransactionResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 2937 times
+malloc_interposer.c - exit: free called 2937 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 268381
+malloc_interposer.c - exit: malloc max = 34808
+malloc_interposer.c - ************************************************************

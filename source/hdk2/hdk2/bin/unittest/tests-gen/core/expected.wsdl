@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions
+    xmlns:s="http://www.w3.org/2001/XMLSchema"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:t1="http://cisco.com/HNAP/Sub/"
+    xmlns:t2="http://cisco.com/HNAPExt/"
+    xmlns:t3="http://cisco.com/HNAPExt/Sub/"
+    xmlns:t4="http://purenetworks.com/HNAP/"
+    xmlns:t5="http://purenetworks.com/HNAP/Sub/"
+    xmlns:t6="http://purenetworks.com/HNAP1/"
+    xmlns:t7="http://purenetworks.com/HNAP1/Sub/"
+    xmlns:t8="http://purenetworks.com/HNAPExt/"
+    xmlns:t9="http://purenetworks.com/HNAPExt/Sub/"
+    xmlns:tns="http://cisco.com/HNAP/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    targetNamespace="http://cisco.com/HNAP/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cisco.com/HNAP/">
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="Action">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="Member" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionResult" type="tns:ActionResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cisco.com/HNAP/Sub/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionSubResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionSub">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberSub" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionSubResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionSubResult" type="t1:ActionSubResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cisco.com/HNAPExt/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionExtResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionExt">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberExt" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionExtResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionExtResult" type="t2:ActionExtResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cisco.com/HNAPExt/Sub/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionExtSubResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionExtSub">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberExtSub" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionExtSubResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionExtSubResult" type="t3:ActionExtSubResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://purenetworks.com/HNAP/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionLegacy2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionLegacy2">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberLegacy2" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionLegacy2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionLegacy2Result" type="t4:ActionLegacy2Result" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://purenetworks.com/HNAP/Sub/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionLegacy2SubResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionLegacy2Sub">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberLegacy2Sub" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionLegacy2SubResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionLegacy2SubResult" type="t5:ActionLegacy2SubResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://purenetworks.com/HNAP1/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionLegacyResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionLegacy">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberLegacy" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionLegacyResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionLegacyResult" type="t6:ActionLegacyResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://purenetworks.com/HNAP1/Sub/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionSubLegacyResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionSubLegacy">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberLegacySub" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionSubLegacyResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionSubLegacyResult" type="t7:ActionSubLegacyResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://purenetworks.com/HNAPExt/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/Sub/" />
+      <s:simpleType name="ActionLegacyExtResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionLegacyExt">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberLegacyExt" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionLegacyExtResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionLegacyExtResult" type="t8:ActionLegacyExtResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://purenetworks.com/HNAPExt/Sub/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:import namespace="http://cisco.com/HNAP/Sub/" />
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:import namespace="http://cisco.com/HNAPExt/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP/" />
+      <s:import namespace="http://purenetworks.com/HNAP/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:import namespace="http://purenetworks.com/HNAP1/Sub/" />
+      <s:import namespace="http://purenetworks.com/HNAPExt/" />
+      <s:simpleType name="ActionLegacyExtSubResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ActionLegacyExtSub">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="MemberLegacyExtSub" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ActionLegacyExtSubResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ActionLegacyExtSubResult" type="t9:ActionLegacyExtSubResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="Action">
+    <wsdl:part name="Action" element="tns:Action" />
+  </wsdl:message>
+  <wsdl:message name="ActionResponse">
+    <wsdl:part name="ActionResponse" element="tns:ActionResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionSub">
+    <wsdl:part name="ActionSub" element="t1:ActionSub" />
+  </wsdl:message>
+  <wsdl:message name="ActionSubResponse">
+    <wsdl:part name="ActionSubResponse" element="t1:ActionSubResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionExt">
+    <wsdl:part name="ActionExt" element="t2:ActionExt" />
+  </wsdl:message>
+  <wsdl:message name="ActionExtResponse">
+    <wsdl:part name="ActionExtResponse" element="t2:ActionExtResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionExtSub">
+    <wsdl:part name="ActionExtSub" element="t3:ActionExtSub" />
+  </wsdl:message>
+  <wsdl:message name="ActionExtSubResponse">
+    <wsdl:part name="ActionExtSubResponse" element="t3:ActionExtSubResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacy2">
+    <wsdl:part name="ActionLegacy2" element="t4:ActionLegacy2" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacy2Response">
+    <wsdl:part name="ActionLegacy2Response" element="t4:ActionLegacy2Response" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacy2Sub">
+    <wsdl:part name="ActionLegacy2Sub" element="t5:ActionLegacy2Sub" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacy2SubResponse">
+    <wsdl:part name="ActionLegacy2SubResponse" element="t5:ActionLegacy2SubResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacy">
+    <wsdl:part name="ActionLegacy" element="t6:ActionLegacy" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacyResponse">
+    <wsdl:part name="ActionLegacyResponse" element="t6:ActionLegacyResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionSubLegacy">
+    <wsdl:part name="ActionSubLegacy" element="t7:ActionSubLegacy" />
+  </wsdl:message>
+  <wsdl:message name="ActionSubLegacyResponse">
+    <wsdl:part name="ActionSubLegacyResponse" element="t7:ActionSubLegacyResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacyExt">
+    <wsdl:part name="ActionLegacyExt" element="t8:ActionLegacyExt" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacyExtResponse">
+    <wsdl:part name="ActionLegacyExtResponse" element="t8:ActionLegacyExtResponse" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacyExtSub">
+    <wsdl:part name="ActionLegacyExtSub" element="t9:ActionLegacyExtSub" />
+  </wsdl:message>
+  <wsdl:message name="ActionLegacyExtSubResponse">
+    <wsdl:part name="ActionLegacyExtSubResponse" element="t9:ActionLegacyExtSubResponse" />
+  </wsdl:message>
+  <wsdl:portType name="HNAP">
+    <wsdl:operation name="Action">
+      <wsdl:input message="tns:Action" />
+      <wsdl:output message="tns:ActionResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionSub">
+      <wsdl:input message="tns:ActionSub" />
+      <wsdl:output message="tns:ActionSubResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionExt">
+      <wsdl:input message="tns:ActionExt" />
+      <wsdl:output message="tns:ActionExtResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionExtSub">
+      <wsdl:input message="tns:ActionExtSub" />
+      <wsdl:output message="tns:ActionExtSubResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacy2">
+      <wsdl:input message="tns:ActionLegacy2" />
+      <wsdl:output message="tns:ActionLegacy2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacy2Sub">
+      <wsdl:input message="tns:ActionLegacy2Sub" />
+      <wsdl:output message="tns:ActionLegacy2SubResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacy">
+      <wsdl:input message="tns:ActionLegacy" />
+      <wsdl:output message="tns:ActionLegacyResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionSubLegacy">
+      <wsdl:input message="tns:ActionSubLegacy" />
+      <wsdl:output message="tns:ActionSubLegacyResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacyExt">
+      <wsdl:input message="tns:ActionLegacyExt" />
+      <wsdl:output message="tns:ActionLegacyExtResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacyExtSub">
+      <wsdl:input message="tns:ActionLegacyExtSub" />
+      <wsdl:output message="tns:ActionLegacyExtSubResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="HNAP" type="tns:HNAP">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="Action">
+      <soap:operation soapAction="http://cisco.com/HNAP/Action" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionSub">
+      <soap:operation soapAction="http://cisco.com/HNAP/Sub/ActionSub" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionExt">
+      <soap:operation soapAction="http://cisco.com/HNAPExt/ActionExt" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionExtSub">
+      <soap:operation soapAction="http://cisco.com/HNAPExt/Sub/ActionExtSub" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacy2">
+      <soap:operation soapAction="http://purenetworks.com/HNAP/ActionLegacy2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacy2Sub">
+      <soap:operation soapAction="http://purenetworks.com/HNAP/Sub/ActionLegacy2Sub" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacy">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/ActionLegacy" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionSubLegacy">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/Sub/ActionSubLegacy" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacyExt">
+      <soap:operation soapAction="http://purenetworks.com/HNAPExt/ActionLegacyExt" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ActionLegacyExtSub">
+      <soap:operation soapAction="http://purenetworks.com/HNAPExt/Sub/ActionLegacyExtSub" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="HNAP">
+    <wsdl:port name="HNAP" binding="tns:HNAP">
+      <soap:address location="" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

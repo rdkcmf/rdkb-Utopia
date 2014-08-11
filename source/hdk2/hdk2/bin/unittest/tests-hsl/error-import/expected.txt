@@ -1,0 +1,39 @@
+
+Types:
+
+  http://cisco.com/HNAPExt/MyStruct
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyStruct
+    schemaName: MyStruct
+    parserOrder: 0
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://www.w3.org/2001/XMLSchema/int (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: int
+    schemaName: int
+    parserOrder: -2
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+Errors:
+
+  error-import/test.hsl:3: import 'badimport.hsl' not found

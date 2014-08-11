@@ -1,0 +1,17 @@
+$read-headers
+HTTP/1.1 100 Continue
+
+$read-data: 1678
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 321
+
+<?xml version="1.0" encoding="utf-8" ?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+  <SimpleUnittestMethodResponse xmlns="http://cisco.com/Unittest/">
+      <SimpleUnittestMethodResult>OK</SimpleUnittestMethodResult>
+  </SimpleUnittestMethodResponse>
+</soap:Body>
+</soap:Envelope>

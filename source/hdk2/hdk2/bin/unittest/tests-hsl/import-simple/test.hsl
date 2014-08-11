@@ -1,0 +1,8 @@
+namespace "http://cisco.com/HNAPExt/"
+namespace other "http://cisco.com/HNAPExt/Other/"
+
+import "import-noparse.hsl"
+
+action MyAction
+    output
+        other:MyEnum b

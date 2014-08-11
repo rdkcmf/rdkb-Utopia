@@ -1,0 +1,10 @@
+SOAPAction: "http://cisco.com/HNAPExt/HND/ActivateTMSSS"
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <ActivateTMSSS xmlns="http://cisco.com/HNAPExt/HND/">
+      <Locale>en_us</Locale>
+    </ActivateTMSSS>
+  </Body>
+</Envelope>

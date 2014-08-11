@@ -1,0 +1,9 @@
+#
+# HTTP-404.test
+#    Verify libhdkcli can handle a HTTP 404 response.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod
+username: admin
+password: password
+timeout: 10

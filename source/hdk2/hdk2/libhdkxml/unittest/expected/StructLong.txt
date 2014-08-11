@@ -1,0 +1,17 @@
+Get before set: 0 (expect 0)
+GetEx before set: 39 (expect 39)
+Set result: 39 (expect 39)
+Get after set: 39 (expect 39)
+GetEx after set: 39 (expect 39)
+2nd set result: 40 (expect 40)
+Get after 2nd set: 40 (expect 40)
+Append result: 41 (expect 41)
+Get after append: 40 (expect 40)
+Get next member: 41 (expect 41)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 2 times
+malloc_interposer.c - exit: free called 2 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 40
+malloc_interposer.c - exit: malloc max = 40
+malloc_interposer.c - ************************************************************

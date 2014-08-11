@@ -1,0 +1,29 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 744
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetPolicySettingsCapabilitiesResponse xmlns="http://cisco.com/HNAPExt/HND/">
+<GetPolicySettingsCapabilitiesResult>OK</GetPolicySettingsCapabilitiesResult>
+<FirstAccessPolicyNumber>1</FirstAccessPolicyNumber>
+<MaxPolicyNumber>10</MaxPolicyNumber>
+<MaxPolicyName>32</MaxPolicyName>
+<MaxAppliedDeviceList>10</MaxAppliedDeviceList>
+<MaxBlockedURLArray>10</MaxBlockedURLArray>
+<MaxBlockedURLString>32</MaxBlockedURLString>
+<MaxBlockedKeywordArray>0</MaxBlockedKeywordArray>
+<MaxBlockedKeywordString>0</MaxBlockedKeywordString>
+<MaxBlockedCategoryArray>0</MaxBlockedCategoryArray>
+</GetPolicySettingsCapabilitiesResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 73 times
+malloc_interposer.c - exit: free called 73 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 16593
+malloc_interposer.c - exit: malloc max = 8405
+malloc_interposer.c - ************************************************************

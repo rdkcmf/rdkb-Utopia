@@ -1,0 +1,4 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct MyStruct2
+    MyEnum a

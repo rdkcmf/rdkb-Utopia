@@ -1,0 +1,43 @@
+Content Length (Computed)= 454
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>7</b>
+<c>a &amp; b &lt; c &gt; d &quot; e &apos; f</c>
+<d>SGVsbG8sIFdvcmxkIQo=</d>
+<e>true</e>
+<f>2009-12-01T17:00:00Z</f>
+<g>19</g>
+<h>192.168.1.114</h>
+<i>00:0C:F1:92:4C:D8</i>
+<j>00112233-4455-6677-8899-aabbccddeeff</j>
+<k>
+<i>11</i>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<a xmlns="http://cisco.com/">11</a>
+<Bar>9</Bar>
+<NoNamespace xmlns="">15</NoNamespace>
+</Foo>
+</k>
+</a>
+
+Content Length (Actual) = 454
+Struct valid: 1
+
+Member b = 7
+Member c = "a & b < c > d " e ' f"
+Member d = Hello, World!
+Member e = 1
+Member f = 2009-12-01T17:00:00Z
+Member g = 19
+Member h = 192.168.1.114
+Member i = 00.0C.F1.92.4C.D8
+Member j = 00112233-4455-6677-8899-AABBCCDDEEFF
+Member k.i = 11
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 63 times
+malloc_interposer.c - exit: free called 63 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 9172
+malloc_interposer.c - exit: malloc max = 9172
+malloc_interposer.c - ************************************************************

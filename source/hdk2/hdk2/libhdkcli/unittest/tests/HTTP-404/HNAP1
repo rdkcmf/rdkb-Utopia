@@ -1,0 +1,14 @@
+$read-headers
+$read-content
+HTTP/1.1 404 Not Found
+Content-Type: text/html
+Connection: close
+
+<html>
+<head>
+<title>404 Not Found</title>
+</head>
+<body>
+404 Not Found
+</body>
+</html>

@@ -1,0 +1,89 @@
++++++++ Request Headers +++++++
+HTTP/1.1 POST /HNAP1
+Connection: Close
+Content-Type: text/xml; charset="utf-8"
+Content-Length: 673
+Authorization: Basic Og==
+SOAPAction: "http://cisco.com/Unittest/NoInputOutputPathMethod"
+Host: 127.0.0.1:8080
+
++++++++ Request Data +++++++
+<?xml version="1.0" encoding="utf-8"?>
+<NoInputOutputPathMethod xmlns="http://cisco.com/Unittest/">
+<StringArg0>The string argument for the NoInputOutputPathMethod unittest</StringArg0>
+<StructArg0>
+<StringMember>string member</StringMember>
+<IntMember>1234</IntMember>
+<BoolMember>false</BoolMember>
+<DateTimeMember>1997-07-16T19:20:10Z</DateTimeMember>
+<IPAddressMember>1.1.1.1</IPAddressMember>
+<MACAddressMember>11:11:11:11:11:11</MACAddressMember>
+<EnumMember>EnumValue0</EnumMember>
+<StringArrayMember>
+<string>string 1</string>
+<string>string 2</string>
+<string>string 3</string>
+</StringArrayMember>
+</StructArg0>
+<IntArg0>5555</IntArg0>
+</NoInputOutputPathMethod>
+
+
+------- Response -------
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset="utf-8"
+Connection: close
+
+<NoInputOutputPathMethodResponse xmlns="http://cisco.com/Unittest/">
+    <NoInputOutputPathMethodResult>OK</NoInputOutputPathMethodResult>
+    <StructOutputArg0>
+        <StringMember>output string member</StringMember>
+        <IntMember>99999</IntMember>
+        <BoolMember>true</BoolMember>
+        <DateTimeMember>2007-12-06T09:20:11Z</DateTimeMember>
+        <IPAddressMember>12.12.31.1</IPAddressMember>
+        <MACAddressMember>11:11:22:11:33:11</MACAddressMember>
+        <EnumMember>EnumValue0</EnumMember>
+        <StringArrayMember>
+            <string>output string 1</string>
+            <string>output string 2</string>
+            <string>output string 3</string>
+        </StringArrayMember>
+    </StructOutputArg0>
+</NoInputOutputPathMethodResponse>
+
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/NoInputOutputPathMethod
+        HTTP host: http://127.0.0.1:8080
+Network Object ID: (null)
+    HTTP username: (null)
+    HTTP password: (null)
+          timeout: 0
+       HNAP input: NoElementPath.input.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<NoInputOutputPathMethodResponse xmlns="http://cisco.com/Unittest/">
+<NoInputOutputPathMethodResult>OK</NoInputOutputPathMethodResult>
+<StructOutputArg0>
+<StringMember>output string member</StringMember>
+<IntMember>99999</IntMember>
+<BoolMember>true</BoolMember>
+<DateTimeMember>2007-12-06T09:20:11Z</DateTimeMember>
+<IPAddressMember>12.12.31.1</IPAddressMember>
+<MACAddressMember>11:11:22:11:33:11</MACAddressMember>
+<EnumMember>EnumValue0</EnumMember>
+<StringArrayMember>
+<string>output string 1</string>
+<string>output string 2</string>
+<string>output string 3</string>
+</StringArrayMember>
+</StructOutputArg0>
+</NoInputOutputPathMethodResponse>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 90 times
+malloc_interposer.c - exit: free called 90 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 19928
+malloc_interposer.c - exit: malloc max = 11611
+malloc_interposer.c - ************************************************************

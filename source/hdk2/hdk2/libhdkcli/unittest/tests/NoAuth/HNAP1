@@ -1,0 +1,14 @@
+$read-headers
+$read-content
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset="utf-8"
+Connection: close
+
+<?xml version="1.0" encoding="utf-8" ?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+  <NoAuthMethodResponse xmlns="http://cisco.com/Unittest/">
+      <NoAuthMethodResult>OK</NoAuthMethodResult>
+  </NoAuthMethodResponse>
+</soap:Body>
+</soap:Envelope>

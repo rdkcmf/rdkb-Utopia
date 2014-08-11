@@ -1,0 +1,6 @@
+#
+# MalformedResponse.test
+#   Verify libhdkcli handles a malformed HTTP response
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod

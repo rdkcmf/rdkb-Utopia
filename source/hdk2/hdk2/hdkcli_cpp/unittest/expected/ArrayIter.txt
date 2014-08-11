@@ -1,0 +1,17 @@
+intArrayRead (size: 4, empty: false)
+[
+1,
+2,
+3,
+4
+]
+iter.value() == 1
+iter.value() == 2
+iter.value() == 3
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 30 times
+malloc_interposer.c - exit: free called 30 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 7648
+malloc_interposer.c - exit: malloc max = 7648
+malloc_interposer.c - ************************************************************

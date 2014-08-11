@@ -1,0 +1,8 @@
+sizeof(HDK_XML_Int) == 4 octets
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 352
+malloc_interposer.c - exit: malloc max = 352
+malloc_interposer.c - ************************************************************

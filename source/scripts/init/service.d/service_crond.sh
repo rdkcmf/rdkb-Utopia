@@ -1,0 +1,177 @@
+#!/bin/sh
+
+#------------------------------------------------------------------
+# Copyright (c) 2009 by Cisco Systems, Inc. All Rights Reserved.
+#
+# This work is subject to U.S. and international copyright laws and
+# treaties. No part of this work may be used, practiced, performed,
+# copied, distributed, revised, modified, translated, abridged, condensed,
+# expanded, collected, compiled, linked, recast, transformed or adapted
+# without the prior written consent of Cisco Systems, Inc. Any use or
+# exploitation of this work without authorization could subject the
+# perpetrator to criminal and civil liability.
+#------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------------
+# This script prepares cron files and brings up a crond
+# The prepared configuration files will have the cron daemon
+# execute all files in a well-known directory at predictables times.
+# 
+# Also this script creates a script to be run by the cron daemon on 
+# a daily basis. The purpose of that script will be to trigger the
+# ddns-start event
+# ----------------------------------------------------------------------------
+
+source /etc/utopia/service.d/ulog_functions.sh
+
+SERVICE_NAME="crond"
+SELF_NAME="`basename $0`"
+
+register_docsis_init_handler () 
+{
+    ID=`sysevent get crond_docsis_async`
+    if [ x = x"$ID" ] ; then
+       ID=`sysevent async docsis-initialized /etc/utopia/service.d/service_crond.sh`
+       sysevent set crond_docsis_async "$ID"
+    fi
+}
+
+service_start () 
+{
+   register_docsis_init_handler
+   if [ "x1" != "x`sysevent get docsis-initialized`" ]; then
+      return
+   fi
+   ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
+
+   killall crond
+   
+   CRONTAB_DIR="/var/spool/cron/crontabs/"
+   CRONTAB_FILE=$CRONTAB_DIR"root"
+   if [ ! -e $CRONTAB_FILE ] ; then
+      # make a pseudo random seed from our mac address
+      # we will get the same values of random over reboots
+      # but there will be divergence of values accross hosts
+      # which is the property we are looking for
+      INT=wan0
+      OUR_MAC=`ip link show $INT | grep link | awk '{print $2}'`
+      MAC1=`echo $OUR_MAC | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$6) }'`
+      MAC2=`echo $OUR_MAC | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$5) }'`
+      RANDOM=`expr $MAC1 \* $MAC2`
+   
+      # prepare busybox crontab directory
+      # echo "[utopia][registration] Preparing crond directory"
+      mkdir -p /etc/cron/cron.everyminute
+      mkdir -p /etc/cron/cron.every5minute
+      mkdir -p /etc/cron/cron.every10minute
+      mkdir -p /etc/cron/cron.hourly
+      mkdir -p /etc/cron/cron.daily
+      mkdir -p /etc/cron/cron.weekly
+      mkdir -p /etc/cron/cron.monthly
+      mkdir -p $CRONTAB_DIR
+   
+      echo "* * * * *  execute_dir /etc/cron/cron.everyminute" > $CRONTAB_FILE
+      echo "1,6,11,16,21,26,31,36,41,46,51,56 * * * *  execute_dir /etc/cron/cron.every5minute" >> $CRONTAB_FILE
+      echo "2,12,22,32,42,52 * * * *  execute_dir /etc/cron/cron.every10minute" >> $CRONTAB_FILE
+      num1=$RANDOM
+      rand1=`expr $num1 % 60`
+      echo "$rand1 * * * * execute_dir /etc/cron/cron.hourly" >> $CRONTAB_FILE
+      num1=$RANDOM
+      num2=$RANDOM
+      rand1=`expr $num1 % 60`
+      rand2=`expr $num2 % 24`
+      echo "$rand1 $rand2 * * * execute_dir /etc/cron/cron.daily" >> $CRONTAB_FILE
+      num1=$RANDOM
+      num2=$RANDOM
+      num3=$RANDOM
+      rand1=`expr $num1 % 60`
+      rand2=`expr $num2 % 24`
+      rand3=`expr $num3 % 7`
+      echo "$rand1 $rand2 * * $rand3 execute_dir /etc/cron/cron.weekly" >> $CRONTAB_FILE
+      num1=$RANDOM
+      num2=$RANDOM
+      num3=$RANDOM
+      rand1=`expr $num1 % 60`
+      rand2=`expr $num2 % 24`
+      rand3=`expr $num3 % 28`
+      echo "$rand1 $rand2 $rand3 * * execute_dir /etc/cron/cron.monthly" >> $CRONTAB_FILE
+      
+      # update mso potd every midnight at 00:05
+      echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE 
+
+      # Generate Firewall statistics hourly 
+      echo "58 * * * * /fss/gw/usr/sbin/GenFWLog" >> $CRONTAB_FILE 
+
+      # add a ddns watchdog trigger to be run daily
+      echo "#! /bin/sh" > /etc/cron/cron.daily/ddns_daily.sh
+      echo "sysevent set ddns-start " >> /etc/cron/cron.daily/ddns_daily.sh
+      chmod 700 /etc/cron/cron.daily/ddns_daily.sh
+   
+      # add starting the ntp client once an hour
+      echo "#! /bin/sh" > /etc/cron/cron.hourly/ntp_hourly.sh
+      echo "sysevent set ntpclient-restart" >> /etc/cron/cron.hourly/ntp_hourly.sh
+      chmod 700 /etc/cron/cron.hourly/ntp_hourly.sh
+   
+      # add starting the process-monitor every minute
+      echo "#! /bin/sh" > /etc/cron/cron.everyminute/pmon_everyminute.sh
+      echo "/etc/utopia/service.d/pmon.sh" >> /etc/cron/cron.everyminute/pmon_everyminute.sh
+      chmod 700 /etc/cron/cron.everyminute/pmon_everyminute.sh
+
+      # add a sysevent tick every minute
+      echo "#! /bin/sh" > /etc/cron/cron.everyminute/sysevent_tick.sh
+      echo "sysevent set cron_every_minute" >> /etc/cron/cron.everyminute/sysevent_tick.sh
+      chmod 700 /etc/cron/cron.everyminute/sysevent_tick.sh
+
+      # monitor syslog every 5 minute
+      echo "#! /bin/sh" > /etc/cron/cron.every5minute/log_every5minute.sh
+      echo "/fss/gw/usr/sbin/log_handle.sh" >> /etc/cron/cron.every5minute/log_every5minute.sh
+      chmod 700 /etc/cron/cron.every5minute/log_every5minute.sh
+   fi
+   
+   # start the cron daemon
+   # echo "[utopia][registration] Starting cron daemon"
+   crond -l 9
+
+   sysevent set ${SERVICE_NAME}-status "started"
+}
+
+service_stop () 
+{
+   ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
+   killall crond
+   sysevent set ${SERVICE_NAME}-status "stopped"
+}
+
+# Entry
+
+case "$1" in
+  ${SERVICE_NAME}-start)
+      service_start
+      ;;
+  ${SERVICE_NAME}-stop)
+      service_stop
+      ;;
+  ${SERVICE_NAME}-restart)
+      service_stop
+      service_start
+      ;;
+   ntpclient-status)
+      STATUS=`sysevent get ntpclient-status`
+      if [ "started" = "$STATUS" ] ; then 
+        ulog ${SERVICE_NAME} status "restarting ${SERVICE_NAME} service" 
+        killall crond
+        crond -l 9
+      fi
+      ;;
+   docsis-initialized)
+      service_start
+   ;;
+  *)
+      echo "Usage: $SELF_NAME [${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" >&2
+      exit 3
+      ;;
+esac
+
+
+

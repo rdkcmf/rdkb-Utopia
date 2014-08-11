@@ -1,0 +1,61 @@
+# tests-gen/core/hnap.gen
+
+namespace "http://cisco.com/HNAP/"
+
+action Action
+    input
+        int Member
+
+namespace "http://cisco.com/HNAP/Sub/"
+
+action ActionSub
+    input
+        int MemberSub
+
+namespace "http://cisco.com/HNAPExt/"
+
+action ActionExt
+    input
+        int MemberExt
+
+namespace "http://cisco.com/HNAPExt/Sub/"
+
+action ActionExtSub
+    input
+        int MemberExtSub
+
+namespace "http://purenetworks.com/HNAP1/"
+
+action ActionLegacy
+    input
+        int MemberLegacy
+
+namespace "http://purenetworks.com/HNAP1/Sub/"
+
+action ActionSubLegacy
+    input
+        int MemberLegacySub
+
+namespace "http://purenetworks.com/HNAP/"
+
+action ActionLegacy2
+    input
+        int MemberLegacy2
+
+namespace "http://purenetworks.com/HNAP/Sub/"
+
+action ActionLegacy2Sub
+    input
+        int MemberLegacy2Sub
+
+namespace "http://purenetworks.com/HNAPExt/"
+
+action ActionLegacyExt
+    input
+        int MemberLegacyExt
+
+namespace "http://purenetworks.com/HNAPExt/Sub/"
+
+action ActionLegacyExtSub
+    input
+        int MemberLegacyExtSub

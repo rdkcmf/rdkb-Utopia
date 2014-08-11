@@ -1,0 +1,97 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+# Build directory
+ifndef BUILDDIR
+BUILDDIR = build
+endif
+
+# Platform-specific
+ifeq ($(shell uname -s), Darwin) # Mac OS X
+PLATFORM_CFLAGS =
+else
+PLATFORM_CFLAGS = -pedantic-errors
+endif
+
+# Targets
+EXE = $(BUILDDIR)/unittest
+
+# Object files
+OBJS_BASE = \
+	test_Parse.o \
+	test_Serialize.o \
+	test_Stream.o \
+	test_Struct.o \
+	test_Type.o \
+	unittest.o \
+	unittest_schema.o \
+	unittest_tests.o \
+	unittest_util.o
+OBJS = $(OBJS_BASE:%=$(BUILDDIR)/%)
+
+# Compiler flags
+ifdef UNITTEST_CXX
+UNITTEST_CC = $(CXX)
+UNITTEST_CFLAGS = $(CXXFLAGS)
+else
+UNITTEST_CC = $(CC)
+UNITTEST_CFLAGS = $(CFLAGS) -Wmissing-prototypes
+endif
+UNITTEST_CFLAGS += -Wall -Wextra -Werror -Wno-long-long $(PLATFORM_CFLAGS)
+UNITTEST_CFLAGS += -I. -I../../include -I../../unittest
+ifdef DEBUG
+UNITTEST_CFLAGS += -g
+else
+UNITTEST_CFLAGS += -Os
+endif
+
+# Linker flags
+LDFLAGS += -shared-libgcc -L$(BUILDDIR) -lhdkxml -ldl $(UNITTEST_LDFLAGS)
+
+# Build target (default)
+.PHONY: build
+build: $(EXE)
+
+# Clean the build directory
+.PHONY: clean
+clean:
+	rm -r -f $(BUILDDIR)
+
+# Rule for linking the executable
+$(EXE): $(OBJS)
+	$(UNITTEST_CC) -o $(EXE) $^ $(LDFLAGS)
+
+# Rule for compiling source files
+$(BUILDDIR)/%.o: %.c
+	$(UNITTEST_CC) -c $(CPPFLAGS) $(UNITTEST_CFLAGS) -o $@ -c $<
+
+# Rule for building source dependency files
+$(BUILDDIR)/.%.depend: %.c
+	@mkdir -p $(BUILDDIR)
+	@$(UNITTEST_CC) -MM $(CPPFLAGS) $(UNITTEST_CFLAGS) $< > $@
+
+# Include dependency files
+-include $(OBJS_BASE:%.o=$(BUILDDIR)/.%.depend)

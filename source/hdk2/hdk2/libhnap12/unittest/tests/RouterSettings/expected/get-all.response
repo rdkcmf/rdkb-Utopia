@@ -1,0 +1,27 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 503
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetRouterSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetRouterSettingsResult>OK</GetRouterSettingsResult>
+<ManageRemote>false</ManageRemote>
+<ManageWireless>false</ManageWireless>
+<RemotePort>8081</RemotePort>
+<RemoteSSL>false</RemoteSSL>
+<DomainName>www.cisco.com</DomainName>
+<WiredQoS>false</WiredQoS>
+<WPSPin>872356723</WPSPin>
+</GetRouterSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 599 times
+malloc_interposer.c - exit: free called 599 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34825
+malloc_interposer.c - exit: malloc max = 22427
+malloc_interposer.c - ************************************************************

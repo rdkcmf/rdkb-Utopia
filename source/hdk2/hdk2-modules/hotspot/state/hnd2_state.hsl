@@ -1,0 +1,180 @@
+import "hnd2.hsl"
+import "core_state.hsl"
+
+namespace "http://cisco.com/HNAPExt/HND/"
+namespace hnap12 "http://purenetworks.com/HNAP1/"
+
+#
+# State definitions
+#
+
+#@ The array of devices to which the access policy is applied.
+state Device[] AppliedDeviceList
+
+#@ The weekly WAN access policy.
+state AccessSchedule AccessSchedule
+
+#@ The array of AccessPolicy structures that describes the access
+#@ policy.
+#@
+#@ The following built-in policies are defined:
+#@
+#@ 1 - Child
+#@
+#@ 2 - Young Teen
+#@
+#@ 3 - Mature Teen
+#@
+#@ 4 - Adult
+#@
+#@ A device must return the built-in access policies up-to
+#@ FirstAccessPolicyNumber - 1.  If FirstAccessPolicyNumber is 1 then no
+#@ built-in policies are returned.
+state AccessPolicy[] AccessPolicyList
+
+#@ An array of AccessPolicyResult structures that report which policy
+#@ structures were set successfully or not.
+state AccessPolicyResult[] AccessPolicyResultList
+
+#@ The access policy ID of the default policy.  Valid values are
+#@ inclusively in the range of 1 and FirstAccessPolicyNumber - 1
+#@ (built-in access policies).
+state int AccessPolicyNumber
+
+#@ The first user-defined AccessPolicyNumber (e.g. 5).
+#@
+#@ Note: If the Trend Micro service is not supported then
+#@ FirstAccessPolicyNumber must be 1.
+state int FirstAccessPolicyNumber
+
+#@ The maximum AccessPolicyNumber (e.g. 10).
+state int MaxPolicyNumber
+
+#@ The maximum length of a PolicyName (in UTF-8 bytes).
+state int MaxPolicyName
+
+#@ The maximum length of the AppliedDeviceList array (per AccessPolicy).
+state int MaxAppliedDeviceList
+
+#@ The maximum length of the BlockedURL array (per policy).
+state int MaxBlockedURLArray
+
+#@ The maximum length of a BlockedURL string (in UTF-8 bytes).
+state int MaxBlockedURLString
+
+#@ The maximum length of the BlockedKeyword array (per policy).
+state int MaxBlockedKeywordArray
+
+#@ The maximum length of a BlockedKeyword string (in UTF-8 bytes).
+state int MaxBlockedKeywordString
+
+#@ The maximum length of the BlockedCategory array (per policy)
+#@
+#@ Note: If the Trend Micro service is not supported then
+#@ MaxBlockedCategoryArray must be 0.
+state int MaxBlockedCategoryArray
+
+#@ The TAV serial number.  The format is "LSZF-0012-4528-2124-2240".
+#@
+#@ Note: If the Trend Micro service is not supported then TAVSN must be
+#@ "".
+state string TAVSN
+
+#@ The TAV serial number that is generated from an ActivateTMSSS call.
+state string TAVSN_New
+
+#@ The service expiration date.  The format is "yyyy-mm-dd",
+#@ e.g. "2009-11-12".
+state string ExpiredDate
+
+#@ The expiration date of the new TAV serial number.
+state string ExpiredDate_New
+
+#@ "true" if WTP is enabled; "false" otherwise.
+#@
+#@ Note: If the Trend Micro service is not supported then WTPEnabled
+#@ must be "false".
+#@
+state bool WTPEnabled
+
+#@ The WTP threshold value.  This value must be inclusively in the range
+#@ of 0 and 100.
+#@
+#@ Note: If the Trend Micro service is not supported then WTPThreshold
+#@ must be 0.
+#@
+state int WTPThreshold
+
+#@ "true" if parental controls (PC) is enabled; "false" otherwise.
+state bool PCEnabled
+
+
+#
+# Action States
+#
+
+action_state GetPolicySettings
+    state
+        [get] AccessPolicyList
+
+action_state SetPolicySettings
+    state
+        [set] AccessPolicyList
+        [get] FirstAccessPolicyNumber
+        [get] MaxPolicyNumber
+        [get] MaxPolicyName
+        [get] MaxAppliedDeviceList
+        [get] MaxBlockedURLArray
+        [get] MaxBlockedURLString
+        [get] MaxBlockedKeywordArray
+        [get] MaxBlockedKeywordString
+        [get] MaxBlockedCategoryArray
+
+action_state GetPolicySettingsCapabilities
+    state
+        [get] FirstAccessPolicyNumber
+        [get] MaxPolicyNumber
+        [get] MaxPolicyName
+        [get] MaxAppliedDeviceList
+        [get] MaxBlockedURLArray
+        [get] MaxBlockedURLString
+        [get] MaxBlockedKeywordArray
+        [get] MaxBlockedKeywordString
+        [get] MaxBlockedCategoryArray
+
+action_state GetDefaultPolicySetting
+    state
+        [get] FirstAccessPolicyNumber
+        [get] AccessPolicyNumber
+
+action_state SetDefaultPolicySetting
+    state
+        [set] AccessPolicyNumber
+        [get] FirstAccessPolicyNumber
+
+action_state GetTMSSSLicense
+    state
+        [get] FirstAccessPolicyNumber
+        [get] TAVSN
+        [get] ExpiredDate
+
+action_state ActivateTMSSS
+    state
+        [get] FirstAccessPolicyNumber
+        [get,set] TAVSN
+        [get] TAVSN_New
+        [set] ExpiredDate
+        [get] ExpiredDate_New
+
+action_state GetTMSSSSettings
+    state
+        [get] WTPEnabled
+        [get] WTPThreshold
+        [get] PCEnabled
+
+action_state SetTMSSSSettings
+    state
+        [get] FirstAccessPolicyNumber
+        [set] WTPEnabled
+        [set] WTPThreshold
+        [set] PCEnabled

@@ -1,0 +1,5 @@
+$read-headers
+HTTP/1.1 301 Moved Permanently
+Connection: close
+Location: http://localhost:8080/Redirect
+

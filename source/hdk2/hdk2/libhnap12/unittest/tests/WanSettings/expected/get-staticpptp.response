@@ -1,0 +1,36 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 711
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWanSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWanSettingsResult>OK</GetWanSettingsResult>
+<Type>StaticPPTP</Type>
+<Username>PPTPUser</Username>
+<Password>PPTPPassword</Password>
+<MaxIdleTime>0</MaxIdleTime>
+<MTU>1452</MTU>
+<ServiceName>12.3.5.9</ServiceName>
+<AutoReconnect>true</AutoReconnect>
+<IPAddress>5.5.5.5</IPAddress>
+<SubnetMask>255.255.0.0</SubnetMask>
+<Gateway>5.5.2.2</Gateway>
+<DNS>
+<Primary>10.0.0.7</Primary>
+<Secondary>10.0.1.13</Secondary>
+<Tertiary>0.0.0.0</Tertiary>
+</DNS>
+<MacAddress>00:1D:7E:F4:6C:EF</MacAddress>
+</GetWanSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 619 times
+malloc_interposer.c - exit: free called 619 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 35123
+malloc_interposer.c - exit: malloc max = 22420
+malloc_interposer.c - ************************************************************

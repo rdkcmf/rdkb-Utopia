@@ -1,0 +1,13 @@
+Parsed '3q2+7xXwDQ==' into blob
+Failed to parse '3q2+7xXwDQ='
+Parsed '0x43' into blob
+Failed to parse 'efasd3+'
+Parsed ' ' into blob
+Parsed '' into blob
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 13 times
+malloc_interposer.c - exit: free called 13 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 598
+malloc_interposer.c - exit: malloc max = 582
+malloc_interposer.c - ************************************************************

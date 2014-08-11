@@ -1,0 +1,8 @@
+#
+# InvalidHost.test
+#    Verify libhdkcli handles an invalid HTTP host parameter.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod
+host: ya, this is a bogus host
+platform-expected

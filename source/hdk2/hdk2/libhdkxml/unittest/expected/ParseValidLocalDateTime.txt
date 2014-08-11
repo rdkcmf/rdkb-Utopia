@@ -1,0 +1,8 @@
+Member f = 2009-12-01T17:00:00
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 26 times
+malloc_interposer.c - exit: free called 26 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 7614
+malloc_interposer.c - exit: malloc max = 7614
+malloc_interposer.c - ************************************************************

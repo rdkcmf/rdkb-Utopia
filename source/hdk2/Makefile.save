@@ -1,0 +1,48 @@
+# environment variable used in this makefile
+#
+# $CCSP_HOME             - top directory of CCSP build tree
+# $CCSP_PLATFORM         - target build platform for CCSP, such as puma
+# $CCSP_CROSS            - prefix for CCSP build cross compiler
+# $CCSP_PLATFORM_CFLAGS  - CCSP platform specific compiler flags
+# $CCSP_PLATFORM_LDFLAGS - CCSP platform specific linker flags
+#
+
+CCSP_PLATFORM=${CcspBoard}
+CCSP_CROSS=${CROSS_COMPILE}
+
+HDK2_VERSION=1.1.1
+HDK2_TARBALL=hdk2-${HDK2_VERSION}.tar.gz
+HDK2_SRC_REPOSITORY_SERVER=http://sauscupoe01.cisco.com
+HDK2_SRCDIR=hdk2 hdk2-modules
+
+CWD=$(shell pwd)
+HDK2_BUILDDIR=${UTOPIA_BUILDDIR}/hdk2
+
+export CC=${CCSP_CROSS}gcc
+export STRIP=${CCSP_CROSS}strip
+export AR=${CCSP_CROSS}ar
+
+export CFLAGS=${CCSP_PLATFORM_CFLAGS} -D_POSIX_C_SOURCE=199309 -D_BSD_SOURCE
+export LDFLAGS=${CCSP_PLATFORM_LDFLAGS}
+
+all: ${HDK2_SRCDIR}
+	make -C hdk2 BUILDDIR=${HDK2_BUILDDIR} \
+                     BUILDDIR_LIBHDKXML=${HDK2_BUILDDIR}/libhdkxml \
+                     BUILDDIR_LIBHDKSRV=${HDK2_BUILDDIR}/libhdksrv \
+                     NO_CLI=y NO_TEST=y NO_DOCS=y
+	make -C hdk2-modules/hotspot BUILDDIR=${HDK2_BUILDDIR}/libhotspot \
+                                     BUILDDIR_LIBHDKXML=${HDK2_BUILDDIR}/libhdkxml \
+                                     BUILDDIR_LIBHDKSRV=${HDK2_BUILDDIR}/libhdksrv \
+                                     NO_DOCS=y
+
+${HDK2_SRCDIR}: | ${HDK2_TARBALL}
+	tar zxvf ${HDK2_TARBALL}
+
+${HDK2_TARBALL}:
+	wget ${HDK2_SRC_REPOSITORY_SERVER}/cisco/${HDK2_TARBALL}
+
+clean:
+	rm -rf ${HDK2_BUILDDIR}
+
+distclean: clean
+	rm -rf ${HDK2_SRCDIR}

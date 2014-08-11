@@ -1,0 +1,17 @@
+namespace "http://cisco.com/HNAPExt/"
+
+enum MyEnum
+    "Value1"
+    "Value2"
+    "Value3"
+
+struct MyStruct
+    int a
+    string b
+
+namespace "http://cisco.com/HNAPExt/Other/"
+namespace ext "http://cisco.com/HNAPExt/"
+
+struct MyStruct
+    ext:MyEnum[] a
+    ext:MyStruct[] b

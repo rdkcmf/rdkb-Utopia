@@ -1,0 +1,10 @@
+#
+# NoContentLength.test
+#   Test the handling of an ommited Content-Length header value.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod
+host: http://127.0.0.1:8080
+username: admin
+password: password
+timeout: 2

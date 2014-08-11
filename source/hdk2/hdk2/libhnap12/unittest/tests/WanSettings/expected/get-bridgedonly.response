@@ -1,0 +1,35 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 649
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWanSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWanSettingsResult>OK</GetWanSettingsResult>
+<Type>BridgedOnly</Type>
+<Username></Username>
+<Password></Password>
+<MaxIdleTime>0</MaxIdleTime>
+<MTU>1500</MTU>
+<ServiceName></ServiceName>
+<AutoReconnect>false</AutoReconnect>
+<IPAddress>0.0.0.0</IPAddress>
+<SubnetMask>0.0.0.0</SubnetMask>
+<Gateway>0.0.0.0</Gateway>
+<DNS>
+<Primary>0.0.0.0</Primary>
+<Secondary>0.0.0.0</Secondary>
+</DNS>
+<MacAddress>00:1D:7E:F4:6C:EF</MacAddress>
+</GetWanSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 603 times
+malloc_interposer.c - exit: free called 603 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34865
+malloc_interposer.c - exit: malloc max = 22420
+malloc_interposer.c - ************************************************************

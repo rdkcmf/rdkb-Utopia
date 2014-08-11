@@ -1,0 +1,141 @@
+Int "":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Int "adfasdfasdfasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Int "7asdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Int "asdf7":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Blob "SGVsbG8sIFdvcmxkIQo":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Blob "SGVsbG8sIFdvcmxkISEK=":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Blob "SGVsbG8sIFdvcmxkISEhCg=":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Blob "SGVsbG8sI@FdvcmxkISEhCg==":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Bool "":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Bool "adfasdfasdfasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Bool "True":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Bool "False":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Bool " false":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Bool "false ":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Bool " false ":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+DateTime "":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+DateTime "adfasdfasdfasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+DateTime "2009-12-02-04:28:00":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+DateTime "2009-12-02T04:28:00Z08:00":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+DateTime "2009-12-02T04:28:00-08":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+DateTime "2009-12T04:28:00Z":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+DateTime "2009-12-02":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Long "":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Long "adfasdfasdfasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Long "7asdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+Long "asdf7":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+IPAddress "adfasdfasdfasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+IPAddress "192.168.1.1asdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+IPAddress "192":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+IPAddress "192.168.1":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+IPAddress "192.168.1.":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+IPAddress "192.168.1:1":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+MACAddress "adfasdfasdfasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+MACAddress "00:01:02:03:04:05asdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+MACAddress "00":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+MACAddress "00:01:02:03:04":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+MACAddress "00:01:02:03:04:":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+MACAddress "00:01:02:03:04.05":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+UUID "":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+UUID "adfasdfasdfasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+UUID "00":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+UUID "00112233-4455-6677-8899-aAbBcCdDeEfFasdf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+UUID "00112233-4455-6677-8899-aAbBcCdDeEf":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+UUID "00112233-4455-6677-8899.aAbBcCdDeEfF":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+UUID "00112233-4455-6677-8899-":
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1166 times
+malloc_interposer.c - exit: free called 1166 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 337723
+malloc_interposer.c - exit: malloc max = 7912
+malloc_interposer.c - ************************************************************

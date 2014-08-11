@@ -1,0 +1,6 @@
+#
+# InvalidInput-MissingParameter.test
+#    Verify libhdkcli handles an invalid input struct which is missing a required parameter.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod

@@ -1,0 +1,16 @@
+namespace "http://cisco.com/HNAPExt/"
+
+import "doctext.hsl"
+
+#@@ h1 My section
+
+#@ My section text.
+
+#@@ h2 My sub-section
+
+#@ My sub-section text
+
+#@@ end
+
+#@ About my action...
+action MyAction

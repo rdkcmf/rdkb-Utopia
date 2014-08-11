@@ -1,0 +1,11 @@
+namespace "http://cisco.com/HNAPExt/"
+
+action MyAction
+    input
+        [optional] \
+            int\
+            b$a
+
+action MyAction2
+    output
+        int b \

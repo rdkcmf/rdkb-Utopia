@@ -1,0 +1,22 @@
+
+Serialized 0 bytes of data
+
+Serialized 1 bytes of data
+
+This is a string
+Serialized 16 bytes of data
+This is a string
+Serialized 17 bytes of data
+
+< & ' asd > ? "
+Serialized 15 bytes of data
+< & ' asd > ? "
+Serialized 16 bytes of data
+
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

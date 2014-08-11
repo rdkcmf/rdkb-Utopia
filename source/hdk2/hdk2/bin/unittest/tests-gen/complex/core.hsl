@@ -1,0 +1,151 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+#
+# HNAP 1.2 Core
+#
+
+namespace "http://purenetworks.com/HNAP1/"
+
+#
+# Enumerations
+#
+
+enum DeviceType
+    "Computer"
+    "ComputerServer"
+    "WorkstationComputer"
+    "LaptopComputer"
+    "Gateway"
+    "GatewayWithWiFi"
+    "DigitalDVR"
+    "DigitalJukebox"
+    "MediaAdapter"
+    "NetworkCamera"
+    "NetworkDevice"
+    "NetworkDrive"
+    "NetworkGameConsole"
+    "NetworkPDA"
+    "NetworkPrinter"
+    "NetworkPrintServer"
+    "PhotoFrame"
+    "VOIPDevice"
+    "WiFiAccessPoint"
+    "SetTopBox"
+    "WiFiBridge"
+
+enum TaskExtType
+    "Browser"
+    "MessageBox"
+    "PUI"
+    "Silent"
+
+enum UpdateMethod
+    "TFTP_UPLOAD"
+    "HNAP_UPLOAD"
+
+#
+# Structures
+#
+
+struct TaskExtension
+    string Name
+    string URL
+    TaskExtType Type
+
+#
+# Actions
+#
+
+action GetDeviceSettings
+    output
+        DeviceType Type
+        string DeviceName
+        string VendorName
+        string ModelDescription
+        string ModelName
+        string FirmwareVersion
+        string PresentationURL
+        string[] SOAPActions
+        string[] SubDeviceURLs
+        TaskExtension[] Tasks
+
+action SetDeviceSettings
+    input
+        string DeviceName
+        string AdminPassword
+    result
+        "REBOOT"
+
+action GetDeviceSettings2
+    output
+        string SerialNumber
+        string TimeZone
+        bool AutoAdjustDST
+        string Locale
+        string[] SupportedLocales
+        bool SSL
+
+action SetDeviceSettings2
+    input
+        string Username
+        string TimeZone
+        bool AutoAdjustDST
+        string Locale
+        bool SSL
+    result
+        "REBOOT"
+        "ERROR_USERNAME_NOT_SUPPORTED"
+        "ERROR_TIMEZONE_NOT_SUPPORTED"
+        "ERROR_REMOTE_SSL_NEEDS_SSL"
+
+action IsDeviceReady
+
+action Reboot
+    result
+        "REBOOT"
+
+action GetFirmwareSettings
+    output
+        string VendorName
+        string ModelName
+        string ModelRevision
+        string FirmwareVersion
+        datetime FirmwareDate
+        UpdateMethod[] UpdateMethods
+
+action FirmwareUpload
+    input
+        blob Base64Image
+    result
+        "REBOOT"
+
+action DownloadSpeedTest
+    input
+        int Bytes
+        int BufferSize
+    output
+        string ByteStream

@@ -1,0 +1,29 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 548
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWLanRadioSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWLanRadioSettingsResult>OK</GetWLanRadioSettingsResult>
+<Enabled>true</Enabled>
+<Mode>802.11an</Mode>
+<MacAddress>EE:EE:EE:EE:EE:EE</MacAddress>
+<SSID>Radio24SSID</SSID>
+<SSIDBroadcast>true</SSIDBroadcast>
+<ChannelWidth>20</ChannelWidth>
+<Channel>40</Channel>
+<SecondaryChannel>0</SecondaryChannel>
+<QoS>true</QoS>
+</GetWLanRadioSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1462 times
+malloc_interposer.c - exit: free called 1462 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 51041
+malloc_interposer.c - exit: malloc max = 29550
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,1144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>AdminPassword</Name>
+<Value>admin</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DeviceType</Name>
+<Value>GatewayWithWiFi</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DeviceName</Name>
+<Value>My Gateway</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>VendorName</Name>
+<Value>Cisco</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ModelDescription</Name>
+<Value>Cisco Lego 1000</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ModelName</Name>
+<Value>Lego 1000</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>FirmwareVersion</Name>
+<Value>1.0.0.0</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>PresentationURL</Name>
+<Value>http://192.168.1.1/</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>SubDeviceURLs</Name>
+<Value>
+      &lt;SubDeviceURLs xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;string&gt;/url1&lt;/string&gt;
+        &lt;string&gt;/url2/&lt;/string&gt;
+      &lt;/SubDeviceURLs&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>TaskExtensions</Name>
+<Value>
+      &lt;TaskExtensions xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;TaskExtension&gt;
+          &lt;Name&gt;Status Page&lt;/Name&gt;
+          &lt;URL&gt;/Status_Router.asp/&lt;/URL&gt;
+          &lt;Type&gt;Browser&lt;/Type&gt;
+        &lt;/TaskExtension&gt;
+        &lt;TaskExtension&gt;
+          &lt;Name&gt;Basic Wireless Settings&lt;/Name&gt;
+          &lt;URL&gt;/Wireless_Basic.asp&lt;/URL&gt;
+          &lt;Type&gt;Browser&lt;/Type&gt;
+        &lt;/TaskExtension&gt;
+      &lt;/TaskExtensions&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>SerialNumber</Name>
+<Value>LKK23LS3HSL9</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>TimeZone</Name>
+<Value>UTC-8:00</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>AutoAdjustDST</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>Locale</Name>
+<Value>en-us</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>SupportedLocales</Name>
+<Value>
+      &lt;SupportedLocales xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;string&gt;en-us&lt;/string&gt;
+        &lt;string&gt;de-de&lt;/string&gt;
+        &lt;string&gt;da-dk&lt;/string&gt;
+        &lt;string&gt;sv-se&lt;/string&gt;
+        &lt;string&gt;es-es&lt;/string&gt;
+        &lt;string&gt;it-it&lt;/string&gt;
+        &lt;string&gt;fr-fr&lt;/string&gt;
+        &lt;string&gt;nl-nl&lt;/string&gt;
+        &lt;string&gt;pt-pt&lt;/string&gt;
+        &lt;string&gt;fr-ca&lt;/string&gt;
+      &lt;/SupportedLocales&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>SSL</Name>
+<Value>false</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>Username</Name>
+<Value>admin</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>UsernameSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>TimeZoneSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ModelRevision</Name>
+<Value>1.0</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>FirmwareDate</Name>
+<Value>2008-11-29T12:33:55Z</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>UpdateMethods</Name>
+<Value>
+      &lt;UpdateMethods xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;string&gt;HNAP_UPLOAD&lt;/string&gt;
+        &lt;string&gt;TFTP_UPLOAD&lt;/string&gt;
+      &lt;/UpdateMethods&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ClientStats</Name>
+<Value>
+      &lt;ClientStats xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;ClientStat&gt;
+          &lt;MacAddress&gt;AA:BB:CC:DD:EE:FF&lt;/MacAddress&gt;
+          &lt;Wireless&gt;false&lt;/Wireless&gt;
+          &lt;LinkSpeedIn&gt;1000&lt;/LinkSpeedIn&gt;
+          &lt;LinkSpeedOut&gt;1000&lt;/LinkSpeedOut&gt;
+          &lt;SignalStrength&gt;0&lt;/SignalStrength&gt;
+        &lt;/ClientStat&gt;
+        &lt;ClientStat&gt;
+          &lt;MacAddress&gt;11:22:33:44:55:66&lt;/MacAddress&gt;
+          &lt;Wireless&gt;true&lt;/Wireless&gt;
+          &lt;LinkSpeedIn&gt;350&lt;/LinkSpeedIn&gt;
+          &lt;LinkSpeedOut&gt;350&lt;/LinkSpeedOut&gt;
+          &lt;SignalStrength&gt;98&lt;/SignalStrength&gt;
+        &lt;/ClientStat&gt;
+      &lt;/ClientStats&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ConnectedClients</Name>
+<Value>
+      &lt;ConnectedClients xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;ConnectedClient&gt;
+          &lt;ConnectTime&gt;2008-11-29T12:33:55Z&lt;/ConnectTime&gt;
+          &lt;MacAddress&gt;00:11:22:33:44:55&lt;/MacAddress&gt;
+          &lt;DeviceName&gt;A Device&lt;/DeviceName&gt;
+          &lt;PortName&gt;LAN&lt;/PortName&gt;
+          &lt;Wireless&gt;false&lt;/Wireless&gt;
+          &lt;Active&gt;true&lt;/Active&gt;
+        &lt;/ConnectedClient&gt;
+      &lt;/ConnectedClients&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>MFEnabled</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>MFIsAllowList</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>MFMACList</Name>
+<Value>
+      &lt;MFMACList xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;MACInfo&gt;
+          &lt;MacAddress&gt;AA:BB:CC:DD:EE:FF&lt;/MacAddress&gt;
+          &lt;DeviceName&gt;Laptop&lt;/DeviceName&gt;
+        &lt;/MACInfo&gt;
+        &lt;MACInfo&gt;
+          &lt;MacAddress&gt;00:11:22:33:44:55&lt;/MacAddress&gt;
+          &lt;DeviceName&gt;Playstation 3&lt;/DeviceName&gt;
+        &lt;/MACInfo&gt;
+        &lt;MACInfo&gt;
+          &lt;MacAddress&gt;FF:FF:FF:FF:FF:FF&lt;/MacAddress&gt;
+          &lt;DeviceName&gt;Router&lt;/DeviceName&gt;
+        &lt;/MACInfo&gt;
+      &lt;/MFMACList&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DeviceNetworkStats</Name>
+<Value>
+      &lt;DeviceNetworkStats xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;NetworkStats&gt;
+          &lt;PortName&gt;LAN&lt;/PortName&gt;
+          &lt;PacketsReceived&gt;123456789&lt;/PacketsReceived&gt;
+          &lt;PacketsSent&gt;1&lt;/PacketsSent&gt;
+          &lt;BytesReceived&gt;500000&lt;/BytesReceived&gt;
+          &lt;BytesSent&gt;1024&lt;/BytesSent&gt;
+        &lt;/NetworkStats&gt;
+        &lt;NetworkStats&gt;
+          &lt;PortName&gt;WLAN 802.11n&lt;/PortName&gt;
+          &lt;PacketsReceived&gt;1&lt;/PacketsReceived&gt;
+          &lt;PacketsSent&gt;1&lt;/PacketsSent&gt;
+          &lt;BytesReceived&gt;1&lt;/BytesReceived&gt;
+          &lt;BytesSent&gt;1&lt;/BytesSent&gt;
+        &lt;/NetworkStats&gt;
+      &lt;/DeviceNetworkStats&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>PortMappings</Name>
+<Value>
+      &lt;PortMappings xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;PortMapping&gt;
+          &lt;PortMappingDescription&gt;Port Mapping 1&lt;/PortMappingDescription&gt;
+          &lt;InternalClient&gt;192.168.10.10&lt;/InternalClient&gt;
+          &lt;PortMappingProtocol&gt;TCP&lt;/PortMappingProtocol&gt;
+          &lt;ExternalPort&gt;8000&lt;/ExternalPort&gt;
+          &lt;InternalPort&gt;80&lt;/InternalPort&gt;
+        &lt;/PortMapping&gt;
+        &lt;PortMapping&gt;
+          &lt;PortMappingDescription&gt;Port Mapping 2&lt;/PortMappingDescription&gt;
+          &lt;InternalClient&gt;192.168.20.20&lt;/InternalClient&gt;
+          &lt;PortMappingProtocol&gt;UDP&lt;/PortMappingProtocol&gt;
+          &lt;ExternalPort&gt;65000&lt;/ExternalPort&gt;
+          &lt;InternalPort&gt;22&lt;/InternalPort&gt;
+        &lt;/PortMapping&gt;
+      &lt;/PortMappings&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanRenewTimeout</Name>
+<Value>60</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>LanIPAddress</Name>
+<Value>192.168.1.2</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>LanSubnetMask</Name>
+<Value>255.255.255.0</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DHCPServerEnabled</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DHCPIPAddressFirst</Name>
+<Value>192.168.1.100</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DHCPIPAddressLast</Name>
+<Value>192.168.1.149</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DHCPLeaseTime</Name>
+<Value>1440</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DHCPReservations</Name>
+<Value>
+      &lt;DHCPReservations xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;DHCPReservation&gt;
+          &lt;DeviceName&gt;Device 1&lt;/DeviceName&gt;
+          &lt;IPAddress&gt;192.168.1.200&lt;/IPAddress&gt;
+              &lt;MacAddress&gt;FF:EE:DD:CC:BB:AA&lt;/MacAddress&gt;
+        &lt;/DHCPReservation&gt;
+        &lt;DHCPReservation&gt;
+          &lt;DeviceName&gt;Device 2&lt;/DeviceName&gt;
+          &lt;IPAddress&gt;192.168.1.201&lt;/IPAddress&gt;
+          &lt;MacAddress&gt;11:22:33:44:55:66&lt;/MacAddress&gt;
+        &lt;/DHCPReservation&gt;
+      &lt;/DHCPReservations&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DHCPReservationsSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>IsAdminPasswordDefault</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ManageRemote</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ManageWireless</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>RemotePort</Name>
+<Value>8080</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>RemoteSSL</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DomainName</Name>
+<Value>cisco.com</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiredQoS</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WPSPin</Name>
+<Value>872356723</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>RemoteManagementSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ManageViaSSLSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>ManageOnlyViaSSL</Name>
+<Value>false</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>RemoteSSLNeedsSSL</Name>
+<Value>false</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>DomainNameChangeSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiredQoSSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>IsAccessPoint</Name>
+<Value>false</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanStatus</Name>
+<Value>CONNECTED</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanAutoDetectType</Name>
+<Value>DHCP</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanSupportedTypes</Name>
+<Value>
+      &lt;WanSupportedTypes xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;string&gt;BigPond&lt;/string&gt;
+        &lt;string&gt;DHCP&lt;/string&gt;
+        &lt;string&gt;DHCPPPPoE&lt;/string&gt;
+        &lt;string&gt;DynamicL2TP&lt;/string&gt;
+        &lt;string&gt;DynamicPPTP&lt;/string&gt;
+        &lt;string&gt;Static&lt;/string&gt;
+        &lt;string&gt;StaticL2TP&lt;/string&gt;
+        &lt;string&gt;StaticPPPoE&lt;/string&gt;
+        &lt;string&gt;StaticPPTP&lt;/string&gt;
+        &lt;string&gt;BridgedOnly&lt;/string&gt;
+        &lt;string&gt;Static1483Bridged&lt;/string&gt;
+        &lt;string&gt;Dynamic1483Bridged&lt;/string&gt;
+        &lt;string&gt;Static1483Routed&lt;/string&gt;
+        &lt;string&gt;StaticPPPOA&lt;/string&gt;
+        &lt;string&gt;DynamicPPPOA&lt;/string&gt;
+        &lt;string&gt;StaticIPOA&lt;/string&gt;
+      &lt;/WanSupportedTypes&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanType</Name>
+<Value>DHCP</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanUsername</Name>
+<Value>WanUser</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanPassword</Name>
+<Value>WanPassword</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanMaxIdleTime</Name>
+<Value>0</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanAutoReconnect</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanAuthService</Name>
+<Value>67.158.10.4</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanPPPoEService</Name>
+<Value>PPPoE Service</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanLoginService</Name>
+<Value>loginserver.linksys.com</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanIPAddress</Name>
+<Value>68.15.193.4</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanGateway</Name>
+<Value>10.0.0.1</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanSubnetMask</Name>
+<Value>255.255.255.0</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanDNS</Name>
+<Value>
+      &lt;WanDNS xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;Primary&gt;10.0.0.1&lt;/Primary&gt;
+        &lt;Secondary&gt;10.0.0.3&lt;/Secondary&gt;
+        &lt;Tertiary&gt;0.0.0.0&lt;/Tertiary&gt;
+      &lt;/WanDNS&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanMTU</Name>
+<Value>1500</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanMacAddress</Name>
+<Value>AA:BB:CC:DD:EE:FF</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WanAutoMTUSupported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientSupportedNetworkType</Name>
+<Value>
+      &lt;WiFiClientSupportedNetworkType xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;string&gt;ADHOC&lt;/string&gt;
+        &lt;string&gt;INFRASTRUCTURE&lt;/string&gt;
+      &lt;/WiFiClientSupportedNetworkType&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientSupportedSecurity</Name>
+<Value>
+      &lt;WiFiClientSupportedSecurity xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;SecurityInfo&gt;
+          &lt;SecurityType&gt;WEP-OPEN&lt;/SecurityType&gt;
+          &lt;Encryptions&gt;
+            &lt;string&gt;WEP-64&lt;/string&gt;
+            &lt;string&gt;WEP-128&lt;/string&gt;
+          &lt;/Encryptions&gt;
+        &lt;/SecurityInfo&gt;
+        &lt;SecurityInfo&gt;
+          &lt;SecurityType&gt;WEP&lt;/SecurityType&gt;
+          &lt;Encryptions&gt;
+            &lt;string&gt;WEP-64&lt;/string&gt;
+            &lt;string&gt;WEP-128&lt;/string&gt;
+          &lt;/Encryptions&gt;
+        &lt;/SecurityInfo&gt;
+        &lt;SecurityInfo&gt;
+          &lt;SecurityType&gt;WPA-AUTO-PSK&lt;/SecurityType&gt;
+          &lt;Encryptions&gt;
+            &lt;string&gt;AES&lt;/string&gt;
+            &lt;string&gt;TKIP&lt;/string&gt;
+          &lt;/Encryptions&gt;
+        &lt;/SecurityInfo&gt;
+        &lt;SecurityInfo&gt;
+          &lt;SecurityType&gt;WPA2-PSK&lt;/SecurityType&gt;
+          &lt;Encryptions&gt;
+            &lt;string&gt;AES&lt;/string&gt;
+            &lt;string&gt;TKIPORAES&lt;/string&gt;
+          &lt;/Encryptions&gt;
+        &lt;/SecurityInfo&gt;
+      &lt;/WiFiClientSupportedSecurity&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientSSID</Name>
+<Value>My Home Network</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientFrequency</Name>
+<Value>2</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientMode</Name>
+<Value>802.11g</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientChannelWidth</Name>
+<Value>20</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientChannel</Name>
+<Value>1</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientSignalStrength</Name>
+<Value>88</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientNoise</Name>
+<Value>7</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientLinkSpeedIn</Name>
+<Value>128</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientLinkSpeedOut</Name>
+<Value>128</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientWmmEnabled</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientNetworkType</Name>
+<Value>ADHOC</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientSecurityEnabled</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientSecurityType</Name>
+<Value>WPA2-PSK</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientEncryption</Name>
+<Value>AES</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientKey</Name>
+<Value>MySecretPassword</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WiFiClientConnected</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadioFrequencyInfos</Name>
+<Value>
+      &lt;WLanRadioFrequencyInfos xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;RadioFrequencyInfo&gt;
+          &lt;RadioID&gt;Radio_0&lt;/RadioID&gt;
+          &lt;Frequencies&gt;
+            &lt;int&gt;2&lt;/int&gt;
+            &lt;int&gt;5&lt;/int&gt;
+            &lt;/Frequencies&gt;
+        &lt;/RadioFrequencyInfo&gt;
+        &lt;RadioFrequencyInfo&gt;
+          &lt;RadioID&gt;Radio_1&lt;/RadioID&gt;
+          &lt;Frequencies&gt;
+            &lt;int&gt;5&lt;/int&gt;
+            &lt;int&gt;8&lt;/int&gt;
+          &lt;/Frequencies&gt;
+        &lt;/RadioFrequencyInfo&gt;
+      &lt;/WLanRadioFrequencyInfos&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanFrequency</Name>
+<Value>
+      &lt;WLanFrequency xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanFrequencyInfo&gt;
+          &lt;RadioID&gt;Radio_0&lt;/RadioID&gt;
+          &lt;Frequency&gt;2&lt;/Frequency&gt;
+        &lt;/WLanFrequencyInfo&gt;
+      &lt;/WLanFrequency&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanSecurityEnabled</Name>
+<Value>
+      &lt;WLanSecurityEnabled xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanSecurityEnabledInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;/WLanSecurityEnabledInfo&gt;
+        &lt;WLanSecurityEnabledInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;Enabled&gt;false&lt;/Enabled&gt;
+        &lt;/WLanSecurityEnabledInfo&gt;
+      &lt;/WLanSecurityEnabled&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanType</Name>
+<Value>
+      &lt;WLanType xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanTypeInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;Type&gt;WPA2-PSK&lt;/Type&gt;
+        &lt;/WLanTypeInfo&gt;
+        &lt;WLanTypeInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;Type&gt;&lt;/Type&gt;
+        &lt;/WLanTypeInfo&gt;
+      &lt;/WLanType&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanEncryption</Name>
+<Value>
+      &lt;WLanEncryption xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanEncryptionInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;Encryption&gt;AES&lt;/Encryption&gt;
+        &lt;/WLanEncryptionInfo&gt;
+        &lt;WLanEncryptionInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;Encryption&gt;&lt;/Encryption&gt;
+        &lt;/WLanEncryptionInfo&gt;
+      &lt;/WLanEncryption&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanKey</Name>
+<Value>
+      &lt;WLanKey xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanKeyInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;Key&gt;hola&lt;/Key&gt;
+        &lt;/WLanKeyInfo&gt;
+        &lt;WLanKeyInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;Key&gt;&lt;/Key&gt;
+        &lt;/WLanKeyInfo&gt;
+      &lt;/WLanKey&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanKeyRenewal</Name>
+<Value>
+      &lt;WLanKeyRenewal xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanKeyRenewalInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;KeyRenewal&gt;6000&lt;/KeyRenewal&gt;
+        &lt;/WLanKeyRenewalInfo&gt;
+        &lt;WLanKeyRenewalInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;KeyRenewal&gt;0&lt;/KeyRenewal&gt;
+        &lt;/WLanKeyRenewalInfo&gt;
+      &lt;/WLanKeyRenewal&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadiusIP1</Name>
+<Value>
+      &lt;WLanRadiusIP1 xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanRadiusIP1Info&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;RadiusIP1&gt;10.0.0.2&lt;/RadiusIP1&gt;
+        &lt;/WLanRadiusIP1Info&gt;
+        &lt;WLanRadiusIP1Info&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;RadiusIP1&gt;&lt;/RadiusIP1&gt;
+        &lt;/WLanRadiusIP1Info&gt;
+      &lt;/WLanRadiusIP1&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadiusPort1</Name>
+<Value>
+      &lt;WLanRadiusPort1 xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanRadiusPort1Info&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;RadiusPort1&gt;9000&lt;/RadiusPort1&gt;
+        &lt;/WLanRadiusPort1Info&gt;
+        &lt;WLanRadiusPort1Info&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;RadiusPort1&gt;0&lt;/RadiusPort1&gt;
+        &lt;/WLanRadiusPort1Info&gt;
+      &lt;/WLanRadiusPort1&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadiusSecret1</Name>
+<Value>
+      &lt;WLanRadiusSecret1 xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanRadiusSecret1Info&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;RadiusSecret1&gt;adios&lt;/RadiusSecret1&gt;
+        &lt;/WLanRadiusSecret1Info&gt;
+        &lt;WLanRadiusSecret1Info&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;RadiusSecret1&gt;&lt;/RadiusSecret1&gt;
+        &lt;/WLanRadiusSecret1Info&gt;
+      &lt;/WLanRadiusSecret1&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadiusIP2</Name>
+<Value>
+      &lt;WLanRadiusIP2 xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanRadiusIP2Info&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;RadiusIP2&gt;&lt;/RadiusIP2&gt;
+        &lt;/WLanRadiusIP2Info&gt;
+        &lt;WLanRadiusIP2Info&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;RadiusIP2&gt;&lt;/RadiusIP2&gt;
+        &lt;/WLanRadiusIP2Info&gt;
+      &lt;/WLanRadiusIP2&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadiusPort2</Name>
+<Value>
+      &lt;WLanRadiusPort2 xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanRadiusPort2Info&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;RadiusPort2&gt;0&lt;/RadiusPort2&gt;
+        &lt;/WLanRadiusPort2Info&gt;
+        &lt;WLanRadiusPort2Info&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;RadiusPort2&gt;0&lt;/RadiusPort2&gt;
+        &lt;/WLanRadiusPort2Info&gt;
+      &lt;/WLanRadiusPort2&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadiusSecret2</Name>
+<Value>
+      &lt;WLanRadiusSecret2 xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanRadiusSecret2Info&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;RadiusSecret2&gt;&lt;/RadiusSecret2&gt;
+        &lt;/WLanRadiusSecret2Info&gt;
+        &lt;WLanRadiusSecret2Info&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;RadiusSecret2&gt;&lt;/RadiusSecret2&gt;
+        &lt;/WLanRadiusSecret2Info&gt;
+      &lt;/WLanRadiusSecret2&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>Radius2Supported</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanEnabled</Name>
+<Value>&lt;WLanEnabled xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanEnabledInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;Enabled&gt;true&lt;/Enabled&gt;&lt;/WLanEnabledInfo&gt;&lt;WLanEnabledInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;Enabled&gt;true&lt;/Enabled&gt;&lt;/WLanEnabledInfo&gt;&lt;/WLanEnabled&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanMode</Name>
+<Value>&lt;WLanMode xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanModeInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;Mode&gt;802.11g&lt;/Mode&gt;&lt;/WLanModeInfo&gt;&lt;WLanModeInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;Mode&gt;802.11an&lt;/Mode&gt;&lt;/WLanModeInfo&gt;&lt;/WLanMode&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanMacAddress</Name>
+<Value>
+      &lt;WLanMacAddress xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanMacAddressInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;MacAddress&gt;FF:FF:FF:FF:FF:FF&lt;/MacAddress&gt;
+        &lt;/WLanMacAddressInfo&gt;
+        &lt;WLanMacAddressInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;MacAddress&gt;EE:EE:EE:EE:EE:EE&lt;/MacAddress&gt;
+        &lt;/WLanMacAddressInfo&gt;
+      &lt;/WLanMacAddress&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanSSID</Name>
+<Value>&lt;WLanSSID xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanSSIDInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;SSID&gt;SSID&lt;/SSID&gt;&lt;/WLanSSIDInfo&gt;&lt;WLanSSIDInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;SSID&gt;Radio24SSID&lt;/SSID&gt;&lt;/WLanSSIDInfo&gt;&lt;/WLanSSID&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanSSIDBroadcast</Name>
+<Value>&lt;WLanSSIDBroadcast xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanSSIDBroadcastInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;SSIDBroadcast&gt;true&lt;/SSIDBroadcast&gt;&lt;/WLanSSIDBroadcastInfo&gt;&lt;WLanSSIDBroadcastInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;SSIDBroadcast&gt;true&lt;/SSIDBroadcast&gt;&lt;/WLanSSIDBroadcastInfo&gt;&lt;/WLanSSIDBroadcast&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanChannelWidth</Name>
+<Value>&lt;WLanChannelWidth xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanChannelWidthInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;ChannelWidth&gt;40&lt;/ChannelWidth&gt;&lt;/WLanChannelWidthInfo&gt;&lt;WLanChannelWidthInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;ChannelWidth&gt;20&lt;/ChannelWidth&gt;&lt;/WLanChannelWidthInfo&gt;&lt;/WLanChannelWidth&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanChannel</Name>
+<Value>&lt;WLanChannel xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanChannelInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;Channel&gt;3&lt;/Channel&gt;&lt;/WLanChannelInfo&gt;&lt;WLanChannelInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;Channel&gt;40&lt;/Channel&gt;&lt;/WLanChannelInfo&gt;&lt;/WLanChannel&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanSecondaryChannel</Name>
+<Value>&lt;WLanSecondaryChannel xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanSecondaryChannelInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;SecondaryChannel&gt;5&lt;/SecondaryChannel&gt;&lt;/WLanSecondaryChannelInfo&gt;&lt;WLanSecondaryChannelInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;SecondaryChannel&gt;0&lt;/SecondaryChannel&gt;&lt;/WLanSecondaryChannelInfo&gt;&lt;/WLanSecondaryChannel&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanQoS</Name>
+<Value>&lt;WLanQoS xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;&lt;WLanQoSInfo&gt;&lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;&lt;QoS&gt;true&lt;/QoS&gt;&lt;/WLanQoSInfo&gt;&lt;WLanQoSInfo&gt;&lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;&lt;QoS&gt;true&lt;/QoS&gt;&lt;/WLanQoSInfo&gt;&lt;/WLanQoS&gt;</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadioInfos</Name>
+<Value>
+      &lt;WLanRadioInfos xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;RadioInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;Frequency&gt;2&lt;/Frequency&gt;
+          &lt;SupportedModes&gt;
+            &lt;string&gt;802.11b&lt;/string&gt;
+            &lt;string&gt;802.11g&lt;/string&gt;
+            &lt;string&gt;802.11n&lt;/string&gt;
+            &lt;string&gt;802.11bg&lt;/string&gt;
+            &lt;string&gt;802.11bgn&lt;/string&gt;
+          &lt;/SupportedModes&gt;
+          &lt;Channels&gt;
+            &lt;int&gt;0&lt;/int&gt;
+            &lt;int&gt;1&lt;/int&gt;
+            &lt;int&gt;2&lt;/int&gt;
+            &lt;int&gt;3&lt;/int&gt;
+            &lt;int&gt;4&lt;/int&gt;
+            &lt;int&gt;5&lt;/int&gt;
+            &lt;int&gt;6&lt;/int&gt;
+            &lt;int&gt;7&lt;/int&gt;
+            &lt;int&gt;8&lt;/int&gt;
+            &lt;int&gt;9&lt;/int&gt;
+            &lt;int&gt;10&lt;/int&gt;
+            &lt;int&gt;11&lt;/int&gt;
+          &lt;/Channels&gt;
+          &lt;WideChannels&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;3&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;1&lt;/int&gt;
+                &lt;int&gt;5&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;4&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;2&lt;/int&gt;
+                &lt;int&gt;6&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;5&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;3&lt;/int&gt;
+                &lt;int&gt;7&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;6&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;4&lt;/int&gt;
+                &lt;int&gt;8&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;7&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;5&lt;/int&gt;
+                &lt;int&gt;9&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;8&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;6&lt;/int&gt;
+                &lt;int&gt;10&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;9&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;7&lt;/int&gt;
+                &lt;int&gt;11&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+          &lt;/WideChannels&gt;
+          &lt;SupportedSecurity&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-OPEN&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIP&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIP&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA2-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIPORAES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA2-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIPORAES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+          &lt;/SupportedSecurity&gt;
+        &lt;/RadioInfo&gt;
+        &lt;RadioInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;Frequency&gt;5&lt;/Frequency&gt;
+          &lt;SupportedModes&gt;
+            &lt;string&gt;802.11a&lt;/string&gt;
+            &lt;string&gt;802.11n&lt;/string&gt;
+            &lt;string&gt;802.11an&lt;/string&gt;
+          &lt;/SupportedModes&gt;
+          &lt;Channels&gt;
+            &lt;int&gt;0&lt;/int&gt;
+            &lt;int&gt;36&lt;/int&gt;
+            &lt;int&gt;40&lt;/int&gt;
+            &lt;int&gt;44&lt;/int&gt;
+            &lt;int&gt;48&lt;/int&gt;
+            &lt;int&gt;149&lt;/int&gt;
+            &lt;int&gt;153&lt;/int&gt;
+            &lt;int&gt;157&lt;/int&gt;
+            &lt;int&gt;161&lt;/int&gt;
+          &lt;/Channels&gt;
+          &lt;WideChannels&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;0&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;0&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;38&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;36&lt;/int&gt;
+                &lt;int&gt;40&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;46&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;44&lt;/int&gt;
+                &lt;int&gt;48&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;151&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;149&lt;/int&gt;
+                &lt;int&gt;153&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;159&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;157&lt;/int&gt;
+                &lt;int&gt;161&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+          &lt;/WideChannels&gt;
+          &lt;SupportedSecurity&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-AUTO&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-OPEN&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-SHARED&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-AUTO-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;TKIPORAES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;TKIP&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA2-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+          &lt;/SupportedSecurity&gt;
+        &lt;/RadioInfo&gt;
+      &lt;/WLanRadioInfos&gt;
+    </Value>
+</State>
+</Simulator>

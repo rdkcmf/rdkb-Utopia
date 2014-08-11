@@ -1,0 +1,98 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+# Build target (default)
+build: libhdksrv-c++ \
+       libhdksrv-nologging \
+       unittest \
+       unittest-static \
+       unittest-c++ \
+       unittest-static-c++
+
+# Clean the build directory
+clean:
+	if exist actual @rmdir /s /q actual
+	if exist build @rmdir /s /q build
+
+# libhdkxml
+libhdkxml:
+	@pushd ..\..\libhdkxml & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR="..\libhdksrv\unittest\build\libhdkxml" & \
+	@popd
+
+# libhdksrv (C, logging)
+libhdksrv: libhdkxml
+	@pushd .. & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR="unittest\build\libhdksrv" BUILDDIR_LIBHDKXML="unittest\build\libhdkxml" HDK_SRV_LOGGING=1 & \
+	@popd
+
+# libhdksrv-c++ (C++, logging)
+libhdksrv-c++: libhdkxml
+	@pushd .. & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR="unittest\build\libhdksrv-c++" BUILDDIR_LIBHDKXML="unittest\build\libhdkxml" HDK_SRV_CXX=1 HDK_SRV_LOGGING=1 & \
+	@popd
+
+# libhdksrv-nologging (C)
+libhdksrv-nologging: libhdkxml
+	@pushd .. & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR="unittest\build\libhdksrv-nologging" BUILDDIR_LIBHDKXML="unittest\build\libhdkxml" & \
+	@popd
+
+# unittest
+unittest: libhdksrv
+	@if not exist "build\unittest" @mkdir "build\unittest"
+	copy "build\libhdkxml\libhdkxml.dll" "build\unittest"
+	copy "build\libhdkxml\libhdkxml.lib" "build\unittest"
+	copy "build\libhdkxml\libexpat.dll" "build\unittest"
+	copy "build\libhdksrv\libhdksrv.dll" "build\unittest"
+	copy "build\libhdksrv\libhdksrv.lib" "build\unittest"
+	nmake.exe /NOLOGO /f Makefile.build.nmake BUILDDIR="build\unittest"
+
+# unittest-static
+unittest-static: libhdksrv
+	@if not exist "build\unittest-static" @mkdir "build\unittest-static"
+	copy "build\libhdkxml\libhdkxmlMT.lib" "build\unittest-static\libhdkxml.lib"
+	copy "build\libhdkxml\libexpatMT.lib" "build\unittest-static\libexpat.lib"
+	copy "build\libhdksrv\libhdksrvMT.lib" "build\unittest-static\libhdksrv.lib"
+	nmake.exe /NOLOGO /f Makefile.build.nmake BUILDDIR="build\unittest-static" UNITTEST_STATIC=1 UNITTEST_LDFLAGS="libexpat.lib"
+
+# unittest (C++)
+unittest-c++: libhdksrv
+	@if not exist "build\unittest-c++" @mkdir "build\unittest-c++"
+	copy "build\libhdkxml\libhdkxml.dll" "build\unittest-c++"
+	copy "build\libhdkxml\libhdkxml.lib" "build\unittest-c++"
+	copy "build\libhdkxml\libexpat.dll" "build\unittest-c++"
+	copy "build\libhdksrv\libhdksrv.dll" "build\unittest-c++"
+	copy "build\libhdksrv\libhdksrv.lib" "build\unittest-c++"
+	nmake.exe /NOLOGO /f Makefile.build.nmake BUILDDIR="build\unittest-c++" UNITTEST_CXX=1
+
+# unittest-static-c++
+unittest-static-c++: libhdksrv
+	@if not exist "build\unittest-static-c++" @mkdir "build\unittest-static-c++"
+	copy "build\libhdkxml\libhdkxmlMT.lib" "build\unittest-static-c++\libhdkxml.lib"
+	copy "build\libhdkxml\libexpatMT.lib" "build\unittest-static-c++\libexpat.lib"
+	copy "build\libhdksrv\libhdksrvMT.lib" "build\unittest-static-c++\libhdksrv.lib"
+	nmake.exe /NOLOGO /f Makefile.build.nmake BUILDDIR="build\unittest-static-c++" UNITTEST_CXX=1 UNITTEST_STATIC=1 UNITTEST_LDFLAGS="libexpat.lib"

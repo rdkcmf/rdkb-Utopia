@@ -1,0 +1,13 @@
+namespace "http://cisco.com/HNAPExt/"
+
+import "state.hsl"
+import "type.hsl"
+
+action MyAction
+    input
+        string Key
+        bool Value
+
+action_state MyAction
+    state
+        [set] MyState

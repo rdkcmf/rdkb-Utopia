@@ -1,0 +1,168 @@
+#
+# parental_control.hnap
+#
+# HNAP specifications for the Parental Controls feature of the Cisco Home HotSpot.
+#
+
+namespace "http://cisco.com/HNAPExt/HotSpot/"
+
+
+#
+# Structures
+#
+
+#@ The WAN access status for a device.
+struct WANAccessStatus
+
+    #@ The MAC address of the device.
+    MACAddress MACAddress
+
+    #@ The IP address of the device.
+    IPAddress IPAddress
+
+    #@ The WAN access state for the device: "true" if the device is
+    #@ currently allowed access the WAN and "false" otherwise.
+    bool HasWANAccess
+
+    #@ "true" if the device is connected to the guest network; "false"
+    #@ otherwise.
+    bool OnGuestNetwork
+
+
+#
+# Actions
+#
+
+#@ Get the WAN access status for a device
+action GetWANAccessStatuses
+
+    output
+
+        #@ The WAN access status array for all devices returned by
+        #@ GetConnectedDevices (as defined by the HNAP 1.2 Router specification).
+        WANAccessStatus[] WANAccessStatuses
+
+
+#@ Determine if the parental controls password has been set.
+#@
+#@ Requirement References: "separate Parental Control password."
+action HasParentalControlsPassword
+
+    output
+
+        #@ "true" if the parental controls password has been set; "false"
+        #@ otherwise.
+        bool HasPassword
+
+
+#@ Check the parental controls password.
+#@
+#@ Requirement References: "separate Parental Control password."
+action CheckParentalControlsPassword
+
+    input
+
+        #@ The parental controls password.  A valid password must be of length
+        #@ 4-32 characters and only contain letters and numbers ([A-Za-z0-9]).
+        string Password
+
+    result
+
+        #@ The old parental controls password is incorrect or the parental
+        #@ controls password is not set.
+        "ERROR_INCORRECT_PASSWORD"
+
+
+#@ Set the parental controls password.
+#@
+#@ Requirement References: "separate Parental Control password."
+action SetParentalControlsPassword
+
+    input
+
+        #@ The old parental controls password.  The old parental controls
+        #@ password should be ignored if the parental controls password is not
+        #@ set.
+        string OldPassword
+
+        #@ The new parental controls password.  A valid password must be of
+        #@ length 4-32 characters and only contain letters and numbers
+        #@ ([A-Za-z0-9]).
+        string NewPassword
+
+    result
+
+        #@ The old parental controls password was incorrect.
+        "ERROR_INCORRECT_PASSWORD"
+
+        #@ An invalid new password was provided.
+        "ERROR_INVALID_PASSWORD"
+
+
+#@ Get the parental controls password reset question.
+#@
+#@ This method should return ERROR if a parental controls password reset
+#@ question has not been set.
+action GetParentalControlsResetQuestion
+
+    output
+
+        #@ The parental controls password reset question.
+        string Question
+
+
+#@ Set the parental controls password reset question and answer.
+action SetParentalControlsResetQuestion
+
+    input
+
+        #@ The parental controls password.  A valid password must be of length
+        #@ 4-32 characters and only contain letters and numbers ([A-Za-z0-9]).
+        string Password
+
+        #@ The parental controls password reset question.  The string must be of
+        #@ length 1 to 64 bytes and be encoded using UTF-8.
+        string Question
+
+        #@ The parental controls password reset question's answer.  The string
+        #@ must be of length 1 to 32 bytes and be encoded using UTF-8.
+        string Answer
+
+    result
+
+        #@ The parental controls password is incorrect or the parental controls
+        #@ password is not set.
+        "ERROR_INCORRECT_PASSWORD"
+
+        #@ An invalid question was provided.
+        "ERROR_INVALID_QUESTION"
+
+        #@ An invalid answer was provided.
+        "ERROR_INVALID_ANSWER"
+
+
+#@ Set a new parental controls password using the parental controls password
+#@ reset question and answer.
+#@
+#@ Note: The answer should be compared using a case-insensitive string compare.
+action ResetParentalControlsPassword
+
+    input
+
+        #@ The parental controls password reset question's answer.  The string
+        #@ must be of length 1 to 32 bytes and be encoded using UTF-8.
+        string Answer
+
+        #@ The new parental controls password.  A valid password must be of
+        #@ length 4-32 characters and only contain letters and numbers
+        #@ ([A-Za-z0-9]).
+        string NewPassword
+
+    result
+
+        #@ The parental controls password reset question's answer is incorrect
+        #@ or the parental controls password reset question is not set.
+        "ERROR_INCORRECT_ANSWER"
+
+        #@ An invalid new password was provided.
+        "ERROR_INVALID_PASSWORD"

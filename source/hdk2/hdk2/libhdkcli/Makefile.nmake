@@ -1,0 +1,151 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+####
+# Makefile.nmake - Builds static and dynamic versions of the libhdkcli library.
+#
+# Generated Binary Files
+#   + Dynamic library
+#      - libhdkcli.dll : The dynamic library, linked against shared (dynamic) libhdkxml (libhdkxml.dll) and
+#                        multithreaded crt (msvcrXX.dll) libraries
+#      - libhdkcli.lib : Defines import methods for libhdkcli.dll.
+#   + Static library
+#      - libhdkcliMT.lib : The static library, linked against static versions of libexpat (libhdkxmlMT.lib) and
+#                          multithreaded static crt (libcmt.lib) libraries
+#
+# Build environment variables
+#   - BUILDDIR : The directory in which the generated binary files are placed.
+#                The default is $(HDKDIR)\build\libhdkcli
+#   - BUILDDIR_LIBHDKXML : The location of the libhdkxml binaries.
+#                          The default is $(HDKDIR)\build\libhdkxml
+#   - DEBUG : If defined, the resulting binaries will be built with debug information
+#             The default is not defined.
+####
+
+# HDK root directory
+HDKDIR = ..
+
+# Build directory
+!ifndef BUILDDIR
+BUILDDIR = $(HDKDIR)\build\libhdkcli
+!endif
+
+# libhdkxml library directory
+!ifndef BUILDDIR_LIBHDKXML
+BUILDDIR_LIBHDKXML = $(HDKDIR)\build\libhdkxml
+!endif
+
+# Targets
+DYNAMIC_LIB = $(BUILDDIR)\libhdkcli.dll
+STATIC_LIB = $(BUILDDIR)\libhdkcliMT.lib
+
+# Object files for the dynamic library
+BUILDDIR_DYNAMIC = $(BUILDDIR)\obj_dynamic
+OBJS_DYNAMIC = \
+	"$(BUILDDIR_DYNAMIC)\hdk_cli.obj" \
+	"$(BUILDDIR_DYNAMIC)\hdk_cli_log.obj" \
+	"$(BUILDDIR_DYNAMIC)\hdk_cli_http_winhttp.obj"
+
+# Object files for the static library
+BUILDDIR_STATIC = $(BUILDDIR)\obj_static
+OBJS_STATIC = \
+	"$(BUILDDIR_STATIC)\hdk_cli.obj" \
+	"$(BUILDDIR_STATIC)\hdk_cli_log.obj" \
+	"$(BUILDDIR_STATIC)\hdk_cli_http_winhttp.obj"
+
+# Compiler flags
+!ifdef HDK_CLI_CXX
+HDK_CLI_CC = $(CXX)
+HDK_CLI_CFLAGS = $(CXXFLAGS) /TP
+!else
+HDK_CLI_CC = $(CC)
+HDK_CLI_CFLAGS = $(CFLAGS) /TC
+!endif
+
+# Enable highest warning level; treat warnings as errors
+HDK_CLI_CFLAGS = $(HDK_CLI_CFLAGS) /W4 /WX /analyze
+# Disable "'function': was declared deprecated" warning
+HDK_CLI_CFLAGS = $(HDK_CLI_CFLAGS) /wd4996
+# Disable "conditional expression is constant" warning
+HDK_CLI_CFLAGS = $(HDK_CLI_CFLAGS) /wd4127
+HDK_CLI_CFLAGS = $(HDK_CLI_CFLAGS) /DHDK_CLI_BUILD /I. /I$(HDKDIR)\include
+
+!ifdef DEBUG
+HDK_CLI_CFLAGS = $(HDK_CLI_CFLAGS) /Od /Zi
+!else
+HDK_CLI_CFLAGS = $(HDK_CLI_CFLAGS) /Os
+!endif
+
+!ifdef HDK_CLI_LOGGING
+HDK_CLI_CFLAGS = $(HDK_CLI_CFLAGS) /DHDK_LOGGING
+!endif
+
+# Library type-specific flags (note the /DHDK_XML_STATIC to indicate static linkage with libhdkxml)
+HDK_CLI_CFLAGS_DYNAMIC = $(HDK_CLI_CFLAGS)
+HDK_CLI_CFLAGS_STATIC = $(HDK_CLI_CFLAGS) /DHDK_XML_STATIC
+
+!ifdef DEBUG
+HDK_CLI_CFLAGS_DYNAMIC = $(HDK_CLI_CFLAGS_DYNAMIC) /MDd
+HDK_CLI_CFLAGS_STATIC = $(HDK_CLI_CFLAGS_STATIC) /MTd
+!else
+HDK_CLI_CFLAGS_DYNAMIC = $(HDK_CLI_CFLAGS_DYNAMIC) /MD
+HDK_CLI_CFLAGS_STATIC = $(HDK_CLI_CFLAGS_STATIC) /MT
+!endif
+
+# Linker flags
+LDFLAGS = /NOLOGO /DLL
+LDFLAGS = $(LDFLAGS) "$(BUILDDIR_LIBHDKXML)\libhdkxml.lib" "winhttp.lib"
+!ifdef DEBUG
+LDFLAGS = /DEBUG $(LDFLAGS)
+!endif
+
+# Lib flags
+LIBFLAGS = /NOLOGO /WX
+
+# Build target (default)
+build: $(DYNAMIC_LIB) $(STATIC_LIB)
+
+# Clean the build directory
+clean:
+	if exist "$(BUILDDIR)" @rmdir /s /q "$(BUILDDIR)"
+
+# Rule for linking the dynamic library
+$(DYNAMIC_LIB): $(OBJS_DYNAMIC)
+	link.exe $(LDFLAGS) $(**) /OUT:$(DYNAMIC_LIB)
+
+# Rule for generating the static library
+$(STATIC_LIB): $(OBJS_STATIC)
+	lib.exe $(LIBFLAGS) $(**) /OUT:$(STATIC_LIB)
+
+# Rule for compiling source files for the dynamic library
+{}.c{$(BUILDDIR_DYNAMIC)}.obj:
+	@if not exist "$(BUILDDIR_DYNAMIC)" @mkdir "$(BUILDDIR_DYNAMIC)"
+	$(HDK_CLI_CC) $(HDK_CLI_CFLAGS_DYNAMIC) /Fd$(*R) /Fo$@ /c $(<)
+
+# Rule for compiling source files for the static library
+{}.c{$(BUILDDIR_STATIC)}.obj:
+	@if not exist "$(BUILDDIR_STATIC)" @mkdir "$(BUILDDIR_STATIC)"
+	$(HDK_CLI_CC) $(HDK_CLI_CFLAGS_STATIC) /Fd$(*R) /Fo$@ /c $(<)

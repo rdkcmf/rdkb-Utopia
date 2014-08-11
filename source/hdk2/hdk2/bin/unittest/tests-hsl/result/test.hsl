@@ -1,0 +1,21 @@
+namespace "http://cisco.com/HNAPExt/"
+
+action MyAction
+    input
+        int a
+    result
+        "OK"
+        "REBOOT"
+        "ERROR"
+        "BLAH"
+        "ERROR_BLAH"
+        "ERROR_BLAH"
+
+action MyAction2
+    result
+        "ERROR_FOO"
+        "ERROR_BLAH"
+
+action MyAction3
+    output
+        int MyAction3Result

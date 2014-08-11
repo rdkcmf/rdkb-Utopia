@@ -1,0 +1,40 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct MyStruct
+    int MyMember
+
+    # Multply defined member
+    string MyMember
+
+    # Bad member name
+    long $foo
+
+    # Bad type
+    loong blue
+
+    # Missing member name
+    int
+
+    # Multiple member names
+    int a b
+    int a b c
+
+    # Bad array syntax
+    int z[]
+
+    # Undefined namespace abbrev
+    zzz:yyy d
+
+# Unindented member
+int zz
+
+enum MyEnum
+    "Value1"
+    "Value2"
+
+    # Member outside of struct
+    int z
+
+enum MyEnum2
+    "Value3"
+    "Value4"

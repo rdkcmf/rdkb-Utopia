@@ -1,0 +1,6 @@
+#
+# HTTP-307.test
+#   Verify libhdkcli handles a HTTP 307 server response.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod

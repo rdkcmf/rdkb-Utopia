@@ -1,0 +1,6 @@
+# tests-gen/dom/test.hsl
+
+namespace "http://cisco.com/HNAPExt/"
+
+enum Foo
+    "Value"

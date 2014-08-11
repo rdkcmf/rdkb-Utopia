@@ -1,0 +1,34 @@
+ipaddressArrayRead (size: 5, empty: false)
+[
+"255.255.255.255",
+"0.0.0.0",
+"127.0.0.1",
+"192.168.0.1",
+"10.0.0.1"
+]
+ipaddressArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<IPAddress xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</IPAddress>
+ipaddressArrayWrite (size: 3, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<IPAddress xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<IPAddress>111.111.111.112</IPAddress>
+<IPAddress>222.222.222.223</IPAddress>
+<IPAddress>12.34.56.78</IPAddress>
+</IPAddress>
+ipaddressArrayCopy (size: 4, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<IPAddress xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<IPAddress>111.111.111.112</IPAddress>
+<IPAddress>222.222.222.223</IPAddress>
+<IPAddress>12.34.56.78</IPAddress>
+<IPAddress>111.111.111.112</IPAddress>
+</IPAddress>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 52 times
+malloc_interposer.c - exit: free called 52 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10255
+malloc_interposer.c - exit: malloc max = 9755
+malloc_interposer.c - ************************************************************

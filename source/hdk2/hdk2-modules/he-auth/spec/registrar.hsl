@@ -1,0 +1,129 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+namespace "http://cisco.com/he/registrar/"
+
+
+#
+# Structures
+#
+
+#@ Description of a network object
+struct NetworkObject
+    UUID     NetworkObjectID
+    string   FriendlyName
+    string   ControlURL
+    #@ implemented services
+    string[] ServiceURIs
+
+#@ Description of a device
+struct Device
+    UUID   DeviceID
+    UUID   TypeID
+    string FriendlyName
+    string Manufacturer
+    string Model
+    NetworkObject[] NetworkObjects
+
+#@ A reference to a network object
+struct NORef
+    UUID DeviceID
+    UUID NetworkObjectID
+
+#@ A match from the <tt>Query</tt> action
+struct QueryMatch
+    NORef  NetworkObjectRef
+    string ControlURL
+
+
+#
+# Actions
+#
+
+#@ Register the presence of a device
+action Register
+    input
+        #@ description of the device
+        Device Device
+
+#@ Unregister the presence of a device
+action Unregister
+    input
+        #@ reference to the device
+        UUID DeviceID
+    result
+        #@ the DeviceID is not registered
+        "ERROR_UNKNOWN_DEVICE_ID"
+
+#@ Get information about a device
+action GetDevice
+    input
+        #@ reference to the device
+        UUID DeviceID
+    output
+        #@ description of the device
+        Device Device
+    result
+        #@ the DeviceID is not registered
+        "ERROR_UNKNOWN_DEVICE_ID"
+
+#@ Find network objects
+action Query
+    input
+        #@ optionally, only network objects on this device
+        [optional] UUID   DeviceID
+        #@ optionally, only network objects with this NoID
+        [optional] UUID   NetworkObjectID
+        #@ optionally, only network objects implementing this service
+        [optional] string ServiceURI
+    output
+        #@ found network objects
+        QueryMatch[] QueryResults
+
+
+#
+# Events
+#
+
+#@ A device registered.
+event Registered
+    #@ reference to the device
+    UUID DeviceID
+
+
+#
+# Services
+#
+
+#@ The registrar service.
+service Registrar
+    actions
+        Register
+        Unregister
+        GetDevice
+        Query
+    events
+        Registered

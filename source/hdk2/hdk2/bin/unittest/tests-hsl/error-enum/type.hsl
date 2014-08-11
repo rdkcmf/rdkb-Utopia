@@ -1,0 +1,24 @@
+namespace "http://cisco.com/HNAPExt/"
+
+# Duplicated enumeration value
+enum MyEnum
+    "Value1"
+    "Value2"
+    "Value1"
+
+# Enum value outside of enum definition not allowed
+struct MyStruct
+    int a
+    "Value3"
+
+# Empty enumeration value
+enum MyEnum2
+    "Value1"
+    ""
+    "Value2"
+
+# Unindented enumeration value
+"Value3"
+
+# Empty enum
+enum MyEnum3

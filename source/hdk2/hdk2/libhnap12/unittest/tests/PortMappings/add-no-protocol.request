@@ -1,0 +1,15 @@
+SOAPAction: "http://purenetworks.com/HNAP1/AddPortMapping"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <AddPortMapping xmlns="http://purenetworks.com/HNAP1/">
+      <PortMappingDescription>No IPProtocol</PortMappingDescription>
+      <InternalClient>192.168.1.23</InternalClient>
+      <ExternalPort>50000</ExternalPort>
+      <InternalPort>23</InternalPort>
+    </AddPortMapping>
+  </soap:Body>
+</soap:Envelope>

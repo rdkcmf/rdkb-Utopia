@@ -1,0 +1,59 @@
+#
+# device_list.hnap
+#
+# HNAP specifications for the Devices List feature of the Cisco Home HotSpot.
+#
+
+namespace "http://cisco.com/HNAPExt/HotSpot/"
+
+
+#
+# Structures
+#
+
+#@ Device information structure.
+struct DeviceInfo
+
+    #@ The device's MAC address.  The device's MAC address uniquely identifies
+    #@ the device.
+    MACAddress MACAddress
+
+    #@ The device's friendly name.
+    string FriendlyName
+
+
+#
+# Actions
+#
+
+#@ Get the array of device information structures.
+#@
+#@ Requirement References: "Get and set"
+action GetDeviceInfo
+
+    output
+
+        #@ The device information array.  The array must contain only one
+        #@ structure per device (unique MAC address).  All newly connected
+        #@ devices are added to the list.  Devices connected to the guest network
+        #@ are only added to the list after they are added to the guest network
+        #@ approval list.
+        DeviceInfo[] DeviceInfos
+
+
+#@ Set the array of device information structures.
+#@
+#@ Requirement References: "Get and set"
+action SetDeviceInfo
+    input
+
+        #@ The device information array.  The array must contain only one
+        #@ structure per device (unique MAC address).  If any DeviceInfo
+        #@ structure contains a MAC address not returned by GetDeviceInfo then
+        #@ ERROR_UNKNOWN_MACADDRESS should be returned.
+        DeviceInfo[] DeviceInfos
+
+    result
+
+        #@ An unknown MAC address was provided.
+        "ERROR_UNKNOWN_MACADDRESS"

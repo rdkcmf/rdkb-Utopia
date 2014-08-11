@@ -1,0 +1,125 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+# Location of the HDK
+!ifndef HDKDIR
+HDKDIR = ..\..
+!endif
+
+# HDK build directories
+!ifndef BUILDDIR_LIBHDKXML
+BUILDDIR_LIBHDKXML = $(HDKDIR)\build\libhdkxml
+!endif
+
+# Build directory
+!ifndef BUILDDIR
+BUILDDIR = ..\..\build\sample\dom
+!endif
+
+# HSL files
+HSL = \
+	dom_sample.hsl
+
+# HSL flags
+HSL_FLAGS = --dom-schema
+
+HSL_SCHEMA = hdk_dom_schema
+HSL_CPP = hdk_dom
+
+# Targets
+EXE = $(BUILDDIR)\dom.exe
+
+# Object files
+OBJS = \
+	"$(BUILDDIR)\hdk_dom_schema.obj" \
+	"$(BUILDDIR)\hdk_dom.obj" \
+	"$(BUILDDIR)\dom.obj"
+
+# HSL-generated source files
+HSL_SCHEMA_SRC = \
+	"$(BUILDDIR)\$(HSL_SCHEMA).h" \
+	"$(BUILDDIR)\$(HSL_SCHEMA).c"
+
+HSL_CPP_SRC = \
+	"$(BUILDDIR)\$(HSL_CPP).h" \
+	"$(BUILDDIR)\$(HSL_CPP).cpp"
+
+# Compiler flags
+DOM_CC = $(CXX) /TP
+DOM_CFLAGS = $(CXXFLAGS)
+
+# Enable highest warning level; treat warnings as errors
+DOM_CFLAGS = $(DOM_CFLAGS) /W4 /WX /analyze
+# Disable "'function': was declared deprecated" warning
+DOM_CFLAGS = $(DOM_CFLAGS) /wd4996
+DOM_CFLAGS = $(DOM_CFLAGS) /I$(HDKDIR)\include /I$(BUILDDIR) /DHDK_MOD_STATIC
+
+!ifdef DEBUG
+DOM_CFLAGS = $(DOM_CFLAGS) /Od /Zi /MDd
+!else
+DOM_CFLAGS = $(DOM_CFLAGS) /Os /MD
+!endif
+
+# Linker flags
+LDFLAGS = /NOLOGO
+LDFLAGS = $(LDFLAGS) /LIBPATH:"$(BUILDDIR_LIBHDKXML)" libhdkxml.lib
+!ifdef DEBUG
+LDFLAGS = $(LDFLAGS) /DEBUG
+!else
+LDFLAGS = $(LDFLAGS) /RELEASE
+!endif
+
+# Build target (default)
+build: $(EXE)
+
+# Clean the build directory
+clean:
+	if exist "$(BUILDDIR)" @rmdir /s /q "$(BUILDDIR)"
+
+# Rule for linking the executable
+$(EXE): $(OBJS)
+	link.exe $(LDFLAGS) $(**R) /OUT:$(EXE)
+	copy "$(BUILDDIR_LIBHDKXML)\libhdkxml.dll" "build"
+	copy "$(BUILDDIR_LIBHDKXML)\libexpat.dll" "build"
+
+# HSL code generation
+$(HSL_SCHEMA_SRC): $(HSL)
+	$(HDKDIR)\bin\hdkmod.py $(HSL_FLAGS) --client -o $(BUILDDIR) -b $(HSL_SCHEMA) $(**)
+
+$(HSL_CPP_SRC): $(HSL)
+	$(HDKDIR)\bin\hdkcli_cpp.py $(HSL_FLAGS) --module-name $(HSL_SCHEMA) -o $(BUILDDIR) -b $(HSL_CPP) $(**)
+
+# Rules for compiling source files
+{}.cpp{$(BUILDDIR)}.obj:
+	@if not exist "$(BUILDDIR)" @mkdir "$(BUILDDIR)"
+	$(DOM_CC) $(DOM_CFLAGS) /Fd$(*R) /Fo$@ /c $(<)
+
+# Rules for compiling generated source files
+{$(BUILDDIR)}.c{$(BUILDDIR)}.obj:
+	$(DOM_CC) $(DOM_CFLAGS) /Fd$(*R) /Fo$@ /c $(<)
+
+{$(BUILDDIR)}.cpp{$(BUILDDIR)}.obj:
+	$(DOM_CC) $(DOM_CFLAGS) /Fd$(*R) /Fo$@ /c $(<)

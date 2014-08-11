@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+<title>HNAP</title>
+
+<style type="text/css">
+body, td, th {background-color:white;font-family:"Helvetica";font-size:9pt;}
+img.logo {padding:40px;}
+tt {font-family:"Courier New";}
+h1 {font-weight:normal;font-size:16pt;}
+h2 {page-break-before:always;border-style: solid none; border-width: 2pt 0; padding: 8pt 0; margin: 30pt 0 10pt 0; font-size:14pt;}
+h3 {font-size:12pt;}
+h4 {font-size:9pt;margin:3ex 0 1ex 0;}
+p {margin:1ex 0;padding:0}
+table {margin:0;padding:0}
+th,td {padding:0 1em;margin:0;text-align: left;vertical-align: baseline;background-color:#EEE;}
+p.syntax {background-color:#EEE;padding:1ex 1em;}
+p.http {background-color:#EEE;padding:1ex 1em;font-family:"Courier New";}
+hr.before {page-break-before:always;margin-top:7ex;}
+div.abstract h4 {border-style: solid none none none;border-width: 2pt 0 0 0;padding: 8pt 0 0 0;margin: 30pt 0 0 0; }
+div.copyright p {font-style:italic;font-size:smaller;padding:0;margin:0;}
+div.copyright h4 {font-style:italic;font-size:smaller;padding: 100pt 0 0 0;margin:0;}
+p.version {font-style:italic;font-weight:bold;}
+p.date {font-style:italic;}
+p.fullname {font-family:"Courier New";}
+var {background-color:#CFC;font-family:"Helvetica";font-size:8pt;font-style:normal;}
+var:before {content:"["}
+var:after {content:"]"}
+.keyword {color: blue;}
+.string {color: darkblue;}
+.comment {color: darkgrey;}
+.type {color: #800;}
+.defined {font-weight:bold;}
+table.params th {background-color:#EEE;}
+table.params td {}
+</style>
+</head>
+<body>
+<h2>Contents</h2>
+<p class="contents">
+<a href="#services">Services</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#service.MyService">MyService</a><br/>
+<a href="#actions">Actions</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#action.MyAction">MyAction</a><br/>
+<a href="#events">Events</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#event.MyEvent">MyEvent</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#event.MyEvent2">MyEvent2</a><br/>
+<a href="#structs">Structures</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#struct.MyStruct">MyStruct</a><br/>
+</p>
+<h2><a name="services">Services</a></h2>
+<h3><a name="service.MyService">MyService</a></h3>
+<p class="fullname">http://cisco.com/HNAPExt/MyService</p>
+<p>My service... </p>
+<h4>Service Actions</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#action.MyAction">MyAction</a><br/>
+<h4>Service Events</h4>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#event.MyEvent">MyEvent</a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#event.MyEvent2">MyEvent2</a><br/>
+<h2><a name="actions">Actions</a></h2>
+<h3><a name="action.MyAction">MyAction</a></h3>
+<p class="fullname">http://cisco.com/HNAPExt/MyAction</p>
+
+<p class="syntax"><tt>
+<a href="#enum.MyActionResult"><span class="type">MyActionResult</span></a> <span class="defined">MyAction</span><br />
+(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">int</span> a,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">string</span>[] b,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#struct.MyStruct"><span class="type">MyStruct</span></a> c,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">out</span> <span class="type">MACAddress</span> a<br />
+);
+</tt></p>
+<h4>In Parameters</h4>
+<table summary="in parameters" class="params">
+<tr>
+<td><p><tt>a</tt></p></td>
+<td><p><tt><span class="type">int</span></tt></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><tt>b</tt></p></td>
+<td><p><tt><span class="type">string</span>[]</tt></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><tt>c</tt></p></td>
+<td><p><tt><a href="#struct.MyStruct"><span class="type">MyStruct</span></a></tt></p></td>
+<td>
+</td>
+</tr>
+</table>
+<h4>Out Parameters</h4>
+<table summary="out parameters" class="params">
+<tr>
+<td><p><tt>a</tt></p></td>
+<td><p><tt><span class="type">MACAddress</span></tt></p></td>
+<td>
+</td>
+</tr>
+</table>
+<h4><a name="enum.MyActionResult">Return Type</a></h4>
+<p class="fullname">http://cisco.com/HNAPExt/MyActionResult</p>
+
+<p class="syntax"><tt>
+<span class="keyword">enum</span> <span class="defined">MyActionResult</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"OK",<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"ERROR"<br />
+}
+</tt></p>
+<table summary="values" class="params">
+<tr>
+<td><p><tt>OK</tt></p></td>
+<td><p>succeeded</p></td>
+</tr>
+<tr>
+<td><p><tt>ERROR</tt></p></td>
+<td><p>failed</p></td>
+</tr>
+</table>
+<h4>Sample Transaction</h4>
+<p class="http">
+POST <var>location</var> HTTP/1.1<br />
+Host: 192.168.1.1<br />
+Content-Type: text/xml; charset=utf-8<br />
+Content-Length: <var>number of octets in body</var><br />
+SOAPAction: "http://cisco.com/HNAPExt/MyAction"<br />
+<br />
+&lt;?xml version="1.0" encoding="utf-8"?&gt;<br />
+&lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;<br />
+&nbsp;&nbsp;&lt;Body&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;MyAction xmlns="http://cisco.com/HNAPExt/"><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;a&gt;<var><span class="type">int</span> value</var>&lt;/a&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;b&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;<var><span class="type">string</span> value</var>&lt;/string&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/b&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;c&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;a&gt;<var><span class="type">IPAddress</span> value</var>&lt;/a&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;b&gt;<var><span class="type">long</span> value</var>&lt;/b&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/c&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/MyAction><br />
+&nbsp;&nbsp;&lt;/Body&gt;<br />
+&lt;/Envelope&gt;<br />
+</p>
+<p class="http"><tt>
+HTTP/1.1 200 OK<br />
+Content-Type: text/xml; charset=utf-8<br />
+Content-Length: <var>number of octets in body</var><br />
+<br />
+&lt;?xml version="1.0" encoding="utf-8"?&gt;<br />
+&lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;<br />
+&nbsp;&nbsp;&lt;Body&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;MyActionResponse xmlns="http://cisco.com/HNAPExt/"><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;MyActionResult&gt;<var><a href="#enum.MyActionResult"><span class="type">MyActionResult</span></a> value</var>&lt;/MyActionResult&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;a&gt;<var><span class="type">MACAddress</span> value</var>&lt;/a&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/MyActionResponse><br />
+&nbsp;&nbsp;&lt;/Body&gt;<br />
+&lt;/Envelope&gt;<br />
+</tt></p>
+<h2><a name="events">Events</a></h2>
+<h3><a name="event.MyEvent">MyEvent</a></h3>
+<p class="fullname">http://cisco.com/HNAPExt/MyEvent</p>
+<p>MyEvent blah blah... </p>
+<p>NOTE: This event does not have an event payload.</p>
+<hr class="before"/>
+<h3><a name="event.MyEvent2">MyEvent2</a></h3>
+<p class="fullname">http://cisco.com/HNAPExt/MyEvent2</p>
+<p>MyEvent2 blah blah... </p>
+<h4>Event Payload</h4>
+<p class="syntax"><tt>
+<span class="keyword">struct</span> <span class="defined">MyEvent2</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">int</span> a;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="#struct.MyStruct"><span class="type">MyStruct</span></a> b;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">blob</span> c;<br />
+}
+</tt></p>
+<table summary="members" class="params">
+<tr>
+<td><p><tt>a</tt></p></td>
+<td><p><tt><span class="type">int</span></tt></p></td>
+<td><p>Member a blah blah... </p>
+</td>
+</tr>
+<tr>
+<td><p><tt>b</tt></p></td>
+<td><p><tt><a href="#struct.MyStruct"><span class="type">MyStruct</span></a></tt></p></td>
+<td><p>Member b blah blah... </p>
+</td>
+</tr>
+<tr>
+<td><p><tt>c</tt></p></td>
+<td><p><tt><span class="type">blob</span></tt></p></td>
+<td><p>Member c blah blah... </p>
+</td>
+</tr>
+</table>
+<h4>Sample Event Payload</h4>
+<p class="http">
+&lt;MyEvent2 xmlns="http://cisco.com/HNAPExt/"><br />
+&nbsp;&nbsp;&lt;a&gt;<var><span class="type">int</span> value</var>&lt;/a&gt;<br />
+&nbsp;&nbsp;&lt;b&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;a&gt;<var><span class="type">IPAddress</span> value</var>&lt;/a&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;b&gt;<var><span class="type">long</span> value</var>&lt;/b&gt;<br />
+&nbsp;&nbsp;&lt;/b&gt;<br />
+&nbsp;&nbsp;&lt;c&gt;<var><span class="type">blob</span> value</var>&lt;/c&gt;<br />
+&lt;/MyEvent2><br />
+</p>
+<h2><a name="structs">Structures</a></h2>
+<h3><a name="struct.MyStruct">MyStruct</a></h3>
+<p class="fullname">http://cisco.com/HNAPExt/MyStruct</p>
+
+<p class="syntax"><tt>
+<span class="keyword">struct</span> <span class="defined">MyStruct</span><br />
+{<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">IPAddress</span> a;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="type">long</span> b;<br />
+}
+</tt></p>
+<table summary="members" class="params">
+<tr>
+<td><p><tt>a</tt></p></td>
+<td><p><tt><span class="type">IPAddress</span></tt></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><tt>b</tt></p></td>
+<td><p><tt><span class="type">long</span></tt></p></td>
+<td>
+</td>
+</tr>
+</table>
+</body>
+</html>

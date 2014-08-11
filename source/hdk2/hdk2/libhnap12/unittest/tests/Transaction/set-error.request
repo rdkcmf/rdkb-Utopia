@@ -1,0 +1,144 @@
+SOAPAction: "http://cisco.com/HNAP/Transaction"
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <Transaction xmlns="http://cisco.com/HNAP/">
+      <Requests>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/SetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;SetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;Mode&gt;802.11g&lt;/Mode&gt;
+      &lt;SSID&gt;NewSSID24&lt;/SSID&gt;
+      &lt;SSIDBroadcast&gt;true&lt;/SSIDBroadcast&gt;
+      &lt;ChannelWidth&gt;0&lt;/ChannelWidth&gt;
+      &lt;Channel&gt;5&lt;/Channel&gt;
+      &lt;SecondaryChannel&gt;7&lt;/SecondaryChannel&gt;
+      &lt;QoS&gt;false&lt;/QoS&gt;
+    &lt;/SetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/SetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;SetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_BAD&lt;/RadioID&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;Mode&gt;802.11an&lt;/Mode&gt;
+      &lt;SSID&gt;NewSSID5&lt;/SSID&gt;
+      &lt;SSIDBroadcast&gt;true&lt;/SSIDBroadcast&gt;
+      &lt;ChannelWidth&gt;20&lt;/ChannelWidth&gt;
+      &lt;Channel&gt;40&lt;/Channel&gt;
+      &lt;SecondaryChannel&gt;0&lt;/SecondaryChannel&gt;
+      &lt;QoS&gt;true&lt;/QoS&gt;
+    &lt;/SetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/SetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;SetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+      &lt;Enabled&gt;true&lt;/Enabled&gt;
+      &lt;Mode&gt;802.11an&lt;/Mode&gt;
+      &lt;SSID&gt;NewSSID5&lt;/SSID&gt;
+      &lt;SSIDBroadcast&gt;true&lt;/SSIDBroadcast&gt;
+      &lt;ChannelWidth&gt;20&lt;/ChannelWidth&gt;
+      &lt;Channel&gt;40&lt;/Channel&gt;
+      &lt;SecondaryChannel&gt;0&lt;/SecondaryChannel&gt;
+      &lt;QoS&gt;true&lt;/QoS&gt;
+    &lt;/SetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+      </Requests>
+    </Transaction>
+  </soap:Body>
+</soap:Envelope>

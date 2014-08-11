@@ -1,0 +1,13 @@
+SOAPAction: http://cisco.com/he/event/Notify
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<Notify xmlns="http://cisco.com/he/event/">
+  <EventURI>http://cisco.com/he/registrar/Registered</EventURI>
+  <SourceDeviceID>2ac21b80-442f-11df-9879-0800200c9a66</SourceDeviceID>
+  <SourceNetworkObjectID>2ac21b80-442f-11df-9879-0800200c9a65</SourceNetworkObjectID>
+  <EventData>Hello, world!!!</EventData>
+</Notify>
+</soap:Body>
+</soap:Envelope>

@@ -1,0 +1,17 @@
+Get before set: 0 (expect 0)
+GetEx before set: 192.168.1.1 (expect 192.168.1.1)
+Set result: 192.168.1.1 (expect 192.168.1.1)
+Get after set: 192.168.1.1 (expect 192.168.1.1)
+GetEx after set: 192.168.1.1 (expect 192.168.1.1)
+2nd set result: 10.0.0.1 (expect 10.0.0.1)
+Get after 2nd set: 10.0.0.1 (expect 10.0.0.1)
+Append result: 169.254.1.1 (expect 169.254.1.1)
+Get after append: 10.0.0.1 (expect 10.0.0.1)
+Get next member: 169.254.1.1 (expect 169.254.1.1)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 2 times
+malloc_interposer.c - exit: free called 2 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 32
+malloc_interposer.c - exit: malloc max = 32
+malloc_interposer.c - ************************************************************

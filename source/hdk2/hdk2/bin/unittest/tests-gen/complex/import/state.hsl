@@ -1,0 +1,400 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+import "../core.hsl"
+import "../router.hsl"
+
+#@@ h1 HNAP 1.2. State Definition
+
+#@ The following document describes the ADI state structures and values.
+
+#@@ end
+
+#
+# HNAP 1.2 State
+#
+
+namespace "http://purenetworks.com/HNAP1/"
+
+#
+# Structures
+#
+
+#@ WLanSecurityEnabled key/value structure
+struct WLanSecurityEnabledInfo
+    #@ Key string
+    string RadioID
+    #@ Specifies whether wireless security is enabled.
+    bool Enabled
+
+#@ WLanType key/value structure
+struct WLanTypeInfo
+    #@ Key string
+    string RadioID
+    #@ The type of wireless security used, eg. WEP-OPEN.
+    WiFiSecurity Type
+
+#@ WLanEncryption key/value structure
+struct WLanEncryptionInfo
+    #@ Key string
+    string RadioID
+    #@ The method of wireless encryption used, eg. WEP-64.
+    WiFiEncryption Encryption
+
+#@ WLanKey key/value structure
+struct WLanKeyInfo
+    #@ Key string
+    string RadioID
+    #@ The WEP/WPA encryption key.
+    string Key
+
+#@ WLanKeyRenewal key/value structure
+struct WLanKeyRenewalInfo
+    #@ Key string
+    string RadioID
+    #@ The time in seconds of the WPA key renewal period.
+    int KeyRenewal
+
+#@ WLanRadiusIP1 key/value structure
+struct WLanRadiusIP1Info
+    #@ Key string
+    string RadioID
+    #@ The primary/preferred RADIUS server's IPAddress.
+    IPAddress RadiusIP1
+
+#@ WLanRadiusPort1 key/value structure
+struct WLanRadiusPort1Info
+    #@ Key string
+    string RadioID
+    #@ The primary/preferred RADIUS server's port.
+    int RadiusPort1
+
+#@ WLanRadiusSecret1 key/value structure
+struct WLanRadiusSecret1Info
+    #@ Key string
+    string RadioID
+    #@ The primary/preferred RADIUS shared secret.
+    string RadiusSecret1
+
+#@ WLanRadiusIP2 key/value structure
+struct WLanRadiusIP2Info
+    #@ Key string
+    string RadioID
+    #@ The secondary/fallback RADIUS server's IPAddress.
+    IPAddress RadiusIP2
+
+#@ WLanRadiusPort2 key/value structure
+struct WLanRadiusPort2Info
+    #@ Key string
+    string RadioID
+    #@ The secondary/fallback RADIUS server's port.
+    int RadiusPort2
+
+#@ WLanRadiusSecret2 key/value structure
+struct WLanRadiusSecret2Info
+    #@ Key string
+    string RadioID
+    #@ The secondary/fallback RADIUS shared secret.
+    string RadiusSecret2
+
+#@ WLanEnabled key/value structure
+struct WLanEnabledInfo
+    #@ Key string
+    string RadioID
+    #@ Specifies whether the wireless radio is enabled.
+    bool Enabled
+
+#@ WLanMode key/value structure
+struct WLanModeInfo
+    #@ Key string
+    string RadioID
+    #@ Specifies the 802.11 mode that the wireless radio is configured for, eg. 802.11n.
+    WiFiMode Mode
+
+#@ WLanMacAddress key/value structure
+struct WLanMacAddressInfo
+    #@ Key string
+    string RadioID
+    #@ The MACAddress of the the wireless radio ethernet interface.
+    MACAddress MacAddress
+
+#@ WLanSSID key/value structure
+struct WLanSSIDInfo
+    #@ Key string
+    string RadioID
+    #@ The wireless network name for the wireless radio.
+    string SSID
+
+#@ WLanSSIDBroadcast key/value structure
+struct WLanSSIDBroadcastInfo
+    #@ Key string
+    string RadioID
+    #@ Specifies whether the wireless radio is broadcasting its SSID.
+    bool SSIDBroadcast
+
+#@ WLanChannelWidth key/value structure
+struct WLanChannelWidthInfo
+    #@ Key string
+    string RadioID
+    #@ The width of each channel for the wireless radio.
+    int ChannelWidth
+
+#@ WLanChannel key/value structure
+struct WLanChannelInfo
+    #@ Key string
+    string RadioID
+    #@ Channel number the wireless radio is currently set to. 0 indicates auto.
+    int Channel
+
+#@ WLanSecondaryChannel key/value structure
+struct WLanSecondaryChannelInfo
+    #@ Key string
+    string RadioID
+    #@ Secondary channel number the wireless radio is currently set to. 0 indicates auto.
+    int SecondaryChannel
+
+#@ WLanQoS key/value structure
+struct WLanQoSInfo
+    #@ Key string
+    string RadioID
+    #@ Indicates whether or not wireless quality of service is enabled for the radio.
+    bool QoS
+
+#@ WLanFrequency key/value structure
+struct WLanFrequencyInfo
+    #@ Key string
+    string RadioID
+    #@ The frequency of the wireless radio. 2 for 2.4GHz, 5 for 5GHz.
+    int Frequency
+
+#
+# DeviceSettings
+#
+
+state DeviceType      DeviceType
+state string          DeviceName
+state string          VendorName
+state string          ModelDescription
+state string          ModelName
+state string          FirmwareVersion
+state string          PresentationURL
+state string[]        SubDeviceURLs
+state TaskExtension[] TaskExtensions
+state string          AdminPassword
+
+#
+# DeviceSettings2
+#
+
+state string   SerialNumber
+state string   Username
+state string   TimeZone
+state bool     AutoAdjustDST
+state string   Locale
+state string[] SupportedLocales
+state bool     SSL
+state bool     UsernameSupported
+state bool     TimeZoneSupported
+state bool     RemoteSSLNeedsSSL
+
+#
+# IsDeviceReady
+#
+#state bool IsDeviceReady
+
+#
+# Reboot
+#
+#state bool RebootTrigger
+
+#
+# FirmwareSettings
+#
+
+state string         ModelRevision
+state datetime       FirmwareDate
+state UpdateMethod[] UpdateMethods
+
+#
+# FirmwareUpload
+#
+#state blob Base64Image
+
+#
+# DownloadSpeedTest
+#
+#state string ByteStream
+
+#
+# PortMappings
+#
+
+state PortMapping[] PortMappings
+state string        PMDescription
+state IPAddress     PMInternalClient
+state IPProtocol    PMProtocol
+state int           PMExternalPort
+state int           PMInternalPort
+state IPAddress     LanIPAddress
+state IPAddress     LanSubnetMask
+
+#
+# ClientStats
+#
+
+state ClientStat[] ClientStats
+
+#
+# ConnectedDevices
+#
+
+state ConnectedClient[] ConnectedClients
+
+#
+# MACFilters2
+#
+
+state bool      MFEnabled
+state bool      MFIsAllowList
+state MACInfo[] MFMACList
+
+#
+# NetworkStats
+#
+
+state NetworkStats[] DeviceNetworkStats
+
+#
+# RenewWanConnection
+#
+
+state int WanRenewTimeout
+
+#
+# RouterLanSettings2
+#
+
+state bool              DHCPServerEnabled
+state IPAddress         DHCPIPAddressFirst
+state IPAddress         DHCPIPAddressLast
+state int               DHCPLeaseTime
+state DHCPReservation[] DHCPReservations
+state bool              DHCPReservationsSupported
+
+#
+# RouterSettings
+#
+
+state bool   ManageRemote
+state bool   ManageWireless
+state int    RemotePort
+state bool   RemoteSSL
+state string DomainName
+state bool   WiredQoS
+state string WPSPin
+state string AdminPasswordDefault
+state bool   RemoteManagementSupported
+state bool   ManageViaSSLSupported
+state bool   ManageOnlyViaSSL
+state bool   DomainNameChangeSupported
+state bool   WiredQoSSupported
+
+#
+# SetAccessPointMode
+#
+
+state bool IsAccessPoint
+
+#
+# WLanRadioFrequency
+#
+
+state RadioFrequencyInfo[] WLanRadioFrequencyInfos
+state WLanFrequencyInfo[]  WLanFrequency
+
+#
+# WLanRadioSecurity
+#
+
+state WLanSecurityEnabledInfo[] WLanSecurityEnabled
+state WLanTypeInfo[]            WLanType
+state WLanEncryptionInfo[]      WLanEncryption
+state WLanKeyInfo[]             WLanKey
+state WLanKeyRenewalInfo[]      WLanKeyRenewal
+state WLanRadiusIP1Info[]       WLanRadiusIP1
+state WLanRadiusPort1Info[]     WLanRadiusPort1
+state WLanRadiusSecret1Info[]   WLanRadiusSecret1
+state WLanRadiusIP2Info[]       WLanRadiusIP2
+state WLanRadiusPort2Info[]     WLanRadiusPort2
+state WLanRadiusSecret2Info[]   WLanRadiusSecret2
+
+#
+# WLanRadioSettings
+#
+
+state WLanEnabledInfo[]          WLanEnabled
+state WLanModeInfo[]             WLanMode
+state WLanMacAddressInfo[]       WLanMacAddress
+state WLanSSIDInfo[]             WLanSSID
+state WLanSSIDBroadcastInfo[]    WLanSSIDBroadcast
+state WLanChannelWidthInfo[]     WLanChannelWidth
+state WLanChannelInfo[]          WLanChannel
+state WLanSecondaryChannelInfo[] WLanSecondaryChannel
+state WLanQoSInfo[]              WLanQoS
+
+#
+# WLanRadios
+#
+
+state RadioInfo[] WLanRadioInfos
+
+#
+# WanInfo
+#
+
+state WANType[] WanSupportedTypes
+state WANType   WanAutoDetectType
+state WANStatus WanStatus
+
+#
+# WanSettings
+#
+
+state WANType     WanType
+state string      WanUsername
+state string      WanPassword
+state int         WanMaxIdleTime
+state int         WanMTU
+state string      WanAuthService
+state string      WanPPPoEService
+state string      WanLoginService
+state bool        WanAutoReconnect
+state IPAddress   WanIPAddress
+state IPAddress   WanSubnetMask
+state IPAddress   WanGateway
+state DNSSettings WanDNS
+state MACAddress  WanMacAddress
+state bool        WanAutoMTUSupported

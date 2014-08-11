@@ -1,0 +1,17 @@
+SOAPAction: "http://purenetworks.com/HNAP1/SetDeviceSettings2"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope 
+xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<soap:Body>
+<SetDeviceSettings2 xmlns="http://purenetworks.com/HNAP1/">
+<Username>MyUsername</Username>
+<TimeZone>UTC+08:00</TimeZone>
+<AutoAdjustDST>false</AutoAdjustDST>
+<Locale>sp-sp</Locale>
+<SSL>true</SSL>
+</SetDeviceSettings2>
+</soap:Body>
+</soap:Envelope>

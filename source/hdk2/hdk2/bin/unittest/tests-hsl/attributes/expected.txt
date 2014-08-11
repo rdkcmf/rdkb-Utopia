@@ -1,0 +1,803 @@
+Actions:
+
+  http://cisco.com/HNAPExt/MyAction
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyAction
+    resultMember: http://cisco.com/HNAPExt/MyActionResult
+    inputMember:
+
+      http://cisco.com/HNAPExt/MyAction
+
+        name: MyAction
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyAction
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/MyAction
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyAction
+        schemaName: MyAction
+        parserOrder: 11
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/a
+
+            name: a
+            namespace: http://cisco.com/HNAPExt/
+            type: http://www.w3.org/2001/XMLSchema/int
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/MyActionResponse
+
+        name: MyActionResponse
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/MyActionResponse
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActionResponse
+        schemaName: MyActionResponse
+        parserOrder: 11
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/MyActionResult
+
+            name: MyActionResult
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+          http://cisco.com/HNAPExt/b
+
+            name: b
+            namespace: http://cisco.com/HNAPExt/
+            type: http://www.w3.org/2001/XMLSchema/int
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+Types:
+
+  http://cisco.com/HNAPExt/ArrayOfComplexStruct (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: ArrayOfComplexStruct
+    schemaName: ArrayOfComplexStruct
+    parserOrder: 26
+    isBuiltin: False
+    isArray: True
+    isStruct: True
+    isEnum: False
+    arrayType: http://cisco.com/HNAPExt/ComplexStruct
+    members:
+
+      http://cisco.com/HNAPExt/ComplexStruct
+
+        name: ComplexStruct
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ComplexStruct
+        isUnbounded: True
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/ArrayOfInt (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: ArrayOfInt
+    schemaName: ArrayOfInt
+    parserOrder: 5
+    isBuiltin: False
+    isArray: True
+    isStruct: True
+    isEnum: False
+    arrayType: http://www.w3.org/2001/XMLSchema/int
+    members:
+
+      http://cisco.com/HNAPExt/int
+
+        name: int
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: True
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/ArrayOfIntValue (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: ArrayOfIntValue
+    schemaName: ArrayOfIntValue
+    parserOrder: 3
+    isBuiltin: False
+    isArray: True
+    isStruct: True
+    isEnum: False
+    arrayType: http://cisco.com/HNAPExt/IntValue
+    members:
+
+      http://cisco.com/HNAPExt/IntValue
+
+        name: IntValue
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/IntValue
+        isUnbounded: True
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/ArrayOfLong (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: ArrayOfLong
+    schemaName: ArrayOfLong
+    parserOrder: 21
+    isBuiltin: False
+    isArray: True
+    isStruct: True
+    isEnum: False
+    arrayType: http://www.w3.org/2001/XMLSchema/long
+    members:
+
+      http://cisco.com/HNAPExt/long
+
+        name: long
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/long
+        isUnbounded: True
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/ArrayOfLongValue (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: ArrayOfLongValue
+    schemaName: ArrayOfLongValue
+    parserOrder: 4
+    isBuiltin: False
+    isArray: True
+    isStruct: True
+    isEnum: False
+    arrayType: http://cisco.com/HNAPExt/LongValue
+    members:
+
+      http://cisco.com/HNAPExt/LongValue
+
+        name: LongValue
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/LongValue
+        isUnbounded: True
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/Beer
+
+    namespace: http://cisco.com/HNAPExt/
+    name: Beer
+    schemaName: Beer
+    parserOrder: 20
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/i
+
+        name: i
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: True
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/longList
+
+        name: longList
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfLong
+        isUnbounded: False
+        isOptional: False
+        isCSV: True
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/struct
+
+        name: struct
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/IntValue
+        isUnbounded: False
+        isOptional: False
+        isCSV: True
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/structList
+
+        name: structList
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfIntValue
+        isUnbounded: False
+        isOptional: False
+        isCSV: True
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/nonCSVString
+
+        name: nonCSVString
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/structWithOptional
+
+        name: structWithOptional
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/StructWithOptional
+        isUnbounded: False
+        isOptional: False
+        isCSV: True
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/complexStruct
+
+        name: complexStruct
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ComplexStruct
+        isUnbounded: False
+        isOptional: False
+        isCSV: True
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/complexStructArray
+
+        name: complexStructArray
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfComplexStruct
+        isUnbounded: False
+        isOptional: False
+        isCSV: True
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/Clooney
+
+    namespace: http://cisco.com/HNAPExt/
+    name: Clooney
+    schemaName: Clooney
+    parserOrder: 12
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/foobar
+
+        name: foobar
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/ComplexStruct
+
+    namespace: http://cisco.com/HNAPExt/
+    name: ComplexStruct
+    schemaName: ComplexStruct
+    parserOrder: 19
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/foo
+
+        name: foo
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/barfoo
+
+        name: barfoo
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/long
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/weee
+
+        name: weee
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/SimpleStruct1
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/bay
+
+        name: bay
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/mcNutti
+
+        name: mcNutti
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/SimpleStruct2
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/IntValue
+
+    namespace: http://cisco.com/HNAPExt/
+    name: IntValue
+    schemaName: IntValue
+    parserOrder: 0
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/InvalidCVSStruct
+
+    namespace: http://cisco.com/HNAPExt/
+    name: InvalidCVSStruct
+    schemaName: InvalidCVSStruct
+    parserOrder: 16
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/foo
+
+        name: foo
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/bar
+
+        name: bar
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/LongValue
+
+    namespace: http://cisco.com/HNAPExt/
+    name: LongValue
+    schemaName: LongValue
+    parserOrder: 1
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/long
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/MyActionResult (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActionResult
+    schemaName: MyActionResult
+    parserOrder: 11
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/MyEnum
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyEnum
+    schemaName: MyEnum
+    parserOrder: 27
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "Value1"
+      "Value2"
+
+  http://cisco.com/HNAPExt/MyStruct1
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyStruct1
+    schemaName: MyStruct1
+    parserOrder: 2
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/intArray
+
+        name: intArray
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfIntValue
+        isUnbounded: False
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/longArray
+
+        name: longArray
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfLongValue
+        isUnbounded: False
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfInt
+        isUnbounded: False
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/b
+
+        name: b
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/c
+
+        name: c
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/datetime
+        isUnbounded: False
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/MyStruct2
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyStruct2
+    schemaName: MyStruct2
+    parserOrder: 6
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfInt
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/MyStruct3
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyStruct3
+    schemaName: MyStruct3
+    parserOrder: 8
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/a
+
+        name: a
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/MyStruct4
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyStruct4
+    schemaName: MyStruct4
+    parserOrder: 9
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/intArray
+
+        name: intArray
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfIntValue
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/SimpleStruct1
+
+    namespace: http://cisco.com/HNAPExt/
+    name: SimpleStruct1
+    schemaName: SimpleStruct1
+    parserOrder: 17
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/foo
+
+        name: foo
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/bar
+
+        name: bar
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/SimpleStruct2
+
+    namespace: http://cisco.com/HNAPExt/
+    name: SimpleStruct2
+    schemaName: SimpleStruct2
+    parserOrder: 18
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/someLong
+
+        name: someLong
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/long
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/someDatetime
+
+        name: someDatetime
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/datetime
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/StructWithArray
+
+    namespace: http://cisco.com/HNAPExt/
+    name: StructWithArray
+    schemaName: StructWithArray
+    parserOrder: 13
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/x
+
+        name: x
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/ArrayOfInt
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/y
+
+        name: y
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://cisco.com/HNAPExt/StructWithOptional
+
+    namespace: http://cisco.com/HNAPExt/
+    name: StructWithOptional
+    schemaName: StructWithOptional
+    parserOrder: 15
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/p
+
+        name: p
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/y
+
+        name: y
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://www.w3.org/2001/XMLSchema/datetime (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: datetime
+    schemaName: dateTime
+    parserOrder: -5
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+  http://www.w3.org/2001/XMLSchema/int (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: int
+    schemaName: int
+    parserOrder: -2
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+  http://www.w3.org/2001/XMLSchema/long (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: long
+    schemaName: long
+    parserOrder: -4
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+  http://www.w3.org/2001/XMLSchema/string (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: string
+    schemaName: string
+    parserOrder: -3
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+Errors:
+
+  attributes/test.hsl:14: invalid attribute 'foo'
+  attributes/test.hsl:16: invalid attribute 'a'
+  attributes/test.hsl:16: invalid attribute 'b'
+  attributes/test.hsl:20: 'optional' is not a name/value pair attribute
+  attributes/test.hsl:25: invalid attribute 'optional'
+  attributes/test.hsl:27: attribute 'error' only valid for action output members
+  attributes/test.hsl:31: invalid attribute 'csv'
+  attributes/test.hsl:64: member invalidMember0 is not representable as a comma-seperated value
+  attributes/test.hsl:65: member invalidMember1 is not representable as a comma-seperated value
+  attributes/test.hsl:69: member invalidMember2 is not representable as a comma-seperated value
+  attributes/test.hsl:70: member invalidMember3 is not representable as a comma-seperated value
+  attributes/test.hsl:72: member invalidMember4 is not representable as a comma-seperated value
+  attributes/test.hsl:76: invalid attribute 'blue'

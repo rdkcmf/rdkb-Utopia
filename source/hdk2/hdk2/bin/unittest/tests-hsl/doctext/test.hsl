@@ -1,0 +1,81 @@
+namespace "http://purenetworks.com/HNAP1/"
+
+#@@ end
+
+#@@ end foo
+
+#@@ h1 Top section
+
+#@ This is some section text.
+#@ More section text.
+
+#@@ h2 Subsection
+
+#@ Subsection text
+
+#@@ end
+
+#@@ h3 Level 3
+
+#@ Threeeee
+
+#@@ end
+
+#@@ h4 four
+
+#@ h4 para
+
+#@@ end
+
+#@@ title Title
+#@@ version Version
+#@@ date Date
+#@@ abstract Abstract
+#@ In Abstract
+#@@ end
+#@@ copyright Copyright Notice
+#@ Copyright whoever
+#@@ end
+
+#@@ h1 Top section 2
+
+#@ Yet more text...
+
+#@@ end
+
+#@@ bad Top section 2
+
+#@@ h1
+
+#@@
+
+#@ My enumeration definition
+#@
+#@ Another line about my enumeration
+enum MyEnum
+    #@ My first value
+    "Value1"
+    #@ My second value
+    "Value2"
+    "Value3"        #@ My third value
+
+#@ My structure definition
+#@
+#@ Another line about my structure
+#@
+struct MyStruct
+    #@ My "a" member
+    int a
+    #@ My "b" member
+    string b        #@ ...and some more
+
+struct EnumsAndStructArrays
+    #@ My "a" array member
+    MyEnum[] a
+    MyStruct[] b    #@ My "b" array member
+
+#@ My action definition
+action MyAction
+    result
+        #@ My error
+        "ERROR_MY_BAD"

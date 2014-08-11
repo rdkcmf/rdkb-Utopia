@@ -1,0 +1,22 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 322
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetTMSSSLicenseResponse xmlns="http://cisco.com/HNAPExt/HND/">
+<GetTMSSSLicenseResult>OK</GetTMSSSLicenseResult>
+<TAVSN></TAVSN>
+<ExpiredDate>1970-01-01</ExpiredDate>
+</GetTMSSSLicenseResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 96 times
+malloc_interposer.c - exit: free called 96 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 17057
+malloc_interposer.c - exit: malloc max = 8910
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,34 @@
+namespace "http://cisco.com/HNAPExt/"
+action MyActionInFirstList_1
+action MyActionInSecondList_1
+action MyActioninFirstList_2
+action MyServiceAction
+
+namespace "http://einknirps.de/bist/du/"
+action CrossDomainNamespaceAction
+
+namespace "http://cisco.com/HNAPExt/"
+
+# Basic service with action
+service MyService
+    actions
+        MyServiceAction
+
+# Empty actions list
+service MyServiceWithNoActions
+    actions
+
+# Divide the actions into multiple lists
+service MyDividedServiceActions
+    actions
+    MyActionInFirstList_1
+    MyActioninFirstList_2
+    actions
+    MyActionInSecondList_1
+
+namespace otherNS "http://einknirps.de/bist/du"
+
+# Service object-specific namespaces
+service MyServiceWithCrossNamespaceAction
+    actions
+        otherNS:CrossDomainNamespaceAction

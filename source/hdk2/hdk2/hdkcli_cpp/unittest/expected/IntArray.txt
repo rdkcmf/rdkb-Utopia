@@ -1,0 +1,39 @@
+intArrayRead (size: 4, empty: false)
+[
+0,
+2222,
+-2342,
+20
+]
+intArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<IntArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</IntArray>
+intArrayWrite (size: 6, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<IntArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<int>4</int>
+<int>8</int>
+<int>15</int>
+<int>16</int>
+<int>23</int>
+<int>42</int>
+</IntArray>
+intArrayCopy (size: 7, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<IntArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<int>4</int>
+<int>8</int>
+<int>15</int>
+<int>16</int>
+<int>23</int>
+<int>42</int>
+<int>4</int>
+</IntArray>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 46 times
+malloc_interposer.c - exit: free called 46 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10010
+malloc_interposer.c - exit: malloc max = 9602
+malloc_interposer.c - ************************************************************

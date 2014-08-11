@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 311
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SetRouterSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<SetRouterSettingsResult>ERROR_REMOTE_MANAGE_DEFAULT_PASSWORD</SetRouterSettingsResult>
+</SetRouterSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 503 times
+malloc_interposer.c - exit: free called 503 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 30504
+malloc_interposer.c - exit: malloc max = 18788
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>DeviceList_DeviceInfos</Name>
+<Value>
+      &lt;DeviceList_DeviceInfos xmlns=&quot;http://cisco.com/HNAPExt/HotSpot/&quot;&gt;
+        &lt;DeviceInfo&gt;
+          &lt;MACAddress&gt;00:11:22:33:44:55&lt;/MACAddress&gt;
+          &lt;FriendlyName&gt;A Device&lt;/FriendlyName&gt;
+        &lt;/DeviceInfo&gt;
+        &lt;DeviceInfo&gt;
+          &lt;MACAddress&gt;00:11:22:33:44:66&lt;/MACAddress&gt;
+          &lt;FriendlyName&gt;A Guest Device&lt;/FriendlyName&gt;
+        &lt;/DeviceInfo&gt;
+        &lt;DeviceInfo&gt;
+          &lt;MACAddress&gt;00:11:22:33:44:77&lt;/MACAddress&gt;
+          &lt;FriendlyName&gt;Device3&lt;/FriendlyName&gt;
+        &lt;/DeviceInfo&gt;
+      &lt;/DeviceList_DeviceInfos&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>ParentalControls_Password</Name>
+<Value>password</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>ParentalControls_Question</Name>
+<Value>What&apos;s my name?</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>ParentalControls_Answer</Name>
+<Value>Myron</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>ParentalControls_WANAccessStatuses</Name>
+<Value>
+      &lt;ParentalControls_WANAccessStatuses xmlns=&quot;http://cisco.com/HNAPExt/HotSpot/&quot;&gt;
+        &lt;WANAccessStatus&gt;
+          &lt;MACAddress&gt;00:11:22:33:44:55&lt;/MACAddress&gt;
+          &lt;IPAddress&gt;192.168.1.100&lt;/IPAddress&gt;
+          &lt;HasWANAccess&gt;true&lt;/HasWANAccess&gt;
+          &lt;OnGuestNetwork&gt;false&lt;/OnGuestNetwork&gt;
+        &lt;/WANAccessStatus&gt;
+        &lt;WANAccessStatus&gt;
+          &lt;MACAddress&gt;00:11:22:33:44:66&lt;/MACAddress&gt;
+          &lt;IPAddress&gt;192.168.2.100&lt;/IPAddress&gt;
+          &lt;HasWANAccess&gt;true&lt;/HasWANAccess&gt;
+          &lt;OnGuestNetwork&gt;true&lt;/OnGuestNetwork&gt;
+        &lt;/WANAccessStatus&gt;
+      &lt;/ParentalControls_WANAccessStatuses&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_Enabled</Name>
+<Value>false</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_SSID</Name>
+<Value>My Home Network Guest</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_Password</Name>
+<Value>admin</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_MaxGuestsAllowed</Name>
+<Value>10</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_IPAddress</Name>
+<Value>192.168.2.1</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_SubnetMask</Name>
+<Value>255.255.255.0</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_IPAddressFirst</Name>
+<Value>192.168.2.100</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_IPAddressLast</Name>
+<Value>192.168.2.149</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+<Name>GuestNetwork_MaxGuestsDeviceAllows</Name>
+<Value>10</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>FirstAccessPolicyNumber</Name>
+<Value>5</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxPolicyNumber</Name>
+<Value>14</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxPolicyName</Name>
+<Value>32</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxAppliedDeviceList</Name>
+<Value>4</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxBlockedURLArray</Name>
+<Value>4</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxBlockedURLString</Name>
+<Value>32</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxBlockedKeywordArray</Name>
+<Value>4</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxBlockedKeywordString</Name>
+<Value>32</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>MaxBlockedCategoryArray</Name>
+<Value>4</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>TAVSN</Name>
+<Value>LSZF-0012-4528-2124-2240</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>ExpiredDate</Name>
+<Value>2099-12-31</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>AccessPolicyNumber</Name>
+<Value>10</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>AccessPolicyList</Name>
+<Value>
+      &lt;AccessPolicyList xmlns=&quot;http://cisco.com/HNAPExt/HND/&quot;&gt;
+        &lt;AccessPolicy&gt;
+          &lt;AccessPolicyNumber&gt;1&lt;/AccessPolicyNumber&gt;
+          &lt;PolicyName&gt;Access Policy 1&lt;/PolicyName&gt;
+          &lt;Status&gt;Enabled&lt;/Status&gt;
+          &lt;AppliedDeviceList&gt;
+            &lt;Device&gt;
+              &lt;MacAddress&gt;00:11:22:33:44:55&lt;/MacAddress&gt;
+              &lt;IPAddress&gt;192.168.1.80&lt;/IPAddress&gt;
+              &lt;IPStart&gt;192.168.1.50&lt;/IPStart&gt;
+              &lt;IPEnd&gt;192.168.1.99&lt;/IPEnd&gt;
+            &lt;/Device&gt;
+          &lt;/AppliedDeviceList&gt;
+          &lt;AccessSchedule&gt;
+            &lt;Sunday&gt;000000000000000000111111111111111111111111000000&lt;/Sunday&gt;
+            &lt;Monday&gt;000000000000000000111111111111111111111111000000&lt;/Monday&gt;
+            &lt;Tuesday&gt;000000000000000000111111111111111111111111000000&lt;/Tuesday&gt;
+            &lt;Wednesday&gt;000000000000000000111111111111111111111111000000&lt;/Wednesday&gt;
+            &lt;Thursday&gt;000000000000000000111111111111111111111111000000&lt;/Thursday&gt;
+            &lt;Friday&gt;000000000000000000111111111111111111111111000000&lt;/Friday&gt;
+            &lt;Saturday&gt;000000000000000000111111111111111111111111000000&lt;/Saturday&gt;
+          &lt;/AccessSchedule&gt;
+          &lt;BlockedURL&gt;
+            &lt;string&gt;www.google.com&lt;/string&gt;
+          &lt;/BlockedURL&gt;
+          &lt;BlockedKeyword&gt;
+            &lt;string&gt;microsoft&lt;/string&gt;
+          &lt;/BlockedKeyword&gt;
+          &lt;BlockedCategory&gt;
+            &lt;int&gt;1&lt;/int&gt;
+          &lt;/BlockedCategory&gt;
+        &lt;/AccessPolicy&gt;
+      &lt;/AccessPolicyList&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>WTPEnabled</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>WTPThreshold</Name>
+<Value>10</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/HNAPExt/HND/</Namespace>
+<Name>PCEnabled</Name>
+<Value>true</Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanEnabled</Name>
+<Value>
+      &lt;WLanEnabled xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanEnabledInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;Enabled&gt;true&lt;/Enabled&gt;
+        &lt;/WLanEnabledInfo&gt;
+        &lt;WLanEnabledInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;Enabled&gt;false&lt;/Enabled&gt;
+        &lt;/WLanEnabledInfo&gt;
+      &lt;/WLanEnabled&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanSSID</Name>
+<Value>
+      &lt;WLanSSID xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;WLanSSIDInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;SSID&gt;SSID2.4GHz&lt;/SSID&gt;
+        &lt;/WLanSSIDInfo&gt;
+        &lt;WLanSSIDInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;SSID&gt;SSID5GHz&lt;/SSID&gt;
+        &lt;/WLanSSIDInfo&gt;
+      &lt;/WLanSSID&gt;
+    </Value>
+</State>
+<State>
+<Namespace>http://purenetworks.com/HNAP1/</Namespace>
+<Name>WLanRadioInfos</Name>
+<Value>
+      &lt;WLanRadioInfos xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;RadioInfo&gt;
+          &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+          &lt;Frequency&gt;2&lt;/Frequency&gt;
+          &lt;SupportedModes&gt;
+            &lt;string&gt;802.11b&lt;/string&gt;
+            &lt;string&gt;802.11g&lt;/string&gt;
+            &lt;string&gt;802.11n&lt;/string&gt;
+            &lt;string&gt;802.11bg&lt;/string&gt;
+            &lt;string&gt;802.11bgn&lt;/string&gt;
+          &lt;/SupportedModes&gt;
+          &lt;Channels&gt;
+            &lt;int&gt;0&lt;/int&gt;
+            &lt;int&gt;1&lt;/int&gt;
+            &lt;int&gt;2&lt;/int&gt;
+            &lt;int&gt;3&lt;/int&gt;
+            &lt;int&gt;4&lt;/int&gt;
+            &lt;int&gt;5&lt;/int&gt;
+            &lt;int&gt;6&lt;/int&gt;
+            &lt;int&gt;7&lt;/int&gt;
+            &lt;int&gt;8&lt;/int&gt;
+            &lt;int&gt;9&lt;/int&gt;
+            &lt;int&gt;10&lt;/int&gt;
+            &lt;int&gt;11&lt;/int&gt;
+          &lt;/Channels&gt;
+          &lt;WideChannels&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;3&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;1&lt;/int&gt;
+                &lt;int&gt;5&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;4&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;2&lt;/int&gt;
+                &lt;int&gt;6&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;5&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;3&lt;/int&gt;
+                &lt;int&gt;7&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;6&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;4&lt;/int&gt;
+                &lt;int&gt;8&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;7&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;5&lt;/int&gt;
+                &lt;int&gt;9&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;8&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;6&lt;/int&gt;
+                &lt;int&gt;10&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;9&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;7&lt;/int&gt;
+                &lt;int&gt;11&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+          &lt;/WideChannels&gt;
+          &lt;SupportedSecurity&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-OPEN&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIP&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIP&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA2-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIPORAES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA2-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+                &lt;string&gt;TKIPORAES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+          &lt;/SupportedSecurity&gt;
+        &lt;/RadioInfo&gt;
+        &lt;RadioInfo&gt;
+          &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+          &lt;Frequency&gt;5&lt;/Frequency&gt;
+          &lt;SupportedModes&gt;
+            &lt;string&gt;802.11a&lt;/string&gt;
+            &lt;string&gt;802.11n&lt;/string&gt;
+            &lt;string&gt;802.11an&lt;/string&gt;
+          &lt;/SupportedModes&gt;
+          &lt;Channels&gt;
+            &lt;int&gt;0&lt;/int&gt;
+            &lt;int&gt;36&lt;/int&gt;
+            &lt;int&gt;40&lt;/int&gt;
+            &lt;int&gt;44&lt;/int&gt;
+            &lt;int&gt;48&lt;/int&gt;
+            &lt;int&gt;149&lt;/int&gt;
+            &lt;int&gt;153&lt;/int&gt;
+            &lt;int&gt;157&lt;/int&gt;
+            &lt;int&gt;161&lt;/int&gt;
+          &lt;/Channels&gt;
+          &lt;WideChannels&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;0&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;0&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;38&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;36&lt;/int&gt;
+                &lt;int&gt;40&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;46&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;44&lt;/int&gt;
+                &lt;int&gt;48&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;151&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;149&lt;/int&gt;
+                &lt;int&gt;153&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+            &lt;WideChannel&gt;
+              &lt;Channel&gt;159&lt;/Channel&gt;
+              &lt;SecondaryChannels&gt;
+                &lt;int&gt;157&lt;/int&gt;
+                &lt;int&gt;161&lt;/int&gt;
+              &lt;/SecondaryChannels&gt;
+            &lt;/WideChannel&gt;
+          &lt;/WideChannels&gt;
+          &lt;SupportedSecurity&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-AUTO&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-OPEN&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-SHARED&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-AUTO-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;TKIPORAES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;TKIP&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WPA2-PSK&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;AES&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+            &lt;SecurityInfo&gt;
+              &lt;SecurityType&gt;WEP-RADIUS&lt;/SecurityType&gt;
+              &lt;Encryptions&gt;
+                &lt;string&gt;WEP-64&lt;/string&gt;
+                &lt;string&gt;WEP-128&lt;/string&gt;
+              &lt;/Encryptions&gt;
+            &lt;/SecurityInfo&gt;
+          &lt;/SupportedSecurity&gt;
+        &lt;/RadioInfo&gt;
+      &lt;/WLanRadioInfos&gt;
+    </Value>
+</State>
+</Simulator>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions
+    xmlns:s="http://www.w3.org/2001/XMLSchema"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:t1="http://cisco.com/HNAPExt/"
+    xmlns:t2="http://cisco.com/HNAPExt/A/"
+    xmlns:tns="http://cisco.com/HNAP/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    targetNamespace="http://cisco.com/HNAP/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cisco.com/HNAPExt/">
+      <s:import namespace="http://cisco.com/HNAPExt/A/" />
+      <s:simpleType name="CiscoAction2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="CiscoActionResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="CiscoEnum">
+        <s:restriction base="s:string">
+          <s:enumeration value="Value1" />
+          <s:enumeration value="Value2" />
+          <s:enumeration value="Value3" />
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="ArrayOfBoolean">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="bool" type="s:boolean" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCiscoEnum">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="t1:CiscoEnum" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCiscoStruct">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CiscoStruct" type="t1:CiscoStruct" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfInt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="int" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfString">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CiscoStruct">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="a" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="as" type="t1:ArrayOfInt" />
+          <s:element minOccurs="1" maxOccurs="1" name="b" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="bs" type="t1:ArrayOfString" />
+          <s:element minOccurs="1" maxOccurs="1" name="c" type="t1:CiscoEnum" />
+          <s:element minOccurs="1" maxOccurs="1" name="cs" type="t1:ArrayOfCiscoEnum" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="CiscoAction">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="a" type="t1:CiscoStruct" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CiscoActionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="CiscoActionResult" type="t1:CiscoActionResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="b" type="t1:ArrayOfCiscoStruct" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CiscoAction2">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="in" type="t1:ArrayOfCiscoStruct" />
+            <s:element minOccurs="1" maxOccurs="1" name="x" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CiscoAction2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="CiscoAction2Result" type="t1:CiscoAction2Result" />
+            <s:element minOccurs="1" maxOccurs="1" name="out" type="t1:CiscoStruct" />
+            <s:element minOccurs="1" maxOccurs="1" name="extra" type="t1:ArrayOfBoolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cisco.com/HNAPExt/A/">
+      <s:import namespace="http://cisco.com/HNAPExt/" />
+      <s:simpleType name="CiscoActionResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="CiscoEnum">
+        <s:restriction base="s:string">
+          <s:enumeration value="Value1" />
+          <s:enumeration value="Value2" />
+          <s:enumeration value="Value3" />
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="ArrayOfCiscoEnum">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="t2:CiscoEnum" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfCiscoStruct">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="CiscoStruct" type="t2:CiscoStruct" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfInt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="int" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfString">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CiscoStruct">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="a" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="as" type="t2:ArrayOfInt" />
+          <s:element minOccurs="1" maxOccurs="1" name="b" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="bs" type="t2:ArrayOfString" />
+          <s:element minOccurs="1" maxOccurs="1" name="c" type="t2:CiscoEnum" />
+          <s:element minOccurs="1" maxOccurs="1" name="cs" type="t2:ArrayOfCiscoEnum" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="CiscoAction">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="a" type="t2:CiscoStruct" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="CiscoActionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="CiscoActionResult" type="t2:CiscoActionResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="b" type="t2:ArrayOfCiscoStruct" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="Cisco_CiscoAction">
+    <wsdl:part name="CiscoAction" element="t1:CiscoAction" />
+  </wsdl:message>
+  <wsdl:message name="Cisco_CiscoActionResponse">
+    <wsdl:part name="CiscoActionResponse" element="t1:CiscoActionResponse" />
+  </wsdl:message>
+  <wsdl:message name="CiscoAction2">
+    <wsdl:part name="CiscoAction2" element="t1:CiscoAction2" />
+  </wsdl:message>
+  <wsdl:message name="CiscoAction2Response">
+    <wsdl:part name="CiscoAction2Response" element="t1:CiscoAction2Response" />
+  </wsdl:message>
+  <wsdl:message name="Cisco_A_CiscoAction">
+    <wsdl:part name="CiscoAction" element="t2:CiscoAction" />
+  </wsdl:message>
+  <wsdl:message name="Cisco_A_CiscoActionResponse">
+    <wsdl:part name="CiscoActionResponse" element="t2:CiscoActionResponse" />
+  </wsdl:message>
+  <wsdl:portType name="HNAP">
+    <wsdl:operation name="Cisco_CiscoAction">
+      <wsdl:input message="tns:Cisco_CiscoAction" />
+      <wsdl:output message="tns:Cisco_CiscoActionResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="CiscoAction2">
+      <wsdl:input message="tns:CiscoAction2" />
+      <wsdl:output message="tns:CiscoAction2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="Cisco_A_CiscoAction">
+      <wsdl:input message="tns:Cisco_A_CiscoAction" />
+      <wsdl:output message="tns:Cisco_A_CiscoActionResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="HNAP" type="tns:HNAP">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="Cisco_CiscoAction">
+      <soap:operation soapAction="http://cisco.com/HNAPExt/CiscoAction" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CiscoAction2">
+      <soap:operation soapAction="http://cisco.com/HNAPExt/CiscoAction2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Cisco_A_CiscoAction">
+      <soap:operation soapAction="http://cisco.com/HNAPExt/A/CiscoAction" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="HNAP">
+    <wsdl:port name="HNAP" binding="tns:HNAP">
+      <soap:address location="" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

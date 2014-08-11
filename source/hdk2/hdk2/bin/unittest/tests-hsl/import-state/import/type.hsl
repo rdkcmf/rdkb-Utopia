@@ -1,0 +1,5 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct MyStruct
+    string Key
+    bool Value

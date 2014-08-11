@@ -1,0 +1,25 @@
+state int MyState1
+
+enum MyEnum
+    "Value1"
+    "Value2"
+
+struct MyStruct
+    int A
+    int B
+
+state MyEnum MyState2
+state MyStruct MyState3
+
+action MyAction
+    input
+        MyEnum A
+    output
+        MyStruct B
+        int C
+    result
+        "ERROR_FOO"
+    state
+        [set] MyState2
+        [get] MyState1
+        [get] MyState3

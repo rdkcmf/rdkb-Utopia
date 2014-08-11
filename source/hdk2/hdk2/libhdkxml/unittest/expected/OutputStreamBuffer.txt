@@ -1,0 +1,60 @@
+Content Length (Computed)= 96
+
+Serialize to a big fixed-size buffer:
+
+Content Length = 96, 96
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>3</b>
+<c>Hello</c>
+</a>
+
+Serialize to an exact fixed-size buffer:
+
+Content Length = 96, 96
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>3</b>
+<c>Hello</c>
+</a>
+
+Serialize to a too-small fixed-size buffer:
+
+Struct serialization failed!
+
+Serialize to a one-byte fixed-size buffer:
+
+Struct serialization failed!
+
+Serialize to a zero fixed-size buffer:
+
+Struct serialization failed!
+
+Serialize to a grow buffer (big initial size):
+
+Content Length = 96, 96
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>3</b>
+<c>Hello</c>
+</a>
+
+Serialize to a grow buffer (small initial size):
+
+Content Length = 96, 96
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>3</b>
+<c>Hello</c>
+</a>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 5 times
+malloc_interposer.c - exit: free called 5 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 1214
+malloc_interposer.c - exit: malloc max = 1062
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+
+  <!-- DeviceSettings2 -->
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>SerialNumber</Name>
+    <Value>LKK23LS3HSL9</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>TimeZone</Name>
+    <Value>UTC-8:00</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>AutoAdjustDST</Name>
+    <Value>true</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>Locale</Name>
+    <Value>en-us</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>SupportedLocales</Name>
+    <Value>
+      &lt;SupportedLocales xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;string&gt;en-us&lt;/string&gt;
+        &lt;string&gt;de-de&lt;/string&gt;
+        &lt;string&gt;da-dk&lt;/string&gt;
+        &lt;string&gt;sv-se&lt;/string&gt;
+        &lt;string&gt;es-es&lt;/string&gt;
+        &lt;string&gt;it-it&lt;/string&gt;
+        &lt;string&gt;fr-fr&lt;/string&gt;
+        &lt;string&gt;nl-nl&lt;/string&gt;
+        &lt;string&gt;pt-pt&lt;/string&gt;
+        &lt;string&gt;fr-ca&lt;/string&gt;
+      &lt;/SupportedLocales&gt;
+    </Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>SSL</Name>
+    <Value>false</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>Username</Name>
+    <Value>admin</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>UsernameSupported</Name>
+    <Value>false</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>TimeZoneSupported</Name>
+    <Value>true</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>RemoteSSLNeedsSSL</Name>
+    <Value>false</Value>
+  </State>
+
+  <!-- RouterSettings -->
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>RemoteSSL</Name>
+    <Value>true</Value>
+  </State>
+</Simulator>

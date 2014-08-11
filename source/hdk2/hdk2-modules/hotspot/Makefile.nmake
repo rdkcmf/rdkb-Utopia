@@ -1,0 +1,209 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+####
+# Makefile.nmake - Builds static and dynamic versions of the libhotspot library.
+#
+# Generated Binary Files
+#   + Dynamic library
+#      - libhotspot.dll : The dynamic library, linked against shared (dynamic) libhdkxml (libhdkxml.dll),
+#                         libhdksrv (libhdksrv.dll) and multithreaded crt (msvcrXX.dll) libraries.
+#      - libhotspot.lib : Defines import methods for libhotspot.dll.
+#   + Static library
+#      - libhotspotMT.lib : The static library, linked against static versions of libhdkxml (libhdkxmlMT.lib),
+#                           libhdksrv (libhdksrvMT.lib) and multithreaded static crt (libcmt.lib) libraries.
+#
+# Build environment variables
+#   - BUILDDIR : The directory in which the built (intermediate) object and generated binary files are placed.
+#                The default is $(HDKDIR)\build\libhotspot
+#   - BUILDDIR_LIBHDKXML : The location of the libhdkxml binaries.
+#                          The default is $(HDKDIR)\build\libhdkxml
+#   - BUILDDIR_LIBHDKSRV : The location of the libhdksrv binaries.
+#                          The default is $(HDKDIR)\build\libhdksrv
+#   - DEBUG : If defined, the resulting binaries will be built with debug information
+#             The default is not defined.
+####
+
+# Location of the HDK
+!ifndef HDKDIR
+HDKDIR = ..\..\hdk2
+!endif
+
+# HDK build directories
+!ifndef BUILDDIR_LIBHDKXML
+BUILDDIR_LIBHDKXML = $(HDKDIR)\build\libhdkxml
+!endif
+!ifndef BUILDDIR_LIBHDKSRV
+BUILDDIR_LIBHDKSRV = $(HDKDIR)\build\libhdksrv
+!endif
+
+# Module name
+MODULE = hotspot
+MODULE_UC = HOTSPOT
+
+# Build directory
+!ifndef BUILDDIR
+BUILDDIR = build
+!endif
+
+# Targets
+DYNAMIC_LIB = $(BUILDDIR)\lib$(MODULE).dll
+STATIC_LIB = $(BUILDDIR)\lib$(MODULE)MT.lib
+MODULE_HTML = $(BUILDDIR)\$(MODULE).html
+
+# HSL files
+HSL = \
+	"spec\device_list.hsl" \
+	"spec\hnd2.hsl" \
+	"spec\guest_access.hsl" \
+	"spec\parental_controls.hsl" \
+	"spec\setup.hsl" \
+	"state\device_list_state.hsl" \
+	"state\hnd2_state.hsl" \
+	"state\guest_access_state.hsl" \
+	"state\parental_controls_state.hsl" \
+	"state\setup_state.hsl"
+
+# HSL flags
+HSL_FLAGS = -I spec -I $(HDKDIR)\spec -I $(HDKDIR)\libhnap12\state
+
+# Object files for the dynamic library
+BUILDDIR_DYNAMIC = $(BUILDDIR)\obj_dynamic
+OBJS_DYNAMIC = \
+	"$(BUILDDIR_DYNAMIC)\$(MODULE).obj" \
+	"$(BUILDDIR_DYNAMIC)\$(MODULE)_methods.obj" \
+	"$(BUILDDIR_DYNAMIC)\hnap12_util.obj"
+
+# Object files for the static library
+BUILDDIR_STATIC = $(BUILDDIR)\obj_static
+OBJS_STATIC = \
+	"$(BUILDDIR_STATIC)\$(MODULE).obj" \
+	"$(BUILDDIR_STATIC)\$(MODULE)_methods.obj" \
+	"$(BUILDDIR_STATIC)\hnap12_util.obj"
+
+######################################################################
+
+# HSL-generated source files
+HSLSRC = \
+	"$(BUILDDIR)\$(MODULE).h" \
+	"$(BUILDDIR)\$(MODULE).c"
+
+# Compiler flags
+!ifdef MODULE_CXX
+MODULE_CC = $(CXX)
+MODULE_CFLAGS = $(CXXFLAGS) /TP
+!else
+MODULE_CC = $(CC)
+MODULE_CFLAGS = $(CFLAGS) /TC
+!endif
+
+# Enable highest warning level; treat warnings as errors
+MODULE_CFLAGS = $(MODULE_CFLAGS) /W4 /WX
+# Disable "'function': was declared deprecated" warning
+MODULE_CFLAGS = $(MODULE_CFLAGS) /wd4996
+MODULE_CFLAGS = $(MODULE_CFLAGS) /D$(MODULE_UC)_BUILD /I. /I$(BUILDDIR)
+MODULE_CFLAGS = $(MODULE_CFLAGS) /I$(HDKDIR)\include /I$(HDKDIR)\libhnap12
+
+!ifdef DEBUG
+MODULE_CFLAGS = $(MODULE_CFLAGS) /Od /Zi
+!else
+MODULE_CFLAGS = $(MODULE_CFLAGS) /Os
+!endif
+
+# Library type-specific flags (note the /DHDK_XML_STATIC /DHDK_XML_STATIC to indicate static linkage with libhdkxml and libhdksrv)
+MODULE_CFLAGS_DYNAMIC = $(MODULE_CFLAGS)
+MODULE_CFLAGS_STATIC = $(MODULE_CFLAGS) /DHDK_XML_STATIC /DHDK_XML_STATIC
+
+!ifdef DEBUG
+MODULE_CFLAGS_DYNAMIC = $(MODULE_CFLAGS_DYNAMIC) /MDd
+HDK_CLI_CFLAGS_STATIC = $(HDK_CLI_CFLAGS_STATIC) /MTd
+!else
+MODULE_CFLAGS_DYNAMIC = $(MODULE_CFLAGS_DYNAMIC) /MD
+MODULE_CFLAGS_STATIC = $(MODULE_CFLAGS_STATIC) /MT
+!endif
+
+# Linker flags
+LDFLAGS = /NOLOGO /DLL
+LDFLAGS = $(LDFLAGS) "$(BUILDDIR_LIBHDKXML)\libhdkxml.lib" "$(BUILDDIR_LIBHDKSRV)\libhdksrv.lib"
+!ifdef DEBUG
+LDFLAGS = /DEBUG $(LDFLAGS)
+!endif
+
+# Lib flags
+LIBFLAGS = /NOLOGO /WX
+
+# Build target (default)
+build: $(DYNAMIC_LIB) $(STATIC_LIB) $(MODULE_HTML)
+
+# Clean the build directory
+clean:
+	if exist "build" @rmdir /s /q "build"
+
+# Generate server method stubs
+methods:
+	$(HDKDIR)\bin\hdkmod.py --server-methods -b $(MODULE) $(HSL)
+
+# HSL code generation
+$(HSLSRC): $(HSL)
+	$(HDKDIR)\bin\hdkmod.py $(HSL_FLAGS) -o $(BUILDDIR) -b $(MODULE) --adi-report $(HSL)
+
+# Documentation generation
+$(MODULE_HTML): $(HSL)
+	$(HDKDIR)\bin\hdkdocs.py $(HSL_FLAGS) -o $@ $(HSL)
+
+# Rule for linking the dynamic library
+$(DYNAMIC_LIB): $(OBJS_DYNAMIC)
+	link.exe $(LDFLAGS) $(**) /OUT:$(DYNAMIC_LIB)
+
+# Rule for generating the static library
+$(STATIC_LIB): $(OBJS_STATIC)
+	lib.exe $(LIBFLAGS) $(**) /OUT:$(STATIC_LIB)
+
+# Rule for compiling source files for the dynamic library
+{}.c{$(BUILDDIR_DYNAMIC)}.obj:
+	@if not exist "$(BUILDDIR_DYNAMIC)" @mkdir "$(BUILDDIR_DYNAMIC)"
+	$(MODULE_CC) $(MODULE_CFLAGS_DYNAMIC) /Fd$(*R) /Fo$@ /c $(<)
+
+{$(BUILDDIR)}.c{$(BUILDDIR_DYNAMIC)}.obj:
+	@if not exist "$(BUILDDIR_DYNAMIC)" @mkdir "$(BUILDDIR_DYNAMIC)"
+	$(MODULE_CC) $(MODULE_CFLAGS_DYNAMIC) /Fd$(*R) /Fo$@ /c $(<)
+
+{$(HDKDIR)\libhnap12}.c{$(BUILDDIR_DYNAMIC)}.obj:
+	@if not exist "$(BUILDDIR_DYNAMIC)" @mkdir "$(BUILDDIR_DYNAMIC)"
+	$(MODULE_CC) $(MODULE_CFLAGS_DYNAMIC) /Fd$(*R) /Fo$@ /c $(<)
+
+# Rule for compiling source files for the static library
+{}.c{$(BUILDDIR_STATIC)}.obj:
+	@if not exist "$(BUILDDIR_STATIC)" @mkdir "$(BUILDDIR_STATIC)"
+	$(MODULE_CC) $(MODULE_CFLAGS_STATIC) /Fd$(*R) /Fo$@ /c $(<)
+
+{$(BUILDDIR)}.c{$(BUILDDIR_STATIC)}.obj:
+	@if not exist "$(BUILDDIR_STATIC)" @mkdir "$(BUILDDIR_STATIC)"
+	$(MODULE_CC) $(MODULE_CFLAGS_STATIC) /Fd$(*R) /Fo$@ /c $(<)
+
+{$(HDKDIR)\libhnap12}.c{$(BUILDDIR_STATIC)}.obj:
+	@if not exist "$(BUILDDIR_STATIC)" @mkdir "$(BUILDDIR_STATIC)"
+	$(MODULE_CC) $(MODULE_CFLAGS_STATIC) /Fd$(*R) /Fo$@ /c $(<)

@@ -1,0 +1,31 @@
+blobDefaultConstructor: {0}
+  
+blobDefaultConstructor != blobDeadDeadBeef
+blobDefaultConstructor != blobFooFo
+
+blobRawConstructor: {4}
+  deadbeef
+blobRawConstructor.get_Data() != (const char*)s_bytesDeadBeef
+blobRawConstructor != blobDeadDeadBeef
+blobRawConstructor != blobFooFo
+
+blobCopyConstructor: {4}
+  deadbeef
+blobCopyConstructor.get_Data() != blobRawConstructor.get_Data()
+blobCopyConstructor != blobDeadDeadBeef
+blobCopyConstructor != blobFooFo
+blobCopyConstructor == blobRawConstructor
+
+blobAssignmentOperator: {4}
+  deadbeef
+blobAssignmentOperator.get_Data() != blobRawConstructor.get_Data()
+blobAssignmentOperator != blobDeadDeadBeef
+blobCopyConstructor != blobFooFo
+blobAssignmentOperator == blobRawConstructor
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 5 times
+malloc_interposer.c - exit: free called 5 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 21
+malloc_interposer.c - exit: malloc max = 21
+malloc_interposer.c - ************************************************************

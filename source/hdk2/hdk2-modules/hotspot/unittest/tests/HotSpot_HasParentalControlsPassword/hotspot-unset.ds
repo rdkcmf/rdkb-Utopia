@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+
+  <!-- <ParentalControls_Password xmlns="http://cisco.com/HNAPExt/HotSpot/">password</ParentalControls_Password> -->
+  <State>
+    <Namespace>http://cisco.com/HNAPExt/HotSpot/</Namespace>
+    <Name>ParentalControls_WANAccessStatuses</Name>
+    <Value>
+      &lt;ParentalControls_WANAccessStatuses xmlns=&quot;http://cisco.com/HNAPExt/HotSpot/&quot;&gt;
+        &lt;WANAccessStatus&gt;
+          &lt;MACAddress&gt;00:11:22:33:44:55&lt;/MACAddress&gt;
+          &lt;IPAddress&gt;192.168.1.100&lt;/IPAddress&gt;
+          &lt;HasWANAccess&gt;true&lt;/HasWANAccess&gt;
+          &lt;OnGuestNetwork&gt;false&lt;/OnGuestNetwork&gt;
+        &lt;/WANAccessStatus&gt;
+        &lt;WANAccessStatus&gt;
+          &lt;MACAddress&gt;00:11:22:33:44:66&lt;/MACAddress&gt;
+          &lt;IPAddress&gt;192.168.2.100&lt;/IPAddress&gt;
+          &lt;HasWANAccess&gt;true&lt;/HasWANAccess&gt;
+          &lt;OnGuestNetwork&gt;true&lt;/OnGuestNetwork&gt;
+        &lt;/WANAccessStatus&gt;
+      &lt;/ParentalControls_WANAccessStatuses&gt;
+    </Value>
+  </State>
+</Simulator>

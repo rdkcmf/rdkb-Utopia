@@ -1,0 +1,71 @@
+# tests-gen/simple/hnap.gen
+
+namespace "http://cisco.com/HNAPExt/"
+
+enum CiscoEnum
+    "Value1"
+    "Value2"
+    "Value3"
+
+namespace "http://cisco.com/HNAPExt/A/"
+
+enum CiscoEnum
+    "Value1"
+    "Value2"
+    "Value3"
+
+namespace "http://cisco.com/HNAPExt/"
+
+struct CiscoStruct
+    int a
+    int[] as
+    string b
+    string[] bs
+    CiscoEnum c
+    CiscoEnum[] cs
+
+namespace "http://cisco.com/HNAPExt/A/"
+
+struct CiscoStruct
+    int a
+    int[] as
+    string b
+    string[] bs
+    CiscoEnum c
+    CiscoEnum[] cs
+
+action CiscoAction
+    input
+        CiscoStruct a
+    output
+        CiscoStruct[] b
+
+namespace "http://cisco.com/HNAPExt/"
+
+action CiscoAction
+    input
+        CiscoStruct a
+    output
+        CiscoStruct[] b
+
+action CiscoAction2
+    input
+        CiscoStruct[] in
+        int x
+    output
+        CiscoStruct out
+        bool[] extra
+
+event CiscoEvent
+    CiscoStruct[] stuff
+    bool someFlag
+
+service CiscoServiceOne
+    actions
+        CiscoAction
+
+service CiscoService2
+    actions
+        CiscoAction2
+    events
+        CiscoEvent

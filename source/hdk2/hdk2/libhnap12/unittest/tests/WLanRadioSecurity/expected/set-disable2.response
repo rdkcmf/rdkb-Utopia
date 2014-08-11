@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 289
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SetWLanRadioSecurityResponse xmlns="http://purenetworks.com/HNAP1/">
+<SetWLanRadioSecurityResult>OK</SetWLanRadioSecurityResult>
+</SetWLanRadioSecurityResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1567 times
+malloc_interposer.c - exit: free called 1567 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 51877
+malloc_interposer.c - exit: malloc max = 28320
+malloc_interposer.c - ************************************************************

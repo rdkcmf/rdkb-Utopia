@@ -1,0 +1,569 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+namespace "http://purenetworks.com/HNAP/Storage/"
+
+
+#@@ top Top
+#@ <img class="logo" src="@images/cisco_logo.png" width="151" height="80" alt="CISCO" />
+#@@ end
+
+#@@ title Network Attached Storage
+#@@ version 1.2 (Rev 12)
+#@@ date February 2010
+
+#@@ abstract Abstract
+#@ This document describes the details of the HNAP protocol specification
+#@ for use with Network Attached Storage (NAS) devices.
+#@@ end
+
+#@@ copyright Copyright Notice
+#@ Copyright &copy; 2002-2010<br/>
+#@ Cisco Systems, Inc.<br/>
+#@ 1201 3rd Avenue, Suite 900<br/>
+#@ Seattle, WA 98101, U.S.A.<br/>
+#@ All rights reserved.
+#@@ end
+
+#@@ h2 Change History
+#@ <table summary="Revision History">
+#@ <tr><th>Revision<th>Date<th>Notes
+#@ <tr><td>8<td>2009-07-23<td>
+#@ Removed "Base HNAP Methods for NAS Devices" section
+#@ <tr><td>9<td>2009-07-24<td>
+#@ Allow FormatStorage to return REBOOT
+#@ <tr><td>10<td>2009-08-06<td>
+#@ Fix wrong text
+#@ <tr><td>11<td>2009-09-02<td>
+#@ Allow -1 in BytesUsed
+#@ <tr><td>12<td>2010-02-<td>
+#@ Re-written in HSL
+#@ </table>
+#@@ end
+
+#@@ h2 Introduction
+#@ Home Network Administration Protocol (HNAP) is an HTTP-SOAP based protocol
+#@ that can be implemented inside of network devices
+#@ to allow advanced programmatic configuration and management by remote entities.
+#@
+#@ HNAP was designed to be a simple light weight protocol
+#@ that is easy to implement inside of small cost-constrained hardware
+#@ such as network routers, cameras and other small devices.
+#@ As the protocol is based on top of existing HTTP-SOAP standards,
+#@ it is very flexible and easily extensible to new scenarios.
+#@
+#@ By implementing HNAP, device vendors can provide added value for devices
+#@ by allowing management entities (for example, Network Magic) to discover and interact with them.
+#@@ end
+
+#@@ h3 Protocol Design
+#@ This document describes a set of HNAP methods that can be optionally implemented
+#@ by a Network Attached Storage (NAS) device to be managed by Network Magic.
+#@ The device should implement all of the minimal requirements for HNAP as described in this document.
+#@
+#@ Any network device that has the means of exposing file shares via SMB for read/write access
+#@ can implement these methods.
+#@ The device may be a dedicated NAS device, a DVR with storage, a media player with storage,
+#@ a mobile phone connected to an 802.11 network exposing its flash based storage card etc.
+#@@ end
+
+#@@ h3 Implementation Notes
+#@ The standard <tt>Basic</tt> authentication mechanism of HNAP can be used
+#@ to limit access to managing shares on this device.
+#@
+#@ For ease of use,
+#@ it is recommended that SMB access is available for all shared folders without requiring a credential.
+#@ For example, Everyone or Guest access is the default.
+#@@ end
+
+#@@ h3 NAS Methods Overview
+#@ This table lists the available APIs and their purpose.
+#@ The detailed API parameters are described in the following pages.
+#@ <table summary="methods">
+#@ <tr><th>SOAP Action<th>Purpose
+#@ <tr><td><tt>GetSharedFolders</tt>
+#@ <td>Enumerate shares on a storage device.
+#@ <tr><td><tt>AddSharedFolder</tt>
+#@ <td>Add a new share to a device.
+#@ <tr><td><tt>DeleteSharedFolder</tt>
+#@ <td>Delete a share from a device.
+#@ <tr><td><tt>ModifySharedFolder</tt>
+#@ <td>Modify attributes of an existing share.
+#@ <tr><td><tt>GetPhysicalDrives</tt>
+#@ <td>Obtain information about the physical storage in the device.
+#@ <tr><td><tt>GetLogicalDrives</tt>
+#@ <td>Obtain information about the logical volumes.
+#@ <tr><td><tt>FormatStorage</tt>
+#@ <td>Format the volumes in a storage device.
+#@ <tr><td><tt>GetFormatStatus</tt>
+#@ <td>Return the status of a pending format request.
+#@ </table>
+#@@ end
+
+#@@ h3 XML Namespace
+#@ All storage-specific HNAP methods in this document are based in the HNAP Storage Namespace.
+#@ This namespace is:
+#@
+#@ <tt>http://purenetworks.com/HNAP/Storage/</tt>
+#@
+#@ Note: A given NAS device implementing HNAP will implement
+#@ both methods from the Storage namespace and the core HNAP namespace.
+#@ The <tt>SOAPActions</tt> field in the <tt>GetDeviceSettings</tt> response
+#@ should ensure fully qualified methods are listed.
+#@@ end
+
+#@@ h3 Types of NAS Device
+#@ There are many types of network storage devices that offer some level of SMB sharing resources on the network.
+#@ Some devices might be more limited in functionality,
+#@ or more intelligent at being able to automatically make the right choice on behalf of the user.
+#@ Such devices might not require as much management from a remote management application.
+#@ They may choose to disallow share creation, or not support drive array creation etc.
+#@
+#@ Some possible examples of types of NAS devices are listed below:
+#@
+#@ <table summary="method use">
+#@ <tr><th>HNAP NAS Method<th>Traditional NAS<th>Network Card Reader<th>Intelligent NAS
+#@ <tr><td><tt>GetSharedFolders</tt>
+#@ <td>yes
+#@ <td>yes
+#@ <td>yes
+#@ <tr><td><tt>AddSharedFolder</tt><br />
+#@ <tt>DeleteSharedFolder</tt><br />
+#@ <tt>ModifySharedFolder</tt>
+#@ <td>yes
+#@ <td>no
+#@
+#@ (Shares created automatically when valid cards are inserted.)
+#@ <td>no
+#@
+#@ (Factory default shares automatically assigned by device.)
+#@ <tr><td><tt>GetPhysicalDrives</tt>
+#@ <td>yes
+#@ <td>yes
+#@ <td>yes
+#@ <tr><td><tt>GetLogicalDrives</tt>
+#@ <td>yes
+#@ <td>yes
+#@ <td>yes
+#@ <tr><td><tt>FormatStorage</tt><br />
+#@ <tt>GetFormatStatus</tt>
+#@ <td>yes
+#@ <td>no
+#@
+#@ (No ability to manage drive arrays)
+#@ <td>no
+#@
+#@ (Arrays managed automatically.)
+#@ </table>
+#@@ end
+
+
+#
+# Enumerations
+#
+
+enum NASLogicalDriveArrayType
+    #@ Indicates that the device is not using any form of RAID.
+    #@ This mode typically corresponds to a single physical disk.
+    "NONE"
+
+    #@ Indicates that a drive is running in JBOD mode.
+    #@ In this mode all physical disks appear as one large disk.
+    #@ Each physical disk can be arbitrary in size without wasting space.
+    #@ Logical size is the total space across all physical drives.
+    "JBOD"
+
+    #@ Indicates that the drive is running in RAID0 mode.
+    #@ In this mode, all physical disks appear as one large disk.
+    #@ However, the size of the array is capped to n * the size of the smallest disk in the array.
+    #@ Same size disks are recommended.
+    #@ No redundancy.
+    "RAID0"
+
+    #@ Indicates that the drive is running in RAID1 mode.
+    #@ In this mode the array appears as one physical disk
+    #@ and the total size of the logical volume is capped at the size of a single physical disk.
+    #@ With RAID1,
+    #@ each disk must be the same size and each physical disk in the array is an exact mirror of each other disk.
+    #@ Most common with 2 disks.
+    "RAID1"
+
+    #@ Indicates that the drive is running in RAID5 mode.
+    #@ This mode uses block-level striping with parity data distributed across the disks.
+    #@ Each physical disk must be the same size.
+    #@ In this mode the array appears as one physical disk
+    #@ and the total size of the logical volume is (n-1) * disk-size.
+    #@ Allows for very easy expansion of size with some redundancy.
+    "RAID5"
+
+
+enum NASLogicalDriveFormat
+
+    #@ The NAS device does not recognize the current drive format,
+    #@ and a call to the FormatStorage method is required to initialize the disk.
+    "UNKNOWN"
+
+    #@ FAT32 file system.
+    #@ FAT32 is a legacy windows storage format that is still widely used for pluggable flash based storage devices.
+    "FAT32"
+
+    #@ NTFS file system.
+    #@ NTFS can handle files with sizes > 4Gb and is the preference of NT based windows systems.
+    "NTFS"
+
+    #@ Mac OS X formatted drive.
+    "HFS+"
+
+    #@ Linux-based system.
+    "EXT2FS"
+
+
+enum NASPhysicalDriveType
+    "SATA"
+    "IDE"
+    "SCSI"
+    "SD"
+    "MICRO-SD"
+    "COMPACT-FLASH"
+    "MEMORY-STICK"
+
+
+enum NASFormatStatus
+    "IDLE"
+    "FORMATTING"
+
+
+#
+# Structures
+#
+
+struct SharedFolder
+    #@ Specifies the name for this share.
+    #@ This name is typically used to refer to its SMB location, for example, <tt>\\computer\name</tt>.
+    #@ It is also visible to the end-user.
+    #@
+    #@<ul>
+    #@<li>Names must be unique for a given NAS device.
+    #@<li> Names cannot contain special characters such as: spaces <tt>\ / : * ? " &lt; &gt; |</tt>
+    #@</ul>
+    string Name
+
+    #@ The local path to this folder on the physical volume.
+    #@
+    #@ The LocalPath attribute syntax is specific to the operating system and format of the volume being used.
+    #@ For example, <tt>C:\myshare\</tt> or <tt>/HDD01/myshare/</tt>
+    string LocalPath
+
+    #@ Id of the logical drive this share resides on.
+    string LogicalDriveID
+
+    #@ The total number of files located in this share.
+    #@ The count should also include all files in all subdirectories.
+    #@
+    #@ If maintaining this count is too computationally expensive for a device,
+    #@ it may opt to return no information for this field.
+    #@ It may do so by returning a value of -1 to indicate that this property is not available.
+   int FileCount
+
+    #@ The total number of subfolders located in this share.
+    #@ This count should include all subfolders in the hierarchy.
+    #@
+    #@ If maintaining this count is too computationally expensive for a device,
+    #@ it may opt to return no information for this field.
+    #@ It may do so by returning a value of -1 to indicate that this property is not available.
+   int FolderCount
+
+    #@ <tt>true</tt> if the share is read-only, <tt>false</tt> if the share allows read-write access.
+    bool ReadOnly
+
+    #@ The total number of bytes used by this share.
+    #@ To allow for large volumes, a 64-bit integer should be used.
+    #@
+    #@ If maintaining this size is too computationally expensive for a device,
+    #@ it may opt to return no information for this field.
+    #@ It may do so by returning a value of -1 to indicate that this property is not available.
+    long BytesUsed
+
+
+struct LogicalDriveInfo
+
+    #@ A unique ID that identifies this logical drive. Logical drive IDs must be unique and persistent.
+    #@ For example, if a drive is removed from the NAS device and re-inserted later,
+    #@ it should reclaim the same drive id for each logical drive.
+    string LogicalDriveID
+
+    #@ Total number of bytes available on this logical volume.
+    #@
+    #@ If the device contains multiple physical disks,
+    #@ the implementer must return aggregate information across all of these disks.
+    #@
+    #@ Must be less than 2<sup>63</sup>.
+    long BytesTotal
+
+    #@ Total number of bytes allocated to files on this logical volume.
+    #@
+    #@ Must be less than 2<sup>63</sup>.
+    long BytesUsed
+
+    #@ Returns an array of <tt>PhysicalDriveID</tt>s that correspond to
+    #@ the physical drives that have been combined to make this single logical drive.
+    #@ If this logical drive does not represent a drive array the device should return an empty array.
+    string[] ArrayDrives
+
+    #@ Type of the array this drive represents.
+    NASLogicalDriveArrayType ArrayType
+
+    #@ Format of this logical drive.
+    NASLogicalDriveFormat Format
+
+
+struct PhysicalDriveInfo
+
+    #@ A unique ID that identifies this physical drive.
+    #@ Physical drive IDs must be unique and persistent.
+    #@ For example, if a drive is removed from the NAS device and re-inserted later,
+    #@ it should reclaim the same drive id.
+    string PhysicalDriveID
+
+    #@ Total capacity of this disk in bytes.
+    #@ Must be less than 2<sup>63</sup>.
+    long Capacity
+
+    #@ Id of the physical drive slot being used by this device.
+    int Slot
+
+    #@ The type of physical storage attached in this slot.
+    NASPhysicalDriveType Type
+
+    #@ <tt>true</tt> if this drive can be removed and/or inserted while the NAS device is turned on,
+    #@ <tt>false</tt> if the NAS device must be powered down prior to drive removal/insertion.
+    bool HotSwappable
+
+#
+# Actions
+#
+
+#@ Use this method to enumerate all of the shared folders exposed by the network device.
+action GetSharedFolders
+    output
+
+        #@ A list of SharedFolder structures,
+        #@ each shared folder structure represents a single unique share on the device.
+        #@
+        #@ If a device has no shares, then the empty list.
+        SharedFolder[] Shares
+
+
+#@ Use this method to add a new shared folder to the volume.
+#@
+#@ <ul>
+#@ <li>This method does not supply a local path name for the location of this shared folder on the physical medium.
+#@ It is up to the implementer of this method to determine
+#@ the best physical location for this share and manage the underlying file system.
+#@ <li>It is assumed that all new shares are created with read/write permissions by default.
+#@ </ul>
+action AddSharedFolder
+    input
+
+        #@ Id of the logical drive on the NAS device to be used to store content for this file share.
+        #@ Can be obtained via the GetLogicalDrives call.
+        string LogicalDriveID
+
+        # $REVIEW: exact set
+        #@ Specifies a name for this share.
+        #@
+        #@ <ul>
+        #@ <li>If a share exists with this name on the device,
+        #@ the method should fail and return the <tt>ERROR_DUPLICATE</tt> code.
+        #@ Share names must be unique for a given NAS device regardless of the number of logical volumes present.
+        #@ <li>Share names should be case insensitive.
+        #@ That is, <tt>\\nasbox\share</tt> is the same as <tt>\\nasbox\ShArE</tt>.
+        #@ <li>Names cannot contain special characters such as: spaces <tt>\ / : * ? " &lt; &gt; |</tt> etc
+        #@ </ul>
+        string Name
+
+        #@ Boolean value that specifies if the share should be created read-only or read-write.
+        bool ReadOnly
+    result
+
+        #@ A share with this name already exists.
+        "ERROR_DUPLICATE"
+
+        #@ A share name was passed that contains illegal characters.
+        "ERROR_INVALID_NAME"
+
+
+#@ Use this method to remove an existing shared folder from the volume.
+#@
+#@ In general,
+#@ Network Storage devices do not have an easy way to browse the physical media that is not shared on the network,
+#@ so when deleting a share from the NAS device via HNAP,
+#@ it is required that all files and folders that are part of that share are also deleted.
+action DeleteSharedFolder
+    input
+
+        #@ Specifies the name of the share that is to be deleted.
+        #@
+        #@ If no share exists with this name on the volume,
+        #@ the method should fail and return the <tt>ERROR_SHARE_NOT_FOUND</tt> code.
+        string Name
+    result
+
+        #@ Share by this name does not exist.
+        "ERROR_SHARE_NOT_FOUND"
+
+
+#@ Use this method to modify the attributes of an existing share,
+#@ including renaming the share, changing its read-write status, or modifying its media type.
+action ModifySharedFolder
+    input
+
+        #@ Specifies the name of the share that is to be modified.
+        string Name
+
+        #@ Specifies a name for this share.
+        #@
+        #@ If <tt>NewName</tt> is the same as <tt>Name</tt>,
+        #@ then it is assumed the client does not wish to modify this attribute.
+        #@
+        #@ If <tt>NewName</tt> is different from <tt>Name</tt>
+        #@ and an existing share exists with this name on the volume,
+        #@ the method will fail and return the <tt>ERROR_DUPLICATE</tt> code.
+        string NewName
+
+        #@ specifies if the share should be created read-only or read-write.
+        bool ReadOnly
+    result
+
+        #@ Share by this name already exists.
+        "ERROR_DUPLICATE"
+
+
+#@ Use this method to obtain information about the physical disk drive attached to this storage device.
+#@
+#@ <ul>
+#@ <li>Some devices only expose a single physical drive.
+#@ <li>A device may have hot-swappable drives which can be removed at runtime.
+#@ <li>A single physical drive may be combined with one or more other physical drives using RAID
+#@ to present a single logical drive.
+#@ HNAP clients should ensure they are using logical and physical volume information where appropriate.
+#@ </ul>
+action GetPhysicalDrives
+    output
+
+        #@ Information about the physical storage inside this network storage device.
+        PhysicalDriveInfo[] PhysicalDriveInfos
+
+        #@ Number of physical storage slots this storage device has.
+        #@ This number allows HNAP clients to determine the expansion possibility of adding more drives.
+        int SlotCount
+
+        #@ An array of the types of RAID supported by this device.
+        #@
+        #@ <ul>
+        #@ <li>An implementer should return a list of all of the above types that it supports.
+        #@
+        #@ <li>If a device is a simple storage device that does not support any form of RAID,
+        #@ it should simply return a single string containing <tt>NONE</tt>.
+        #@ </ul>
+        NASLogicalDriveArrayType[] SupportedArrayTypes
+
+
+#@ Use this method to obtain information about the logical drives attached to this storage device.
+#@
+#@ <ul>
+#@ <li>A logical drive might be a combination of one or more physical drives or might be a single physical drive.
+#@ Physical drives are combined into logical drives by using one or more RAID array techniques.
+#@ <li>A logical drive may also be achieved by portioning a single physical drive into two or more logical drives.
+#@ <li>HNAP does not offer the ability to configure partitions, but does allow configuration of drive arrays.
+#@ <li>Logical drives should only be exposed if they are formatted and ready for use.
+#@ For example a device containing a single physical unformatted raw disk
+#@ would show as 1 physical drive and 0 logical drives until the physical drive is formatted.
+#@ </ul>
+action GetLogicalDrives
+
+    output
+
+        #@ Returns a storage info structure that contains information about
+        #@ the logical storage inside this network storage device.
+        LogicalDriveInfo[] LogicalDriveInfos
+
+
+#@ Use this method to format the physical storage in a network storage device.
+#@ This method is used to combine multiple physical disks together into one logical volume,
+#@ also known as a drive array.
+#@ <ul>
+#@ <li>A host should check which ArrayTypes this NAS device supports by using <tt>GetPhysicalDrives</tt>.
+#@ <li>Devices that do not allow for formatting may not implement this method.
+#@ <li>This method typically is a lengthy operation,
+#@ if a device returns <tt>OK</tt> it indicates the operation has been started.
+#@ HNAP clients must poll using GetFormatStatus for completion of the operation.
+#@ <li>If the device returns <tt>REBOOT</tt>,
+#@ the client must poll as usual using IsDeviceReady before sending further HNAP calls.
+#@ However, the format is not guaranteed to be complete when the device is ready again.
+#@ The client should use GetFormatStatus to check.
+#@ </ul>
+action FormatStorage
+
+    input
+
+        #@ Array of PhysicalDriveIDs to be combined into a single array.
+        #@
+        #@ After calling this method completes,
+        #@ there will be a new single logical drive containing the selected physical drives.
+        string[] PhysicalDrives
+
+        #@ Desired configuration for network storage device.
+        NASLogicalDriveArrayType ArrayType
+
+    result
+
+        #@ This array type is not supported by this device.
+        "ERROR_NOT_SUPPORTED"
+
+        #@ The physical device IDs passed are not recognized .
+        "ERROR_BAD_DEVICE_ID"
+
+        #@ Too few physical device IDs were supplied for the array type being configured.
+        "ERROR_NEED_MORE_DRIVES"
+
+        #@ The device is busy processing a recent format request.
+        "ERROR_DEVICE_BUSY"
+
+
+#@ Use this method to query the status of a pending format operation.
+action GetFormatStatus
+
+    output
+
+        #@ Status of pending format operation.
+        NASFormatStatus Status
+
+        #@ Progress so far as a percentage.
+        int Progress
+
+        #@ Estimated time remaining for the operation, in seconds.
+        int Remaining

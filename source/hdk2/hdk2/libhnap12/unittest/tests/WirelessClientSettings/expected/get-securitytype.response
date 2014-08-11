@@ -1,0 +1,27 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 547
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWirelessClientSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWirelessClientSettingsResult>OK</GetWirelessClientSettingsResult>
+<SSID>My Home Network</SSID>
+<NetworkType>INFRASTRUCTURE</NetworkType>
+<SecurityEnabled>true</SecurityEnabled>
+<SecurityType>WPA-AUTO-PSK</SecurityType>
+<Encryption>AES</Encryption>
+<Key>MySecretPassword</Key>
+<Connected>true</Connected>
+</GetWirelessClientSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 662 times
+malloc_interposer.c - exit: free called 662 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 37118
+malloc_interposer.c - exit: malloc max = 24479
+malloc_interposer.c - ************************************************************

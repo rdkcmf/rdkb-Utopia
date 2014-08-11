@@ -1,0 +1,36 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 637
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetMACFilters2Response xmlns="http://purenetworks.com/HNAP1/">
+<GetMACFilters2Result>OK</GetMACFilters2Result>
+<Enabled>true</Enabled>
+<IsAllowList>true</IsAllowList>
+<MACList>
+<MACInfo>
+<MacAddress>AA:BB:CC:DD:EE:FF</MacAddress>
+<DeviceName>Laptop</DeviceName>
+</MACInfo>
+<MACInfo>
+<MacAddress>00:11:22:33:44:55</MacAddress>
+<DeviceName>Playstation 3</DeviceName>
+</MACInfo>
+<MACInfo>
+<MacAddress>FF:FF:FF:FF:FF:FF</MacAddress>
+<DeviceName>Router</DeviceName>
+</MACInfo>
+</MACList>
+</GetMACFilters2Response>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 611 times
+malloc_interposer.c - exit: free called 611 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34490
+malloc_interposer.c - exit: malloc max = 21726
+malloc_interposer.c - ************************************************************

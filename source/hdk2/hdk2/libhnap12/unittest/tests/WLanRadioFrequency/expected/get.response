@@ -1,0 +1,36 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 596
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWLanRadioFrequenciesResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWLanRadioFrequenciesResult>OK</GetWLanRadioFrequenciesResult>
+<RadioFrequencyInfos>
+<RadioFrequencyInfo>
+<RadioID>Radio_0</RadioID>
+<Frequencies>
+<int>2</int>
+<int>5</int>
+</Frequencies>
+</RadioFrequencyInfo>
+<RadioFrequencyInfo>
+<RadioID>Radio_1</RadioID>
+<Frequencies>
+<int>5</int>
+<int>8</int>
+</Frequencies>
+</RadioFrequencyInfo>
+</RadioFrequencyInfos>
+</GetWLanRadioFrequenciesResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 952 times
+malloc_interposer.c - exit: free called 952 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 41588
+malloc_interposer.c - exit: malloc max = 28896
+malloc_interposer.c - ************************************************************

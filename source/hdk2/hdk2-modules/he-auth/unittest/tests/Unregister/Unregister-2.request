@@ -1,0 +1,10 @@
+SOAPAction: http://cisco.com/he/registrar/Unregister
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<Unregister xmlns="http://cisco.com/he/registrar/">
+  <DeviceID>2ac21b80-442f-11df-9879-0800200c9a64</DeviceID>
+</Unregister>
+</soap:Body>
+</soap:Envelope>

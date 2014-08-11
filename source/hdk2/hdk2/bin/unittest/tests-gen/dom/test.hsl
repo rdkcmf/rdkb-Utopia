@@ -1,0 +1,13 @@
+# tests-gen/dom/test.hsl
+
+namespace "http://cisco.com/HNAPExt/"
+
+struct CiscoStruct
+    int a
+    string b
+    long c
+
+struct CiscoStructToo
+    CiscoStruct s
+    [optional] int d
+    string e

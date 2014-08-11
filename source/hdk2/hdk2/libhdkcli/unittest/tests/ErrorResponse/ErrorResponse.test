@@ -1,0 +1,7 @@
+#
+# ErrorResponse.test
+#   Test the handling of an error response.
+#
+
+method: http://cisco.com/Unittest/ComplexUnittestMethod
+host: http://127.0.0.1:8080

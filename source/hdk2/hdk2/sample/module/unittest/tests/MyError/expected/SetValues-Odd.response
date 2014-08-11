@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 254
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SetValuesResponse xmlns="http://cisco.com/mymodule/">
+<SetValuesResult>ERROR_ODD_VALUE</SetValuesResult>
+</SetValuesResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 117 times
+malloc_interposer.c - exit: free called 117 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 17246
+malloc_interposer.c - exit: malloc max = 8736
+malloc_interposer.c - ************************************************************

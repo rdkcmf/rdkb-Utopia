@@ -1,0 +1,30 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 608
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWirelessClientConnectionInfoResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWirelessClientConnectionInfoResult>OK</GetWirelessClientConnectionInfoResult>
+<SSID>My Home Network</SSID>
+<Frequency>2</Frequency>
+<Mode>802.11g</Mode>
+<ChannelWidth>20</ChannelWidth>
+<Channel>1</Channel>
+<SignalStrength>88</SignalStrength>
+<Noise>7</Noise>
+<LinkSpeedIn>128</LinkSpeedIn>
+<LinkSpeedOut>128</LinkSpeedOut>
+<WmmEnabled>true</WmmEnabled>
+</GetWirelessClientConnectionInfoResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 666 times
+malloc_interposer.c - exit: free called 666 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 36622
+malloc_interposer.c - exit: malloc max = 23915
+malloc_interposer.c - ************************************************************

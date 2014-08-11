@@ -1,0 +1,18 @@
+Failed to parse '1'
+Failed to parse '0'
+Failed to parse 'True'
+Failed to parse 'FaLse'
+Failed to parse 'tru'
+Parsed 'true' into boolean
+Parsed 'false' into boolean
+Failed to parse '334234'
+Failed to parse '\ '
+Failed to parse '	'
+Failed to parse ''
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

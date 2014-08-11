@@ -1,0 +1,161 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+import "core.hsl"
+
+namespace "http://purenetworks.com/HNAP1/"
+
+#
+# State definitions
+#
+
+# DeviceSettings
+
+#@ Enumeration of supported device types.
+state DeviceType      DeviceType
+#@ A user-friendly name for the device.
+state string          DeviceName
+#@ The name of the device manufacturer.
+state string          VendorName
+#@ A brief description of the device.
+state string          ModelDescription
+#@ The device's model number, preceeded by the VendorName.
+state string          ModelName
+#@ The device's firmware version.
+state string          FirmwareVersion
+#@ A URL to the Web-based user interface for administering the device.
+state string          PresentationURL
+state string[]        SubDeviceURLs
+#@ A list of tasks that the device management software can expose in its user interface (UI).
+state TaskExtension[] TaskExtensions
+#@ The administrator password for this device.
+state string          AdminPassword
+
+# DeviceSettings2
+
+#@ The device's serial number
+state string   SerialNumber
+#@ The administrator username for this device.
+state string   Username
+#@ The time zone the device is currently configured for.
+state string   TimeZone
+#@ Indicates whether or not the device automatically adjusts the time to account for day light savings.
+state bool     AutoAdjustDST
+#@ The RFC 3066 formatted locale the device is currently configured for
+state string   Locale
+#@ An array of RFC 3066 formatted locales that the device supports.
+state string[] SupportedLocales
+#@ Indicates whether or not the secure SSL port (443) is open and can accept HNAP calls.
+state bool     SSL
+#@ Indicates whether or not the device supports setting the username
+state bool     UsernameSupported
+#@ Indicates whether or not the device supports setting the timezone
+state bool     TimeZoneSupported
+#@ Indicates whether the RemotePort will only accept SSL connections.
+state bool   RemoteSSL
+#@ Indicates whether or not the device requires SSL for remote SSL management
+state bool     RemoteSSLNeedsSSL
+
+# IsDeviceReady
+
+#@ Indicates whether or not the device is ready to accept HNAP calls.
+state bool IsDeviceReady
+
+# Reboot
+
+#@ Indicates to the device that a reboot should be executed.
+#@
+#@ NOTE: This is not an actual ADI value, it is a trigger.
+state bool RebootTrigger
+
+# FirmwareSettings
+
+#@ Allows hardware vendors to extend their ModelName to specify a hardware revision number.
+state string         ModelRevision
+#@ Creation date of the firmware file.
+state datetime       FirmwareDate
+#@ Array of supported firmware update methods.
+state UpdateMethod[] UpdateMethods
+
+
+#
+# Action States
+#
+
+action_state GetDeviceSettings
+    state
+        [get] DeviceType
+        [get] DeviceName
+        [get] VendorName
+        [get] ModelDescription
+        [get] ModelName
+        [get] FirmwareVersion
+        [get] PresentationURL
+        [get] SubDeviceURLs
+        [get] TaskExtensions
+
+action_state SetDeviceSettings
+    state
+        [set] DeviceName
+        [set] AdminPassword
+
+action_state GetDeviceSettings2
+    state
+        [get] SerialNumber
+        [get] TimeZone
+        [get] AutoAdjustDST
+        [get] Locale
+        [get] SupportedLocales
+        [get] SSL
+
+action_state SetDeviceSettings2
+    state
+        [get,set] Username
+        [get,set] TimeZone
+        [set] AutoAdjustDST
+        [set] Locale
+        [set] SSL
+        [get] UsernameSupported
+        [get] TimeZoneSupported
+        [get] RemoteSSL
+        [get] RemoteSSLNeedsSSL
+
+action_state IsDeviceReady
+    state
+        [get] IsDeviceReady
+
+action_state Reboot
+    state
+        [get] RebootTrigger
+
+action_state GetFirmwareSettings
+    state
+        [get] VendorName
+        [get] ModelName
+        [get] ModelRevision
+        [get] FirmwareVersion
+        [get] FirmwareDate
+        [get] UpdateMethods

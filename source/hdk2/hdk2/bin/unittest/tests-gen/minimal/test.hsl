@@ -1,0 +1,5 @@
+# tests-gen/minimal/test.hnap
+
+namespace "http://cisco.com/HNAPExt/"
+
+action CiscoAction

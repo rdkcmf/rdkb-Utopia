@@ -1,0 +1,31 @@
+SOAPAction: "http://purenetworks.com/HNAP1/SetRouterLanSettings2"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+  <soap:Body>
+    <SetRouterLanSettings2 xmlns="http://purenetworks.com/HNAP1/">
+      <RouterIPAddress>192.168.1.99</RouterIPAddress>
+      <RouterSubnetMask>255.255.255.0</RouterSubnetMask>
+      <DHCPServerEnabled>true</DHCPServerEnabled>
+      <IPAddressFirst>192.168.1.100</IPAddressFirst>
+      <IPAddressLast>192.168.1.149</IPAddressLast>
+      <LeaseTime>1440</LeaseTime>
+      <DHCPReservations>
+        <DHCPReservation>
+          <DeviceName>Device 1</DeviceName>
+          <IPAddress>192.168.1.200</IPAddress>
+          <MacAddress>FF:EE:DD:CC:BB:AA</MacAddress>
+        </DHCPReservation>
+        <DHCPReservation>
+          <DeviceName>Device 2</DeviceName>
+          <IPAddress>192.168.1.201</IPAddress>
+          <MacAddress>11:22:33:44:55:66</MacAddress>
+        </DHCPReservation>
+      </DHCPReservations>
+    </SetRouterLanSettings2>
+  </soap:Body>
+</soap:Envelope>

@@ -1,0 +1,69 @@
+namespace "http://cisco.com/HNAPExt/Sub/"
+
+# State (other namespace)
+state string s6
+
+namespace "http://cisco.com/HNAPExt/"
+namespace sub "http://cisco.com/HNAPExt/Sub/"
+
+# Structs
+struct MyStruct
+    int a
+    int b
+    int[] c
+
+# Actions
+action Action1
+    input
+        string m6
+        MyStruct[] m5
+
+action Action2
+    output
+        string m6
+        MyStruct[] m5
+
+action Action3
+   state
+        [get] s6
+
+# State
+#@ My state
+[foo] state int s1 #@ ...
+state string s1
+state string s2
+state long[] s3
+state MyStruct s4
+state MyStruct[] s5
+
+# Action State
+action_state Action1
+    state
+        #@ State member
+        [set] sub:s6 #@ ...
+        [set] s5
+
+action_state Action2
+    input
+        [get] sub:s6
+        [get] s5
+    state
+        s99
+        [foo] s98
+        [get] s97
+        [get, set] s1
+
+action_state Action3
+    input
+        [get] sub:s6
+        [get] s5
+
+# Action state redefinition...
+action_state Action1
+    state
+        [set] s5
+
+# Unknown action
+action_state Action4
+    state
+        [get] s1

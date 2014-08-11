@@ -1,0 +1,18 @@
+<NoInputOutputPathMethod xmlns="http://cisco.com/Unittest/">
+    <StringArg0>The string argument for the NoInputOutputPathMethod unittest</StringArg0>
+    <StructArg0>
+        <StringMember>string member</StringMember>
+        <IntMember>1234</IntMember>
+        <BoolMember>false</BoolMember>
+        <DateTimeMember>1997-07-16T19:20:10Z</DateTimeMember>
+        <IPAddressMember>1.1.1.1</IPAddressMember>
+        <MACAddressMember>11:11:11:11:11:11</MACAddressMember>
+        <EnumMember>EnumValue0</EnumMember>
+        <StringArrayMember>
+            <string>string 1</string>
+            <string>string 2</string>
+            <string>string 3</string>
+        </StringArrayMember>
+    </StructArg0>
+    <IntArg0>5555</IntArg0>
+</NoInputOutputPathMethod>

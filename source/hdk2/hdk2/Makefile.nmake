@@ -1,0 +1,147 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+# Build directory
+!ifndef BUILDDIR
+BUILDDIR = build
+!endif
+
+# Build target (default)
+build:
+	@pushd libhdkxml & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\$(BUILDDIR)\libhdkxml & \
+	@popd
+	@pushd libhdksrv & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\$(BUILDDIR)\libhdksrv & \
+	@popd
+	@pushd libhdkcli & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\$(BUILDDIR)\libhdkcli & \
+	@popd
+	@pushd libhnap12 & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\$(BUILDDIR)\libhnap12 & \
+	@popd
+	@pushd unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\$(BUILDDIR)\unittest & \
+	@popd
+	@pushd spec & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\$(BUILDDIR)\doc & \
+	@popd
+
+# Sample build target
+_sample:
+	@pushd sample\cgi & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\..\$(BUILDDIR)\sample\cgi & \
+	@popd
+	@pushd sample\client & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\..\$(BUILDDIR)\sample\client & \
+	@popd
+	@pushd sample\dom & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\..\$(BUILDDIR)\sample\dom & \
+	@popd
+	@pushd sample\hnapd & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\..\$(BUILDDIR)\sample\hnapd & \
+	@popd
+	@pushd sample\module & \
+	nmake.exe /NOLOGO /f Makefile.nmake BUILDDIR=..\..\$(BUILDDIR)\sample\module & \
+	@popd
+
+# Clean the build directory
+clean:
+	@pushd .\libhdkxml & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\$(BUILDDIR)\libhdkxml & \
+	@popd
+	@pushd libhdkxml\unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean & \
+	@popd
+	@pushd libhdksrv & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\$(BUILDDIR)\libhdksrv & \
+	@popd
+	@pushd libhdksrv\unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean & \
+	@popd
+	@pushd libhdkcli & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\$(BUILDDIR)\libhdkcli & \
+	@popd
+	@pushd libhdkcli\unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean & \
+	@popd
+	@pushd libhnap12 & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\$(BUILDDIR)\libhnap12 & \
+	@popd
+	@pushd libhnap12\unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean & \
+	@popd
+	@pushd unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\$(BUILDDIR)\unittest & \
+	@popd
+	@pushd spec & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\$(BUILDDIR)\doc & \
+	@popd
+	@pushd sample\cgi & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\..\$(BUILDDIR)\sample\cgi & \
+	@popd
+	@pushd sample\client & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\..\$(BUILDDIR)\sample\client & \
+	@popd
+	@pushd sample\dom & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\..\$(BUILDDIR)\sample\dom & \
+	@popd
+	@pushd sample\hnapd & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\..\$(BUILDDIR)\sample\hnapd & \
+	@popd
+	@pushd sample\module & \
+	nmake.exe /NOLOGO /f Makefile.nmake clean BUILDDIR=..\..\$(BUILDDIR)\sample\module & \
+	@popd
+!if "$(BUILDDIR)" == "build"
+	@if exist "$(BUILDDIR)" @rmdir /s /q "$(BUILDDIR)"
+!endif
+
+# Run unit tests
+runtests:
+	bin\unittest\runtests.py
+	@echo.
+	libhdkxml\unittest\runtests.py
+	@echo.
+	libhdksrv\unittest\runtests.py
+	@echo.
+	libhdkcli\unittest\runtests.py
+	@echo.
+	hdkcli_cpp\unittest\runtests.py
+	@echo.
+	@pushd libhnap12\unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake /S & \
+	@popd
+	@echo.
+	@pushd sample\module\unittest & \
+	nmake.exe /NOLOGO /f Makefile.nmake /S & \
+	@popd
+	@echo.
+	@pushd spec & \
+	nmake.exe /NOLOGO /f Makefile.nmake check BUILDDIR=..\$(BUILDDIR)\doc & \
+	@popd
+
+# Clean, build and test
+check: clean build _sample runtests

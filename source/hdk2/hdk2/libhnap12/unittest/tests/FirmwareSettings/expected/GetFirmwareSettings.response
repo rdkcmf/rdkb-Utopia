@@ -1,0 +1,29 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 568
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetFirmwareSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetFirmwareSettingsResult>OK</GetFirmwareSettingsResult>
+<VendorName>Cisco</VendorName>
+<ModelName>Lego 1000</ModelName>
+<ModelRevision>1.0</ModelRevision>
+<FirmwareVersion>1.0.0.0</FirmwareVersion>
+<FirmwareDate>2008-11-29T12:33:55Z</FirmwareDate>
+<UpdateMethods>
+<string>HNAP_UPLOAD</string>
+<string>TFTP_UPLOAD</string>
+</UpdateMethods>
+</GetFirmwareSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 605 times
+malloc_interposer.c - exit: free called 605 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34314
+malloc_interposer.c - exit: malloc max = 21726
+malloc_interposer.c - ************************************************************

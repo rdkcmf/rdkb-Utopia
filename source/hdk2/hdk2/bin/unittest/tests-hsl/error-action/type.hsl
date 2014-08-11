@@ -1,0 +1,19 @@
+namespace "http://cisco.com/HNAPExt/"
+
+action MyAction
+    input
+        int a
+
+action MyAction
+    output
+        string b
+
+action MyAction2
+# Unindented action definitions
+input
+    int a
+output
+    int a
+result
+    "Value1"
+    "Value2"

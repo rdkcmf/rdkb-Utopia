@@ -1,0 +1,493 @@
+#
+# Copyright (c) 2008-2010 Cisco Systems, Inc. All rights reserved.
+#
+# Cisco Systems, Inc. retains all right, title and interest (including all
+# intellectual property rights) in and to this computer program, which is
+# protected by applicable intellectual property laws.  Unless you have obtained
+# a separate written license from Cisco Systems, Inc., you are not authorized
+# to utilize all or a part of this computer program for any purpose (including
+# reproduction, distribution, modification, and compilation into object code),
+# and you must immediately destroy or return to Cisco Systems, Inc. all copies
+# of this computer program.  If you are licensed by Cisco Systems, Inc., your
+# rights to utilize this computer program are limited by the terms of that
+# license.  To obtain a license, please contact Cisco Systems, Inc.
+#
+# This computer program contains trade secrets owned by Cisco Systems, Inc.
+# and, unless unauthorized by Cisco Systems, Inc. in writing, you agree to
+# maintain the confidentiality of this computer program and related information
+# and to not disclose this computer program and related information to any
+# other person or entity.
+#
+# THIS COMPUTER PROGRAM IS PROVIDED AS IS WITHOUT ANY WARRANTIES, AND CISCO
+# SYSTEMS, INC. EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+# INCLUDING THE WARRANTIES OF MERCHANTIBILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, TITLE, AND NONINFRINGEMENT.
+#
+
+namespace "http://purenetworks.com/HNAP1/"
+
+
+#@@ top Top
+#@ <img class="logo" src="@images/cisco_logo.png" width="151" height="80" alt="CISCO" />
+#@@ end
+
+#@@ title Broadband Modems
+#@@ version 1.2 (Rev 4)
+#@@ date February 2010
+
+#@@ abstract Abstract
+#@ This document describes the details of the HNAP 1.2 protocol specification
+#@ for devices that include broadband modem support, such as DSL and MoCA modems.
+#@@ end
+
+#@@ copyright Copyright Notice
+#@ Copyright &copy; 2002-2010<br/>
+#@ Cisco Systems, Inc.<br/>
+#@ 1201 3rd Avenue, Suite 900<br/>
+#@ Seattle, WA 98101, U.S.A.<br/>
+#@ All rights reserved.
+#@@ end
+
+#@@ h2 Change History
+#@ <table summary="Revision History">
+#@ <tr><th>Revision<th>Date<th>Notes
+#@ <tr><td>4<td>2010-02-<td>
+#@ Re-written in HSL
+#@ </table>
+#@@ end
+
+#@@ h2 Introduction
+#@ Home Network Administration Protocol (HNAP) is an HTTP-SOAP based protocol
+#@ that can be implemented inside of network devices
+#@ to allow advanced programmatic configuration and management by remote entities.
+#@
+#@ HNAP was designed to be a simple light weight protocol
+#@ that is easy to implement inside of small cost-constrained hardware
+#@ such as network routers, cameras and other small devices.
+#@ As the protocol is based on top of existing HTTP-SOAP standards,
+#@ it is very flexible and easily extensible to new scenarios.
+#@
+#@ By implementing HNAP, device vendors can provide added value for devices
+#@ by allowing management entities (for example, Network Magic) to discover and interact with them.
+#@
+#@ This document describes the set of HNAP methods for
+#@ configuration of settings inside of devices that contain broadband modems.
+#@ Configuration settings for DSL modem settings and MoCA modem settings are currently supported.
+#@
+#@ This document is part of the HNAP 1.2 series and requires implementation of other parts of the protocol.
+#@@ end
+
+#@@ h2 Base HNAP Methods for Broadband Modems
+#@ In addition to the modem-specific methods listed in this document,
+#@ an HNAP-compliant device MUST implement several base HNAP methods and functionality for core devices.
+#@ These are:
+#@
+#@ <table summary="core methods">
+#@ <tr><th>Core HNAP Method<th>Purpose
+#@ <tr><td><tt>GetDeviceSettings</tt>
+#@ <td>A modem must fully implement this method,
+#@ including identifying its device type as a router, access point, or modem
+#@ and listing the SOAPActions that it supports.
+#@ <tr><td><tt>SetDeviceSettings</tt>
+#@ <td>It is strongly recommended that a modem require authenticated security.
+#@ If so it must implement this method to allow modification of the administration password.
+#@ <tr><td><tt>GetDeviceSettings2</tt><br />
+#@ <tt>SetDeviceSettings2</tt>
+#@ <td>Depending on the capabilities of the device,
+#@ these methods MAY be implemented to provide configuration of Timezone, administration account, and SSL settings.
+#@ <tr><td><tt>IsDeviceReady</tt>
+#@ <td>Must be implemented.
+#@ <tr><td><tt>Reboot</tt>
+#@ <td>Must be implemented.
+#@ <tr><td><tt>GetFirmwareSettings</tt><br />
+#@ <tt>FirmwareUpload</tt>
+#@ <td>Implement these methods if the device is to take advantage of firmware updates.
+#@ <tr><td><tt>DownloadSpeedTest</tt>
+#@ <td>This is an optional method that measures the device's network performance.
+#@ It is strongly recommended to implement this method to allow HNAP clients to perform optimization tests.
+#@ </table>
+#@
+#@ Please see the core HNAP spec for additional requirements, including discovery and security requirements.
+#@
+#@ Typically this specification is implemented by combination devices
+#@ that include router, access point, and broadband modem capabilities.
+#@ In such cases, the HNAP specification for Routers and Access Points should also be implemented.
+#@ Refer to the Home Network Administration Protocol (HNAP) for Routers Specification.
+#@@ end
+
+#@@ h2 HNAP Methods Reference
+#@ This section provides information about the available SOAP Actions/methods and data types.
+#@
+#@@ h3 Modem Methods Overview
+#@ <table summary="methods">
+#@ <tr><th>SOAP Action<th>Purpose
+#@ <tr><td><tt>GetDSLSettings</tt><br />
+#@ <tt>SetDSLSettings</tt>
+#@ <td>Allows configuration of a DSL modem inside an internet gateway device.
+#@ <tr><td><tt>SetDSLSettings</tt><br />
+#@ <tt>GetMOCASetting</tt><br />
+#@ <tt>SetMOCASettings</tt><br />
+#@ <tt>GetMOCAStats</tt>
+#@ <td>Allows configuration of a MoCA modem inside a device supporting MoCA.
+#@ </table>
+#@@ end
+
+#@@ h3 XML Namespace
+#@ All modem-specific HNAP methods listed in this document
+#@ are based in the same HNAP namespace as the core device specification.
+#@ This namespace is:
+#@
+#@ <tt>http://purenetworks.com/HNAP1/</tt>
+#@@ end
+
+
+#
+# Enumerations
+#
+
+enum DSLMultplexing
+    "LLC"
+    "VC"
+
+
+enum DSLQoSType
+    #@ Continuous Bit Rate, a fixed bandwidth for voice or data traffic
+    "CBR"
+    #@ Unspecific Bit Rate, for applications that are non-time sensitive, for example email
+    "UBR"
+    #@ Variable Bit Rate, for bursty traffic and bandwidth sharing with other applications
+    "VBR"
+
+
+enum DSLModulation
+    "MultiMode"
+    "T1.413"
+    "G.dmt"
+    "G.lite"
+    "ADSL2"
+    "ADSL2+"
+    "ADSL2 L"
+    "ADSL2 M"
+    "ADSL2+ M"
+
+
+enum MOCAFunction
+
+    #@ the device will decide whether to act as a <q>client</q> or <q>network coordinator</q>,
+    #@ depending on a number of internal factors.
+    "Auto"
+
+    #@ the device will set itself as the <q>master network coordinator</q> or the <q>backup network coordinator</q>,
+    #@ depending on whether there is already a <q>master network coordinator</q> or not.
+    "Coordinator"
+
+    #@ the device will set itself as a <q>client</q> in the network
+    #@ (which will work fine if there is already another MoCA device previously installed
+    #@ that is acting as the <q>network coordinator</q>).
+    "Client"
+
+
+#
+# Actions
+#
+
+#@ Use this method to obtain DSL configuration settings for a residential gateway device that incorporates a DSL modem.
+action GetDSLSettings
+    output
+        #@ the multiplexing option for the DSL connection
+        DSLMultplexing Multiplexing
+
+        #@ the quality of service type for the DSL connection
+        DSLQoSType QoSType
+
+        #@ Peak Cell Rate.
+        #@ Valid values are between 1 and 65534.
+        #@
+        #@ A value of 0 (zero) indicates that this parameter is not valid for the current <tt>QoSType</tt> setting.
+        #@ An HNAP client should only expect this value to be valid
+        #@ if <tt>QoSType</tt> is set to <tt>CBR</tt> or <tt>VBR</tt>.
+        int PCR
+
+        #@ Sustain Cell Rate.
+        #@ Valid values are between 1 and 65534.
+        #@
+        #@ The Sustain Cell Rate sets the average cell rate that can be transmitted.
+        #@ The SCR value is normally less than the PCR value.
+        #@
+        #@ A value of 0 (zero) indicates that this parameter is not valid for the current <tt>QoSType</tt> setting.
+        #@ An HNAP client should only expect this value to be valid if <tt>QoSType</tt> is set to <tt>VBR</tt>.
+        int SCR
+
+        #@ whether to select the VPI and VCI automatically.
+        bool AutoDetect
+
+        #@ Virtual Path Identifier.
+        #@ Values can be 0-255.
+        #@
+        #@ When <tt>AutoDetect</tt> is <tt>true</tt>,
+        #@ a special value of -1 may be returned by the device
+        #@ to indicate that this setting has not been detected and so is not currently available.
+        int VPI
+
+        #@ Virtual Channel Identifier.
+        #@ Values can be 0-65535.
+        #@
+        #@ When <tt>AutoDetect</tt> is <tt>true</tt>,
+        #@ a special value of -1 may be returned by the device
+        #@ to indicate that this setting has not been detected and so is not currently available.
+        int VCI
+
+        #@ DSL Modulation
+        DSLModulation Modulation
+
+
+#@ Use this method to configure DSL settings for a residential gateway device that incorporates a DSL modem.
+action SetDSLSettings
+    input
+        #@ the multiplexing option for the DSL connection
+        DSLMultplexing Multiplexing
+
+        #@ the quality of service type for the DSL connection
+        DSLQoSType QoSType
+
+        #@ Peak Cell Rate.
+        #@ Valid values are between 1 and 65534.
+        #@
+        #@ A value of 0 (zero) indicates that this parameter is not intended to be set.
+        #@ The device should choose a reasonable default in this case.
+        #@
+        #@ PCR values are only valid (non-zero) when <tt>QoSType</tt> is set to <tt>CBR</tt> or <tt>VBR</tt>.
+        int PCR
+
+        #@ Sustain Cell Rate.
+        #@ Valid values are between 1 and 65534.
+        #@
+        #@ A value of 0 (zero) indicates that this parameter is not intended to be set.
+        #@ The device should choose a reasonable default in this case.
+        #@
+        #@ SCR values are only valid (non-zero) when <tt>QoSType</tt> is set to <tt>VBR</tt>.
+        int SCR
+
+        #@ whether to select the VPI and VCI automatically.
+        bool AutoDetect
+
+        #@ Virtual Path Identifier.
+        #@ Values can be 0-255.
+        #@
+        #@ When <tt>AutoDetect</tt> is <tt>true</tt>, this value is ignored by the device.
+        #@ It is recommended that HNAP clients pass -1 in this instance.
+        int VPI
+
+        #@ Virtual Channel Identifier.
+        #@ Values can be 0-65535.
+        #@
+        #@ When <tt>AutoDetect</tt> is <tt>true</tt>, this value is ignored by the device.
+        #@ It is recommended that HNAP clients pass -1 in this instance.
+        int VCI
+
+        #@ DSL Modulation
+        DSLModulation Modulation
+    result
+        "REBOOT"
+
+
+action GetMOCASettings
+    output
+        #@ the current password of the MoCA interface.
+        #@
+        #@ Must be 12-17 digits (i.e., characters in the range 0 to 9).
+        #@
+        #@ The password is used to make sure that
+        #@ only devices that have the same password  can communicate on the coax cable.
+        string Password
+
+        #@ the current Channel Plan configured in the device.
+        #@ The Channel Plan defines
+        #@ the sets of channels and their bandwidth that are available for a particular implementation.
+        #@
+        #@ Possible values are 1, 2, and 3.
+        #@
+        #@ This parameter is reserved for future use.
+        #@ All HNAP clients should currently expect this parameter to be set to 2.
+        #@
+        #@ The following table shows the relationship between a given channel plan
+        #@ and the valid channel mask for that plan.
+        #@
+        #@ <table summary="channel plans">
+        #@ <tr><th>Channel Plan<th>Valid Channels
+        #@ <tr><td>1
+        #@ <td>Any set of frequencies can be selected, as long as the frequencies are not next to each other.
+        #@ For example: frequencies 800 MHz and 850 MHz can be selected,
+        #@ but 800 MHz and 825 MHz are not allowed, or 825 MHz and 850 MHz are also not allowed.
+        #@ Expressed in another way, the channel mask, when expressed in hex,
+        #@ can have any values as long as no two adjacent bits are set.
+        #@ <tr><td>2
+        #@ <td>The only valid choices for channel mask correspond to the following frequencies:
+        #@
+        #@ 1150 MHz - bit 14<br />
+        #@ 1200 MHz - bit 16<br />
+        #@ 1250 MHz - bit 18<br />
+        #@ 1300 MHz - bit 20<br />
+        #@ 1350 MHz - bit 22<br />
+        #@ 1400 MHz - bit 24<br />
+        #@ 1450 MHz - bit 26<br />
+        #@ 1500 MHz - bit 28
+        #@
+        #@ Expressed in hex mode, the channel mask would have the value 0x15554000,
+        #@ if all allowed frequencies were selected.
+        #@ Any combination of values involving the allowed bits is possible.
+        #@ <tr><td>3
+        #@ <td>The only valid choice for channel mask corresponds to the frequency of 1050 MHz (bit 10).
+        #@ Expressed in hex mode, the channel mask can only have the value 0x00000400.
+        #@ No other channel mask values are allowed.
+        #@ </table>
+        int ChannelPlan
+
+        #@ the mask indicating which channels can be scanned to form a MoCA network.
+        #@
+        #@ There are a total of 29 channels that can be selected.
+        #@ They start at 800 MHz and go to 1500 MHz, in steps of 25 MHz.
+        #@ So channel 0 is 800 MHz, channel 1 is 825 MHz, and so on until channel 28 which is 1500 MHz.
+        #@
+        #@ The channel mask defines a subset of these 29 channels
+        #@ that can select to be scanned for possible use by MoCA.
+        #@ Only one will be used by MoCA, but the caller can specify
+        #@ that all channels be scanned,
+        #@ that the default channel (which is 1150 MHz) be scanned,
+        #@ or that a particular subset of the 29 channels be selected by the user to be scanned.
+        #@
+        #@ Bit N of this 29-bit mask indicates channel N is scanned to form network.
+        int ChannelMask
+
+        #@ the current channel selected by the MoCA router.
+        #@ Valid channels are: 0-28.
+        #@ The channel returned must be a valid channel specified in the <tt>ChannelMask</tt>.
+        #@
+        #@ Each channel number corresponds to a frequency between 800 MHz and 1500 MHz as defined above.
+        int Channel
+
+        #@ the Function parameter for a MoCA device.
+        #@
+        #@ While an HNAP client can write
+        #@ any of the three values <tt>Auto</tt>, <tt>Client</tt>, or <tt>Coordinator</tt>
+        #@ when being retrieved via a get,
+        #@ the device should return the currently selected setting - <tt>Coordinator</tt> or <tt>Client</tt>.
+        MOCAFunction Function
+
+        #@ the version of the software installed in the firmware of a device to handle MoCA related issues
+        string DriverSoftwareVersion
+
+        #@ the version of the firmware installed on the MoCA chip
+        string FirmwareVersion
+
+        #@ whether the MoCA link is up
+        bool LinkActive
+
+        #@ the MAC address of the MoCA interface
+        MACAddress MacAddress
+
+
+action SetMOCASettings
+    input
+        #@ the current password of the MoCA interface.
+        #@
+        #@ Must be 12-17 digits (i.e., characters in the range 0 to 9).
+        #@
+        #@ The password is used to make sure that
+        #@ only devices that have the same password  can communicate on the coax cable.
+        string Password
+
+        #@ the current Channel Plan configured in the device.
+        #@ The Channel Plan defines
+        #@ the sets of channels and their bandwidth that are available for a particular implementation.
+        #@
+        #@ Possible values are 1, 2, and 3.
+        #@
+        #@ This parameter is reserved for future use.
+        #@ All HNAP clients should currently expect this parameter to be set to 2.
+        #@
+        #@ The following table shows the relationship between a given channel plan
+        #@ and the valid channel mask for that plan.
+        #@
+        #@ <table summary="channel plans">
+        #@ <tr><th>Channel Plan<th>Valid Channels
+        #@ <tr><td>1
+        #@ <td>Any set of frequencies can be selected, as long as the frequencies are not next to each other.
+        #@ For example: frequencies 800 MHz and 850 MHz can be selected,
+        #@ but 800 MHz and 825 MHz are not allowed, or 825 MHz and 850 MHz are also not allowed.
+        #@ Expressed in another way, the channel mask, when expressed in hex,
+        #@ can have any values as long as no two adjacent bits are set.
+        #@ <tr><td>2
+        #@ <td>The only valid choices for channel mask correspond to the following frequencies:
+        #@
+        #@ 1150 MHz - bit 14<br />
+        #@ 1200 MHz - bit 16<br />
+        #@ 1250 MHz - bit 18<br />
+        #@ 1300 MHz - bit 20<br />
+        #@ 1350 MHz - bit 22<br />
+        #@ 1400 MHz - bit 24<br />
+        #@ 1450 MHz - bit 26<br />
+        #@ 1500 MHz - bit 28
+        #@
+        #@ Expressed in hex mode, the channel mask would have the value 0x15554000,
+        #@ if all allowed frequencies were selected.
+        #@ Any combination of values involving the allowed bits is possible.
+        #@ <tr><td>3
+        #@ <td>The only valid choice for channel mask corresponds to the frequency of 1050 MHz (bit 10).
+        #@ Expressed in hex mode, the channel mask can only have the value 0x00000400.
+        #@ No other channel mask values are allowed.
+        #@ </table>
+        int ChannelPlan
+
+        #@ the mask indicating which channels can be scanned to form a MoCA network.
+        #@
+        #@ There are a total of 29 channels that can be selected.
+        #@ They start at 800 MHz and go to 1500 MHz, in steps of 25 MHz.
+        #@ So channel 0 is 800 MHz, channel 1 is 825 MHz, and so on until channel 28 which is 1500 MHz.
+        #@
+        #@ The channel mask defines a subset of these 29 channels
+        #@ that can select to be scanned for possible use by MoCA.
+        #@ Only one will be used by MoCA, but the caller can specify
+        #@ that all channels be scanned,
+        #@ that the default channel (which is 1150 MHz) be scanned,
+        #@ or that a particular subset of the 29 channels be selected by the user to be scanned.
+        #@
+        #@ Bit N of this 29-bit mask indicates channel N is scanned to form network.
+        int ChannelMask
+
+        #@ the Function parameter for a MoCA device.
+        MOCAFunction Function
+    result
+        #@ Password does not comply to limitations
+        "ERROR_BAD_PASSWORD"
+        #@ Channel mask is not valid
+        "ERROR_BAD_MASK"
+        #@ Channel plan is not currently supported or was invalid
+        "ERROR_BAD_CHANNEL_PLAN"
+        #@ Function method passed is not supported or invalid
+        "ERROR_BAD_FUNCTION"
+    result
+        "REBOOT"
+
+
+#@ Use this method to obtain statistics about the MoCA connection.
+action GetMOCAStats
+    output
+
+        #@ the number of packets received since the device was last restarted
+        int PacketsReceived
+
+        #@ the number of packets sent since the device was last restarted
+        int PacketsSent
+
+        #@ the number of bytes received since the device was last restarted
+        int BytesReceived
+
+        #@ the number of bytes sent since the device was last restarted
+        int BytesSent
+
+        #@ the number of packet errors that occurred during a receive since the device was last restarted
+        int PacketErrorsReceived
+
+        #@ the number of packet errors that occurred during a send since the device was last restarted
+        int PacketErrorsSent

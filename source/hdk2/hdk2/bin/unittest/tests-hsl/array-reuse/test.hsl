@@ -1,0 +1,7 @@
+namespace "http://cisco.com/HNAPExt/"
+
+struct MyStruct1
+    int[] a
+
+struct MyStruct2
+    int[] a

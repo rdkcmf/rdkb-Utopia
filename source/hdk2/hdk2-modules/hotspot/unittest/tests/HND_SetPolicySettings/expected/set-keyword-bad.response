@@ -1,0 +1,42 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 888
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SetPolicySettingsResponse xmlns="http://cisco.com/HNAPExt/HND/">
+<SetPolicySettingsResult>ERROR_SET_ACCESSPOLICY</SetPolicySettingsResult>
+<AccessPolicyResultList>
+<AccessPolicyResult>
+<AccessPolicyNumber>1</AccessPolicyNumber>
+<Result>OK</Result>
+</AccessPolicyResult>
+<AccessPolicyResult>
+<AccessPolicyNumber>2</AccessPolicyNumber>
+<Result>OK</Result>
+</AccessPolicyResult>
+<AccessPolicyResult>
+<AccessPolicyNumber>3</AccessPolicyNumber>
+<Result>OK</Result>
+</AccessPolicyResult>
+<AccessPolicyResult>
+<AccessPolicyNumber>4</AccessPolicyNumber>
+<Result>OK</Result>
+</AccessPolicyResult>
+<AccessPolicyResult>
+<AccessPolicyNumber>5</AccessPolicyNumber>
+<Result>ERROR_GENERAL</Result>
+</AccessPolicyResult>
+</AccessPolicyResultList>
+</SetPolicySettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 706 times
+malloc_interposer.c - exit: free called 706 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 38022
+malloc_interposer.c - exit: malloc max = 19004
+malloc_interposer.c - ************************************************************
