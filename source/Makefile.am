@@ -1,1 +1,1 @@
-SUBDIRS = igd firewall_log utctx macclone trigger firewall syscfg wmon ulog dhcpproxy pmon utapi sysevent scripts hdk2 hnap pal newhost services
+SUBDIRS = ulog syscfg sysevent services igd firewall_log utctx macclone trigger firewall wmon dhcpproxy pmon utapi scripts hdk2 hnap pal newhost
