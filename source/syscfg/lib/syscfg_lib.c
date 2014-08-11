@@ -1472,7 +1472,7 @@ int load_from_file (const char *fname)
     char *inbuf, *buf;
     char *name, *value;
 
-    fd = open(fname, O_RDONLY);
+    fd = open(fname, O_RDONLY, S_IRUSR);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }
@@ -1518,7 +1518,7 @@ int commit_to_file (const char *fname)
     char buf[2*MAX_ITEM_SZ];
     syscfg_shm_ctx *ctx = syscfg_ctx;
 
-    fd = open(fname, O_CREAT | O_RDWR | O_TRUNC);
+    fd = open(fname, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }
