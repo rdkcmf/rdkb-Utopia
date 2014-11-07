@@ -1,1 +1,1 @@
-SUBDIRS = syscfg ulog sysevent services
+SUBDIRS = ulog syscfg sysevent services utctx utapi

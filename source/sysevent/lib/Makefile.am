@@ -13,4 +13,7 @@ hardware_platform = i686-linux-gnu
 lib_LTLIBRARIES = libsysevent.la
 libsysevent_la_CPPFLAGS = -I$(top_srcdir)/source/include $(CPPFLAGS)
 libsysevent_la_SOURCES = libsysevent.c
-libsysevent_la_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz
+libsysevent_la_LDFLAGS = -L/var/tmp/pc-rdkb/lib -lpthread -lz
+
+libsysevent_ladir = $(top_srcdir)/source/include/sysevent
+libsysevent_la_HEADERS = libsysevent_internal.h

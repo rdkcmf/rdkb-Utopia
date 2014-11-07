@@ -31,10 +31,16 @@ AC_C_INLINE
 AC_FUNC_MALLOC
 
 AC_CONFIG_FILES(
+	source/utctx/bin/Makefile
+	source/utctx/lib/Makefile
+	source/utctx/Makefile
 	source/syscfg/cmd/Makefile
 	source/syscfg/lib/Makefile
 	source/syscfg/Makefile
 	source/ulog/Makefile
+	source/utapi/cmd/Makefile
+	source/utapi/lib/Makefile
+	source/utapi/Makefile
 	source/sysevent/lib/Makefile
 	source/sysevent/Makefile
 	source/services/lib/Makefile
