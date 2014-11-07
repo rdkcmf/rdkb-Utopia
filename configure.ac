@@ -35,6 +35,10 @@ AC_CONFIG_FILES(
 	source/syscfg/lib/Makefile
 	source/syscfg/Makefile
 	source/ulog/Makefile
+	source/sysevent/lib/Makefile
+	source/sysevent/Makefile
+	source/services/lib/Makefile
+	source/services/Makefile
 	source/Makefile
 	Makefile
 )

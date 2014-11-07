@@ -1,1 +1,1 @@
-SUBDIRS = syscfg ulog
+SUBDIRS = syscfg ulog sysevent services
