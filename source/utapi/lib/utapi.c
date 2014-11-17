@@ -6118,7 +6118,7 @@ static pid_t s_spawn_async_process(const char *lock_filename,
         struct flock fl; // Lock settings
         
         // Open the lock file
-        lock_fd = open(lock_filename, O_WRONLY|O_CREAT);
+        lock_fd = open(lock_filename, O_WRONLY|O_CREAT, 0644);
         
         if (lock_fd < 0) {
             exit(1);
@@ -6345,7 +6345,7 @@ int Utopia_DiagTracerouteTestStart (char *dest)
         0 == strcmp(dest, "255.255.255.255"))
     {
         // Open the log file
-        fd = open(TRACEROUTE_LOG_TMP_FILE, O_WRONLY|O_CREAT);
+        fd = open(TRACEROUTE_LOG_TMP_FILE, O_WRONLY|O_CREAT, 0644);
         
         if (fd < 0) {
             return ERR_FILE_NOT_FOUND;

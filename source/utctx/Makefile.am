@@ -1,1 +1,1 @@
-SUBDIRS = bin lib sample
+SUBDIRS = lib bin
