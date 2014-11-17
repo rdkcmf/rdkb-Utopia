@@ -12,4 +12,4 @@ hardware_platform = i686-linux-gnu
 bin_PROGRAMS = utcmd
 utcmd_CPPFLAGS = -I$(top_srcdir)/source/include $(CPPFLAGS)
 utcmd_SOURCES = utcmd.c
-utcmd_LDFLAGS =  -L$(top_srcdir)/lib -lutapi -lutctx -lulog -lsyscfg -lsysevent
+utcmd_LDFLAGS = -lutapi -lutctx -lulog -lsyscfg -lsysevent
