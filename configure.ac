@@ -31,13 +31,23 @@ AC_C_INLINE
 AC_FUNC_MALLOC
 
 AC_CONFIG_FILES(
+	source/igd/src/Makefile
+	source/igd/Makefile
+	source/firewall_log/Makefile
 	source/utctx/bin/Makefile
 	source/utctx/lib/Makefile
 	source/utctx/Makefile
+	source/firewall/arch/intel_usg/boards/rdkb_arm/source/Makefile
+	source/firewall/arch/intel_usg/boards/rdkb_arm/Makefile
+	source/firewall/arch/intel_usg/boards/Makefile
+	source/firewall/arch/intel_usg/Makefile
+	source/firewall/arch/Makefile
+	source/firewall/Makefile
 	source/syscfg/cmd/Makefile
 	source/syscfg/lib/Makefile
 	source/syscfg/Makefile
 	source/ulog/Makefile
+	source/dhcpproxy/Makefile
 	source/utapi/cmd/Makefile
 	source/utapi/lib/Makefile
 	source/utapi/Makefile

@@ -112,7 +112,7 @@ int fLock(){
     fl.l_len = 0;  
     fl.l_pid = -1;  
 
-    if((fd=open(LOCK_FILE_NAME,O_CREAT| O_RDWR))>0){
+    if((fd=open(LOCK_FILE_NAME,O_CREAT| O_RDWR, S_IRUSR | S_IWUSR))>0){
         do{
             if( -1  != fcntl(fd,F_SETLK,&fl)){
                 printf("GET W-LOCK SUCCESS\n");
