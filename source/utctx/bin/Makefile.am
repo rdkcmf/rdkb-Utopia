@@ -12,4 +12,4 @@ hardware_platform = i686-linux-gnu
 bin_PROGRAMS = utctx_cmd
 utctx_cmd_CPPFLAGS = -I$(top_srcdir)/source/include -I$(top_srcdir)/source/include/utctx $(CPPFLAGS)
 utctx_cmd_SOURCES = utctx_cmd.c
-utctx_cmd_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lsyscfg -lsysevent -L$(top_srcdir)/lib -lutctx -lulog -lpthread
+utctx_cmd_LDFLAGS =  -lsyscfg -lsysevent -lutctx -lulog -lpthread
