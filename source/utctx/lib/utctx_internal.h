@@ -51,7 +51,7 @@
 #include "unittest_syscfg.h"
 #else
 #include <sysevent/sysevent.h>
-#include <sysevent/lib/libsysevent_internal.h>
+#include <sysevent/libsysevent_internal.h>
 #include <syscfg/syscfg.h>
 #include <sys/reboot.h>
 #include <sys/select.h>

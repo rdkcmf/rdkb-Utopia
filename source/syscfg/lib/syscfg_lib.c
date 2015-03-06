@@ -609,28 +609,6 @@ static inline int write_unlock (syscfg_shm_ctx *ctx)
     return sem_post(&ctx->cb.write_lock);
 }
 
-static int rw_lock (syscfg_shm_ctx *ctx)
-{
-    int rc = read_lock(ctx);
-    if (0 == rc) {
-        rc = write_lock(ctx);
-        if (0 == rc) {
-            return 0; // all success
-        } else {
-            // write lock failed, rollback read lock
-            read_unlock(ctx);
-        }
-    }
-    return -1;
-}
-
-static int rw_unlock (syscfg_shm_ctx *ctx)
-{
-    read_unlock(ctx);
-    write_unlock(ctx);
-    return 0;
-}
-
 static inline int commit_lock (syscfg_shm_ctx *ctx)
 {
     return sem_wait(&ctx->cb.commit_lock);
@@ -1494,7 +1472,7 @@ int load_from_file (const char *fname)
     char *inbuf, *buf;
     char *name, *value;
 
-    fd = open(fname, O_RDONLY, S_IRUSR);
+    fd = open(fname, O_RDONLY);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }
@@ -1540,7 +1518,7 @@ int commit_to_file (const char *fname)
     char buf[2*MAX_ITEM_SZ];
     syscfg_shm_ctx *ctx = syscfg_ctx;
 
-    fd = open(fname, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    fd = open(fname, O_CREAT | O_RDWR | O_TRUNC);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }

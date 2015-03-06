@@ -13,7 +13,7 @@
 #------------------------------------------------------------------
 
 #source /etc/utopia/service.d/interface_functions.sh
-#source /etc/utopia/service.d/hostname_functions.sh
+source /etc/utopia/service.d/hostname_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
 #source /etc/utopia/service.d/service_lan/wlan.sh
 source /etc/utopia/service.d/event_handler_functions.sh
@@ -169,6 +169,7 @@ add_ebtable_rule()
 
     dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
     ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
 
 #--------------------------------------------------------------
@@ -183,6 +184,7 @@ del_ebtable_rule()
 
     dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
     ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
 
 #--------------------------------------------------------------
@@ -356,7 +358,7 @@ service_start ()
          check_err $? "Unable to bringup bridge"
       else
          sysevent set ${SERVICE_NAME}-errinfo
-         sysevent set ${SERVICE_NAME}-status started
+         sysevent set ${SERVICE_NAME}-status starting
 		
          add_ebtable_rule
 
@@ -369,6 +371,10 @@ service_start ()
             # It is not a good practice to force all physical links to refresh -- should have used arguments to specify which ports/links
             gw_lan_refresh
          fi
+         #set hostname            
+         prepare_hostname
+
+         sysevent set ${SERVICE_NAME}-status started
       fi
    fi
 }

@@ -46,7 +46,7 @@
 #include <utctx/utctx.h>
 #include <utctx/utctx_api.h>
 #include <utapi/utapi.h>
-#include <lib/utapi_wlan.h>
+#include <utapi/utapi_wlan.h>
 
 
 /*

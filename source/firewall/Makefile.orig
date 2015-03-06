@@ -30,7 +30,7 @@ LDFLAGS += -lsysevent
 LDFLAGS += -lulog
 LDFLAGS += -lccsp_common
 # The following libraries are required for nfq_handler.
-#LDFLAGS += -lnetfilter_queue -lnfnetlink -lssl
+LDFLAGS += -lnetfilter_queue -lnfnetlink -lssl
 
 targets_firewall := firewall
 targets_firewall := $(addprefix $(ComponentBuildDir)/,$(targets_firewall))
@@ -47,9 +47,9 @@ targets_nfq_handler := $(addprefix $(ComponentBuildDir)/,$(targets_nfq_handler))
 source_files_nfq_handler := nfq_handler.c raw_socket_send.c
 obj_files_nfq_handler := $(addprefix $(ComponentBuildDir)/,$(source_files_nfq_handler:%.c=%.o))
 
-$(targets_nfq_handler: $(obj_files_nfq_handler)
+$(targets_nfq_handler): $(obj_files_nfq_handler)
 
-all: $(targets_firewall) install
+all: $(targets_firewall) $(targets_nfq_handler) install
 
 clean: 
 	rm -f $(ComponentBuildDir)
@@ -58,6 +58,9 @@ install:
 	@echo "Copying...[$(targets_firewall) to SBIN directory]"
 	@install -d -m 0755 $(CCSP_INSTALL_ROOT)/usr/sbin
 	@install -m 0755 $(targets_firewall) $(CCSP_INSTALL_ROOT)/usr/sbin/
+	@echo "Copying...[$(targets_nfq_handler) to SBIN directory]"
+	@install -d -m 0755 $(CCSP_INSTALL_ROOT)/usr/sbin
+	@install -m 0755 $(targets_nfq_handler) $(CCSP_INSTALL_ROOT)/usr/sbin/
 
 .PHONY : all clean install
 

@@ -213,7 +213,7 @@ uncompress()
 {
     if [ -z $1 ] || [ ! -e $1 ] || [ -z $2 ] || [ ! -d $2 ]
     then
-        exit 0;
+        return 0;
     fi
     DIR=$2
     TAR=$1

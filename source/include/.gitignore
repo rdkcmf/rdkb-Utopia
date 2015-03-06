@@ -1,0 +1,4 @@
+# Setup for an Empty Dir, "untracked by Git".
+*
+!.gitignore
+

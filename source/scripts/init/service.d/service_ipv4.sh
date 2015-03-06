@@ -626,7 +626,7 @@ case "$1" in
    ${SERVICE_NAME}-down)
         #INST=${1%-*}
         #INST=${INST#*_}
-        remove_config $2
+        teardown_instance $2
    ;;
    
   *)

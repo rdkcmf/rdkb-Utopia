@@ -6118,7 +6118,7 @@ static pid_t s_spawn_async_process(const char *lock_filename,
         struct flock fl; // Lock settings
         
         // Open the lock file
-        lock_fd = open(lock_filename, O_WRONLY|O_CREAT, 0644);
+        lock_fd = open(lock_filename, O_WRONLY|O_CREAT);
         
         if (lock_fd < 0) {
             exit(1);
@@ -6345,7 +6345,7 @@ int Utopia_DiagTracerouteTestStart (char *dest)
         0 == strcmp(dest, "255.255.255.255"))
     {
         // Open the log file
-        fd = open(TRACEROUTE_LOG_TMP_FILE, O_WRONLY|O_CREAT, 0644);
+        fd = open(TRACEROUTE_LOG_TMP_FILE, O_WRONLY|O_CREAT);
         
         if (fd < 0) {
             return ERR_FILE_NOT_FOUND;
@@ -6592,18 +6592,30 @@ int Utopia_Set_DeviceTime_NTPServer(UtopiaContext *ctx, char *server, int index)
   {
      return ERR_UTCTX_INIT;
   }
+
+  char tmp_server[UTOPIA_TR181_PARAM_SIZE] = {0};
+
+  if('\0' == server[0])
+  {
+      strncpy(tmp_server, "no_ntp_address", UTOPIA_TR181_PARAM_SIZE);
+  }
+  else
+      strncpy(tmp_server, server, UTOPIA_TR181_PARAM_SIZE);
+
+
   switch(index)
   {
   case 1:
-      UTOPIA_SET(ctx, UtopiaValue_NTP_Server1, server);
+      UTOPIA_SET(ctx, UtopiaValue_NTP_Server1, tmp_server);
       break;
   case 2:
-      UTOPIA_SET(ctx, UtopiaValue_NTP_Server2, server);
+      UTOPIA_SET(ctx, UtopiaValue_NTP_Server2, tmp_server);
       break;
   case 3:
-      UTOPIA_SET(ctx, UtopiaValue_NTP_Server3, server);
+      UTOPIA_SET(ctx, UtopiaValue_NTP_Server3, tmp_server);
       break;
   }
+
   return SUCCESS;
 }
 
@@ -6630,6 +6642,11 @@ int Utopia_Get_DeviceTime_NTPServer(UtopiaContext *ctx, char *server,int index)
   }
   if(rc)
   {
+      if(0 == strncmp(server, "no_ntp_address", strlen("no_ntp_address")))
+      {
+          memset(server, 0, UTOPIA_TR181_PARAM_SIZE);
+      }
+
       return SUCCESS;
   }
 

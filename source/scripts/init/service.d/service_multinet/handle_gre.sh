@@ -24,7 +24,8 @@ GRE_IFNAME="gretap0"
 source /etc/utopia/service.d/ut_plat.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
-MTU_VAL=1360
+MTU_VAL=1400
+MSS_VAL=1360
 
 GRE_PSM_BASE=dmsb.cisco.gre
 HS_PSM_BASE=dmsb.hotspot.gre
@@ -261,7 +262,7 @@ update_bridge_config () {
         sysevent set gre_${inst}_${br}_snoop_rule "$br_snoop_rule"
         
         
-        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MTU_VAL"`
+        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MSS_VAL"`
         sysevent set gre_${inst}_${br}_mss_rule "$br_mss_rule"
     done
     

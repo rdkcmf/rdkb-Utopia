@@ -238,7 +238,7 @@ teardown_wireless_interfaces() {
 #this function is used to restart such services.
 restart_necessary_functions()
 {
-
+   echo ""
 }
 
 #--------------------------------------------------------------
@@ -650,7 +650,7 @@ service_start ()
       fi
 	  #rongwei added
 	  killall wecb_master 2>/dev/null
-	  killall xhs 2>/dev/null
+	  killall CcspHomeSecurity 2>/dev/null
 	  ulimit -s 200 && wecb_master& 
 	  sleep 1
 	  ###echo `ps | grep wecb_master | grep -v grep | awk '{print $1}'` > /var/run/wecb_master.pid
@@ -659,7 +659,7 @@ service_start ()
 	  chmod +x /var/wecb_master.sh
 	  /etc/utopia/service.d/pmon.sh register wecb_master
 	  /etc/utopia/service.d/pmon.sh setproc wecb_master wecb_master /var/run/wecb_master.pid "/var/wecb_master.sh" 
-	  xhs 8081&
+	  CcspHomeSecurity 8081&
    fi
 }
 
@@ -690,8 +690,7 @@ service_stop ()
 	  /etc/utopia/service.d/pmon.sh unregister wecb_master 
 	  #rongwei added
 	  killall wecb_master 2>/dev/null
-	  killall wecb_master 2>/dev/null
-	  killall xhs 2>/dev/null
+	  killall CcspHomeSecurity 2>/dev/null
    fi
 }
 

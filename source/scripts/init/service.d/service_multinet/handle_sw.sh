@@ -146,14 +146,19 @@ handle_moca () {
     
 }
 
-#args portname(unmapped)
+#args portname(unmapped), [t] 
 check_for_dependent_ports () {
+    if [ x = x$2 ]; then
+      name=$1
+    else
+      name=$1-$2
+    fi
     eval case "$1" in \
         $ATOM_PORTS\) \
-            PORTS_ATOM_ADD=\"${PORTS_ATOM_ADD} $1\" \
+            PORTS_ATOM_ADD=\"${PORTS_ATOM_ADD} $name\" \
         \;\; \
         $EXTPORTS\) \
-            PORTS_EXT_ADD=\"${PORTS_EXT_ADD} $1\" \
+            PORTS_EXT_ADD=\"${PORTS_EXT_ADD} $name\" \
         \;\; \
         sw_5\) \
             handle_moca 1\
@@ -167,7 +172,7 @@ sw_add_ports() {
     for i in $2; do
         PORT=`echo $i | cut -d- -f1`
         TAG=`echo $i | cut -d- -s -f2`
-        check_for_dependent_ports $PORT
+        check_for_dependent_ports $PORT $TAG
         eval CMD=\"\${PORTMAP_${PORT}}\"
         if [ x = x"$CMD" ]; then
             continue
@@ -243,7 +248,7 @@ case "$1" in
             return
         fi
         VID=$3
-        PORTS_ADD="${4//-t/}"
+        PORTS_ADD="${4}"
         PORTS_EXT_ADD=""
         
         #DEBUG
@@ -272,7 +277,7 @@ case "$1" in
             #Re-add the default vlan to allow normal handling for untagged traffic
             #swctl $PORTMAP_arm -v 2 -m $NATIVE_MODE -q 1
         fi
-        sysevent set sw_vid_$3_ports "${VIDPORTS}${PORTS_ADD}"
+        sysevent set sw_vid_$3_ports "${VIDPORTS} ${PORTS_ADD}"
         
         #Add to switch connection ports if on external switch
         if [ x != x"$PORTS_EXT_ADD" ]; then
@@ -348,13 +353,13 @@ case "$1" in
         for i in ${4}; do
             PORT=`echo $i | cut -d- -f1`
             TAG=`echo $i | cut -d- -s -f2`
-            VIDPORTS="`echo $VIDPORTS| sed 's/ *\<'$PORT'\>\( *\)/\1/g'`"
+            VIDPORTS="`echo $VIDPORTS| sed 's/ *\<'$i'\>\( *\)/\1/g'`"
             eval case $PORT in \
                 $ATOM_PORTS\) \
-                    ATOM_VIDPORTS=\"`echo $ATOM_VIDPORTS| sed 's/ *\<'$PORT'\>\( *\)/\1/g'`\" \
+                    ATOM_VIDPORTS=\"`echo $ATOM_VIDPORTS| sed 's/ *\<'$i'\>\( *\)/\1/g'`\" \
                 \;\; \
                 $EXTPORTS\) \
-                    EXT_VIDPORTS=\"`echo $EXT_VIDPORTS| sed 's/ *\<'$PORT'\>\( *\)/\1/g'`\" \
+                    EXT_VIDPORTS=\"`echo $EXT_VIDPORTS| sed 's/ *\<'$i'\>\( *\)/\1/g'`\" \
                 \;\; \
                 sw_5\) \
                     handle_moca 0 \

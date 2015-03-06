@@ -1216,6 +1216,10 @@ int main (int argc, char **argv)
             FORK_HELPER_PATH"/"SYSEVENTD_FORK_HELPER_PROCESS, errno, strerror(errno)) ;
       _exit(127);   /* exec error */
    }
+
+   /*just speed 10 worker thread and 1 main thread */
+   nice(-20);
+
    if (-1 == pid) {
       ulogf(ULOG_SYSTEM, UL_SYSEVENT, "Unable to create fork helper process %s. (%d) %s", 
        FORK_HELPER_PATH"/"SYSEVENTD_FORK_HELPER_PROCESS, errno, strerror(errno)) ;

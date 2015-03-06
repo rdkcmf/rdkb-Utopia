@@ -87,6 +87,7 @@
 
 #include "pal_def.h"
 #include "igd_platform_dependent_inf.h"
+#include "autoconf.h"
 
 
 /***********************************************************************
@@ -100,11 +101,15 @@
 //Now pulled from syscfg
 
 // The plarform-related info that will be used in the the description file of IGD device
-#define ROOT_FRIENDLY_NAME 			"Cisco " MODULE_DESCRIPTION
+
+#define ROOT_FRIENDLY_NAME 			CONFIG_VENDOR_MODEL
 #define WANDEVICE_FRIENDLY_NAME 	        "WANDevice:1"
 #define WAN_CONNECTION_DEVICE_FRIENDLY_NAME 	"WANConnectionDevice:1"
 #define LANDEVICE_FRIENDLY_NAME 	        "LANDevice:1"
-
+#define MODULE_DESCRIPTION 		        CONFIG_VENDOR_MODEL
+#define MODULE_NAME 				CONFIG_VENDOR_MODEL
+#define MODULE_NUMBER 				CONFIG_VENDOR_MODEL
+#define UPC 					CONFIG_VENDOR_MODEL
 
 /***********************************************************************
 * (2) Product-related functions
