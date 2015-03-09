@@ -37,11 +37,6 @@ AC_CONFIG_FILES(
 	source/utctx/bin/Makefile
 	source/utctx/lib/Makefile
 	source/utctx/Makefile
-	source/firewall/arch/intel_usg/boards/rdkb_arm/source/Makefile
-	source/firewall/arch/intel_usg/boards/rdkb_arm/Makefile
-	source/firewall/arch/intel_usg/boards/Makefile
-	source/firewall/arch/intel_usg/Makefile
-	source/firewall/arch/Makefile
 	source/firewall/Makefile
 	source/syscfg/cmd/Makefile
 	source/syscfg/lib/Makefile
