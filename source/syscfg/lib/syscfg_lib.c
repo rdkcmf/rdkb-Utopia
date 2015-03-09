@@ -609,6 +609,28 @@ static inline int write_unlock (syscfg_shm_ctx *ctx)
     return sem_post(&ctx->cb.write_lock);
 }
 
+static int rw_lock (syscfg_shm_ctx *ctx)
+{
+    int rc = read_lock(ctx);
+    if (0 == rc) {
+        rc = write_lock(ctx);
+        if (0 == rc) {
+            return 0; // all success
+        } else {
+            // write lock failed, rollback read lock
+            read_unlock(ctx);
+        }
+    }
+    return -1;
+}
+
+static int rw_unlock (syscfg_shm_ctx *ctx)
+{
+    read_unlock(ctx);
+    write_unlock(ctx);
+    return 0;
+}
+
 static inline int commit_lock (syscfg_shm_ctx *ctx)
 {
     return sem_wait(&ctx->cb.commit_lock);
