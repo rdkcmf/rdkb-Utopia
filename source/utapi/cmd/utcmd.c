@@ -35,7 +35,7 @@
 #include <utctx/utctx.h>
 #include <utctx/utctx_api.h>
 #include <utapi/utapi.h>
-#include <utapi/utapi_wlan.h>
+#include <utapi/lib/utapi_wlan.h>
 
 typedef enum {
     CMD_FACTORY_RESET,
