@@ -68,12 +68,12 @@ service_start ()
            sysevent set wan-stop
            PAUSE=$(($PAUSE+1))
         fi
-        STATUS=`sysevent get lan-status`
-        if [ "stopped" != "$STATUS" ] ; then
+        #STATUS=`sysevent get lan-status`
+        #if [ "stopped" != "$STATUS" ] ; then
            ulog forwarding status "stopping lan"
            sysevent set lan-stop
            PAUSE=$(($PAUSE+1))
-        fi
+        #fi
         if [ $PAUSE -gt 0 ] ; then
            sleep $PAUSE
            wait_till_state wan stopped

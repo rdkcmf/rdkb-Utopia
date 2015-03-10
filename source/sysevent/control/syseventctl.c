@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "sysevent/sysevent.h"
 
 #define SE_NAME             "sectl"
@@ -572,6 +573,9 @@ int main(int argc, char **argv)
    snprintf(server_host, sizeof(server_host), "127.0.0.1");
    server_port = SE_SERVER_WELL_KNOWN_PORT;
    use_tcp = 0;
+
+   /*speed the sysevent command */
+   nice(-20);
 
    // parse commandline for options and readjust defaults if requested
    int next_arg = get_options(argc, argv);

@@ -317,7 +317,7 @@ static struct
     { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "pptp_address_static",            UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPTPAddressStatic */
     { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "l2tp_address_static",            UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_L2TPAddressStatic */
     { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "telstra_server",                 UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_TelstraServer */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_mtu",                        UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_MTU */
+    { Utopia_Type_Config, Utopia_Event__NONE__,            Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_mtu",                        UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_MTU */
     { Utopia_Type_Config, Utopia_Event__NONE__,            Utopia_Static__NONE__, Utopia_For__NONE__, 0, "wan_physical_ifname",            UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PhysicalIfName */
     { Utopia_Type_Config, Utopia_Event__NONE__,            Utopia_Static__NONE__, Utopia_For__NONE__, 0, "wan_virtual_ifnum",              UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_VirtualIfNum */
     { Utopia_Type_Config, Utopia_Event_LAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "lan_dhcp_client",                UtopiaValue__UNKNOWN__ }, /* UtopiaValue_LAN_DHCPClient */

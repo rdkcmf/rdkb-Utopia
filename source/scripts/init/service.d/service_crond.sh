@@ -127,6 +127,11 @@ service_start ()
       echo "#! /bin/sh" > /etc/cron/cron.every5minute/log_every5minute.sh
       echo "/fss/gw/usr/sbin/log_handle.sh" >> /etc/cron/cron.every5minute/log_every5minute.sh
       chmod 700 /etc/cron/cron.every5minute/log_every5minute.sh
+
+	  #monitor start-misc in case wan is not online
+      echo "#! /bin/sh" > /etc/cron/cron.everyminute/misc_handler.sh
+      echo "/fss/gw/usr/sbin/misc_handler.sh" >> /etc/cron/cron.everyminute/misc_handler.sh
+      chmod 700 /etc/cron/cron.everyminute/misc_handler.sh
    fi
    
    # start the cron daemon

@@ -63,57 +63,28 @@ fi
 #-----------------------------------------------------------------
 lan_status_change ()
 {
-   sysevent set dns-errinfo
-   sysevent set dhcp_server_errinfo
-
-   wait_till_end_state dns
-   wait_till_end_state dhcp_server
 
    if [ "stopped" = "$1" ] ; then
+         sysevent set dns-errinfo
+         sysevent set dhcp_server_errinfo
+         wait_till_end_state dns
+         wait_till_end_state dhcp_server
          $PMON unsetproc dhcp_server
          killall `basename $SERVER`
          rm -f $PID_FILE
          sysevent set dns-status stopped
          sysevent set dhcp_server-status stopped
-   elif [ "started" = "$1" ] ; then
+   elif [ "started" = "$1" -a "started" = "$CURRENT_LAN_STATE" ] ; then
       if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
          # set hostname and /etc/hosts cause we are the dns forwarder
          prepare_hostname
          # also prepare dns part of dhcp conf cause we are the dhcp server too
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
-      else
-         # set hostname and /etc/hosts cause we are the dns forwarder
-         prepare_hostname
-         # also prepare dhcp conf cause we are the dhcp server too
-         prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask
-         # remove any extraneous leases
-         sanitize_leases_file
-      fi
-
-
-      if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
          $SERVER -u nobody -P 4096 -C $DHCP_CONF --enable-dbus
          sysevent set dns-status started
-      else
-         # we use dhcp-authoritative flag to indicate that this is
-         # the only dhcp server on the local network. This allows 
-         # the dns server to give out a _requested_ lease even if
-         # that lease is not found in the dnsmasq.leases file
-         killall `basename $SERVER`
-         rm -f $PID_FILE
-         sysevent set dhcp_server-status stopped
-
-         $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF --enable-dbus
-         if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
-            echo "#!/bin/sh" > $TIME_FILE
-            echo "   sysevent set dhcp_server-restart" >> $TIME_FILE
-            chmod 700 $TIME_FILE
-         fi
-         $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
-         sysevent set dns-status started
-         sysevent set dhcp_server-status started
-         #sysevent_ap set lan-restart
-      fi
+     else
+         dhcp_server_start $2
+     fi
    fi
 }
 
@@ -285,9 +256,18 @@ resync_to_nonvol ()
 dhcp_server_start ()
 {
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
+      #when disable dhcp server in gui, we need remove the corresponding process in backend, or the dhcp server still work.
+      dhcp_server_stop
+
       sysevent set dhcp_server-status error
       sysevent set dhcp_server-errinfo "dhcp server is disabled by configuration" 
-      return 0
+      rm -f /var/tmp/lan_not_restart
+	  return 0
+   fi
+   
+   if [ "started" != "$CURRENT_LAN_STATE" ] ; then
+      rm -f /var/tmp/lan_not_restart
+      exit 0
    fi
    
    sysevent set ${SERVICE_NAME}-errinfo
@@ -319,22 +299,23 @@ dhcp_server_start ()
    if [ -z "$CURRENT_PID" ] ; then
       RESTART=1
    else
-      CURRENT_PIDS=`pidof dnsmasq`
-      if [ -z "$CURRENT_PIDS" ] ; then
+      RUNNING_PIDS=`pidof dnsmasq`
+      if [ -z "$RUNNING_PIDS" ] ; then
          RESTART=1
       else
-         RUNNING_PIDS=`pidof dnsmasq`
          FOO=`echo $RUNNING_PIDS | grep $CURRENT_PID`
          if [ -z "$FOO" ] ; then
             RESTART=1
          fi
       fi
    fi
+
    rm -f $DHCP_TMP_CONF
 
    killall -HUP `basename $SERVER`
    if [ "0" = "$RESTART" ] ; then
          sysevent set dhcp_server-status started
+         rm -f /var/tmp/lan_not_restart
          return 0
    fi
 
@@ -346,13 +327,12 @@ dhcp_server_start ()
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
    $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF --enable-dbus
-
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
    sysevent set dns-status started
    sysevent set dhcp_server-status started
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
          echo "#!/bin/sh" > $TIME_FILE
-         echo "   sysevent set dhcp_server-restart" >> $TIME_FILE
+         echo "   sysevent set dhcp_server-restart lan_not_restart" >> $TIME_FILE
          chmod 700 $TIME_FILE
    fi
    #sysevent_ap set lan-restart
@@ -360,17 +340,17 @@ dhcp_server_start ()
    #USGv2: to refresh Ethernet ports/WiFI/MoCA
    PSM_MODE=`sysevent get system_psm_mode`
    if [ "$PSM_MODE" != "1" ]; then
-     wan_ipaddr=`sysevent get current_wan_ipaddr`
-     if [ "0.0.0.0" != $wan_ipaddr ] ; then
-        if [ ! -f "/var/tmp/lan_not_restart" ]; then
-          gw_lan_refresh &
-          echo "lan_not_restart NOT found! Restart lan!"
+     if [ ! -f "/var/tmp/lan_not_restart" ] && [ "$1" != "lan_not_restart" ]; then
+          if [ x"ready" = x`sysevent get start-misc` ]; then
+		      gw_lan_refresh &
+              echo "lan_not_restart NOT found! Restart lan!"
+		  fi
         else
           rm -f /var/tmp/lan_not_restart
           echo "lan_not_restart found! Don't restart lan!"
         fi
      fi
-   fi
+
 }
 
 #-----------------------------------------------------------------
@@ -381,11 +361,10 @@ dhcp_server_stop ()
    if [ "stopped" = "$DHCP_STATUS" ] ; then
       return 0
    fi
-
-   # dns is always running
+   
+   #dns is always running
    prepare_hostname
    prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
-
    $PMON unsetproc dhcp_server
    sysevent set dns-status stopped
    killall `basename $SERVER`
@@ -479,8 +458,8 @@ case "$1" in
       dhcp_server_stop
       ;;
    ${SERVICE_NAME}-restart)
-      dhcp_server_stop
-      dhcp_server_start
+      #dhcp_server_stop
+      dhcp_server_start $2
       ;;
    dns-start)
       dns_start
@@ -493,6 +472,11 @@ case "$1" in
       ;;
    lan-status)
       lan_status_change $CURRENT_LAN_STATE
+	  #if [ "$CURRENT_LAN_STATE" = "started" -a ! -f /tmp/fresh_start ]; then
+	  #	  gw_lan_refresh&
+	  #	  touch /tmp/fresh_start
+	  #	  echo "Rstart LAN for first boot up"
+	  # fi
       ;;
    syslog-status)
       STATUS=`sysevent get syslog-status`
@@ -513,7 +497,7 @@ case "$1" in
       ;;
     ipv4_*-status)
         if [ x"up" = x$2 ]; then
-            lan_status_change started
+            lan_status_change started lan_not_restart 
         fi
       ;;
    *)

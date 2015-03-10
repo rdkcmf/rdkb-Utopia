@@ -350,13 +350,14 @@ NOT_DEF:
 #include "ccsp_memory.h"
 #include "firewall_custom.h"
 
-//#define CONFIG_CISCO_PARCON_WALLED_GARDEN
 #define CCSP_SUBSYS "eRT."
 #define PORTMAPPING_2WAY_PASSTHROUGH
 #define MAX_URL_LEN 1024 
+#define IF_IPV6ADDR_MAX 16
+
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
 #define PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK "18080" // the same as the port in lighttpd.conf
-#define PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK "18080" // the same as the port in lighttpd.conf
+#define PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK "10443" // the same as the port in lighttpd.conf
 //#define DNS_QUERY_QUEUE_NUM 5
 
 #define DNS_RES_QUEUE_NUM_START 6 //should be the same range as system_defaults-xxx
@@ -370,6 +371,7 @@ NOT_DEF:
 
 #define HTTPV6_GET_QUEUE_NUM_START 13 
 #define HTTPV6_GET_QUEUE_NUM_END 14
+
 
 #if (HTTP_GET_QUEUE_NUM_END == HTTP_GET_QUEUE_NUM_START)
 #define __IPT_GET_QUEUE_CONFIG__(x) "--queue-num " #x
@@ -500,7 +502,14 @@ static char default_wan_ifname[50]; // name of the regular wan interface
 static char current_wan_ifname[50]; // name of the ppp interface or the regular wan interface if no ppp
 static char ecm_wan_ifname[20];
 static char emta_wan_ifname[20];
+static char wan6_ifname[20];
 static char wan_service_status[20];       // wan_service-status
+
+static int ecm_wan_ipv6_num = 0;
+static char ecm_wan_ipv6[IF_IPV6ADDR_MAX][40];
+
+static int current_wan_ipv6_num = 0;
+static char current_wan_ipv6[IF_IPV6ADDR_MAX][40];
 
 static char current_wan_ipaddr[20]; // ipv4 address of the wan interface, whether ppp or regular
 static char lan_ifname[50];       // name of the lan interface
@@ -993,6 +1002,51 @@ static int to_syslog_level (int log_leveli)
    }
 }
 
+#define IPV6_ADDR_SCOPE_MASK    0x00f0U
+#define _PROCNET_IFINET6  "/proc/net/if_inet6"
+int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
+{
+    FILE * fp = NULL;
+	char addr6p[8][5];
+	int plen, scope, dad_status, if_idx;    
+	char addr6[40], devname[20];
+	struct sockaddr_in6 sap;
+    int    i = 0;
+    
+    if (!ifname && !ipArry && !p_num)
+        return -1;
+    fp = fopen(_PROCNET_IFINET6, "r");
+    if (!fp)
+        return -1;
+    
+	while (fscanf
+		   (fp, "%4s%4s%4s%4s%4s%4s%4s%4s %08x %02x %02x %02x %20s\n",
+			addr6p[0], addr6p[1], addr6p[2], addr6p[3], addr6p[4],
+			addr6p[5], addr6p[6], addr6p[7], &if_idx, &plen, &scope,
+			&dad_status, devname) != EOF
+          )
+    {
+        if (!strcmp(ifname, devname))
+        {
+            sprintf(addr6, "%s:%s:%s:%s:%s:%s:%s:%s",
+					addr6p[0], addr6p[1], addr6p[2], addr6p[3],
+					addr6p[4], addr6p[5], addr6p[6], addr6p[7]);
+            
+            /* Global address */ 
+            if(0 == (scope & IPV6_ADDR_SCOPE_MASK)){
+                strncpy(ipArry[i], addr6, 40);
+                i++;
+                if(i == IF_IPV6ADDR_MAX)
+                    break;
+			}
+        }
+    }
+    *p_num = i;
+
+    fclose(fp);
+    return 0;
+}
+
 /*
  *  Procedure     : prepare_globals_from_configuration
  *  Purpose       : use syscfg and sysevent to prepare information such as
@@ -1107,7 +1161,9 @@ static int prepare_globals_from_configuration(void)
 
    syscfg_get(NULL, "ecm_wan_ifname", ecm_wan_ifname, sizeof(ecm_wan_ifname));
    syscfg_get(NULL, "emta_wan_ifname", emta_wan_ifname, sizeof(emta_wan_ifname));
-  
+   get_ip6address(ecm_wan_ifname, ecm_wan_ipv6, &ecm_wan_ipv6_num);
+   //get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num);
+
    isCacheActive     = (0 == strcmp("started", transparent_cache_state)) ? 1 : 0;
    isFirewallEnabled = (0 == strcmp("0", firewall_enabled)) ? 0 : 1;  
    isWanReady        = (0 == strcmp("0.0.0.0", current_wan_ipaddr)) ? 0 : 1;
@@ -3491,13 +3547,21 @@ static int lan_telnet_ssh(FILE *fp, int family)
    return 0;
 }
 
+static int do_lan2self_by_wanip6(FILE *filter_fp)
+{
+    int i;
+    for(i = 0; i < ecm_wan_ipv6_num; i++){
+        fprintf(filter_fp, "-A INPUT -i %s -d %s -p tcp --match multiport --dports 23,22,80,443,161 -j LOG_INPUT_DROP\n", lan_ifname, ecm_wan_ipv6[i]);
+    }
+}
+
 static int do_lan2self_by_wanip(FILE *filter_fp, int family)
 {
    //As requested, we don't allow SNMP/HTTP/HTTPs/Ping
-   char httpport[64];
+   char httpport[64], tmpQuery[64];
    char httpsport[64];
    char port[64];
-   int rc = 0;
+   int rc = 0, ret;
    httpport[0] = '\0';
    httpsport[0] = '\0';
 
@@ -3515,6 +3579,13 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
    fprintf(filter_fp, "-A lan2self_by_wanip -s 192.168.100.3 -d 192.168.100.1 -j RETURN\n");
 
    rc = syscfg_get(NULL, "mgmt_wan_httpport", httpport, sizeof(httpport));
+#if defined(CONFIG_CCSP_WAN_MGMT_PORT)
+   tmpQuery[0] = '\0';
+   ret = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmpQuery, sizeof(tmpQuery));
+   if(ret == 0)
+       strcpy(httpport, tmpQuery);
+#endif
+
    if (rc == 0 && httpport[0] != '\0' && atoi(httpport) != 80 && (atoi(httpport) >= 0 && atoi(httpport) <= 65535 ))
        fprintf(filter_fp, "-A lan2self_by_wanip -p tcp --dport %s -j xlog_drop_lan2self\n", httpport); //GUI on mgmt_wan port
 
@@ -3545,6 +3616,21 @@ static void do_lan2wan_staticip(FILE *filter_fp){
     }
 }
 #endif
+/*
+ * Disable LAN http access while CmWebAccessUserIfLevel.all-users.lan = off(0)
+ */
+void lan_http_access(FILE *fp) {
+    char lan_ip_webaccess[2];
+
+    if (0 == sysevent_get(sysevent_fd, sysevent_token, "lan_ip_webaccess", lan_ip_webaccess, sizeof(lan_ip_webaccess))) {
+       if(lan_ip_webaccess[0]!='\0' && strcmp(lan_ip_webaccess, "0")==0) {          
+           if(!isBridgeMode) //brlan0 exists
+               fprintf(fp, "-A %s -i %s -p tcp --dport %s -j xlog_drop_lan2self\n", "lan2self_mgmt", lan_ifname, reserved_mgmt_port);
+
+           fprintf(fp, "-A %s -i %s -p tcp --dport %s -j xlog_drop_lan2self\n", "lan2self_mgmt", cmdiag_ifname, reserved_mgmt_port); //lan0 always exist
+       }
+   } 
+}
 /*
  *  Procedure     : do_lan2self_mgmt
  *  Purpose       : allow or deny local access
@@ -3581,6 +3667,10 @@ static int do_lan2self_mgmt(FILE *fp)
    }
 
    lan_telnet_ssh(fp, AF_INET);
+
+#if defined(CONFIG_CCSP_LAN_HTTP_ACCESS)
+   lan_http_access(fp);
+#endif
 
    return(0);
 }
@@ -3656,6 +3746,8 @@ static int do_wan2self_attack(FILE *fp)
 
    //LAND Aattack - sending a spoofed TCP SYN pkt with the target host's IP address to an open port as both source and destination
    if(isWanReady) {
+       /* Allow multicast packet through */
+       fprintf(fp, "-A wanattack -p udp -s %s -d 224.0.0.0/8 -j RETURN\n", current_wan_ipaddr);
        fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", current_wan_ipaddr, logRateLimit);
        fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", current_wan_ipaddr);
    }
@@ -3820,7 +3912,7 @@ static int do_mgmt_override(FILE *nat_fp)
 }
 
 /*
- *  Procedure     : do_remote_access_control
+ *  Procedure     : remote_access_set_proto
  *  Purpose       : allow or deny remote access
  *  Parameters    :
  *     nat_fp
@@ -3843,8 +3935,8 @@ static int remote_access_set_proto(FILE *filt_fp, FILE *nat_fp, const char *port
 #define IPRANGE_UTKEY_PREFIX "mgmt_wan_iprange_"
 static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
 {
-    int rc;
-    char query[MAX_QUERY];
+    int rc, ret;
+    char query[MAX_QUERY], tmpQuery[MAX_QUERY];
     char srcaddr[MAX_QUERY];
     char iprangeAddr[REMOTE_ACCESS_IP_RANGE_MAX_RULE][MAX_QUERY] = {'\0'};
     unsigned long count, i;
@@ -3856,9 +3948,13 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     char port[64];
     char utKey[64];
     unsigned char srcany = 0, validEntry = 0, noIPv6Entry = 0;
+    char cm_ip_webaccess[2];
+    char rg_ip_webaccess[2];
 
     httpport[0] = '\0';
     httpsport[0] = '\0';
+    cm_ip_webaccess[0] = '\0';
+    rg_ip_webaccess[0] = '\0';
 
     /* global flag */
     rc = syscfg_get(NULL, "mgmt_wan_access", query, sizeof(query));
@@ -3932,61 +4028,113 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    }
 
    /* HTTP access */
-   rc = syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
-   rc |= syscfg_get(NULL, "mgmt_wan_httpport", httpport, sizeof(httpport));
-   if (rc == 0 && atoi(query) == 1)
-   {
-       if(validEntry)
-           remote_access_set_proto(filter_fp, nat_fp, httpport, srcaddr, family, ecm_wan_ifname);
+   // CM-IP: wan0
+#if defined(CONFIG_CCSP_CM_IP_WEBACCESS)
+   if(validEntry)
+       remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
 
-       for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
-           remote_access_set_proto(filter_fp, nat_fp, httpport, iprangeAddr[i], family, ecm_wan_ifname);
-
-       //allows remote GUI access on erouter0 interface
-#ifdef CONFIG_CISCO_ALLOW_REMOTE_GUI_ACCESS
-       if((family == AF_INET && \
-                   (strncasecmp(firewall_level, "Low", strlen("Low")) == 0 || \
-                    (strncasecmp(firewall_level, "Custom", strlen("Custom")) == 0 && !isHttpBlocked))) || \
-               (family == AF_INET6 && 
-                (strncasecmp(firewall_levelv6, "Custom", strlen("Custom")) != 0 || \
-                 (strncasecmp(firewall_levelv6, "Custom", strlen("Custom")) == 0 && !isHttpBlockedV6)))) {
-
+   for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+       remote_access_set_proto(filter_fp, nat_fp, "80", iprangeAddr[i], family, ecm_wan_ifname);
+#else
+   if (0 == sysevent_get(sysevent_fd, sysevent_token, "cm_ip_webaccess", cm_ip_webaccess, sizeof(cm_ip_webaccess))) {
+       if(cm_ip_webaccess[0]!='\0' && strcmp(cm_ip_webaccess, "1")==0) {
            if(validEntry)
-               remote_access_set_proto(filter_fp, nat_fp, httpport, srcaddr, family, current_wan_ifname);
+               remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
 
            for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
-               remote_access_set_proto(filter_fp, nat_fp, httpport, iprangeAddr[i], family, current_wan_ifname);
+               remote_access_set_proto(filter_fp, nat_fp, "80", iprangeAddr[i], family, ecm_wan_ifname);
        }
+   } 
 #endif
+   // RG-IP: erouter0
+#if defined(CONFIG_CCSP_WAN_MGMT)
+   rc = syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
+#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
+   tmpQuery[0] = '\0';
+   ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
+   if(ret == 0)
+       strcpy(query, tmpQuery);
+#endif
+
+   rc |= syscfg_get(NULL, "mgmt_wan_httpport", httpport, sizeof(httpport));
+#if defined(CONFIG_CCSP_WAN_MGMT_PORT)
+   tmpQuery[0] = '\0';
+   ret = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmpQuery, sizeof(tmpQuery));
+   if(ret == 0)
+       strcpy(httpport, tmpQuery);
+#endif
+
+   if (rc == 0 && atoi(query) == 1)
+   {
+       // allows remote GUI access on erouter0 interface
+       if(validEntry)
+           remote_access_set_proto(filter_fp, nat_fp, httpport, srcaddr, family, current_wan_ifname);
+
+       for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+           remote_access_set_proto(filter_fp, nat_fp, httpport, iprangeAddr[i], family, current_wan_ifname);
    }
+#else
+   rc = syscfg_get(NULL, "mgmt_wan_httpport", httpport, sizeof(httpport));
+   if(rc == 0) {
+       if (0 == sysevent_get(sysevent_fd, sysevent_token, "rg_ip_webaccess", rg_ip_webaccess, sizeof(rg_ip_webaccess))) {
+           if(rg_ip_webaccess[0]!='\0' && strcmp(rg_ip_webaccess, "1")==0) {
+              if(validEntry)
+                  remote_access_set_proto(filter_fp, nat_fp, httpport, srcaddr, family, current_wan_ifname);
+
+              for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+                  remote_access_set_proto(filter_fp, nat_fp, httpport, iprangeAddr[i], family, current_wan_ifname);
+           }
+       }
+   }   
+#endif
 
    /* HTTPS access */
+   // CM-IP: wan0
+#if defined(CONFIG_CCSP_CM_IP_WEBACCESS)
+   if(validEntry)
+       remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
+
+   for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+       remote_access_set_proto(filter_fp, nat_fp, "443", iprangeAddr[i], family, ecm_wan_ifname);
+#else
+   if (0 == sysevent_get(sysevent_fd, sysevent_token, "cm_ip_webaccess", cm_ip_webaccess, sizeof(cm_ip_webaccess))) {
+       if(cm_ip_webaccess[0]!='\0' && strcmp(cm_ip_webaccess, "1")==0) {
+           if(validEntry)
+               remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
+
+           for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+               remote_access_set_proto(filter_fp, nat_fp, "443", iprangeAddr[i], family, ecm_wan_ifname);
+       }
+   }
+#endif
+
+   // RG-IP: erouter0
+#if defined(CONFIG_CCSP_WAN_MGMT)
    rc = syscfg_get(NULL, "mgmt_wan_httpsaccess", query, sizeof(query));
    rc |= syscfg_get(NULL, "mgmt_wan_httpsport", httpsport, sizeof(httpsport));
    if (rc == 0 && atoi(query) == 1)
    {
+
        if(validEntry)
-           remote_access_set_proto(filter_fp, nat_fp, httpsport, srcaddr, family, ecm_wan_ifname);
+           remote_access_set_proto(filter_fp, nat_fp, httpsport, srcaddr, family, current_wan_ifname);
 
        for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
-           remote_access_set_proto(filter_fp, nat_fp, httpsport, iprangeAddr[i], family, ecm_wan_ifname);
-
-#ifdef CONFIG_CISCO_ALLOW_REMOTE_GUI_ACCESS
-       if((family == AF_INET && \
-                   (strncasecmp(firewall_level, "Low", strlen("Low")) == 0 || \
-                    (strncasecmp(firewall_level, "Custom", strlen("Custom")) == 0 && !isHttpBlocked))) || \
-               (family == AF_INET6 && 
-                (strncasecmp(firewall_levelv6, "Custom", strlen("Custom")) != 0 || \
-                 (strncasecmp(firewall_levelv6, "Custom", strlen("Custom")) == 0 && !isHttpBlockedV6)))) {
-
-           if(validEntry)
-               remote_access_set_proto(filter_fp, nat_fp, httpsport, srcaddr, family, current_wan_ifname);
-
-           for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
-               remote_access_set_proto(filter_fp, nat_fp, httpsport, iprangeAddr[i], family, current_wan_ifname);
-       }
-#endif
+           remote_access_set_proto(filter_fp, nat_fp, httpsport, iprangeAddr[i], family, current_wan_ifname);
    }
+#else
+   rc = syscfg_get(NULL, "mgmt_wan_httpsport", httpsport, sizeof(httpsport));
+   if(rc == 0) {
+       if (0 == sysevent_get(sysevent_fd, sysevent_token, "rg_ip_webaccess", rg_ip_webaccess, sizeof(rg_ip_webaccess))) {
+           if(rg_ip_webaccess[0]!='\0' && strcmp(rg_ip_webaccess, "1")==0) {
+              if(validEntry)
+                  remote_access_set_proto(filter_fp, nat_fp, httpsport, srcaddr, family, current_wan_ifname);
+
+              for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+                  remote_access_set_proto(filter_fp, nat_fp, httpsport, iprangeAddr[i], family, current_wan_ifname);
+           }
+       }
+   }  
+#endif
 
    /* eCM SSH access */
    rc = syscfg_get(NULL, "mgmt_wan_sshaccess", query, sizeof(query));
@@ -4147,7 +4295,11 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
       else if (strncasecmp(firewall_level, "Low", strlen("Low")) == 0)
       {
          fprintf(filter_fp, "-A wan2self_ports -p tcp --dport 113 -j xlog_drop_wan2self\n"); // IDENT
+      #if defined(CONFIG_CCSP_DROP_ICMP_PING)
+         fprintf(filter_fp, "-A wan2self_ports -p icmp --icmp-type 8 -j xlog_drop_wan2self\n"); // Drop ICMP PING
+      #else
          fprintf(filter_fp, "-A wan2self_ports -p icmp --icmp-type 8 -m limit --limit 3/second -j xlog_accept_wan2self\n"); // Allow ICMP PING with limited rate
+      #endif
       }
       else if (strncasecmp(firewall_level, "Custom", strlen("Custom")) == 0)
       {
@@ -5663,7 +5815,7 @@ static int do_device_based_parcon(FILE *natFp, FILE* filterFp)
          //lan2wan http interception per device
          fprintf(filterFp, ":lan2wan_http_nfqueue_%s - [0:0]\n", ins_num);
 
-		 do_device_based_pp_disabled_appendrule(filterFp, ins_num, lan_ifname, query);
+         do_device_based_pp_disabled_appendrule(filterFp, ins_num, lan_ifname, query);
 
          //these rules are for http and dns query interception per device
          fprintf(filterFp, "-A lan2wan_httpget_intercept -m mac --mac-source %s -j lan2wan_http_nfqueue_%s\n", query, ins_num);
@@ -5679,7 +5831,7 @@ static int do_device_based_parcon(FILE *natFp, FILE* filterFp)
          if(mac2Ip != NULL) {
              fgets(ipAddr, sizeof(ipAddr), mac2Ip);
              fprintf(filterFp, "-A device_%s_container -d %s -m limit --limit 1/s --limit-burst 1 -j wan2lan_dnsr_nfqueue_%s\n", ins_num, ipAddr, ins_num);
-			do_device_based_pp_disabled_ip_appendrule(filterFp, ins_num, ipAddr);
+             do_device_based_pp_disabled_ip_appendrule(filterFp, ins_num, ipAddr);
              fclose(mac2Ip);
          }
 
@@ -5972,10 +6124,7 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
         if (count < 0) count = 0;
         if (count > MAX_SYSCFG_ENTRIES) count = MAX_SYSCFG_ENTRIES;
 
-        if (count > 0)
-        {
-			ruleIndex += do_parcon_mgmt_lan2wan_pc_site_appendrule(fp);
-        }
+        ruleIndex += do_parcon_mgmt_lan2wan_pc_site_appendrule(fp);
 
         for (idx = 1; idx <= count; idx++)
         {
@@ -6004,18 +6153,20 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
             {
                 char hexUrl[MAX_URL_LEN * 2 + 32];
                 int host_name_offset = 0;
+                isHttps = 0;
                 if (0 == strncmp(query, "http://", STRLEN_HTTP_URL_PREFIX)) {
                     host_name_offset = STRLEN_HTTP_URL_PREFIX;
                 }
                 else if (0 == strncmp(query, "https://", STRLEN_HTTPS_URL_PREFIX)) {
                     host_name_offset = STRLEN_HTTPS_URL_PREFIX;
+                    isHttps = 1;
                 }
                 char *tmp;
                 int is_dnsr_nfq = 1;
                 if(strncmp(query+host_name_offset, "[", 1) == 0){ /* if this is a ipv6 address stop monitor dns */
                     is_dnsr_nfq = 0;
-                }else if(tmp = strstr(query+host_name_offset, ":") != NULL ){ 
-                    /* remove the port */ 
+                }else if((tmp = strstr(query+host_name_offset, ":")) != NULL ){ 
+                    /* remove the port */
                     *tmp = '\0';
                     is_dnsr_nfq = 2;
                 }
@@ -6046,10 +6197,10 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                 fprintf(fp, "-A %s -j NFQUEUE "HTTP_GET_QUEUE_CONFIG "\n", drop_log);
                 fprintf(nat_fp, ":%s - [0:0]\n", drop_log);
                 fprintf(nat_fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
-                if(isHttps)
-                    fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
-                else
-                    fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
+                //if(isHttps)
+                //    fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
+                //else
+                //    fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
             }else    
                 fprintf(fp, "-A %s -j NFQUEUE "HTTPV6_GET_QUEUE_CONFIG "\n", drop_log);
 #else
@@ -6120,17 +6271,19 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport %s -m httphost --host \"%s:%s\" -j %s\n", nstdPort, query + host_name_offset, nstdPort, drop_log);
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
                     if(iptype == 4){
-                        if(isHttps)
+                        if(isHttps){
                             fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport %s -m set --match-set %s dst -m comment --comment \"host match %s \"  -j %s\n",\
                                     nstdPort, ins_num, query, drop_log);
-                        else
+                            fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
+                        }else{
                             fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport %s -m set --match-set %s dst -m comment --comment \"host match %s \"  -j %s\n",\
                                     nstdPort, ins_num, query, drop_log);
+                            fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
+                        }
                     }
                     
 #endif
-
-					do_parcon_mgmt_lan2wan_pc_site_insertrule(fp, ruleIndex, nstdPort);
+                    do_parcon_mgmt_lan2wan_pc_site_insertrule(fp, ruleIndex, nstdPort);
                 }
                 else
                 {
@@ -6143,6 +6296,8 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                                 ins_num, query, drop_log);
                         fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport 443 -m set --match-set %s dst -m comment --comment \"host match %s \" -j  %s\n", \
                                 ins_num, query, drop_log);
+                        fprintf(nat_fp, "-A %s -m tcp -p tcp --dport 443 -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
+                        fprintf(nat_fp, "-A %s -m tcp -p tcp --dport 80 -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
                     }
 #endif
                 }
@@ -6151,7 +6306,12 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
             }
             else if (strncasecmp(method, "KEYWD", 5)==0)
             {
-                fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp -j %s\n", query, drop_log);
+                // consider the case that user input whole url.
+                if(strstr(query, "://") != 0) {
+                    fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp -j %s\n", strstr(query, "://") + 3, drop_log);
+                } else {
+                    fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp -j %s\n", query, drop_log);
+                }
             }
         }
     }
@@ -6551,6 +6711,19 @@ static int do_lan2wan_misc(FILE *filter_fp)
          fprintf(filter_fp, "%s\n", str);
       }
    }
+
+#if defined(CONFIG_CCSP_VPN_PASSTHROUGH)
+   char query[2] = {'\0'};
+
+   if(isWanReady) {
+       if((0==syscfg_get(NULL, "IPSecPassthrough", query, sizeof(query))) && (atoi(query)==0))
+           fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 500  -j DROP\n"); // block IPSec
+
+       query[0] = '\0';
+       if((0==syscfg_get(NULL, "PPTPPassthrough", query, sizeof(query))) && (atoi(query)==0))
+           fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 1723 -j DROP\n"); // block PPTP
+   }
+#endif
 
    if (isWanReady && strncasecmp(firewall_level, "High", strlen("High")) == 0)
    {
@@ -7625,6 +7798,13 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "-A general_input -i brlan0 ! -s 192.168.100.3 -d 192.168.100.1 -j xlog_drop_lan2self\n");
    }
 
+   //open port for DHCP
+   if(!isBridgeMode) {
+       fprintf(filter_fp, "-A general_input -i %s -p udp --dport 68 -j ACCEPT\n", current_wan_ifname);
+       fprintf(filter_fp, "-A general_input -i %s -p udp --dport 68 -j ACCEPT\n", ecm_wan_ifname);
+       fprintf(filter_fp, "-A general_input -i %s -p udp --dport 68 -j ACCEPT\n", emta_wan_ifname);
+   }
+
    fprintf(filter_fp, "-A lan2self ! -d %s -j lan2self_by_wanip\n", lan_ipaddr);
    fprintf(filter_fp, "-A lan2self -j lan2self_mgmt\n");
    fprintf(filter_fp, "-A lan2self -j lanattack\n");
@@ -8049,7 +8229,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "%s\n", ":wan2self_mgmt - [0:0]");
    fprintf(filter_fp, "%s\n", ":lan2self_mgmt - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlog_drop_wan2self - [0:0]");
+   fprintf(filter_fp, "%s\n", ":xlog_drop_lan2self - [0:0]");
    fprintf(filter_fp, "-A xlog_drop_wan2self -j DROP\n");
+   fprintf(filter_fp, "-A xlog_drop_lan2self -j DROP\n");
 
    if(isWanServiceReady || isBridgeMode) {
        fprintf(filter_fp, "-A INPUT ! -i %s -j wan2self_mgmt\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname);
@@ -8062,6 +8244,10 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A INPUT -i %s -j lan2self_mgmt\n", cmdiag_ifname); //lan0 always exist
 
    lan_telnet_ssh(filter_fp, AF_INET);
+
+   #if defined(CONFIG_CCSP_LAN_HTTP_ACCESS)
+   lan_http_access(filter_fp);
+   #endif
 
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
@@ -8246,6 +8432,35 @@ static int prepare_stopped_ipv4_firewall(FILE *file_fp)
 
    return(0);
 }
+
+//Hardcoded support for cm and erouter should be generalized.
+static char * ifnames[] = { wan6_ifname, ecm_wan_ifname, emta_wan_ifname};
+static int numifs = sizeof(ifnames) / sizeof(*ifnames);
+
+static void do_ipv6_sn_filter(FILE* fp) {
+ 
+    int i;
+    char mcastAddrStr[64];
+    char ifIpv6AddrKey[64];
+    fprintf(fp, "*mangle\n");
+    
+    
+    
+    for (i = 0; i < numifs; ++i) {
+        snprintf(ifIpv6AddrKey, sizeof(ifIpv6AddrKey), "ipv6_%s_dhcp_solicNodeAddr", ifnames[i]);
+        sysevent_get(sysevent_fd, sysevent_token, ifIpv6AddrKey, mcastAddrStr, sizeof(mcastAddrStr));
+        if (mcastAddrStr[0] != '\0')
+            fprintf(fp, "-A PREROUTING -i %s -d %s -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m limit --limit 20/sec -j ACCEPT\n", ifnames[i], mcastAddrStr);
+        
+        snprintf(ifIpv6AddrKey, sizeof(ifIpv6AddrKey), "ipv6_%s_ll_solicNodeAddr", ifnames[i]);
+        sysevent_get(sysevent_fd, sysevent_token, ifIpv6AddrKey, mcastAddrStr, sizeof(mcastAddrStr));
+        if (mcastAddrStr[0] != '\0')
+            fprintf(fp, "-A PREROUTING -i %s -d %s -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m limit --limit 20/sec -j ACCEPT\n", ifnames[i], mcastAddrStr);
+        
+        fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP\n", ifnames[i], mcastAddrStr);
+    }
+    fprintf(fp, "COMMIT\n");
+}
 /*
  ****************************************************************
  *               IPv6 Firewall                                  *
@@ -8276,6 +8491,13 @@ int prepare_ipv6_firewall(const char *fw_file)
    if (NULL == fp) {
       return(-2);
    }
+   
+   sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipv6_interface", wan6_ifname, sizeof(wan6_ifname));
+   
+   if (wan6_ifname[0] == '\0') 
+       strcpy(wan6_ifname, current_wan_ifname);
+   
+   do_ipv6_sn_filter(fp);
 
    fprintf(fp, "*filter\n");
    fprintf(fp, ":INPUT ACCEPT [0:0]\n");
@@ -8307,10 +8529,10 @@ int prepare_ipv6_firewall(const char *fw_file)
 
    if (isFirewallEnabled) {
       // Get the current WAN IPv6 interface (which differs from the IPv4 in case of tunnels)
-      char wan6_ifname[129],query[10],port[10];
-      int rc;
+      char query[10],port[10],tmpQuery[10];
+      int rc, ret;
 
-      sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipv6_interface", wan6_ifname, sizeof(wan6_ifname));
+      
       // not sure if this is the right thing to do, but if there is no current_wan_ipv6_interface several iptables statements fail
       if ('\0' == wan6_ifname[0]) {
          snprintf(wan6_ifname, sizeof(wan6_ifname), "%s", current_wan_ifname);
@@ -8318,9 +8540,23 @@ int prepare_ipv6_firewall(const char *fw_file)
       query[0] = '\0';
       port[0] = '\0';
       rc = syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
+#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
+      tmpQuery[0] = '\0';
+      ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
+      if(ret == 0)
+          strcpy(query, tmpQuery);
+#endif
       if (0 == rc && '\0' != query[0] && (0 !=  strncmp(query, "0", sizeof(query))) ) {
-         rc = syscfg_get(NULL, "mgmt_wan_httpport", port, sizeof(port));
-         if (0 != rc || '\0' == port[0]) {
+
+          rc = syscfg_get(NULL, "mgmt_wan_httpport", port, sizeof(port));
+#if defined(CONFIG_CCSP_WAN_MGMT_PORT)
+          tmpQuery[0] = '\0';
+          ret = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmpQuery, sizeof(tmpQuery));
+          if(ret == 0)
+              strcpy(port, tmpQuery);
+#endif
+
+          if (0 != rc || '\0' == port[0]) {
             snprintf(port, sizeof(port), "%d", 8080);
          }
       }
@@ -8354,6 +8590,11 @@ int prepare_ipv6_firewall(const char *fw_file)
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", emta_wan_ifname); // Echo request
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", emta_wan_ifname); // Echo reply
 
+      /* not allow ping wan0 from brlan0 */
+      int i;
+      for(i = 0; i < ecm_wan_ipv6_num; i++){
+         fprintf(fp, "-A INPUT -i %s -d %s -p icmpv6 -m icmp6 --icmpv6-type 128  -j LOG_INPUT_DROP\n", lan_ifname, ecm_wan_ipv6[i]);
+      }
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", lan_ifname); // Echo request
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", lan_ifname); // Echo reply
 
@@ -8364,6 +8605,16 @@ int prepare_ipv6_firewall(const char *fw_file)
           fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j DROP\n", current_wan_ifname); // Echo request
           fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m state --state NEW,INVALID,RELATED -j DROP\n", current_wan_ifname); // Echo reply
 
+      }
+      else if(strncasecmp(firewall_levelv6, "Low", strlen("Low")) == 0) 
+      {
+      #if defined(CONFIG_CCSP_DROP_ICMP_PING)
+          fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j DROP\n", current_wan_ifname); // Echo request
+          fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m state --state NEW,INVALID,RELATED -j DROP\n", current_wan_ifname); // Echo reply
+      #else
+          fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", current_wan_ifname); // Echo request
+          fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", current_wan_ifname); // Echo reply
+      #endif
       }
       else
       {
@@ -8402,9 +8653,14 @@ int prepare_ipv6_firewall(const char *fw_file)
       fprintf(fp, "-A INPUT -s fe80::/64 -p icmpv6 -m icmp6 --icmpv6-type 151 -m limit --limit 10/sec -j ACCEPT\n");
       fprintf(fp, "-A INPUT -s fe80::/64 -p icmpv6 -m icmp6 --icmpv6-type 152 -m limit --limit 10/sec -j ACCEPT\n");
       fprintf(fp, "-A INPUT -s fe80::/64 -p icmpv6 -m icmp6 --icmpv6-type 153 -m limit --limit 10/sec -j ACCEPT\n");
+      
+      // Allow SSDP 
+      fprintf(fp, "-A INPUT -i %s -p udp --dport 1900 -j ACCEPT\n", lan_ifname);
 
       // Normal ports for Management interface
+      do_lan2self_by_wanip6(fp);
       fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 80 --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", lan_ifname);
+      fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", lan_ifname);
       //if (port[0])
       //   fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport %s --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", wan6_ifname,port);
 

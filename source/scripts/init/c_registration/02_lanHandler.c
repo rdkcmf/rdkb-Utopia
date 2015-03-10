@@ -34,6 +34,7 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/lan_handler.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "snmp_subagent-status|/etc/utopia/service.d/lan_handler.sh",
     "ipv4-resync|/etc/utopia/service.d/lan_handler.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
+    "erouter_mode-updated|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 
 void srv_register(void) {
