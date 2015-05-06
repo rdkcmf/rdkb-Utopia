@@ -1,5 +1,22 @@
 #!/bin/sh
 
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+
 #------------------------------------------------------------------
 # Copyright (c) 2013 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -24,7 +41,8 @@ GRE_IFNAME="gretap0"
 source /etc/utopia/service.d/ut_plat.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
-MTU_VAL=1360
+MTU_VAL=1400
+MSS_VAL=1360
 
 GRE_PSM_BASE=dmsb.cisco.gre
 HS_PSM_BASE=dmsb.hotspot.gre
@@ -261,7 +279,7 @@ update_bridge_config () {
         sysevent set gre_${inst}_${br}_snoop_rule "$br_snoop_rule"
         
         
-        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MTU_VAL"`
+        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MSS_VAL"`
         sysevent set gre_${inst}_${br}_mss_rule "$br_mss_rule"
     done
     

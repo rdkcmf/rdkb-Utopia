@@ -23,7 +23,7 @@ CFLAGS += -DPAL_ULOG
 CFLAGS += -Wall -Wextra -Isrc/inc
 
 LDFLAGS += -lsyscfg
-LDFLAGS += -lulog
+LDFLAGS += -lulog -lsysevent
 LDFLAGS += -lpal -lupnp -lixml -lpthread -lthreadutil
 LDFLAGS += -lulog -Bdynamic -lutctx -lutapi
 LDFLAGS += -lnvramstorage -lticc -lutils_docsis 

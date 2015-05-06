@@ -33,6 +33,7 @@ const char* SERVICE_NAME            = "hotspot";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet/handle_gre.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "gre-restart|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
+                                        "gre-forceRestart|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
                                         "snmp_subagent-status|/etc/utopia/service.d/service_multinet/handle_gre.sh",
                                         "hotspot-update_bridges|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
                                         NULL

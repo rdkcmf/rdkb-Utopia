@@ -1,5 +1,22 @@
 #!/bin/sh
 
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+
 #------------------------------------------------------------------
 # Copyright (c) 2008,2010 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -238,7 +255,7 @@ teardown_wireless_interfaces() {
 #this function is used to restart such services.
 restart_necessary_functions()
 {
-
+   echo ""
 }
 
 #--------------------------------------------------------------
@@ -650,7 +667,7 @@ service_start ()
       fi
 	  #rongwei added
 	  killall wecb_master 2>/dev/null
-	  killall xhs 2>/dev/null
+	  killall CcspHomeSecurity 2>/dev/null
 	  ulimit -s 200 && wecb_master& 
 	  sleep 1
 	  ###echo `ps | grep wecb_master | grep -v grep | awk '{print $1}'` > /var/run/wecb_master.pid
@@ -659,7 +676,7 @@ service_start ()
 	  chmod +x /var/wecb_master.sh
 	  /etc/utopia/service.d/pmon.sh register wecb_master
 	  /etc/utopia/service.d/pmon.sh setproc wecb_master wecb_master /var/run/wecb_master.pid "/var/wecb_master.sh" 
-	  xhs 8081&
+	  CcspHomeSecurity 8081&
    fi
 }
 
@@ -690,8 +707,7 @@ service_stop ()
 	  /etc/utopia/service.d/pmon.sh unregister wecb_master 
 	  #rongwei added
 	  killall wecb_master 2>/dev/null
-	  killall wecb_master 2>/dev/null
-	  killall xhs 2>/dev/null
+	  killall CcspHomeSecurity 2>/dev/null
    fi
 }
 

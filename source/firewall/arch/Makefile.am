@@ -1,1 +1,0 @@
-SUBDIRS = intel_usg

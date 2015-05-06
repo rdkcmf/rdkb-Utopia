@@ -1,5 +1,22 @@
 #!/bin/sh
 
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+
 #------------------------------------------------------------------
 # Copyright (c) 2008,2010 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -91,11 +108,38 @@ prepare_extra_commandline_params () {
 #    2            : error that requires quiet time before retry (eg. connection failure)
 #---------------------------------------------------------------------------------------
 update_ddns_server() {
-   prepare_ddns_config_file
+#   prepare_ddns_config_file
 
-   EXTRA_PARAMS=`prepare_extra_commandline_params`
-   ez-ipupdate $EXTRA_PARAMS -c $CONF_FILE -e /etc/utopia/service.d/service_ddns/ddns_success.sh > $OUTPUT_FILE 2>&1
-   RET_CODE=$?
+#   EXTRA_PARAMS=`prepare_extra_commandline_params`
+#   ez-ipupdate $EXTRA_PARAMS -c $CONF_FILE -e /etc/utopia/service.d/service_ddns/ddns_success.sh > $OUTPUT_FILE 2>&1
+   DnsIdx=1
+   EXTRA_PARAMS=""
+   while [ $DnsIdx -le 2 ]; do
+       ddns_enable_x=`syscfg get ddns_enable${DnsIdx}`
+       if [ "1" = "$ddns_enable_x" ]; then
+           ddns_service_x=`syscfg get ddns_service${DnsIdx}`
+           ddns_username_x=`syscfg get ddns_username${DnsIdx}`
+           ddns_password_x=`syscfg get ddns_password${DnsIdx}`
+           ddns_hostname_x=`syscfg get ddns_hostname${DnsIdx}`
+           EXTRA_PARAMS="--interface=erouter0"
+           EXTRA_PARAMS="${EXTRA_PARAMS} --cache-file=/var/ez-ipupdate.cache.${ddns_service_x}"
+           EXTRA_PARAMS="${EXTRA_PARAMS} --daemon"
+           EXTRA_PARAMS="${EXTRA_PARAMS} --max-interval=2073600"
+           EXTRA_PARAMS="${EXTRA_PARAMS} --service-type=${ddns_service_x}"
+           EXTRA_PARAMS="${EXTRA_PARAMS} --user=${ddns_username_x}:${ddns_password_x}"
+           EXTRA_PARAMS="${EXTRA_PARAMS} --host=${ddns_hostname_x}"
+       fi
+       DnsIdx=`expr $DnsIdx + 1`
+   done
+           
+   if [ "" != "${EXTRA_PARAMS}" ]; then
+       echo "/fss/gw/usr/bin/ez-ipupdate ${EXTRA_PARAMS} " 
+       /fss/gw/usr/bin/ez-ipupdate ${EXTRA_PARAMS} 
+       RET_CODE=$?
+   else
+       RET_CODE=1
+   fi
+       
    if [ "0" != "$RET_CODE" ]; then
       # we clear the wan_last_ipaddr to force us to retry once the error is cleared
       if [ -n $SYSCFG_wan_last_ipaddr ] ; then
@@ -273,7 +317,8 @@ update_ddns_if_needed () {
 #----------------------------------------------------------------------
 service_init ()
 {
-    FOO=`utctx_cmd get ddns_enable wan_last_ipaddr ddns_last_update ddns_update_days ddns_hostname ddns_username ddns_password ddns_service ddns_mx ddns_mx_backup ddns_wildcard ddns_server`
+    #FOO=`utctx_cmd get ddns_enable wan_last_ipaddr ddns_last_update ddns_update_days ddns_hostname ddns_username ddns_password ddns_service ddns_mx ddns_mx_backup ddns_wildcard ddns_server`
+    FOO=`utctx_cmd get ddns_enable wan_last_ipaddr ddns_last_update ddns_update_days ddns_mx ddns_mx_backup ddns_wildcard `
     eval $FOO
 }
 

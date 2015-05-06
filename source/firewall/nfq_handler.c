@@ -40,6 +40,17 @@
 #define _NFQ_DEBUG_LEVEL 0
 #define PARCON_IP_PATH "/var/parcon/"
 
+
+typedef int (*nfq_cb)(struct nfq_q_handle *, struct nfgenmsg *, struct nfq_data *, void *);
+
+typedef struct nfq_cfg
+{
+    char mode[32];
+    unsigned char qnum_start;
+    unsigned char qnum_end;
+    nfq_cb callback;
+} nfq_cfg;
+
 void send_tcp_pkt(char *interface, int family, char *srcMac, char *dstMac, char *srcIp, char *dstIp, unsigned short srcPort, unsigned short dstPort, unsigned long seqNum, unsigned long ackNum, char *url, unsigned char fin);
 
 char srcMac[20];
@@ -447,9 +458,41 @@ int main(int argc, char *argv[])
     struct nfq_q_handle *queueHandle;
     int fd, rv;
     char buf[4096];
-    u_int16_t family = AF_INET;
-    int (*callback)(struct nfq_q_handle *, struct nfgenmsg *, struct nfq_data *, void *);
+    unsigned char i, j;
+    u_int16_t family = atoi(argv[1]) == 4 ? AF_INET : AF_INET6;
 
+#ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
+    const nfq_cfg nfqCfg[] = {
+        {"dns_response", 6, 8, dns_response_callback},
+        {"http_get", 11, 12, http_get_callback}
+    };
+
+   const nfq_cfg nfqCfgV6[] = {
+        {"dnsv6_response", 9, 10, dns_response_callback},
+        {"httpv6_get", 13, 14, http_get_callback}
+   };
+#else
+    const nfq_cfg nfqCfg[] = {
+        {"dns_query", 5, 5, dns_query_callback},
+        {"dns_response", 6, 8, dns_response_callback},
+        {"http_get", 11, 12, http_get_callback}
+    };
+
+   const nfq_cfg nfqCfgV6[] = {
+   };
+#endif
+
+   if(argc == 3)
+       strncpy(srcMac, argv[2], sizeof(srcMac));
+   else{
+       /* In ARES/XB3 brlan0 has not been created when program started
+        * Get Mac by self */
+       getIFMac("brlan0", srcMac);
+   }
+
+#if 0
+    //int (*callback)(struct nfq_q_handle *, struct nfgenmsg *, struct nfq_data *, void *);
+    //
     if(strcmp("dns_query", argv[2]) == 0)
         callback = dns_query_callback;
     else if(strcmp("dns_response", argv[2]) == 0)
@@ -482,7 +525,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "nfq_handler: error during nfq_create_queue()\n");
         exit(1);
     }
-
+#endif
 
     nfqHandle = nfq_open();
     if (!nfqHandle) {
@@ -490,29 +533,46 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    printf("unbinding existing nf_queue handler for AF_INET (if any)\n");
+    printf("unbinding existing nf_queue handler for %s (if any)\n", family == AF_INET ? "AF_INET" : "AF_INET6");
     if (nfq_unbind_pf(nfqHandle, family) < 0) {
         fprintf(stderr, "nfq_handler: error during nfq_unbind_pf()\n");
         exit(1);
     }
 
-    printf("binding nfnetlink_queue as nf_queue handler for AF_INET\n");
+    printf("binding nfnetlink_queue as nf_queue handler for %s\n", family == AF_INET ? "AF_INET" : "AF_INET6");
     if (nfq_bind_pf(nfqHandle, family) < 0) {
         fprintf(stderr, "nfq_handler: error during nfq_bind_pf()\n");
         exit(1);
     }
 
-    printf("binding this socket to queue %s in %s mode\n", argv[1], argv[2]);
-    queueHandle = nfq_create_queue(nfqHandle,  atoi(argv[1]), callback, NULL);
-    if (!queueHandle) {
-        fprintf(stderr, "nfq_handler: error during nfq_create_queue()\n");
-        exit(1);
+    int numOfCfg;
+    nfq_cfg *pNfqCfg;
+
+    if(family == AF_INET) {
+        numOfCfg = sizeof(nfqCfg) / sizeof(nfq_cfg);
+        pNfqCfg = nfqCfg;
+    } else {
+        numOfCfg = sizeof(nfqCfgV6) / sizeof(nfq_cfg);
+        pNfqCfg = nfqCfgV6;
     }
 
-    printf("setting copy_packet mode\n");
-    if (nfq_set_mode(queueHandle, NFQNL_COPY_PACKET, 0xffff) < 0) {
-        fprintf(stderr, "can't set packet_copy mode\n");
-        exit(1);
+    for(i = 0; i < numOfCfg; i++) {
+      
+        for(j = pNfqCfg[i].qnum_start; j <= pNfqCfg[i].qnum_end; j++) {
+     
+            printf("binding this socket to queue %d in %s mode\n", j, pNfqCfg[i].mode);
+            queueHandle = nfq_create_queue(nfqHandle, j, pNfqCfg[i].callback, NULL);
+            if (!queueHandle) {
+                fprintf(stderr, "nfq_handler: error during nfq_create_queue()\n");
+                exit(1);
+            }
+
+            printf("setting copy_packet mode\n");
+            if (nfq_set_mode(queueHandle, NFQNL_COPY_PACKET, 0xffff) < 0) {
+                fprintf(stderr, "can't set packet_copy mode\n");
+                exit(1);
+            }
+        }
     }
 
     fd = nfq_fd(nfqHandle);

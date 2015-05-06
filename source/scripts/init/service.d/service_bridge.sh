@@ -1,5 +1,22 @@
 #!/bin/sh
 
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+
 #------------------------------------------------------------------
 # Copyright (c) 2010 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -13,7 +30,7 @@
 #------------------------------------------------------------------
 
 #source /etc/utopia/service.d/interface_functions.sh
-#source /etc/utopia/service.d/hostname_functions.sh
+source /etc/utopia/service.d/hostname_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
 #source /etc/utopia/service.d/service_lan/wlan.sh
 source /etc/utopia/service.d/event_handler_functions.sh
@@ -169,6 +186,7 @@ add_ebtable_rule()
 
     dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
     ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
 
 #--------------------------------------------------------------
@@ -183,6 +201,7 @@ del_ebtable_rule()
 
     dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
     ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
 
 #--------------------------------------------------------------
@@ -356,7 +375,7 @@ service_start ()
          check_err $? "Unable to bringup bridge"
       else
          sysevent set ${SERVICE_NAME}-errinfo
-         sysevent set ${SERVICE_NAME}-status started
+         sysevent set ${SERVICE_NAME}-status starting
 		
          add_ebtable_rule
 
@@ -369,6 +388,10 @@ service_start ()
             # It is not a good practice to force all physical links to refresh -- should have used arguments to specify which ports/links
             gw_lan_refresh
          fi
+         #set hostname            
+         prepare_hostname
+
+         sysevent set ${SERVICE_NAME}-status started
       fi
    fi
 }

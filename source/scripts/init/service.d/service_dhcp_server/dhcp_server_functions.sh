@@ -1,3 +1,19 @@
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
 #------------------------------------------------------------------
 # Copyright (c) 2008 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -17,7 +33,6 @@ LOCAL_DHCP_CONF=/tmp/dnsmasq.conf$$
 LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts$$
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options$$
 RESOLV_CONF=/etc/resolv.conf
-LOG_FILE=/tmp/udhcp.log
 
 DHCP_SLOW_START_1_FILE=/etc/cron/cron.everyminute/dhcp_slow_start.sh
 DHCP_SLOW_START_2_FILE=/etc/cron/cron.every5minute/dhcp_slow_start.sh
@@ -200,7 +215,7 @@ prepare_dhcp_conf_static_hosts() {
          #FRIENDLY_NAME=$1
          #IFS=$SAVEIFS
          #echo "$MAC,$IP,$FRIENDLY_NAME" >> $LOCAL_DHCP_STATIC_HOSTS_FILE
-         echo "$HOST_LINE" >> $LOCAL_DHCP_STATIC_HOSTS_FILE
+         echo "$HOST_LINE,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_STATIC_HOSTS_FILE
       fi
    done
    cat $LOCAL_DHCP_STATIC_HOSTS_FILE > $DHCP_STATIC_HOSTS_FILE
@@ -283,27 +298,11 @@ prepare_dhcp_options() {
            fi
         fi
         
-      elif [ -f $LOG_FILE ] ; then
-      
+      else   
         #Wan Dynamic DNS from dhcp protocol
-        NS=` grep "dns server" $LOG_FILE | awk '{print $4}'`
+        NS=`sysevent get wan_dhcp_dns`
         if [ "" != "$NS" ] ; then
-           if [ "" = "$DHCP_OPTION_STR" ] ; then
-              DHCP_OPTION_STR="option:dns-server, "$NS
-           else
-              DHCP_OPTION_STR=$DHCP_OPTION_STR","$NS
-           fi
-        fi
-        NS=` grep "dns server" $LOG_FILE | awk '{print $5}'`
-        if [ "" != "$NS" ] ; then
-           if [ "" = "$DHCP_OPTION_STR" ] ; then
-              DHCP_OPTION_STR="option:dns-server, "$NS
-           else
-              DHCP_OPTION_STR=$DHCP_OPTION_STR","$NS
-           fi
-        fi
-        NS=` grep "dns server" $LOG_FILE | awk '{print $6}'`
-        if [ "" != "$NS" ] ; then
+           NS=`echo "$NS" | sed "s/ /,/g"`
            if [ "" = "$DHCP_OPTION_STR" ] ; then
               DHCP_OPTION_STR="option:dns-server, "$NS
            else

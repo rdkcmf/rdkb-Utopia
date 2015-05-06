@@ -1,1 +1,0 @@
-../../arm_shared/source/service_dhcpv6_client.sh

@@ -1,5 +1,22 @@
 #!/bin/sh
 
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+
 #------------------------------------------------------------------
 # Copyright (c) 2009 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -74,11 +91,24 @@ bring_wan_up() {
    PROPAGATE_DOM=`syscfg get dhcp_server_propagate_wan_domain`
    PROPAGATE_NS=`syscfg get dhcp_server_propagate_wan_nameserver`
    if [ x$PROPAGATE_DOM = x1 -o x$PROPAGATE_NS = x1 ]; then
-       touch /var/tmp/lan_not_restart
-       sysevent set dhcp_server-restart
+       #touch /var/tmp/lan_not_restart
+       sysevent set dhcp_server-restart lan_not_restart
    fi
    
-   sysevent set firewall-restart
+   if [ x"ready" != x`sysevent get start-misc` -a x != x`sysevent get current_lan_ipaddr` -a "0.0.0.0" != `sysevent get current_lan_ipaddr` ]; then
+       STARTED_FLG=`sysevent get parcon_nfq_status`
+
+       if [ x"$STARTED_FLG" != x"started" ]; then
+           BRLAN0_MAC=`ifconfig l2sd0 | grep HWaddr | awk '{print $5}'`
+           ((nfq_handler 4 $BRLAN0_MAC &)&)
+           ((nfq_handler 6 $BRLAN0_MAC &)&)
+           sysevent set parcon_nfq_status started
+       fi
+
+       firewall
+   else
+       sysevent set firewall-restart
+   fi
    
    echo 1 > /proc/sys/net/ipv4/ip_forward
    ulog dhcp_wan status "$PID setting current_wan_state up"
@@ -86,6 +116,10 @@ bring_wan_up() {
    sysevent set current_wan_state up
    sysevent set wan-status started
    sysevent set wan_start_time `cat /proc/uptime | cut -d'.' -f1`
+   #start ntp time sync
+   if [ x"1" = x`syscfg get ntp_enabled` ] ; then
+       dmcli eRT setv Device.Time.Enable bool 1 &
+   fi
 }
 
 # --------------------------------------------------------

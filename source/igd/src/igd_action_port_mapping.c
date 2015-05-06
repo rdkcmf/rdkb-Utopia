@@ -512,9 +512,9 @@ INT32 IGD_get_SpecificPortMapping_entry(INOUT struct action_event *event)
         } else {
             PAL_LOG(WAN_CONNECTION_DEVICE_LOG_NAME, PAL_LOG_LEVEL_FAILURE, "IGD_pii_get_portmapping_entry_specific error");
 
-            ret = PAL_UPNP_SOAP_E_ACTION_FAILED;
+            ret = NO_SUCH_ENTRY_IN_ARRAY;
             event->request->error_code = ret;
-            strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), PAL_UPNP_LINE_SIZE);
+            strncpy(event->request->error_str, NO_SUCH_ENTRY_IN_ARRAY_STR, sizeof(NO_SUCH_ENTRY_IN_ARRAY_STR)+1);
         }
         
         PAL_xml2s_free(&portmapIndex, tableSpecPorMap);

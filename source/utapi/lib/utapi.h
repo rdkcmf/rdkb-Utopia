@@ -934,6 +934,10 @@ typedef struct firewall {
 int Utopia_SetFirewallSettings (UtopiaContext *ctx, firewall_t fw);
 int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw);
 
+typedef struct ipv6Prefix {
+	char prefix[IPADDR_SZ];
+	int size;
+}ipv6Prefix_t;
 
 /*
  * IPv6 Settings and Status

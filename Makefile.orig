@@ -38,10 +38,13 @@ modules += dhcpproxy
 modules += firewall_log
 modules += hdk2
 #modules += hnap
-ifdef CONFIG_KERNRL_NF_TRIGGER_SUPPORT
+#ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
 modules += trigger
-endif
+#endif
 modules += igd
+modules += service_wan
+modules += service_routed
+#modules += service_multinet
 
 
 modules := $(addprefix $(ComponentSrcDir)/,$(modules))

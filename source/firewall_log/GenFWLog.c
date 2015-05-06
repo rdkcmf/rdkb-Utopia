@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "syscfg/syscfg.h"
+#include "sysevent/sysevent.h"
 #include "autoconf.h"
 //#define _NO_MMAP__
 #define CONFIG_CISCO_PARCON_WALLED_GARDEN
@@ -38,7 +39,7 @@
 #define LOCK_ATTEMP_TIME 10
 
 #define RULE_NUM 10 
-#define LOG_TIME_SIZE 15
+#define LOG_TIME_SIZE 20 
 #define TEMP_FILE   "/tmp/.ipt_rule"
 #define TEMP_LOG_LIST "/tmp/.log_list"
 #define IPT_COUNT_CMD "iptables -L -n -v "
@@ -112,7 +113,7 @@ int fLock(){
     fl.l_len = 0;  
     fl.l_pid = -1;  
 
-    if((fd=open(LOCK_FILE_NAME,O_CREAT| O_RDWR, S_IRUSR | S_IWUSR))>0){
+    if((fd=open(LOCK_FILE_NAME,O_CREAT| O_RDWR))>0){
         do{
             if( -1  != fcntl(fd,F_SETLK,&fl)){
                 printf("GET W-LOCK SUCCESS\n");
@@ -689,18 +690,34 @@ int main(int argc, char** argv){
     int i=0;
     char fFlag[8];
     char temp[100];
+    int            sysevent_fd = -1;
+    char          *sysevent_name = "GenFWLog";
+    token_t        sysevent_token;
+    unsigned short sysevent_port;
+    char           sysevent_ip[19];
 
     t=time(NULL);
     g_ptime=localtime(&t);
 
-    syscfg_init();
-    memset(FIREWALL_LOG_DIR, 0, sizeof(FIREWALL_LOG_DIR));
-    syscfg_get(NULL, "FW_LOG_FILE_PATH", FIREWALL_LOG_DIR, sizeof(FIREWALL_LOG_DIR));
-
-    if(FIREWALL_LOG_DIR[0] == '\0' ){
-        printf("Not get fw log path\n");
+    snprintf(sysevent_ip, sizeof(sysevent_ip), "127.0.0.1");
+    sysevent_port = SE_SERVER_WELL_KNOWN_PORT;
+    sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
+    if(sysevent_fd  < 0){
+        printf("GenFWLog: Init sysevent error\n");
         exit(1);
     }
+     
+    memset(FIREWALL_LOG_DIR, 0, sizeof(FIREWALL_LOG_DIR));
+    sysevent_get(sysevent_fd, sysevent_token, "FW_LOG_FILE_PATH_V2", FIREWALL_LOG_DIR, sizeof(FIREWALL_LOG_DIR));
+    if(FIREWALL_LOG_DIR[0] == '\0' ){
+        syscfg_init();
+        syscfg_get(NULL, "FW_LOG_FILE_PATH", FIREWALL_LOG_DIR, sizeof(FIREWALL_LOG_DIR));
+        if(FIREWALL_LOG_DIR[0] == '\0' ){
+           printf("Not get fw log path\n");
+           exit(1);
+        }
+    }
+    sysevent_close(sysevent_fd, sysevent_token);
 
     if(argc == 2 && !strcmp(argv[1], "-nz")){
         /* Don't clear iptables count */
@@ -796,7 +813,7 @@ int main(int argc, char** argv){
     while((--i) >= 0){
         if(g_p_rule_tbl[i].time[0] == 0){
             /* If we can't find occur time use local time */
-            strftime(g_p_rule_tbl[i].time, TIME_SIZE, "%b %d", g_ptime); 
+            strftime(g_p_rule_tbl[i].time, TIME_SIZE, "%b %d %T %Y", g_ptime); 
         }
         write_rule(log, &g_p_rule_tbl[i]);
     }

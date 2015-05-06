@@ -1,5 +1,22 @@
 #!/bin/sh
 
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+
 #------------------------------------------------------------------
 # Copyright (c) 2008,2010 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -105,10 +122,35 @@ case "$1" in
         if [ x"up" = x${2} ]; then
             INST=${1#*_}
             INST=${INST%-*}
+			RG_MODE=`syscfg get last_erouter_mode`
             sysevent set current_lan_ipaddr `sysevent get ipv4_${INST}-ipv4addr`
+
+			if [ "$RG_MODE" = "2" -a x"ready" != x`sysevent get start-misc` ]; then
+				firewall
+				execute_dir /etc/utopia/post.d/
+            elif [ x"ready" != x`sysevent get start-misc` -a x != x`sysevent get current_wan_ipaddr` -a "0.0.0.0" != `sysevent get current_wan_ipaddr` ]; then
+
+                STARTED_FLG=`sysevent get parcon_nfq_status`
+
+                if [ x"$STARTED_FLG" != x"started" ]; then
+                    BRLAN0_MAC=`ifconfig l2sd0 | grep HWaddr | awk '{print $5}'`
+                    ((nfq_handler 4 $BRLAN0_MAC &)&)
+                    ((nfq_handler 6 $BRLAN0_MAC &)&)
+                    sysevent set parcon_nfq_status started
+                fi
+				gw_lan_refresh&
+                firewall
+				execute_dir /etc/utopia/post.d/
+            else
+                sysevent set firewall-restart
+            fi
+
             #sysevent set desired_moca_link_state up
             sysevent set lan-status started
+            
+            firewall_nfq_handler.sh &             
 
+            sysevent set lan_start_time `cat /proc/uptime | cut -d'.' -f1`
             LAN_IFNAME=`sysevent get ipv4_${INST}-ifname`
             #if it's ipv4 only, not enable link local 
             SYSCFG_last_erouter_mode=`syscfg get last_erouter_mode`
@@ -139,23 +181,9 @@ case "$1" in
             if [ "$LAN_IPV6_PREFIX" != "" ] ; then
                     ip -6 route add $LAN_IPV6_PREFIX dev $LAN_IFNAME
             fi
-            
-			#xhs 8081&
-			#sleep 1
-            #ulimit -s 200 && wecb_master&
-            #sleep 1
-            #echo '#!/bin/sh' > /var/wecb_master.sh
-            #echo 'ulimit -s 200 && wecb_master&' >> /var/wecb_master.sh 
-            #chmod +x /var/wecb_master.sh
-            #/etc/utopia/service.d/pmon.sh register wecb_master
-            #/etc/utopia/service.d/pmon.sh setproc wecb_master wecb_master /var/run/wecb_master.pid "/var/wecb_master.sh" 
         else
             if [ x"started" = x`sysevent get lan-status` ]; then
-                #unregister wecb_master from pmon to let this script to bring it up when lan restart.
-                #/etc/utopia/service.d/pmon.sh unregister wecb_master 
-                #rongwei added
-				#kill `pidof wecb_master`
-				#kill `pidof xhs`
+				#kill `pidof CcspHomeSecurity`
                 sysevent set lan-status stopped
                 #sysevent set desired_moca_link_state down
             fi

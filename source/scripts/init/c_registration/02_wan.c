@@ -29,14 +29,24 @@
 #include <stdio.h>
 #include "srvmgr/srvmgr.h"
 
+#define SERV_WAN_HANDLER    "/etc/utopia/service.d/service_wan.sh"
+
 const char* SERVICE_NAME            = "wan";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_wan.sh";
+const char* SERVICE_DEFAULT_HANDLER = SERV_WAN_HANDLER;
 
 /*
  * override wan-restart collapse the waiting activation queue if more than 1 event is pending 
  */
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-   "wan-restart|/etc/utopia/service.d/service_wan.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
+   "wan-restart|"SERV_WAN_HANDLER"|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
+   /* for USGv2: gw_prov_sm.c: when unplug, plug cable , 
+    * "wan-stop" / "wan-start" will be invoked.
+    * if we register phylink_wan_state, then handler will be trigger twice */
+   //"phylink_wan_state|"SERV_WAN_HANDLER"|NULL|"TUPLE_FLAG_EVENT,
+   "erouter_mode-updated|"SERV_WAN_HANDLER"|NULL|"TUPLE_FLAG_EVENT,
+   "dhcp_client-restart|"SERV_WAN_HANDLER"|NULL|"TUPLE_FLAG_EVENT,
+   "dhcp_client-release|"SERV_WAN_HANDLER"|NULL|"TUPLE_FLAG_EVENT,
+   "dhcp_client-renew|"SERV_WAN_HANDLER"|NULL|"TUPLE_FLAG_EVENT,
    NULL 
 };
 
