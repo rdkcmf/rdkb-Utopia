@@ -32,7 +32,6 @@ modules += firewall
 ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
 modules += walled_garden
 endif
-modules += wmon
 modules += newhost
 modules += dhcpproxy
 modules += firewall_log
