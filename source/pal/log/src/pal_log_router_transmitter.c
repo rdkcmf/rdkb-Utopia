@@ -503,57 +503,55 @@ LOCAL VOID _log_router_transmitter_packet_handle(IN CHAR *buf, IN INT32 buf_len,
 #include <stdlib.h>
 #include <unistd.h>
     
-#define READ_BUF_SIZE 50    
+#define BUFF_SIZE 50    
 LOCAL INT32 _find_process_by_name(CHAR* process_name)
 {
-    DIR *dir;
+    DIR *procEnt;
     struct dirent *next;
-    long* pidList=NULL;
+    char *ret;
+    
     int i=0;
 
-    dir = opendir("/proc");
-    if (!dir)
+    procEnt = opendir("/proc");
+    
+    if (!procEnt)
     {
-        fprintf(stderr, "Cannot open /proc\n");
+        fprintf(stderr, "FAILURE openning /proc\n");
         return -1;
     }
     
-    while ((next = readdir(dir)) != NULL)
+    while ((next = readdir(procEnt)) != NULL)
     {
         FILE *status;
-        char filename[READ_BUF_SIZE];
-        char buffer[READ_BUF_SIZE];
-        char name[READ_BUF_SIZE];
 
-        /* Must skip ".." since that is outside /proc */
-        if (strcmp(next->d_name, "..") == 0)
+        char buffer[BUFF_SIZE];
+        char name[BUFF_SIZE];
+
+        //Validate pid entry
+        if (strcmp(next->d_name, "..") == 0 ||
+            !isdigit(*next->d_name)
+            
+        )
             continue;
 
-        /* If it isn't a number, we don't want it */
-        if (!isdigit(*next->d_name))
-            continue;
-
-        sprintf(filename, "/proc/%s/status", next->d_name);
-        if (! (status = fopen(filename, "r")) ) 
+        //Read status entry
+        sprintf(buffer, "/proc/%s/status", next->d_name);
+        if (! (status = fopen(buffer, "r")) ) 
         {
             continue;
         }
-        /* Read first line in /proc/?pid?/status */
-        if (fgets(buffer, READ_BUF_SIZE-1, status) == NULL) 
-        {
-            fclose(status);
-            continue;
-        }
+        
+        ret = fgets(buffer, BUFF_SIZE-1, status);
         fclose(status);
-
-        /* Buffer should contain a string like "Name:   binary_name" */
-        sscanf(buffer, "%*s %s", name);
-        //fprintf(stderr,"\nthe process name is:%s\n",name);
-        if ( (strncmp(name, process_name, 15) == 0)
-              &&(strtol(next->d_name, NULL, 0) != getpid()) )
+        if (!ret) 
         {
-            //fprintf(stderr,"\nthe process pid is:%d\n",strtol(next->d_name, NULL, 0));
-            return 1;
+            continue;
+        }
+
+        sscanf(buffer, "%*s %s", name);
+        if (strncmp(name, process_name, 15) == 0)
+        {
+            return strtol(next->d_name, NULL, 0) == getpid() ? 0 : 1;
         }
     }
     return 0;
