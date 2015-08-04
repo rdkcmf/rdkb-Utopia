@@ -63,22 +63,20 @@
 char command[32];
 
 /*
- * Convert Ethernet address string representation to binary data
- * @param       a       string in xx:xx:xx:xx:xx:xx notation
- * @param       e       binary data
- * @return      TRUE if conversion was successful and FALSE otherwise
+ * Ethernet address string to binary conversion
+ * strEth       string in xx:xx:xx:xx:xx:xx notation
+ * binEth       binary data
+ * return      TRUE if conversion was successful and FALSE otherwise
  */
 int
-ether_atoe(const char *a, unsigned char *e)
+ether_atoe(const char *strEth, unsigned char *binEth)
 {
-    char *c = (char *) a;
-    int i = 0;
+    char *c = (char *) strEth;
+    int i;
 
-    memset(e, 0, ETHER_ADDR_LEN);
-    for (;;) {
-        e[i++] = (unsigned char) strtoul(c, &c, 16);
-        if (!*c++ || i == ETHER_ADDR_LEN)
-            break;
+    memset(binEth, 0, ETHER_ADDR_LEN);
+    for (i = 0; (*c) && i < ETHER_ADDR_LEN; ++i,++c) {
+        binEth[i] = (unsigned char) strtoul(c, &c, 16);
     }
     return (i == ETHER_ADDR_LEN);
 }
