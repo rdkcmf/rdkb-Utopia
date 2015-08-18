@@ -82,10 +82,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "igd_utility.h"
 #include "pal_log.h"
 
 #include "igd_platform_independent_inf.h"
-#include "igd_utility.h"
+
 #include "igd_service_wan_connect.h"
 #include "igd_action_port_mapping.h"
 

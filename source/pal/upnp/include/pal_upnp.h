@@ -59,6 +59,7 @@
 #ifndef __PAL_UPNP_H__
 #define __PAL_UPNP_H__
 
+#include <upnp/upnp.h>
 #include "pal_def.h"
 #include "pal_xml.h"
 #include <arpa/inet.h>
@@ -140,127 +141,9 @@ typedef CHAR pal_upnp_sid[PAL_UPNP_SID_SIZE];
 
 
 
-typedef enum _pal_upnp_etype {
-  /*
-   * Control callbacks
-   */
-
-  /** Received by a device when a control point issues a control
-   *  request.  The {\bf Event} parameter contains a pointer to a {\bf
-   *  pal_upnp_action_request} structure containing the action.  The application
-   *  stores the results of the action in this structure. */
-
-  PAL_UPNP_CONTROL_ACTION_REQUEST,
-
-  /** A {\bf PAL_upnp_send_action} call completed. The {\bf Event}
-   *  parameter contains a pointer to a {\bf pal_upnp_action_complete} structure
-   *  with the results of the action.  */
-
-  PAL_UPNP_CONTROL_ACTION_COMPLETE,
-
-  /** Received by a device when a query for a single service variable
-   *  arrives.  The {\bf Event} parameter contains a pointer to a {\bf
-   *  pal_upnp_state_var_request} structure containing the name of the variable
-   *  and value.  */
-
-  PAL_UPNP_CONTROL_GET_VAR_REQUEST,
-
-  /** A {\bf pal_upnp_get_state_var} call completed. The {\bf Event}
-   *  parameter contains a pointer to a {\bf pal_upnp_state_var_Complete} structure
-   *  containing the value for the variable.  */
-
-  PAL_UPNP_CONTROL_GET_VAR_COMPLETE,
-
-  /*
-   * Discovery callbacks
-   */
-
-  /** Received by a control point when a new device or service is available.  
-   *  The {\bf Event} parameter contains a pointer to a {\bf
-   *  pal_upnp_discovery} structure with the information about the device
-   *  or service.  */
-
-  PAL_UPNP_DISCOVERY_ADVERTISEMENT_ALIVE,
-
-  /** Received by a control point when a device or service shuts down. The {\bf
-   *  event} parameter contains a pointer to a {\bf pal_upnp_discovery}
-   *  structure containing the information about the device or
-   *  service.  */
-
-  PAL_UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE,
-
-  /** Received by a control point when a matching device or service responds.
-   *  The {\bf Event} parameter contains a pointer to a {\bf
-   *  pal_upnp_discovery} structure containing the information about
-   *  the reply to the search request.  */
-
-  PAL_UPNP_DISCOVERY_SEARCH_RESULT,
-
-  /** Received by a control point when the search timeout expires.  The
-   *  SDK generates no more callbacks for this search after this 
-   *  event.  The {\bf Event} parameter is {\tt NULL}.  */
-
-  PAL_UPNP_DISCOVERY_SEARCH_TIMEOUT,
-
-  /*
-   * Eventing callbacks
-   */
-
-  /** Received by a device when a subscription arrives.
-   *  The {\bf Event} parameter contains a pointer to a {\bf
-   *  pal_upnp_subscription_request} structure.  At this point, the
-   *  subscription has already been accepted.  {\bf pal_upnp_discovery}
-   *  needs to be called to confirm the subscription and transmit the
-   *  initial state table.  This can be done during this callback.  The SDK
-   *  generates no events for a subscription unless the device 
-   *  application calls {\bf PAL_upnp_accept_subscription}.
-   */
-
-  PAL_UPNP_EVENT_SUBSCRIPTION_REQUEST,
-
-  /** Received by a control point when an event arrives.  The {\bf
-   *  Event} parameter contains a {\bf pal_upnp_event} structure
-   *  with the information about the event.  */
-
-  PAL_UPNP_EVENT_RECEIVED,
-
-  /** A {\bf UpnpRenewSubscriptionAsync} call completed. The status of
-   *  the renewal is in the {\bf Event} parameter as a {\bf
-   *  Upnp_Event_Subscription} structure.  */
-
-  PAL_UPNP_EVENT_RENEWAL_COMPLETE,
-
-  /** A {\bf UpnpSubscribeAsync} call completed. The status of the
-   * subscription is in the {\bf Event} parameter as a {\bf
-   * Upnp_Event_Subscription} structure.  */
-
-  PAL_UPNP_EVENT_SUBSCRIBE_COMPLETE,
-
-  /** A {\bf UpnpUnSubscribeAsync} call completed. The status of the
-   *  subscription is in the {\bf Event} parameter as a {\bf
-   *  Upnp_Event_Subscribe} structure.  */
-
-  PAL_UPNP_EVENT_UNSUBSCRIBE_COMPLETE,
-
-  /** The auto-renewal of a client subscription failed.   
-   *  The {\bf Event} parameter is a {\bf Upnp_Event_Subscribe} structure 
-   *  with the error code set appropriately. The subscription is no longer 
-   *  valid. */
-
-  PAL_UPNP_EVENT_AUTORENEWAL_FAILED,
-
-  /** A client subscription has expired. This will only occur 
-   *  if auto-renewal of subscriptions is disabled.
-   *  The {\bf Event} parameter is a {\bf Upnp_Event_Subscribe}
-   *  structure. The subscription is no longer valid. */
-  
-  PAL_UPNP_EVENT_SUBSCRIPTION_EXPIRED
-}pal_upnp_etype;
-
-
 /*for event callback function*/
 typedef INT32 (*pal_upnp_func)(
-    IN pal_upnp_etype event_type, 
+    IN Upnp_EventType event_type, 
     IN VOID *event, 
     IN VOID *cookie);
 

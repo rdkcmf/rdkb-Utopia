@@ -69,8 +69,9 @@
 #define WAN_CONNECTION_DEVICE_INTERNAL_H
 
 #include <string.h>
-#include "pal_def.h"
+
 #include "pal_upnp_device.h"
+#include "pal_def.h"
 
 #define INVALID_DEVICE_UUID 			720
 #define INVALID_SERVICE_ID 				721

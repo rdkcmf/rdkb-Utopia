@@ -70,10 +70,11 @@
 
 #include <stdlib.h>
 
+#include "igd_utility.h"
 #include "pal_log.h"
 
 #include "igd_platform_independent_inf.h"
-#include "igd_utility.h"
+
 #include "igd_service_wan_connect.h"
 
 #ifndef LOG_ENTER_FUNCTION

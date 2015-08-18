@@ -431,8 +431,13 @@ INT32 PAL_upnp_make_action( INOUT pal_xml_top** action,
     
     for (i = 0; i < nb_params; i++){
         
-         ret = _upnp_addto_action(action_type,(IXML_Document **)action,action_name, service_type, 
+         if (action_type) {
+            ret = UpnpAddToActionResponse((IXML_Document **)action,action_name, service_type, 
             params[i].name, params[i].value);
+         } else {
+             ret = UpnpAddToAction((IXML_Document **)action,action_name, service_type, 
+            params[i].name, params[i].value);
+         }
 
         if (ret != PAL_UPNP_E_SUCCESS){
 
@@ -712,85 +717,6 @@ INT32 PAL_upnp_accept_subscription(IN pal_upnp_device_handle handle,
     return "Unknown Error";
  }
 
-
-/************************************************************************
-* Function : _upnp_addto_action
-*
-* Parameters:
-*	IN int response: flag to tell if the ActionDoc is for response
-*		or request
-*	INOUT IXML_Document **ActionDoc: request or response document
-*	IN char *ActionName: Name of the action request or response
-*	IN char *ServType: Service type
-*	IN char * ArgName: Name of the argument
-*	IN char * ArgValue: Value of the argument
-*
-* Description:
-*	This function adds the argument in the action request or response.
-* This function creates the action request or response if it is a first
-* argument else it will add the argument in the document.
-*   This is an internal interface.
-*
-* Returns: int
-*	returns PAL_UPNP_E_SUCCESS if successful else returns appropriate error
-***************************************************************************/
-LOCAL int _upnp_addto_action( IN int response,
-                                  INOUT IXML_Document ** ActionDoc,
-                                  IN const char *ActionName,
-                                  IN const char *ServType,
-                                  IN const char *ArgName,
-                                  IN const char *ArgValue)
-{
-    char *ActBuff = NULL;
-    IXML_Node *node = NULL;
-    IXML_Element *Ele = NULL;
-    IXML_Node *Txt = NULL;
-    int rc = 0;
-
-    if( ActionName == NULL || ServType == NULL ) {
-        return UPNP_E_INVALID_PARAM;
-    }
-
-    if( *ActionDoc == NULL ) {
-        ActBuff = ( char * )malloc( 2000 );
-        if( ActBuff == NULL ) {
-            return UPNP_E_OUTOF_MEMORY;
-        }
-
-        if( response ) {
-            snprintf( ActBuff,2000,
-                "<u:%sResponse xmlns:u=\"%s\">\r\n</u:%sResponse>",
-                ActionName, ServType, ActionName );
-        } else {
-            snprintf( ActBuff,2000,
-                "<u:%s xmlns:u=\"%s\">\r\n</u:%s>",
-                ActionName, ServType, ActionName );
-        }
-
-        rc = ixmlParseBufferEx( ActBuff, ActionDoc );
-        free( ActBuff );
-        if( rc != IXML_SUCCESS ) {
-            if( rc == IXML_INSUFFICIENT_MEMORY ) {
-                return UPNP_E_OUTOF_MEMORY;
-            } else {
-                return UPNP_E_INVALID_DESC;
-            }
-        }
-    }
-
-    if( ArgName != NULL /*&& ArgValue != NULL */  ) {
-        node = ixmlNode_getFirstChild( ( IXML_Node * ) * ActionDoc );
-        Ele = ixmlDocument_createElement( *ActionDoc, ArgName );
-        if( ArgValue ) {
-            Txt = ixmlDocument_createTextNode( *ActionDoc, ArgValue );
-            ixmlNode_appendChild( ( IXML_Node * ) Ele, Txt );
-        }
-
-        ixmlNode_appendChild( node, ( IXML_Node * ) Ele );
-    }
-
-    return PAL_UPNP_E_SUCCESS;
-}
     
 //end of pal_upnp.c
 
