@@ -76,6 +76,7 @@ AC_CONFIG_FILES(
 	source/services/Makefile
 	source/service_wan/Makefile
 	source/util/Makefile
+	source/trigger/Makefile
 	source/Makefile
 	Makefile
 )

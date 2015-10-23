@@ -55,8 +55,8 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-#include "sysevent.h"
-#include "syscfg.h"
+#include "sysevent/sysevent.h"
+#include "syscfg/syscfg.h"
 #include "util.h"
 
 #define PROG_NAME       "SERVICE-WAN"

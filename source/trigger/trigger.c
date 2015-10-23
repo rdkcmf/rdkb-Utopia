@@ -59,7 +59,7 @@
 #include <linux/ip.h>  /* for iphdr */
 #include <linux/netfilter.h>            /* for NF_ACCEPT */
 #include <libnetfilter_queue/libnetfilter_queue.h>
-#include "ulog/ulog.h"
+#include "ulog.h"
 #include "syscfg/syscfg.h"
 #include "sysevent/sysevent.h"
 

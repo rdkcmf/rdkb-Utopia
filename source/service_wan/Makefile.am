@@ -17,7 +17,15 @@
 # limitations under the License.
 ##########################################################################
 bin_PROGRAMS = service_wan
+
 AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util
+
 AM_LDFLAGS =  -lpthread -lz
+
 service_wan_SOURCES = service_wan.c
-service_wan_LDADD = $(top_builddir)/source/util/libutopiautil.la
+
+service_wan_LDADD = $(top_builddir)/source/util/libutopiautil.la \
+                    $(top_builddir)/source/services/lib/libsrvmgr.la \
+                    $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                    $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                    $(top_builddir)/source/ulog/libulog.la
