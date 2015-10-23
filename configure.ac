@@ -48,6 +48,8 @@ AC_C_INLINE
 # Checks for library functions.
 AC_FUNC_MALLOC
 
+PKG_CHECK_MODULES([DBUS],[dbus-1 >= 1.6.18])
+
 AC_CONFIG_FILES(
 	source/igd/src/Makefile
 	source/igd/Makefile
@@ -60,14 +62,20 @@ AC_CONFIG_FILES(
 	source/syscfg/lib/Makefile
 	source/syscfg/Makefile
 	source/ulog/Makefile
+	source/newhost/Makefile
+	source/macclone/Makefile
 	source/dhcpproxy/Makefile
 	source/utapi/cmd/Makefile
 	source/utapi/lib/Makefile
 	source/utapi/Makefile
+	source/pmon/Makefile
+	source/pal/Makefile
 	source/sysevent/lib/Makefile
 	source/sysevent/Makefile
 	source/services/lib/Makefile
 	source/services/Makefile
+	source/service_wan/Makefile
+	source/util/Makefile
 	source/Makefile
 	Makefile
 )

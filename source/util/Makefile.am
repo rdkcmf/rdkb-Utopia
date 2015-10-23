@@ -16,15 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = firewall
-bin_PROGRAMS += nfq_handler
-AM_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include $(CPPFLAGS) $(DBUS_CFLAGS)
-AM_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz -lnetfilter_queue -lnfnetlink -lccsp_common $(DBUS_LIBS)
-firewall_SOURCES = firewall.c firewall_priv.c
-nfq_handler_SOURCES = raw_socket_send.c nfq_handler.c
-firewall_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                 $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                 $(top_builddir)/source/ulog/libulog.la
-nfq_handler_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                    $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                    $(top_builddir)/source/ulog/libulog.la
+lib_LTLIBRARIES = libutopiautil.la
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util
+AM_LDFLAGS =  -lpthread -lz
+libutopiautil_la_SOURCES = util.c
