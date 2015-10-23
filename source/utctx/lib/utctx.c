@@ -753,7 +753,7 @@ static struct
     { Utopia_Type_Config, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "lan_clients_count", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_USGv2_Lan_Clients_Count */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "lan_clients_%d", UtopiaValue__UNKNOWN__ },  /* UtopiaValue_USGv2_Lan_Clients */
     { Utopia_Type_NamedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Name_For_Key, 1, "lan_clients_mac_%s", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_USGv2_Lan_Clients_Mac */
-
+    { Utopia_Type_Event, Utopia_Event__NONE__,           Utopia_Static__NONE__, Utopia_For__NONE__, 0, "pnm-status",    		UtopiaValue__UNKNOWN__ }, /* UtopiaValue_IPv6_Prefix */
     { Utopia_Type__UNKNOWN__, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_For__NONE__, 0, 0, UtopiaValue__UNKNOWN__ }, /* UtopiaValue__LAST__ */
 };
 

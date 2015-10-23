@@ -58,7 +58,7 @@ fi
 
 #when no cable plug in, timeout happened, we still need register the sysevent
 if [ "$UPTIME" -gt 600 ]; then
-    execute_dir /etc/utopia/post.d/
+    execute_dir /etc/utopia/post.d/ restart
 fi
 
 if [ "$LAN_ST" != "started" ]; then

@@ -411,7 +411,7 @@ then
         remove_log $V_FW_LOG_FILE_PATH/*
     fi
 
-    rm -rf /nvram2/log
+    #rm -rf /nvram2/log
     rm -rf /nvram/log
 
     #delete syslog config file

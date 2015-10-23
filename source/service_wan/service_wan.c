@@ -181,8 +181,9 @@ static int dhcp_start(const char *ifname)
 static int route_config(const char *ifname)
 {
     if (vsystem("ip rule add iif %s lookup all_lans && "
-                "ip rule add oif %s lookup erouter",
-                ifname, ifname) != 0)
+                "ip rule add oif %s lookup erouter && "
+                "ip -6 rule add oif %s lookup erouter ",
+                ifname, ifname, ifname) != 0)
         return -1;
 
     return 0;
@@ -191,8 +192,9 @@ static int route_config(const char *ifname)
 static int route_deconfig(const char *ifname)
 {
     if (vsystem("ip rule del iif %s lookup all_lans && "
-                "ip rule del oif %s lookup erouter",
-                ifname, ifname) != 0)
+                "ip rule del oif %s lookup erouter && "
+                " ip -6 rule del oif %s lookup erouter ",
+                ifname, ifname, ifname) != 0)
         return -1;
 
     return 0;
@@ -238,6 +240,9 @@ static int wan_start(struct serv_wan *sw)
 
 done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
+    printf("Network Response script called to capture network response\n ");
+    /*Network Response captured ans stored in /var/tmp/network_response.txt*/
+    system("sh /etc/network_response.sh &");
     return 0;
 }
 
@@ -323,6 +328,8 @@ static int wan_iface_up(struct serv_wan *sw)
 
         sysctl_iface_set("/proc/sys/net/ipv6/conf/all/forwarding", NULL, "1");
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/forwarding", sw->ifname, "1");
+        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/forwarding", "wan0", "0");
+        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/forwarding", "mta0", "0");
         break;
     default:
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", sw->ifname, "0");

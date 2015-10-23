@@ -40,8 +40,12 @@ echo "* Copyright (c) 2010 by Cisco Systems, Inc. All Rights Reserved.   "
 echo "*                                                                  "
 echo "*******************************************************************"
 
+source /etc/utopia/service.d/log_capture_path.sh
+
 dmesg -n 5
 
+TR69TLVFILE="/nvram/TLVData.bin"
+REVERTFLAG="/nvram/reverted"
 # determine the distro type (GAP or GNP)
 if [ -n "$(grep TPG /etc/drg_version.txt)" ]; then
     distro=GAP
@@ -68,6 +72,10 @@ echo "1800" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
 echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
 
 echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
+
+echo 4096 > /proc/sys/net/ipv6/neigh/default/gc_thresh1
+echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
+echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 
 #echo "[utopia][init] Loading drivers"
 #MODULE_PATH=/fss/gw/lib/modules/`uname -r`/
@@ -103,6 +111,8 @@ echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 #    insmod /lib/modules/`uname -r`/kernel/drivers/wifi/wl.ko
 #    cp /etc/utopia/service.d/nvram.dat /tmp
 #fi
+echo "Starting log module.."
+/fss/gw/usr/sbin/log_start.sh
 
 echo "[utopia][init] Starting udev.."
 
@@ -153,7 +163,7 @@ echo "[utopia][init] Starting udev.."
 
 mkdir -p /tmp/cron
 
-BUTTON_THRESHOLD=5
+BUTTON_THRESHOLD=15
 FACTORY_RESET_KEY=factory_reset
 FACTORY_RESET_RGWIFI=y
 FACTORY_RESET_WIFI=w
@@ -187,15 +197,20 @@ if [ -f $SYSCFG_FILE ]; then
 else
    echo -n > $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
+   #>>zqiu
+   echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
+   syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
+   #<<zqiu
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
-#if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
+if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
    # Note: Only new P-UNIT firmwares and Linux drivers (>= 1.1.x) support this.
-#   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Reset duration from shadow register"|awk -F ' |\.' '{ print $9 }'`
+   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Reset duration from shadow register"|awk -F ' |\.' '{ print $9 }'`
    # Clear the Reset duration from shadow register value
-#   echo "1" > /proc/P-UNIT/clr_reset_duration_shadow
-if cat /proc/P-UNIT/status | grep -q "Last reset duration"; then
+   # echo "1" > /proc/P-UNIT/clr_reset_duration_shadow
+   clean_reset_duration;
+elif cat /proc/P-UNIT/status | grep -q "Last reset duration"; then
    PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk -F ' |\.' '{ print $7 }'`
 else
    echo "[utopia][init] Cannot read the reset duration value from /proc/P-UNIT/status"
@@ -228,14 +243,44 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
+   rm -f $TR69TLVFILE
+   rm -f $REVERTFLAG
    # Remove DHCP lease file
    rm -f /nvram/dnsmasq.leases
+   rm -f /nvram/server-IfaceMgr.xml
+   rm -f /nvram/server-AddrMgr.xml
+   rm -f /nvram/server-CfgMgr.xml
+   rm -f /nvram/server-TransMgr.xml
+   rm -f /nvram/server-cache.xml
+   rm -f /nvram/server-duid
 
+   #>>zqiu
+   create_wifi_default
+   #<<zqiu
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
    syscfg_create -f $SYSCFG_FILE
+#>>zqiu
+elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
+    echo "[utopia][init] Performing wifi reset"
+    create_wifi_default
+    syscfg unset $FACTORY_RESET_KEY
+#<<zqiu
 fi
 #echo "[utopia][init] Cleaning up vendor nvram"
 # /etc/utopia/service.d/nvram_cleanup.sh
+
+echo "*** HTTPS root certificate for TR69 ***"
+
+if [ ! -f /etc/cacert.pem ]; then
+	echo "HTTPS root certificate for TR69 is missing..."
+
+else
+	echo "Copying HTTPS root certificate for TR69"
+	if [ -f /nvram/cacert.pem ]; then
+		rm -f /nvram/cacert.pem
+	fi
+	cp -f /etc/cacert.pem /nvram/
+fi
 
 echo "[utopia][init] Starting system logging"
 /etc/utopia/service.d/service_syslog.sh syslog-start
@@ -262,8 +307,26 @@ echo "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
 
 echo "[utopia][init] Applying iptables settings"
-iptables -A INPUT -i brlan0 -p tcp --dport 23 -j DROP
-iptables -A INPUT -i brlan0 -p tcp --dport 22 -j DROP
+
+lan_ifname=`syscfg get lan_ifname`
+cmdiag_ifname=`syscfg get cmdiag_ifname`
+ecm_wan_ifname=`syscfg get ecm_wan_ifname`
+wan_ifname=`sysevent get wan_ifname`
+
+#disable telnet / ssh ports
+iptables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
+iptables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
+iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
+iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+
+ip6tables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
+ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+
+#protect from IPv6 NS flooding
+ip6tables -t mangle -A PREROUTING -i $ecm_wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
+ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 
 /fss/gw/sbin/ulogd -c /fss/gw/etc/ulogd.conf -d
 
@@ -282,7 +345,8 @@ echo "[utopia][init] Processing registration"
 INIT_DIR=/etc/utopia/registration.d
 # run all executables in the sysevent registration directory
 # echo "[utopia][init] Running registration using $INIT_DIR"
-execute_dir $INIT_DIR
+execute_dir $INIT_DIR&
+#init_inter_subsystem&
 
 #--------Set up private IPC vlan----------------
 SWITCH_HANDLER=/etc/utopia/service.d/service_multinet/handle_sw.sh

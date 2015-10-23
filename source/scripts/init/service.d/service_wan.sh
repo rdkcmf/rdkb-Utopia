@@ -78,9 +78,12 @@
 # may be dhcp, static, pppoe, l2tp, pptp or in the future other protocols
 #--------------------------------------------------------------
 
+source /etc/utopia/service.d/log_capture_path.sh
+
 echo "---------------------------------------------------------"
 echo "-------------------- service_wan.sh ---------------------"
 echo "---------------------------------------------------------"
+echo "RDKB_SYSTEM_BOOT_UP_LOG : service_wan.sh script called to bring up WAN INTERFACE"
 echo ">>>>> $1"
 set -x
 

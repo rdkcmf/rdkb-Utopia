@@ -145,8 +145,9 @@
 CHAR* IGD_pii_get_serial_number(VOID)
 {
     static char prodSn[128] = {'\0'};
-    ProductionDb_RetrieveAccess();
-    ProdDb_GetSerialNumber(prodSn);
+    /* TODO: to be implemented by OEM
+	ProductionDb_RetrieveAccess();
+    ProdDb_GetSerialNumber(prodSn);*/
     return prodSn;
 	//return "123456789001";
 }
@@ -869,7 +870,7 @@ INT32 IGD_pii_add_portmapping_entry( IN INT32 WanDeviceIndex,
                  * if for different internal client, return error
                  */
                 PAL_LOG("igd_platform", "debug", "%s: entry exists for different internal client (error)", __FUNCTION__);
-                rc = ERROR_CONFLICT_FOR_MAPPING_ENTRY;
+                rc = 1;
             }
         } else {
             /*

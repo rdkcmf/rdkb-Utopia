@@ -73,6 +73,8 @@
 
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/hostname_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
+
 PID="($$)"
 RESOLV_CONF="/etc/resolv.conf"
 

@@ -46,11 +46,28 @@
 
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
-DHCP_OPTIONS_FILE=/etc/dhcp_options
+DHCP_OPTIONS_FILE=/var/dhcp_options
 LOCAL_DHCP_CONF=/tmp/dnsmasq.conf$$
 LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts$$
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options$$
 RESOLV_CONF=/etc/resolv.conf
+
+# Variables needed for captive portal mode : start
+DEFAULT_RESOLV_CONF="/var/default/resolv.conf"
+DEFAULT_CONF_DIR="/var/default"
+XCONF_FILE=/etc/Xconf
+STATIC_URLS_FILE="/etc/static_urls"
+XCONF_DOWNLOAD_URL="/tmp/xconfdownloadurl"
+XCONF_DEFAULT_URL="https://xconf.xcal.tv/xconf/swu/stb/"
+XFINITY_DEFAULT_URL="http://xfinity.com"
+SPEEDTEST_DEFAULT_URL="http://speedtest.comcast.net"
+XFINITY_RED_DEFAULT_URL="http://my.xfinity.com"
+COMCAST_DEFAULT_URL="www.comcast.com"
+COMCAST_ACTIVATE_URL="https://activate.comcast.com"
+COMCAST_ACTIVATE_URL_2="https://caap-pdca.sys.comcast.net"
+COMCAST_HTTP_URL="http://comcast.com"
+
+# Variables needed for captive portal mode : end
 
 DHCP_SLOW_START_1_FILE=/etc/cron/cron.everyminute/dhcp_slow_start.sh
 DHCP_SLOW_START_2_FILE=/etc/cron/cron.every5minute/dhcp_slow_start.sh
@@ -355,6 +372,73 @@ prepare_dhcp_options() {
 
 }
 
+# A generic function which can be used for any URL parsing
+removehttp()
+{
+	urlToCheck=$1
+	haveHttp=`echo $urlToCheck | grep //`
+	if [ "$haveHttp" != "" ]
+	then
+		url=`echo $urlToCheck | cut -f2 -d":" | cut -f3 -d"/"`
+		echo $url
+	else
+		echo $urlToCheck
+	fi
+		
+}
+
+# This function will whitelist URLs that are needed during cpative portal mode
+prepare_whitelist_urls()
+{
+    #ACS_URL=""
+	Cloud_URL=""
+	isIPv4=""
+	isIPv6=""
+	nServer4=""
+	nServer6=""
+    #EMS_URL=""
+	
+
+	# Cloud URL can be get from DML
+	Cloud_URL=`syscfg get redirection_url`
+	if [ "$Cloud_URL" != "" ]
+	then
+		Cloud_URL=`removehttp $Cloud_URL`
+	fi
+	
+	#Check in what mode erouter0 is in : ipv4/ipv6
+	isIPv4=`ifconfig erouter0 | grep inet | grep -v inet6`
+	if [ "$isIPv4" = "" ]
+	then
+		isIPv6=`ifconfig erouter0 | grep inet6`
+		if [ "$isIPv6" != "" ]
+		then
+			nServer6=`cat $RESOLV_CONF | grep nameserver | grep ":" | head -1 | cut -d" " -f2`
+		fi
+	else	
+			nServer4=`cat $RESOLV_CONF | grep nameserver | grep "\." | head -1 | cut -d" " -f2`
+	fi
+	
+	#TODO: ipv6 DNS whitelisting in case of ipv6 only clients
+	
+	# Whitelist all server IPs with IPv4 DNS servers.
+	if [ "$nServer4" != "" ]
+	then
+
+		if [ "$Cloud_URL" != "" ]; then
+			echo "server=/$Cloud_URL/$nServer4" >> $1
+		fi
+        if [ -f $STATIC_URLS_FILE ]; then
+         STATIC_URL_LIST=`cat $STATIC_URLS_FILE`
+         for whitelisting_url in $STATIC_URL_LIST
+         do
+            echo "server=/$whitelisting_url/$nServer4" >> $1
+         done
+      fi
+
+	
+	fi
+}
 
 #-----------------------------------------------------------------
 # set the dhcp config file which is also the dns forwarders file
@@ -366,7 +450,7 @@ prepare_dhcp_options() {
 prepare_dhcp_conf () {
    LAN_IFNAME=`syscfg get lan_ifname`
 
-   echo -n > $DHCP_STATIC_HOSTS_FILE
+  echo -n > $DHCP_STATIC_HOSTS_FILE
 
    if [ "$3" = "dns_only" ] ; then
       PREFIX=#
@@ -376,9 +460,68 @@ prepare_dhcp_conf () {
    calculate_dhcp_range $1 $2
 
    echo -n > $LOCAL_DHCP_CONF
+
+
+   CAPTIVE_PORTAL_MODE="false"
+
+   #Read the http response value
+   NETWORKRESPONSESTATUS=`cat /var/tmp/networkresponse.txt`
+
+    
+   # If redirection flag is "true" that means we are in factory default condition
+   REDIRECTION_ON=`syscfg get redirection_flag`
+   WIFI_NOT_CONFIGURED=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
+
+echo "DHCP SERVER : redirection_flag val is $REDIRECTION_ON"
+iter=0
+max_iter=2
+while [ "$WIFI_NOT_CONFIGURED" = "" ] && [ "$iter" -le $max_iter ]
+do
+	iter=$((iter+1))
+	echo "DHCP SERVER : Inside while $iter iteration"
+	WIFI_NOT_CONFIGURED=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
+done
+
+echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
+
+   if [ "$NETWORKRESPONSESTATUS" = "204" ] && [ "$REDIRECTION_ON" = "true" ] && [ "$WIFI_NOT_CONFIGURED" = "true" ]
+   then
+      	CAPTIVE_PORTAL_MODE="true"
+		echo "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE"
+		if [ -e "/nvram/reverted" ]
+		then
+			echo "DHCP SERVER : Removing reverted flag"
+			rm -f /nvram/reverted
+		fi
+   else
+        CAPTIVE_PORTAL_MODE="false"
+		echo "DHCP SERVER : WiFi SSID and Passphrase are already modified or no network response ,set CAPTIVE_PORTAL_MODE to false"
+   fi
+
+  
    echo "domain-needed" >> $LOCAL_DHCP_CONF
    echo "bogus-priv" >> $LOCAL_DHCP_CONF
-   echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
+
+   if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
+   then
+	# Create a temporary resolv configuration file
+	# Pass that as an option in DNSMASQ
+	if [ ! -d $DEFAULT_CONF_DIR ]
+	then
+		mkdir $DEFAULT_CONF_DIR
+	fi
+	touch $DEFAULT_RESOLV_CONF
+	echo "nameserver 127.0.0.1" > $DEFAULT_RESOLV_CONF
+	echo "resolv-file=$DEFAULT_RESOLV_CONF" >> $LOCAL_DHCP_CONF
+	#echo "address=/#/$addr" >> $DHCP_CONF
+   else
+	if [ -e $DEFAULT_RESOLV_CONF ]
+	then
+		rm -f $DEFAULT_RESOLV_CONF
+	fi
+	echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
+   fi
+
    echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
    echo "expand-hosts" >> $LOCAL_DHCP_CONF
 
@@ -406,9 +549,10 @@ prepare_dhcp_conf () {
    echo "$PREFIX""dhcp-script=$DHCP_ACTION_SCRIPT" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-lease-max=$DHCP_NUM" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-hostsfile=$DHCP_STATIC_HOSTS_FILE" >> $LOCAL_DHCP_CONF
-   echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
-   if [ "$LOG_LEVEL" -gt 1 ] ; then
-      echo "$PREFIX""log-dhcp" >> $LOCAL_DHCP_CONF
+
+   if [ "$CAPTIVE_PORTAL_MODE" = "false" ]
+   then
+		echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
    fi
 
    # Add in A records provisioned via sysevent pool
@@ -459,7 +603,15 @@ prepare_dhcp_conf () {
    fi
    
    do_extra_pools
-   
+   if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
+   then
+        # In factory default condition, prepare whitelisting and redirection IP
+	addr=`syscfg get lan_ipaddr`
+	echo "address=/#/$addr" >> $LOCAL_DHCP_CONF
+	echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
+        prepare_whitelist_urls $LOCAL_DHCP_CONF
+	sysevent set captiveportaldhcp completed
+   fi
    cat $LOCAL_DHCP_CONF > $DHCP_CONF
    rm -f $LOCAL_DHCP_CONF
 }

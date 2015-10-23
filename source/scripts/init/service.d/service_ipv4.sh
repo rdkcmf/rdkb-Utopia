@@ -65,6 +65,7 @@
 SERVICE_NAME="ipv4"
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/ut_plat.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 
 
@@ -259,8 +260,8 @@ apply_config () {
         LAN_IFNAME=$IFNAME
 
         if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ]; then
-            ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/$SYSEVT_lan_prefix_v6 dev $LAN_IFNAME valid_lft forever preferred_lft forever
-            ip -6 addr add $SYSEVT_lan_ipaddr_v6/$SYSEVT_lan_prefix_v6 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+            ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+            ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
         fi
     fi
 
@@ -389,6 +390,7 @@ resync_all_instances () {
 #args: l3 instance
 resync_instance () {
 
+    echo "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance."
     eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
     
     if [ x = x$NV_ENABLED -o x$DM_FALSE = x$NV_ENABLED ]; then
@@ -406,7 +408,7 @@ resync_instance () {
     CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_${1}-ipv4subnet`
     
     #DEBUG
-    echo "Syncing l3 instance ($1), NV_ETHLOWER:$NV_ETHLOWER, NV_LOWER:$NV_LOWER , NV_ENABLED:$NV_ENABLED , NV_IP:$NV_IP , NV_SUBNET:$NV_SUBNET , LOWER:$LOWER , CUR_IPV4_ADDR:$CUR_IPV4_ADDR , CUR_IPV4_SUBNET:$CUR_IPV4_SUBNET"
+    echo "RDKB_SYSTEM_BOOT_UP_LOG : Syncing l3 instance ($1), NV_ETHLOWER:$NV_ETHLOWER, NV_LOWER:$NV_LOWER , NV_ENABLED:$NV_ENABLED , NV_IP:$NV_IP , NV_SUBNET:$NV_SUBNET , LOWER:$LOWER , CUR_IPV4_ADDR:$CUR_IPV4_ADDR , CUR_IPV4_SUBNET:$CUR_IPV4_SUBNET"
     
     if [ x$NV_LOWER != x$LOWER ]; then
         #different lower layer, teardown and switch

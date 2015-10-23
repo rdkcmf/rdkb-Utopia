@@ -55,6 +55,7 @@
 #source /etc/utopia/service.d/brcm_ethernet_helper.sh
 
 source /etc/utopia/service.d/ut_plat.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 THIS=/etc/utopia/service.d/lan_handler.sh
 SERVICE_NAME="lan_handler"
@@ -107,8 +108,8 @@ ap_addr() {
 #------------------------------------------------------------------
 
 #service_init 
-
-echo "lan_handler called with $1 $2" > /dev/console
+echo "RDKB_SYSTEM_BOOT_UP_LOG : lan_handler called with $1 $2"
+#echo "lan_handler called with $1 $2" > /dev/console
 
 case "$1" in
    ${SERVICE_NAME}-start)
@@ -140,14 +141,15 @@ case "$1" in
         if [ x"up" = x${2} ]; then
             INST=${1#*_}
             INST=${INST%-*}
-			RG_MODE=`syscfg get last_erouter_mode`
+            RG_MODE=`syscfg get last_erouter_mode`
             sysevent set current_lan_ipaddr `sysevent get ipv4_${INST}-ipv4addr`
 
-			if [ "$RG_MODE" = "2" -a x"ready" != x`sysevent get start-misc` ]; then
-				firewall
-				execute_dir /etc/utopia/post.d/
+            if [ "$RG_MODE" = "2" -a x"ready" != x`sysevent get start-misc` ]; then
+                sysevent set lan-status started
+                firewall
+                execute_dir /etc/utopia/post.d/
             elif [ x"ready" != x`sysevent get start-misc` -a x != x`sysevent get current_wan_ipaddr` -a "0.0.0.0" != `sysevent get current_wan_ipaddr` ]; then
-
+                sysevent set lan-status started
                 STARTED_FLG=`sysevent get parcon_nfq_status`
 
                 if [ x"$STARTED_FLG" != x"started" ]; then
@@ -156,15 +158,21 @@ case "$1" in
                     ((nfq_handler 6 $BRLAN0_MAC &)&)
                     sysevent set parcon_nfq_status started
                 fi
-				gw_lan_refresh&
-                firewall
-				execute_dir /etc/utopia/post.d/
+                isAvailablebrlan1=`ifconfig | grep brlan1`
+                if [ "$isAvailablebrlan1" != "" ]
+                then
+                    echo "Refreshing from handler"
+                    gw_lan_refresh&
+                fi
+               	firewall
+                execute_dir /etc/utopia/post.d/
             else
+                sysevent set lan-status started
                 sysevent set firewall-restart
             fi
 
             #sysevent set desired_moca_link_state up
-            sysevent set lan-status started
+            #sysevent set lan-status started
             
             firewall_nfq_handler.sh &             
 
@@ -223,7 +231,7 @@ case "$1" in
 
    ;;
    
-   snmp_subagent-status)
+   pnm-status)
         if [ x = x"`sysevent get lan_handler_async`" ]; then
             eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
             if [ x != x$INST ]; then 
@@ -258,8 +266,8 @@ case "$1" in
         LAN_IFNAME=`sysevent get ipv4_${LAN_INST}-ifname`
 
         if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ]; then
-            ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/$SYSEVT_lan_prefix_v6 dev $LAN_IFNAME valid_lft forever preferred_lft forever
-            ip -6 addr add $SYSEVT_lan_ipaddr_v6/$SYSEVT_lan_prefix_v6 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+            ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+            ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
         fi
 
    ;;

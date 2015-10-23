@@ -62,18 +62,23 @@ source /etc/utopia/service.d/service_dhcp_server/dhcp_server_functions.sh
 source /etc/utopia/service.d/hostname_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 #source /etc/utopia/service.d/sysevent_functions.sh
 
 
 SERVICE_NAME="dhcp_server"
 
-DHCP_CONF=/etc/dnsmasq.conf
+#DHCP_CONF=/etc/dnsmasq.conf
+DHCP_CONF=/var/dnsmasq.conf
+RESOLV_CONF=/etc/resolv.conf
 BIN=dnsmasq
 SERVER=${BIN}
 PMON=/etc/utopia/service.d/pmon.sh
 PID_FILE=/var/run/dnsmasq.pid
 PID=$$
 
+XCONF_FILE="/etc/Xconf"
+XCONF_DEFAULT_URL="https://xconf.xcal.tv/xconf/swu/stb/"
 
 CURRENT_LAN_STATE=`sysevent get lan-status`
 
@@ -117,9 +122,9 @@ lan_status_change ()
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
          $SERVER -u nobody -P 4096 -C $DHCP_CONF --enable-dbus
          sysevent set dns-status started
-     else
+      else
          dhcp_server_start $2
-     fi
+      fi
    fi
 }
 
@@ -361,7 +366,14 @@ dhcp_server_start ()
    # the only dhcp server on the local network. This allows
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
+
+
+   echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
+   cat $RESOLV_CONF
+
+   echo "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server"
    $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF --enable-dbus
+
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
    sysevent set dns-status started
    sysevent set dhcp_server-status started
@@ -376,11 +388,16 @@ dhcp_server_start ()
    PSM_MODE=`sysevent get system_psm_mode`
    if [ "$PSM_MODE" != "1" ]; then
      if [ ! -f "/var/tmp/lan_not_restart" ] && [ "$1" != "lan_not_restart" ]; then
-          if [ x"ready" = x`sysevent get start-misc` ]; then
-		      gw_lan_refresh &
-              echo "lan_not_restart NOT found! Restart lan!"
-		  fi
-        else
+        if [ x"ready" = x`sysevent get start-misc` ]; then
+	      #isAvailablebrlan1=`ifconfig | grep brlan1`
+	      #if [ "$isAvailablebrlan1" != "" ]
+              #then
+              	echo "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh from dhcpscript"
+              	gw_lan_refresh &
+              #	echo "lan_not_restart NOT found! Restart lan!"
+	      #fi
+	    fi
+     else
           rm -f /var/tmp/lan_not_restart
           echo "lan_not_restart found! Don't restart lan!"
         fi

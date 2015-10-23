@@ -340,6 +340,10 @@ NOT_DEF:
  ============================================================================
 */
 #include "autoconf.h"
+//zqiu: Need to enable kernel flag CONFIG_KERNEL_NF_TRIGGER_SUPPORT
+#ifdef CONFIG_INTEL_NF_TRIGGER_SUPPORT
+#define CONFIG_KERNEL_NF_TRIGGER_SUPPORT CONFIG_INTEL_NF_TRIGGER_SUPPORT
+#endif
 
 #include <stdio.h>
 #include <stdint.h>
@@ -554,6 +558,7 @@ static char firewall_levelv6[20];   // None, High, or Custom
 static char cmdiag_ifname[20];       // name of the lan interface
 static int isNatReady;
 static char natip4[20];
+static char redirectionFlag[50]; //Captive portal mode flag
 
 static char iptables_pri_level[IPT_PRI_MAX];
 //static int  portmapping_pri;        
@@ -712,6 +717,12 @@ inline int SET_IPT_PRI_MODULD(char *s){
  */
 #define REMOTE_ACCESS_IP_RANGE_MAX_RULE 20
 
+/* DSCP val for gre*/
+#define PSM_NAME_GRE_DSCP_VALUE "dmsb.hotspot.tunnel.1.DSCPMarkPolicy"
+int greDscp = 44; // Default initialized to 44
+
+/* Configure WiFi flag for captive Portal*/
+#define PSM_NAME_CP_NOTIFY_VALUE "eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges"
 /*
  =================================================================
                      utilities
@@ -1557,6 +1568,16 @@ static int prepare_globals_from_configuration(void)
    if (0 != rc || '\0' == reserved_mgmt_port[0]) {
       snprintf(reserved_mgmt_port, sizeof(reserved_mgmt_port), "80");
    } 
+   
+   /* Get DSCP value for gre */
+   if(bus_handle != NULL){
+       rc = PSM_VALUE_GET_STRING(PSM_NAME_GRE_DSCP_VALUE, pStr);
+       if(rc == CCSP_SUCCESS && pStr != NULL){
+          greDscp = atoi(pStr);
+          Ansc_FreeMemory_Callback(pStr);
+          pStr = NULL;
+       }   
+   }
  
    return(0);
 }
@@ -3983,6 +4004,12 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     
     srcaddr[0] = '\0';
 
+#if defined(CONFIG_CCSP_CM_IP_WEBACCESS)
+       remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
+       remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
+#endif
+
+
     rc = syscfg_get(NULL, IPRANGE_UTKEY_PREFIX"count", countStr, sizeof(countStr));
     if(rc == 0)
         count = strtoul(countStr, NULL, 10);
@@ -4049,11 +4076,13 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    /* HTTP access */
    // CM-IP: wan0
 #if defined(CONFIG_CCSP_CM_IP_WEBACCESS)
+/*
    if(validEntry)
        remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
 
    for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
        remote_access_set_proto(filter_fp, nat_fp, "80", iprangeAddr[i], family, ecm_wan_ifname);
+*/
 #else
    if (0 == sysevent_get(sysevent_fd, sysevent_token, "cm_ip_webaccess", cm_ip_webaccess, sizeof(cm_ip_webaccess))) {
        if(cm_ip_webaccess[0]!='\0' && strcmp(cm_ip_webaccess, "1")==0) {
@@ -4110,11 +4139,13 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    /* HTTPS access */
    // CM-IP: wan0
 #if defined(CONFIG_CCSP_CM_IP_WEBACCESS)
+/*
    if(validEntry)
        remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
 
    for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
        remote_access_set_proto(filter_fp, nat_fp, "443", iprangeAddr[i], family, ecm_wan_ifname);
+*/
 #else
    if (0 == sysevent_get(sysevent_fd, sysevent_token, "cm_ip_webaccess", cm_ip_webaccess, sizeof(cm_ip_webaccess))) {
        if(cm_ip_webaccess[0]!='\0' && strcmp(cm_ip_webaccess, "1")==0) {
@@ -7328,6 +7359,11 @@ static void prepare_ipc_filter(FILE *filter_fp) {
     // TODO: fix this hard coding
     fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.500");
     fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.500");
+//zqiu>>
+//  make sure rpc channel are not been blocked
+    fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.4093");
+    fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.4093");
+//zqiu<<
 }
 
 static int prepare_multinet_filter_input(FILE *filter_fp) {
@@ -7448,6 +7484,77 @@ static int prepare_multinet_mangle(FILE *mangle_fp) {
    } while (SYSEVENT_NULL_ITERATOR != iterator);
 }
 
+
+//Captive Portal
+static int isInCaptivePortal()
+{
+   //Captive Portal
+   int retCode = 0;
+   int retPsm = 0;
+   char *pVal = NULL;
+   int isNotifyDefault=0;
+   int isRedirectionDefault=0;
+   int isResponse204=0;
+   FILE *responsefd;
+   char responseCode[10];
+   int iresCode;
+   char *networkResponse = "/var/tmp/networkresponse.txt";
+
+   /* Get the syscfg DB value to check if we are in CP redirection mode*/
+   retCode=syscfg_get(NULL, "redirection_flag", redirectionFlag, sizeof(redirectionFlag));  
+   if (0 != retCode || '\0' == redirectionFlag[0])
+   {
+	printf("CP DNS Redirection %s, Syscfg read failed\n", __FUNCTION__);
+   }
+   else
+   {
+        // Set a flag which we can check later to add DNS redirection
+        if(!strcmp("true", redirectionFlag))
+        {
+            isRedirectionDefault = 1;
+        }
+   }
+
+   // Check the PSM value to check we are having default WiFi configuration
+   if(bus_handle != NULL)
+   {
+       retPsm = PSM_VALUE_GET_STRING(PSM_NAME_CP_NOTIFY_VALUE, pVal);
+       if(retPsm == CCSP_SUCCESS && pVal != NULL)
+       {
+          /* If value is true then we are in default onfiguration mode */
+          if(strcmp("true", pVal) == 0)
+          {
+             isNotifyDefault = 1;
+          }
+          Ansc_FreeMemory_Callback(pVal);
+          pVal = NULL;
+       }  
+   }  
+   //Check the reponse code received from Web Service
+   if((responsefd = fopen(networkResponse, "r")) != NULL) 
+   {
+
+       if(fgets(responseCode, sizeof(responseCode), responsefd) != NULL)
+       {
+		  iresCode = atoi(responseCode);
+          if( iresCode == 204 ) 
+          {
+            isResponse204=1;
+            fclose(responsefd);
+          }
+       }
+   }
+   if((isRedirectionDefault) && (isNotifyDefault) && (isResponse204))
+   {
+      printf("CP DNS Redirection : Return 1\n"); 
+      return 1;
+   }
+   else
+   {
+      printf("CP DNS Redirection : Return 0\n"); 
+      return 0;
+   }
+}
 /*
  ==========================================================================
               IPv4 Firewall 
@@ -7504,6 +7611,24 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(mangle_fp, "%s\n", ":prerouting_qos - [0:0]");
    fprintf(mangle_fp, "%s\n", ":postrouting_qos - [0:0]");
    fprintf(mangle_fp, "%s\n", ":postrouting_lan2lan - [0:0]");
+
+  /*ADDED TO SUPPORT XCONF SERVER REACHABILITY
+   * All egress traffic from the erouter0 interface 
+   * is marked with AF22 
+   */
+   fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
+   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --set-dscp-class af22\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
+   
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs1 -j CONNMARK --set-mark 0xB\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs5 -j CONNMARK --set-mark 0xC\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af22 -j CONNMARK --set-mark 0xD\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xB -j DSCP --set-dscp-class cs1\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");
+   
+   /*XCONF RULES END*/
+
 #ifdef CONFIG_BUILD_TRIGGER
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_trigger\n");
@@ -7729,13 +7854,30 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       fprintf(filter_fp, "-A INPUT -i %s -d 192.168.100.1 -j ACCEPT\n", cmdiag_ifname);
    }
 
+   //Captive Portal 
+   /* If both PSM and syscfg values are true then SET the DNS redirection to GW*/    
+   if(isInCaptivePortal()==1)
+   {   
+      fprintf(nat_fp, "-I PREROUTING -i %s -p udp --dport 53 -j DNAT --to %s\n", lan_ifname, lan_ipaddr);
+      fprintf(nat_fp, "-I PREROUTING -i %s -p tcp --dport 53 -j DNAT --to %s\n", lan_ifname, lan_ipaddr);
+   }
+   
+
    if (ecm_wan_ifname[0])  // spare eCM wan interface from Utopia firewall
    {
+      //block port 53/67/514
+      fprintf(filter_fp, "-A INPUT -i %s -p udp --dport 53 -j DROP\n", ecm_wan_ifname);
+      fprintf(filter_fp, "-A INPUT -i %s -p udp --dport 67 -j DROP\n", ecm_wan_ifname);
+      fprintf(filter_fp, "-A INPUT -i %s -p udp --dport 514 -j DROP\n", ecm_wan_ifname);
+
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", ecm_wan_ifname);
    }
 
    if (emta_wan_ifname[0]) // spare eMTA wan interface from Utopia firewall
    {
+      fprintf(filter_fp, "-A INPUT -i %s -p udp --dport 80 -j DROP\n", emta_wan_ifname);
+      fprintf(filter_fp, "-A INPUT -i %s -p udp --dport 443 -j DROP\n", emta_wan_ifname);
+
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", emta_wan_ifname);
    }
    
@@ -8476,7 +8618,8 @@ static void do_ipv6_sn_filter(FILE* fp) {
         if (mcastAddrStr[0] != '\0')
             fprintf(fp, "-A PREROUTING -i %s -d %s -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m limit --limit 20/sec -j ACCEPT\n", ifnames[i], mcastAddrStr);
         
-        fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP\n", ifnames[i], mcastAddrStr);
+        fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m limit --limit 20/sec -j ACCEPT\n", ifnames[i]);
+        fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP\n", ifnames[i]);
     }
     fprintf(fp, "COMMIT\n");
 }
@@ -8695,16 +8838,30 @@ int prepare_ipv6_firewall(const char *fw_file)
 
       // established communication from anywhere is accepted
       fprintf(fp, "-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n");
+      // for tftp software download to work
+      fprintf(fp, "-A INPUT -i %s -p udp --dport 53 -j DROP\n", ecm_wan_ifname);
+      fprintf(fp, "-A INPUT -i %s -p udp --dport 67 -j DROP\n", ecm_wan_ifname);
+      fprintf(fp, "-A INPUT -i %s -p udp --dport 514 -j DROP\n", ecm_wan_ifname);
+      fprintf(fp, "-A INPUT -i %s -j ACCEPT\n", ecm_wan_ifname);
 
       // Return traffic. The equivalent of IOS 'established'
       fprintf(fp, "-A INPUT -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -j ACCEPT\n");
 
-
-      // DNS resolver request from client
-      // DNS server replies from Internet servers
-      fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname);
-      //fprintf(fp, "-A INPUT -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", wan6_ifname);
-      fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname);
+      //Captive Portal 
+      // Commenting out DROP 53 part as it will create confusion to end user
+      //if(isInCaptivePortal()==1)
+      //{
+           //fprintf(fp, "-I INPUT -i %s -p udp -m udp --dport 53 -j DROP\n", lan_ifname);
+           //fprintf(fp, "-I INPUT -i %s -p tcp -m tcp --dport 53 -j DROP\n", lan_ifname);
+      //}
+      //else
+      //{
+           // DNS resolver request from client
+           // DNS server replies from Internet servers
+           fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname);
+           //fprintf(fp, "-A INPUT -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", wan6_ifname);
+           fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname);
+      //}
 
 
       // NTP request from client
