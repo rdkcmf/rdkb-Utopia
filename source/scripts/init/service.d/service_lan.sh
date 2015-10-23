@@ -273,7 +273,7 @@ teardown_wireless_interfaces() {
 #this function is used to restart such services.
 restart_necessary_functions()
 {
-   echo ""
+   echo "NOT IMPLEMENTED"
 }
 
 #--------------------------------------------------------------

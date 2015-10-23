@@ -147,6 +147,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char preferred_lft[16], valid_lft[16];
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
+    char buf[6];
+    FILE *responsefd;
+    char *networkResponse = "/var/tmp/networkresponse.txt";
+    int iresCode = 0;
+    char responseCode[10];
+    int inCaptivePortal = 0;
     int nopt, i;
     char lan_if[IFNAMSIZ];
     char *start, *tok, *sp;
@@ -216,8 +222,29 @@ static int gen_zebra_conf(int sefd, token_t setok)
 
         fprintf(fp, "   ipv6 nd router-preference medium\n");
 
-        if (strlen(lan_addr))
-            fprintf(fp, "   ipv6 nd rdnss %s 300\n", lan_addr);
+	// During captive portal no need to pass DNS
+	// Check the reponse code received from Web Service
+   	if((responsefd = fopen(networkResponse, "r")) != NULL) 
+   	{
+       		if(fgets(responseCode, sizeof(responseCode), responsefd) != NULL)
+       		{
+		  	iresCode = atoi(responseCode);
+          	}
+   	}
+        syscfg_get( NULL, "redirection_flag", buf, sizeof(buf));
+    	if( buf != NULL )
+    	{
+		if ((strncmp(buf,"true",4) == 0) && iresCode == 204)
+		{
+			inCaptivePortal = 1;        		
+		}
+	}
+	
+	if(inCaptivePortal != 1)
+	{
+		if (strlen(lan_addr))
+            			fprintf(fp, "   ipv6 nd rdnss %s 300\n", lan_addr);
+	}
 
         /* static IPv6 DNS */
         syscfg_get(NULL, "dhcpv6spool00::optionnumber", val, sizeof(val));
@@ -249,15 +276,19 @@ static int gen_zebra_conf(int sefd, token_t setok)
             }
         }
 
-        /* DNS from WAN (if no static DNS) */
-        if (strlen(name_servs) == 0) {
-            sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
-                    sizeof(name_servs) - strlen(name_servs));
-        }
+	if(inCaptivePortal != 1)
+	{
+       		/* DNS from WAN (if no static DNS) */
+       		if (strlen(name_servs) == 0) {
+       			sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
+               		sizeof(name_servs) - strlen(name_servs));
+       		}
 
-        for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
-            fprintf(fp, "   ipv6 nd rdnss %s 300\n", tok);
-    }
+        		for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
+            		fprintf(fp, "   ipv6 nd rdnss %s 300\n", tok);
+		}
+	}
+    
 
     fprintf(fp, "interface %s\n", lan_if);
     fprintf(fp, "   ip irdp multicast\n");

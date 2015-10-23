@@ -59,7 +59,8 @@ ccsp_bus_client_tool eRT setv Device.Bridging.Bridge.4.Port.2.X_CISCO_COM_Mode s
 ccsp_bus_client_tool eRT setv Device.Bridging.Bridge.4.Enable bool true
 
 #Reload PSM defaults
-psmcli set dmsb.hotspot.gre.1.ReconnPrimary 43200
-psmcli set dmsb.hotspot.gre.1.KeepAlive.Interval 60
-psmcli set dmsb.hotspot.gre.1.KeepAlive.Threshold 3
-psmcli set dmsb.hotspot.gre.1.KeepAlive.FailInterval 2000
+psmcli set dmsb.hotspot.tunnel.1.ReconnectToPrimaryRemoteEndpoint 43200
+psmcli set dmsb.hotspot.tunnel.1.RemoteEndpointHealthCheckPingInterval 60
+psmcli set dmsb.hotspot.tunnel.1.RemoteEndpointHealthCheckPingFailThreshold 3
+#zqiu: default should be  300 sec
+psmcli set dmsb.hotspot.tunnel.1.RemoteEndpointHealthCheckPingIntervalInFailure 300

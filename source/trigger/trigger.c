@@ -682,6 +682,8 @@ static int main_loop(int queue_fd)
 
       long secs = get_next_timeout();
       if (-1 == secs) {
+	//zqiu: we still need to yeild to other process to avoid cpu occupation.
+	sleep(1);
          waitsecs = timeout.tv_sec = timeout.tv_usec = 0;
          rc = select(max_fd, &rd_set, NULL, NULL, NULL);
       } else {

@@ -68,6 +68,8 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "syslog_rotated|/etc/utopia/service.d/service_firewall/newhost_monitor.sh|NULL|"TUPLE_FLAG_EVENT,
                                         "ipv6_prefix|"SERVICE_DEFAULT_HANDLER,
                                         "current_wan_ipv6_interface|"SERVICE_DEFAULT_HANDLER,
+                                        "ipv6_wan0_dhcp_solicNodeAddr|"SERVICE_DEFAULT_HANDLER,
+                                        "ipv6_erouter0_dhcp_solicNodeAddr|"SERVICE_DEFAULT_HANDLER,
                                         NULL
                                       };
 

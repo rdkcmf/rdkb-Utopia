@@ -234,7 +234,7 @@ config_new_members () {
     NETID=$1
     
     #DEBUG:
-    echo "Entering config_new_members. Netid: ${NETID}"
+    echo "RDKB_SYSTEM_BOOT_UP_LOG : Entering config_new_members. Netid: ${NETID}"
     
 #Bring up / create all interfaces
     for i in $INTERFACE_TYPES; do
@@ -242,12 +242,12 @@ config_new_members () {
         
         if [ x = x"$CURTYPE_MEMBERS" ]; then
             #DEBUG:
-            echo "No Members of type: ${i}"
+            echo "RDKB_SYSTEM_BOOT_UP_LOG : No Members of type: ${i}"
             continue
         fi
         
         #DEBUG:
-        echo "TOADD_${i}: ${CURTYPE_MEMBERS}"
+        echo "RDKB_SYSTEM_BOOT_UP_LOG : TOADD_${i}: ${CURTYPE_MEMBERS}"
         
         eval CURTYPE_HANDLER=\${${i}_HANDLER}
         REGISTERED=""
@@ -265,13 +265,13 @@ config_new_members () {
         RETURNED_STATUS=`$CURTYPE_HANDLER create $NETID "${REGISTERED# }"`
         
         #DEBUG:
-        echo "Handler returned: ${RETURNED_STATUS}"
+        echo "RDKB_SYSTEM_BOOT_UP_LOG : Handler returned: ${RETURNED_STATUS}"
         
         #Script prints status info in the format {type}_READY=[ifname ...]
         eval $RETURNED_STATUS
         
         #DEBUG:
-        echo "Registering for these interfaces: ${REGISTERED}"
+        echo "RDKB_SYSTEM_BOOT_UP_LOG : Registering for these interfaces: ${REGISTERED}"
         
         for j in $REGISTERED; do
             if [ x = x"`sysevent get net_${NETID}_${j}_async`" ]; then
@@ -288,7 +288,7 @@ config_new_members () {
     done
     
     #DEBUG:
-    echo "ALL_NEW_MEMBERS: ${ALL_NEW_MEMBERS}"
+    echo "RDKB_SYSTEM_BOOT_UP_LOG : ALL_NEW_MEMBERS: ${ALL_NEW_MEMBERS}"
 
     #Set up remote interfaces
     for i in $REMOTE_INTERFACE_TYPES; do
@@ -300,7 +300,7 @@ config_new_members () {
                 eval CURTYPE_MEMBERS=\"${CURTYPE_MEMBERS} \${IF_${j}}\"
             done
             #DEBUG:
-            echo "Adding vlans via $CURTYPE_HANDLER with netid: ${NETID} vid: $CURNET_VID, on: ${CURTYPE_MEMBERS}"
+            echo "RDKB_SYSTEM_BOOT_UP_LOG : Adding vlans via $CURTYPE_HANDLER with netid: ${NETID} vid: $CURNET_VID, on: ${CURTYPE_MEMBERS}"
             $CURTYPE_HANDLER addVlan $NETID $CURNET_VID "$CURTYPE_MEMBERS"
             
             ALL_NEW_READY="${ALL_NEW_READY} `echo ${CURTYPE_MEMBERS} | sed 's/\([^ ]*\)/'"${i}"':\1/g'`"
@@ -327,13 +327,13 @@ config_new_members () {
     done
     
     #DEBUG:
-    echo "ALL_LOCAL: ${ALL_LOCAL}"
+    echo "RDKB_SYSTEM_BOOT_UP_LOG : ALL_LOCAL: ${ALL_LOCAL}"
 
     #Add bridge if necessary
     if [ x1 != x`sysevent get ${SERVICE_NAME}_$NETID-bridging` ]; then
         if [ `echo $ALL_LOCAL | wc -w` -gt 0 ]; then
             #DEBUG:
-            echo "Adding bridge: $CURNET_NAME for netid:${NETID}"
+            echo "RDKB_SYSTEM_BOOT_UP_LOG : Adding bridge: $CURNET_NAME for netid:${NETID}"
             BRIDGE="$CURNET_NAME"
             NAME="$BRIDGE"
             brctl addbr $CURNET_NAME
@@ -342,7 +342,7 @@ config_new_members () {
             BRIDGE_CREATED=1
         else
             #DEBUG:
-            echo "Not bridging for netid:${NETID}. Name=$ALL_LOCAL"
+            echo "RDKB_SYSTEM_BOOT_UP_LOG : Not bridging for netid:${NETID}. Name=$ALL_LOCAL"
             NAME=`sysevent get ${SERVICE_NAME}_$NETID-name`
             if [ x = x$NAME -o 0 = `expr match "$ALL_LOCAL" ".*$NAME.*"` ]; then
                 NAME="$ALL_LOCAL"
@@ -364,7 +364,7 @@ config_new_members () {
         #Add vlans
         for i in $LOCAL_READY; do
             #DEBUG:
-            echo "Configuring local interface:$i, with netvid:$CURNET_VID, bridge:\"${BRIDGE}\" for netid:${NETID}"
+            echo "RDKB_SYSTEM_BOOT_UP_LOG : Configuring local interface:$i, with netvid:$CURNET_VID, bridge:\"${BRIDGE}\" for netid:${NETID}"
             configure_if "add" $i $CURNET_VID $BRIDGE
         done
     fi
@@ -381,7 +381,7 @@ config_new_members () {
 #envIn/Out: ALL_READY
 del_old_members () {
     #DEBUG:
-    echo "del_old_members:${1}, ${TO_REMOVE}"
+    echo "RDKB_SYSTEM_BOOT_UP_LOG : del_old_members:${1}, ${TO_REMOVE}"
     for i in $TO_REMOVE; do
         TYPE=`echo $i | cut -d: -f1`
         IFNAME=`echo $i | cut -d: -f2`
@@ -453,7 +453,7 @@ update_net_status () {
     sysevent set ${SERVICE_NAME}_${1}-$L2_LOCAL_READY_PARAM $LOCAL_READY
     
     #DEBUG:
-    echo "Net status update:${1}, `sysevent get ${SERVICE_NAME}_$1-status`, localready:$LOCAL_READY"
+    echo "RDKB_SYSTEM_BOOT_UP_LOG : Net status update:${1}, `sysevent get ${SERVICE_NAME}_$1-status`, localready:$LOCAL_READY"
 
 }
 
@@ -751,6 +751,8 @@ load_net() {
 #------------------------------------------------------------------
 # ENTRY
 #------------------------------------------------------------------
+
+source /etc/utopia/service.d/log_capture_path.sh
 
 #service_init
 case "$1" in

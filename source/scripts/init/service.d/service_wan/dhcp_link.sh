@@ -87,6 +87,7 @@
 #
 #------------------------------------------------------------------
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 PID="($$)"
 
 BIN=ti_udhcpc

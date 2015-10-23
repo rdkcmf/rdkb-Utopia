@@ -63,27 +63,38 @@ MTU_VAL=1400
 MSS_VAL=1360
 
 GRE_PSM_BASE=dmsb.cisco.gre
-HS_PSM_BASE=dmsb.hotspot.gre
+#HS_PSM_BASE=dmsb.hotspot.gre
+HS_PSM_BASE=dmsb.hotspot.tunnel
 GRE_PSM_NAME=name
 #format for below is comma delimited FQDM
-GRE_PSM_BRIDGES=AssociatedBridges
-GRE_PSM_KAINT=KeepAlive.Interval
-GRE_PSM_KAFINT=KeepAlive.FailInterval
-GRE_PSM_KARECON=ReconnPrimary
-GRE_PSM_KATHRESH=KeepAlive.Threshold
-GRE_PSM_KAPOLICY=KeepAlive.Policy
+GRE_PSM_BRIDGES=AssociatedBridges 
+#GRE_PSM_KAINT=KeepAlive.Interval
+GRE_PSM_KAINT=RemoteEndpointHealthCheckPingInterval
+#GRE_PSM_KAFINT=KeepAlive.FailInterval
+GRE_PSM_KAFINT=RemoteEndpointHealthCheckPingIntervalInFailure
+#GRE_PSM_KARECON=ReconnPrimary
+GRE_PSM_KARECON=ReconnectToPrimaryRemoteEndpoint
+#GRE_PSM_KATHRESH=KeepAlive.Threshold
+GRE_PSM_KATHRESH=RemoteEndpointHealthCheckPingFailThreshold
+#GRE_PSM_KAPOLICY=KeepAlive.Policy
+GRE_PSM_KAPOLICY=KeepAlivePolicy
 GRE_PSM_TOS=tos
 GRE_PSM_KEY=key
 GRE_PSM_CSUM=csumenabled
 GRE_PSM_SEQ=seqnumenabled
-GRE_PSM_ENDPOINTS=Endpoints
+#GRE_PSM_ENDPOINTS=Endpoints 
+GRE_PSM_PRIENDPOINTS=PrimaryRemoteEndpoint
+GRE_PSM_SECENDPOINTS=SecondaryRemoteEndpoint
 GRE_PSM_ENDPOINT=endpoint
-GRE_PSM_KACOUNT=KeepAlive.Count
-GRE_PSM_SNOOPCIRC=DHCP.CircuitIDSSID
-GRE_PSM_SNOOPREM=DHCP.RemoteID
+#GRE_PSM_KACOUNT=KeepAlive.Count
+GRE_PSM_KACOUNT=RemoteEndpointHealthCheckPingCount
+#GRE_PSM_SNOOPCIRC=DHCP.CircuitIDSSID
+GRE_PSM_SNOOPCIRC=EnableCircuitID
+#GRE_PSM_SNOOPREM=DHCP.RemoteID
+GRE_PSM_SNOOPREM=EnableRemoteID
 GRE_PSM_ENABLE=enable
 HS_PSM_ENABLE=Enable
-GRE_PSM_LOCALIFS=LocalInterfaces
+GRE_PSM_LOCALIFS=LocalInterfaces   
 WIFI_PSM_PREFIX=eRT.com.cisco.spvtg.ccsp.Device.WiFi.Radio.SSID
 WIFI_RADIO_INDEX=RadioIndex
 
@@ -154,9 +165,10 @@ destroy_tunnel () {
 }
 
 gre_preproc () {
-    if [ -f $UTOPIAROOT/hhs_validate.sh ]; then
-        $UTOPIAROOT/hhs_validate.sh
-    fi
+    #zqiu: fix for XHH 5G not get IP issue
+    #if [ -f $UTOPIAROOT/hhs_validate.sh ]; then
+    #    $UTOPIAROOT/hhs_validate.sh
+    #fi
     allGreInst="`psmcli getallinst $GRE_PSM_BASE.`"
     query=""
     
@@ -174,8 +186,8 @@ gre_preproc () {
 
 init_keepalive_sysevents () {
     keepalive_args="-n `sysevent get wan_ifname`"
-    PRIMARY=`echo $ENDPOINTS | cut -f 1 -d ","`
-    SECONDARY=`echo $ENDPOINTS | cut -f 2 -d "," -s`
+    #PRIMARY=`echo $ENDPOINTS | cut -f 1 -d ","`
+    #SECONDARY=`echo $ENDPOINTS | cut -f 2 -d "," -s`
     if [ x = x`sysevent get hotspotfd-primary` ]; then
         sysevent set hotspotfd-primary $PRIMARY
     fi
@@ -264,10 +276,14 @@ bInst_to_bNames () {
 }
 
 read_init_params () {
+    #zqiu: short term fix for XHH 5G not get IP issue	
+    inst=`dmcli eRT setv Device.Bridging.Bridge.4.Port.2.LowerLayers string Device.WiFi.SSID.6`;
+    
     inst=`sysevent get gre_$1_inst`
-    
-    eval `psmcli get -e ENDPOINTS $HS_PSM_BASE.${inst}.$GRE_PSM_ENDPOINTS BRIDGE_INSTS $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES  KA_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAINT KA_FAIL_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAFINT KA_POLICY $HS_PSM_BASE.${inst}.$GRE_PSM_KAPOLICY KA_THRESH $HS_PSM_BASE.${inst}.$GRE_PSM_KATHRESH KA_COUNT $HS_PSM_BASE.${inst}.$GRE_PSM_KACOUNT KA_RECON_PRIM $HS_PSM_BASE.${inst}.$GRE_PSM_KARECON SNOOP_CIRCUIT $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPCIRC SNOOP_REMOTE $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPREM WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
-    
+    #eval `psmcli get -e ENDPOINTS $HS_PSM_BASE.${inst}.$GRE_PSM_ENDPOINTS BRIDGE_INSTS $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES  KA_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAINT KA_FAIL_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAFINT KA_POLICY $HS_PSM_BASE.${inst}.$GRE_PSM_KAPOLICY KA_THRESH $HS_PSM_BASE.${inst}.$GRE_PSM_KATHRESH KA_COUNT $HS_PSM_BASE.${inst}.$GRE_PSM_KACOUNT KA_RECON_PRIM $HS_PSM_BASE.${inst}.$GRE_PSM_KARECON SNOOP_CIRCUIT $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPCIRC SNOOP_REMOTE $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPREM WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+    eval `psmcli get -e PRIMARY $HS_PSM_BASE.${inst}.$GRE_PSM_PRIENDPOINTS SECONDARY $HS_PSM_BASE.${inst}.$GRE_PSM_SECENDPOINTS BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES KA_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAINT KA_FAIL_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAFINT KA_POLICY $HS_PSM_BASE.${inst}.$GRE_PSM_KAPOLICY KA_THRESH $HS_PSM_BASE.${inst}.$GRE_PSM_KATHRESH KA_COUNT $HS_PSM_BASE.${inst}.$GRE_PSM_KACOUNT KA_RECON_PRIM $HS_PSM_BASE.${inst}.$GRE_PSM_KARECON SNOOP_CIRCUIT $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPCIRC SNOOP_REMOTE $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPREM WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+	BRIDGE_INSTS="$BRIDGE_INST_1,$BRIDGE_INST_2"
+		
     bInst_to_bNames "$BRIDGE_INSTS" "$WECB_BRIDGES"
 
 }
@@ -293,11 +309,11 @@ update_bridge_config () {
             queue=`expr $queue + 1`
             continue
         fi
-        br_snoop_rule="`sysevent setunique GeneralPurposeFirewallRule " -A FORWARD -o $br -p udp --dport=67 -j NFQUEUE --queue-bypass --queue-num $queue"`"
+        br_snoop_rule="`sysevent setunique GeneralPurposeFirewallRule " -A FORWARD -o $br -p udp --dport=67:68 -j NFQUEUE --queue-bypass --queue-num $queue"`"
         sysevent set gre_${inst}_${br}_snoop_rule "$br_snoop_rule"
         
         
-        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MSS_VAL"`
+        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MTU_VAL"`
         sysevent set gre_${inst}_${br}_mss_rule "$br_mss_rule"
     done
     
@@ -333,14 +349,18 @@ update_bridge_frag_config () {
 #       $radios - radio instances
 #       $ssid_${instance}_radio - radio for the specified ssid
 get_ssids() {
-    localifs=`psmcli get $HS_PSM_BASE.${1}.$GRE_PSM_LOCALIFS`
+    #localifs=`psmcli get $HS_PSM_BASE.${1}.$GRE_PSM_LOCALIFS`		
+	localif_1=`psmcli get $HS_PSM_BASE.${1}.interface.1.$GRE_PSM_LOCALIFS`		
+	localif_2=`psmcli get $HS_PSM_BASE.${1}.interface.2.$GRE_PSM_LOCALIFS`	
+	localifs="$localif_1,$localif_2";
     OLD_IFS="$IFS"
     IFS=","
     for i in $localifs; do
         winst=`echo $i |cut -d . -f 4`
         ssids="$ssids $winst"
-        radio=$(( `psmcli get $WIFI_PSM_PREFIX.${winst}.${WIFI_RADIO_INDEX}` + 1 ))
-        
+        #zqiu: Radio instance number should be get from the DML, instead of real radio id in bbhm +1
+		#radio=$(( `psmcli get $WIFI_PSM_PREFIX.${winst}.${WIFI_RADIO_INDEX}` + 1 ))
+        radio=`dmcli eRT getv ${i}LowerLayers  | grep string,  | awk '{print $5}' | cut -d . -f 4 `
         expr match "$radios" '.*\b\('$winst'\)\b.*' > /dev/null
         if [ 0 != $? ]; then
             #add this radio instance
@@ -421,8 +441,11 @@ hotspot_down() {
 #    sysevent set gre_snooper_clients_async
     sysevent get gre_primary_async
     
-    bridgeFQDM=`psmcli get $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES`
-    
+    #bridgeFQDM=`psmcli get $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES`	
+	BRIDGE_INST_1=`psmcli get $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES`
+	BRIDGE_INST_2=`psmcli get $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES`	
+    bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
+	
     remove_bridge_config ${inst} "`sysevent get gre_${inst}_current_bridges`"
 
     brinst=""
@@ -453,9 +476,10 @@ hotspot_down() {
 #args: hotspot instance
 hotspot_up() {
     inst=$1
-    
-    eval `psmcli get -e bridgeFQDM $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
-        
+    #eval `psmcli get -e bridgeFQDM $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+    eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+    bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
+	
     if [ x"1" != x$ENABLED -o x"1" != x$GRE_ENABLED ]; then
         exit 0
     fi
@@ -515,8 +539,11 @@ check_ssids () {
 #args: 
 set_wecb_bridges() {
     # TODO: parameterize the instance number "1"
-    BRIDGE_INS="`psmcli get $HS_PSM_BASE.1.$GRE_PSM_BRIDGES`"
-    
+    #BRIDGE_INS="`psmcli get $HS_PSM_BASE.1.$GRE_PSM_BRIDGES`"	
+    BRIDGE_INST_1="`psmcli get $HS_PSM_BASE.1.interface.1.$GRE_PSM_BRIDGES`"
+	BRIDGE_INST_2="`psmcli get $HS_PSM_BASE.1.interface.2.$GRE_PSM_BRIDGES`"
+	BRIDGE_INS="$BRIDGE_INST_1,$BRIDGE_INST_2"
+	
     local binst=""
     local query=""
     local num=0
@@ -687,8 +714,12 @@ case "$1" in
 #             exit 0
 #         fi
         set_wecb_bridges
-        eval `psmcli get -e bridgeFQDM $HS_PSM_BASE.${2}.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${2}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${2}.$GRE_PSM_ENABLE name $GRE_PSM_BASE.$2.$GRE_PSM_NAME`
-        if [ x != x$curr_tunnel ]; then
+		
+		#eval `psmcli get -e bridgeFQDM $HS_PSM_BASE.${2}.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${2}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${2}.$GRE_PSM_ENABLE name $GRE_PSM_BASE.$2.$GRE_PSM_NAME`
+        eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${2}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${2}.interface.2.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${2}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${2}.$GRE_PSM_ENABLE name $GRE_PSM_BASE.$2.$GRE_PSM_NAME`
+        bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
+		
+		if [ x != x$curr_tunnel ]; then
             destroy_tunnel $name
         fi
         
@@ -718,8 +749,8 @@ case "$1" in
     
     #args: hotspot gre instance
     hotspot-update_bridges)
-        eval `psmcli get -e BRIDGE_INSTS $HS_PSM_BASE.${2}.$GRE_PSM_BRIDGES WECB_BRIDGES dmsb.wecb.hhs_extra_bridges NAME $GRE_PSM_BASE.$2.$GRE_PSM_NAME`
-        
+		eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${2}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${2}.interface.2.$GRE_PSM_BRIDGES WECB_BRIDGES dmsb.wecb.hhs_extra_bridges NAME $GRE_PSM_BASE.$2.$GRE_PSM_NAME`
+        BRIDGE_INSTS="$BRIDGE_INST_1,$BRIDGE_INST_2"
         start=""
         brinst=""
         OLD_IFS="$IFS"

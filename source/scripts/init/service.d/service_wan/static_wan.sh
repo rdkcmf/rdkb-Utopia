@@ -67,6 +67,7 @@
 #------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 DESIRED_WAN_STATE=`sysevent get desired_ipv4_wan_state`
 CURRENT_WAN_STATE=`sysevent get current_ipv4_wan_state`

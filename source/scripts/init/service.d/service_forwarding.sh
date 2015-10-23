@@ -169,6 +169,26 @@ service_stop ()
    sleep 2
    wait_till_state bridge stopped
    wait_till_state wan stopped
+
+   BREAK_LOOP=0
+   BREAK_COUNT=0
+
+
+   while [ $BREAK_LOOP -eq 0 ]
+   do
+   	LAN_STATUS_FWD=`sysevent get lan-status`
+
+
+   	if [ "$LAN_STATUS_FWD" = "stopped" ] || [ "$BREAK_COUNT" -gt 10 ] ; then
+
+		BREAK_LOOP=1
+	else
+		sleep 2
+	fi
+	BREAK_COUNT=$((BREAK_COUNT+1))
+
+   done
+
    sysevent set ${SERVICE_NAME}-status stopped
 }
 
