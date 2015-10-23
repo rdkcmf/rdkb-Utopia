@@ -91,7 +91,7 @@ $$Version=14
 # 1 - IPv4
 # 2 - IPv6
 # 3 - IPv4 and IPv6
-$last_erouter_mode=1
+$last_erouter_mode=3
 
 # wan_physical_ifname - the name (as known to the OS) of the physical interface
 #    that is used for the wan. This setting is not meant for users to manipulate.
@@ -463,7 +463,7 @@ $ntp_enabled=0
 # is: March 8 is the 0th day of the 2nd week of the 3rd month, and 
 #     Nov 11 is the 0th day of the 1st week of the 11th month
 # thus: DST,M3.2.0/02:00,M11.1.0/02:00
-$TZ=EST
+$TZ=
 $ntp_cityindex=0
 $auto_dst=1
 
@@ -494,8 +494,8 @@ $user_name_1=mso
 $user_name_2=cusadmin
 $user_name_3=admin
 #$user_password_1=password of the day
-$user_password_1=pod
-$user_password_2=WebUI
+$user_password_1=nas00Rn7TU
+$user_password_2=Xfinity
 $user_password_3=password
 $user_insNum_1=1
 $user_insNum_2=2
@@ -507,14 +507,12 @@ $mgmt_https_enable=0
 $mgmt_wifi_access=1
 
 $mgmt_wan_access=1
-$mgmt_wan_httpaccess=1
-$mgmt_wan_httpaccess_ert=0
+$mgmt_wan_httpaccess=0
 $mgmt_wan_httpsaccess=0
 $mgmt_wan_sshaccess=0
 $mgmt_wan_telnetaccess=0
-$mgmt_wan_httpport=80
-$mgmt_wan_httpport_ert=8080
-$mgmt_wan_httpsport=8081
+$mgmt_wan_httpport=8080
+$mgmt_wan_httpsport=8181
 $mgmt_wan_sshport=22
 $mgmt_wan_telnetport=23
 $mgmt_wan_srcany=1
@@ -803,7 +801,7 @@ $$emta_wan_ifname=mta0
 $managedsites_enabled=0
 $managedservices_enabled=0
 $manageddevices_enabled=0
-$manageddevices_allow_all=0
+$manageddevices_allow_all=1
 $ManagedSiteBlockCount=0
 $ManagedSiteTrustCount=0
 $ManagedServiceBlockCount=0
@@ -829,7 +827,7 @@ $rlog_port=514
 
 #Firewall log settings
 $FW_LOG_FILE_PATH=/nvram/log/firewall
-@FW_LOG_FILE_PATH_V2=/nvram2/log/firewall
+@FW_LOG_FILE_PATH_V2=/nvram/log/firewall
 $$FW_LOG_COMPRESSED_FILE_SIZE=10
 
 #SYSTEM log settings
@@ -894,3 +892,43 @@ $hostname=Docsis-Gateway
 @parcon_dnsv6r_end=10
 @parcon_httpv6get_start=13
 @parcon_httpv6get_end=14
+#redirection flag 
+$redirection_flag=true
+$redirection_url=http://XfinityHomeNetworking.com
+$cloud_capable_flag=1
+$cloud_enable_flag=0
+
+# RDK log level
+$X_RDKCENTRAL-COM_LogLevel=4
+$X_RDKCENTRAL-COM_TR69_LogLevel=4
+$X_RDKCENTRAL-COM_PAM_LogLevel=4	
+$X_RDKCENTRAL-COM_PSM_LogLevel=4	
+$X_RDKCENTRAL-COM_MTA_LogLevel=4
+$X_RDKCENTRAL-COM_CM_LogLevel=4
+$X_RDKCENTRAL-COM_WiFi_LogLevel=4
+$X_RDKCENTRAL-COM_CR_LogLevel=4
+
+# RDK LogEnable
+$X_RDKCENTRAL-COM_LoggerEnable=1
+$X_RDKCENTRAL-COM_TR69_LoggerEnable=1
+$X_RDKCENTRAL-COM_PAM_LoggerEnable=1
+$X_RDKCENTRAL-COM_PSM_LoggerEnable=1
+$X_RDKCENTRAL-COM_MTA_LoggerEnable=1
+$X_RDKCENTRAL-COM_CM_LoggerEnable=1
+$X_RDKCENTRAL-COM_WiFi_LoggerEnable=1
+$X_RDKCENTRAL-COM_CR_LoggerEnable=1
+
+# RDK Log related data
+$reboot_count=0
+$latest_reboot_time=
+$wifi_reset_count=0
+$latest_wifi_reset_time=
+
+# EMS
+#$ems_server_url=http://96.119.182.89:8080/captiveportalEMS
+$ems_server_url=https://emsdev.sys.comcast.net:8080/captiveportalEMS
+
+# xPC Sync related data
+$X_COMCAST-COM_CMC=0
+$X_COMCAST-COM_CID=0
+$X_COMCAST-COM_SyncProtocolVersion=0
