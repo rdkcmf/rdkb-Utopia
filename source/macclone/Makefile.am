@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
+bin_PROGRAMS = macclone
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
@@ -30,9 +31,19 @@ AM_LDFLAGS += -lulog
 
 AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
-hardware_platform = i686-linux-gnu
 
-noinst_LTLIBRARIES = libUtopia_macclone.la
-libUtopia_macclone_la_CPPFLAGS = -I$(top_srcdir)/source/cosa/include/linux -I/var/tmp/pc-rdkb/include/dbus-1.0 -I$(top_srcdir)/source/igd/arch/intel_usg/boards/rdkb_arm/include -I$(top_srcdir)/source/firewall/arch/intel_usg/boards/rdkb_arm/include -I$(top_srcdir)/source/firewall/arch/intel_usg/boards/arm_shared/include -I$(top_srcdir)/source/hdk2/hdk2/include -I$(top_srcdir)/source/pal/upnp/include -I$(top_srcdir)/source/pal/xml/include -I$(top_srcdir)/source/pal/kernel/include -I$(top_srcdir)/source/pal/include -I$(top_srcdir)/source/pal/log/include $(CPPFLAGS)
-libUtopia_macclone_la_SOURCES = macclone.c
-libUtopia_macclone_la_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz -lsrvmgr -lsyscfg -lsysevent -lulog
+macclone_CPPFLAGS = -I$(top_srcdir)/source/pal/upnp/include \
+		    -I$(top_srcdir)/source/pal/xml/include \
+		    -I$(top_srcdir)/source/pal/kernel/include \
+		    -I$(top_srcdir)/source/pal/include \
+		    -I$(top_srcdir)/source/pal/log/include \
+		    $(DBUS_CFLAGS) 
+
+macclone_SOURCES = macclone.c
+
+macclone_LDFLAGS =  -lpthread -lz $(DBUS_LIBS)
+
+macclone_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                $(top_builddir)/source/ulog/libulog.la \
+                $(top_builddir)/source/services/lib/libsrvmgr.la

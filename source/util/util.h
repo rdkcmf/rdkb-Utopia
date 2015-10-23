@@ -35,7 +35,7 @@
 
 #ifndef __SERV_UTIL__
 #define __SERV_UTIL__
-#include <sysevent.h>
+#include <sysevent/sysevent.h>
 
 #define SE_SERV         "127.0.0.1"
 
