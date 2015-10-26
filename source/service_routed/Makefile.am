@@ -16,4 +16,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = ulog syscfg sysevent services utctx utapi firewall firewall_log dhcpproxy newhost macclone util pal pmon services service_wan trigger igd service_routed
+bin_PROGRAMS = service_routed
+
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util
+
+AM_LDFLAGS =  -lpthread -lz
+
+service_routed_SOURCES = service_routed.c
+
+service_routed_LDADD = $(top_builddir)/source/util/libutopiautil.la \
+                    $(top_builddir)/source/services/lib/libsrvmgr.la \
+                    $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                    $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                    $(top_builddir)/source/ulog/libulog.la
