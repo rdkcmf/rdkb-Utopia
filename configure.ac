@@ -81,6 +81,9 @@ AC_CONFIG_FILES(
         source/scripts/Makefile
         source/scripts/init/Makefile
         source/scripts/init/c_registration/Makefile
+	source/scripts/init/src/Makefile
+	source/scripts/init/src/apply_system_defaults/Makefile
+	source/scripts/init/src/execute_dir/Makefile
 	source/Makefile
 	Makefile
 )
