@@ -48,7 +48,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 
 #define SERVICE_NAME              "firewall"
 //#define SERVICE_DEFAULT_HANDLER   "/fss/gw/usr/sbin/firewall"

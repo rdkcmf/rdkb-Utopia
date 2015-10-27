@@ -46,7 +46,7 @@
  */
 
 #include <stdio.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 #include "syscfg/syscfg.h"
 
 

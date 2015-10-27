@@ -46,7 +46,7 @@
  */
 
 #include <stdio.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 
 const char* SERVICE_NAME            = "lan";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/lan_handler.sh";

@@ -46,7 +46,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 
 const char* SERVICE_NAME            = "crond";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_crond.sh";

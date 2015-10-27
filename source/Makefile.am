@@ -16,4 +16,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = ulog syscfg sysevent services utctx utapi firewall firewall_log dhcpproxy newhost macclone util pal pmon services service_wan trigger igd service_routed
+SUBDIRS = ulog syscfg sysevent services utctx utapi firewall firewall_log dhcpproxy newhost macclone util pal pmon services service_wan trigger igd service_routed scripts
