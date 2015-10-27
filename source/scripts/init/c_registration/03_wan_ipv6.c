@@ -48,7 +48,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 
 const char* SERVICE_NAME            = "ipv6";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_wan_ipv6.sh";

@@ -45,7 +45,7 @@
  * perpetrator to criminal and civil liability.
  */
 #include <stdio.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 
 const char* SERVICE_NAME            = "ftpserver";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ftpserver.sh";

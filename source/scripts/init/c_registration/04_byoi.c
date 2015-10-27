@@ -71,7 +71,7 @@
  */
 
 #include <stdio.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 
 /*
  * 1) Name of this service

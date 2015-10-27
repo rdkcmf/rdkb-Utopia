@@ -46,7 +46,7 @@
  */
 
 #include <stdio.h>
-#include "srvmgr/srvmgr.h"
+#include "srvmgr.h"
 
 #define SERV_WAN_HANDLER    "/etc/utopia/service.d/service_wan.sh"
 

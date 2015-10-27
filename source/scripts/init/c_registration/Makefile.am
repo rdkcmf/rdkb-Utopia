@@ -16,23 +16,64 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
+bin_PROGRAMS = 26_potd 15_switchpmon 10_fpm 02_forwarding 10_bootstrap_dns 33_cosa 03_wan_ipv6 20_gwreset 10_mcastproxy 15_dhcpv6_client 02_wlan 15_xhs 15_dhcp_server 20_factorydefault 01_init 10_sysevent_proxy 02_lanHandler 15_qos 04_byoi 15_dnsforwarder 02_managed 25_crond 10_ntpclient 20_routing 02_multinet 04_byoi_gap 15_http_server 10_mldproxy 15_ddnsclient 02_bridge 15_ssh_server 20_ciscoconnect 02_lan 10_firewall 02_syslog 15_ftp_server 15_wecb 15_igd 15_hotspot 02_ipv4 15_dhcpv6_server 10_mcastsnooper 02_wan 01_system
+
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 AM_CFLAGS += -D_COSA_SIM_
-AM_LDFLAGS = -L/var/tmp/pc-rdkb/lib
-AM_LDFLAGS += -lpthread
-AM_LDFLAGS += -lz
-AM_LDFLAGS += -lsrvmgr
-AM_LDFLAGS += -lsyscfg
-AM_LDFLAGS += -lsysevent
-AM_LDFLAGS += -lulog
+AM_LDFLAGS = -lpthread -lz \
+		$(top_builddir)/source/util/libutopiautil.la \
+                $(top_builddir)/source/services/lib/libsrvmgr.la \
+                $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                $(top_builddir)/source/ulog/libulog.la
 
-AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
-hardware_platform = i686-linux-gnu
 
-noinst_LTLIBRARIES = libUtopia_c_registration.la
-libUtopia_c_registration_la_CPPFLAGS = -I$(top_srcdir)/source/cosa/include/linux -I/var/tmp/pc-rdkb/include/dbus-1.0 -I$(top_srcdir)/include -I$(top_srcdir)/source/hdk2/hdk2/include -I$(top_srcdir)/source/pal/upnp/include -I$(top_srcdir)/source/pal/xml/include -I$(top_srcdir)/source/pal/kernel/include -I$(top_srcdir)/source/pal/include -I$(top_srcdir)/source/pal/log/include $(CPPFLAGS)
-libUtopia_c_registration_la_SOURCES = 26_potd.c 15_switchpmon.c 10_fpm.c 02_forwarding.c 10_bootstrap_dns.c 33_cosa.c 03_wan_ipv6.c 20_gwreset.c 10_mcastproxy.c 15_dhcpv6_client.c 02_wlan.c 15_xhs.c 15_dhcp_server.c 20_factorydefault.c 01_init.c 10_sysevent_proxy.c 02_lanHandler.c 15_qos.c 04_byoi.c 15_dnsforwarder.c 02_managed.c 25_crond.c 10_ntpclient.c 20_routing.c REGISTRATION_TEMPLATE.c.txt 02_multinet.c 04_byoi_gap.c 15_http_server.c 10_mldproxy.c 15_ddnsclient.c 02_bridge.c 15_ssh_server.c 20_ciscoconnect.c 02_lan.c 10_firewall.c 02_syslog.c 15_ftp_server.c 15_wecb.c 15_igd.c 15_hotspot.c 02_ipv4.c 15_dhcpv6_server.c 10_mcastsnooper.c 02_wan.c 01_system.c
-libUtopia_c_registration_la_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz -lsrvmgr -lsyscfg -lsysevent -lulog
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/services/lib
+
+26_potd_SOURCES = 26_potd.c
+15_switchpmon_SOURCES = 15_switchpmon.c
+10_fpm_SOURCES = 10_fpm.c
+02_forwarding_SOURCES = 02_forwarding.c
+10_bootstrap_dns_SOURCES = 10_bootstrap_dns.c
+33_cosa_SOURCES = 33_cosa.c
+03_wan_ipv6_SOURCES = 03_wan_ipv6.c
+20_gwreset_SOURCES = 20_gwreset.c
+10_mcastproxy_SOURCES = 10_mcastproxy.c
+15_dhcpv6_client_SOURCES = 15_dhcpv6_client.c
+02_wlan_SOURCES = 02_wlan.c
+15_xhs_SOURCES = 15_xhs.c
+15_dhcp_server_SOURCES = 15_dhcp_server.c
+20_factorydefault_SOURCES = 20_factorydefault.c
+01_init_SOURCES = 01_init.c
+10_sysevent_proxy_SOURCES = 10_sysevent_proxy.c
+02_lanHandler_SOURCES = 02_lanHandler.c
+15_qos_SOURCES = 15_qos.c
+04_byoi_SOURCES = 04_byoi.c
+15_dnsforwarder_SOURCES = 15_dnsforwarder.c
+02_managed_SOURCES = 02_managed.c
+25_crond_SOURCES = 25_crond.c
+10_ntpclient_SOURCES = 10_ntpclient.c
+20_routing_SOURCES = 20_routing.c
+02_multinet_SOURCES = 02_multinet.c
+04_byoi_gap_SOURCES = 04_byoi_gap.c
+15_http_server_SOURCES = 15_http_server.c
+10_mldproxy_SOURCES = 10_mldproxy.c
+15_ddnsclient_SOURCES = 15_ddnsclient.c
+02_bridge_SOURCES = 02_bridge.c
+15_ssh_server_SOURCES = 15_ssh_server.c
+20_ciscoconnect_SOURCES = 20_ciscoconnect.c
+02_lan_SOURCES = 02_lan.c
+10_firewall_SOURCES = 10_firewall.c
+02_syslog_SOURCES = 02_syslog.c
+15_ftp_server_SOURCES = 15_ftp_server.c
+15_wecb_SOURCES = 15_wecb.c
+15_igd_SOURCES = 15_igd.c
+15_hotspot_SOURCES = 15_hotspot.c
+02_ipv4_SOURCES = 02_ipv4.c
+15_dhcpv6_server_SOURCES = 15_dhcpv6_server.c
+10_mcastsnooper_SOURCES = 10_mcastsnooper.c
+02_wan_SOURCES = 02_wan.c
+01_system_SOURCES = 01_system.c
