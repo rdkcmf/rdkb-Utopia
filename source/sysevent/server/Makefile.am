@@ -16,23 +16,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS = -D_ANSC_LINUX
-AM_CFLAGS += -D_ANSC_USER
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-AM_CFLAGS += -D_COSA_SIM_
-AM_LDFLAGS = -L/var/tmp/pc-rdkb/lib
-AM_LDFLAGS += -lpthread
-AM_LDFLAGS += -lz
-AM_LDFLAGS += -lsrvmgr
-AM_LDFLAGS += -lsyscfg
-AM_LDFLAGS += -lsysevent
-AM_LDFLAGS += -lulog
+bin_PROGRAMS = syseventd
 
-AM_CPPFLAGS = -Wall -Werror
+AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -D_COSA_SIM_ -DIPV6=1 -DSET_REPLY_REQUIRED -DUSE_SYSCFG -DSE_SERVER_CODE_DEBUG \
+		-DREDIRECT_CODE_DEBUG
+AM_CFLAGS += -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/sysevent/lib
+
 ACLOCAL_AMFLAGS = -I m4
-hardware_platform = i686-linux-gnu
 
-noinst_LTLIBRARIES = libUtopia_server.la
-libUtopia_server_la_CPPFLAGS = -I$(top_srcdir)/source/cosa/include/linux -I/var/tmp/pc-rdkb/include/dbus-1.0 -I$(top_srcdir)/include -I$(top_srcdir)/source/hdk2/hdk2/include -I$(top_srcdir)/source/pal/upnp/include -I$(top_srcdir)/source/pal/xml/include -I$(top_srcdir)/source/pal/kernel/include -I$(top_srcdir)/source/pal/include -I$(top_srcdir)/source/pal/log/include $(CPPFLAGS)
-libUtopia_server_la_SOURCES = worker_threads.c dataMgr.c triggerMgr.c se_debug.c clientsMgr.c syseventd_main.c utils.c
-libUtopia_server_la_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz -lsrvmgr -lsyscfg -lsysevent -lulog
+
+AM_LDFLAGS =  -lpthread -lz \
+                $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                $(top_builddir)/source/ulog/libulog.la
+
+syseventd_SOURCES = syseventd_main.c worker_threads.c triggerMgr.c clientsMgr.c dataMgr.c se_debug.c utils.c
+

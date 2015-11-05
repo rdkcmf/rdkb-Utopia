@@ -71,6 +71,10 @@ AC_CONFIG_FILES(
 	source/pmon/Makefile
 	source/pal/Makefile
 	source/sysevent/lib/Makefile
+	source/sysevent/control/Makefile
+	source/sysevent/fork_helper/Makefile
+	source/sysevent/proxy/Makefile
+	source/sysevent/server/Makefile
 	source/sysevent/Makefile
 	source/services/lib/Makefile
 	source/services/Makefile
