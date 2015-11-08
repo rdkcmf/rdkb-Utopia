@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = 26_potd 15_switchpmon 10_fpm 02_forwarding 10_bootstrap_dns 33_cosa 03_wan_ipv6 20_gwreset 10_mcastproxy 15_dhcpv6_client 02_wlan 15_xhs 15_dhcp_server 20_factorydefault 01_init 10_sysevent_proxy 02_lanHandler 15_qos 04_byoi 15_dnsforwarder 02_managed 25_crond 10_ntpclient 20_routing 02_multinet 04_byoi_gap 15_http_server 10_mldproxy 15_ddnsclient 02_bridge 15_ssh_server 20_ciscoconnect 02_lan 10_firewall 02_syslog 15_ftp_server 15_wecb 15_igd 15_hotspot 02_ipv4 15_dhcpv6_server 10_mcastsnooper 02_wan 01_system
+bin_PROGRAMS = 26_potd 15_switchpmon 10_fpm 02_forwarding 10_bootstrap_dns 33_cosa 03_wan_ipv6 20_gwreset 10_mcastproxy 15_dhcpv6_client 02_wlan 15_xhs 15_dhcp_server 20_factorydefault 01_init 10_sysevent_proxy 02_lanHandler 15_qos 04_byoi 15_dnsforwarder 02_managed 25_crond 10_ntpclient 20_routing 02_multinet 04_byoi_gap 15_http_server 10_mldproxy 15_ddnsclient 02_bridge 15_ssh_server 20_ciscoconnect 02_lan 10_firewall 02_syslog 15_ftp_server 15_wecb 15_igd 15_hotspot 02_ipv4 15_dhcpv6_server 10_mcastsnooper 02_wan 01_system 15_misc 15_ccsphs
 
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
@@ -77,3 +77,5 @@ AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir
 10_mcastsnooper_SOURCES = 10_mcastsnooper.c
 02_wan_SOURCES = 02_wan.c
 01_system_SOURCES = 01_system.c
+15_misc_SOURCES = 15_misc.c
+15_ccsphs_SOURCES = 15_ccsphs.c
