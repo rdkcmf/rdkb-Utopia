@@ -1,39 +1,4 @@
 #!/bin/sh
-##########################################################################
-# If not stated otherwise in this file or this component's Licenses.txt
-# file the following copyright and licenses apply:
-#
-# Copyright 2015 RDK Management
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-##########################################################################
-
-#######################################################################
-#   Copyright [2014] [Cisco Systems, Inc.]
-# 
-#   Licensed under the Apache License, Version 2.0 (the \"License\");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-# 
-#       http://www.apache.org/licenses/LICENSE-2.0
-# 
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an \"AS IS\" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-#######################################################################
-
 
 #------------------------------------------------------------------
 # Copyright (c) 2010 by Cisco Systems, Inc. All Rights Reserved.
@@ -202,7 +167,8 @@ add_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
-    dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
+    dst_ip="10.0.0.1" # RT-10-580 @ XB3 
+    ip addr add $dst_ip/24 dev $cmdiag_if
     ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
     echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
@@ -217,7 +183,8 @@ del_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
-    dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
+    dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
+    ip addr del $dst_ip/24 dev $cmdiag_if
     ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
     echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
