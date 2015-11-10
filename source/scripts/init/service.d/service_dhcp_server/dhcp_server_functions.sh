@@ -1,37 +1,3 @@
-##########################################################################
-# If not stated otherwise in this file or this component's Licenses.txt
-# file the following copyright and licenses apply:
-#
-# Copyright 2015 RDK Management
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-##########################################################################
-#######################################################################
-#   Copyright [2014] [Cisco Systems, Inc.]
-# 
-#   Licensed under the Apache License, Version 2.0 (the \"License\");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-# 
-#       http://www.apache.org/licenses/LICENSE-2.0
-# 
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an \"AS IS\" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
-#######################################################################
-
 #------------------------------------------------------------------
 # Copyright (c) 2008 by Cisco Systems, Inc. All Rights Reserved.
 #
@@ -448,6 +414,7 @@ prepare_whitelist_urls()
 #     dns_only  (if no dhcp server is required)
 #-----------------------------------------------------------------
 prepare_dhcp_conf () {
+   echo "DHCP SERVER : Prepare DHCP configuration"
    LAN_IFNAME=`syscfg get lan_ifname`
 
   echo -n > $DHCP_STATIC_HOSTS_FILE
@@ -555,46 +522,9 @@ echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
 		echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
    fi
 
-   # Add in A records provisioned via sysevent pool
-   # sysevent setunique dns_a "FQDN,last_octet" 
-   iterator=`sysevent getiterator dns_a`
-   while [ "4294967295" != "$iterator" ]
-   do
-      value=`sysevent getunique dns_a $iterator`
-      if [ -n "$value" ] ; then
-         name=`echo $value | cut -d, -f1`
-         last_octet=`echo $value | cut -d, -f2`
-         ip=$DHCP_FIRST_OCTETS.$last_octet
-         echo "address=/${name}/${ip}" >> $LOCAL_DHCP_CONF
-      fi
-      iterator=`sysevent getiterator dns_a $iterator`
-   done
 
-   # Add in AAAA records provisioned via sysevent pool
-   # sysevent setunique dns_aaaa "FQDN,ip address" 
-   iterator=`sysevent getiterator dns_aaaa`
-   while [ "4294967295" != "$iterator" ]
-   do
-      value=`sysevent getunique dns_aaaa $iterator`
-      if [ -n "$value" ] ; then
-         name=`echo $value | cut -d, -f1`
-         ip=`echo $value | cut -d, -f2`
-         echo "address=/${name}/${ip}" >> $LOCAL_DHCP_CONF
-      fi
-      iterator=`sysevent getiterator dns_aaaa $iterator`
-   done
-
-   # For iRouter, route DNS query to managed domain to eMG
-   MANAGED_DNS=`sysevent get managed_dns`
-   if [ -n "$MANAGED_DNS" ]; then
-      MANAGED_DOMAIN_FILE=/tmp/managed_service/domains.txt
-      if [ -f $MANAGED_DOMAIN_FILE ]; then
-         MANAGED_DOMAIN_LIST=`cat $MANAGED_DOMAIN_FILE`
-         for managed_domain in $MANAGED_DOMAIN_LIST
-         do
-            echo "server=/$managed_domain/$MANAGED_DNS" >> $LOCAL_DHCP_CONF
-         done
-      fi
+   if [ "$LOG_LEVEL" -gt 1 ] ; then
+      echo "$PREFIX""log-dhcp" >> $LOCAL_DHCP_CONF
    fi
 
    if [ "dns_only" != "$3" ] ; then
@@ -614,6 +544,8 @@ echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
    fi
    cat $LOCAL_DHCP_CONF > $DHCP_CONF
    rm -f $LOCAL_DHCP_CONF
+
+   echo "DHCP SERVER : Completed preparing DHCP configuration"
 }
 
 do_extra_pools () {
