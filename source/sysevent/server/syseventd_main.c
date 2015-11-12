@@ -104,7 +104,7 @@ int debug_num_accepts;
  * transient processes
  */
 #define SYSEVENTD_FORK_HELPER_PROCESS "syseventd_fork_helper"
-#define FORK_HELPER_PATH "/fss/gw/sbin"
+#define FORK_HELPER_PATH "/fss/gw/usr/bin"
 /*
  * file where sysevent daemon pid is kept
  */
