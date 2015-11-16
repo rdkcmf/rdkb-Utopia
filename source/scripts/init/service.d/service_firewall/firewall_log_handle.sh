@@ -34,9 +34,9 @@
 #   limitations under the License.
 #######################################################################
 
-/fss/gw/usr/sbin/GenFWLog -c
-/fss/gw/usr/sbin/firewall $*
-/fss/gw/usr/sbin/GenFWLog -gc
+/fss/gw/usr/bin/GenFWLog -c
+/fss/gw/usr/bin/firewall $*
+/fss/gw/usr/bin/GenFWLog -gc
 
 CONN_F=`sysevent get firewall_flush_conntrack`
 WANIP=`sysevent get current_wan_ipaddr`
