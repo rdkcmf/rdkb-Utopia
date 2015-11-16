@@ -136,7 +136,7 @@ service_start ()
       echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE 
 
       # Generate Firewall statistics hourly 
-      echo "58 * * * * /fss/gw/usr/sbin/GenFWLog" >> $CRONTAB_FILE 
+      echo "58 * * * * /fss/gw/usr/bin/GenFWLog" >> $CRONTAB_FILE 
 
       # add a ddns watchdog trigger to be run daily
       echo "#! /bin/sh" > /etc/cron/cron.daily/ddns_daily.sh
@@ -165,7 +165,7 @@ service_start ()
 
 	  #monitor start-misc in case wan is not online
       echo "#! /bin/sh" > /etc/cron/cron.everyminute/misc_handler.sh
-      echo "/fss/gw/usr/sbin/misc_handler.sh" >> /etc/cron/cron.everyminute/misc_handler.sh
+      echo "/fss/gw/etc/utopia/service.d/misc_handler.sh" >> /etc/cron/cron.everyminute/misc_handler.sh
       chmod 700 /etc/cron/cron.everyminute/misc_handler.sh
    fi
    
