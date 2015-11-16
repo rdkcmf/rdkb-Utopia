@@ -34,3 +34,4 @@ lib_LTLIBRARIES = libsyscfg.la
 libsyscfg_la_CPPFLAGS = -I$(top_srcdir)/source/include $(CPPFLAGS)
 libsyscfg_la_SOURCES = syscfg_lib.c syscfg_mtd.c
 libsyscfg_la_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz
+libsyscfg_la_LIBADD = $(top_builddir)/source/ulog/libulog.la
