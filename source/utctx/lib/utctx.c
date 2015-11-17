@@ -1992,3 +1992,5 @@ void Utopia_Free(UtopiaContext* pUtopiaCtx, int fCommit)
         SysEvent_Close(pUtopiaCtx->iEventHandle, pUtopiaCtx->uiEventToken);
     }
 }
+
+

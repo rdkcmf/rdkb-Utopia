@@ -107,6 +107,7 @@ ap_addr() {
 # ENTRY
 #------------------------------------------------------------------
 
+
 #service_init 
 echo "RDKB_SYSTEM_BOOT_UP_LOG : lan_handler called with $1 $2"
 #echo "lan_handler called with $1 $2" > /dev/console
@@ -145,11 +146,13 @@ case "$1" in
             sysevent set current_lan_ipaddr `sysevent get ipv4_${INST}-ipv4addr`
 
             if [ "$RG_MODE" = "2" -a x"ready" != x`sysevent get start-misc` ]; then
+				echo "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2"
                 sysevent set lan-status started
                 firewall
                 execute_dir /etc/utopia/post.d/
             elif [ x"ready" != x`sysevent get start-misc` -a x != x`sysevent get current_wan_ipaddr` -a "0.0.0.0" != `sysevent get current_wan_ipaddr` ]; then
-                sysevent set lan-status started
+				echo "LAN HANDLER : Triggering DHCP server using LAN status based on start misc"
+				sysevent set lan-status started
                 STARTED_FLG=`sysevent get parcon_nfq_status`
 
                 if [ x"$STARTED_FLG" != x"started" ]; then
@@ -161,18 +164,18 @@ case "$1" in
                 isAvailablebrlan1=`ifconfig | grep brlan1`
                 if [ "$isAvailablebrlan1" != "" ]
                 then
-                    echo "Refreshing from handler"
+                    echo "LAN HANDLER : Refreshing LAN from handler"
                     gw_lan_refresh&
                 fi
                	firewall
                 execute_dir /etc/utopia/post.d/
             else
+				echo "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started
                 sysevent set firewall-restart
             fi
 
             #sysevent set desired_moca_link_state up
-            #sysevent set lan-status started
             
             firewall_nfq_handler.sh &             
 
@@ -197,9 +200,12 @@ case "$1" in
 
             #disable dnsmasq when ipv6 only mode and DSlite is disabled
             DSLITE_ENABLED=`sysevent get dslite_enabled`
+	    	DHCP_PROGRESS=`sysevent get dhcp_server-progress`
+			echo "LAN HANDLER : DHCP configuration status got is : $DHCP_PROGRESS"
             if [ "2" = "$SYSCFG_last_erouter_mode" ] && [ "x1" != x$DSLITE_ENABLED ]; then
                 sysevent set dhcp_server-stop		    
-            elif [ "0" != "$SYSCFG_last_erouter_mode" ]; then
+            elif [ "0" != "$SYSCFG_last_erouter_mode" ] && [ "$DHCP_PROGRESS" != "inprogress" ] ; then
+				echo "LAN HANDLER : Triggering dhcp start based on last erouter mode"
                 sysevent set dhcp_server-start
             fi
 
