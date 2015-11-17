@@ -38,3 +38,5 @@ libpal_la_SOURCES = $(top_srcdir)/source/pal/kernel/src/pal_kernel.c \
                     $(top_srcdir)/source/pal/upnp/src/pal_upnp_device.c \
                     $(top_srcdir)/source/pal/xml/src/pal_xml2s.c \
                     $(top_srcdir)/source/pal/xml/src/pal_xml.c
+
+libpal_la_LDFLAGS = -lupnp
