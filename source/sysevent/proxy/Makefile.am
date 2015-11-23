@@ -18,7 +18,7 @@
 ##########################################################################
 bin_PROGRAMS = syseventd_proxy
 
-AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -D_COSA_SIM_
+AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_
 AM_CFLAGS += -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/sysevent/lib
 
 ACLOCAL_AMFLAGS = -I m4
