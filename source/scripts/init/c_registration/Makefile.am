@@ -21,7 +21,6 @@ bin_PROGRAMS = 26_potd 15_switchpmon 10_fpm 02_forwarding 10_bootstrap_dns 33_co
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-AM_CFLAGS += -D_COSA_SIM_
 AM_LDFLAGS = -lpthread -lz \
 		$(top_builddir)/source/util/libutopiautil.la \
                 $(top_builddir)/source/services/lib/libsrvmgr.la \

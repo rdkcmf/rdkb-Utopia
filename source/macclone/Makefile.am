@@ -20,7 +20,6 @@ bin_PROGRAMS = macclone
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-AM_CFLAGS += -D_COSA_SIM_
 AM_LDFLAGS = -L/var/tmp/pc-rdkb/lib
 AM_LDFLAGS += -lpthread
 AM_LDFLAGS += -lz

@@ -18,7 +18,7 @@
 ##########################################################################
 bin_PROGRAMS = syseventd
 
-AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -D_COSA_SIM_ -DIPV6=1 -DSET_REPLY_REQUIRED -DUSE_SYSCFG -DSE_SERVER_CODE_DEBUG \
+AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -DIPV6=1 -DSET_REPLY_REQUIRED -DUSE_SYSCFG -DSE_SERVER_CODE_DEBUG \
 		-DREDIRECT_CODE_DEBUG
 AM_CFLAGS += -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/sysevent/lib
 

@@ -18,7 +18,7 @@
 ##########################################################################
 bin_PROGRAMS = syseventd_fork_helper
 
-AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -D_COSA_SIM_ -DIPV6=1
+AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -DIPV6=1
 AM_CFLAGS += -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util
 
 ACLOCAL_AMFLAGS = -I m4
