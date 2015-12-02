@@ -131,10 +131,8 @@ static int route_set(struct serv_routed *sr)
 
 static int route_unset(struct serv_routed *sr)
 {
-    
-    if (vsystem("ip -6 route del default dev erouter0 table erouter") != 0)
-        printf("rule doen't exist. Continue... \n");
-    if (vsystem("ip -6 rule del iif brlan0 table erouter") != 0)
+    if (vsystem("ip -6 route del default dev erouter0 table erouter"
+            " && ip -6 rule del iif brlan0 table erouter") != 0)
         return -1;
 
     return 0;
@@ -146,7 +144,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16];
     char name_servs[1024] = {0};
     char prefix[64], orig_prefix[64], lan_addr[64];
-    char preferred_lft[16], valid_lft[16], wan_status[32];
+    char preferred_lft[16], valid_lft[16];
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
     char buf[6];
@@ -190,8 +188,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
-    sysevent_get(sefd, setok, "current_wan_state", wan_status, sizeof(wan_status));
-
     if (atoi(preferred_lft) <= 0)
         snprintf(preferred_lft, sizeof(preferred_lft), "300");
     if (atoi(valid_lft) <= 0)
@@ -206,21 +202,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
         if (strlen(prefix))
             fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
-/*
         if (strlen(orig_prefix))
             fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
-*/
-	fprintf(fp, "   ipv6 nd ra-interval 3\n");
 
-	if(strcmp(wan_status,"up" ) != 0 )
-	{
-	        if (strlen(orig_prefix))
-        	    fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
-
-                fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
-	}
-	else
-        	fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+        fprintf(fp, "   ipv6 nd ra-interval 3\n");
+        fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
 
         syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
         if (strcmp(m_flag, "1") == 0)
