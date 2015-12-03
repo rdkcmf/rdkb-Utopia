@@ -63,11 +63,11 @@ service_start() {
     if [ x`sysevent get ipv4_${INST}-status` = x$L3_UP_STATUS  -a x`sysevent get ${SERVICE_NAME}-status` != x"started" ] ; then
         ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service"
 	    ulimit -s 1024 && wecb_master&
-		echo '#!/bin/sh' > /var/wecb_master.sh
-		echo 'ulimit -s 1024 && wecb_master&' >> /var/wecb_master.sh 
-		chmod +x /var/wecb_master.sh
+		echo '#!/bin/sh' > /var/volatile/wecb_master.sh
+		echo 'ulimit -s 1024 && wecb_master&' >> /var/volatile/wecb_master.sh 
+		chmod +x /var/volatile/wecb_master.sh
 		/etc/utopia/service.d/pmon.sh register wecb_master
-		/etc/utopia/service.d/pmon.sh setproc wecb_master wecb_master /var/run/wecb_master.pid "/var/wecb_master.sh" 
+		/etc/utopia/service.d/pmon.sh setproc wecb_master wecb_master /var/run/wecb_master.pid "/var/volatile/wecb_master.sh" 
         sysevent set ${SERVICE_NAME}-errinfo
         sysevent set ${SERVICE_NAME}-status "started"
     fi
