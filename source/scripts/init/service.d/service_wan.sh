@@ -87,6 +87,9 @@ echo "RDKB_SYSTEM_BOOT_UP_LOG : service_wan.sh script called to bring up WAN INT
 echo ">>>>> $1"
 set -x
 
+touch /var/resolv.conf
+touch /var/tmp/resolv.conf
+
 SERVICE_NAME=wan
 
 case "$1" in
