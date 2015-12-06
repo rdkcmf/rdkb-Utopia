@@ -170,20 +170,19 @@ static int dhcp_stop(const char *ifname)
 static int dhcp_start(const char *ifname)
 {
     int err;
-/*
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                 "-H DocsisGateway -p %s -B -b 1",
                 ifname, DHCPC_PID_FILE);
-*/
 
+/*
 	err = vsystem("strace -o /tmp/stracelog -f ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
               "-H DocsisGateway -p %s -B -b 1",
               ifname, DHCPC_PID_FILE);
-
+*/
 	if (err != 0)
                    fprintf(stderr, "%s: fail to launch erouter plugin\n", __FUNCTION__);
 
-	err = 0; //temporary hack
+	err = 0; //temporary hack for ARRISXB3-3748
 
     return err == 0 ? 0 : -1;
 }
@@ -194,7 +193,8 @@ static int route_config(const char *ifname)
                 "ip rule add oif %s lookup erouter && "
                 "ip -6 rule add oif %s lookup erouter ",
                 ifname, ifname, ifname) != 0)
-        return -1;
+	return 0; //temporary hack for ARRISXB3-3748
+        //hack hack hack return -1;
 
     return 0;
 }
@@ -205,7 +205,8 @@ static int route_deconfig(const char *ifname)
                 "ip rule del oif %s lookup erouter && "
                 " ip -6 rule del oif %s lookup erouter ",
                 ifname, ifname, ifname) != 0)
-        return -1;
+	return 0; //temporary hack for ARRISXB3-3748
+        //hack hack hack return -1;
 
     return 0;
 }
@@ -361,6 +362,8 @@ static int wan_iface_down(struct serv_wan *sw)
     int err;
 
     err = vsystem("ip -4 link set %s down", sw->ifname);
+
+	err = 0; //temporary hack for ARRISXB3-3748
     return err == 0 ? 0 : -1;
 }
 
@@ -649,19 +652,22 @@ static int wan_static_start(struct serv_wan *sw)
 
     if(vsystem("ip -4 addr add %s/%s broadcast + dev %s", wan_ipaddr, wan_netmask, sw->ifname) != 0) {
         fprintf(stderr, "%s: Add address to interface %s failed!\n", __FUNCTION__, sw->ifname);
-        return -1;
+	return 0; //temporary hack for ARRISXB3-3748
+        //hack hack hack return -1;
     }
 
     if(vsystem("ip -4 link set %s up", sw->ifname) != 0) {
         fprintf(stderr, "%s: Set interface %s up failed!\n", __FUNCTION__, sw->ifname);
-        return -1;
+	return 0; //temporary hack for ARRISXB3-3748
+        //hack hack hack return -1;
     }
 
     if(vsystem("ip -4 route add table erouter default dev %s via %s && "
                 "ip rule add from %s lookup erouter", sw->ifname, wan_default_gw, wan_ipaddr) != 0)
     {
         fprintf(stderr, "%s: router related config failed!\n", __FUNCTION__);
-        return -1;
+	return 0; //temporary hack for ARRISXB3-3748
+        //hack hack hack return -1;
     }
 
     /*set related sysevent*/
