@@ -170,10 +170,20 @@ static int dhcp_stop(const char *ifname)
 static int dhcp_start(const char *ifname)
 {
     int err;
-
+/*
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                 "-H DocsisGateway -p %s -B -b 1",
                 ifname, DHCPC_PID_FILE);
+*/
+
+	err = vsystem("strace -o /tmp/stracelog -f ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
+              "-H DocsisGateway -p %s -B -b 1",
+              ifname, DHCPC_PID_FILE);
+
+	if (err != 0)
+                   fprintf(stderr, "%s: fail to launch erouter plugin\n", __FUNCTION__);
+
+	err = 0; //temporary hack
 
     return err == 0 ? 0 : -1;
 }
