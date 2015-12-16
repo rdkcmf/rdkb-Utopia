@@ -60,7 +60,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
-   system("insmod /fss/gw/lib/modules/2.6.39.3/drivers/net/brMtuMod.ko");
+   system("modprobe brMtuMod");
 }
 
 void srv_unregister(void) {
