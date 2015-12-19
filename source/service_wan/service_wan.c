@@ -251,10 +251,9 @@ static int wan_start(struct serv_wan *sw)
 
 done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
-    // ARRISXB3-3867 - Disable captive portal temporarily
-    //printf("Network Response script called to capture network response\n ");
+    printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
-    //system("sh /etc/network_response.sh &");
+    system("sh /etc/network_response.sh &");
     return 0;
 }
 
