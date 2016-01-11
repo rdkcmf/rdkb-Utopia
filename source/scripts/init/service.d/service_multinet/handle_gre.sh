@@ -54,7 +54,7 @@
 
 TYPE=Gre
 
-GRE_IFNAME="gretap1"
+GRE_IFNAME="gretap_0"
 
 source /etc/utopia/service.d/ut_plat.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
