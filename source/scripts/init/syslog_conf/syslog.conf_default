@@ -1,6 +1,6 @@
 kern.info  /var/log/kernel
 local6.warning /var/log/docsis
-local5.notice /nvram2/log/system/systemlog
-local4.notice /nvram2/log/event/eventlog
-*.=crit /nvram2/log/critlog
+local5.notice /nvram/log/system/systemlog
+local4.notice /nvram/log/event/eventlog
+*.=crit /nvram/log/critlog
 user.* /var/log/user
