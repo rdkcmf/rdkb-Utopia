@@ -52,6 +52,110 @@ LOG_LEVEL_FILE=/nvram/syslog_level
 LOG_CONF_FILE=/nvram/syslog.conf
 SYSLOG_CONF_FILE=/etc/syslog.conf
 SYSLOG_DEFAULT_CONF_FILE=/etc/syslog.conf_default
+DPC3939_OLD_FWLOG_FILE_PATH=/nvram/log/firewall
+DPC3939_OLD_EVTLOG=/nvram/log/event/eventlog
+DPC3939_OLD_SYSTERMLOG=/nvram/log/system/systemlog
+
+# In R1.3, Log path is under /nvram/log
+# > R1.4 Log path is under /nvram2/log
+# Move txt file into tar package
+old_sysevtlog_handle(){
+    if [ -e "$1"".0" ] || [  -e "$1" ]
+    then
+        FILE=""
+        DIR=/tmp/`date +%Y%m%d%H%M%s`
+        mkdir -p $DIR
+        cd $DIR
+        NEW_NAME=`syscfg get $2`
+
+        if [ -z $NEW_NAME ]
+        then
+            syscfg set $2 1
+            syscfg commit
+            NEW_NAME=1
+        else
+            let "NEW_NAME++"
+            syscfg set $2 $NEW_NAME
+            syscfg commit
+        fi
+
+        if [ -e "$1"".0" ]
+        then
+
+            cp $1.0 $NEW_NAME
+            FILE="$1.0"
+            let "NEW_NAME++"
+            syscfg set $2 $NEW_NAME
+            syscfg commit
+        fi
+
+        if [ -e "$1" ]
+        then
+            cp $1 $NEW_NAME
+            FILE="$FILE"" $1"
+            let "NEW_NAME++"
+            syscfg set $2 $NEW_NAME
+            syscfg commit
+        fi
+
+        ZIP="$1.$POSTFIX"
+        NEW_ZIP="${1##*/}.$POSTFIX"
+        #un-compress log file
+        if [ -e $ZIP ]
+        then
+             $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP 
+             ZIP_SZ=$(ls -l $ZIP | awk '{print $3}')
+        else
+             ZIP_SZ=0;
+        fi
+        $COMPRESS_CMD $NEW_ZIP ./* 
+        $WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
+        for oldfile in $FILE ;
+        do
+            echo "$WT_LOCK $oldfile -c rm -r $oldfile"
+            $WT_LOCK $oldfile -c rm -r $oldfile
+        done;
+
+        rm -rf $DIR     
+    fi
+}
+
+old_fwlog_handle(){
+    MERGE=0 
+    # find old log path
+    if [ -e "$1" ]
+    then 
+        for filename in `ls $1`;
+        do
+            if [ "$filename" != "fwlog.$POSTFIX" ]
+            then
+                MERGE=1
+            fi
+        done
+
+        if [ "$MERGE" == "1" ]
+        then
+            echo "merge log"
+            for filename in `ls $2`;
+            do
+                if [ "$filename" != "fwlog.$POSTFIX" ]
+                then
+                    tmp_file="$1/${filename##*/}"
+                    cat $2/$filename >> $tmp_file 
+                fi
+            done
+            echo "Move all txt log to new location"
+            for filename in `ls $1` ;
+            do
+                if [ "$filename" != "fwlog.$POSTFIX" ]
+                then
+                    cp -f $1/$filename $2
+                    $WT_LOCK $1/$filename -c rm -r $1/$filename
+                fi
+            done
+        fi
+    fi
+}
 
 start_syslog(){
     if [ -e $SYSLOG_CONF_FILE ]
@@ -97,14 +201,16 @@ start_syslog(){
 
 get_log_file()
 {
-TEMP=`syscfg get $1`
+#TEMP=`syscfg get $1`
+TEMP=`sysevent get $1`
 if [ "$TEMP" == "" ]
 then
     TEMP=$(grep -e $2 /etc/syslog.conf | awk '{print $2}')
     if [ "$TEMP" != "" ]
     then
-        syscfg set $1 $TEMP
-        syscfg commit
+        #syscfg set $1 $TEMP
+        #syscfg commit
+        sysevent set $1 $TEMP
     fi
 fi
 # !
@@ -114,11 +220,11 @@ echo $TEMP
 remove_log()
 {
     FILE="$1"
-#echo FILE $FILE
+
     if [ ! -z $FILE ]
     then
         DIR=${FILE%/*}
-#echo $DIR
+
         if [ -d $DIR ]
         then
             echo "rm -rf $1*"
@@ -146,6 +252,9 @@ compress()
         ZIP="$V_SYS_LOG_FILE.$POSTFIX"
         NEW_ZIP="${V_SYS_LOG_FILE##*/}.$POSTFIX"
         ZIP_SZ_MAX=`syscfg get SYS_LOG_COMMPRESSED_FILE_SIZE`
+        # get R1.3 old log path
+        OLD_LOG_DIR_13=${DPC3939_OLD_SYSTERMLOG%/*}
+
         if [ ! -e $FILE ]
         then
             exit 0;
@@ -169,6 +278,8 @@ compress()
         ZIP="$V_EVT_LOG_FILE.$POSTFIX"
         NEW_ZIP="${V_EVT_LOG_FILE##*/}.tar.bz2"
         ZIP_SZ_MAX=`syscfg get EVT_LOG_COMMPRESSED_FILE_SIZE`
+        # get R1.3 old log path
+        OLD_LOG_DIR_13=${DPC3939_OLD_EVTLOG%/*}
         if [ ! -e $FILE ]
         then
             exit 0;
@@ -191,6 +302,8 @@ compress()
         ZIP="$V_FW_LOG_FILE_PATH/fwlog.$POSTFIX"
         NEW_ZIP="fwlog.$POSTFIX"
         ZIP_SZ_MAX=`syscfg get FW_LOG_COMPRESSED_FILE_SIZE`
+        # get old log path
+        OLD_LOG_DIR_13=${DPC3939_OLD_FWLOG_FILE_PATH}
         if [ -z "$FILE" ]
         then
             exit 0;
@@ -231,6 +344,11 @@ compress()
         if [ ! -z "$OLD_FILE" ]
         then
             rm $OLD_FILE
+            # Remove old R1.3 log under /nvram
+            if [ -e $OLD_LOG_DIR_13 ]
+            then
+                rm -rf $OLD_LOG_DIR_13
+            fi
         fi
 
         $COMPRESS_CMD $NEW_ZIP ./* 
@@ -256,13 +374,28 @@ uncompress()
     $RD_LOCK $TAR -c $UNCOMPRESS_CMD $TAR 
 }
 
-V_FW_LOG_FILE_PATH=`syscfg get FW_LOG_FILE_PATH`
-V_EVT_LOG_FILE="$(get_log_file EVT_LOG_FILE eventlog)"
-V_SYS_LOG_FILE="$(get_log_file SYS_LOG_FILE systemlog)"
+V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
+if [ -z $V_FW_LOG_FILE_PATH ]
+then
+    V_FW_LOG_FILE_PATH=`syscfg get FW_LOG_FILE_PATH`
+fi
+
+V_EVT_LOG_FILE="$(get_log_file EVT_LOG_FILE_V2 eventlog)"
+V_SYS_LOG_FILE="$(get_log_file SYS_LOG_FILE_V2 systemlog)"
 if [ -z $V_FW_LOG_FILE_PATH ] || [ -z $V_EVT_LOG_FILE ] || [ -z $V_FW_LOG_FILE_PATH ]
 then
     exit 0;
 fi
+
+V_HANDLE_OLD_LOG_13_FLG=`sysevent get R13_LOG_HANDLE_FLG`
+if [ -z $V_HANDLE_OLD_LOG_13_FLG ]
+then
+    old_sysevtlog_handle $DPC3939_OLD_SYSTERMLOG SYS_LOG_F_INSTANCE 
+    old_sysevtlog_handle $DPC3939_OLD_EVTLOG EVT_LOG_F_INSTANCE 
+    old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH $V_FW_LOG_FILE_PATH 
+    sysevent set R13_LOG_HANDLE_FLG 1
+fi 
+
 
 if [ "$1" == "reset" ]
 then 
@@ -305,6 +438,7 @@ fi
 
 if [ "$1" == "uncompress_syslog" ]
 then
+    uncompress "$DPC3939_OLD_SYSTERMLOG.tar.bz2" $2
     uncompress "$V_SYS_LOG_FILE.tar.bz2" $2
 fi
 
@@ -315,6 +449,7 @@ fi
 
 if [ "$1" == "uncompress_evtlog" ]
 then
+    uncompress "$DPC3939_OLD_EVTLOG.tar.bz2" $2 
     uncompress "$V_EVT_LOG_FILE.tar.bz2" $2
 fi
 
@@ -325,6 +460,7 @@ fi
 
 if [ "$1" == "uncompress_fwlog" ]
 then
+    uncompress "$DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2" $2
     uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" $2
 fi
 
