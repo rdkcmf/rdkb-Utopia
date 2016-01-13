@@ -206,12 +206,12 @@ fi
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
 if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
    # Note: Only new P-UNIT firmwares and Linux drivers (>= 1.1.x) support this.
-   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Reset duration from shadow register"|awk -F ' |\.' '{ print $9 }'`
+   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Reset duration from shadow register"|awk -F '[ |\.]' '{ print $9 }'`
    # Clear the Reset duration from shadow register value
    # echo "1" > /proc/P-UNIT/clr_reset_duration_shadow
    clean_reset_duration;
 elif cat /proc/P-UNIT/status | grep -q "Last reset duration"; then
-   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk -F ' |\.' '{ print $7 }'`
+   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk -F '[ |\.]' '{ print $7 }'`
 else
    echo "[utopia][init] Cannot read the reset duration value from /proc/P-UNIT/status"
 fi
