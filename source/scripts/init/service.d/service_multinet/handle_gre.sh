@@ -59,6 +59,8 @@ GRE_IFNAME="gretap_0"
 source /etc/utopia/service.d/ut_plat.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
+BINPATH=/fss/gw/usr/ccsp
+
 MTU_VAL=1400
 MSS_VAL=1360
 
@@ -382,13 +384,13 @@ set_ssids_enabled() {
     
     get_ssids $1
     for instance in $ssids; do
-        ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_RouterEnabled bool $2 &
+       $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_RouterEnabled bool $2 &
         eval eval mask=\\\${mask_\${ssid_${instance}_radio}}
         eval eval mask_\${ssid_${instance}_radio}=$(( (2 ** ($instance - 1)) + $mask )) 
     done
     for rad in $radios; do
-        eval ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySettingSSID int \${mask_${rad}}
-        ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySetting bool true &
+        eval $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySettingSSID int \${mask_${rad}}
+        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySetting bool true &
     done
     
     sysevent set hotspot_ssids_up $2
@@ -398,7 +400,7 @@ set_ssids_enabled() {
 set_apisolation() {
     get_ssids $1
     for instance in $ssids; do
-        ccsp_bus_client_tool eRT setv Device.WiFi.AccessPoint.$instance.IsolationEnable bool true
+        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.AccessPoint.$instance.IsolationEnable bool true
     done
 }
 
@@ -406,7 +408,7 @@ set_apisolation() {
 kick_clients () {
     get_ssids $1
     for instance in $ssids; do
-        ccsp_bus_client_tool eRT setv Device.WiFi.AccessPoint.${instance}.X_CISCO_COM_KickAssocDevices bool true &
+        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.AccessPoint.${instance}.X_CISCO_COM_KickAssocDevices bool true &
     done
 }
 #args: hotspot instance
