@@ -424,7 +424,7 @@ prepare_dhcp_conf () {
    else 
       PREFIX=
    fi
-   calculate_dhcp_range $1 $2
+   #calculate_dhcp_range $1 $2
 
    echo -n > $LOCAL_DHCP_CONF
 
@@ -436,6 +436,7 @@ prepare_dhcp_conf () {
 
     
    # If redirection flag is "true" that means we are in factory default condition
+   CAPTIVEPORTAL_ENABLED=`syscfg get CaptivePortal_Enable`
    REDIRECTION_ON=`syscfg get redirection_flag`
    WIFI_NOT_CONFIGURED=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
 
@@ -450,21 +451,24 @@ do
 done
 
 echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
+echo "DHCP SERVER : CaptivePortal_Enabled is $CAPTIVEPORTAL_ENABLED"
 
-   if [ "$NETWORKRESPONSESTATUS" = "204" ] && [ "$REDIRECTION_ON" = "true" ] && [ "$WIFI_NOT_CONFIGURED" = "true" ]
-   then
-      	CAPTIVE_PORTAL_MODE="true"
-		echo "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE"
-		if [ -e "/nvram/reverted" ]
-		then
-			echo "DHCP SERVER : Removing reverted flag"
-			rm -f /nvram/reverted
-		fi
-   else
-        CAPTIVE_PORTAL_MODE="false"
-		echo "DHCP SERVER : WiFi SSID and Passphrase are already modified or no network response ,set CAPTIVE_PORTAL_MODE to false"
-   fi
-
+if [ "$CAPTIVEPORTAL_ENABLED" == "true" ]
+then
+	   if [ "$NETWORKRESPONSESTATUS" = "204" ] && [ "$REDIRECTION_ON" = "true" ] && [ "$WIFI_NOT_CONFIGURED" = "true" ]
+	   then
+	      	CAPTIVE_PORTAL_MODE="true"
+			echo "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE"
+			if [ -e "/nvram/reverted" ]
+			then
+				echo "DHCP SERVER : Removing reverted flag"
+				rm -f /nvram/reverted
+			fi
+	   else
+		CAPTIVE_PORTAL_MODE="false"
+			echo "DHCP SERVER : WiFi SSID and Passphrase are already modified or no network response ,set CAPTIVE_PORTAL_MODE to false"
+	   fi
+fi
   
    echo "domain-needed" >> $LOCAL_DHCP_CONF
    echo "bogus-priv" >> $LOCAL_DHCP_CONF
@@ -489,7 +493,7 @@ echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
 	echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
    fi
 
-   echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
+   #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
    echo "expand-hosts" >> $LOCAL_DHCP_CONF
 
    # if we are provisioned to use the wan domain name, the we do so
@@ -511,7 +515,7 @@ echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
    if [ "$3" = "dns_only" ] ; then
       echo "no-dhcp-interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
    fi 
-   echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+   #echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-leasefile=$DHCP_LEASE_FILE" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-script=$DHCP_ACTION_SCRIPT" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-lease-max=$DHCP_NUM" >> $LOCAL_DHCP_CONF
@@ -530,6 +534,12 @@ echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
    if [ "dns_only" != "$3" ] ; then
       prepare_dhcp_conf_static_hosts
       prepare_dhcp_options
+   fi
+   
+   if [ "started" = $CURRENT_LAN_STATE ]; then
+      calculate_dhcp_range $1 $2
+      echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
+      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
    fi
    
    do_extra_pools
