@@ -1,9 +1,11 @@
 #!/bin/sh
 
-if [ ! -d "/var/tmp/logs" ]; then
-    mkdir /var/tmp/logs
+source /fss/gw/etc/utopia/service.d/log_env_var.sh
+
+if [ ! -d "$LOG_PATH" ]; then
+    mkdir $LOG_PATH
 fi
 
-CONSOLEFILE="/var/tmp/logs/ArmConsolelog.txt.0"
+
 exec 3>&1 4>&2 >>$CONSOLEFILE 2>&1
 

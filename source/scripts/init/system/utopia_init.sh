@@ -352,7 +352,13 @@ execute_dir $INIT_DIR&
 SWITCH_HANDLER=/etc/utopia/service.d/service_multinet/handle_sw.sh
 vconfig add l2sd0 500
 $SWITCH_HANDLER addVlan 0 500 sw_6
-ifconfig l2sd0.500 192.168.101.1 
+ifconfig l2sd0.500 192.168.101.1
+
+#--------Set up Radius vlan -------------------
+vconfig add l2sd0 4090
+$SWITCH_HANDLER addVlan 0 4090 sw_6
+ifconfig l2sd0.4090 192.168.251.1 netmask 255.255.255.0 up
+ip rule add from all iif l2sd0.4090 lookup erouter
 
 #--------Marvell LAN-side egress flood mitigation----------------
 echo "88E6172: Do not egress flood unicast with unknown DA"

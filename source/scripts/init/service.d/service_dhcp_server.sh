@@ -104,28 +104,33 @@ fi
 lan_status_change ()
 {
 
-   if [ "stopped" = "$1" ] ; then
-         sysevent set dns-errinfo
-         sysevent set dhcp_server_errinfo
-         wait_till_end_state dns
-         wait_till_end_state dhcp_server
-         $PMON unsetproc dhcp_server
-         killall `basename $SERVER`
-         rm -f $PID_FILE
-         sysevent set dns-status stopped
-         sysevent set dhcp_server-status stopped
-   elif [ "started" = "$1" -a "started" = "$CURRENT_LAN_STATE" ] ; then
+   echo "SERVICE DHCP : Inside lan status change with $1 and $2"
+   echo "SERVICE DHCP : Current lan status is : $CURRENT_LAN_STATE"
+#   if [ "stopped" = "$1" ] ; then
+#         sysevent set dns-errinfo
+#         sysevent set dhcp_server_errinfo
+#         wait_till_end_state dns
+#         wait_till_end_state dhcp_server
+#         $PMON unsetproc dhcp_server
+#         killall `basename $SERVER`
+#         rm -f $PID_FILE
+#         sysevent set dns-status stopped
+#         sysevent set dhcp_server-status stopped
+#   elif [ "started" = "$1" -a "started" = "$CURRENT_LAN_STATE" ] ; then
       if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
          # set hostname and /etc/hosts cause we are the dns forwarder
          prepare_hostname
          # also prepare dns part of dhcp conf cause we are the dhcp server too
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
+		 echo "SERVICE DHCP : Start dhcp-server from lan status change"
          $SERVER -u nobody -P 4096 -C $DHCP_CONF --enable-dbus
          sysevent set dns-status started
       else
+	     sysevent set lan_status-dhcp started
+	     echo "SERVICE DHCP :  Call start DHCP server from lan status change with $2"
          dhcp_server_start $2
       fi
-   fi
+#   fi
 }
 
 #-----------------------------------------------------------------
@@ -140,7 +145,7 @@ lan_status_change ()
 #-----------------------------------------------------------------
 restart_request ()
 {
-   if [ "started" != "$CURRENT_LAN_STATE" ] ; then
+   if [ "started" != "`sysevent get dhcp_server-status`" ] ; then
       exit 0
    fi
    sysevent set dns-errinfo
@@ -305,11 +310,14 @@ dhcp_server_start ()
 	  return 0
    fi
    
-   if [ "started" != "$CURRENT_LAN_STATE" ] ; then
+   #if [ "started" != "$CURRENT_LAN_STATE" ] ; then
+   if [ "started" != "`sysevent get lan_status-dhcp`" ] ; then
       rm -f /var/tmp/lan_not_restart
       exit 0
    fi
-   
+
+   sysevent set dhcp_server-progress inprogress
+   echo "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start"
    sysevent set ${SERVICE_NAME}-errinfo
    wait_till_end_state dhcp_server
    wait_till_end_state dns
@@ -371,12 +379,14 @@ dhcp_server_start ()
    echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
    cat $RESOLV_CONF
 
-   echo "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server"
+   echo "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server from dhcp_server_start"
    $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF --enable-dbus
 
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
    sysevent set dns-status started
    sysevent set dhcp_server-status started
+   sysevent set dhcp_server-progress completed
+   echo "DHCP SERVICE :dhcp_server-progress is set to completed "
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
          echo "#!/bin/sh" > $TIME_FILE
          echo "   sysevent set dhcp_server-restart lan_not_restart" >> $TIME_FILE
@@ -400,9 +410,8 @@ dhcp_server_start ()
      else
           rm -f /var/tmp/lan_not_restart
           echo "lan_not_restart found! Don't restart lan!"
-        fi
      fi
-
+   fi
 }
 
 #-----------------------------------------------------------------
@@ -504,6 +513,7 @@ service_init
 
 case "$1" in
    ${SERVICE_NAME}-start)
+	  echo "SERVICE DHCP : Got start.. call dhcp_server_start"
       dhcp_server_start
       ;;
    ${SERVICE_NAME}-stop)
@@ -511,6 +521,7 @@ case "$1" in
       ;;
    ${SERVICE_NAME}-restart)
       #dhcp_server_stop
+	  echo "SERVICE DHCP : Got restart with $2.. Call dhcp_server_start"
       dhcp_server_start $2
       ;;
    dns-start)
@@ -523,6 +534,7 @@ case "$1" in
       dns_start
       ;;
    lan-status)
+	  echo "SERVICE DHCP : Got lan_status"
       lan_status_change $CURRENT_LAN_STATE
 	  #if [ "$CURRENT_LAN_STATE" = "started" -a ! -f /tmp/fresh_start ]; then
 	  #	  gw_lan_refresh&
@@ -549,6 +561,7 @@ case "$1" in
       ;;
     ipv4_*-status)
         if [ x"up" = x$2 ]; then
+	        echo "SERVICE DHCP : Got ipv4 status"
             lan_status_change started lan_not_restart 
         fi
       ;;

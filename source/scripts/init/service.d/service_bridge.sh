@@ -167,8 +167,7 @@ add_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
-    dst_ip="10.0.0.1" # RT-10-580 @ XB3 
-    ip addr add $dst_ip/24 dev $cmdiag_if
+    dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
     ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
     echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
@@ -183,87 +182,86 @@ del_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
-    dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
-    ip addr del $dst_ip/24 dev $cmdiag_if
+    dst_ip=`ip -4 addr show $cmdiag_if | awk -F'[ /]+' '/inet/ {print $3}'`
     ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
     echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
 
 #--------------------------------------------------------------
-# do_start
+# do_start (deprecated)
 #--------------------------------------------------------------
-do_start()
-{
-   ulog bridge status "stopping firewall"
-   stop_firewall
-   ulog bridge status "firewall status is now `sysevent get firewall-status`"
-
-   ulog bridge status "reprogramming ethernet switch to remove vlans"
-   #disable_vlan_mode_on_ethernet_switch
-
-   ulog bridge status "bringing up lan interface in bridge mode"
-   bringup_ethernet_interfaces
-   bringup_wireless_interfaces
-   
-   brctl addbr $SYSCFG_lan_ifname
-   brctl setfd $SYSCFG_lan_ifname 0
-   #brctl stp $SYSCFG_lan_ifname on
-   brctl stp $SYSCFG_lan_ifname off
-
-
-   # enslave interfaces to the bridge
-   enslave_a_interface $SYSCFG_wan_physical_ifname $SYSCFG_lan_ifname
-   for loop in $LAN_IFNAMES
-   do
-      enslave_a_interface $loop $SYSCFG_lan_ifname
-   done
-
-   # bring up the bridge
-   ip link set $SYSCFG_lan_ifname up 
-   ip link set $SYSCFG_lan_ifname allmulticast on
-
-   ifconfig $SYSCFG_lan_ifname hw ether `get_mac $SYSCFG_wan_physical_ifname` 
-
-   # bridge_mode 1 is dhcp, bridge_mode 2 is static
-   if [ "2" = "$SYSCFG_bridge_mode" ] && [ -n "$SYSCFG_bridge_ipaddr" ] && [ -n "$SYSCFG_bridge_netmask" ] && [ -n "$SYSCFG_bridge_default_gateway" ]; then
-      RESOLV_CONF="/etc/resolv.conf"
-      echo -n  > $RESOLV_CONF
-      if [ -n "$SYSCFG_bridge_domain" ] ; then
-         echo "search $SYSCFG_bridge_domain" >> $RESOLV_CONF
-      fi
-      if [ -n "$SYSCFG_bridge_nameserver1" ]  && [ "0.0.0.0" !=  "$SYSCFG_bridge_nameserver1" ] ; then
-         echo "nameserver $SYSCFG_bridge_nameserver1" >> $RESOLV_CONF
-      fi
-      if [ -n "$SYSCFG_bridge_nameserver2" ]  && [ "0.0.0.0" !=  "$SYSCFG_bridge_nameserver2" ] ; then
-         echo "nameserver $SYSCFG_bridge_nameserver2" >> $RESOLV_CONF
-      fi
-      if [ -n "$SYSCFG_bridge_nameserver3" ]  && [ "0.0.0.0" !=  "$SYSCFG_bridge_nameserver3" ] ; then
-         echo "nameserver $SYSCFG_bridge_nameserver3" >> $RESOLV_CONF
-      fi
-      ip -4 addr add  $SYSCFG_bridge_ipaddr/$SYSCFG_bridge_netmask broadcast + dev $SYSCFG_lan_ifname
-      ip -4 route add default dev $SYSCFG_lan_ifname via $SYSCFG_bridge_default_gateway
-      # set sysevent tuple showing current state
-      sysevent set bridge_ipv4_ipaddr $SYSCFG_bridge_ipaddr
-      sysevent set bridge_ipv4_subnet $SYSCFG_bridge_netmask
-      sysevent set bridge_default_router $SYSCFG_bridge_default_gateway
-
-   else
-      udhcpc -S -b -i $SYSCFG_lan_ifname -h $SYSCFG_hostname -p $UDHCPC_PID_FILE  --arping -s $UDHCPC_SCRIPT 
-      register_dhcp_client_handlers
-   fi
-
- #  vendor_block_dos_land_attack
-
-   bringup_wireless_daemons
-
-   prepare_hostname
-   
-   if [ "1" = "`sysevent get byoi_bridge_mode`" ]; then
-      sysevent set dns-start
-   fi
-
-   ulog bridge status "lan interface up"
-}
+# do_start()
+# {
+#    ulog bridge status "stopping firewall"
+#    stop_firewall
+#    ulog bridge status "firewall status is now `sysevent get firewall-status`"
+# 
+#    ulog bridge status "reprogramming ethernet switch to remove vlans"
+#    #disable_vlan_mode_on_ethernet_switch
+# 
+#    ulog bridge status "bringing up lan interface in bridge mode"
+#    bringup_ethernet_interfaces
+#    bringup_wireless_interfaces
+#    
+#    brctl addbr $SYSCFG_lan_ifname
+#    brctl setfd $SYSCFG_lan_ifname 0
+#    #brctl stp $SYSCFG_lan_ifname on
+#    brctl stp $SYSCFG_lan_ifname off
+# 
+# 
+#    # enslave interfaces to the bridge
+#    enslave_a_interface $SYSCFG_wan_physical_ifname $SYSCFG_lan_ifname
+#    for loop in $LAN_IFNAMES
+#    do
+#       enslave_a_interface $loop $SYSCFG_lan_ifname
+#    done
+# 
+#    # bring up the bridge
+#    ip link set $SYSCFG_lan_ifname up 
+#    ip link set $SYSCFG_lan_ifname allmulticast on
+# 
+#    ifconfig $SYSCFG_lan_ifname hw ether `get_mac $SYSCFG_wan_physical_ifname` 
+# 
+#    # bridge_mode 1 is dhcp, bridge_mode 2 is static
+#    if [ "2" = "$SYSCFG_bridge_mode" ] && [ -n "$SYSCFG_bridge_ipaddr" ] && [ -n "$SYSCFG_bridge_netmask" ] && [ -n "$SYSCFG_bridge_default_gateway" ]; then
+#       RESOLV_CONF="/etc/resolv.conf"
+#       echo -n  > $RESOLV_CONF
+#       if [ -n "$SYSCFG_bridge_domain" ] ; then
+#          echo "search $SYSCFG_bridge_domain" >> $RESOLV_CONF
+#       fi
+#       if [ -n "$SYSCFG_bridge_nameserver1" ]  && [ "0.0.0.0" !=  "$SYSCFG_bridge_nameserver1" ] ; then
+#          echo "nameserver $SYSCFG_bridge_nameserver1" >> $RESOLV_CONF
+#       fi
+#       if [ -n "$SYSCFG_bridge_nameserver2" ]  && [ "0.0.0.0" !=  "$SYSCFG_bridge_nameserver2" ] ; then
+#          echo "nameserver $SYSCFG_bridge_nameserver2" >> $RESOLV_CONF
+#       fi
+#       if [ -n "$SYSCFG_bridge_nameserver3" ]  && [ "0.0.0.0" !=  "$SYSCFG_bridge_nameserver3" ] ; then
+#          echo "nameserver $SYSCFG_bridge_nameserver3" >> $RESOLV_CONF
+#       fi
+#       ip -4 addr add  $SYSCFG_bridge_ipaddr/$SYSCFG_bridge_netmask broadcast + dev $SYSCFG_lan_ifname
+#       ip -4 route add default dev $SYSCFG_lan_ifname via $SYSCFG_bridge_default_gateway
+#       # set sysevent tuple showing current state
+#       sysevent set bridge_ipv4_ipaddr $SYSCFG_bridge_ipaddr
+#       sysevent set bridge_ipv4_subnet $SYSCFG_bridge_netmask
+#       sysevent set bridge_default_router $SYSCFG_bridge_default_gateway
+# 
+#    else
+#       udhcpc -S -b -i $SYSCFG_lan_ifname -h $SYSCFG_hostname -p $UDHCPC_PID_FILE  --arping -s $UDHCPC_SCRIPT 
+#       register_dhcp_client_handlers
+#    fi
+# 
+#  #  vendor_block_dos_land_attack
+# 
+#    bringup_wireless_daemons
+# 
+#    prepare_hostname
+#    
+#    if [ "1" = "`sysevent get byoi_bridge_mode`" ]; then
+#       sysevent set dns-start
+#    fi
+# 
+#    ulog bridge status "lan interface up"
+# }
 
 #--------------------------------------------------------------
 # do_stop
@@ -326,7 +324,7 @@ service_init ()
    # to the operating system
 
    SYSCFG_FAILED='false'
-   FOO=`utctx_cmd get bridge_mode lan_ifname lan_ethernet_physical_ifnames lan_wl_physical_ifnames wan_physical_ifname bridge_ipaddr bridge_netmask bridge_default_gateway bridge_nameserver1 bridge_nameserver2 bridge_nameserver3 bridge_domain hostname`
+   FOO=`utctx_cmd get lan_ifname lan_ethernet_physical_ifnames lan_wl_physical_ifnames wan_physical_ifname bridge_ipaddr bridge_netmask bridge_default_gateway bridge_nameserver1 bridge_nameserver2 bridge_nameserver3 bridge_domain hostname`
    eval $FOO
   if [ $SYSCFG_FAILED = 'true' ] ; then
      ulog bridge status "$PID utctx failed to get some configuration data"

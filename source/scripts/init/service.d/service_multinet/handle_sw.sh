@@ -52,6 +52,8 @@
 # ENTRY
 #------------------------------------------------------------------
 
+source /etc/utopia/service.d/log_capture_path.sh
+
 TYPE=SW
 
 TAGGING_MODE=2

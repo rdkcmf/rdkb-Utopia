@@ -33,6 +33,8 @@
 #######################################################################
 
 
+BINPATH="/usr/bin"
+
 if [ "x"$1 = "xkill" ] || [ "x"$2 = "xkill" ]; then
     # this script will be invoked by ccspRecoveryManager, 
     # do not kill self.
@@ -48,14 +50,22 @@ if [ "x"$1 = "xkill" ] || [ "x"$2 = "xkill" ]; then
     killall Lm_hosts
 fi
 
-export LD_LIBRARY_PATH=$PWD:.:$PWD/lib:/usr/lib:$LD_LIBRARY_PATH
+cp ccsp_msg.cfg /tmp
+
+cd /fss/gw/usr/ccsp
+export LD_LIBRARY_PATH=$PWD:.:$PWD/lib:/lib:/usr/lib:$LD_LIBRARY_PATH
 export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
 
-if [ -f /fss/gw/usr/ccsp/cp_subsys_ert ]; then
-    Subsys="eRT."
+touch /tmp/cp_subsys_ert
+
+if [ -f /tmp/cp_subsys_ert ]; then
+        Subsys="eRT."
+elif [ -e ./cp_subsys_emg ]; then
+        Subsys="eMG."
 else
-    Subsys=""
+        Subsys=""
 fi
+
 
 cd /fss/gw/usr/ccsp/pam
 #double background to detach the script from the tty
@@ -66,7 +76,7 @@ cd ..
 if [ -f ./cp_subsys_ert ]; then
 #sleep 3
 cd rm
-    ./CcspRmSsp -subsys $Subsys
+    $BINPATH/CcspRmSsp -subsys $Subsys
 cd ../
 fi
 
@@ -97,20 +107,20 @@ fi
     cd ssd
     sleep 1
     if [ "x"$Subsys = "x" ];then
-        ./CcspSsdSsp
+        $BINPATH/CcspSsdSsp
     else
         echo "./CcspSsdSsp -subsys $Subsys"
-        ./CcspSsdSsp -subsys $Subsys
+        $BINPATH/CcspSsdSsp -subsys $Subsys
     fi
     cd ..
 
     cd fu
    sleep 1
     if [ "x"$Subsys = "x" ];then
-        ./CcspFuSsp
+        $BINPATH/CcspFuSsp
     else
         echo "./CcspFuSsp -subsys $Subsys"
-        ./CcspFuSsp -subsys $Subsys
+        $BINPATH/CcspFuSsp -subsys $Subsys
     fi
     cd ..
 
@@ -124,18 +134,18 @@ cd tad
 #delay TaD in order to reduce CPU overload and make PAM ready early
 sleep 3
 if [ "x"$Subsys = "x" ];then
-    ./CcspTandDSsp
+    $BINPATH/CcspTandDSsp
 else
-    ./CcspTandDSsp -subsys $Subsys
+    $BINPATH/CcspTandDSsp -subsys $Subsys
 fi
 cd ..
 
 sleep 1
 if [ "x"$Subsys = "x" ];then
-    ./ccspRecoveryManager &
+    $BINPATH/ccspRecoveryManager &
 else
     echo "./ccspRecoveryManager -subsys $Subsys &"
-    ./ccspRecoveryManager -subsys $Subsys &
+    $BINPATH/ccspRecoveryManager -subsys $Subsys &
 fi
 
 #cd lm

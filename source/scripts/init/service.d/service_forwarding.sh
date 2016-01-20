@@ -96,12 +96,14 @@ service_start ()
       service_init
 
       # if we are in bridge mode then make sure that the wan, lan are down
-      if [ "1" = "$bridge_mode" ] || [ "2" = "$bridge_mode" ]; then
-        STATUS=`sysevent get wan-status`
-        if [ "stopped" != "$STATUS" ] ; then
-           ulog forwarding status "stopping wan"
-           sysevent set wan-stop
-           PAUSE=$(($PAUSE+1))
+      if [ "1" = "$bridge_mode" ] || [ "2" = "$bridge_mode" ] || [ "3" = "$bridge_mode" ]; then
+        if [ "3" != "$bridge_mode" ]; then 
+            STATUS=`sysevent get wan-status`
+            if [ "stopped" != "$STATUS" ] ; then
+                ulog forwarding status "stopping wan"
+                sysevent set wan-stop
+                PAUSE=$(($PAUSE+1))
+            fi
         fi
         #STATUS=`sysevent get lan-status`
         #if [ "stopped" != "$STATUS" ] ; then
@@ -128,9 +130,16 @@ service_start ()
       # Start the network
 
       # Usually we start up in router mode, but if bridge_mode is set them we start in bridge mode instead
-      if [ "1" = "$bridge_mode" ] || [ "2" = "$bridge_mode" ] ; then
+      if [ "1" = "$bridge_mode" ] || [ "2" = "$bridge_mode" ] || [ "3" = "$bridge_mode" ]; then
          ulog forwarding status "starting bridge"
          sysevent set bridge-start
+         STATUS=`sysevent get wan-status`
+         if [ "3" = "$bridge_mode" ]; then 
+            if [ "started" != "$STATUS" ] ; then
+                ulog forwarding status "starting wan"
+                sysevent set wan-start
+            fi
+         fi
          # just in case the firewall is still configured for router mode, restart it
          sysevent set firewall-restart
          wait_till_state bridge starting
@@ -204,7 +213,8 @@ case "$1" in
       service_stop
       ;;
    ${SERVICE_NAME}-restart)
-      service_stop
+#      service_stop
+      sysevent set ${SERVICE_NAME}-status restarting
       service_start
       ;;
    *)

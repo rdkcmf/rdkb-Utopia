@@ -558,6 +558,7 @@ static char firewall_levelv6[20];   // None, High, or Custom
 static char cmdiag_ifname[20];       // name of the lan interface
 static int isNatReady;
 static char natip4[20];
+static char captivePortalEnabled[50]; //to ccheck captive portal is enabled or not
 static char redirectionFlag[50]; //Captive portal mode flag
 
 static char iptables_pri_level[IPT_PRI_MAX];
@@ -1163,7 +1164,9 @@ static int prepare_globals_from_configuration(void)
    syscfg_get(NULL, "nat_enabled", nat_enabled, sizeof(nat_enabled)); 
    syscfg_get(NULL, "dmz_enabled", dmz_enabled, sizeof(dmz_enabled)); 
    syscfg_get(NULL, "firewall_enabled", firewall_enabled, sizeof(firewall_enabled)); 
-   syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode)); 
+   //mipieper - change for pseudo bridge
+   //syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode)); 
+   sysevent_get(sysevent_fd, sysevent_token, "bridge_mode", bridge_mode, sizeof(bridge_mode));
    syscfg_get(NULL, "log_level", log_level, sizeof(log_level)); 
    if ('\0' == log_level[0]) {
       sprintf(log_level, "1");
@@ -1917,12 +1920,12 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                 fprintf(nat_fp, "%s\n", str);
             }
          }
-
-         if(strcmp(internal_port, "0")){
-            snprintf(str, sizeof(str),
-                      "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                     toip, internal_port);
-            fprintf(filter_fp, "%s\n", str);
+         if (filter_fp) {
+            if(strcmp(internal_port, "0")){
+                snprintf(str, sizeof(str),
+                        "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
+                        toip, internal_port);
+                fprintf(filter_fp, "%s\n", str);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
             snprintf(str, sizeof(str),
                  "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
@@ -1942,7 +1945,8 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif
          }
 
-         fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "%s\n", str);
+         }
       }
       if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
          if (isNatReady) {
@@ -1993,12 +1997,12 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                 fprintf(nat_fp, "%s\n", str);
             }
          }
-         
-         if(strcmp(internal_port, "0")){
-            snprintf(str, sizeof(str),
-                 "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-                 toip, internal_port);
-            fprintf(filter_fp, "%s\n", str);
+         if (filter_fp) {
+            if(strcmp(internal_port, "0")){
+                snprintf(str, sizeof(str),
+                    "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
+                    toip, internal_port);
+                fprintf(filter_fp, "%s\n", str);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
             snprintf(str, sizeof(str),
                  "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
@@ -2016,13 +2020,16 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                  toip, external_port);
             fprintf(filter_fp, "%s\n", str);
 #endif
+            }
          }
       }
 #ifndef PORTMAPPING_2WAY_PASSTHROUGH
-            snprintf(str, sizeof(str),
-                 "-A lan2wan_forwarding_accept -m conntrack --ctstate DNAT -j xlog_accept_lan2wan", 
-                 toip, internal_port);
-            fprintf(filter_fp, "%s\n", str);
+            if (filter_fp) {
+                snprintf(str, sizeof(str),
+                    "-A lan2wan_forwarding_accept -m conntrack --ctstate DNAT -j xlog_accept_lan2wan", 
+                    toip, internal_port);
+                fprintf(filter_fp, "%s\n", str);
+            }
 #endif
    }
 SinglePortForwardNext:
@@ -2115,26 +2122,28 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                         "-A postrouting_towan -s %s -j SNAT --to-source %s", 
                         toip, public_ip);
                     fprintf(nat_fp, "%s\n", str);
-                    snprintf(str, sizeof(str),
-                          "-A wan2lan_forwarding_accept  -d %s -j xlog_accept_wan2lan", 
-                          toip);
-                    fprintf(filter_fp, "%s\n", str);
-                    /* one 2 one should work even nat disable */ 
-                    if(!isNatReady){
-                        snprintf(str, sizeof(str), 
-                            "-I lan2wan_disable -s %s -j xlog_accept_lan2wan", toip);
+                    if (filter_fp) {
+                        snprintf(str, sizeof(str),
+                            "-A wan2lan_forwarding_accept  -d %s -j xlog_accept_wan2lan", 
+                            toip);
                         fprintf(filter_fp, "%s\n", str);
-                        snprintf(str, sizeof(str), 
-                            "-I wan2lan_disabled -d %s -j xlog_accept_wan2lan", toip);
-                        fprintf(filter_fp, "%s\n", str);
-                     }
+                        /* one 2 one should work even nat disable */ 
+                        if(!isNatReady){
+                            snprintf(str, sizeof(str), 
+                                "-I lan2wan_disable -s %s -j xlog_accept_lan2wan", toip);
+                            fprintf(filter_fp, "%s\n", str);
+                            snprintf(str, sizeof(str), 
+                                "-I wan2lan_disabled -d %s -j xlog_accept_wan2lan", toip);
+                            fprintf(filter_fp, "%s\n", str);
+                        }
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-                    snprintf(str, sizeof(str),
-                          "-A lan2wan_forwarding_accept -s %s -j xlog_accept_lan2wan", 
-                         toip);
-                    fprintf(filter_fp, "%s\n", str);
+                        snprintf(str, sizeof(str),
+                            "-A lan2wan_forwarding_accept -s %s -j xlog_accept_lan2wan", 
+                            toip);
+                        fprintf(filter_fp, "%s\n", str);
 #endif
+                    }
                  }
 #endif
                  continue;
@@ -2277,17 +2286,19 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
             fprintf(nat_fp, "%s\n", str);
          }
 
-         snprintf(str, sizeof(str),
-                  "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                 toip, match_internal_port);
-         fprintf(filter_fp, "%s\n", str);
+         if (filter_fp) {
+            snprintf(str, sizeof(str),
+                    "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
+                    toip, match_internal_port);
+            fprintf(filter_fp, "%s\n", str);
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
-                 toip, match_internal_port);
-         fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                    "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
+                    toip, match_internal_port);
+            fprintf(filter_fp, "%s\n", str);
 #endif
+         }
       }
       if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
          if (isNatReady) {
@@ -2328,10 +2339,11 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
             fprintf(nat_fp, "%s\n", str);
         }
 
-         snprintf(str, sizeof(str),
-                  "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-                  toip, match_internal_port);
-         fprintf(filter_fp, "%s\n", str);
+        if(filter_fp){
+            snprintf(str, sizeof(str),
+                    "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
+                    toip, match_internal_port);
+            fprintf(filter_fp, "%s\n", str);
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
          snprintf(str, sizeof(str),
@@ -2339,12 +2351,15 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                   toip, match_internal_port);
          fprintf(filter_fp, "%s\n", str);
 #endif
+        }
       }
 #ifndef PORTMAPPING_2WAY_PASSTHROUGH
+    if(filter_fp) {
             snprintf(str, sizeof(str),
                  "-A lan2wan_forwarding_accept -m conntrack --ctstate DNAT -j xlog_accept_lan2wan", 
                  toip, internal_port);
             fprintf(filter_fp, "%s\n", str);
+    }
 #endif
 
    }
@@ -2486,9 +2501,11 @@ static int do_wellknown_ports_forwarding(FILE *nat_fp, FILE *filter_fp)
             fprintf(nat_fp, "%s\n", str);
          }
 
-         snprintf(str, sizeof(str),
-                  "-A wan2lan_forwarding_accept -p %s -m %s -d %s.%s --dport %s -j xlog_accept_wan2lan", port_prot, port_prot, lan_3_octets, toip, '\0' == toport[0] ? port_val : toport);
-         fprintf(filter_fp, "%s\n", str);
+         if(filter_fp) {
+            snprintf(str, sizeof(str),
+                    "-A wan2lan_forwarding_accept -p %s -m %s -d %s.%s --dport %s -j xlog_accept_wan2lan", port_prot, port_prot, lan_3_octets, toip, '\0' == toport[0] ? port_val : toport);
+            fprintf(filter_fp, "%s\n", str);
+         }
       }
    }
 WellKnownPortForwardNext:
@@ -2611,10 +2628,12 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
                }
             }
 
-            snprintf(str, sizeof(str),
-                    "-A wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
-                        external_ip, toip, dport);
-            fprintf(filter_fp, "%s\n", str);
+            if(filter_fp) {
+                snprintf(str, sizeof(str),
+                        "-A wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+                            external_ip, toip, dport);
+                fprintf(filter_fp, "%s\n", str);
+            }
          }
          if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
             if (isNatReady) {
@@ -2645,10 +2664,12 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
                }
             }
 
-            snprintf(str, sizeof(str),
-                    "-A wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
-                        external_ip, toip, dport);
-            fprintf(filter_fp, "%s\n", str);
+            if(filter_fp) {
+                snprintf(str, sizeof(str),
+                        "-A wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+                            external_ip, toip, dport);
+                fprintf(filter_fp, "%s\n", str);
+            }
          }
       }
    } while (SYSEVENT_NULL_ITERATOR != iterator);
@@ -2750,7 +2771,8 @@ static int do_port_forwarding(FILE *nat_fp, FILE *filter_fp)
    do_port_range_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_wellknown_ports_forwarding(nat_fp, filter_fp);
    do_ephemeral_port_forwarding(nat_fp, filter_fp);
-   do_static_route_forwarding(filter_fp);
+   if (filter_fp)
+    do_static_route_forwarding(filter_fp);
    return(0);
 }
 
@@ -6028,7 +6050,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          fprintf(fp, ":%s - [0:0]\n", drop_log);
          fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
          fprintf(fp, "-A %s -j DROP\n", drop_log);
-         fprintf(fp, "-A lan2wan_pc_device -m mac --mac-source %s -j %s\n", query, block ? drop_log : "RETURN");
+         fprintf(fp, "-A lan2wan_pc_device -i %s -m mac --mac-source %s -j %s\n",lan_ifname, query, block ? drop_log : "RETURN");
       }
 
       if (!allow_all) {
@@ -7501,6 +7523,23 @@ static int isInCaptivePortal()
    char *networkResponse = "/var/tmp/networkresponse.txt";
 
    /* Get the syscfg DB value to check if we are in CP redirection mode*/
+
+
+   retCode=syscfg_get(NULL, "CaptivePortal_Enable", captivePortalEnabled, sizeof(captivePortalEnabled));  
+   if (0 != retCode || '\0' == captivePortalEnabled[0])
+   {
+	printf("Syscfg read failed to get CaptivePortal_Enable value\n", __FUNCTION__);
+   }
+   else
+   {
+        // Set a flag which we can check later to add DNS redirection
+        if(!strcmp("false", captivePortalEnabled))
+        {
+ 	     printf("CaptivePortal is disabled : Return 0\n"); 
+      	     return 0;
+        }
+   }
+
    retCode=syscfg_get(NULL, "redirection_flag", redirectionFlag, sizeof(redirectionFlag));  
    if (0 != retCode || '\0' == redirectionFlag[0])
    {
@@ -7907,6 +7946,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    prepare_multinet_filter_forward(filter_fp);
    fprintf(filter_fp, "-A FORWARD -j xlog_drop_wan2lan\n");
    
+   fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
+
    /***********************
     * set lan to wan subrule by order 
     * *********************/
@@ -8379,6 +8421,8 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(nat_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":postrouting_towan - [0:0]");
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
+   do_port_forwarding(nat_fp, NULL);
+   do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
    fprintf(nat_fp, "%s\n", "COMMIT");
 
@@ -9373,7 +9417,11 @@ static int service_start ()
    char *cron_file = crontab_dir"/"crontab_filename;
    FILE *cron_fp = NULL; // the crontab file we use to set wakeups for timed firewall events
    cron_fp = fopen(cron_file, "w");
-   fclose(cron_fp);
+   if(cron_fp) {
+       fclose(cron_fp);
+   } else {
+       fprintf(stderr,"%s: ### create crontab_file error with %d!!!\n",__FUNCTION__, errno);
+   } 
 
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "starting", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "starting %s service", service_name);

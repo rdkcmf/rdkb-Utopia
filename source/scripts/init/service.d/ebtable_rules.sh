@@ -102,7 +102,7 @@ set_ebtable_rules() {
 
     # rules are different in bridge/router mode
     bridge_mode=`sysevent get bridge_mode`
-    if [ "1" == "$bridge_mode" ] || [ "2" == "$bridge_mode" ]; then
+    if [ "0" != "$bridge_mode" ] ; then
         #
         # bridge mode
         #
