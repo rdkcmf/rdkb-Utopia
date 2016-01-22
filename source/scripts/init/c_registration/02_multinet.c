@@ -49,7 +49,7 @@
 #include "srvmgr.h"
 
 const char* SERVICE_NAME            = "multinet";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet.sh";
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_exec";
 /*
  * 3) Custom Events
  *    If the service should receive events other than start stop restart, then
@@ -78,10 +78,10 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet.sh
  * eg. "event3|/etc/code|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_SERIAL
  */
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "multinet-syncNets|/etc/utopia/service.d/service_multinet.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-syncMembers|/etc/utopia/service.d/service_multinet.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-down|/etc/utopia/service.d/service_multinet.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/service_multinet.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncNets|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "sw_ext_restore|/etc/utopia/service.d/service_multinet/handle_sw.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 
