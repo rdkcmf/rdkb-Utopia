@@ -150,9 +150,9 @@ service_start ()
       chmod 700 /etc/cron/cron.hourly/ntp_hourly.sh
 
       # log mem and cpu info once an hour
-      #echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
-      #echo "sh /fss/gw/usr/ccsp/tad/log_mem_cpu_info.sh" >> /etc/cron/cron.hourly/log_hourly.sh
-      #chmod 700 /etc/cron/cron.hourly/log_hourly.sh
+      echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
+      echo "sh /fss/gw/usr/ccsp/tad/log_mem_cpu_info.sh" >> /etc/cron/cron.hourly/log_hourly.sh
+      chmod 700 /etc/cron/cron.hourly/log_hourly.sh
    
       # add starting the process-monitor every minute
       echo "#! /bin/sh" > /etc/cron/cron.everyminute/pmon_everyminute.sh
