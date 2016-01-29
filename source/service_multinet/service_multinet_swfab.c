@@ -54,6 +54,11 @@ static int map(PL2Net net, PMemberControl members, BOOL mark) {
         if (!members->handled[i] && !iface->map) {
             mapToPlat(iface);
             
+            if (NULL == ((PPlatformPort)iface->map)) {
+                MNET_DEBUG("Interface MAP pointer is NULL continue\n")
+                continue;
+            }
+
             //Populate status event name
             //TODO, make this part of mapToPlat
             if ((matchPort = (PPlatformPort)iface->map)) {
