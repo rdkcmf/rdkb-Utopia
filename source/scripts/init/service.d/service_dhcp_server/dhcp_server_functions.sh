@@ -379,10 +379,10 @@ prepare_whitelist_urls()
 		isIPv6=`ifconfig erouter0 | grep inet6`
 		if [ "$isIPv6" != "" ]
 		then
-			nServer6=`cat $RESOLV_CONF | grep nameserver | grep ":" | head -1 | cut -d" " -f2`
+			nServer6=`cat $RESOLV_CONF | grep nameserver | grep ":" | head -n 1 | cut -d" " -f2`
 		fi
 	else	
-			nServer4=`cat $RESOLV_CONF | grep nameserver | grep "\." | head -1 | cut -d" " -f2`
+			nServer4=`cat $RESOLV_CONF | grep nameserver | grep "\." | head -n 1 | cut -d" " -f2`
 	fi
 	
 	#TODO: ipv6 DNS whitelisting in case of ipv6 only clients
