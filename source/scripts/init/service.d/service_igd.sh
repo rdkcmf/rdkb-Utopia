@@ -168,8 +168,8 @@ init_once () {
 #        echo "$UPNP_TTL" > $UPNP_TMP
         mkdir -p /var/IGD
         (cd /var/IGD; ln -sf /etc/IGD/* .)
-        swctl -c 23 -p 7 -s 01:00:5E:7F:FF:FA
-        swctl -c 23 -p 2 -s 01:00:5E:7F:FF:FA
+        #swctl -c 23 -p 7 -s 01:00:5E:7F:FF:FA
+        #swctl -c 23 -p 2 -s 01:00:5E:7F:FF:FA
 		#external MoCA chip
 	   	#swctl -c 23 -p 3 -s 01:00:5E:7F:FF:FA
 	   	#Intel MoCA chip
