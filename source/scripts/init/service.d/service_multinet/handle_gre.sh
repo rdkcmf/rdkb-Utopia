@@ -54,7 +54,8 @@
 
 TYPE=Gre
 
-GRE_IFNAME="gretap_0"
+GRE_IFNAME="gretap0"
+GRE_IFNAME_DUMMY="gretap_0"
 
 source /etc/utopia/service.d/ut_plat.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
@@ -150,6 +151,12 @@ create_tunnel () {
     
     update_bridge_frag_config $inst $1
     
+    isgretap0Present=`ip link show | grep gretap0`
+    if [ "$isgretap0Present" != "" ]; then
+        echo "gretap0 is already present rename it before creating"
+        ip link set dev $GRE_IFNAME name $GRE_IFNAME_DUMMY
+    fi
+
     ip link add $2 type gretap remote $1 dev $WAN_IF $extra
     sysevent set gre_current_endpoint $1
     sysevent set if_${2}-status $IF_READY

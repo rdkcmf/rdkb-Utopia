@@ -164,7 +164,7 @@ static PlatformPort trunkSwPortList[] = {
 };
 
 static PlatformPort grePortList[] = {
-    {(void*)"gretap_0", ENTITY_NP, halList + HAL_GRE, 1},
+    {(void*)"gretap0", ENTITY_NP, halList + HAL_GRE, 1},
     {(void*)"gretap1", ENTITY_NP, halList + HAL_GRE, 1},
     {(void*)"gretap2", ENTITY_NP, halList + HAL_GRE, 1},
     {(void*)"gretap3", ENTITY_NP, halList + HAL_GRE, 1}
@@ -214,7 +214,7 @@ int mapToPlat(PNetInterface iface) {
     } else if (!strcmp("Moca", iface->type->name)) {
         
     } else if (!strcmp("Gre", iface->type->name)) {
-        sscanf(iface->name, "gretap_%d", &portIndex);
+        sscanf(iface->name, "gretap%d", &portIndex);
         iface->map = grePortList + portIndex;
     } else if (!strcmp("virt", iface->type->name)) {
         iface->map = &npPlaceholderPort;
@@ -239,7 +239,7 @@ PPlatformPort plat_mapFromString(char* portIdString) {
         sscanf(portIdString, "sw_%d", &portIndex);
         return (accessSwPortList + (portIndex - 1));
     } else if (strstr(portIdString, "gretap")) {
-        sscanf(portIdString, "gretap_%d", &portIndex);
+        sscanf(portIdString, "gretap%d", &portIndex);
         return  (grePortList + portIndex);
     } else if (strstr(portIdString, "vNPPort")) {
     
