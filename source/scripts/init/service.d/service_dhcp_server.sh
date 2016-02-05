@@ -123,7 +123,7 @@ lan_status_change ()
          # also prepare dns part of dhcp conf cause we are the dhcp server too
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
 		 echo "SERVICE DHCP : Start dhcp-server from lan status change"
-         $SERVER -u nobody -P 4096 -C $DHCP_CONF --enable-dbus
+         $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
          sysevent set dns-status started
       else
 	     sysevent set lan_status-dhcp started
@@ -203,14 +203,14 @@ restart_request ()
    rm -f $PID_FILE
 
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
-      $SERVER -u nobody -P 4096 -C $DHCP_CONF --enable-dbus
+      $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
       sysevent set dns-status started
    else
       # we use dhcp-authoritative flag to indicate that this is
       # the only dhcp server on the local network. This allows 
       # the dns server to give out a _requested_ lease even if
       # that lease is not found in the dnsmasq.leases file
-      $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF --enable-dbus
+      $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
       if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ] ; then
          echo "#!/bin/sh" > $TIME_FILE
          echo "   sysevent set dhcp_server-restart" >> $TIME_FILE
@@ -380,7 +380,7 @@ dhcp_server_start ()
    cat $RESOLV_CONF
 
    echo "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server from dhcp_server_start"
-   $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF --enable-dbus
+   $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
    sysevent set dns-status started
@@ -433,7 +433,7 @@ dhcp_server_stop ()
    sysevent set dhcp_server-status stopped
 
    # restart the dns server
-   $SERVER -u nobody -P 4096 -C $DHCP_CONF --enable-dbus
+   $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
    sysevent set dns-status started
 }
 
@@ -486,9 +486,9 @@ dns_start ()
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
    if [ "stopped" = $DHCP_STATE ]; then
-      $SERVER -u nobody -P 4096 -C $DHCP_CONF --enable-dbus
+      $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
    else
-      $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF --enable-dbus
+      $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
    fi
    
    sysevent set dns-status started
