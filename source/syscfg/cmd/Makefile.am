@@ -30,5 +30,5 @@ bin_PROGRAMS = syscfg
 syscfg_CPPFLAGS = -I$(top_srcdir)/source/include $(CPPFLAGS)
 syscfg_SOURCES = syscfgcmd.c
 syscfg_LDFLAGS =  -lpthread -lz \
-                  $(top_srcdir)/source/syscfg/lib/libsyscfg.la \
-                  $(top_srcdir)/source/ulog/libulog.la
+                  $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                  $(top_builddir)/source/ulog/libulog.la
