@@ -375,18 +375,10 @@ dhcp_server_start ()
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
 
-
-   echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
-   cat $RESOLV_CONF
-
+   
    echo "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server from dhcp_server_start"
    $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 
-   $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
-   sysevent set dns-status started
-   sysevent set dhcp_server-status started
-   sysevent set dhcp_server-progress completed
-   echo "DHCP SERVICE :dhcp_server-progress is set to completed "
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
          echo "#!/bin/sh" > $TIME_FILE
          echo "   sysevent set dhcp_server-restart lan_not_restart" >> $TIME_FILE
@@ -412,6 +404,15 @@ dhcp_server_start ()
           echo "lan_not_restart found! Don't restart lan!"
      fi
    fi
+
+   $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
+   sysevent set dns-status started
+   sysevent set dhcp_server-status started
+   sysevent set dhcp_server-progress completed
+   echo "DHCP SERVICE :dhcp_server-progress is set to completed "
+
+   echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
+   cat $RESOLV_CONF
 }
 
 #-----------------------------------------------------------------
