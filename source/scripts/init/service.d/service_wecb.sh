@@ -87,10 +87,9 @@ service_init() {
 	#sysevent set ${SERVICE_NAME}-status "init"
 	#external MoCA chip
 	
-	#swctl -c 23 -p 3 -s 01:00:5E:7F:FF:FA
+	swctl -c 23 -p 3 -s 01:00:5E:7F:FF:FA
 	#Intel MoCA chip
-	#swctl -c 23 -p 1 -s 01:00:5E:7F:FF:FA
-        swctl -c 23 -p 142 -s 01:00:5E:7F:FF:FA
+	swctl -c 23 -p 1 -s 01:00:5E:7F:FF:FA
 }
 
 handle_ipv4_status() {
