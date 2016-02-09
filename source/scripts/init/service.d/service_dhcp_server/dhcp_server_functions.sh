@@ -542,7 +542,13 @@ fi
       echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
    fi
    
-   do_extra_pools
+   # For boot itme optimization, run do_extra_pool only when brlan1 interface is available
+   isBrlan1=`ifconfig brlan1`
+   if [ "$isBrlan1" != "" ]
+   then
+      do_extra_pools
+   fi
+
    if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
    then
         # In factory default condition, prepare whitelisting and redirection IP
