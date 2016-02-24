@@ -4264,9 +4264,9 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
 
     //remote management is only available on eCM interface if it is enabled
     if(family == AF_INET)
-        fprintf(filter_fp, "-A wan2self_mgmt -p tcp -m multiport --dports 22,23,%s,%s -j xlog_drop_wan2self\n", httpport, httpsport);
+        fprintf(filter_fp, "-A wan2self_mgmt -p tcp -m multiport --dports 23,%s,%s -j xlog_drop_wan2self\n", httpport, httpsport);
     else
-        fprintf(filter_fp, "-A INPUT ! -i %s -p tcp -m multiport --dports 22,23,%s,%s -j DROP\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname, httpport, httpsport);
+        fprintf(filter_fp, "-A INPUT ! -i %s -p tcp -m multiport --dports 23,%s,%s -j DROP\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname, httpport, httpsport);
 
     return 0;
 }
