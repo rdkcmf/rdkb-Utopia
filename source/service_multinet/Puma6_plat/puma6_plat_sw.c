@@ -66,19 +66,23 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
     
     char cmdBuff[128];
     char ifname[80];
+    char temp_ifname[80];
+    memset(ifname, 0, 80);
+    memset(temp_ifname, 0, 80);
     
-    for (i = 0; i < numArgs; ++i ) {
-        
+    for (i = 0; i < numArgs; ++i ) { 
         portState = (PSwPortState) args[i].portID;
-        stringIDExtSw(portState, ifname, sizeof(ifname));
-        
-        //#Args: netid, netvid, members...
-        sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
-        
-        system(cmdBuff);
-        
-    }
-    
+        stringIDExtSw(portState, temp_ifname, sizeof(temp_ifname));
+        if (args[i].vidParams.tagging)
+            strcat(temp_ifname, "-t");
+
+        strcat(ifname, temp_ifname);
+        strcat(ifname, " ");
+    }   
+    //#Args: netid, netvid, members...
+    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+    MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
+    system(cmdBuff); 
 }
 
 int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) {
