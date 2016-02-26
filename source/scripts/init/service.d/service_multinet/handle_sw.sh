@@ -284,13 +284,22 @@ case "$1" in
         if [ x = x"$4" ]; then
             return
         fi
+		NETID=$2
         VID=$3
-        PORTS_ADD="${4}"
+	
+        for i in ${4}; do
+            if [ x"-t" = x"$i" -o x = x"$i" ]; then
+                echo "Not adding $i to PORTS_ADD" 
+            else
+                PORTS_ADD="${PORTS_ADD} $i"
+            fi
+            shift
+        done
         PORTS_EXT_ADD=""
         
         #DEBUG
-        echo "--SW handler, adding vlan $3 on net $2 for $4"
-        VIDPORTS="`sysevent get sw_vid_$3_ports`"
+        echo "--SW handler, adding vlan $VID on net $NETID for $PORTS_ADD"
+        VIDPORTS="`sysevent get sw_vid_${VID}_ports`"
         #add to arm port (implicit rule)
         if [ x = x`sysevent get sw_port_arm_venable` ]; then
             #DEBUG
@@ -301,20 +310,20 @@ case "$1" in
         
         #add the management virtual interface first
         if [ x = x"$VIDPORTS" ]; then
-            vconfig add $MGMT_PORT_LINUX_IFNAME $3
-            ifconfig $MGMT_PORT_LINUX_IFNAME.$3 up
+            vconfig add $MGMT_PORT_LINUX_IFNAME ${VID}
+            ifconfig $MGMT_PORT_LINUX_IFNAME.${VID} up
         fi
         
-        sw_add_ports $3 "$4"
+        sw_add_ports $VID "$PORTS_ADD"
         
         if [ x = x"$VIDPORTS" ]; then 
             #DEBUG
-            echo "--SW handler, swctl $PORTMAP_arm -v $3 -m $TAGGING_MODE -q 1"
-            swctl $PORTMAP_arm -v $3 -m $TAGGING_MODE -q 1
+            echo "--SW handler, swctl $PORTMAP_arm -v ${VID} -m $TAGGING_MODE -q 1"
+            swctl $PORTMAP_arm -v ${VID} -m $TAGGING_MODE -q 1
             #Re-add the default vlan to allow normal handling for untagged traffic
             #swctl $PORTMAP_arm -v 2 -m $NATIVE_MODE -q 1
         fi
-        sysevent set sw_vid_$3_ports "${VIDPORTS} ${PORTS_ADD}"
+        sysevent set sw_vid_${VID}_ports "${VIDPORTS} ${PORTS_ADD}"
         
         #Add to switch connection ports if on external switch
         if [ x != x"$PORTS_EXT_ADD" ]; then
@@ -333,22 +342,22 @@ case "$1" in
             fi
             
             #Add vlan if not already added
-            EXT_VIDPORTS="`sysevent get sw_vid_$3_extports`"
+            EXT_VIDPORTS="`sysevent get sw_vid_${VID}_extports`"
             if [ x = x"$EXT_VIDPORTS" ]; then
                 #DEBUG
-                echo "--SW handler, swctl $PORTMAP_I2E -v $3 -m $TAGGING_MODE -q 1"
-                echo "--SW handler, swctl $PORTMAP_E2I -v $3 -m $TAGGING_MODE -q 1"
-                swctl $PORTMAP_I2E -v $3 -m $TAGGING_MODE -q 1
+                echo "--SW handler, swctl $PORTMAP_I2E -v $VID -m $TAGGING_MODE -q 1"
+                echo "--SW handler, swctl $PORTMAP_E2I -v $VID -m $TAGGING_MODE -q 1"
+                swctl $PORTMAP_I2E -v ${VID} -m $TAGGING_MODE -q 1
                 #swctl $PORTMAP_I2E -v 2 -m $NATIVE_MODE -q 1
-                swctl $PORTMAP_E2I -v $3 -m $TAGGING_MODE -q 1
+                swctl $PORTMAP_E2I -v ${VID} -m $TAGGING_MODE -q 1
                 #swctl $PORTMAP_E2I -v 2 -m $NATIVE_MODE -q 1
                 
                 #Save list of vids
-                sysevent set sw_ext_vids "$VID `sysevent get sw_ext_vids`"
+                sysevent set sw_ext_vids "${VID} `sysevent get sw_ext_vids`"
             fi
             
             #Save list of members
-            sysevent set sw_vid_$3_extports "${EXT_VIDPORTS}${PORTS_EXT_ADD}"
+            sysevent set sw_vid_${VID}_extports "${EXT_VIDPORTS}${PORTS_EXT_ADD}"
         fi
         
         if [ x != x"$PORTS_ATOM_ADD" ]; then
@@ -358,16 +367,16 @@ case "$1" in
                 swctl $PORTMAP_VENABLE_atom
                 sysevent set sw_port_atom_venable 1
             fi
-            
-            ATOM_VIDPORTS="`sysevent get sw_vid_$3_atomports`"
+           
+            ATOM_VIDPORTS="`sysevent get sw_vid_${VID}_atomports`"
             if [ x = x"$ATOM_VIDPORTS" ]; then
                 #DEBUG
-                echo "--SW handler, swctl $PORTMAP_atom -v $3 -m $TAGGING_MODE -q 1"
-                swctl $PORTMAP_atom -v $3 -m $TAGGING_MODE -q 1
+                echo "--SW handler, swctl $PORTMAP_atom -v ${VID} -m $TAGGING_MODE -q 1"
+                swctl $PORTMAP_atom -v ${VID} -m $TAGGING_MODE -q 1
                 #swctl $PORTMAP_atom -v 2 -m $NATIVE_MODE -q 1
             fi
             
-            sysevent set sw_vid_$3_atomports "${ATOM_VIDPORTS}${PORTS_ATOM_ADD}"
+            sysevent set sw_vid_${VID}_atomports "${ATOM_VIDPORTS}${PORTS_ATOM_ADD}"
         fi
     ;;
     
