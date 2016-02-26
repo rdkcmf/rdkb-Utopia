@@ -89,17 +89,21 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) {
     int i;
     
     char cmdBuff[128];
+    char portID[80];
+    memset(portID, 0, 80);
     
-    for (i = 0; i < numArgs; ++i ) {
+    for (i = 0; i < numArgs; ++i ) { 
+        strcat(portID, (char*)args[i].portID);
+        if (args[i].vidParams.tagging)
+            strcat(portID, "-t");
 
-        
-        //#Args: netid, netvid, members...
-        sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[i].hints.network->inst, args[i].vidParams.vid, (char*)args[i].portID, args[i].vidParams.tagging ? "-t" : "");
-        
-        system(cmdBuff);
-        
-    }
+        strcat(portID, " ");
+    }   
     
+    //#Args: netid, netvid, members...
+    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[i].hints.network->inst, args[i].vidParams.vid, portID);
+    MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
+    system(cmdBuff);
 }
 
 int stringIDIntSw (void* portID, char* stringbuf, int bufSize) {
