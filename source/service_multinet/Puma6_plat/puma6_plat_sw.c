@@ -79,7 +79,8 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
         strcat(ifname, temp_ifname);
         strcat(ifname, " ");
     }   
-    //#Args: netid, netvid, members...
+
+    //Rag: netid and vlanid is same for all the args, so index zero is being used.
     sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, ifname);
     MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
     system(cmdBuff); 
@@ -99,9 +100,9 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) {
 
         strcat(portID, " ");
     }   
-    
-    //#Args: netid, netvid, members...
-    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[i].hints.network->inst, args[i].vidParams.vid, portID);
+   
+    //Rag: netid and vlanid is same for all the args, so index zero is being used. 
+    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, portID);
     MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
     system(cmdBuff);
 }
