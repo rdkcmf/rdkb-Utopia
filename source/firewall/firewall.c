@@ -7655,13 +7655,19 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    * All egress traffic from the erouter0 interface 
    * is marked with AF22 
    */
-   fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
+   
+   //zqiu: RDKB-4519 
+   //fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
+   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
+   fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
    fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --set-dscp-class af22\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
    
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af32 -j CONNMARK --set-mark 0xA\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs1 -j CONNMARK --set-mark 0xB\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs5 -j CONNMARK --set-mark 0xC\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af22 -j CONNMARK --set-mark 0xD\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xA  -j DSCP --set-dscp-class af32\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xB -j DSCP --set-dscp-class cs1\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");
@@ -8665,6 +8671,22 @@ static void do_ipv6_sn_filter(FILE* fp) {
         fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m limit --limit 20/sec -j ACCEPT\n", ifnames[i]);
         fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP\n", ifnames[i]);
     }
+	
+	//zqiu: XCONF >>  RDKB-4519
+		fprintf(fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
+		fprintf(fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
+		fprintf(fp, "-A OUTPUT -o erouter0 -j DSCP --set-dscp-class af22\n");
+		//fprintf(fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
+		fprintf(fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af32 -j CONNMARK --set-mark 0xA\n");
+		fprintf(fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs1 -j CONNMARK --set-mark 0xB\n");
+		fprintf(fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs5 -j CONNMARK --set-mark 0xC\n");
+		fprintf(fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af22 -j CONNMARK --set-mark 0xD\n");
+		fprintf(fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xA  -j DSCP --set-dscp-class af32\n");
+		fprintf(fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xB -j DSCP --set-dscp-class cs1\n");
+		fprintf(fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
+		fprintf(fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");	
+	//zqiu: XCONF <<
+	
     fprintf(fp, "COMMIT\n");
 }
 /*
