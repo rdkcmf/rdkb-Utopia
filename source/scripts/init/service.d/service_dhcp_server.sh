@@ -319,8 +319,8 @@ dhcp_server_start ()
    sysevent set dhcp_server-progress inprogress
    echo "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start"
    sysevent set ${SERVICE_NAME}-errinfo
-   wait_till_end_state dhcp_server
-   wait_till_end_state dns
+   #wait_till_end_state dhcp_server
+   #wait_till_end_state dns
 
    # since dnsmasq acts as both dhcp server and dns forwarder
    # we need to decide whether to start dnsmasq or just sighup it

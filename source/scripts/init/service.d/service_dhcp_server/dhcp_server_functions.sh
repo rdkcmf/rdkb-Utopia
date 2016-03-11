@@ -338,6 +338,30 @@ prepare_dhcp_options() {
 
 }
 
+prepare_dhcp_options_wan_dns()
+{
+   echo -n > $LOCAL_DHCP_OPTIONS_FILE
+   DHCP_OPTION_STR=
+
+   # Propagate Wan DNS
+   if [ "1" = "$PROPAGATE_NS" ] ; then
+      #Wan Dynamic DNS from dhcp protocol
+      NS=`sysevent get wan_dhcp_dns`
+      if [ "" != "$NS" ] ; then
+         NS=`echo "$NS" | sed "s/ /,/g"`
+         if [ "" = "$DHCP_OPTION_STR" ] ; then
+            DHCP_OPTION_STR="option:dns-server, "$NS
+         else
+            DHCP_OPTION_STR=$DHCP_OPTION_STR","$NS
+         fi
+      fi
+   fi
+
+   echo $DHCP_OPTION_STR >> $LOCAL_DHCP_OPTIONS_FILE
+   cat $LOCAL_DHCP_OPTIONS_FILE > $DHCP_OPTIONS_FILE
+   rm -f $LOCAL_DHCP_OPTIONS_FILE
+}
+
 # A generic function which can be used for any URL parsing
 removehttp()
 {
@@ -533,7 +557,8 @@ fi
 
    if [ "dns_only" != "$3" ] ; then
       prepare_dhcp_conf_static_hosts
-      prepare_dhcp_options
+      #prepare_dhcp_options
+	  prepare_dhcp_options_wan_dns	
    fi
    
    if [ "started" = $CURRENT_LAN_STATE ]; then
@@ -543,7 +568,7 @@ fi
    fi
    
    # For boot itme optimization, run do_extra_pool only when brlan1 interface is available
-   isBrlan1=`ifconfig brlan1`
+   isBrlan1=`ifconfig | grep brlan1`
    if [ "$isBrlan1" != "" ]
    then
       do_extra_pools
