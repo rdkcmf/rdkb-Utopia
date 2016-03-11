@@ -907,6 +907,7 @@ $X_RDKCENTRAL-COM_MTA_LogLevel=4
 $X_RDKCENTRAL-COM_CM_LogLevel=4
 $X_RDKCENTRAL-COM_WiFi_LogLevel=4
 $X_RDKCENTRAL-COM_CR_LogLevel=4
+$X_RDKCENTRAL-COM_Harvester_LogLevel=4
 
 # RDK LogEnable
 $X_RDKCENTRAL-COM_LoggerEnable=1
@@ -917,6 +918,7 @@ $X_RDKCENTRAL-COM_MTA_LoggerEnable=1
 $X_RDKCENTRAL-COM_CM_LoggerEnable=1
 $X_RDKCENTRAL-COM_WiFi_LoggerEnable=1
 $X_RDKCENTRAL-COM_CR_LoggerEnable=1
+$X_RDKCENTRAL-COM_Harvester_LoggerEnable=1
 
 # RDK Log related data
 $reboot_count=0
