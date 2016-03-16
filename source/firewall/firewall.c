@@ -7955,6 +7955,12 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
    fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
 
+// RDKB-4826- Santosh
+
+   fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.106 -o %s -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.106 -j ACCEPT\n", current_wan_ifname);
+
+
    /***********************
     * set lan to wan subrule by order 
     * *********************/
