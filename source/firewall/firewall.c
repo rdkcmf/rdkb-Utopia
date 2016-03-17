@@ -6724,7 +6724,35 @@ static int prepare_lan_bandwidth_tracking(FILE *fp)
    return(0);
 }
 #endif
+/*
+ *  Procedure     : do_lan2wan_misc
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  IoT firewall rules pertaining to traffic
+ *                  from the lan to the wan
+ *  Parameters    :
+ *    filter_fp             : An open file to write lan2wan rules to
+ * Return Values  :
+ *    0              : Success
+ */
+static int do_lan2wan_IoT_Allow(FILE *filter_fp)
+{
 
+   /*
+    * if the wan is currently unavailable, then drop any packets from lan to wan
+    */
+ 
+      fprintf(filter_fp, "-A lan2wan_iot_allow -d ntp01.cmc.co.denver.comcast.net -j ACCEPT\n");
+      fprintf(filter_fp, "-A lan2wan_iot_allow -d ntp.ccp.xcal.tv -j ACCEPT\n");
+      //fprintf(filter_fp, "-A lan2wan_iot_allow -d cpentp.services.cox.net -j ACCEPT\n");
+      //fprintf(filter_fp, "-A lan2wan_iot_allow -d cpentp.services.coxlab.net -j ACCEPT\n");
+      fprintf(filter_fp, "-A lan2wan_iot_allow -d fkps.ccp.xcal.tv -j ACCEPT\n");
+      fprintf(filter_fp, "-A lan2wan_iot_allow -d xacs.ccp.xcal.tv -j ACCEPT\n");
+      //fprintf(filter_fp, "-A lan2wan_iot_allow -d x1.xcal.tv -j ACCEPT\n");
+      fprintf(filter_fp, "-A lan2wan_iot_allow -d decider.r53.xcal.tv -j ACCEPT\n");
+      fprintf(filter_fp, "-A lan2wan_iot_allow -j REJECT\n");
+
+   return(0);
+}
 /*
  *  Procedure     : do_lan2wan_disable
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -6837,7 +6865,7 @@ static int do_lan2wan_misc(FILE *filter_fp)
 static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
 {
    do_lan2wan_misc(filter_fp);
-
+   do_lan2wan_IoT_Allow(filter_fp);
    //Not used in USGv2
    //do_lan2wan_webfilters(filter_fp);
    //do_lan_access_restrictions(filter_fp, nat_fp);
@@ -7797,6 +7825,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":lan2wan_pc_device - [0:0]");
    fprintf(filter_fp, "%s\n", ":lan2wan_pc_site - [0:0]");
    fprintf(filter_fp, "%s\n", ":lan2wan_pc_service - [0:0]");
+   fprintf(filter_fp, "%s\n", ":lan2wan_iot_allow - [0:0]");
    fprintf(filter_fp, "%s\n", ":wan2lan - [0:0]");
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN 
 //    fprintf(filterFp, ":lan2wan_dnsq_nfqueue - [0:0]\n");
@@ -7959,6 +7988,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
     * set lan to wan subrule by order 
     * *********************/
    fprintf(filter_fp, "-A lan2wan -j lan2wan_disable\n");
+   fprintf(filter_fp, "-A lan2wan -i l2sd0.106 -j lan2wan_iot_allow\n");
    for(i=0; i< IPT_PRI_MAX; i++)
    {
       switch(iptables_pri_level[i]){
