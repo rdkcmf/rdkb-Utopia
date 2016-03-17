@@ -574,6 +574,18 @@ fi
       do_extra_pools
    fi
 
+   IOT_IFNAME=`syscfg get iot_ifname`
+   isIOT=`ifconfig | grep $IOT_IFNAME`
+
+   if [ "$isIOT" != "" ] 
+   then
+	IOT_START_ADDR=`syscfg get iot_dhcp_start`
+	IOT_END_ADDR=`syscfg get iot_dhcp_end`
+	IOT_NETMASK=`syscfg get iot_netmask`
+	echo "interface=$IOT_IFNAME" >> $LOCAL_DHCP_CONF
+	echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+   fi
+
    if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
    then
         # In factory default condition, prepare whitelisting and redirection IP

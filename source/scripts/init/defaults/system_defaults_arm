@@ -953,3 +953,10 @@ $todays_reboot_count=0
 $todays_reset_count=0
 $lastActiontakentime=0
 $process_memory_log_count=0
+
+#IOT VLAN
+$iot_ifname=l2sd0.106
+$iot_ipaddr=192.168.106.1
+$iot_netmask=255.255.255.0
+$iot_dhcp_start=192.168.106.100
+$iot_dhcp_end=192.168.106.150
