@@ -123,6 +123,7 @@
 #include <utctx/utctx_api.h>
 #include <utapi/utapi.h>
 #include <ccsp_syslog.h>
+#include <platform_hal.h>
 
 #include "pal_log.h"
 #include "igd_platform_independent_inf.h"
@@ -145,9 +146,11 @@
 CHAR* IGD_pii_get_serial_number(VOID)
 {
     static char prodSn[128] = {'\0'};
+    int ret;
     /* TODO: to be implemented by OEM
 	ProductionDb_RetrieveAccess();
     ProdDb_GetSerialNumber(prodSn);*/
+    ret = platform_hal_GetSerialNumber(prodSn);
     return prodSn;
 	//return "123456789001";
 }
