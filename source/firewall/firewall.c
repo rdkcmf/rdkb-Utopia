@@ -8328,7 +8328,24 @@ static int do_raw_table_nowan(FILE *fp)
    return(0);
 }
 
+#ifdef INTEL_PUMA7
+static int do_raw_table_puma7(FILE *fp)
+{
+      fprintf(stderr,"******DO RAW TABLE PUMA7****\n");
+      char str[MAX_QUERY];
 
+      //use the raw table
+      isRawTableUsed = 1;
+
+      snprintf(str, sizeof(str), "-A PREROUTING -i a-mux -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      return(0);
+}
+#endif
 // static int prepare_multilan_firewall(FILE *nat_fp, FILE *filter_fp)
 // {
     //Allow traffic through all psm configured networks.
@@ -8372,7 +8389,9 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    //do_raw_ephemeral(raw_fp);
    //do_raw_table_general_rules(raw_fp);
    //do_raw_table_nowan(raw_fp);
-
+#ifdef INTEL_PUMA7
+   do_raw_table_puma7(raw_fp);
+#endif
    add_qos_marking_statements(mangle_fp);
 
    do_port_forwarding(nat_fp, filter_fp);
