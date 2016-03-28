@@ -77,7 +77,7 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_ex
  * keep the define outside of the string quotation symbols
  * eg. "event3|/etc/code|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_SERIAL
  */
-#ifdef PUMA7_SWCTL_NO_DIRECT_CALL
+#ifdef INTEL_PUMA7
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "multinet-syncNets|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "multinet-syncMembers|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
@@ -96,7 +96,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
-#ifndef PUMA7_SWCTL_NO_DIRECT_CALL
+#ifndef INTEL_PUMA7
    system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
 #endif
 }
