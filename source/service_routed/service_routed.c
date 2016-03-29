@@ -165,7 +165,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         "log file /var/log/zebra.log\n"
         "table 255\n";
 
-    if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) < 0) {
+    if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
         return -1;
     }

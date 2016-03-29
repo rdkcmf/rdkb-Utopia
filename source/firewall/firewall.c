@@ -1705,11 +1705,11 @@ static int prepare_globals_from_configuration(void)
    snprintf(str, sizeof(str),
             "-A xlog_accept_wan2self -j ACCEPT");
    fprintf(fp, "%s\n", str);
-
+#ifndef INTEL_PUMA7
    snprintf(str, sizeof(str),
             "-A xlog_drop_wan2lan -j DROP");
    fprintf(fp, "%s\n", str);
-
+#endif
    snprintf(str, sizeof(str),
             "-A xlog_drop_wan2self -j DROP");
    fprintf(fp, "%s\n", str);
