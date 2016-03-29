@@ -253,7 +253,11 @@ done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
     printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
+    
+/* TEMP disable captive portal for xb6 until we fix the issue*/
+#ifndef INTEL_PUMA7
     system("sh /etc/network_response.sh &");
+#endif
     return 0;
 }
 
@@ -454,7 +458,12 @@ static int wan_addr_set(struct serv_wan *sw)
             vsystem("((nfq_handler 4 %s &)&)", val);
             sysevent_set(sw->sefd, sw->setok, "parcon_nfq_status", "started", 0);
         }
+/* Temp fix xb6 we don't have gw_lan_refresh utility implemented yet*/
+#ifdef INTEL_PUMA7
+        vsystem("firewall && execute_dir /etc/utopia/post.d/");
+#else
         vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/");
+#endif
 
     } else {
         fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
@@ -467,6 +476,11 @@ static int wan_addr_set(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "firewall_flush_conntrack", "1", 0);
 
     sysevent_set(sw->sefd, sw->setok, "wan-status", "started", 0);
+/*XB6 brlan0 comes up earlier so ned to find the way to restart the firewall
+ IPv6 not yet supported so we can't restart in service routed  because of missing zebra.conf*/
+#ifdef INTEL_PUMA7
+        sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
+#endif
     return 0;
 }
 
