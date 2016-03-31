@@ -36,10 +36,13 @@
 #include "puma6_plat_sw.h"
 #include "puma6_plat_map.h"
 #include "service_multinet_ep.h"
+#include "sysevent/sysevent.h"
+#include "syscfg/syscfg.h"
 
 #include <stdio.h>
 #include <string.h>
-
+extern int sysevent_fd_interactive;
+extern token_t sysevent_token_interactive;
 static unsigned char bLibInited = 0;
 
 
@@ -67,6 +70,7 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
     char cmdBuff[128];
     char ifname[80];
     char temp_ifname[80];
+    char iot_enabled[20];
     memset(ifname, 0, 80);
     memset(temp_ifname, 0, 80);
 
@@ -99,6 +103,36 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
         sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, ifname);
         MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
         system(cmdBuff);
+
+        syscfg_init();
+        memset(iot_enabled, 0, sizeof(iot_enabled));
+        int rc=syscfg_get(NULL, "X_RDKCENTRAL-COM_ENABLEIOT", iot_enabled, sizeof(iot_enabled));
+
+        if((iot_enabled != NULL) || (rc != -1))
+        {
+	    printf("%s , IOT_LOG : iot_enabled is not NULL\n",__FUNCTION__);
+              
+            if(0==strncmp(iot_enabled,"true",4))
+            {
+               // Add vlan for IOT 
+               memset(cmdBuff, 0, 128);
+               sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "addIotVlan", 0, 106,"-t");
+               printf("%s, IOT_LOG : Command for IOT %s\n",__FUNCTION__,cmdBuff);
+               system(cmdBuff);
+               printf("%s, IOT_LOG : Raise sysevent from multinet\n",__FUNCTION__);
+               sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, "iot_status","bootup",0);
+            }
+            else
+            {
+               printf("%s, IOT_LOG : IOT is disabled\n",__FUNCTION__);
+
+            }
+        }
+        else
+        {
+           printf("%s, IOT_LOG : iot_enabled returned NULL\n",__FUNCTION__);
+        }
+        
     }
     
 }

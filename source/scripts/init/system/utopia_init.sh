@@ -364,10 +364,4 @@ ip rule add from all iif l2sd0.4090 lookup erouter
 echo "88E6172: Do not egress flood unicast with unknown DA"
 swctl -c 11 -p 5 -r 4 -b 0x007b
 
-# Creating IOT VLAN on ARM
-swctl -c 16 -p 0 -v 106 -m 2 -q 1
-swctl -c 16 -p 7 -v 106 -m 2 -q 1
-vconfig add l2sd0 106
-ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
-ip rule add from all iif l2sd0.106 lookup erouter
 

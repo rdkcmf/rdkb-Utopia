@@ -71,6 +71,8 @@ PORTMAP_atom="-c 16 -p 0"
 PORTMAP_arm="-c 16 -p 7"
 PORTMAP_I2E="-c 16 -p 2"
 PORTMAP_E2I="-c 0 -p 5"
+PORTMAP_IOT_1="-c 16 -p 0"
+PORTMAP_IOT_2="-c 16 -p 7"
 
 PORTMAP_DEF_sw_1="-c 34 -p 0"
 PORTMAP_DEF_sw_2="-c 34 -p 1"
@@ -380,6 +382,35 @@ case "$1" in
         fi
     ;;
     
+    addIotVlan)
+          
+        #swctl -c 16 -p 0 -v 106 -m 2 -q 1
+        #swctl -c 16 -p 7 -v 106 -m 2 -q 1
+        #vconfig add l2sd0 106
+        #ifconfig l2sd0.106 192.168.106.1 255.255.255.0 up
+        echo "IOT_LOG : hande_sw received addIotVlan"
+        iotEnabled=`syscfg get X_RDKCENTRAL-COM_ENABLEIOT`
+        if [ "$iotEnabled" = "true" ]
+        then
+             NETID=$2
+             VID=$3
+	
+             iot_ipaddress=`syscfg get iot_ipaddr`
+             iot_interface=`syscfg get iot_ifname`
+             iot_mask=`syscfg get iot_netmask`
+
+             echo "IOT_LOG : Adding VLAN l2sd0.$VID"
+             vconfig add l2sd0 $VID
+             ifconfig $iot_interface $iot_ipaddress netmask $iot_mask up
+             #DEBUG
+             echo "IOT_LOG : --SW handler, adding vlan $VID for IOT"
+             swctl $PORTMAP_IOT_1 -v $VID -m $TAGGING_MODE -q 1
+             swctl $PORTMAP_IOT_2 -v $VID -m $TAGGING_MODE -q 1
+        else
+             echo "IOT_LOG : No need to add vlan for IOT"
+             return
+        fi
+    ;; 
     #Args: netid, netvid, members
     delVlan)
     
