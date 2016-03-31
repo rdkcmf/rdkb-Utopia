@@ -539,6 +539,8 @@ static char lan_ifname[50];       // name of the lan interface
 static char lan_ipaddr[20];       // ipv4 address of the lan interface
 static char lan_netmask[20];      // ipv4 netmask of the lan interface
 static char lan_3_octets[17];     // first 3 octets of the lan ipv4 address
+static char iot_ifName[50];       // IOT interface
+static char iot_primaryAddress[50]; //IOT primary IP address
 
 static char rip_enabled[20];      // is rip enabled
 static char rip_interface_wan[20];  // if rip is enabled, then is it enabled on the wan interface
@@ -7984,10 +7986,25 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
    fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
 
-// RDKB-4826- Santosh
+   // RDKB-4826 - IOT rules for DHCP
+   static char iot_enabled[20];
+   memset(iot_enabled, 0, sizeof(iot_enabled));
+   syscfg_get(NULL, "X_RDKCENTRAL-COM_ENABLEIOT", iot_enabled, sizeof(iot_enabled));
+  
+   if(0==strcmp("true",iot_enabled))
+   {
+      printf("IOT_LOG : Adding iptable rules for IOT\n");
+      memset(iot_ifName, 0, sizeof(iot_ifName));
+      syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
+      memset(iot_primaryAddress, 0, sizeof(iot_primaryAddress));
+      syscfg_get(NULL, "iot_ipaddr", iot_primaryAddress, sizeof(iot_primaryAddress));
 
-   fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.106 -o %s -j ACCEPT\n", current_wan_ifname);
-   fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.106 -j ACCEPT\n", current_wan_ifname);
+      fprintf(filter_fp,"-A INPUT -d %s/24 -i %s -j ACCEPT\n",iot_primaryAddress,iot_ifName);
+      fprintf(filter_fp,"-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n",iot_ifName);
+      fprintf(filter_fp,"-A FORWARD -i %s -o %s -j ACCEPT\n",iot_ifName,iot_ifName);
+      fprintf(filter_fp, "-I FORWARD 2 -i %s -o %s -j ACCEPT\n", iot_ifName,current_wan_ifname);
+      fprintf(filter_fp, "-I FORWARD 3 -i %s -o %s -j ACCEPT\n", iot_ifName,current_wan_ifname);
+   }
 
 
    /***********************

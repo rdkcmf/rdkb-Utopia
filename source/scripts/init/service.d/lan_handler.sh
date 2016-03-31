@@ -57,6 +57,9 @@
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
 
+IOT_SERVICE_PATH="/etc/utopia/service.d"
+SERVICE_MULTINET_PATH="/etc/utopia/service.d/service_multinet"
+
 THIS=/etc/utopia/service.d/lan_handler.sh
 SERVICE_NAME="lan_handler"
 
@@ -250,6 +253,25 @@ case "$1" in
                 
             fi
         fi
+   ;;
+
+   iot_status)
+            echo "IOT_LOG : lan_handler received $2 status"
+
+            if [ "$2" = "up" ]
+            then
+               $SERVICE_MULTINET_PATH/handle_sw.sh "addIotVlan" 0 106 "-t"
+               echo "IOT_LOG : lan_handler done with handle_sw call"
+               $IOT_SERVICE_PATH/iot_service.sh "up"
+            elif [ "$2" = "down" ]
+            then
+               $IOT_SERVICE_PATH/iot_service.sh "down"               
+            elif [ "$2" = "bootup" ]
+            then 
+               $IOT_SERVICE_PATH/iot_service.sh "bootup"
+            fi
+            echo "IOT_LOG : lan_handler done with IOT service call"
+            
    ;;
    
    lan-restart)
