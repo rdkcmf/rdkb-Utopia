@@ -7689,7 +7689,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    //zqiu: RDKB-4519 
    //fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
    fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
+#ifndef INTEL_PUMA7
    fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
+#endif
    fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --set-dscp-class af22\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
    
