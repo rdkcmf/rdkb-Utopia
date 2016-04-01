@@ -7958,7 +7958,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", emta_wan_ifname);
    }
-   
+#ifdef INTEL_PUMA7
+
+   fprintf(filter_fp, "-A INPUT -i gmac5 -j ACCEPT\n");
+
+#endif
    prepare_multinet_filter_input(filter_fp);
    prepare_ipc_filter(filter_fp);
    //fprintf(filter_fp, "-A OUTPUT -m state --state INVALID -j DROP\n");
