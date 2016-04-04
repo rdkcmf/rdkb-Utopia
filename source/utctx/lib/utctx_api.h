@@ -610,6 +610,10 @@ typedef enum _UtopiaValue
     UtopiaValue_USGv2_Lan_Clients_Count,
     UtopiaValue_USGv2_Lan_Clients,
     UtopiaValue_USGv2_Lan_Clients_Mac,
+	UtopiaValue_PNM_Status,    
+	UtopiaValue_SPF_PrevRuleEnabledState,	 
+	UtopiaValue_PFR_PrevRuleEnabledState,
+	UtopiaValue_PRT_PrevRuleEnabledState,
     UtopiaValue__LAST__
 } UtopiaValue;
 

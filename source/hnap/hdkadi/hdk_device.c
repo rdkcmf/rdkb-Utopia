@@ -3036,6 +3036,7 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                     {
                         /* Unset each element of a single port forward */
                         Utopia_UnsetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Enabled, i);
+                        Utopia_UnsetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_PrevRuleEnabledState, i);
                         Utopia_UnsetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Name, i);
                         Utopia_UnsetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Protocol, i);
                         Utopia_UnsetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_ExternalPort, i);
@@ -3075,6 +3076,8 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SinglePortForward, i, pszBuffer);
 
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Enabled, i, "1");
+                            Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_PrevRuleEnabledState, i, "1");
+						
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Name, i, pszDescription);
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Protocol, i, (*pEnum == HNAP12_Enum_PN_IPProtocol_TCP ? "tcp" : "udp"));
 
