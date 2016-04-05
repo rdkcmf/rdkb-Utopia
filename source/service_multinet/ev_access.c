@@ -196,7 +196,7 @@ int ev_unregister_ifstatus(PL2Net net, char* ifStatusEventName) {
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive, 
         paramName, asyncString, sizeof(asyncString));
         
-    sscanf(asyncString, MNET_IFSTATUS_ASYNCVAL_FORMAT(asyncID));
+    sscanf(asyncString, "%d %d", &asyncID.trigger_id, &asyncID.action_id);
     
     sysevent_rmcallback(sysevent_fd_interactive, sysevent_token_interactive,
         asyncID);
