@@ -84,43 +84,7 @@ prepare_telstra() {
    TELSTRA_CONF_FILE=/tmp/bpalogin.conf
    TELSTRA_BIN=/usr/sbin/bpalogin
    echo -n > $TELSTRA_CONF_FILE
-   # Default debug level is 1.  Values range from 0-2 with 0 being silent
-   # All information goes to the syslog.
-   echo "debuglevel 1" >> $TELSTRA_CONF_FILE
-
-   USERNAME=`syscfg get wan_proto_username`
-   PASSWORD=`syscfg get wan_proto_password`
-   AUTHSERVER=`syscfg get telstra_server`
-   echo "username $USERNAME" >> $TELSTRA_CONF_FILE
-   echo "password $PASSWORD" >> $TELSTRA_CONF_FILE
-   echo "authserver $AUTHSERVER" >> $TELSTRA_CONF_FILE
-
-   # The default auth server is "dce-server" You can override this value, but
-   # you would only do this if you have not set your default domain correctly
-   # in your /etc/resolv.conf
-   #authserver dce-server
-
-   # You can override the default domain if you have your
-   # resolv.conf set to not include the BPA domains.
-   AUTH_DOMAIN=`syscfg get wan_domain`
-   #authdomain vic.bigpond.net.au
-   if [ "" != "$AUTH_DOMAIN" ] ; then
-      echo "authdomain $AUTH_DOMAIN" >> $TELSTRA_CONF_FILE
-   fi
-
-   # The loginprog will be executed whenever BPALogin connects successfully
-   # you could have it run a script to start a firewall, etc.  The first
-   # parm to the program will be the port number
-   #connectedprog  /etc/rc.d/rc.masq
-   #disconnectedprog  /etc/rc.d/rc.masq
-
-   # If you want to bind BPALogin to a specific address rather than all
-   # sockets, you can do that here.
-   #localaddress 10.1.2.0
-
-   # You can now define the listen port instead of a random port
-   # This will help with firewalls.
-   #localport 5050
+  
 
    # Logging can be sent to syslog or sysout.
    #logging sysout
