@@ -84,6 +84,7 @@
 # interface types and all names must be unique. i.e. you cannot have an interface named "gre"
 # if there is a "gre" interface type
 
+source /etc/utopia/service.d/log_capture_path.sh
 
 source /etc/utopia/service.d/interface_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
@@ -752,7 +753,6 @@ load_net() {
 # ENTRY
 #------------------------------------------------------------------
 
-source /etc/utopia/service.d/log_capture_path.sh
 
 #service_init
 case "$1" in

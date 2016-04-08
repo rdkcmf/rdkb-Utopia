@@ -52,7 +52,7 @@
 # ENTRY
 #------------------------------------------------------------------
 
-#source /etc/utopia/service.d/log_capture_path.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 TYPE=SW
 
