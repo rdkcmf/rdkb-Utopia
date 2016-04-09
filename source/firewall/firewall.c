@@ -8009,7 +8009,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       fprintf(filter_fp,"-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n",iot_ifName);
       fprintf(filter_fp,"-A FORWARD -i %s -o %s -j ACCEPT\n",iot_ifName,iot_ifName);
       fprintf(filter_fp, "-I FORWARD 2 -i %s -o %s -j ACCEPT\n", iot_ifName,current_wan_ifname);
-      fprintf(filter_fp, "-I FORWARD 3 -i %s -o %s -j ACCEPT\n", iot_ifName,current_wan_ifname);
+      fprintf(filter_fp, "-I FORWARD 3 -i %s -o %s -j ACCEPT\n", current_wan_ifname, iot_ifName);
    }
 
 
