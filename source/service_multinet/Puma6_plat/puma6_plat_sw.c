@@ -106,7 +106,7 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
 
         syscfg_init();
         memset(iot_enabled, 0, sizeof(iot_enabled));
-        int rc=syscfg_get(NULL, "X_RDKCENTRAL-COM_ENABLEIOT", iot_enabled, sizeof(iot_enabled));
+        int rc=syscfg_get(NULL, "lost_and_found_enable", iot_enabled, sizeof(iot_enabled));
 
         if((iot_enabled != NULL) || (rc != -1))
         {

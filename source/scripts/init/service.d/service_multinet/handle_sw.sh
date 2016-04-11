@@ -389,7 +389,7 @@ case "$1" in
         #vconfig add l2sd0 106
         #ifconfig l2sd0.106 192.168.106.1 255.255.255.0 up
         echo "IOT_LOG : hande_sw received addIotVlan"
-        iotEnabled=`syscfg get X_RDKCENTRAL-COM_ENABLEIOT`
+        iotEnabled=`syscfg get lost_and_found_enable`
         if [ "$iotEnabled" = "true" ]
         then
              NETID=$2

@@ -593,7 +593,7 @@ fi
       do_extra_pools
    fi
 
-   iotEnabled=`syscfg get X_RDKCENTRAL-COM_ENABLEIOT`
+   iotEnabled=`syscfg get lost_and_found_enable`
    if [ "$iotEnabled" = "true" ]
    then
         echo "IOT_LOG : DHCP server configuring for IOT"

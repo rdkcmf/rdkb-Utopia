@@ -963,4 +963,4 @@ $iot_dhcp_end=192.168.106.150
 
 # XSMART or IOT Enable
 $X_RDKCENTRAL-COM_ENABLEIOT=false
-
+$lost_and_found_enable=true
