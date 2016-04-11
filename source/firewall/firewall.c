@@ -6867,7 +6867,7 @@ static int do_lan2wan_misc(FILE *filter_fp)
 static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
 {
    do_lan2wan_misc(filter_fp);
-   do_lan2wan_IoT_Allow(filter_fp);
+   //do_lan2wan_IoT_Allow(filter_fp);
    //Not used in USGv2
    //do_lan2wan_webfilters(filter_fp);
    //do_lan_access_restrictions(filter_fp, nat_fp);
@@ -8007,9 +8007,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
       fprintf(filter_fp,"-A INPUT -d %s/24 -i %s -j ACCEPT\n",iot_primaryAddress,iot_ifName);
       fprintf(filter_fp,"-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n",iot_ifName);
-      fprintf(filter_fp,"-A FORWARD -i %s -o %s -j ACCEPT\n",iot_ifName,iot_ifName);
-      fprintf(filter_fp, "-I FORWARD 2 -i %s -o %s -j ACCEPT\n", iot_ifName,current_wan_ifname);
+      //fprintf(filter_fp,"-A FORWARD -i %s -o %s -j ACCEPT\n",iot_ifName,iot_ifName);
+      fprintf(filter_fp, "-I FORWARD 2 -i %s -o %s -j lan2wan_iot_allow\n", iot_ifName,current_wan_ifname);
       fprintf(filter_fp, "-I FORWARD 3 -i %s -o %s -j ACCEPT\n", current_wan_ifname, iot_ifName);
+      do_lan2wan_IoT_Allow(filter_fp);
    }
 
 
@@ -8017,7 +8018,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
     * set lan to wan subrule by order 
     * *********************/
    fprintf(filter_fp, "-A lan2wan -j lan2wan_disable\n");
-   fprintf(filter_fp, "-A lan2wan -i l2sd0.106 -j lan2wan_iot_allow\n");
+   //fprintf(filter_fp, "-A lan2wan -i l2sd0.106 -j lan2wan_iot_allow\n");
    for(i=0; i< IPT_PRI_MAX; i++)
    {
       switch(iptables_pri_level[i]){
