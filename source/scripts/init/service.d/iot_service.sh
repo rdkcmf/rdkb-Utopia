@@ -103,7 +103,7 @@ then
 elif [ "$1" = "bootup" ]
 then
    #No need to call restart services as during bootup all configuration will be done
-   isIotEnabled=`syscfg get X_RDKCENTRAL-COM_ENABLEIOT`
+   isIotEnabled=`syscfg get lost_and_found_enable`
    echo "IOT_LOG : IOT enabled is : $isIotEnabled"   
    if [ "$isIotEnabled" = "true" ]
    then

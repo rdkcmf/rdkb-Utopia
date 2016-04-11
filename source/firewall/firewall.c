@@ -7995,7 +7995,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    // RDKB-4826 - IOT rules for DHCP
    static char iot_enabled[20];
    memset(iot_enabled, 0, sizeof(iot_enabled));
-   syscfg_get(NULL, "X_RDKCENTRAL-COM_ENABLEIOT", iot_enabled, sizeof(iot_enabled));
+   syscfg_get(NULL, "lost_and_found_enable", iot_enabled, sizeof(iot_enabled));
   
    if(0==strcmp("true",iot_enabled))
    {
