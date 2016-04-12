@@ -6742,7 +6742,7 @@ static int do_lan2wan_IoT_Allow(FILE *filter_fp)
    /*
     * if the wan is currently unavailable, then drop any packets from lan to wan
     */
- 
+      fprintf(filter_fp, "-A lan2wan_iot_allow -p udp --dport 53 -j ACCEPT\n");
       fprintf(filter_fp, "-A lan2wan_iot_allow -d ntp01.cmc.co.denver.comcast.net -j ACCEPT\n");
       fprintf(filter_fp, "-A lan2wan_iot_allow -d ntp.ccp.xcal.tv -j ACCEPT\n");
       //fprintf(filter_fp, "-A lan2wan_iot_allow -d cpentp.services.cox.net -j ACCEPT\n");
