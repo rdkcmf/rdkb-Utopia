@@ -49,7 +49,12 @@
 #include "srvmgr.h"
 
 const char* SERVICE_NAME            = "multinet";
+
+#ifdef INTEL_PUM7
+const char* SERVICE_DEFAULT_HANDLER = "etc/utopia/service.d/vlan_util_xb6.sh";
+#else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_exec";
+#endif
 /*
  * 3) Custom Events
  *    If the service should receive events other than start stop restart, then
@@ -79,10 +84,10 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_ex
  */
 #ifdef INTEL_PUMA7
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "multinet-syncNets|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-syncMembers|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-down|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|"TUPLE_FLAG_EVENT,
     NULL };
 #else
 const char* SERVICE_CUSTOM_EVENTS[] = { 

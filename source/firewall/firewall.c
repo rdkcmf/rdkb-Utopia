@@ -8364,9 +8364,37 @@ static int do_raw_table_puma7(FILE *fp)
       snprintf(str, sizeof(str), "-A PREROUTING -i a-mux -j NOTRACK");
       fprintf(fp, "%s\n", str);
 
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0 -j NOTRACK");
+      //For ath0 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1000 -j NOTRACK");
       fprintf(fp, "%s\n", str);
 
+      //For ath1 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1001 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      //For ath2 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1002 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      //For ath3 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1003 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      //For ath4 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1004 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      //For ath5 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1005 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      //For ath6 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1006 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
+
+      //For ath7 acceleration loop
+      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1007 -j NOTRACK");
+      fprintf(fp, "%s\n", str);
       return(0);
 }
 #endif
