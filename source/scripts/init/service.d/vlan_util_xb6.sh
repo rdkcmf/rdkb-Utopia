@@ -89,13 +89,6 @@ wait_qtn(){
 	done
 }
 
-#Conveniently sets the SSID by CCSP AP name athX
-#Parameters: athx "SSID_NAME"
-qtn_set_ssid(){
-	map_ath_to_qtn $AP_NAME
-	$QCSAPI_PCIE set_ssid $VAP_NAME "$2"
-}
-
 #Generate and set a default SSID for wifi AP
 #Assumes you have already set the variables $AP_NAME and $VAP_NAME
 qtn_set_default_ssid(){
@@ -121,7 +114,7 @@ qtn_set_default_ssid(){
 		fi
 		SSID="${SSID_PREFIX} ${SSID_CATEGORY} ${RADIO_DESC} $UNIQUE_ID"
 
-		$QCSAPI_PCIE set_ssid $VAP_NAME "$SSID"
+		$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
 	fi
 }
 
@@ -132,7 +125,6 @@ setup_qtn(){
         QTN_MODE="$1"
         AP_NAME="$2"
 
-	wait_qtn
 	qtn_init
 
         #First we need to map index to QTN internal indexand vlan ID
@@ -140,7 +132,7 @@ setup_qtn(){
 
         if [ "$QTN_MODE" = "start" ] ; then
 		#Create VAP
-		$QCSAPI_PCIE wifi_create_bss $VAP_NAME
+		$QWCFG_TEST push $QTN_INDEX vap_emerged 1
 
                 #Bind internal interface to vlan we can use
                 $QWCFG_TEST set $QTN_INDEX bind_vlan $QTN_VLAN
@@ -168,7 +160,7 @@ setup_qtn(){
                 $QWCFG_TEST set $QTN_INDEX unbind_vlan $QTN_VLAN
 
                 #Create VAP
-                $QCSAPI_PCIE wifi_remove_bss $VAP_NAME
+		$QWCFG_TEST push $QTN_INDEX vap_emerged 0
         fi                                                                    
 }       
 
@@ -233,6 +225,7 @@ setup_lans(){
 
                 #Create bridge
                 $VLAN_UTIL add_group $BRIDGE_NAME $BRIDGE_VLAN
+
                 $SYSEVENT set multinet_${INSTANCE}-localready 1
                 $SYSEVENT set multinet_${INSTANCE}-status partial
                 case $INSTANCE in
@@ -263,6 +256,7 @@ setup_lans(){
 
                 3)
                 #Create Xfinity public 2.4GHz network
+
 		#Set up GRE and add it to this group
                 sh /etc/utopia/service.d/service_multinet/handle_gre.sh create $INSTANCE $DEFAULT_GRE_TUNNEL 
                 setup_gretap $LAN_MODE $BRIDGE_NAME $BRIDGE_VLAN
