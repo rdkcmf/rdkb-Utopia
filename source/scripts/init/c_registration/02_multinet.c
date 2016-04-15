@@ -50,8 +50,8 @@
 
 const char* SERVICE_NAME            = "multinet";
 
-#ifdef INTEL_PUM7
-const char* SERVICE_DEFAULT_HANDLER = "etc/utopia/service.d/vlan_util_xb6.sh";
+#ifdef INTEL_PUMA7
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb6.sh";
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_exec";
 #endif
