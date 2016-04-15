@@ -8360,48 +8360,48 @@ static int do_raw_table_nowan(FILE *fp)
 #ifdef INTEL_PUMA7
 static int do_raw_table_puma7(FILE *fp)
 {
-      fprintf(stderr,"******DO RAW TABLE PUMA7****\n");
-      char str[MAX_QUERY];
+	char str[MAX_QUERY];
+	fprintf(stderr,"******DO RAW TABLE PUMA7 ****\n");
 
-      //use the raw table
-      isRawTableUsed = 1;
+      	//use the raw table
+      	isRawTableUsed = 1;
 
-      snprintf(str, sizeof(str), "-A PREROUTING -i a-mux -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	snprintf(str, sizeof(str), "-A PREROUTING -i a-mux -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath0 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1000 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	//For ath0 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1000 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath1 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1001 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	//For ath1 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1001 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath2 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1002 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	//For ath2 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1002 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath3 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1003 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	//For ath3 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1003 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath4 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1004 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	//For ath4 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1004 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath5 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1005 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	//For ath5 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1005 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath6 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1006 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
+	//For ath6 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1006 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
 
-      //For ath7 acceleration loop
-      snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1007 -j NOTRACK");
-      fprintf(fp, "%s\n", str);
- 
-     return(0);
+	//For ath7 acceleration loop
+	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1007 -j NOTRACK");
+	fprintf(fp, "%s\n", str);
+
+	return(0);
 }
 #endif
 // static int prepare_multilan_firewall(FILE *nat_fp, FILE *filter_fp)
@@ -8837,9 +8837,14 @@ int prepare_ipv6_firewall(const char *fw_file)
    
    if (wan6_ifname[0] == '\0') 
        strcpy(wan6_ifname, current_wan_ifname);
+
+#ifdef INTEL_PUMA7
+   fprintf(fp, "*raw\n");
+   do_raw_table_puma7(fp);
+   fprintf(fp, "COMMIT\n");
+#endif
    
    do_ipv6_sn_filter(fp);
-
 
    fprintf(fp, "*filter\n");
    fprintf(fp, ":INPUT ACCEPT [0:0]\n");
