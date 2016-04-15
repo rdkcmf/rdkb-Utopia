@@ -7790,6 +7790,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
 
+#ifdef INTEL_PUMA7
+   //Avoid blocking packets at the Intel NIL layer
+   fprintf(filter_fp, "-A FORWARD -i a-mux -j ACCEPT\n");
+#endif
+
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    fprintf(filter_fp, "%s\n", ":pp_disabled - [0:0]");
    if(isGuestNetworkEnabled) {
@@ -8395,7 +8400,8 @@ static int do_raw_table_puma7(FILE *fp)
       //For ath7 acceleration loop
       snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1007 -j NOTRACK");
       fprintf(fp, "%s\n", str);
-      return(0);
+ 
+     return(0);
 }
 #endif
 // static int prepare_multilan_firewall(FILE *nat_fp, FILE *filter_fp)
@@ -8834,10 +8840,16 @@ int prepare_ipv6_firewall(const char *fw_file)
    
    do_ipv6_sn_filter(fp);
 
+
    fprintf(fp, "*filter\n");
    fprintf(fp, ":INPUT ACCEPT [0:0]\n");
    fprintf(fp, ":FORWARD ACCEPT [0:0]\n");
    fprintf(fp, ":OUTPUT ACCEPT [0:0]\n");
+
+#ifdef INTEL_PUMA7
+   //Avoid blocking packets at the Intel NIL layer
+   fprintf(fp, "-A FORWARD -i a-mux -j ACCEPT\n");
+#endif
 
    if (!isFirewallEnabled || isBridgeMode || !isWanServiceReady) {
        if(isBridgeMode || isWanServiceReady)

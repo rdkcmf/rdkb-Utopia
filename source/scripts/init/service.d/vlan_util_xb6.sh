@@ -194,7 +194,14 @@ qtn_setup_all(){
 	setup_qtn $1 ath6
 	setup_qtn $1 ath7
 }
-                                      
+         
+wait_for_gre_ready(){
+	while [ "`$SYSEVENT get if_${LAN_GRE_TUNNEL}-status`" != "ready" ] ; do
+		echo "Waiting for $LAN_GRE_TUNNEL to be ready..."
+		sleep 1
+	done
+}
+                             
 #Do any gretap setup needed here, or call events, whatever
 #Also returns LAN_GRE_TUNNEL so we know which to use for the base tunnel
 #Syntax: setup_gretap [start|stop] bridge_name group_number
@@ -207,16 +214,11 @@ setup_gretap(){
 	LAN_GRE_TUNNEL="$DEFAULT_GRE_TUNNEL"
 
         if [ "$GRE_MODE" = "start" ] ; then
-                #In order to be added to bridge, interface must
-                #have a valid MAC address.  This hack creates the vlan
- 		#interface and gives it a valid mac address.
+		#Wait until gre got created
+		wait_for_gre_ready
 		vconfig add $LAN_GRE_TUNNEL $LAN_VLAN
-
-		HWADDR="`cat /sys/class/net/gretap0/address`"
-		if [ "$HWADDR" = "00:00:00:00:00:00" ] ; then
-			echo "Changing GRE mac from $HWADDR to $DUMMY_MAC"
-                	$IFCONFIG ${LAN_GRE_TUNNEL}.${LAN_VLAN} hw ether $DUMMY_MAC
-		fi
+		ifconfig $LAN_GRE_TUNNEL up
+		ifconfig ${LAN_GRE_TUNNEL}.$LAN_VLAN up
         else
 		vconfig rem ${LAN_GRE_TUNNEL}.${LAN_VLAN}
         fi
@@ -231,7 +233,8 @@ setup_lans(){
 
                 #Create bridge
                 $VLAN_UTIL add_group $BRIDGE_NAME $BRIDGE_VLAN
-
+                $SYSEVENT set multinet_${INSTANCE}-localready 1
+                $SYSEVENT set multinet_${INSTANCE}-status partial
                 case $INSTANCE in
                 1)
 		#Set up Quantenna wifi
@@ -260,10 +263,9 @@ setup_lans(){
 
                 3)
                 #Create Xfinity public 2.4GHz network
-
 		#Set up GRE and add it to this group
                 sh /etc/utopia/service.d/service_multinet/handle_gre.sh create $INSTANCE $DEFAULT_GRE_TUNNEL 
-                #setup_gretap $LAN_MODE $BRIDGE_NAME $BRIDGE_VLAN
+                setup_gretap $LAN_MODE $BRIDGE_NAME $BRIDGE_VLAN
 
 		#Set up Quantenna wifi
 		setup_qtn $LAN_MODE ath4
@@ -278,7 +280,7 @@ setup_lans(){
 
 		#Set up GRE and add it to this group
                 sh /etc/utopia/service.d/service_multinet/handle_gre.sh create $INSTANCE $DEFAULT_GRE_TUNNEL 
-                #setup_gretap $LAN_MODE $BRIDGE_NAME $BRIDGE_VLAN
+                setup_gretap $LAN_MODE $BRIDGE_NAME $BRIDGE_VLAN
 
                 #Set up Quantenna wifi
                 setup_qtn $LAN_MODE ath5
@@ -289,10 +291,6 @@ setup_lans(){
                 ;;
 
                 esac
-
-		#Send event saying we're ready
-                $SYSEVENT set multinet_${INSTANCE}-localready 1
-                $SYSEVENT set multinet_${INSTANCE}-status partial
         else 
                 $SYSEVENT set multinet_${INSTANCE}-status stopping
                 case $INSTANCE in
@@ -394,6 +392,7 @@ esac
 
 #Set the interfae name
 $SYSEVENT set multinet_${INSTANCE}-name $BRIDGE_NAME
+$SYSEVENT set multinet_${INSTANCE}-vid $BRIDGE_VLAN
 
 
 if [ "$MODE" = "up" ] ; then
@@ -420,6 +419,8 @@ if [ "$MODE" = "up" ] ; then
 
         #Set up bridge and add interfaces
         setup_lans start
+	#Send event saying we're ready
+        $SYSEVENT set multinet_${INSTANCE}-status ready
 elif [ $MODE = "start" ]; then
         #If bridge already exists, tear it down first
         $IFCONFIG $BRIDGE_NAME 1> /dev/null 2> /dev/null
@@ -430,7 +431,8 @@ elif [ $MODE = "start" ]; then
 
         #Set up bridge and add interfaces
         setup_lans start
-
+	#Send event saying we're ready
+        $SYSEVENT set multinet_${INSTANCE}-status ready
         #restart the firewall after the network is set up
         $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ] ; then
