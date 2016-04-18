@@ -29,8 +29,8 @@ BASE_WIFI_IF="host0"
 #Base vlan ID to use internally in QTN
 QTN_VLAN_BASE="2000"
 QTN_STATE="/var/run/.qtn_vlan_enabled"
-UNIQUE_ID=`ncpu_exec -ep "cat /sys/class/net/wan0/address"|egrep -e ".*:.*:.*:.*:.*:.*"|cut -d ":" -f 5-6`
-
+UNIQUE_ID=`ncpu_exec -ep "cat /sys/class/net/wan0/address"|egrep -e ".*:.*:.*:.*:.*:.*"|cut -d ":" -f 3-6`
+UNIQUE_ID=`echo "${UNIQUE_ID//:}"`
 #GRE tunnel information
 DEFAULT_GRE_TUNNEL="gretap0"
 #Dummy MAC address to assign to GRE tunnels so we can add them to bridges
@@ -92,27 +92,28 @@ wait_qtn(){
 #Generate and set a default SSID for wifi AP
 #Assumes you have already set the variables $AP_NAME and $VAP_NAME
 qtn_set_default_ssid(){
-	if [ $USE_DEFAULT_SSID -ne 0 ] ; then
-		SSID_PREFIX="Xfinity"
+	if [ $USE_DEFAULT_SSID -ne 0 -a "$BRIDGE_NAME" != "brlan0" ] ; then
 
 		SSID_CATEGORY=""
-		if [ $ATH_INDEX -eq 0 -o $ATH_INDEX -eq 1 ] ; then
-			SSID_CATEGORY="Private"	
-		elif [ $ATH_INDEX -eq 2 -o $ATH_INDEX -eq 3 ] ; then
-			SSID_CATEGORY="Home"
+		#Captive portal will take care of setting the private network ssid and passphrase
+		#if [ $ATH_INDEX -eq 0 -o $ATH_INDEX -eq 1 ] ; then
+		#	SSID_CATEGORY="Private"	
+		if [ $ATH_INDEX -eq 2 -o $ATH_INDEX -eq 3 ] ; then
+			SSID_CATEGORY="XHS"
 		elif [ $ATH_INDEX -eq 4 -o $ATH_INDEX -eq 5 ] ; then
 			SSID_CATEGORY="WiFi"
 		elif [ $ATH_INDEX -eq 6 -o $ATH_INDEX -eq 7 ] ; then
 			SSID_CATEGORY="IoT"
 		fi
 
-		RADIO_DESC=""
-		if [ "$RADIO" -eq "0" ] ; then
-			RADIO_DESC="5GHz"
-		elif [ "$RADIO" -eq "2" ] ; then
-			RADIO_DESC="2.4GHz"
-		fi
-		SSID="${SSID_PREFIX} ${SSID_CATEGORY} ${RADIO_DESC} $UNIQUE_ID"
+		#RADIO_DESC=""
+		#if [ "$RADIO" -eq "0" ] ; then
+		#	RADIO_DESC="5GHz"
+		#elif [ "$RADIO" -eq "2" ] ; then
+		#RADIO_DESC="2.4GHz"
+		#fi
+		##SSID="${SSID_PREFIX} ${SSID_CATEGORY} ${RADIO_DESC} $UNIQUE_ID"
+		SSID="${SSID_CATEGORY}-$UNIQUE_ID"
 
 		$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
 	fi
