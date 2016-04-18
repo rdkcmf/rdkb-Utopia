@@ -100,10 +100,24 @@ qtn_set_default_ssid(){
 		#	SSID_CATEGORY="Private"	
 		if [ $ATH_INDEX -eq 2 -o $ATH_INDEX -eq 3 ] ; then
 			SSID_CATEGORY="XHS"
+
+			#ADD MAC ADDRESS here
+			SSID="${SSID_CATEGORY}-$UNIQUE_ID"
+			#THEN SET SSID XHS-MAC (same for both 2.4 and 5G)
+			$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
 		elif [ $ATH_INDEX -eq 4 -o $ATH_INDEX -eq 5 ] ; then
-			SSID_CATEGORY="WiFi"
+			SSID_CATEGORY="xfinitywifi"
+			SSID="${SSID_CATEGORY}"
+
+			#THEN SET SSID "xfinitywifi"   (same for both 2.4 and 5G)
+			$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
 		elif [ $ATH_INDEX -eq 6 -o $ATH_INDEX -eq 7 ] ; then
-			SSID_CATEGORY="IoT"
+			SSID_CATEGORY="IOT"
+
+			#ADD MAC ADDRESS here
+			SSID="${SSID_CATEGORY}-$UNIQUE_ID"
+			#THEN SET SSID IOT-MAC (same for both 2.4 and 5G)
+			$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
 		fi
 
 		#RADIO_DESC=""
@@ -113,9 +127,9 @@ qtn_set_default_ssid(){
 		#RADIO_DESC="2.4GHz"
 		#fi
 		##SSID="${SSID_PREFIX} ${SSID_CATEGORY} ${RADIO_DESC} $UNIQUE_ID"
-		SSID="${SSID_CATEGORY}-$UNIQUE_ID"
-
-		$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
+		#NEXT 2 lines - CANNOT DO THIS HERE. THIS WILL ALSO SET Private SSID
+		##SSID="${SSID_CATEGORY}-$UNIQUE_ID"
+		##$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
 	fi
 }
 
