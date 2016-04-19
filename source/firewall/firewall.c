@@ -7940,6 +7940,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       fprintf(filter_fp, "-A INPUT -i %s -d 192.168.100.1 -j ACCEPT\n", cmdiag_ifname);
    }
 
+#ifdef _COSA_BCM_MIPS_
+    // Allow all traffic to the private interface priv0
+    fprintf(filter_fp, "-A INPUT -i priv0 -j ACCEPT\n");
+#endif
+
    //Captive Portal 
    /* If both PSM and syscfg values are true then SET the DNS redirection to GW*/    
    if(isInCaptivePortal()==1)
