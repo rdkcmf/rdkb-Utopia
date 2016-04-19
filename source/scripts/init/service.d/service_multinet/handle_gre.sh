@@ -285,7 +285,12 @@ bInst_to_bNames () {
 }
 
 read_init_params () {
-    gre_preproc
+   
+    #this is temp workaround until we find the root cause why snmp-agent status not getting invoked in xb6
+    if [ x != x`sysevent get gre_$1_inst` ]; then
+        echo "GRE instance for $1 cannot be zero calling gre_preproc"
+         gre_preproc
+    fi
     #zqiu: short term fix for XHH 5G not get IP issue
     inst=`dmcli eRT setv Device.Bridging.Bridge.4.Port.2.LowerLayers string Device.WiFi.SSID.6`;
     
