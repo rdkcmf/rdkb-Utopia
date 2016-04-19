@@ -388,6 +388,7 @@ typedef enum protocol {
 typedef struct portFwdSingle {
     char       name[NAME_SZ];
     boolean_t  enabled;
+    boolean_t  prevRuleEnabledState;	
     int        rule_id;
     protocol_t protocol;
     int        external_port;
@@ -411,6 +412,7 @@ typedef struct portMapDyn {
 typedef struct portFwdRange {
     char       name[NAME_SZ];
     boolean_t  enabled;
+    boolean_t  prevRuleEnabledState;	
     int        rule_id;
     protocol_t protocol;
     int        start_port;
@@ -425,6 +427,7 @@ typedef struct portFwdRange {
 typedef struct portRangeTrig {
     char       name[TOKEN_SZ];
     boolean_t  enabled;
+    boolean_t  prevRuleEnabledState;	
     int        rule_id;
     protocol_t trigger_proto;
     protocol_t forward_proto;

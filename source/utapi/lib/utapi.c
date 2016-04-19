@@ -2140,7 +2140,24 @@ static int s_getportfwd_index (UtopiaContext *ctx, int rule_id, int count)
 
 static int s_getportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap)
 {
+	boolean_t TempprevRuleEnabledState = FALSE;
+	
     Utopia_GetIndexedBool(ctx, UtopiaValue_SPF_Enabled, index, &portmap->enabled);
+
+	/* 
+	  * Check whether previous enable state variable available in syscfg DB 
+	  * file or not. If not available then create DB instance store this value
+	  */
+	if( SUCCESS == Utopia_GetIndexedBool(ctx, UtopiaValue_SPF_PrevRuleEnabledState, index, &TempprevRuleEnabledState) )
+	{
+		portmap->prevRuleEnabledState = TempprevRuleEnabledState;
+	}
+	else
+	{
+	   portmap->prevRuleEnabledState = portmap->enabled;
+	   UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_SPF_PrevRuleEnabledState, index, portmap->prevRuleEnabledState);
+	}
+
     Utopia_GetIndexed(ctx, UtopiaValue_SPF_Name, index, portmap->name, NAME_SZ);
     Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_ExternalPort, index, &portmap->external_port);
     Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_InternalPort, index, &portmap->internal_port);
@@ -2156,6 +2173,7 @@ static int s_getportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap
 static int s_setportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap)
 {
     UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_SPF_Enabled, index, portmap->enabled);
+    UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_SPF_PrevRuleEnabledState, index,portmap->prevRuleEnabledState );	
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SPF_Name, index, portmap->name);
     UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_SPF_ExternalPort, index, portmap->external_port);
     UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_SPF_InternalPort, index, portmap->internal_port);
@@ -2171,6 +2189,7 @@ static int s_setportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap
 static int s_unsetportfwd (UtopiaContext *ctx, int index)
 {
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_Enabled, index);
+    UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_PrevRuleEnabledState, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_Name, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_ExternalPort, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_InternalPort, index);
@@ -2957,10 +2976,26 @@ static int s_getportfwdrange_index (UtopiaContext *ctx, int rule_id, int count)
 static int s_getportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *portmap)
 {
     char *last, port_range[32];
+	boolean_t TempprevRuleEnabledState = FALSE;
 
     portmap->internal_port_range_size = 0;
 
     Utopia_GetIndexedBool(ctx, UtopiaValue_PFR_Enabled, index, &portmap->enabled);
+
+	/* 
+	  * Check whether previous enable state variable available in syscfg DB 
+	  * file or not. If not available then create DB instance store this value
+	  */
+	if( SUCCESS == Utopia_GetIndexedBool(ctx, UtopiaValue_PFR_PrevRuleEnabledState, index, &TempprevRuleEnabledState) )
+	{
+	   portmap->prevRuleEnabledState = TempprevRuleEnabledState;
+	}
+	else
+	{
+	   portmap->prevRuleEnabledState = portmap->enabled;
+	   UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PFR_PrevRuleEnabledState, index, portmap->prevRuleEnabledState);
+	}
+
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_Name, index, portmap->name, NAME_SZ);
     Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_InternalPort, index, &portmap->internal_port);
     Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_InternalPortRangeSize, index, &portmap->internal_port_range_size);
@@ -2989,6 +3024,7 @@ static int s_setportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *por
     char port_range[32];
 
     UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PFR_Enabled, index, portmap->enabled);
+    UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PFR_PrevRuleEnabledState, index, portmap->prevRuleEnabledState );
     UTOPIA_SETINDEXED(ctx, UtopiaValue_PFR_Name, index, portmap->name);
     UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_PFR_InternalPort, index, portmap->internal_port);
     UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_PFR_InternalPortRangeSize, index, portmap->internal_port_range_size);
@@ -3015,6 +3051,7 @@ static int s_setportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *por
 static int s_unsetportfwdrange (UtopiaContext *ctx, int index)
 {
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_Enabled, index);
+    UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_PrevRuleEnabledState, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_Name, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_InternalPort, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_InternalPortRangeSize, index);
@@ -3311,8 +3348,24 @@ static int s_getporttrigger_index (UtopiaContext *ctx, int rule_id, int count)
 static int s_getporttrigger (UtopiaContext *ctx, int index, portRangeTrig_t *map)
 {
     char *last, port_range[32];
+    boolean_t  TempprevRuleEnabledState = FALSE;	
 
     Utopia_GetIndexedBool(ctx, UtopiaValue_PRT_Enabled, index, &map->enabled);
+
+	/* 
+	  * Check whether previous enable state variable available in syscfg DB 
+	  * file or not. If not available then create DB instance store this value
+	  */
+	if( SUCCESS == Utopia_GetIndexedBool(ctx, UtopiaValue_PRT_PrevRuleEnabledState, index, &TempprevRuleEnabledState) )
+	{
+	   map->prevRuleEnabledState = TempprevRuleEnabledState;
+	}
+	else
+	{
+	   map->prevRuleEnabledState = map->enabled;
+	   UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PRT_PrevRuleEnabledState, index, map->prevRuleEnabledState);
+	}
+
     Utopia_GetIndexed(ctx, UtopiaValue_PRT_Name, index, map->name, NAME_SZ);
 
     Utopia_GetIndexed(ctx, UtopiaValue_PRT_TriggerProtocol, index, s_tokenbuf, sizeof(s_tokenbuf));
@@ -3347,9 +3400,11 @@ static int s_getporttrigger (UtopiaContext *ctx, int index, portRangeTrig_t *map
 static int s_setporttrigger (UtopiaContext *ctx, int index, portRangeTrig_t *map)
 {
     char *p, port_range[32];
+	boolean_t TempprevRuleEnabledState;
 
     UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PRT_Enabled, index, map->enabled);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_PRT_Name, index, map->name);
+    UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PRT_PrevRuleEnabledState, index, map->prevRuleEnabledState);
+	UTOPIA_SETINDEXED(ctx, UtopiaValue_PRT_Name, index, map->name);
     snprintf(port_range, sizeof(port_range), "%d %d", map->trigger_start,
                                                       map->trigger_end);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_PRT_TriggerRange, index, port_range);
@@ -3368,7 +3423,8 @@ static int s_unsetporttrigger (UtopiaContext *ctx, int index)
 {
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_TriggerID, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_Enabled, index);
-    UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_Name, index);
+    UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_PrevRuleEnabledState, index);
+	UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_Name, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_TriggerRange, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_ForwardRange, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PRT_TriggerProtocol, index);
