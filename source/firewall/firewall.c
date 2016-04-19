@@ -6845,6 +6845,10 @@ static int do_lan2wan_misc(FILE *filter_fp)
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 995  -j RETURN\n"); // EMAIL
       fprintf(filter_fp, "-A lan2wan_misc -p gre              -j RETURN\n"); // GRE
       fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 500  -j RETURN\n"); // VPN
+      //zqiu>> cisco vpn
+      fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 4500  -j RETURN\n"); // VPN
+      fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 62515  -j RETURN\n"); // VPN
+      //zqiu<<
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 1723 -j RETURN\n"); // VPN
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 3689 -j RETURN\n"); // ITUNES
       fprintf(filter_fp, "-A lan2wan_misc -m state --state RELATED,ESTABLISHED -j RETURN\n");
