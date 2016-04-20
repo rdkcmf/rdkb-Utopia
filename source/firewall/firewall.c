@@ -7782,9 +7782,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan_todmz\n", current_wan_ifname);
    fprintf(nat_fp, "-A POSTROUTING -j postrouting_ephemeral\n");
 // This breaks emta DNS routing on XF3. We may need some special rule here.
-#if !defined (_COSA_BCM_MIPS_)
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
-#endif
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_tolan\n", lan_ifname);
    prepare_multinet_postrouting_nat(nat_fp);
    fprintf(nat_fp, "-A POSTROUTING -j postrouting_plugins\n");
@@ -8003,10 +8001,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, current_wan_ifname);
    // need br0 to br0 for virtual services)
    fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", lan_ifname, lan_ifname);
-   // This is required for emta DNS routing on XF3.
-#if defined (_COSA_BCM_MIPS_)
-   fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", current_wan_ifname, current_wan_ifname);
-#endif
    prepare_multinet_filter_forward(filter_fp);
    fprintf(filter_fp, "-A FORWARD -j xlog_drop_wan2lan\n");
    
