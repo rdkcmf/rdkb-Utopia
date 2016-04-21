@@ -31,7 +31,7 @@ S3_URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb_snmp.cgi"
 WAITINGFORUPLOAD="$LOG_UPLOAD_FOLDER/waitingforupload"
 
 if [ -f /etc/os-release ]; then
-      MAXSIZE=1572864
+      MAXSIZE=1536
 else
       MAXSIZE=524288
 fi
