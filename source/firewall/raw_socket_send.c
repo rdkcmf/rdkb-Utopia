@@ -124,49 +124,6 @@ unsigned short csum(unsigned short *ptr,int nbytes)
     return(answer);
 }
 
-int CreateRawSocket(int protocol_to_sniff)
-{
-    int rawsock;
-
-    if((rawsock = socket(PF_PACKET, SOCK_RAW, htons(protocol_to_sniff)))== -1)
-    {
-        perror("Error creating raw socket: ");
-        exit(-1);
-    }
-
-    return rawsock;
-}
-
-int BindRawSocketToInterface(char *device, int rawsock, int protocol)
-{
-    struct sockaddr_ll sll;
-    struct ifreq ifr;
-
-    bzero(&sll, sizeof(sll));
-    bzero(&ifr, sizeof(ifr));
-
-    /* First Get the Interface Index  */
-    strncpy((char *)ifr.ifr_name, device, IFNAMSIZ);
-    if((ioctl(rawsock, SIOCGIFINDEX, &ifr)) == -1)
-    {
-        printf("Error getting Interface index !\n");
-        exit(-1);
-    }
-
-    /* Bind our raw socket to this interface */
-    sll.sll_family = AF_PACKET;
-    sll.sll_ifindex = ifr.ifr_ifindex;
-    sll.sll_protocol = htons(protocol);
-
-    if((bind(rawsock, (struct sockaddr *)&sll, sizeof(sll)))== -1)
-    {
-        perror("Error binding raw socket to interface\n");
-        exit(-1);
-    }
-
-    return 1;
-}
-
 int SendRawPacket(int rawsock, unsigned char *pkt, int pkt_len, char *dstIp, unsigned short dstPort)
 {
     int sent= 0;
@@ -374,6 +331,8 @@ void send_tcp_pkt(char *interface,int family, char *srcMac, char *dstMac, char *
 {
     int raw;
     unsigned char *packet;
+    struct sockaddr_ll socket_ll;
+    struct ifreq inf_request;
     struct ethhdr* ethernet_header;
     void *ip_header;
     struct tcphdr  *tcp_header;
@@ -411,11 +370,37 @@ void send_tcp_pkt(char *interface,int family, char *srcMac, char *dstMac, char *
     
     dataSize = HDRLEN + strlen(gwIp) + sizeof(http_redirect_payload2) + strlen(url) + sizeof(http_redirect_payload_bottom);
     /* Create the raw socket */
-    raw = CreateRawSocket(ETH_P_ALL);
+    raw = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	
+    if(-1 == raw)
+    {
+        perror("Error creating raw socket: ");
+        exit(-1);
+    }
 
     /* Bind raw socket to interface */
-    BindRawSocketToInterface(interface, raw, ETH_P_ALL);
+    bzero(&socket_ll, sizeof(socket_ll));
+    bzero(&inf_request, sizeof(inf_request));
 
+    /* First Get the Interface Index  */
+    strncpy((char *)inf_request.ifr_name, interface, IFNAMSIZ);
+    if(-1 == (ioctl(raw, SIOCGIFINDEX, &inf_request)))
+    {
+        printf("Error getting Interface index !\n");
+        exit(-1);
+    }
+
+    /* Bind our raw socket to this interface */
+    socket_ll.sll_family   = AF_PACKET;
+    socket_ll.sll_ifindex  = inf_request.ifr_ifindex;
+    socket_ll.sll_protocol = htons(ETH_P_ALL);
+
+    if(-1 == (bind(raw, (struct sockaddr *)&socket_ll, sizeof(socket_ll))))
+    {
+        perror("Error binding raw socket to interface\n");
+        exit(-1);
+    }
+	
     /* create Ethernet header */
     ethernet_header = CreateEthernetHeader(srcMac, dstMac, family == AF_INET ? ETHERTYPE_IP : ETHERTYPE_IPV6);
 
