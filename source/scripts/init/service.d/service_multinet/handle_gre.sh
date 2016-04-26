@@ -60,6 +60,7 @@ GRE_IFNAME_DUMMY="gretap_0"
 source /etc/utopia/service.d/ut_plat.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
+export LOG4C_RCPATH=/fss/gw/rdklogger
 BINPATH=/fss/gw/usr/ccsp
 
 MTU_VAL=1400
