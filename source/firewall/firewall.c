@@ -6755,6 +6755,16 @@ static int do_lan2wan_IoT_Allow(FILE *filter_fp)
 
    return(0);
 }
+
+//zqiu:R5337
+static int do_wan2lan_IoT_Allow(FILE *filter_fp)
+{
+      //Low firewall
+      fprintf(filter_fp, "-A wan2lan_iot_allow -p tcp --dport 113 -j RETURN\n"); // IDENT
+      fprintf(filter_fp, "-A wan2lan_iot_allow -j ACCEPT\n");
+   return(0);
+}
+
 /*
  *  Procedure     : do_lan2wan_disable
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -7839,7 +7849,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":lan2wan_pc_device - [0:0]");
    fprintf(filter_fp, "%s\n", ":lan2wan_pc_site - [0:0]");
    fprintf(filter_fp, "%s\n", ":lan2wan_pc_service - [0:0]");
-   fprintf(filter_fp, "%s\n", ":lan2wan_iot_allow - [0:0]");
+   //fprintf(filter_fp, "%s\n", ":lan2wan_iot_allow - [0:0]");
    fprintf(filter_fp, "%s\n", ":wan2lan - [0:0]");
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN 
 //    fprintf(filterFp, ":lan2wan_dnsq_nfqueue - [0:0]\n");
@@ -7863,6 +7873,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":wan2lan_plugins - [0:0]");
    fprintf(filter_fp, "%s\n", ":wan2lan_nonat - [0:0]");
    fprintf(filter_fp, "%s\n", ":wan2lan_dmz - [0:0]");
+   fprintf(filter_fp, "%s\n", ":wan2lan_iot_allow - [0:0]");
 #ifdef CONFIG_BUILD_TRIGGER
 #ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
    fprintf(filter_fp, "%s\n", ":wan2lan_trigger - [0:0]");
@@ -8023,9 +8034,12 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       fprintf(filter_fp,"-A INPUT -d %s/24 -i %s -j ACCEPT\n",iot_primaryAddress,iot_ifName);
       fprintf(filter_fp,"-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n",iot_ifName);
       //fprintf(filter_fp,"-A FORWARD -i %s -o %s -j ACCEPT\n",iot_ifName,iot_ifName);
-      fprintf(filter_fp, "-I FORWARD 2 -i %s -o %s -j lan2wan_iot_allow\n", iot_ifName,current_wan_ifname);
-      fprintf(filter_fp, "-I FORWARD 3 -i %s -o %s -j ACCEPT\n", current_wan_ifname, iot_ifName);
-      do_lan2wan_IoT_Allow(filter_fp);
+      //fprintf(filter_fp, "-I FORWARD 2 -i %s -o %s -j lan2wan_iot_allow\n", iot_ifName,current_wan_ifname);
+      fprintf(filter_fp, "-I FORWARD 2 -i %s -o %s -j ACCEPT\n", iot_ifName,current_wan_ifname);
+      fprintf(filter_fp, "-I FORWARD 3 -i %s -o %s -j wan2lan_iot_allow\n", current_wan_ifname, iot_ifName);
+      //zqiu: R5337
+      //do_lan2wan_IoT_Allow(filter_fp);
+      do_wan2lan_IoT_Allow(filter_fp);
    }
 
 
