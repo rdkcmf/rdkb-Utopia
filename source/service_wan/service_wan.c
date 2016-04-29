@@ -253,11 +253,9 @@ done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
     printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
-    
-/* TEMP disable captive portal for xb6 until we fix the issue*/
-#ifndef INTEL_PUMA7
+	
     system("sh /etc/network_response.sh &");
-#endif
+
     return 0;
 }
 
