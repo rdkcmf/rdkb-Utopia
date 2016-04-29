@@ -6382,9 +6382,9 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
             {
                 // consider the case that user input whole url.
                 if(strstr(query, "://") != 0) {
-                    fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp -j %s\n", strstr(query, "://") + 3, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp --icase -j %s\n", strstr(query, "://") + 3, drop_log);
                 } else {
-                    fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp -j %s\n", query, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp --icase -j %s\n", query, drop_log);
                 }
             }
         }
