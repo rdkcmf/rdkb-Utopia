@@ -230,6 +230,32 @@ setup_gretap(){
 		vconfig rem ${LAN_GRE_TUNNEL}.${LAN_VLAN}
         fi
 }
+setup_iot_interface() {
+	# Creating ATOM side vlan for IOT and assigning IP address
+	vconfig add eth0 106
+	ifconfig eth0.106 192.168.106.254 netmask 255.255.255.0 up
+	ip route add default via 192.168.106.1
+}
+#Create or Destroy 
+setup_iot() {
+IOT_MODE=$1
+if [ "$IOT_MODE" = "start" ];then
+	$VLAN_UTIL add_group $BRIDGE_NAME $BRIDGE_VLAN
+	#Set up Quantenna wifi
+	setup_qtn $IOT_MODE ath6
+	setup_qtn $IOT_MODE ath7
+        setup_iot_interface 
+        #Create private LAN if it doesn't exist
+        $VLAN_UTIL add_interface $BRIDGE_NAME ath6
+        $VLAN_UTIL add_interface $BRIDGE_NAME ath7	
+	$VLAN_UTIL add_interface $BRIDGE_NAME eth0 $BRIDGE_VLAN
+else
+	del_group $BRIDGE_NAME
+	setup_qtn $IOT_MODE ath6
+	setup_qtn $IOT_MODE ath7
+	vconfig rem eth0.106
+fi
+}
 
 #Create or destoy LAN bridges
 #Syntax: setup_lans [start|stop] instance
@@ -252,7 +278,7 @@ setup_lans(){
                 #Create private LAN if it doesn't exist
                 $VLAN_UTIL add_interface $BRIDGE_NAME eth_0
                 $VLAN_UTIL add_interface $BRIDGE_NAME nmoca0
-                $VLAN_UTIL add_interface $BRIDGE_NAME nmoca0 $BRIDGE_VLAN
+                #$VLAN_UTIL add_interface $BRIDGE_NAME nmoca0 $BRIDGE_VLAN
                 $VLAN_UTIL add_interface $BRIDGE_NAME ath0
                 $VLAN_UTIL add_interface $BRIDGE_NAME ath1
                 ;;
@@ -330,7 +356,7 @@ setup_lans(){
 		setup_qtn $LAN_MODE ath5
                 setup_gretap $LAN_MODE $BRIDGE_NAME $BRIDGE_VLAN
                 ;;
-
+		
                 esac
                 $SYSEVENT set multinet_${INSTANCE}-status stopped
         fi
@@ -352,6 +378,10 @@ if [ "$EVENT" = "multinet-up" ] ; then
         MODE="up"
 elif [ "$EVENT" = "multinet-start" ] ; then
         MODE="start"
+elif [ "$EVENT" = "iot-up" ] ; then
+        MODE="iot-start"
+elif [ "$EVENT" = "iot-down" ] ; then                                             
+        MODE="iot-stop"   
 elif [ "$EVENT" = "multinet-down" ] ; then
         MODE="stop"
 elif [ "$EVENT" = "multinet-stop" ] ; then
@@ -391,6 +421,10 @@ case $INSTANCE in
                 BRIDGE_NAME="brlan3"
                 BRIDGE_VLAN=103
         ;;
+	6)
+		BRIDGE_NAME="br106"
+                BRIDGE_VLAN=106
+	;;
         *)
                 #Unknown / unsupported instance number
                 echo "$0 error: Unknown instance $INSTANCE"
@@ -443,6 +477,20 @@ elif [ $MODE = "start" ]; then
 	#Send event saying we're ready
         $SYSEVENT set multinet_${INSTANCE}-status ready
         #restart the firewall after the network is set up
+        $SYSEVENT set firewall-restart
+elif [ $MODE = "iot-start" ]; then
+        #If bridge already exists, tear it down first
+        $IFCONFIG $BRIDGE_NAME 1> /dev/null 2> /dev/null
+        if [ $? -eq 0 ] ; then
+                #Bridge already exists, destroy it first then create
+                setup_iot stop
+        fi
+
+        #Set up bridge and add interfaces
+        setup_iot start
+        $SYSEVENT set firewall-restart
+elif [ $MODE = "iot-stop" ]; then
+	setup_iot stop                                                         
         $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ] ; then
         #Indicate LAN is stopping
