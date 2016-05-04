@@ -230,12 +230,7 @@ setup_gretap(){
 		vconfig rem ${LAN_GRE_TUNNEL}.${LAN_VLAN}
         fi
 }
-setup_iot_interface() {
-	# Creating ATOM side vlan for IOT and assigning IP address
-	vconfig add eth0 106
-	ifconfig eth0.106 192.168.106.254 netmask 255.255.255.0 up
-	ip route add default via 192.168.106.1
-}
+
 #Create or Destroy 
 setup_iot() {
 IOT_MODE=$1
@@ -244,7 +239,6 @@ if [ "$IOT_MODE" = "start" ];then
 	#Set up Quantenna wifi
 	setup_qtn $IOT_MODE ath6
 	setup_qtn $IOT_MODE ath7
-        setup_iot_interface 
         #Create private LAN if it doesn't exist
         $VLAN_UTIL add_interface $BRIDGE_NAME ath6
         $VLAN_UTIL add_interface $BRIDGE_NAME ath7	
@@ -253,7 +247,6 @@ else
 	del_group $BRIDGE_NAME
 	setup_qtn $IOT_MODE ath6
 	setup_qtn $IOT_MODE ath7
-	vconfig rem eth0.106
 fi
 }
 
