@@ -6198,7 +6198,9 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
         if (count < 0) count = 0;
         if (count > MAX_SYSCFG_ENTRIES) count = MAX_SYSCFG_ENTRIES;
 
+#if !defined(_COSA_BCM_MIPS_)
         ruleIndex += do_parcon_mgmt_lan2wan_pc_site_appendrule(fp);
+#endif
 
         for (idx = 1; idx <= count; idx++)
         {
@@ -6357,7 +6359,9 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                     }
                     
 #endif
+#if !defined(_COSA_BCM_MIPS_)
                     do_parcon_mgmt_lan2wan_pc_site_insertrule(fp, ruleIndex, nstdPort);
+#endif
                 }
                 else
                 {
