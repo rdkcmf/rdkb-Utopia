@@ -456,13 +456,7 @@ static int wan_addr_set(struct serv_wan *sw)
             vsystem("((nfq_handler 4 %s &)&)", val);
             sysevent_set(sw->sefd, sw->setok, "parcon_nfq_status", "started", 0);
         }
-/* Temp fix xb6 we don't have gw_lan_refresh utility implemented yet*/
-#ifdef INTEL_PUMA7
-        vsystem("firewall && execute_dir /etc/utopia/post.d/");
-#else
         vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/");
-#endif
-
     } else {
         fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
