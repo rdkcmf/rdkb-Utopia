@@ -270,8 +270,12 @@ setup_lans(){
 
                 #Create private LAN if it doesn't exist
                 $VLAN_UTIL add_interface $BRIDGE_NAME eth_0
-		$VLAN_UTIL add_interface $BRIDGE_NAME eth_1
-                $VLAN_UTIL add_interface $BRIDGE_NAME nmoca0
+		isport2enable=`dmcli eRT getv Device.Bridging.Bridge.1.Port.8.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+        	if [ "$isport2enable" = "true" ]; then
+			#Add the port2 to the private network
+			$VLAN_UTIL add_interface $BRIDGE_NAME eth_1
+		fi
+		$VLAN_UTIL add_interface $BRIDGE_NAME nmoca0
                 #$VLAN_UTIL add_interface $BRIDGE_NAME nmoca0 $BRIDGE_VLAN
                 $VLAN_UTIL add_interface $BRIDGE_NAME ath0
                 $VLAN_UTIL add_interface $BRIDGE_NAME ath1
@@ -281,6 +285,11 @@ setup_lans(){
 		#Set up Quantenna wifi
 		setup_qtn $LAN_MODE ath2
 		setup_qtn $LAN_MODE ath3
+		isport2enable=`dmcli eRT getv Device.Bridging.Bridge.2.Port.2.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+        	if [ "$isport2enable" = "true" ]; then
+			#Add the port2 to the private network
+			$VLAN_UTIL add_interface $BRIDGE_NAME eth_1
+		fi
 
                 #Create Xfinity home network if it doesn't exist
                 $VLAN_UTIL add_interface $BRIDGE_NAME nmoca0 $BRIDGE_VLAN
@@ -360,6 +369,29 @@ print_syntax(){
         echo "Syntax: $0 [multinet-up|multinet-down] instance"
 }
 
+handle_syncmembers(){
+$SYSEVENT set multinet_${INSTANCE}-localready 1
+if [ "$BRIDGE_NAME" = "brlan0" ]; then
+	#get the port enabling flag set
+	isport2enable=`dmcli eRT getv Device.Bridging.Bridge.1.Port.8.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+        if [ "$isport2enable" = "true" ]; then
+		#Add the port2 to the private network
+		$VLAN_UTIL add_interface $BRIDGE_NAME eth_1
+	else
+		$VLAN_UTIL del_interface $BRIDGE_NAME eth_1
+	fi  
+elif [ "$BRIDGE_NAME" = "brlan1" ]; then
+		#get the port enabling flag from set
+	isport2enable=`dmcli eRT getv Device.Bridging.Bridge.2.Port.2.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+        if [ "$isport2enable" = "true" ]; then
+		#Add the port2 to the Xfinity HOME network
+		$VLAN_UTIL add_interface $BRIDGE_NAME eth_1
+	else
+		$VLAN_UTIL del_interface $BRIDGE_NAME eth_1
+	fi
+fi
+$SYSEVENT set multinet_${INSTANCE}-status partial
+}
 #Script execution begins here
 #Handle input parameters
 #Temporary workaround: kill link monitor
@@ -492,7 +524,7 @@ elif [ "$MODE" = "stop" ] ; then
         #Send event that LAN is stopped
         $SYSEVENT set multinet_${INSTANCE}-status stopped 
 elif [ "$MODE" = "syncmembers" ] ; then
-        echo "TO DO NOT SUPPORTED YET"
+        handle_syncmembers
 elif [ "$MODE" = "restart" ] ; then
         #Indicate LAN is stopping
         $SYSEVENT set multinet_${INSTANCE}-status stopping
