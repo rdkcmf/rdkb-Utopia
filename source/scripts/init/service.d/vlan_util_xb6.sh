@@ -270,6 +270,7 @@ setup_lans(){
 
                 #Create private LAN if it doesn't exist
                 $VLAN_UTIL add_interface $BRIDGE_NAME eth_0
+		$VLAN_UTIL add_interface $BRIDGE_NAME eth_1
                 $VLAN_UTIL add_interface $BRIDGE_NAME nmoca0
                 #$VLAN_UTIL add_interface $BRIDGE_NAME nmoca0 $BRIDGE_VLAN
                 $VLAN_UTIL add_interface $BRIDGE_NAME ath0
@@ -282,7 +283,6 @@ setup_lans(){
 		setup_qtn $LAN_MODE ath3
 
                 #Create Xfinity home network if it doesn't exist
-                $VLAN_UTIL add_interface $BRIDGE_NAME eth_1
                 $VLAN_UTIL add_interface $BRIDGE_NAME nmoca0 $BRIDGE_VLAN
                 $VLAN_UTIL add_interface $BRIDGE_NAME ath2
                 $VLAN_UTIL add_interface $BRIDGE_NAME ath3
