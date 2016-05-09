@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ -f /etc/os-release ]; then
+if [ -f /etc/os-release ] || [ -f /etc/device.properties ]; then
       LOG_FOLDER="/rdklogs"
 else
       LOG_FOLDER="/var/tmp"
@@ -30,7 +30,7 @@ HTTP_CODE="/tmp/curl_httpcode"
 S3_URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb_snmp.cgi"
 WAITINGFORUPLOAD="$LOG_UPLOAD_FOLDER/waitingforupload"
 
-if [ -f /etc/os-release ]; then
+if [ -f /etc/os-release ] || [ -f /etc/device.properties ]; then
       MAXSIZE=1536
 else
       MAXSIZE=524288
