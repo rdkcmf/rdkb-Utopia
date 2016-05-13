@@ -583,7 +583,11 @@ fi
    if [ "started" = $CURRENT_LAN_STATE ]; then
       calculate_dhcp_range $1 $2
       echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
-      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+	  if [ $DHCP_LEASE_TIME == -1 ]; then
+	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,infinite" >> $LOCAL_DHCP_CONF
+	  else
+  	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+	  fi	      
    fi
    
    # For boot itme optimization, run do_extra_pool only when brlan1 interface is available
@@ -603,7 +607,11 @@ fi
 	IOT_END_ADDR=`syscfg get iot_dhcp_end`
 	IOT_NETMASK=`syscfg get iot_netmask`
 	echo "interface=$IOT_IFNAME" >> $LOCAL_DHCP_CONF
-	echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+	  if [ $DHCP_LEASE_TIME == -1 ]; then
+		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,infinite" >> $LOCAL_DHCP_CONF
+	  else
+		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+	  fi	      
    fi
 
    if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
