@@ -116,6 +116,10 @@ service_start ()
 #rdkb-4297 Runs on the 1st minute of every 12th hour
       echo "1 */12 * * *  /fss/gw/usr/ccsp/pam/moca_status.sh" >> $CRONTAB_FILE
 
+      #zqiu: monitor lan client traffic
+      echo "* * * * *   /fss/gw/usr/ccsp/tad/rxtx_lan.sh" >> $CRONTAB_FILE
+      echo "*/30 * * * *   /fss/gw/usr/ccsp/tad/rxtx_dmp.sh" >> $CRONTAB_FILE
+
       num1=$RANDOM
       num2=$RANDOM
       rand1=`expr $num1 % 60`
