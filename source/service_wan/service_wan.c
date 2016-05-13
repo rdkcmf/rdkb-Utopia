@@ -65,6 +65,7 @@
 #define SW_PROT_TIMO   675 
 #define RESOLV_CONF_FILE  "/etc/resolv.conf"
 
+#define WAN_STARTED "/var/wan_started"
 enum wan_prot {
     WAN_PROT_DHCP,
     WAN_PROT_STATIC,
@@ -211,10 +212,21 @@ static int route_deconfig(const char *ifname)
     return 0;
 }
 
+int checkFileExists(const char *fname)
+{
+    FILE *file;
+    if (file = fopen(fname, "r"))
+    {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
+
 static int wan_start(struct serv_wan *sw)
 {
     char status[16];
-
+    int ret;
     /* state check */
     sysevent_get(sw->sefd, sw->setok, "wan_service-status", status, sizeof(status));
     if (strcmp(status, "starting") == 0 || strcmp(status, "started") == 0) {
@@ -251,10 +263,25 @@ static int wan_start(struct serv_wan *sw)
 
 done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
+
     printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
 	
     system("sh /etc/network_response.sh &");
+
+    ret = checkFileExists(WAN_STARTED);
+    printf("Check wan started ret is %d\n",ret);
+    if ( 0 == ret )
+    {
+	system("touch /var/wan_started");
+    }
+    else
+    {
+	char  str[100] = {0};
+        printf("%s wan_service-status is started again, upload logs\n",__FUNCTION__);
+	sprintf(str,"/fss/gw/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false ");
+	system(str);
+    }
 
     return 0;
 }
@@ -297,7 +324,11 @@ static int wan_stop(struct serv_wan *sw)
         return -1;
     }
 
+    printf("%s wan_service-status is stopped, take log back up\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopped", 0);
+	char  str[100] = {0};
+	sprintf(str,"/fss/gw/rdklogger/backupLogs.sh false \"\" wan-stopped");
+    system(str);
     return 0;
 }
 
