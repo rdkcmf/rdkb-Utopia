@@ -7740,6 +7740,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "%s\n", ":PREROUTING ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":POSTROUTING ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
+#if defined(_COSA_BCM_MIPS_)
+   fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+   fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+#endif
    fprintf(nat_fp, "%s\n", ":prerouting_ephemeral - [0:0]");
    fprintf(nat_fp, "%s\n", ":prerouting_fromwan - [0:0]");
    fprintf(nat_fp, "%s\n", ":prerouting_mgmt_override - [0:0]");
@@ -7757,6 +7761,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "%s\n", ":postrouting_tolan - [0:0]");
    fprintf(nat_fp, "%s\n", ":postrouting_plugins - [0:0]");
    fprintf(nat_fp, "%s\n", ":postrouting_ephemeral - [0:0]");
+#if defined(_COSA_BCM_MIPS_)
+   fprintf(nat_fp, "-A POSTROUTING -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+   fprintf(nat_fp, "-A POSTROUTING -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+#endif
    fprintf(nat_fp, "-A PREROUTING -j prerouting_ephemeral\n");
    fprintf(nat_fp, "-A PREROUTING -j prerouting_mgmt_override\n");
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromlan\n", lan_ifname);
@@ -8004,12 +8012,20 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    char str[MAX_QUERY];
    //snprintf(str, sizeof(str), "-I OUTPUT 1 -s 0.0.0.0 ! -d 255.255.255.255 -o %s -j DROP", current_wan_ifname);
    //fprintf(filter_fp, "%s\n", str);
+#if defined(_COSA_BCM_MIPS_)
+   fprintf(filter_fp, "-A OUTPUT -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+#endif
    fprintf(filter_fp, "-A OUTPUT -j general_output\n");
    fprintf(filter_fp, "-A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
    fprintf(filter_fp, "-A OUTPUT -o %s -j self2lan\n", lan_ifname);
    prepare_multinet_filter_output(filter_fp);
    fprintf(filter_fp, "-A self2lan -j self2lan_plugins\n");
    fprintf(filter_fp, "-A OUTPUT -m state --state NEW -j ACCEPT\n");
+
+#if defined(_COSA_BCM_MIPS_)
+   fprintf(filter_fp, "-A FORWARD -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+   fprintf(filter_fp, "-A FORWARD -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+#endif
 
    fprintf(filter_fp, "-A FORWARD -j general_forward\n");
    fprintf(filter_fp, "-A FORWARD -i %s -o %s -j wan2lan\n", current_wan_ifname, lan_ifname);
@@ -8949,6 +8965,10 @@ int prepare_ipv6_firewall(const char *fw_file)
 
       fprintf(fp, "-A INPUT -m state --state INVALID -j LOG_INPUT_DROP\n");
 
+#if defined(_COSA_BCM_MIPS_)
+      fprintf(fp, "-A INPUT -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+      fprintf(fp, "-A INPUT -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+#endif
       // Allow cfgserv through 
       //fprintf(fp, "-A INPUT -p udp -d ff80::114/64 --dport 5555 -j ACCEPT\n");
       //fprintf(fp, "-A INPUT -p tcp --dport 3005 -j ACCEPT\n");
@@ -9056,6 +9076,12 @@ int prepare_ipv6_firewall(const char *fw_file)
 
       // established communication from anywhere is accepted
       fprintf(fp, "-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n");
+
+#if defined(_COSA_BCM_MIPS_)
+      fprintf(fp, "-A INPUT -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+      fprintf(fp, "-A INPUT -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+#endif
+
       // for tftp software download to work
       fprintf(fp, "-A INPUT -i %s -p udp --dport 53 -j DROP\n", ecm_wan_ifname);
       fprintf(fp, "-A INPUT -i %s -p udp --dport 67 -j DROP\n", ecm_wan_ifname);
@@ -9155,6 +9181,11 @@ v6GPFirewallRuleNext:
 
       // Block the evil routing header type 0
       fprintf(fp, "-A FORWARD -m rt --rt-type 0 -j LOG_FORWARD_DROP \n");
+
+#if defined(_COSA_BCM_MIPS_)
+      fprintf(fp, "-A FORWARD -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+      fprintf(fp, "-A FORWARD -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+#endif
 
       // Link local should never be forwarded
       fprintf(fp, "-A FORWARD -s fe80::/64 -j LOG_FORWARD_DROP\n");
@@ -9355,6 +9386,11 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A OUTPUT -o lo -j ACCEPT\n");
       // And accept everything anyway as we trust ourself
       fprintf(fp, "-A OUTPUT -j ACCEPT\n");
+
+#if defined(_COSA_BCM_MIPS_)
+      fprintf(fp, "-A OUTPUT -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
+#endif
+
    }
 
 end_of_ipv6_firewall:
