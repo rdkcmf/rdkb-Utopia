@@ -279,7 +279,7 @@ done:
     {
 	char  str[100] = {0};
         printf("%s wan_service-status is started again, upload logs\n",__FUNCTION__);
-	sprintf(str,"/fss/gw/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false ");
+	sprintf(str,"/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false ");
 	system(str);
     }
 
@@ -327,7 +327,7 @@ static int wan_stop(struct serv_wan *sw)
     printf("%s wan_service-status is stopped, take log back up\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopped", 0);
 	char  str[100] = {0};
-	sprintf(str,"/fss/gw/rdklogger/backupLogs.sh false \"\" wan-stopped");
+	sprintf(str,"/rdklogger/backupLogs.sh false \"\" wan-stopped");
     system(str);
     return 0;
 }
