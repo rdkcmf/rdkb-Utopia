@@ -49,7 +49,11 @@
 #include "srvmgr.h"
 
 const char* SERVICE_NAME            = "bridge";
+#ifdef INTEL_PUMA7
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_puma7.sh";
+#else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge.sh";
+#endif
 const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
 
 void srv_register(void) {
