@@ -440,7 +440,7 @@ static char *service_name = "firewall";
 
 const char* const firewall_component_id = "ccsp.firewall";
 static void* bus_handle = NULL;
-
+pthread_mutex_t firewall_check;
 #define SERVICE_EV_COUNT 4
 enum{
     NAT_DISABLE = 0,
@@ -9626,6 +9626,7 @@ static int service_start ()
    //clear content in firewall cron file.
    char *cron_file = crontab_dir"/"crontab_filename;
    FILE *cron_fp = NULL; // the crontab file we use to set wakeups for timed firewall events
+   pthread_mutex_lock(&firewall_check);
    cron_fp = fopen(cron_file, "w");
    if(cron_fp) {
        fclose(cron_fp);
@@ -9673,8 +9674,8 @@ static int service_start ()
 
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "started", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "started %s service", service_name);
-
-   return 0;
+ pthread_mutex_unlock(&firewall_check);
+ 	return 0;
 }
 
 /*
@@ -9688,12 +9689,13 @@ static int service_start ()
 static int service_stop ()
 {
    char *filename1 = "/tmp/.ipt";
-
+	pthread_mutex_lock(&firewall_check);
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "stopping", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "stopping %s service", service_name);
 
    FILE *fp = fopen(filename1, "w"); 
    if (NULL == fp) {
+   pthread_mutex_unlock(&firewall_check);
       return(-2);
    }
    prepare_stopped_ipv4_firewall(fp);
@@ -9708,8 +9710,8 @@ static int service_stop ()
 
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "stopped", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "stopped %s service", service_name);
-
-   return 0;
+ pthread_mutex_unlock(&firewall_check);
+    return 0;
 }
 
 /*
@@ -9765,7 +9767,7 @@ int main(int argc, char **argv)
          argv++;
       }
    }
-
+	pthread_mutex_init(&firewall_check, NULL);
    rc = service_init(argc, argv);
    if (rc < 0) {
        service_close();
