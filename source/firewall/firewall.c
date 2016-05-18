@@ -4029,8 +4029,16 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     srcaddr[0] = '\0';
 
 #if defined(CONFIG_CCSP_CM_IP_WEBACCESS)
+#if defined(_COSA_BCM_MIPS_)
+    // XF3 only has this interface available on IPv6 erouter0
+    if (family == AF_INET6)
+    {
+#endif
        remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
        remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
+#if defined(_COSA_BCM_MIPS_)
+    }
+#endif
 #endif
 
 
@@ -4116,7 +4124,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
            for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
                remote_access_set_proto(filter_fp, nat_fp, "80", iprangeAddr[i], family, ecm_wan_ifname);
        }
-   } 
+   }
 #endif
    // RG-IP: erouter0
 #if defined(CONFIG_CCSP_WAN_MGMT)
