@@ -968,3 +968,11 @@ $iot_dhcp_end=192.168.106.150
 # XSMART or IOT Enable
 $X_RDKCENTRAL-COM_ENABLEIOT=false
 $lost_and_found_enable=true
+
+# X_Comcast_com_ParentalControl managed devices
+$HTTP_Server_IP=127.0.0.1
+$HTTPS_Server_IP=127.0.0.1
+$Default_Server_IP=127.0.0.1
+$HTTP_Server_IPv6=::1
+$HTTPS_Server_IPv6=::1
+$Default_Server_IPv6=::1
