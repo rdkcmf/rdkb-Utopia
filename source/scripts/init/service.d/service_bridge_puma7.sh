@@ -211,7 +211,7 @@ service_start(){
 
 		prepare_hostname
 
-		restart_webgui
+		#restart_webgui
 
 		gw_lan_refresh
 
@@ -246,7 +246,7 @@ service_stop(){
 
 		iptables -D INPUT -i $CMDIAG_IF -p udp --dport 67 -j DROP
 
-		restart_webgui
+		#restart_webgui
 
 		gw_lan_refresh
 
