@@ -18,6 +18,7 @@
 include $(CCSP_ROOT_DIR)/arch/ccsp_common.mk
 
 install_script := $(call add_files_from_board,,utopia_init.sh)
+install_script += $(call add_files_from_board,,need_wifi_default.sh)
 
 target_install_dir := $(CCSP_INSTALL_ROOT)/etc/utopia
 
