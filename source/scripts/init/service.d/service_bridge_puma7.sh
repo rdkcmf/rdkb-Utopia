@@ -10,9 +10,6 @@ source /etc/utopia/service.d/event_handler_functions.sh
 
 SERVICE_NAME="bridge"
 
-#Which multinet instance is the private LAN?
-INSTANCE=1
-
 #TODO: Should we get these from CCSP instead of hardcoding them?
 LAN_IP="10.0.0.1"
 LAN_NETMASK="255.255.255.0"
@@ -62,7 +59,7 @@ wait_till_stopped()
 	TRIES=1
 	while [ "30" -ge "$TRIES" ] ; do
 		LSTATUS=`sysevent get ${LSERVICE}-status`
-		if [ "stopped" = "$LSTATUS" ] ; then
+		if [ "stopped" = "$LSTATUS" -o "" = "$LSTATUS" ] ; then
 			return
 		else
 			sleep 1
@@ -76,12 +73,11 @@ flush_connection_info(){
 	#Flush packet processor sessions on NPCPU
 	ncpu_exec -e "(echo flush_all_sessions > /proc/net/ti_pp)"
 
+	#Flush connection tracking entries
+	conntrack_flush
+
 	#Flush CPE table
 	ncpu_exec -e "(echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt)"
-
-	#Flush connection tracking entries
-	#NOTE: Disabled for now, there is an Intel bug where this command freezes.  Uncomment once that fix is merged to Comcast
-	#conntrack -F
 }
 
 #Add or remove rules to block local traffic from reaching DOCSIS bridge
@@ -113,19 +109,34 @@ restart_webgui()
 	/etc/webgui.sh
 }
 
+assure_multinet_stopped(){
+	PRI_L2=`sysevent get primary_lan_l2net`
+	LAN_STATUS="`sysevent get multinet_${PRI_L2}-status`"
+	if [ "$LAN_STATUS" = "" -o "$LAN_STATUS" = "stopped" ] ; then
+		echo "Multinet instance $PRI_L2 stopped, proceeding"
+	else
+		sysevent set multinet-stop $PRI_L2
+	fi
+	wait_till_stopped multinet_${PRI_L2}
+	vlan_util del_group $BRIDGE_NAME 2> /dev/null
+}
+
 do_start_multi()
 {
-	PRI_L2=`sysevent get primary_lan_l2net`
-	#This is to address a BUG in vlan_util_xb6.sh that it doesn't set state to starting
-	sysevent set multinet-start $PRI_L2
-	wait_till_started multinet_${PRI_L2}
+	assure_multinet_stopped
+	vlan_util add_group $BRIDGE_NAME 100
+	vlan_util add_interface $BRIDGE_NAME eth_0
+	isport2enable=`dmcli eRT getv Device.Bridging.Bridge.1.Port.8.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+	if [ "$isport2enable" = "true" ]; then
+		#Add the port2 to the private network
+		vlan_util add_interface $BRIDGE_NAME eth_1
+	fi
+	vlan_util add_interface $BRIDGE_NAME nmoca0
 }
 
 do_stop_multi()
 {
-	PRI_L2=`sysevent get primary_lan_l2net`
-	sysevent set multinet-stop $PRI_L2
-	wait_till_stopped multinet_${PRI_L2}
+	vlan_util del_group $BRIDGE_NAME
 }
 
 
@@ -145,7 +156,8 @@ cmdiag_ebtables_rules()
 		ebtables -t nat -N BRIDGE_REDIRECT
 		ebtables -t nat -F BRIDGE_REDIRECT 2> /dev/null
 		ebtables -t nat -I PREROUTING -j BRIDGE_REDIRECT
-		ebtables -t nat -A BRIDGE_REDIRECT -p ipv4 --ip-dst $LAN_IP -j dnat --to-destination $CMDIAG_MAC
+		ebtables -t nat -A BRIDGE_REDIRECT --logical-in $BRIDGE_NAME -p ipv4 --ip-dst $LAN_IP -j dnat --to-destination $CMDIAG_MAC
+		ebtables -t nat -A BRIDGE_REDIRECT --logical-in $BRIDGE_NAME -p ipv4 --ip-dst $LAN_IP -j forward --forward-dev llan0
 		ebtables -t nat -A BRIDGE_REDIRECT -j RETURN
 	else
 		ebtables -D FORWARD -j BRIDGE_FORWARD_FILTER
@@ -166,9 +178,9 @@ cmdiag_if()
 		cmdiag_ebtables_rules enable
 		ifconfig l${CMDIAG_IF} promisc up
 		ifconfig $CMDIAG_IF $LAN_IP netmask $LAN_NETMASK up
-		vlan_util add_interface $LAN_BRIDGE l${CMDIAG_IF}
+		vlan_util add_interface $BRIDGE_NAME l${CMDIAG_IF}
 	else
-		vlan_util del_interface $LAN_BRIDGE l${CMDIAG_IF}
+		vlan_util del_interface $BRIDGE_NAME l${CMDIAG_IF}
 		ifconfig $CMDIAG_IF down
 		ifconfig l${CMDIAG_IF} down
 		ip link del $CMDIAG_IF
@@ -188,18 +200,18 @@ service_start(){
 
 		block_bridge
 
-		#Block DHCP requests on $LAN_BRIDGE
+		#Block DHCP requests on $BRIDGE_NAME
 		iptables -I INPUT -i $CMDIAG_IF -p udp --dport 67 -j DROP
 
 		#Connect management interface
 		cmdiag_if enable
 
-		#Send responses from $LAN_BRIDGE IP to a separate bridge mode route table
+		#Send responses from $BRIDGE_NAME IP to a separate bridge mode route table
 		ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
 		ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
 
-		#Add lbr0 to $LAN_BRIDGE
-		vlan_util add_interface $LAN_BRIDGE lbr0
+		#Add lbr0 to $BRIDGE_NAME
+		vlan_util add_interface $BRIDGE_NAME lbr0
 
 		#Flush connection tracking and packet processor sessions to avoid stale information
 		flush_connection_info
@@ -213,7 +225,8 @@ service_start(){
 
 		#restart_webgui
 
-		gw_lan_refresh
+		#Disabled until implemented correctly on xb6
+		#gw_lan_refresh
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status started
@@ -232,7 +245,7 @@ service_stop(){
 		block_bridge
 
 		#Remove local bridge connection from 
-		vlan_util del_interface $LAN_BRIDGE lbr0
+		vlan_util del_interface $BRIDGE_NAME lbr0
 
 		#Disconnect management interface
 		cmdiag_if disable
@@ -248,7 +261,8 @@ service_stop(){
 
 		#restart_webgui
 
-		gw_lan_refresh
+		#Disabled until implemented correctly on xb6
+		#gw_lan_refresh
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status stopped
@@ -295,7 +309,7 @@ service_init ()
 echo "service_bridge_puma7.sh called with $1 $2" > /dev/console
 service_init
 
-LAN_BRIDGE="$SYSCFG_lan_ifname"
+BRIDGE_NAME="$SYSCFG_lan_ifname"
 CMDIAG_IF=`syscfg get cmdiag_ifname`
 CMDIAG_MAC=`ncpu_exec -ep "(cat /sys/class/net/lan0/address)"`
 
