@@ -69,11 +69,20 @@ wait_till_stopped()
 	echo "$0: Timed out waiting for $LSERVICE to be stopped"
 }
 
+disable_packet_processor(){
+	ncpu_exec -e "(echo disable > /proc/net/ti_pp)"
+}
+
+enable_packet_processor(){
+	ncpu_exec -e "(echo enable > /proc/net/ti_pp)"
+}
+
 flush_connection_info(){
 	#Flush packet processor sessions on NPCPU
-	ncpu_exec -e "(echo flush_all_sessions > /proc/net/ti_pp)"
+	#ncpu_exec -e "(echo flush_all_sessions > /proc/net/ti_pp)"
 
-	#Flush connection tracking entries
+	#Flush connection tracking entries on both arm and atom sides
+	ncpu_exec -e "conntrack_flush"
 	conntrack_flush
 
 	#Flush CPE table
@@ -315,21 +324,25 @@ CMDIAG_MAC=`ncpu_exec -ep "(cat /sys/class/net/lan0/address)"`
 
 case "$1" in
    ${SERVICE_NAME}-start)
+      disable_packet_processor
       service_start
+      enable_packet_processor
       ;;
    ${SERVICE_NAME}-stop)
+      disable_packet_processor
       service_stop
+      enable_packet_processor
       ;;
    ${SERVICE_NAME}-restart)
+      disable_packet_processor
       sysevent set lan-restarting 1
       service_stop
       service_start
       sysevent set lan-restarting 0
+      enable_packet_processor
       ;;
    *)
       echo "Usage: service-${SERVICE_NAME} [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" > /dev/console
       exit 3
       ;;
 esac
-
-

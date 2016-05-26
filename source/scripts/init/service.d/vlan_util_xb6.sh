@@ -397,6 +397,9 @@ $SYSEVENT set multinet_${INSTANCE}-status partial
 #Temporary workaround: kill link monitor
 $KILLALL $QWCFG_TEST
 
+#Get current state
+CURRENT_STATE=`$SYSEVENT get multinet_${INSTANCE}-status`
+
 #Get event
 EVENT="$1"
 if [ "$EVENT" = "multinet-up" ] ; then
@@ -412,7 +415,11 @@ elif [ "$EVENT" = "multinet-down" ] ; then
 elif [ "$EVENT" = "multinet-stop" ] ; then
         MODE="stop"
 elif [ "$EVENT" = "multinet-syncMembers" ] ; then
-        MODE="syncmembers"
+        if [ "$CURRENT_STATE" = "" -o "$CURRENT_STATE" = "stopped" ] ; then
+	        MODE="start"
+        else
+                MODE="syncmembers"
+        fi
 else
         echo "$0 error: Unknown event: $1"
         print_syntax
@@ -461,7 +468,6 @@ esac
 #Set the interfae name
 $SYSEVENT set multinet_${INSTANCE}-name $BRIDGE_NAME
 $SYSEVENT set multinet_${INSTANCE}-vid $BRIDGE_VLAN
-
 
 if [ "$MODE" = "up" ] ; then
         #Start by setting status to stopped
