@@ -89,17 +89,44 @@ flush_connection_info(){
 	ncpu_exec -e "(echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt)"
 }
 
+#Add any iptables rules which are needed while in bridged mode
+#Normally these rules would be added by the firewall, but in bridged
+#mode the firewall is not started
+iptables_rules(){
+	WAN_IF=`sysevent get wan_ifname`
+
+        if [ "$1" = "enable" ] ; then
+		#Block DHCP requests on $BRIDGE_NAME
+		iptables -I INPUT -i $CMDIAG_IF -p udp --dport 67 -j DROP
+                iptables -t raw -A PREROUTING -i a-mux -j NOTRACK
+                iptables -t nat -A POSTROUTING -o $WAN_IF -j MASQUERADE
+        else
+		iptables -D INPUT -i $CMDIAG_IF -p udp --dport 67 -j DROP
+                iptables -t raw -D PREROUTING -i a-mux -j NOTRACK
+                iptables -t nat -D POSTROUTING -o $WAN_IF -j MASQUERADE
+        fi
+}
+
 #Add or remove rules to block local traffic from reaching DOCSIS bridge
 filter_local_traffic(){
-	FILTER_MODE=$1
+        if [ "$1" = "enable" ] ; then
+                #Create a new chain to local traffic filtering
+                ebtables -N BRIDGE_OUTPUT_FILTER
+                ebtables -F BRIDGE_OUTPUT_FILTER 2> /dev/null
+                ebtables -I OUTPUT -j BRIDGE_OUTPUT_FILTER
 
-	if [ "$FILTER_MODE" = "enable" ] ; then
-		#Block locally-generated traffic from LAN bridge from going to DOCSIS bridge and corrupting CPE table
-		ebtables -A OUTPUT -o lbr0 -j DROP
-	else
-		#Unblock locally-generated traffic from LAN bridge from going to DOCSIS bridge and corrupting CPE table
-		ebtables -D OUTPUT -o lbr0 -j DROP 2> /dev/null
-	fi
+                #Don't allow a-mux or LAN bridge to send traffic to DOCSIS bridge
+                ebtables -A BRIDGE_OUTPUT_FILTER --logical-out a-mux -j DROP
+                ebtables -A BRIDGE_OUTPUT_FILTER --logical-out $BRIDGE_NAME -j DROP
+                ebtables -A BRIDGE_OUTPUT_FILTER -o lbr0 -j DROP
+
+                #Return from filter chain
+                ebtables -A BRIDGE_OUTPUT_FILTER -j RETURN
+        else
+		#Delete the local traffic filter chain
+                ebtables -D OUTPUT -j BRIDGE_OUTPUT_FILTER
+                ebtables -X BRIDGE_OUTPUT_FILTER
+        fi
 }
 
 #Temporarily block traffic through lbr0 while reconfiguring rules 
@@ -110,12 +137,6 @@ block_bridge(){
 #Unblock bridged traffic through lbr0
 unblock_bridge(){
 	ebtables -D FORWARD -i llbr0 -j DROP
-}
-
-restart_webgui()
-{
-	killall lighttpd
-	/etc/webgui.sh
 }
 
 assure_multinet_stopped(){
@@ -130,35 +151,37 @@ assure_multinet_stopped(){
 	vlan_util del_group $BRIDGE_NAME 2> /dev/null
 }
 
-do_start_multi()
+lan_bridge()
 {
-	assure_multinet_stopped
-	vlan_util add_group $BRIDGE_NAME 100
-	vlan_util add_interface $BRIDGE_NAME eth_0
-	isport2enable=`dmcli eRT getv Device.Bridging.Bridge.1.Port.8.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
-	if [ "$isport2enable" = "true" ]; then
-		#Add the port2 to the private network
-		vlan_util add_interface $BRIDGE_NAME eth_1
-	fi
-	vlan_util add_interface $BRIDGE_NAME nmoca0
+        if [ "$1" = "enable" ] ; then
+                assure_multinet_stopped
+                vlan_util add_group $BRIDGE_NAME 100
+                vlan_util add_interface $BRIDGE_NAME eth_0
+                isport2enable=`dmcli eRT getv Device.Bridging.Bridge.1.Port.8.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+                if [ "$isport2enable" = "true" ]; then
+                        #Add the port2 to the private network
+                        vlan_util add_interface $BRIDGE_NAME eth_1
+                fi
+                vlan_util add_interface $BRIDGE_NAME nmoca0
+        else
+                vlan_util del_group $BRIDGE_NAME
+        fi
 }
-
-do_stop_multi()
-{
-	vlan_util del_group $BRIDGE_NAME
-}
-
 
 cmdiag_ebtables_rules()
 {
 	if [ "$1" = "enable" ] ; then
 		CMDIAG_MAC="`cat /sys/class/net/lan0/address`"
+		MUX_MAC="`cat /sys/class/net/adp0/address`"
 
-		#Don't allow lan0 to send traffic to DOCSIS bridge
+		#Don't allow lan0 or MUX to send traffic to DOCSIS bridge
 		ebtables -N BRIDGE_FORWARD_FILTER
 		ebtables -F BRIDGE_FORWARD_FILTER 2> /dev/null
 		ebtables -I FORWARD -j BRIDGE_FORWARD_FILTER
 		ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o lbr0 -j DROP
+		ebtables -A BRIDGE_FORWARD_FILTER -s $MUX_MAC -o lbr0 -j DROP
+		ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o llbr0 -j DROP
+		ebtables -A BRIDGE_FORWARD_FILTER -s $MUX_MAC -o llbr0 -j DROP
 		ebtables -A BRIDGE_FORWARD_FILTER -j RETURN
 
 		#Redirect traffic destined to lan0 IP to lan0 MAC address
@@ -183,6 +206,8 @@ cmdiag_if()
 	if [ "$1" = "enable" ] ; then
 		ip link add $CMDIAG_IF type veth peer name l${CMDIAG_IF} 
 		echo 1 > /proc/sys/net/ipv6/conf/llan0/disable_ipv6
+		echo 1 > /proc/sys/net/ipv6/conf/adp0/disable_ipv6
+		echo 1 > /proc/sys/net/ipv6/conf/a-mux/disable_ipv6
 		ifconfig $CMDIAG_IF hw ether $CMDIAG_MAC
 		cmdiag_ebtables_rules enable
 		ifconfig l${CMDIAG_IF} promisc up
@@ -197,34 +222,40 @@ cmdiag_if()
 	fi
 }
 
+routing_rules(){
+        if [ "$1" = "enable" ] ; then
+		#Send responses from $BRIDGE_NAME IP to a separate bridge mode route table
+		ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
+		ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
+        else
+		ip rule del from $LAN_IP lookup $BRIDGE_MODE_TABLE
+		ip route flush table $BRIDGE_MODE_TABLE
+        fi
+}
+
 #Enable pseudo bridge mode.  If already enabled, just refresh parameters (in case bridges were torn down and rebuilt)
 service_start(){
 	wait_till_steady_state ${SERVICE_NAME}
 	STATUS=`sysevent get ${SERVICE_NAME}-status`
 	if [ "started" != "$STATUS" ] ; then
-		do_start_multi
+                lan_bridge enable
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status starting
 
 		block_bridge
 
-		#Block DHCP requests on $BRIDGE_NAME
-		iptables -I INPUT -i $CMDIAG_IF -p udp --dport 67 -j DROP
-
 		#Connect management interface
 		cmdiag_if enable
 
-		#Send responses from $BRIDGE_NAME IP to a separate bridge mode route table
-		ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
-		ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
+		routing_rules enable
+
+		#Insert necessary iptables rules
+		iptables_rules enable
 
 		#Add lbr0 to $BRIDGE_NAME
 		vlan_util add_interface $BRIDGE_NAME lbr0
 
-		#Flush connection tracking and packet processor sessions to avoid stale information
-		flush_connection_info
-	
 		#Block traffic coming from the lbr0 connector interfaces at the MUX
 		filter_local_traffic enable
 
@@ -232,10 +263,11 @@ service_start(){
 
 		prepare_hostname
 
-		#restart_webgui
-
 		#Disabled until implemented correctly on xb6
 		#gw_lan_refresh
+
+		#Flush connection tracking and packet processor sessions to avoid stale information
+		flush_connection_info
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status started
@@ -253,22 +285,22 @@ service_stop(){
 
 		block_bridge
 
-		#Remove local bridge connection from 
+		#Remove local bridge connection from lan bridge
 		vlan_util del_interface $BRIDGE_NAME lbr0
+
+		#Remove iptables rules no longer needed
+		iptables_rules disable
 
 		#Disconnect management interface
 		cmdiag_if disable
 		filter_local_traffic disable
-	
-		#Flush connection tracking and packet processor sessions to avoid stale information
-		flush_connection_info
+
+		lan_bridge disable
 
 		unblock_bridge
-		do_stop_multi
 
-		iptables -D INPUT -i $CMDIAG_IF -p udp --dport 67 -j DROP
-
-		#restart_webgui
+		#Flush connection tracking and packet processor sessions to avoid stale information
+		flush_connection_info
 
 		#Disabled until implemented correctly on xb6
 		#gw_lan_refresh
@@ -334,8 +366,9 @@ case "$1" in
       enable_packet_processor
       ;;
    ${SERVICE_NAME}-restart)
+      PRI_L2=`sysevent get primary_lan_l2net`
       disable_packet_processor
-      sysevent set lan-restarting 1
+      sysevent set lan-restarting $PRI_L2
       service_stop
       service_start
       sysevent set lan-restarting 0
