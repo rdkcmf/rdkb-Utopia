@@ -976,3 +976,5 @@ $Default_Server_IP=127.0.0.1
 $HTTP_Server_IPv6=::1
 $HTTPS_Server_IPv6=::1
 $Default_Server_IPv6=::1
+#CloudPersonalization url
+$CloudPersonalizationURL=http://internet.xfinity.com
