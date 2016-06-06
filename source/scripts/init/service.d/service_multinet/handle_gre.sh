@@ -429,8 +429,6 @@ kill_procs () {
 # TODO: develop scheme for only killing related pids. background task var $1 doesn't work as these processes daemonize
     killall hotspotfd
     sysevent set ${1}_keepalive_pid
-    killall dhcp_snooperd
-    sysevent set dhcpsnoopd_pid
     killall $GRE_ARP_PROC
     
 }
@@ -600,6 +598,8 @@ case "$1" in
             sysevent set gre_primary_async "$async" > /dev/null
             
             init_keepalive_sysevents > /dev/null
+            init_snooper_sysevents
+            sysevent set snooper-log-enable 1
             hotspotfd $keepalive_args  > /dev/null &
             sysevent set ${inst}_keepalive_pid $! > /dev/null
             
@@ -612,12 +612,7 @@ case "$1" in
             
             #check_ssids
             
-            init_snooper_sysevents
-            dhcp_snooperd -q $BASEQUEUE -n 2 -e 1  > /dev/null &
-            sysevent set dhcpsnoopd_pid $!
-            sysevent set snooper-log-enable 1
         fi
-        
     
         if [ x"up" = x`sysevent get if_${3}-status` ]; then 
             echo ${TYPE}_READY=\"$3\"
