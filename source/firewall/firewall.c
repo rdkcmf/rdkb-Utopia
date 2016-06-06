@@ -7714,6 +7714,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    
    //zqiu: RDKB-4519 
    //fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
+#if defined(_COSA_BCM_MIPS_)
+   fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
+#endif
    fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
 #ifndef INTEL_PUMA7
    fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
