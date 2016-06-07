@@ -5993,8 +5993,14 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
     if (iptype == 4) {
         cron_fp = fopen(cron_file, "a+");
     }
-
-    do_parcon_mgmt_device(fp, iptype, cron_fp);
+	if (iptype == 4)
+	{
+    	do_parcon_mgmt_device(nat_fp, iptype, cron_fp);
+	}
+	else
+	{
+		do_parcon_mgmt_device(fp,iptype, NULL);
+	}
 #ifndef CONFIG_CISCO_FEATURE_CISCOCONNECT
     do_parcon_mgmt_site_keywd(fp,nat_fp, iptype, cron_fp);
 #endif
@@ -6047,25 +6053,22 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 
          if (allow_all != block) continue;
 
-         int within_policy_start_stop = determine_enforcement_schedule2(cron_fp, namespace);
+		 if (iptype == 4){
+	        int within_policy_start_stop = determine_enforcement_schedule2(cron_fp, namespace);
 
-         if (!within_policy_start_stop) continue;
+         	if (!within_policy_start_stop) continue;
+		 }
+		 
 
          query[0] = '\0';
          rc = syscfg_get(namespace, "mac_addr", query, sizeof(query));
          if (0 != rc || '\0' == query[0]) continue;
 
-         char drop_log[40];
-         snprintf(drop_log, sizeof(drop_log), "LOG_DeviceBlocked_%d_DROP", idx);
-         fprintf(fp, ":%s - [0:0]\n", drop_log);
-         fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
-         fprintf(fp, "-A %s -j DROP\n", drop_log);
-         fprintf(fp, "-A lan2wan_pc_device -i %s -m mac --mac-source %s -j %s\n",lan_ifname, query, block ? drop_log : "RETURN");
+         fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
       }
 
       if (!allow_all) {
-         fprintf(fp, "-A lan2wan_pc_device  -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix LOG_DeviceBlocked_DROP --log-level %d\n", syslog_level);
-         fprintf(fp, "-A lan2wan_pc_device -j DROP\n");
+        fprintf(fp, "-A prerouting_devices -p tcp -j prerouting_redirect\n");
       }
    }
 
@@ -7758,6 +7761,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "%s\n", ":prerouting_plugins - [0:0]");
    fprintf(nat_fp, "%s\n", ":prerouting_fromwan_todmz - [0:0]");
    fprintf(nat_fp, "%s\n", ":prerouting_fromlan - [0:0]");
+   fprintf(nat_fp, "%s\n", ":prerouting_devices - [0:0]");
+   fprintf(nat_fp, "%s\n", ":prerouting_redirect - [0:0]");
 #ifdef CONFIG_BUILD_TRIGGER
 #ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
    fprintf(nat_fp, "%s\n", ":prerouting_fromlan_trigger - [0:0]");
@@ -7776,7 +7781,22 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "-A PREROUTING -j prerouting_ephemeral\n");
    fprintf(nat_fp, "-A PREROUTING -j prerouting_mgmt_override\n");
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromlan\n", lan_ifname);
+   fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);    
+   char IPv4[17] = "0"; 
+      
+   syscfg_get(NULL, "HTTP_Server_IP", IPv4, sizeof(IPv4));
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:80\n",IPv4);
+  
 
+   IPv4[0] = '\0';
+   syscfg_get(NULL, "HTTPS_Server_IP", IPv4, sizeof(IPv4));
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination %s:443\n",IPv4);
+
+   IPv4[0] = '\0';
+   syscfg_get(NULL, "Default_Server_IP", IPv4, sizeof(IPv4));
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination %s:443\n",IPv4);
+   fprintf(nat_fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination %s:80\n",IPv4);
+   
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    if(isGuestNetworkEnabled) {
        fprintf(nat_fp, "%s\n", ":guestnet_walled_garden - [0:0]");
@@ -8854,6 +8874,34 @@ static void do_ipv6_sn_filter(FILE* fp) {
 	
     fprintf(fp, "COMMIT\n");
 }
+static void do_ipv6_nat_table(FILE* fp)
+{
+    char mcastAddrStr[64];
+    char IPv6[64] = "0";
+	int rc;
+    fprintf(fp, "*nat\n");
+	
+   fprintf(fp, "%s\n", ":prerouting_devices - [0:0]");
+   fprintf(fp, "%s\n", ":prerouting_redirect - [0:0]");
+
+ 
+   syscfg_get(NULL, "HTTP_Server_IPv6", IPv6, sizeof(IPv6));
+   fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:80\n",IPv6);
+ 	
+
+   IPv6[0] = '\0';
+   syscfg_get(NULL, "HTTPS_Server_IPv6", IPv6, sizeof(IPv6));
+   fprintf(fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination [%s]:443\n",IPv6);
+      
+   IPv6[0] = '\0';  
+   syscfg_get(NULL, "Default_Server_IPv6", IPv6, sizeof(IPv6));
+   fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:443\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:80\n",IPv6);
+   
+   do_parental_control(fp,NULL, 6);
+   fprintf(fp, "COMMIT\n");
+}
+
 /*
  ****************************************************************
  *               IPv6 Firewall                                  *
@@ -8897,6 +8945,7 @@ int prepare_ipv6_firewall(const char *fw_file)
 #endif
    
    do_ipv6_sn_filter(fp);
+   do_ipv6_nat_table(fp);
 
    fprintf(fp, "*filter\n");
    fprintf(fp, ":INPUT ACCEPT [0:0]\n");
@@ -9240,7 +9289,6 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A FORWARD -i %s -p udp --sport 53 -j wan2lan_dnsr_nfqueue\n", wan6_ifname);
 #endif
 
-      do_parental_control(fp,NULL, 6);
 
       if (strncasecmp(firewall_levelv6, "High", strlen("High")) == 0)
       {
