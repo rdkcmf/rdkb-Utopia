@@ -978,3 +978,5 @@ $HTTPS_Server_IPv6=::1
 $Default_Server_IPv6=::1
 #CloudPersonalization url
 $CloudPersonalizationURL=http://internet.xfinity.com
+# Webpa Parameters
+$X_RDKCENTRAL-COM_LastReconnectReason=webpa_process_starts
