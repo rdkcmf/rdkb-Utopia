@@ -980,3 +980,5 @@ $Default_Server_IPv6=::1
 $CloudPersonalizationURL=http://internet.xfinity.com
 # Webpa Parameters
 $X_RDKCENTRAL-COM_LastReconnectReason=webpa_process_starts
+$X_RDKCENTRAL-COM_LastRebootReason=unknown
+$X_RDKCENTRAL-COM_LastRebootCounter=0
