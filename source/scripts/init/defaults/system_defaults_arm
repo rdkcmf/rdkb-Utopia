@@ -945,6 +945,7 @@ $ConnTest_PingInterval=60
 $ConnTest_NumPingsPerServer=3
 $ConnTest_MinNumPingServer=1
 $ConnTest_PingRespWaitTime=1000
+$ConnTest_CorrectiveAction=false
 $Ipv4PingServer_Count=0
 $Ipv6PingServer_Count=0
 $resource_monitor_interval=15
