@@ -204,16 +204,12 @@ else
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
-if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
-   # Note: Only new P-UNIT firmwares and Linux drivers (>= 1.1.x) support this.
-   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Reset duration from shadow register"|awk -F '[ |\.]' '{ print $9 }'`
-   # Clear the Reset duration from shadow register value
-   # echo "1" > /proc/P-UNIT/clr_reset_duration_shadow
-   clean_reset_duration;
-elif cat /proc/P-UNIT/status | grep -q "Last reset duration"; then
-   PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk -F '[ |\.]' '{ print $7 }'`
+if [ -s /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur ]; then
+   #Note: /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is an Arris XB6 File created by Arris and Intel by reading ARM
+   PUNIT_RESET_DURATION=`cat /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur`
 else
-   echo "[utopia][init] Cannot read the reset duration value from /proc/P-UNIT/status"
+   echo "[utopia][init] /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is empty or missing"
+   PUNIT_RESET_DURATION=0
 fi
 
 # Set the factory reset key if it was pressed for longer than our threshold
