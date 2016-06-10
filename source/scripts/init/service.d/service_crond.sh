@@ -113,12 +113,15 @@ service_start ()
       rand1=`expr $num1 % 60`
       echo "$rand1 * * * * execute_dir /etc/cron/cron.hourly" >> $CRONTAB_FILE
       echo "1 */6 * * *  /fss/gw/rdklogger/rxtx100.sh" >> $CRONTAB_FILE
-#rdkb-4297 Runs on the 1st minute of every 12th hour
+      #rdkb-4297 Runs on the 1st minute of every 12th hour
       echo "1 */12 * * *  /fss/gw/usr/ccsp/pam/moca_status.sh" >> $CRONTAB_FILE
 
       #zqiu: monitor lan client traffic
       echo "* * * * *   /fss/gw/usr/ccsp/tad/rxtx_lan.sh" >> $CRONTAB_FILE
       echo "*/30 * * * *   /fss/gw/usr/ccsp/tad/rxtx_dmp.sh" >> $CRONTAB_FILE
+
+      # Get host no. of entries every 6 hrs.
+      echo "1 */6 * * *   /usr/ccsp/tad/getHostNumberofentries.sh" >> $CRONTAB_FILE
 
       num1=$RANDOM
       num2=$RANDOM
