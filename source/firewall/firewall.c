@@ -8578,6 +8578,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(raw_fp, "%s\n", "*raw");
    fprintf(raw_fp, "%s\n", ":PREROUTING ACCEPT [0:0]");
    fprintf(raw_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
+#ifdef INTEL_PUMA7
+   do_raw_table_puma7(raw_fp);
+#endif
    fprintf(raw_fp, "%s\n", "COMMIT");
 
    /*
