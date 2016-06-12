@@ -35,8 +35,12 @@
 #ifndef MNET_BASE_H
 #define MNET_BASE_H
 
+#if 0
 #undef BOOL
 # define BOOL unsigned char
+#else
+typedef  unsigned char BOOL;
+#endif /* 0 */
 
 
 #ifndef SERVICE_D_BASE_DIR
