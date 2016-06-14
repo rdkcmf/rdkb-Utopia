@@ -92,7 +92,7 @@ if [ "1" = "$PROPAGATE_NS" ] || [ "1" = "$PROPOGATE_DOM" ] || [ "1" = "$SYSCFG_b
    if [ "1" = "$SLOW_START" ] ; then
       wan_ipaddr=`sysevent get current_wan_ipaddr`
       primary_temp_ip_prefix=`syscfg get primary_temp_ip_prefix`
-      if [ "0.0.0.0" = $wan_ipaddr ] ; then
+      if [ "0.0.0.0" = "$wan_ipaddr" ] ; then
          DHCP_SLOW_START_NEEDED=1
       fi
       if [ "1" = "$SYSCFG_byoi_enabled" ] && [ "primary" = "`sysevent get current_hsd_mode`" ] &&
