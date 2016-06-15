@@ -103,6 +103,7 @@ WIFI_PSM_PREFIX=eRT.com.cisco.spvtg.ccsp.Device.WiFi.Radio.SSID
 WIFI_RADIO_INDEX=RadioIndex
 
 GRE_ARP_PROC=hotspot_arpd
+HOTSPOT_COMP=CcspHotspot
 ARP_NFQUEUE=0
 
 WAN_IF=erouter0
@@ -427,7 +428,7 @@ kill_procs () {
 #     kill `sysevent get dhcpsnoopd_pid`
 #     sysevent set dhcpsnoopd_pid
 # TODO: develop scheme for only killing related pids. background task var $1 doesn't work as these processes daemonize
-    killall hotspotfd
+    killall $HOTSPOT_COMP
     sysevent set ${1}_keepalive_pid
     killall $GRE_ARP_PROC
     
@@ -600,7 +601,8 @@ case "$1" in
             init_keepalive_sysevents > /dev/null
             init_snooper_sysevents
             sysevent set snooper-log-enable 1
-            hotspotfd $keepalive_args  > /dev/null &
+            echo "Starting hotspot component" > /dev/console
+            $HOTSPOT_COMP -subsys eRT. > /dev/null &
             sysevent set ${inst}_keepalive_pid $! > /dev/null
             
             update_bridge_config $3 > /dev/null
