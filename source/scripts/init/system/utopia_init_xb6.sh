@@ -299,6 +299,20 @@ syseventd
 #insmod $MODULE_PATH/fat.ko
 #insmod $MODULE_PATH/vfat.ko
 
+#ARRISXB6-1554: apply_system_defaults calls sysevent API. Logs showed binaries weren't fully started
+attemptCounter=0
+
+until [ -e "/tmp/syseventd_connection" ]; do
+    
+    if [ $attemptCounter -lt 3 ]
+    then
+       sleep 2s
+       let "attemptCounter++"
+    else
+       break
+    fi
+done
+
 echo "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
 
