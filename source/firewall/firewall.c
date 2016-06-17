@@ -8973,12 +8973,9 @@ int prepare_ipv6_firewall(const char *fw_file)
 
    fprintf(fp, "%s\n", ":LOG_INPUT_DROP - [0:0]");
    fprintf(fp, "%s\n", ":LOG_FORWARD_DROP - [0:0]");
-
-#ifndef INTEL_PUMA7
-   //Avoid Filling NVRAM Log in Dual Stack Mode and Erouter0 doesn't get IPv6 address
+  
    fprintf(fp, "-A LOG_INPUT_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 INPUT drop\"\n",syslog_level);
    fprintf(fp, "-A LOG_FORWARD_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 FORWARD drop\"\n",syslog_level);
-#endif
    fprintf(fp, "-A LOG_INPUT_DROP -j DROP\n"); 
    fprintf(fp, "-A LOG_FORWARD_DROP -j DROP\n"); 
 
