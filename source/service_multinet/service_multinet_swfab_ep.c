@@ -39,6 +39,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MULTINET_DEBUG 1
+
 int ep_set_entity_vid_portMembers(int vid, int entity, char* memberPortNames[], int numPorts) {
     char keybuf[80];
     char valbuf[512];

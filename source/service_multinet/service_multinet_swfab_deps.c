@@ -40,6 +40,8 @@
 #include "service_multinet_swfab_plat.h"
 #include "service_multinet_swfab_ep.h"
 
+#define MULTINET_DEBUG 1
+
 static List vlanState;
 
 //TODO optimize so that exec calls don't have to load the whole tree every time.

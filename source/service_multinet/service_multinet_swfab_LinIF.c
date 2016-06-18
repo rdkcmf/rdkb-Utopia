@@ -36,12 +36,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MULTINET_DEBUG 1
+
 //TODO:move actual config to nethelper lib
 int linuxIfConfigVlan(PSWFabHALArg args, int numArgs, BOOL up) {
     char cmdBuf[1024];
     int offset = 0; 
     int i;
-    
+
+MNET_DEBUG("%s : %d Entry. \n" COMMA __FUNCTION__ COMMA __LINE__)
     for (i = 0; i < numArgs; ++i) {
         if (offset) offset+=snprintf(cmdBuf+offset, 
                                     sizeof(cmdBuf) - offset,
@@ -97,7 +100,11 @@ int linuxIfConfigVlan(PSWFabHALArg args, int numArgs, BOOL up) {
         }
             
     }
-    
+
+MNET_DEBUG("%s : %d offset is %d \n" COMMA __FUNCTION__ COMMA __LINE__ COMMA offset)
+
+MNET_DEBUG(" CMD : %s \n" COMMA cmdBuf)
+
     if (offset) 
         system(cmdBuf);
 }
