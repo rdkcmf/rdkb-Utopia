@@ -50,12 +50,39 @@ typedef  unsigned char BOOL;
 #define SERVICE_MULTINET_DIR SERVICE_D_BASE_DIR "/service_multinet"
 
 #include <stdio.h>
-//#define MULTINET_DEBUG 1
+#include <stdlib.h>
+
+extern FILE *mnetfp;
+
+#define MULTINET_DEBUG 1
+
+#if 0
 
 #ifdef MULTINET_DEBUG
 //Usage: MNET_DEBUG("format" COMMA ARG COMMA ARG)
 #define COMMA ,
 #define MNET_DEBUG(x) printf("----------MNET_DEBUG:" x); fflush(stdout);
+//#define MNET_DEBUG(x)
+#define MNET_DBG_CMD(x) x;
+//#define MNET_DBG_CMD(x)
+#else 
+#define MNET_DEBUG(x)
+//#define MNET_DEBUG(x)
+#define MNET_DBG_CMD(x)
+#endif
+
+#endif
+
+
+#ifdef MULTINET_DEBUG
+//Usage: MNET_DEBUG("format" COMMA ARG COMMA ARG)
+#define COMMA ,
+#define MNET_DEBUG(x) \
+if(mnetfp != NULL){ \
+fprintf(mnetfp,"----------MNET_DEBUG:" x);}\
+else \
+printf(" FILE Pointer is NULL \n"); 
+
 //#define MNET_DEBUG(x)
 #define MNET_DBG_CMD(x) x;
 //#define MNET_DBG_CMD(x)

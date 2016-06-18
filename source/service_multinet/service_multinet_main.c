@@ -42,9 +42,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #ifndef SERVICE_MULTINET_EXE_PATH
 #define SERVICE_MULTINET_EXE_PATH "/etc/utopia/service.d/service_multinet_exec"
 #endif
+
+FILE *mnetfp = NULL;
  
  typedef int (*entryCallback)(char* argv[], int argc);
  
@@ -79,6 +82,9 @@
     int i;
 	if (argc < 2) return 1;
         
+	if(mnetfp == NULL) {
+		mnetfp = fopen ("/rdklogs/logs/MnetDebug.txt", "a+");
+	} 
         MNET_DEBUG("ENTERED MULTINET APP, argc = %d \n" COMMA argc)
         if((retval = multinet_lib_init(0, SERVICE_MULTINET_EXE_PATH))) {
             printf("%s failed to init multinet lib. code=%d\n" SERVICE_MULTINET_EXE_PATH, retval);
@@ -88,6 +94,8 @@
 	for (i =0; i < sizeof(calls) / sizeof(*calls); ++i) {
 		if (!strcmp(calls[i].call, argv[1])) {
 			calls[i].action(argv, argc);
+			if(mnetfp)
+		      fclose(mnetfp);
 			return 0;
 		}
 	}
@@ -99,6 +107,8 @@
         }
 	
 	//printUsage();
+	if(mnetfp)
+		fclose(mnetfp);
 	return 1;
 	
 }
