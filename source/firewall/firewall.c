@@ -541,7 +541,9 @@ static char lan_netmask[20];      // ipv4 netmask of the lan interface
 static char lan_3_octets[17];     // first 3 octets of the lan ipv4 address
 static char iot_ifName[50];       // IOT interface
 static char iot_primaryAddress[50]; //IOT primary IP address
-
+#if defined(_COSA_BCM_MIPS_)
+static char lan0_ipaddr[20];       // ipv4 address of the lan0 interface used to access web ui in bridge mode
+#endif
 static char rip_enabled[20];      // is rip enabled
 static char rip_interface_wan[20];  // if rip is enabled, then is it enabled on the wan interface
 static char nat_enabled[20];      // is nat enabled
@@ -1104,7 +1106,10 @@ static int prepare_globals_from_configuration(void)
    lan_ipaddr[0] = '\0';
    transparent_cache_state[0] = '\0';
    wan_service_status[0] = '\0';
-
+#if defined(_COSA_BCM_MIPS_)
+   lan0_ipaddr[0] = '\0';
+   sysevent_get(sysevent_fd, sysevent_token, "lan0_ipaddr", lan0_ipaddr, sizeof(lan0_ipaddr));
+#endif
     
    sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
@@ -3516,9 +3521,14 @@ static int do_wan_nat_lan_clients(FILE *fp)
            "-A postrouting_towan -s %s -j RETURN", current_wan_ipaddr);
   fprintf(fp, "%s\n",str); 
 #endif 
-
+#if defined(_COSA_BCM_MIPS_)
+  if(!isBridgeMode) {       
+#endif
   snprintf(str, sizeof(str),
            "-A postrouting_towan  -j SNAT --to-source %s", natip4);
+#if defined(_COSA_BCM_MIPS_)
+  }
+#endif
   fprintf(fp, "%s\n", str);
   
    if (isCacheActive) {
@@ -8618,6 +8628,11 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(nat_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":postrouting_towan - [0:0]");
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
+#if defined(_COSA_BCM_MIPS_)
+   if(isBridgeMode) {       
+       fprintf(nat_fp, "-A PREROUTING -d 10.0.0.1/32 -i %s -p tcp -j DNAT --to-destination %s\n", current_wan_ifname, lan0_ipaddr);
+   }
+#endif
    do_port_forwarding(nat_fp, NULL);
    do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
@@ -8636,6 +8651,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A xlog_drop_lan2self -j DROP\n");
 
    if(isWanServiceReady || isBridgeMode) {
+#if defined(_COSA_BCM_MIPS_)
+       fprintf(filter_fp, "-A INPUT -p tcp --dport 80 -d %s -j ACCEPT\n",lan0_ipaddr);
+#endif
        fprintf(filter_fp, "-A INPUT ! -i %s -j wan2self_mgmt\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname);
        do_remote_access_control(NULL, filter_fp, AF_INET);
    }
