@@ -49,6 +49,7 @@
 
 source /etc/utopia/service.d/interface_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 #source /etc/utopia/service.d/service_lan/wlan.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 #source /etc/utopia/service.d/service_lan/lan_hooks.sh
@@ -681,6 +682,7 @@ service_start ()
          sysevent set ${SERVICE_NAME}-errinfo
          sysevent set ${SERVICE_NAME}-status started
 #song:         add_docsis_bridge
+         echo "service_lan : Triggering RDKB_FIREWALL_RESTART"
          sysevent set firewall-restart
       fi
 	  #rongwei added

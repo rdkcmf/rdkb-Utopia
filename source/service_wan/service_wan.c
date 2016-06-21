@@ -490,6 +490,7 @@ static int wan_addr_set(struct serv_wan *sw)
         vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/");
     } else {
         fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
+        printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
     }
 #endif
@@ -502,6 +503,7 @@ static int wan_addr_set(struct serv_wan *sw)
 /*XB6 brlan0 comes up earlier so ned to find the way to restart the firewall
  IPv6 not yet supported so we can't restart in service routed  because of missing zebra.conf*/
 #ifdef INTEL_PUMA7
+        printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
 #endif
     return 0;
@@ -539,6 +541,7 @@ static int wan_addr_unset(struct serv_wan *sw)
 
     vsystem("ip -4 addr flush dev %s", sw->ifname);
 
+    printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
 
     sysevent_set(sw->sefd, sw->setok, "wan-status", "stopped", 0);

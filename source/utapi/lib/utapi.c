@@ -2741,6 +2741,7 @@ static int s_firewall_restart ()
 
     ulog(ULOG_CONFIG, UL_UTAPI, "restarting firewall...");
 
+    printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
     int rc = sysevent_set(se_fd, se_token, "firewall-restart", NULL, 0);
 
     ulogf(ULOG_CONFIG, UL_UTAPI, "firewall restart mesg sent, (rc %d)", rc);

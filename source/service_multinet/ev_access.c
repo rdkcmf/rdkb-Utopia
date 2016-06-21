@@ -204,6 +204,7 @@ int ev_unregister_ifstatus(PL2Net net, char* ifStatusEventName) {
 
 int ev_firewall_restart(void) {
 
+    MNET_DEBUG("ev_firewall_restart Triggering RDKB_FIREWALL_RESTART\n")
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive,
                  "firewall-restart", "", 0);
 }

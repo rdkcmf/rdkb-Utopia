@@ -48,6 +48,7 @@
 #------------------------------------------------------------------
 
 #source /etc/utopia/service.d/interface_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 source /etc/utopia/service.d/hostname_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
 #source /etc/utopia/service.d/service_lan/wlan.sh
@@ -185,6 +186,7 @@ stop_firewall()
 {
    STATUS=`sysevent get firewall-status`
    if [ "stopped" != "$STATUS" ] ; then
+      echo "service_bridge : Triggering RDKB_FIREWALL_STOP"
       sysevent set firewall-stop
       sleep 1
       wait_till_end_state firewall

@@ -175,6 +175,7 @@ case "$1" in
             else
 				echo "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started
+		echo "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART"
                 sysevent set firewall-restart
             fi
 
@@ -223,6 +224,7 @@ case "$1" in
                 #sysevent set desired_moca_link_state down
             fi
         fi
+        echo "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
         sysevent set firewall-restart 
    ;;
    
