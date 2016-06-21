@@ -632,6 +632,7 @@ then
     sync_group_settings
     
     #Restart the firewall after the network is set up
+    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=start"
     $SYSEVENT set firewall-restart    
 elif [ $MODE = "iot-start" ]
 then
@@ -640,10 +641,12 @@ then
     sync_group_settings
     
     #Restart the firewall after setting up IoT
+    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=iotstart"
     $SYSEVENT set firewall-restart
 elif [ $MODE = "iot-stop" ]
 then
     remove_all_from_group
+    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=iotstop"
     $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ]
 then
@@ -664,6 +667,7 @@ then
     #Sync the group interfaces and raise status events
     sync_group_settings
     #Restart the firewall after the network is set up
+    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=restart"
     $SYSEVENT set firewall-restart
 else
     echo "Syntax: $0 [start | stop | restart]"

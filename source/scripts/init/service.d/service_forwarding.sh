@@ -53,6 +53,7 @@
 #--------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 
 SERVICE_NAME="forwarding"
@@ -141,6 +142,8 @@ service_start ()
             fi
          fi
          # just in case the firewall is still configured for router mode, restart it
+
+         echo "service_forwarding : Triggering RDKB_FIREWALL_RESTART before bridge starting"
          sysevent set firewall-restart
          wait_till_state bridge starting
       else
@@ -154,6 +157,7 @@ service_start ()
          STATUS=`sysevent get firewall-status`
          if [ "stopped" = "$STATUS" ] ; then
             ulog forwarding status "starting firewall"
+            echo "service_forwarding : Triggering RDKB_FIREWALL_RESTART before lan_wan starting"
             sysevent set firewall-restart
          fi
          wait_till_state lan starting

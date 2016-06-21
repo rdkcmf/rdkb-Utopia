@@ -87,6 +87,7 @@
 #
 #------------------------------------------------------------------
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 PID="($$)"
 
 UDHCPC_PID_FILE=/var/run/udhcpc_lan.pid
@@ -420,6 +421,7 @@ case "$1" in
 
       ;;
    lan-status)
+      echo "dhcp_lan Triggering RDKB_FIREWALL_RESTART"
       sysevent set firewall-restart
       ;;
    esac

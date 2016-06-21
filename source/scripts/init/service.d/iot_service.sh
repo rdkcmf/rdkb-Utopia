@@ -18,6 +18,7 @@
 # limitations under the License.
 ##########################################################################
 
+source /etc/utopia/service.d/log_capture_path.sh
 iot_ipaddress=`syscfg get iot_ipaddr`
 iot_interface=`syscfg get iot_ifname`
 iot_mask=`syscfg get iot_netmask`
@@ -71,6 +72,7 @@ restartServices()
 
   sysevent set dhcp_server-restart lan_not_restart
 
+  echo "iotservice : Triggering RDKB_FIREWALL_RESTART"
   sysevent set firewall-restart
 }
 

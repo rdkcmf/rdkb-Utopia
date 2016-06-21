@@ -48,6 +48,7 @@
 #------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 
 SERVICE_NAME="ciscoconnect"
@@ -74,6 +75,7 @@ stop_guestnet ()
 {
     sysevent set ipv4-down `sysevent get ${SERVICE_NAME}_guest_l3net`
     sysevent set multinet-down `sysevent get ${SERVICE_NAME}_guest_l2net`
+    echo "service_ciscoconnect : Triggering RDKB_FIREWALL_RESTART"
     sysevent set firewall-restart
     sysevent set ciscoconnect-guest_status "stopped"
 }

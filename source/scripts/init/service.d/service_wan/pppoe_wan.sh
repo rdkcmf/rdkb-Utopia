@@ -65,6 +65,7 @@
 #------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 source /etc/utopia/service.d/service_wan/ppp_helpers.sh
 
 DESIRED_WAN_STATE=`sysevent get desired_ipv4_wan_state`
@@ -146,6 +147,7 @@ bring_wan_down() {
    sysevent set pppd_current_wan_ifname
    sysevent set current_wan_ipaddr 0.0.0.0
    sysevent set current_wan_subnet 0.0.0.0
+   echo "pppoe_wan : Triggering RDKB_FIREWALL_RESTART"
    sysevent set firewall-restart
 }
 

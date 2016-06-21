@@ -179,6 +179,7 @@ static int handle_newhost_trigger(char *ip, char *mac)
       }
       fprintf(kh_fp, "%s   %s\n", ip, mac);
       fclose(kh_fp);
+      printf("%s Calling RDKB_FIREWALL_RESTART \n",__FUNCTION__);
       sysevent_set(sysevent_fd, sysevent_token, "firewall-restart", NULL, 0);
    }
    return(0);

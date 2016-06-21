@@ -51,6 +51,7 @@
 #------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 SERVICE_NAME="ntpclient"
 SELF_NAME="`basename $0`"
@@ -196,6 +197,7 @@ service_start ()
    if [ -n $SYSCFG_InternetAccessPolicyCount ] && [ "0" != "$SYSCFG_InternetAccessPolicyCount" ] ; then
       # if there is an Internet Access Policy then we need to give the firewall a chance to react to the 
       # new known time
+      echo "service_ntpclient : Triggering RDKB_FIREWALL_RESTART"
       sysevent set firewall-restart
    fi
    sysevent set ${SERVICE_NAME}-status "started"

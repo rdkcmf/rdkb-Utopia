@@ -241,7 +241,8 @@ apply_config () {
     
     sysevent set ${SERVICE_NAME}_${1}-ipv4addr $CUR_IPV4_ADDR
     sysevent set ${SERVICE_NAME}_${1}-ipv4subnet $CUR_IPV4_SUBNET
-    
+   
+    echo "service_ipv4 : Triggering RDKB_FIREWALL_RESTART" 
     sysevent set firewall-restart
     
     return 0

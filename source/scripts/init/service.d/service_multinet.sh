@@ -164,6 +164,7 @@ start_net () {
     update_net_status $NETID
     
     if [ x1 = x$2 ]; then
+        echo "MultinetService Triggering RDKB_FIREWALL_RESTART"
         sysevent set firewall-restart
     fi
     

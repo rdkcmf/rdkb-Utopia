@@ -83,7 +83,7 @@ static int fw_restart(struct serv_routed *sr)
         vsystem("((nfq_handler 4 %s &)&)", val);
         sysevent_set(sr->sefd, sr->setok, "parcon_nfq_status", "started", 0);
     }
-
+    printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
     sysevent_set(sr->sefd, sr->setok, "firewall-restart", NULL, 0);
     return 0;
 }

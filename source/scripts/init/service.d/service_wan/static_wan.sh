@@ -78,6 +78,7 @@ bring_wan_down() {
    echo 0 > /proc/sys/net/ipv4/ip_forward
    sysevent set current_wan_ipaddr 0.0.0.0
    sysevent set current_wan_subnet 0.0.0.0
+   echo "static_wan: Triggering RDKB_FIREWALL_RESTART from WAN down"
    sysevent set firewall-restart
    ulog static_wan status "$PID setting current_wan_state down"
    sysevent set current_ipv4_wan_state down
@@ -104,6 +105,7 @@ bring_wan_up() {
       sysevent set current_wan_ipaddr 0.0.0.0
    fi
 
+   echo "static_wan: Triggering RDKB_FIREWALL_RESTART from WAN up"
    sysevent set firewall-restart
    echo 1 > /proc/sys/net/ipv4/ip_forward
    ulog static_wan status "$PID setting current_wan_state up"

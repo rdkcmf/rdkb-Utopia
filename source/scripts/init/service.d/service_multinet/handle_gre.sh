@@ -58,6 +58,7 @@ GRE_IFNAME="gretap0"
 GRE_IFNAME_DUMMY="gretap_0"
 
 source /etc/utopia/service.d/ut_plat.sh
+source /etc/utopia/service.d/log_capture_path.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
 export LOG4C_RCPATH=/fss/gw/rdklogger
@@ -610,6 +611,7 @@ case "$1" in
             arpFWrule=`sysevent setunique GeneralPurposeFirewallRule " -I OUTPUT -o $WAN_IF -p icmp --icmp-type 3 -j NFQUEUE --queue-bypass --queue-num $ARP_NFQUEUE"`
             sysevent set ${inst}_arp_queue_rule "$arpFWrule" > /dev/null
             $GRE_ARP_PROC -q $ARP_NFQUEUE  > /dev/null &
+            echo "handle_gre : Triggering RDKB_FIREWALL_RESTART"
             sysevent set firewall-restart > /dev/null
             
             #check_ssids
@@ -791,6 +793,7 @@ case "$1" in
         fi
         
         if [ x = x$start ]; then
+          echo "handle_gre : Triggering RDKB_FIREWALL_RESTART in update bridges"
             sysevent set firewall-restart
         fi
     ;;
