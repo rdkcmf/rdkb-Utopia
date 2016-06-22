@@ -126,6 +126,15 @@ service_start ()
            sleep 1
            wait_till_state bridge stopped
         fi
+		#router mode handle
+		if [ "0" = "$bridge_mode" ]; then 
+            STATUS=`sysevent get wan-status`
+            if [ "stopped" != "$STATUS" ] ; then
+                ulog forwarding status "stopping wan"
+                sysevent set wan-stop
+                wait_till_state wan stopped
+            fi
+        fi
       fi
 
       # Start the network
