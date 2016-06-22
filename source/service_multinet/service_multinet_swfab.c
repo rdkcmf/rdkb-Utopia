@@ -39,6 +39,7 @@
 
 #include "service_multinet_swfab_plat.h"
 #include "service_multinet_swfab_deps.h"
+#include "service_multinet_swfab_LinIF.h"
 #include <string.h>
 
 
@@ -91,6 +92,7 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
     ListIterator portIter, matchIter;
     PListItem item;
     PSWFabHAL hal;
+	BOOL l_bHalCalled = FALSE;
     
     MNET_DEBUG("swfab_configVlan, net %d, numMembers %d, add: %hhu\n" COMMA net->inst COMMA members->numMembers COMMA add)
     
@@ -154,22 +156,38 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
         
         numArgs = 0;
         hal = portConfigs[i].config.platPort->hal;
-        for (j = i; j < numConfigs; ++j) {
-            if (portConfigs[j].config.platPort->hal->id != hal->id) continue;
-            MNET_DEBUG("swfab_configVlan, aggregating ")
-            MNET_DBG_CMD(printPlatport(portConfigs[j].config.platPort))
-            args[numArgs].portID = portConfigs[j].config.platPort->portID;
-            args[numArgs].hints.network = net;
-            args[numArgs++].vidParams = portConfigs[j].config.vidParams; 
-            portConfigs[j].handled =1;
-        }
-        MNET_DEBUG("swfab_configVlan, Calling configVlan on hal %d. numArgs %d\n" COMMA hal->id COMMA numArgs)
-        hal->configVlan(args, numArgs, add);
-        MNET_DEBUG("swfab_configVlan, Hal %d returned.\n" COMMA hal->id)
-    }
-    
-    saveVlanState(vlanState);
-    
+		if (NULL != hal)
+        {	
+            for (j = i; j < numConfigs; ++j) 
+			{
+            	if (portConfigs[j].config.platPort->hal->id != hal->id) continue;
+	            MNET_DEBUG("swfab_configVlan, aggregating\n")
+    	        MNET_DBG_CMD(printPlatport(portConfigs[j].config.platPort))
+        	    args[numArgs].portID = portConfigs[j].config.platPort->portID;
+            	args[numArgs].hints.network = net;
+	            args[numArgs++].vidParams = portConfigs[j].config.vidParams; 
+    	        portConfigs[j].handled =1;
+        	}
+        	MNET_DEBUG("swfab_configVlan, Calling configVlan on hal %d. numArgs %d\n" COMMA hal->id COMMA numArgs)
+			l_bHalCalled = TRUE;
+	        hal->configVlan(args, numArgs, add);
+    	    MNET_DEBUG("swfab_configVlan, Hal %d returned.\n" COMMA hal->id)
+		}
+		else if (NULL == hal || FALSE == l_bHalCalled)
+		{			
+			if (!strncmp(portConfigs[i].config.platPort->portID, "l2sd0", 5))				
+			{
+				MNET_DEBUG("swfab_configVlan, hal pointer is NULL create l2sd0 directly\n");
+				args[numArgs].portID = portConfigs[i].config.platPort->portID;
+                args[numArgs].hints.network = net;
+                args[numArgs++].vidParams = portConfigs[i].config.vidParams;
+				
+				linuxIfConfigVlan(args, 1, add); //for l2sd0.100 / l2sd0.101 creation	
+			}
+			continue;
+		}
+    }    
+    saveVlanState(vlanState);    
 }
 
 void printPlatport(PPlatformPort port) {

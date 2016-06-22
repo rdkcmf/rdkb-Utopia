@@ -41,7 +41,8 @@
 #include "service_multinet_util.h"
 
 
-
+#define TRUE 1
+#define FALSE 0
 #define HAL_MAX_PORTS 32
 #define MAX_ADD_PORTS HAL_MAX_PORTS*2
 #define MAX_ENTITIES 32
