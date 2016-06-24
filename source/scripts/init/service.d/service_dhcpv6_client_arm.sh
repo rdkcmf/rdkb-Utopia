@@ -110,6 +110,9 @@ service_start()
    elif [ "$BRIDGE_MODE" = "1" -o "$BRIDGE_MODE" = "2" ]
    then
       service_stop
+   elif [ "$WAN_STATE" = "stopped" ]
+   then
+        service_stop
    elif [ ! -f $DHCPV6_PID_FILE ]
    then
       mkdir -p /tmp/.dibbler-info
@@ -142,6 +145,7 @@ register_dhcpv6_client_handler()
    register_sysevent_handler $SERVICE_NAME phylink_wan_state /etc/utopia/service.d/service_dhcpv6_client.sh
    register_sysevent_handler $SERVICE_NAME current_wan_ifname /etc/utopia/service.d/service_dhcpv6_client.sh
    register_sysevent_handler $SERVICE_NAME bridge_mode /etc/utopia/service.d/service_dhcpv6_client.sh
+   register_sysevent_handler $SERVICE_NAME wan-status /etc/utopia/service.d/service_dhcpv6_client.sh
 }
 
 unregister_dhcpv6_client_handler()
@@ -150,6 +154,7 @@ unregister_dhcpv6_client_handler()
    unregister_sysevent_handler $SERVICE_NAME phylink_wan_state
    unregister_sysevent_handler $SERVICE_NAME current_wan_ifname
    unregister_sysevent_handler $SERVICE_NAME bridge_mode
+   unregister_sysevent_handler $SERVICE_NAME wan-status
 }
 
 service_enable ()
@@ -200,9 +205,16 @@ case "$1" in
    # Add other event entry points here
    #----------------------------------------------------------------------------------
 
-   erouter_mode-updated|phylink_wan_state|lan-status|wan-status|ipv6-status|current_ipv4_link_state|current_wan_ifname|bridge_mode)
+   erouter_mode-updated|phylink_wan_state|lan-status|ipv6-status|current_ipv4_link_state|current_wan_ifname|bridge_mode)
       service_update
       ;;
+
+   wan-status)
+	if [ "$2" = "stopped" ] ||  [ "$2" = "started" ]
+  	 then
+		service_update
+        fi
+	;;
 
    *)
       echo "Usage: $SERVICE_NAME enable | disable" > /dev/console
