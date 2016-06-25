@@ -42,6 +42,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef INCLUDE_BREAKPAD
+#include "breakpad_wrapper.h"
+#endif
 
 #ifndef SERVICE_MULTINET_EXE_PATH
 #define SERVICE_MULTINET_EXE_PATH "/etc/utopia/service.d/service_multinet_exec"
@@ -84,7 +87,10 @@ FILE *mnetfp = NULL;
         
 	if(mnetfp == NULL) {
 		mnetfp = fopen ("/rdklogs/logs/MnetDebug.txt", "a+");
-	} 
+	}
+#ifdef INCLUDE_BREAKPAD
+    breakpad_ExceptionHandler();
+#endif 
         MNET_DEBUG("ENTERED MULTINET APP, argc = %d \n" COMMA argc)
         if((retval = multinet_lib_init(0, SERVICE_MULTINET_EXE_PATH))) {
             printf("%s failed to init multinet lib. code=%d\n" SERVICE_MULTINET_EXE_PATH, retval);
