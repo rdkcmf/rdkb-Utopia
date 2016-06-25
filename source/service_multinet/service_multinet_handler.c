@@ -119,6 +119,7 @@ int add_vlan_for_members(PL2Net net, PMember members, int numMembers) {
     
     memset(memberControl.handled, 0, sizeof(memberControl.handled)*memberControl.numMembers);
     for (i = 0; i < numHandlers /*&& members->remaining*/; ++i) {
+		MNET_DEBUG("Calling add_vlan_for_members for inst:%d name:%s\n" COMMA net->inst COMMA net->name);
         handlerList[i].add_vlan_for_members(net, &memberControl); 
     }
 }

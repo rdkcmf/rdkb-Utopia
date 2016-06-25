@@ -157,6 +157,11 @@ int loadVlanState(PVlanTrunkState vidState){
     
     for (i = 0; i < numEntities; ++i) {
         entity = addEntity(vidState, entities[i]);
+		if (NULL == entity)
+		{
+			MNET_DEBUG("loadVlanState, addEntity has failed return\n");
+			return 0;
+		}
         numPorts = sizeof(portMemberNameList)/sizeof(*portMemberNameList);
         ep_get_entity_vid_portMembers(vidState->vid, entities[i], portMemberNameList, &numPorts, portMemberBuff, sizeof(portMemberBuff));
         for (j = 0; j < numPorts; ++j) {
@@ -217,6 +222,11 @@ int addAndGetTrunkPorts(PVlanTrunkState vidState, PPlatformPort newPort, PList l
         }
         
         entity = addEntity(vidState, newPort->entity);
+		if (NULL == entity)
+		{
+			MNET_DEBUG("loadVlanState, addEntity failed while adding new entity\n");
+			return 0;
+		}
         MNET_DEBUG("addAndGetTrunkPorts, added new entity %d\n" COMMA entity->entity)
         
     }
@@ -399,6 +409,11 @@ PEntityPortList addEntity(PVlanTrunkState vidState, int entity) {
     newEntity = (PEntityPortList) addAndAlloc(&vidState->memberEntities, sizeof(EntityPortList));
     if (newEntity)
         newEntity->entity = entity;
+	else
+	{
+		MNET_DEBUG("addAndAlloc in addEntity has returned NULL\n");
+		return NULL;
+	}	
     vidState->entitiesDirty = 1;
     return newEntity;
 }
