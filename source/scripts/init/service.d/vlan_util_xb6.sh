@@ -152,7 +152,8 @@ setup_qtn(){
         $IP link set $AP_NAME up
         
         #If configured to do so, set a default SSID name here
-        qtn_set_default_ssid
+	# Quantenna layer will set the default SSID, etc.
+        # qtn_set_default_ssid
     else
         #Remove vlan interface
         $IP link set $AP_NAME down
@@ -529,8 +530,8 @@ trap "rm -f ${LOCKFILE}; exit" INT TERM EXIT
 echo $$ > ${LOCKFILE}
 
 #Handle input parameters
-#Temporary workaround: kill link monitor
-$KILLALL $QWCFG_TEST 2> /dev/null
+#Temporary workaround: kill link monitor. No longer needed.
+#$KILLALL $QWCFG_TEST 2> /dev/null
 
 BRIDGE_MODE=`$SYSEVENT get bridge_mode`
 CMDIAG_IF=`syscfg get cmdiag_ifname`
@@ -676,7 +677,8 @@ else
 fi
 
 #When finished, restart the link monitor
-/etc/rc.d/qtn.rc.link_monitor up
+# No longer needed to enable/disable.
+#/etc/rc.d/qtn.rc.link_monitor up
 
 #Script finished, remove lock file
 rm -f ${LOCKFILE}
