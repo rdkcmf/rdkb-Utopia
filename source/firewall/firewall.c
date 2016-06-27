@@ -431,6 +431,9 @@ NOT_DEF:
 #define HTTP_GET_QUEUE_NUM_START 11 
 #define HTTP_GET_QUEUE_NUM_END 12
 #endif
+#define FW_DEBUG 1
+
+FILE *firewallfp = NULL;
 
 //#define CONFIG_BUILD_TRIGGER 1
 /*
@@ -743,6 +746,7 @@ int greDscp = 44; // Default initialized to 44
  */
 static char *trim(char *in)
 {
+                 FIREWALL_DEBUG("Entering *trim\n");         
    // trim the front of the string
    if (NULL == in) {
       return(NULL);
@@ -759,6 +763,7 @@ static char *trim(char *in)
       *end = '\0';
       end--;
    }
+                 FIREWALL_DEBUG("Exiting *trim\n");         
    return(start);
 }
 
@@ -779,11 +784,13 @@ static char *trim(char *in)
  */
 static char *token_get(char *in, char delim)
 {
+                 FIREWALL_DEBUG("Entering *token_get\n");         
    char *end = strchr(in, delim);
    if (NULL != end) {
       *end = '\0';
       end++;
    }
+                 FIREWALL_DEBUG("Exiting *token_get\n");         
    return(end);   
 }
 
@@ -806,7 +813,8 @@ static int time_delta(struct tm *time1, const char *time2, int *hours, int *mins
    int t2h;
    int t2m;
    sscanf(time2,"%d:%d", &t2h, &t2m);
-   if (time1->tm_hour > t2h) {
+   FIREWALL_DEBUG("Entering time_delta\n");         
+  if (time1->tm_hour > t2h) {
       *hours = *mins = 0;
       return(-1);
    } else if (time1->tm_hour == t2h && time1->tm_min >= t2m) { 
@@ -822,6 +830,7 @@ static int time_delta(struct tm *time1, const char *time2, int *hours, int *mins
       }
       return(0);
    }
+   FIREWALL_DEBUG("Exiting time_delta\n");         
 }
  
 /*
@@ -844,7 +853,7 @@ static int substitute(char *in_str, char *out_str, const int size, char *from, c
     char *in_str_end  = in_str + strlen(in_str);
     char *out_str_end = out_str + size;
     int   num_subst   = 0;
-
+    FIREWALL_DEBUG("Entering substitute\n");         
     while (in_str_p < in_str_end && out_str_p < out_str_end) {
        char *from_p;
        from_p = strstr(in_str_p, from);
@@ -891,6 +900,7 @@ static int substitute(char *in_str, char *out_str, const int size, char *from, c
     }
 
     out_str[size-1] = '\0';
+    FIREWALL_DEBUG("Exiting substitute\n");         
     return(num_subst);
 }
 
@@ -915,7 +925,7 @@ static char *make_substitutions(char *in_str, char *out_str, const int size)
     char *out_str_p = out_str;
     char *in_str_end = in_str + strlen(in_str);
     char *out_str_end = out_str + size;
-
+    FIREWALL_DEBUG("Entering *make_substitutions\n");         
     while (in_str_p < in_str_end && out_str_p < out_str_end) {
        char token[50];
        if ('$' == *in_str_p) {
@@ -960,6 +970,7 @@ static char *make_substitutions(char *in_str, char *out_str, const int size)
    }
 
     out_str[size-1] = '\0';
+    FIREWALL_DEBUG("Exiting *make_substitutions\n");         
     return(out_str);
 }
  
@@ -981,6 +992,7 @@ static char *make_substitutions(char *in_str, char *out_str, const int size)
  */
 static char *match_keyword(FILE *fp, char *keyword, char delim, char *line, int size)
 {
+   FIREWALL_DEBUG("Entering *match_keyword\n");         
    while (NULL != fgets(line, size, fp) ) {
       char *keyword_candidate = NULL;
       char *next;
@@ -1013,7 +1025,7 @@ static char *match_keyword(FILE *fp, char *keyword, char delim, char *line, int 
          return(next);
       } 
    }
-
+   FIREWALL_DEBUG("Exiting *match_keyword\n");         
    return(NULL);
 }
 
@@ -1047,7 +1059,7 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
 	char addr6[40], devname[20];
 	struct sockaddr_in6 sap;
     int    i = 0;
-    
+    FIREWALL_DEBUG("Entering get_ip6address\n");         
     if (!ifname && !ipArry && !p_num)
         return -1;
     fp = fopen(_PROCNET_IFINET6, "r");
@@ -1079,6 +1091,7 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
     *p_num = i;
 
     fclose(fp);
+    FIREWALL_DEBUG("Exiting get_ip6address\n");         
     return 0;
 }
 
@@ -1093,7 +1106,7 @@ static int prepare_globals_from_configuration(void)
    char tmp[100];
    char *pStr = NULL;
    int i;
-
+   FIREWALL_DEBUG("Entering prepare_globals_from_configuration\n");       
    tmp[0] = '\0';
    // use wan protocol determined wan interface name if possible, else use default (the name used by the OS)
    default_wan_ifname[0] = '\0';
@@ -1588,7 +1601,7 @@ static int prepare_globals_from_configuration(void)
           pStr = NULL;
        }   
    }
- 
+    FIREWALL_DEBUG("Exiting prepare_globals_from_configuration\n");       
    return(0);
 }
 
@@ -1617,7 +1630,8 @@ static int prepare_globals_from_configuration(void)
  int do_raw_logs(FILE *fp)
 {
    char str[MAX_QUERY];
-   if (isLogEnabled) {
+   FIREWALL_DEBUG("Entering do_raw_logs\n");       
+ if (isLogEnabled) {
       if (isLogSecurityEnabled) {
          snprintf(str, sizeof(str),
                   "-A xlog_drop_lanattack -j LOG --log-prefix \"UTOPIA: FW.LANATTACK DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
@@ -1627,6 +1641,7 @@ static int prepare_globals_from_configuration(void)
    snprintf(str, sizeof(str),
             "-A xlog_drop_lanattack -j DROP");
    fprintf(fp, "%s\n", str);
+   FIREWALL_DEBUG("Exiting do_raw_logs\n");       
    return(0);
 }
 
@@ -1642,7 +1657,7 @@ static int prepare_globals_from_configuration(void)
  int do_logs(FILE *fp)
 {
    char str[MAX_QUERY];
-
+   FIREWALL_DEBUG("Entering do_logs\n");       
    /*
     * Aside from the general idea that logging is enabled,
     * we can turn on/off certain logs according to whether
@@ -1748,7 +1763,7 @@ static int prepare_globals_from_configuration(void)
    snprintf(str, sizeof(str),
             "-A xlogreject -j DROP");
    fprintf(fp, "%s\n", str);
-
+           FIREWALL_DEBUG("Exiting do_logs\n");       
    return(0);
 }
 
@@ -1781,7 +1796,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
    int  rc;
    int  count;
    char *tmp = NULL;
-
+           FIREWALL_DEBUG("Entering do_single_port_forwarding\n");       
    query[0] = '\0';
    rc = syscfg_get(NULL, "SinglePortForwardCount", query, sizeof(query)); 
    if (0 != rc || '\0' == query[0]) {
@@ -2040,7 +2055,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif
    }
 SinglePortForwardNext:
-
+           FIREWALL_DEBUG("Exiting do_single_port_forwarding\n");       
    return(0);
 }
 
@@ -2064,7 +2079,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
    char str[MAX_QUERY];
    int count;
    query[0] = '\0';
-
+           FIREWALL_DEBUG("Entering do_port_range_forwarding\n");       
    rc = syscfg_get(NULL, "PortRangeForwardCount", query, sizeof(query));
    if (0 != rc || '\0' == query[0]) {
       goto PortRangeForwardNext;
@@ -2371,6 +2386,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 
    }
 PortRangeForwardNext:
+           FIREWALL_DEBUG("Exiting do_port_range_forwarding\n");       
    return(0);
 }
 
@@ -2394,7 +2410,7 @@ static int do_wellknown_ports_forwarding(FILE *nat_fp, FILE *filter_fp)
    char query[MAX_QUERY];
    int  rc;
 
-
+           FIREWALL_DEBUG("Entering do_wellknown_ports_forwarding\n");       
    wkp_fp = fopen(filename, "r");
    if (NULL == wkp_fp) {
       return(-1);
@@ -2517,6 +2533,7 @@ static int do_wellknown_ports_forwarding(FILE *nat_fp, FILE *filter_fp)
    }
 WellKnownPortForwardNext:
    fclose(wkp_fp);
+           FIREWALL_DEBUG("Exiting do_wellknown_ports_forwarding\n");       
    return(0);
 }
 
@@ -2539,7 +2556,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
    char          rule[MAX_QUERY];
    char          in_rule[MAX_QUERY];
    char          subst[MAX_QUERY];
-
+           FIREWALL_DEBUG("Entering do_ephemeral_port_forwarding\n");       
    iterator = SYSEVENT_NULL_ITERATOR;
    do {
       name[0] = rule[0] = subst[0] = '\0';
@@ -2680,6 +2697,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
          }
       }
    } while (SYSEVENT_NULL_ITERATOR != iterator);
+           FIREWALL_DEBUG("Exiting do_ephemeral_port_forwarding\n");       
    return(0);
 }
 
@@ -2699,7 +2717,7 @@ static int do_static_route_forwarding(FILE *filter_fp)
    char query[MAX_QUERY];
    int  rc;
    int idx;
-
+           FIREWALL_DEBUG("Entering do_static_route_forwarding\n");       
    query[0] = '\0';
    int count;
    rc = syscfg_get(NULL, "StaticRouteCount", query, sizeof(query));
@@ -2753,6 +2771,7 @@ static int do_static_route_forwarding(FILE *filter_fp)
        fprintf(filter_fp, "%s\n", str);
     }
 StaticRouteForwardDone:
+           FIREWALL_DEBUG("Exiting do_static_route_forwarding\n");       
    return(0);
 }
 
@@ -2774,12 +2793,14 @@ static int do_port_forwarding(FILE *nat_fp, FILE *filter_fp)
     *   a PREROUTING DNAT rule
     *   an ACCEPT rule
     */
+           FIREWALL_DEBUG("Entering do_port_forwarding\n");       
    do_single_port_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_port_range_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_wellknown_ports_forwarding(nat_fp, filter_fp);
    do_ephemeral_port_forwarding(nat_fp, filter_fp);
    if (filter_fp)
     do_static_route_forwarding(filter_fp);
+           FIREWALL_DEBUG("Exiting do_port_forwarding\n");       
    return(0);
 }
 
@@ -2802,7 +2823,7 @@ static int do_nonat(FILE *filter_fp)
    if (isNatEnabled == NAT_DISABLE) {
       return(0);
    } 
-
+           FIREWALL_DEBUG("Entering do_nonat\n");       
    if (strncasecmp(firewall_level, "High", strlen("High")) != 0)
    {
       // if we are not doing nat, restrict wan to lan traffic per security settings
@@ -2854,7 +2875,7 @@ static int do_nonat(FILE *filter_fp)
                "-A wan2lan_nonat -d %s/%s -j xlog_accept_wan2lan", lan_ipaddr, lan_netmask);
       fprintf(filter_fp, "%s\n", str);
    }
-
+           FIREWALL_DEBUG("Exiting do_nonat\n");       
    return(0);
 }
 
@@ -2878,7 +2899,7 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
 
    int rc;
    int  src_type = 0; // 0 is all networks, 1 is an ip[/netmask], 2 is ip range
-
+           FIREWALL_DEBUG("Entering do_dmz\n");       
    if (!isDmzEnabled) {
       return(0);
    } 
@@ -3042,7 +3063,7 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
       default:
          break;
    }
-
+           FIREWALL_DEBUG("Exiting do_dmz\n");       
    return(0);
 }
 
@@ -3076,7 +3097,7 @@ static int write_qos_classification_statement (FILE *fp, FILE *qos_fp, char *nam
    rewind(qos_fp);
    char line[512];
    char *next_token;
-
+           FIREWALL_DEBUG("Entering write_qos_classification_statement\n");       
    while (NULL != (next_token = match_keyword(qos_fp, name, '|', line, sizeof(line))) ) {
 
       char *friendly_name = next_token;
@@ -3120,6 +3141,7 @@ static int write_qos_classification_statement (FILE *fp, FILE *qos_fp, char *nam
               subst_hook, make_substitutions(match,subst,sizeof(subst)), make_substitutions(class, subst2,sizeof(subst2)));
       fprintf(fp, "%s\n", str);
    }
+           FIREWALL_DEBUG("Exiting write_qos_classification_statement\n");       
    return(0); 
 }
 
@@ -3140,7 +3162,7 @@ static int add_qos_marking_statements(FILE *fp)
 
    int rc;
    char query[MAX_QUERY];
-
+           FIREWALL_DEBUG("Entering add_qos_marking_statements\n");       
    // is the qos enabled
    query[0] = '\0';
    rc = syscfg_get(NULL, "qos_enable", query, sizeof(query));
@@ -3436,7 +3458,7 @@ QoSVoiceDevices:
    }
 
 QoSDone:
-
+           FIREWALL_DEBUG("Exiting add_qos_marking_statements\n");       
    return(0);
 }
 
@@ -3467,7 +3489,7 @@ static int do_nat_ephemeral(FILE *fp)
    char      in_rule[MAX_QUERY];
    char      subst[MAX_QUERY];
    char      str[MAX_QUERY];
-
+           FIREWALL_DEBUG("Entering do_nat_ephemeral\n");       
    iterator = SYSEVENT_NULL_ITERATOR;
    do {
       name[0] = subst[0] = '\0';
@@ -3488,6 +3510,7 @@ static int do_nat_ephemeral(FILE *fp)
         }
       }
    } while (SYSEVENT_NULL_ITERATOR != iterator);
+           FIREWALL_DEBUG("Exiting do_nat_ephemeral\n");       
    return(0);
 }
 
@@ -3507,7 +3530,7 @@ static int do_wan_nat_lan_clients(FILE *fp)
       return(0);
    }
   char str[MAX_QUERY];
-
+           FIREWALL_DEBUG("Entering do_wan_nat_lan_clients\n");       
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
   //do not do SNAT on public ip
   int i;
@@ -3537,6 +3560,7 @@ static int do_wan_nat_lan_clients(FILE *fp)
                "-A PREROUTING -i %s -p tcp --dport 80 -j DNAT --to %s:%s", lan_ifname, lan_ipaddr, "3128");
       fprintf(fp, "%s\n", rule);
    }
+           FIREWALL_DEBUG("Exiting do_wan_nat_lan_clients\n");       
    return(0);
 }
 
@@ -3558,7 +3582,8 @@ static int do_lan2self_attack(FILE *fp)
    /* LAND ATTACK */
    char str[MAX_QUERY];
 // TODO: Add for each lan ip
-   snprintf(str, sizeof(str),
+           FIREWALL_DEBUG("Entering do_lan2self_attack\n");       
+ snprintf(str, sizeof(str),
             "-A lanattack -s %s -d %s -j xlog_drop_lanattack", lan_ipaddr, lan_ipaddr);
    fprintf(fp, "%s\n", str);
 
@@ -3569,7 +3594,7 @@ static int do_lan2self_attack(FILE *fp)
    snprintf(str, sizeof(str),
             "-A lanattack -d 127.0.0.1 -j xlog_drop_lanattack");
    fprintf(fp, "%s\n", str);
-
+           FIREWALL_DEBUG("Exiting do_lan2self_attack\n");       
    return(0);
 }
 
@@ -3581,7 +3606,7 @@ static int lan_telnet_ssh(FILE *fp, int family)
    int rc;
    char query[MAX_QUERY];
    query[0] = '\0';
-
+           FIREWALL_DEBUG("Entering lan_telnet_ssh\n");     
    //telnet access control for lan side
    memset(query, 0, MAX_QUERY);
    rc = syscfg_get(NULL, "mgmt_lan_telnetaccess", query, sizeof(query));
@@ -3617,16 +3642,18 @@ static int lan_telnet_ssh(FILE *fp, int family)
            fprintf(fp, "-A %s -p tcp --dport 22 -j DROP\n", "lan2self_mgmt");
        }
    }
-
+           FIREWALL_DEBUG("Exiting lan_telnet_ssh\n");     
    return 0;
 }
 
 static int do_lan2self_by_wanip6(FILE *filter_fp)
 {
+           FIREWALL_DEBUG("Entering do_lan2self_by_wanip6\n");     
     int i;
     for(i = 0; i < ecm_wan_ipv6_num; i++){
         fprintf(filter_fp, "-A INPUT -i %s -d %s -p tcp --match multiport --dports 23,22,80,443,161 -j LOG_INPUT_DROP\n", lan_ifname, ecm_wan_ipv6[i]);
     }
+           FIREWALL_DEBUG("Exiting do_lan2self_by_wanip6\n");     
 }
 
 static int do_lan2self_by_wanip(FILE *filter_fp, int family)
@@ -3638,7 +3665,7 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
    int rc = 0, ret;
    httpport[0] = '\0';
    httpsport[0] = '\0';
-
+           FIREWALL_DEBUG("Entering do_lan2self_by_wanip\n");     
    fprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", current_wan_ipaddr); //eRouter address doesn't have any restrictions
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    if(isWanStaticIPReady){
@@ -3670,6 +3697,7 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
    fprintf(filter_fp, "-A lan2self_by_wanip -p tcp -m multiport --dports 80,443 -j xlog_drop_lan2self\n"); //GUI on standard ports
    fprintf(filter_fp, "-A lan2self_by_wanip -p udp --dport 161 -j xlog_drop_lan2self\n"); //SNMP
    fprintf(filter_fp, "-A lan2self_by_wanip -p icmp --icmp-type 8 -j xlog_drop_lan2self\n"); // ICMP PING request
+           FIREWALL_DEBUG("Exiting do_lan2self_by_wanip\n");     
 }
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
 /*
@@ -3682,12 +3710,13 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
  */
 static void do_lan2wan_staticip(FILE *filter_fp){
     int i;
-
+           FIREWALL_DEBUG("Entering do_lan2wan_staticip\n");     
     if(isWanStaticIPReady && isFWTS_enable ){
         for(i = 0; i < StaticIPSubnetNum; i++){
             fprintf(filter_fp, "-A lan2wan_staticip -s %s/%s -j ACCEPT\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask);
         }
     }
+           FIREWALL_DEBUG("Exiting do_lan2wan_staticip\n");     
 }
 #endif
 /*
@@ -3695,7 +3724,7 @@ static void do_lan2wan_staticip(FILE *filter_fp){
  */
 void lan_http_access(FILE *fp) {
     char lan_ip_webaccess[2];
-
+           FIREWALL_DEBUG("Entering lan_http_access\n");     
     if (0 == sysevent_get(sysevent_fd, sysevent_token, "lan_ip_webaccess", lan_ip_webaccess, sizeof(lan_ip_webaccess))) {
        if(lan_ip_webaccess[0]!='\0' && strcmp(lan_ip_webaccess, "0")==0) {          
            if(!isBridgeMode) //brlan0 exists
@@ -3704,6 +3733,7 @@ void lan_http_access(FILE *fp) {
            fprintf(fp, "-A %s -i %s -p tcp --dport %s -j xlog_drop_lan2self\n", "lan2self_mgmt", cmdiag_ifname, reserved_mgmt_port); //lan0 always exist
        }
    } 
+           FIREWALL_DEBUG("Exiting lan_http_access\n");     
 }
 /*
  *  Procedure     : do_lan2self_mgmt
@@ -3717,7 +3747,8 @@ static int do_lan2self_mgmt(FILE *fp)
 {
    int rc;
    char query[MAX_QUERY];
-   query[0] = '\0';
+           FIREWALL_DEBUG("Entering do_lan2self_mgmt\n");     
+ query[0] = '\0';
    rc = syscfg_get(NULL, "mgmt_wifi_access", query, sizeof(query));
    if (0 == rc && '\0' != query[0] && 0 == strncmp(query, "0", sizeof(query)) ) {
       /* disallow wifi access */
@@ -3745,7 +3776,7 @@ static int do_lan2self_mgmt(FILE *fp)
 #if defined(CONFIG_CCSP_LAN_HTTP_ACCESS)
    lan_http_access(fp);
 #endif
-
+           FIREWALL_DEBUG("Exiting do_lan2self_mgmt\n");     
    return(0);
 }
  
@@ -3762,11 +3793,13 @@ static int do_lan2self_mgmt(FILE *fp)
  */
 static int do_lan2self(FILE *fp)
 {
+         FIREWALL_DEBUG("Entering do_lan2self\n");     
    if(isWanReady)
        do_lan2self_by_wanip(fp, AF_INET);
 
    do_lan2self_attack(fp);
    do_lan2self_mgmt(fp);
+         FIREWALL_DEBUG("Exiting do_lan2self\n");     
    return(0);
 }
 
@@ -3798,7 +3831,7 @@ static int do_wan2self_attack(FILE *fp)
 
    char str[MAX_QUERY];
    char *logRateLimit = "-m limit --limit 6/h --limit-burst 1";
-
+         FIREWALL_DEBUG("Entering do_wan2self_attack\n");     
    /*
     * Log probable DoS attack
     */
@@ -3963,7 +3996,7 @@ static int do_wan2self_attack(FILE *fp)
       fprintf(fp, "%s\n", str);
 
    }
-
+         FIREWALL_DEBUG("Exiting do_wan2self_attack\n");     
    return(0);
 }
 
@@ -3978,10 +4011,12 @@ static int do_wan2self_attack(FILE *fp)
 static int do_mgmt_override(FILE *nat_fp)
 {
    char str[MAX_QUERY];
-   snprintf(str, sizeof(str),
+         FIREWALL_DEBUG("Entering do_mgmt_override\n");     
+  snprintf(str, sizeof(str),
             "-I prerouting_mgmt_override 1 -s %s/%s -d %s -p tcp  -m tcp --dport %s -j ACCEPT",
               lan_ipaddr, lan_netmask, lan_ipaddr, reserved_mgmt_port);
    fprintf(nat_fp, "%s\n", str);
+         FIREWALL_DEBUG("Exiting do_mgmt_override\n");     
    return(0);
 }
 
@@ -3997,12 +4032,13 @@ static int do_mgmt_override(FILE *nat_fp)
 
 static int remote_access_set_proto(FILE *filt_fp, FILE *nat_fp, const char *port, const char *src, int family, const char *interface)
 {
+         FIREWALL_DEBUG("Entering remote_access_set_proto\n");    
     if (family == AF_INET) {
         fprintf(filt_fp, "-A wan2self_mgmt -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port);
     } else {
         fprintf(filt_fp, "-A INPUT -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port);
     }
-
+         FIREWALL_DEBUG("Exiting remote_access_set_proto\n");    
     return 0;
 }
 
@@ -4024,7 +4060,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     unsigned char srcany = 0, validEntry = 0, noIPv6Entry = 0;
     char cm_ip_webaccess[2];
     char rg_ip_webaccess[2];
-
+         FIREWALL_DEBUG("Entering do_remote_access_control\n");    
     httpport[0] = '\0';
     httpsport[0] = '\0';
     cm_ip_webaccess[0] = '\0';
@@ -4287,7 +4323,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
         fprintf(filter_fp, "-A wan2self_mgmt -p tcp -m multiport --dports 23,%s,%s -j xlog_drop_wan2self\n", httpport, httpsport);
     else
         fprintf(filter_fp, "-A INPUT ! -i %s -p tcp -m multiport --dports 23,%s,%s -j DROP\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname, httpport, httpsport);
-
+         FIREWALL_DEBUG("Exiting do_remote_access_control\n");    
     return 0;
 }
 
@@ -4305,7 +4341,7 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
 
    char str[MAX_QUERY];
-
+         FIREWALL_DEBUG("Entering do_wan2self_ports\n");    
    // since connection tracking is turned of if current_wan_ipaddr = 0.0.0.0
    // we need to explicitly allow dns
    if (!isWanReady) {
@@ -4425,7 +4461,7 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
        fprintf(filter_fp, "-A wan2self_ports -p tcp --dport 113 -j xlog_drop_wan2self\n"); // IDENT
        fprintf(filter_fp, "-A wan2self_ports -p icmp --icmp-type 8 -j xlog_drop_wan2self\n"); // DROP ICMP PING
    }
-
+         FIREWALL_DEBUG("Exiting do_wan2self_ports\n");    
    return(0);
 }
 /*
@@ -4438,6 +4474,7 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
  */
 static int do_wan2self_allow(FILE *filter_fp)
 {
+         FIREWALL_DEBUG("Entering do_wan2self_allow\n");    
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    int i;
    //always allow ping if disable true static on firewall
@@ -4448,6 +4485,7 @@ static int do_wan2self_allow(FILE *filter_fp)
   }
 
 #endif
+	FIREWALL_DEBUG("Exiting do_wan2self_allow\n");	  
 }
 /*
  *  Procedure     : do_wan2self
@@ -4463,12 +4501,13 @@ static int do_wan2self_allow(FILE *filter_fp)
  */
 static int do_wan2self(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
+         FIREWALL_DEBUG("Entering do_wan2self\n");    
    do_wan2self_allow(filter_fp);
    do_wan2self_attack(filter_fp);
    do_wan2self_ports(mangle_fp, nat_fp, filter_fp);
    do_mgmt_override(nat_fp);
    do_remote_access_control(nat_fp, filter_fp, AF_INET);
-
+         FIREWALL_DEBUG("Exiting do_wan2self\n");    
    return(0);
 }
 
@@ -4499,7 +4538,7 @@ static int write_block_application_statement (FILE *fp, FILE *wkp_fp, char *tabl
    char *next_token;
    char *port_prot;
    char *port_val;
-
+         FIREWALL_DEBUG("Entering write_block_application_statement\n");    
    while (NULL != (next_token = match_keyword(wkp_fp, name, ' ', line, sizeof(line))) ) {
       char port_str[50];
       sscanf(next_token, "%50s ", port_str);
@@ -4518,7 +4557,7 @@ static int write_block_application_statement (FILE *fp, FILE *wkp_fp, char *tabl
       fprintf(fp, "%s\n", str);
 
    }
-
+         FIREWALL_DEBUG("Exiting write_block_application_statement\n");    
    return(0); 
 }
 
@@ -4535,7 +4574,8 @@ static int do_lan2wan_webfilters(FILE *filter_fp)
 {
    char str[MAX_QUERY];
    char webfilter_enable[4];
-   if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_enable)) ) {
+         FIREWALL_DEBUG("Entering do_lan2wan_webfilters\n");    
+if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-proxy -j xlogreject");
@@ -4563,6 +4603,7 @@ static int do_lan2wan_webfilters(FILE *filter_fp)
          fprintf(filter_fp, "%s\n", str);
       }
    }
+         FIREWALL_DEBUG("Exiting do_lan2wan_webfilters\n");    
    return(0);
 }
 
@@ -4585,7 +4626,7 @@ static int set_lan_access_restriction_start_stop(FILE *fp, int days, char *start
    int sm;
    int eh;
    int em;
-
+      FIREWALL_DEBUG("Entering set_lan_access_restriction_start_stop\n");    
    /*
     * If the policy is for 7 days per week and NO start/stop times, then we dont need
     * a cron rule because the policy is always active
@@ -4683,7 +4724,7 @@ static int set_lan_access_restriction_start_stop(FILE *fp, int days, char *start
    }
    *strp = '\0';
    fprintf(fp, " %s %s\n", str, "sysevent set pp_flush 1 && sysevent set firewall-restart");
-
+      FIREWALL_DEBUG("Exiting set_lan_access_restriction_start_stop\n");    
    return(0);
 }
 
@@ -4691,7 +4732,7 @@ static int set_lan_access_restriction_start(FILE *fp, int days, char *start, int
 {
    int sh;
    int sm;
-    
+      FIREWALL_DEBUG("Entering set_lan_access_restriction_start\n");    
    sscanf(start, "%d:%d", &sh, &sm);
 
    char str[MAX_QUERY];
@@ -4735,7 +4776,7 @@ static int set_lan_access_restriction_start(FILE *fp, int days, char *start, int
    }
    *strp = '\0';
    fprintf(fp, " %s %s\n", str, "sysevent set firewall-restart");
-
+      FIREWALL_DEBUG("Exiting set_lan_access_restriction_start\n");    
    return(0);
 }
 
@@ -4743,7 +4784,7 @@ static int set_lan_access_restriction_stop(FILE *fp, int days, char *stop, int h
 {
    int eh;
    int em;
-
+    FIREWALL_DEBUG("Entering set_lan_access_restriction_stop\n");  
    sscanf(stop, "%d:%d", &eh, &em);
 
    char str[MAX_QUERY];
@@ -4786,7 +4827,7 @@ static int set_lan_access_restriction_stop(FILE *fp, int days, char *stop, int h
    }
    *strp = '\0';
    fprintf(fp, " %s %s\n", str, "sysevent set firewall-restart");
-
+    FIREWALL_DEBUG("Exiting set_lan_access_restriction_stop\n");  
    return(0);
 }
 
@@ -4808,7 +4849,7 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
    FILE *cron_fp; // the crontab file we use to set wakeups for timed firewall events
    cron_fp = fopen(cron_file, "w");
       
-
+    FIREWALL_DEBUG("Entering do_lan_access_restrictions\n");  
    /*
     * syscfg tuple InternetAccessPolicy_x, where x is a digit
     * keeps track of the syscfg namespace of a user defined internet access policy.
@@ -5373,6 +5414,7 @@ InternetAccessPolicyNext3:
    if (!isCronRestartNeeded) {
       unlink(cron_file);
    }
+    FIREWALL_DEBUG("Exiting do_lan_access_restrictions\n");  
    return(0);
 }
 
@@ -5381,7 +5423,7 @@ static int determine_enforcement_schedule(FILE *cron_fp, const char *namespace)
 {
    int rc;
    char query[MAX_QUERY];
-
+    FIREWALL_DEBUG("Entering determine_enforcement_schedule\n");  
    int always = 1;
    query[0] = '\0';
    rc = syscfg_get(namespace, "always", query, sizeof(query));
@@ -5522,6 +5564,7 @@ static int determine_enforcement_schedule(FILE *cron_fp, const char *namespace)
          }
        }
    }
+    FIREWALL_DEBUG("Exiting determine_enforcement_schedule\n");  
    return within_policy_start_stop;
 }
 
@@ -5529,7 +5572,7 @@ static int determine_enforcement_schedule2(FILE *cron_fp, const char *namespace)
 {
    int rc;
    char query[MAX_QUERY];
-
+    FIREWALL_DEBUG("Entering determine_enforcement_schedule2\n");  
    int always = 1;
    query[0] = '\0';
    rc = syscfg_get(namespace, "always", query, sizeof(query));
@@ -5610,6 +5653,7 @@ static int determine_enforcement_schedule2(FILE *cron_fp, const char *namespace)
          }
        }
    }
+    FIREWALL_DEBUG("Exiting determine_enforcement_schedule2\n");  
    return within_policy_start_stop;
 }
 
@@ -5629,7 +5673,7 @@ static int do_parental_control_allow_trusted(FILE *fp, int iptype, const char* l
    int count=0, idx, rc;
    int count_v4=0, count_v6=0;
    char query[MAX_QUERY], result[MAX_QUERY];
-
+    FIREWALL_DEBUG("Entering do_parental_control_allow_trusted\n");  
    snprintf(query, sizeof(query), "%sCount", list_name);
 
    result[0] = '\0';
@@ -5672,7 +5716,7 @@ static int do_parental_control_allow_trusted(FILE *fp, int iptype, const char* l
          }
       }
    }
-
+    FIREWALL_DEBUG("Exiting do_parental_control_allow_trusted\n");  
    return iptype == 4 ? count_v4 : count_v6;
 }
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
@@ -5697,7 +5741,7 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
     FILE *ipRecords;
     int len;
     int dnsResponse = 0;
- 
+    FIREWALL_DEBUG("Entering block_url_by_ipaddr\n");  
     if(ipver == 6)
         snprintf(filePath, sizeof(filePath), "/var/.pc_url2ipv6_%s", insNum);
     else
@@ -5765,7 +5809,7 @@ EXIT:
 
     if(dnsResponse == 0)
         unlink(filePath);
-
+    FIREWALL_DEBUG("Exiting block_url_by_ipaddr\n");  
     return;
 }
 #endif
@@ -5775,7 +5819,7 @@ static char *convert_url_to_hex_fmt(const char *url, char *dnsHexUrl)
     char s1[256], s2[512 + 32];
     char *p = s1, *tok;
     int i, len;
-
+    FIREWALL_DEBUG("Entering convert_url_to_hex_fm\n"); 
     if(strlen(url) > 255) {
         fprintf(stderr, "firewall: %s - maxium length of url is 255\n", __FUNCTION__);
         return NULL;
@@ -5793,7 +5837,7 @@ static char *convert_url_to_hex_fmt(const char *url, char *dnsHexUrl)
         }
         strcat(dnsHexUrl, s2);
     }
-
+    FIREWALL_DEBUG("Exiting convert_url_to_hex_fm\n"); 
     return dnsHexUrl;
 }
 
@@ -5806,7 +5850,7 @@ static void do_device_based_parcon_allow(FILE *fp)
     FILE *allowList = fopen(PARCON_ALLOW_LIST, "r");
     char line[256];
     char *t;
-
+    FIREWALL_DEBUG("Entering do_device_based_parcon_allow\n"); 
     if(!allowList)
         return;
 
@@ -5817,7 +5861,7 @@ static void do_device_based_parcon_allow(FILE *fp)
             fprintf(fp, "-A parcon_allow_list -m mac --mac-source %s -j ACCEPT\n", line);
         }
     }
-
+    FIREWALL_DEBUG("Exiting do_device_based_parcon_allow\n"); 
     return;
 }
 
@@ -5829,7 +5873,7 @@ static int do_device_based_parcon(FILE *natFp, FILE* filterFp)
    char ipAddr[256];
    int len;
    char filePath[256];
-
+    FIREWALL_DEBUG("Entering do_device_based_parcon\n"); 
    cron_fp = fopen(cron_file, "a+");
 
    int rc;
@@ -5975,7 +6019,7 @@ static int do_device_based_parcon(FILE *natFp, FILE* filterFp)
    }
 
    fclose(cron_fp);
-
+    FIREWALL_DEBUG("Exiting do_device_based_parcon\n"); 
    return(0);
 }
 #endif
@@ -5998,7 +6042,7 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
 
     char *cron_file = crontab_dir"/"crontab_filename;
     FILE *cron_fp = NULL; // the crontab file we use to set wakeups for timed firewall events
- 
+    FIREWALL_DEBUG("Entering do_parental_control\n"); 
     //only do cron configuration once   
     if (iptype == 4) {
         cron_fp = fopen(cron_file, "a+");
@@ -6019,7 +6063,7 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
     if (iptype == 4) {
         fclose(cron_fp);
     }
-
+    FIREWALL_DEBUG("Exiting do_parental_control\n"); 
     return 0;
 }
 
@@ -6030,7 +6074,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 {
    int rc;
    char query[MAX_QUERY];
-
+   FIREWALL_DEBUG("Entering do_parcon_mgmt_device\n"); 
    query[0] = '\0';
    rc = syscfg_get(NULL, "manageddevices_enabled", query, sizeof(query)); 
    if (rc == 0 && query[0] != '\0' && query[0] != '0') { // managed device list enabled
@@ -6081,7 +6125,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
         fprintf(fp, "-A prerouting_devices -p tcp -j prerouting_redirect\n");
       }
    }
-
+   FIREWALL_DEBUG("Exiting do_parcon_mgmt_device\n"); 
    return(0);
 }
 
@@ -6090,6 +6134,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
  */
 static int do_parcon_mgmt_service(FILE *fp, int iptype, FILE *cron_fp)
 {
+   FIREWALL_DEBUG("Entering do_parcon_mgmt_service\n"); 
    int rc;
    char query[MAX_QUERY];
 
@@ -6181,7 +6226,7 @@ static int do_parcon_mgmt_service(FILE *fp, int iptype, FILE *cron_fp)
          }
       }
    }
-
+   FIREWALL_DEBUG("Exiting do_parcon_mgmt_service\n"); 
    return(0);
 }
 
@@ -6193,6 +6238,7 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
     int rc;
     char query[MAX_QUERY];
     int isHttps = 0; 
+   FIREWALL_DEBUG("Entering do_parcon_mgmt_site_keywd\n"); 
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
     if(iptype == 4)
         fprintf(nat_fp, "-A prerouting_fromlan -j managedsite_based_parcon\n");
@@ -6414,7 +6460,7 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
             }
         }
     }
-
+   FIREWALL_DEBUG("Exiting do_parcon_mgmt_site_keywd\n"); 
     return(0);
 }
 
@@ -6428,7 +6474,7 @@ static void do_allowed_guest(FILE *natFp)
     char line[256];
     char *t;
     int len; 
-
+   FIREWALL_DEBUG("Entering do_allowed_guest\n"); 
     if(!allowList)
         return;
 
@@ -6441,18 +6487,19 @@ static void do_allowed_guest(FILE *natFp)
             fprintf(natFp, "-A guestnet_allow_list -s %s -j ACCEPT\n", t);
         }
     }
-
+   FIREWALL_DEBUG("Exiting do_allowed_guest\n"); 
     return;
 }
 
 static void do_guestnet_walled_garden(FILE *natFp)
 {
     do_allowed_guest(natFp);
-
+   FIREWALL_DEBUG("Entering do_guestnet_walled_garden\n"); 
     fprintf(natFp, "-A guestnet_walled_garden -d %s -p tcp --dport 80 -j ACCEPT\n", guest_network_ipaddr);
     fprintf(natFp, "-A guestnet_walled_garden -d %s -p tcp --dport 443 -j ACCEPT\n", guest_network_ipaddr);
     fprintf(natFp, "-A guestnet_walled_garden -p tcp --dport 80 -j REDIRECT --to-port 28080\n");
     fprintf(natFp, "-A guestnet_walled_garden -p tcp --dport 443 -j REDIRECT --to-port 20443\n");
+   FIREWALL_DEBUG("Exiting do_guestnet_walled_garden\n"); 
 }
 #endif
 
@@ -6472,6 +6519,7 @@ static int do_prepare_port_range_triggers(FILE *nat_fp, FILE *filter_fp)
 static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
 #endif
 {
+   FIREWALL_DEBUG("Entering do_prepare_port_range_triggers\n"); 
    int idx;
    int  rc;
    char namespace[MAX_NAMESPACE];
@@ -6662,6 +6710,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
    }
 
 end_do_prepare_port_range_triggers:
+   FIREWALL_DEBUG("Exiting do_prepare_port_range_triggers\n"); 
    return(0);
 }
 #endif // CONFIG_BUILD_TRIGGER
@@ -6676,7 +6725,7 @@ end_do_prepare_port_range_triggers:
  */
 static int prepare_host_detect(FILE * fp)
 {
-
+   FIREWALL_DEBUG("Entering prepare_host_detect\n"); 
    if (isLanHostTracking || isDMZbyMAC) {
       char str[MAX_QUERY];
       /*
@@ -6701,6 +6750,7 @@ static int prepare_host_detect(FILE * fp)
                  LOG_TRIGGER_PREFIX);
       fprintf(fp, "%s\n", str);
    }
+   FIREWALL_DEBUG("Exiting prepare_host_detect\n"); 
    return(0);
 }
 
@@ -6719,7 +6769,7 @@ static int prepare_host_detect(FILE * fp)
  */
 static int prepare_lan_bandwidth_tracking(FILE *fp)
 {
-
+   FIREWALL_DEBUG("Entering prepare_lan_bandwidth_tracking\n"); 
    int hosts = 0;
    FILE *kh_fp = fopen(lan_hosts_dir"/"hosts_filename, "r");
    char buf[1024];
@@ -6747,7 +6797,7 @@ static int prepare_lan_bandwidth_tracking(FILE *fp)
       }
       fclose(kh_fp);
    }
-
+   FIREWALL_DEBUG("Exiting prepare_lan_bandwidth_tracking\n"); 
    return(0);
 }
 #endif
@@ -6763,7 +6813,7 @@ static int prepare_lan_bandwidth_tracking(FILE *fp)
  */
 static int do_lan2wan_IoT_Allow(FILE *filter_fp)
 {
-
+   FIREWALL_DEBUG("Entering do_lan2wan_IoT_Allow\n"); 
    /*
     * if the wan is currently unavailable, then drop any packets from lan to wan
     */
@@ -6777,16 +6827,18 @@ static int do_lan2wan_IoT_Allow(FILE *filter_fp)
       //fprintf(filter_fp, "-A lan2wan_iot_allow -d x1.xcal.tv -j ACCEPT\n");
       fprintf(filter_fp, "-A lan2wan_iot_allow -d decider.r53.xcal.tv -j ACCEPT\n");
       fprintf(filter_fp, "-A lan2wan_iot_allow -j REJECT\n");
-
+   FIREWALL_DEBUG("Exiting do_lan2wan_IoT_Allow\n"); 
    return(0);
 }
 
 //zqiu:R5337
 static int do_wan2lan_IoT_Allow(FILE *filter_fp)
 {
+   FIREWALL_DEBUG("Entering do_wan2lan_IoT_Allow\n"); 
       //Low firewall
       fprintf(filter_fp, "-A wan2lan_iot_allow -p tcp --dport 113 -j RETURN\n"); // IDENT
       fprintf(filter_fp, "-A wan2lan_iot_allow -j ACCEPT\n");
+   FIREWALL_DEBUG("Exiting do_wan2lan_IoT_Allow\n"); 
    return(0);
 }
 
@@ -6803,7 +6855,8 @@ static int do_wan2lan_IoT_Allow(FILE *filter_fp)
 static void do_lan2wan_disable(FILE *filter_fp)
 {
    char str[MAX_QUERY];
-    /* if nat is disable or
+   FIREWALL_DEBUG("Entering do_lan2wan_disable\n"); 
+   /* if nat is disable or
      * wan is not ready or
      * nat is not ready
      * all private packet from lan to wan should be blocked
@@ -6814,6 +6867,7 @@ static void do_lan2wan_disable(FILE *filter_fp)
                   "-A lan2wan_disable -s %s/%s -j DROP", lan_ipaddr, lan_netmask);
          fprintf(filter_fp, "%s\n", str);
     }
+   FIREWALL_DEBUG("Exiting do_lan2wan_disable\n"); 
 }
 
 /*
@@ -6829,7 +6883,7 @@ static void do_lan2wan_disable(FILE *filter_fp)
 static int do_lan2wan_misc(FILE *filter_fp)
 {
    char str[MAX_QUERY];
-
+   FIREWALL_DEBUG("Entering do_lan2wan_misc\n");
    /*
     * if the wan is currently unavailable, then drop any packets from lan to wan
     */
@@ -6889,6 +6943,7 @@ static int do_lan2wan_misc(FILE *filter_fp)
       fprintf(filter_fp, "-A lan2wan_misc -m state --state RELATED,ESTABLISHED -j RETURN\n");
       fprintf(filter_fp, "-A lan2wan_misc -j DROP\n");
    }
+   FIREWALL_DEBUG("Exiting do_lan2wan_misc\n");
    return(0);
 }
 
@@ -6905,6 +6960,7 @@ static int do_lan2wan_misc(FILE *filter_fp)
  */
 static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
 {
+   FIREWALL_DEBUG("Entering do_lan2wan\n");
    do_lan2wan_misc(filter_fp);
    //do_lan2wan_IoT_Allow(filter_fp);
    //Not used in USGv2
@@ -6933,6 +6989,8 @@ static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
    }
 #endif
 
+   FIREWALL_DEBUG("Exiting do_lan2wan\n"); 
+
    return(0);
 }
 
@@ -6940,6 +6998,7 @@ static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
 
 static void add_usgv2_wan2lan_general_rules(FILE *fp)
 {
+   FIREWALL_DEBUG("Entering add_usgv2_wan2lan_general_rules\n"); 
     fprintf(fp, "-A wan2lan_misc -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
 
     if (strncasecmp(firewall_level, "High", strlen("High")) == 0) {
@@ -6990,6 +7049,7 @@ static void add_usgv2_wan2lan_general_rules(FILE *fp)
             fprintf(fp, "-A wan2lan_misc -p 2 -j xlog_drop_wan2lan\n"); // IGMP
         }
     }
+   FIREWALL_DEBUG("Exiting add_usgv2_wan2lan_general_rules\n"); 
 }
 
 /*
@@ -7012,7 +7072,7 @@ static int do_wan2lan_misc(FILE *fp)
    if (NULL == fp) {
       return(-1);
    }
-
+   FIREWALL_DEBUG("Entering do_wan2lan_misc\n"); 
    add_usgv2_wan2lan_general_rules(fp);
    /*
     * syscfg tuple W2LFirewallRule_, where x is a digit
@@ -7167,7 +7227,7 @@ FirewallRuleNext2:
       }
    }
 
-
+   FIREWALL_DEBUG("Exiting do_wan2lan_misc\n"); 
    return(0);
 }
 
@@ -7185,7 +7245,7 @@ FirewallRuleNext2:
  */
 static int do_wan2lan_disabled(FILE *fp)
 {
-
+   FIREWALL_DEBUG("Entering do_wan2lan_disabled\n"); 
    char str[MAX_QUERY];
 
    /*
@@ -7196,6 +7256,7 @@ static int do_wan2lan_disabled(FILE *fp)
                "-A wan2lan_disabled -d %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
       fprintf(fp, "%s\n", str);
    }
+   FIREWALL_DEBUG("Exiting do_wan2lan_disabled\n"); 
    return(0);
 }
 
@@ -7213,7 +7274,7 @@ static int do_wan2lan_accept(FILE *fp)
 {
 
    char str[MAX_QUERY];
-
+   FIREWALL_DEBUG("Entering do_wan2lan_accept\n"); 
 
    if (!isMulticastBlocked) {
       // accept multicast from our wan
@@ -7221,6 +7282,7 @@ static int do_wan2lan_accept(FILE *fp)
          "-A wan2lan_accept -p udp -m udp --destination 224.0.0.0/4 -j ACCEPT");
       fprintf(fp, "%s\n", str);
    }
+   FIREWALL_DEBUG("Exiting do_wan2lan_accept\n"); 
    return(0);
 }
 
@@ -7236,7 +7298,7 @@ static int do_wan2lan_accept(FILE *fp)
 static void do_wan2lan_staticip(FILE *filter_fp)
 {
     int i;
-
+   FIREWALL_DEBUG("Entering do_wan2lan_staticip\n"); 	  
     if(isWanStaticIPReady && isFWTS_enable){
         for(i = 0; i < StaticIPSubnetNum; i++){
             fprintf(filter_fp, "-A wan2lan_staticip -d %s/%s -j ACCEPT\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask);
@@ -7246,6 +7308,7 @@ static void do_wan2lan_staticip(FILE *filter_fp)
     for(i = 0; i < StaticIPSubnetNum; i++){
         fprintf(filter_fp, "-A wan2lan_staticip_post -d %s/%s -j ACCEPT\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask);
     }
+   FIREWALL_DEBUG("Exiting do_wan2lan_staticip\n"); 	  
 }
 
 //Add True Static IP port mgmt rules
@@ -7257,7 +7320,7 @@ static void do_wan2lan_tsip_pm(FILE *filter_fp)
     char startIP[sizeof("255.255.255.255")], endIP[sizeof("255.255.255.255")];
     char startPort[sizeof("65535")], endPort[sizeof("65535")];
     unsigned char type;
-
+   FIREWALL_DEBUG("Entering do_wan2lan_tsip_pm\n"); 	  
     query[0] = '\0';
     rc = syscfg_get(NULL, PT_MGMT_PREFIX"enabled", query, sizeof(query));
 
@@ -7317,6 +7380,7 @@ static void do_wan2lan_tsip_pm(FILE *filter_fp)
         fprintf(filter_fp, "-A wan2lan_staticip_pm -p tcp -d %s/%s -j %s\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask, type == 0 ? "DROP" : "ACCEPT");
         fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -d %s/%s -j %s\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask, type == 0 ? "DROP" : "ACCEPT");
     }
+   FIREWALL_DEBUG("Exiting do_wan2lan_tsip_pm\n"); 	  
 }
 #endif
 
@@ -7332,6 +7396,7 @@ static void do_wan2lan_tsip_pm(FILE *filter_fp)
  */
 static int do_wan2lan(FILE *fp)
 {
+   FIREWALL_DEBUG("Entering do_wan2lan\n"); 	  
    do_wan2lan_disabled(fp);
    do_wan2lan_misc(fp);
    do_wan2lan_accept(fp);
@@ -7339,6 +7404,7 @@ static int do_wan2lan(FILE *fp)
    do_wan2lan_staticip(fp);
    do_wan2lan_tsip_pm(fp);
    #endif
+   FIREWALL_DEBUG("Exiting do_wan2lan\n"); 	  
    return(0);
 }
 
@@ -7368,6 +7434,7 @@ static int do_filter_table_general_rules(FILE *fp)
    char      rule[MAX_QUERY];
    char      in_rule[MAX_QUERY];
    char      subst[MAX_QUERY];
+   FIREWALL_DEBUG("Entering do_filter_table_general_rules\n"); 	  
    in_rule[0] = '\0';
    syscfg_get(NULL, "GeneralPurposeFirewallRuleCount", in_rule, sizeof(in_rule));
    if ('\0' == in_rule[0]) {
@@ -7434,6 +7501,7 @@ GPFirewallRuleNext:
       }
 
    } while (SYSEVENT_NULL_ITERATOR != iterator);
+                FIREWALL_DEBUG("Exiting do_filter_table_general_rules\n"); 	  
    return (0);
 }
 
@@ -7447,6 +7515,7 @@ static int prepare_multinet_postrouting_nat(FILE *nat_fp) {
 }
 
 static void prepare_ipc_filter(FILE *filter_fp) {
+                FIREWALL_DEBUG("Entering prepare_ipc_filter\n"); 	  
     // TODO: fix this hard coding
     fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.500");
     fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.500");
@@ -7455,16 +7524,17 @@ static void prepare_ipc_filter(FILE *filter_fp) {
     fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.4093");
     fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.4093");
 //zqiu<<
+                FIREWALL_DEBUG("Exiting prepare_ipc_filter\n"); 	  
 }
 
 static int prepare_multinet_filter_input(FILE *filter_fp) {
     
-    
+                FIREWALL_DEBUG("Entering prepare_multinet_filter_input\n"); 	  
     //Allow GRE tunnel traffic
     // TODO: Read sysevent enable flag
     fprintf(filter_fp, "-I INPUT -i %s -p gre -j ACCEPT\n", current_wan_ifname);
     
-    
+                 FIREWALL_DEBUG("Exiting prepare_multinet_filter_input\n"); 	 
     
 }
 
@@ -7489,7 +7559,7 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     char primary_inst[MAX_QUERY];
     primary_inst[0] = '\0';
     char ip[20];
-    
+          FIREWALL_DEBUG("Entering prepare_multinet_filter_forward\n"); 	 
     //L3 rules
     snprintf(net_query, sizeof(net_query), "ipv4-instances");
     sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
@@ -7544,7 +7614,7 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
         fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", net_resp, net_resp);
         
     } while ((tok = strtok(NULL, " ")) != NULL);
-    
+      FIREWALL_DEBUG("Exiting prepare_multinet_filter_forward\n"); 	 
     return 0;
 }
 
@@ -7554,7 +7624,7 @@ static int prepare_multinet_mangle(FILE *mangle_fp) {
    FILE* fp = mangle_fp;
    char      rule[MAX_QUERY];
    char      subst[MAX_QUERY];
-
+   FIREWALL_DEBUG("Entering prepare_multinet_mangle\n"); 	
    iterator = SYSEVENT_NULL_ITERATOR;
    do {
       name[0] = rule[0] = '\0';
@@ -7573,6 +7643,7 @@ static int prepare_multinet_mangle(FILE *mangle_fp) {
       }
 
    } while (SYSEVENT_NULL_ITERATOR != iterator);
+      FIREWALL_DEBUG("Exiting prepare_multinet_mangle\n"); 	
 }
 
 
@@ -7590,14 +7661,15 @@ static int isInCaptivePortal()
    char responseCode[10];
    int iresCode;
    char *networkResponse = "/var/tmp/networkresponse.txt";
-
+   FIREWALL_DEBUG("Entering isInCaptivePortal\n"); 	
    /* Get the syscfg DB value to check if we are in CP redirection mode*/
 
 
    retCode=syscfg_get(NULL, "CaptivePortal_Enable", captivePortalEnabled, sizeof(captivePortalEnabled));  
    if (0 != retCode || '\0' == captivePortalEnabled[0])
    {
-	printf("Syscfg read failed to get CaptivePortal_Enable value\n", __FUNCTION__);
+	printf("%s Syscfg read failed to get CaptivePortal_Enable value\n", __FUNCTION__);
+ 	     	FIREWALL_DEBUG("%s Syscfg read failed to get CaptivePortal_Enable value\n" COMMA __FUNCTION__); 		
    }
    else
    {
@@ -7605,6 +7677,7 @@ static int isInCaptivePortal()
         if(!strcmp("false", captivePortalEnabled))
         {
  	     printf("CaptivePortal is disabled : Return 0\n"); 
+ 	     	FIREWALL_DEBUG("CaptivePortal is disabled : Return 0\n"); 	
       	     return 0;
         }
    }
@@ -7613,6 +7686,7 @@ static int isInCaptivePortal()
    if (0 != retCode || '\0' == redirectionFlag[0])
    {
 	printf("CP DNS Redirection %s, Syscfg read failed\n", __FUNCTION__);
+	FIREWALL_DEBUG("CP DNS Redirection %s, Syscfg read failed\n"COMMA __FUNCTION__); 	
    }
    else
    {
@@ -7652,14 +7726,19 @@ static int isInCaptivePortal()
           }
        }
    }
+
+   FIREWALL_DEBUG("Exiting isInCaptivePortal\n");	 
+
    if((isRedirectionDefault) && (isNotifyDefault) && (isResponse204))
    {
       printf("CP DNS Redirection : Return 1\n"); 
+         FIREWALL_DEBUG("CP DNS Redirection : Return 1\n"); 	
       return 1;
    }
    else
    {
       printf("CP DNS Redirection : Return 0\n"); 
+       FIREWALL_DEBUG("CP DNS Redirection : Return 0\n"); 
       return 0;
    }
 }
@@ -7683,6 +7762,7 @@ static int isInCaptivePortal()
  */
 static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
+   FIREWALL_DEBUG("Entering prepare_subtables \n"); 	
    int i; 
    /*
     * raw
@@ -8230,6 +8310,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
               break;
       }
    }
+      FIREWALL_DEBUG("Exiting  prepare_subtables \n"); 	
    return(0);
 }
 
@@ -8252,7 +8333,7 @@ static int prepare_subtables_ext(char *fname, FILE *raw_fp, FILE *mangle_fp, FIL
 	FILE *ext_fp;
 	char line[256];
 	FILE *fp = NULL;
-	
+   FIREWALL_DEBUG("Entering prepare_subtables_ext \n"); 	
 	ext_fp = fopen(fname, "r");
 	if (ext_fp == NULL) {
 		return -1;
@@ -8295,7 +8376,7 @@ static int prepare_subtables_ext(char *fname, FILE *raw_fp, FILE *mangle_fp, FIL
 			printf("%s", line);
 		}
 	}
-
+   FIREWALL_DEBUG("Exiting prepare_subtables_ext \n"); 	
 	return(0);
 }
 
@@ -8325,7 +8406,7 @@ static int do_raw_ephemeral(FILE *fp)
    char      in_rule[MAX_QUERY];
    char      subst[MAX_QUERY];
    char      str[MAX_QUERY];
-
+   FIREWALL_DEBUG("Entering do_raw_ephemeral \n"); 
    iterator = SYSEVENT_NULL_ITERATOR;
    do {
       name[0] = subst[0] = '\0';
@@ -8348,6 +8429,8 @@ static int do_raw_ephemeral(FILE *fp)
         }
       }
    } while (SYSEVENT_NULL_ITERATOR != iterator);
+
+   FIREWALL_DEBUG("Exiting do_raw_ephemeral \n"); 
    return(0);
 }
 
@@ -8366,6 +8449,7 @@ static int do_raw_ephemeral(FILE *fp)
  */
 static int do_raw_table_general_rules(FILE *fp)
 {
+FIREWALL_DEBUG("Entering do_raw_table_general_rules \n"); 
    int  idx;
    char rule_query[MAX_QUERY];
    int  count = 1;
@@ -8409,6 +8493,7 @@ static int do_raw_table_general_rules(FILE *fp)
       }
       memset(in_rule, 0, sizeof(in_rule));
    }
+   FIREWALL_DEBUG("Exiting do_raw_table_general_rules \n"); 
    return(0);
 }
 
@@ -8427,6 +8512,7 @@ static int do_raw_table_general_rules(FILE *fp)
  */
 static int do_raw_table_nowan(FILE *fp)
 {
+	FIREWALL_DEBUG("Entering do_raw_table_nowan \n"); 
    if (!isWanReady) {
       char str[MAX_QUERY];
 
@@ -8439,12 +8525,14 @@ static int do_raw_table_nowan(FILE *fp)
       snprintf(str, sizeof(str), "-A output_nowan -o %s -j NOTRACK",default_wan_ifname);
       fprintf(fp, "%s\n", str);
    }
+      FIREWALL_DEBUG("Exiting do_raw_table_nowan \n"); 
    return(0);
 }
 
 #ifdef INTEL_PUMA7
 static int do_raw_table_puma7(FILE *fp)
 {
+   FIREWALL_DEBUG("Entering do_raw_table_puma7 \n"); 
 	char str[MAX_QUERY];
 	fprintf(stderr,"******DO RAW TABLE PUMA7 ****\n");
 
@@ -8485,7 +8573,7 @@ static int do_raw_table_puma7(FILE *fp)
 	//For ath7 acceleration loop
 	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1007 -j NOTRACK");
 	fprintf(fp, "%s\n", str);
-
+   FIREWALL_DEBUG("Exiting do_raw_table_puma7 \n"); 
 	return(0);
 }
 #endif
@@ -8512,6 +8600,7 @@ static int do_raw_table_puma7(FILE *fp)
  */
 static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
+   FIREWALL_DEBUG("Entering prepare_enabled_ipv4_firewall \n"); 
    /*
     * Add all of the tables and subtables that are required for the firewall
     */
@@ -8567,7 +8656,7 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    fprintf(mangle_fp, "%s\n", "COMMIT");
    fprintf(nat_fp, "%s\n", "COMMIT");
    fprintf(filter_fp, "%s\n", "COMMIT");
-
+   FIREWALL_DEBUG("Exiting prepare_enabled_ipv4_firewall \n"); 
    return(0);
 }
 
@@ -8585,6 +8674,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    /*
     * raw
     */
+   FIREWALL_DEBUG("Entering prepare_disabled_ipv4_firewall \n"); 
    fprintf(raw_fp, "%s\n", "*raw");
    fprintf(raw_fp, "%s\n", ":PREROUTING ACCEPT [0:0]");
    fprintf(raw_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
@@ -8672,7 +8762,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", "COMMIT");
-
+ FIREWALL_DEBUG("Exiting prepare_disabled_ipv4_firewall \n"); 
    return(0);
 }
 
@@ -8695,6 +8785,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
  */
 int prepare_ipv4_firewall(const char *fw_file)
 {
+ FIREWALL_DEBUG("Inside prepare_ipv4_firewall \n"); 
    /*
     * fw_file is the name of the file that we write firewall statement to.
     * This file is used by iptables-restore to provision the firewall.
@@ -8794,7 +8885,7 @@ int prepare_ipv4_firewall(const char *fw_file)
    unlink(fname);
    snprintf(fname, sizeof(fname), "/tmp/nat_%x", ourpid);
    unlink(fname);
-
+ FIREWALL_DEBUG("Exiting prepare_ipv4_firewall \n"); 
    return(0);
 }
 
@@ -8807,6 +8898,7 @@ int prepare_ipv4_firewall(const char *fw_file)
  */
 static int prepare_stopped_ipv4_firewall(FILE *file_fp)
 {
+ FIREWALL_DEBUG("Inside prepare_stopped_ipv4_firewall \n"); 
    /*
     * raw
     */
@@ -8849,7 +8941,7 @@ static int prepare_stopped_ipv4_firewall(FILE *file_fp)
    //lan_telnet_ssh(file_fp, AF_INET);
 
    fprintf(file_fp, "%s\n", "COMMIT");
-
+ FIREWALL_DEBUG("Exiting prepare_stopped_ipv4_firewall \n"); 
    return(0);
 }
 
@@ -8858,7 +8950,7 @@ static char * ifnames[] = { wan6_ifname, ecm_wan_ifname, emta_wan_ifname};
 static int numifs = sizeof(ifnames) / sizeof(*ifnames);
 
 static void do_ipv6_sn_filter(FILE* fp) {
- 
+ FIREWALL_DEBUG("Inside do_ipv6_sn_filter \n"); 
     int i;
     char mcastAddrStr[64];
     char ifIpv6AddrKey[64];
@@ -8897,9 +8989,11 @@ static void do_ipv6_sn_filter(FILE* fp) {
 	//zqiu: XCONF <<
 	
     fprintf(fp, "COMMIT\n");
+     FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
 static void do_ipv6_nat_table(FILE* fp)
 {
+ FIREWALL_DEBUG("Inside do_ipv6_nat_table \n");
     char mcastAddrStr[64];
     char IPv6[64] = "0";
 	int rc;
@@ -8924,6 +9018,7 @@ static void do_ipv6_nat_table(FILE* fp)
    
    do_parental_control(fp,NULL, 6);
    fprintf(fp, "COMMIT\n");
+    FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
 }
 
 /*
@@ -8949,6 +9044,7 @@ static void do_ipv6_nat_table(FILE* fp)
  */
 int prepare_ipv6_firewall(const char *fw_file)
 {
+ FIREWALL_DEBUG("Inside prepare_ipv6_firewall \n");
    if (NULL == fw_file) {
       return(-1);
    }
@@ -9478,6 +9574,7 @@ end_of_ipv6_firewall:
    fprintf(fp, "COMMIT\n");
 
    fclose(fp);
+      FIREWALL_DEBUG("Exiting prepare_ipv6_firewall \n");
    return(0);
 }
 
@@ -9488,6 +9585,7 @@ end_of_ipv6_firewall:
  */
 static void printhelp(char *name) {
    printf ("Usage %s event_name --port sysevent_port --ip sysevent_ip --help\n", name);
+   FIREWALL_DEBUG("Usage %s event_name --port sysevent_port --ip sysevent_ip --help\n" COMMA name);
 }
 
 /*
@@ -9503,6 +9601,7 @@ static void printhelp(char *name) {
 static int get_options(int argc, char **argv)
 {
    int c;
+   FIREWALL_DEBUG("Inside get_options\n");
    while (1) {
       int option_index = 0;
       static struct option long_options[] = {
@@ -9541,6 +9640,7 @@ static int get_options(int argc, char **argv)
             break;
       }
    }
+   FIREWALL_DEBUG("Exiting get_options\n");
    return(optind);
 }
 
@@ -9558,6 +9658,7 @@ static int get_options(int argc, char **argv)
  */
 static service_ev_t get_service_event (const char *ev)
 {
+	FIREWALL_DEBUG("Inside service_ev_t get_service_event\n");
     int i;
     
     for (i = 0; i < SERVICE_EV_COUNT; i++) {
@@ -9565,7 +9666,7 @@ static service_ev_t get_service_event (const char *ev)
             return service_ev_map[i].ev;
         }
     }
-
+	FIREWALL_DEBUG("Exiting service_ev_t get_service_event\n");
     return SERVICE_EV_UNKNOWN;
 }
 
@@ -9587,8 +9688,9 @@ static int service_init (int argc, char **argv)
    int ret = 0;
 
    ulog_init();
-
+	FIREWALL_DEBUG("Inside firewall service_init()\n");
    ulogf(ULOG_FIREWALL, UL_INFO, "%s service initializing", service_name);
+      	FIREWALL_DEBUG("%s service initializing\n" COMMA service_name);
 
    isCronRestartNeeded     = 0;
 
@@ -9624,6 +9726,7 @@ static int service_init (int argc, char **argv)
    sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
    if (0 > sysevent_fd) {
       printf("Unable to register with sysevent daemon at %s %u.\n", sysevent_ip, sysevent_port);
+      FIREWALL_DEBUG("Unable to register with sysevent daemon at %s %u.\n"COMMA sysevent_ip COMMA sysevent_port);
       rc = -2;
       goto ret_err;
    }
@@ -9638,6 +9741,7 @@ static int service_init (int argc, char **argv)
         // Dbus connection error
         // Comment below
         fprintf(stderr, "%d, DBUS connection error\n", CCSP_MESSAGE_BUS_CANNOT_CONNECT);
+        FIREWALL_DEBUG("%d, DBUS connection error\n" COMMA CCSP_MESSAGE_BUS_CANNOT_CONNECT);
         fprintf(stderr, "%d", CCSP_MESSAGE_BUS_CANNOT_CONNECT);
         bus_handle = NULL;
         //firewall need work before DBUS started, cannot exit
@@ -9645,7 +9749,7 @@ static int service_init (int argc, char **argv)
     }
 
    ulog_debugf(ULOG_FIREWALL, UL_INFO, "firewall opening sysevent_fd %d, token %d", sysevent_fd, sysevent_token);
-
+   FIREWALL_DEBUG("firewall opening sysevent_fd %d, token %d\n"COMMA sysevent_fd COMMA sysevent_token);       
    time_t now;
    time(&now);
    if (NULL == localtime_r((&now), (&local_now))) {
@@ -9656,6 +9760,7 @@ static int service_init (int argc, char **argv)
    prepare_globals_from_configuration();
  
 ret_err:
+FIREWALL_DEBUG("Exiting firewall service_init()\n");
    return rc;
 }
 
@@ -9670,22 +9775,27 @@ ret_err:
  */
 static int service_close ()
 {
+FIREWALL_DEBUG("Inside firewall service_close()\n");
    if (0 <= lock_fd) {
        close(lock_fd);
        unlink("/tmp/firewall_lock");
        ulog_debug(ULOG_FIREWALL, UL_INFO, "firewall closing firewall_lock");
+       FIREWALL_DEBUG("firewall closing firewall_lock\n");
    }
    if (0 <= sysevent_fd)  {
        ulog_debugf(ULOG_FIREWALL, UL_INFO, "firewall closing sysevent_fd %d, token %d",
                    sysevent_fd, sysevent_token);
+       FIREWALL_DEBUG("firewall closing sysevent_fd %d, token %d\n"COMMA
+                   sysevent_fd COMMA sysevent_token);
        sysevent_close(sysevent_fd, sysevent_token);
    }
    if (bus_handle != NULL) {
        ulog_debug(ULOG_FIREWALL, UL_INFO, "firewall closing dbus connection");
+       FIREWALL_DEBUG("firewall closing dbus connection\n");
         CCSP_Message_Bus_Exit(bus_handle);
    }
    ulog(ULOG_FIREWALL, UL_INFO, "firewall operation completed");
-
+FIREWALL_DEBUG("exiting firewall service_close()\n");
    return 0;
 }
 
@@ -9707,16 +9817,18 @@ static int service_start ()
    char *cron_file = crontab_dir"/"crontab_filename;
    FILE *cron_fp = NULL; // the crontab file we use to set wakeups for timed firewall events
    pthread_mutex_lock(&firewall_check);
+   FIREWALL_DEBUG("Inside firewall service_start()\n");
    cron_fp = fopen(cron_file, "w");
    if(cron_fp) {
        fclose(cron_fp);
    } else {
        fprintf(stderr,"%s: ### create crontab_file error with %d!!!\n",__FUNCTION__, errno);
+       FIREWALL_DEBUG("%s: ### create crontab_file error with %d!!!\n" COMMA __FUNCTION__ COMMA errno);
    } 
 
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "starting", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "starting %s service", service_name);
-
+      	FIREWALL_DEBUG("starting %s service\n" COMMA service_name);
    /*  ipv4 */
    prepare_ipv4_firewall(filename1);
    system("iptables-restore -c  < /tmp/.ipt");
@@ -9754,7 +9866,9 @@ static int service_start ()
 
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "started", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "started %s service", service_name);
- pthread_mutex_unlock(&firewall_check);
+   FIREWALL_DEBUG("started %s service\n" COMMA service_name);
+   pthread_mutex_unlock(&firewall_check);
+   FIREWALL_DEBUG("Exiting firewall service_start()\n");
  	return 0;
 }
 
@@ -9770,9 +9884,10 @@ static int service_stop ()
 {
    char *filename1 = "/tmp/.ipt";
 	pthread_mutex_lock(&firewall_check);
+	FIREWALL_DEBUG("Inside firewall service_stop()\n");
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "stopping", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "stopping %s service", service_name);
-
+	FIREWALL_DEBUG("stopping %s service\n" COMMA service_name);
    FILE *fp = fopen(filename1, "w"); 
    if (NULL == fp) {
    pthread_mutex_unlock(&firewall_check);
@@ -9790,7 +9905,9 @@ static int service_stop ()
 
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "stopped", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "stopped %s service", service_name);
+   	FIREWALL_DEBUG("stopped %s service\n" COMMA service_name);
  pthread_mutex_unlock(&firewall_check);
+ 	FIREWALL_DEBUG("Exiting firewall service_stop()\n");
     return 0;
 }
 
@@ -9807,6 +9924,7 @@ static int service_restart ()
 // dont tear down firewall and put it into completly open and unnatted state
 // just recalculate the rules - service start does that
 //    (void) service_stop();
+	FIREWALL_DEBUG("Inside Firewall service_restart () \n");
     return service_start();
 }
 
@@ -9831,6 +9949,10 @@ int main(int argc, char **argv)
 
    // defualt command if first argument is missing
    service_ev_t event = SERVICE_EV_RESTART;
+	   if(firewallfp == NULL) {
+		firewallfp = fopen ("/rdklogs/logs/FirewallDebug.txt", "a+");
+	} 
+        FIREWALL_DEBUG("ENTERED FIREWALL, argc = %d \n" COMMA argc);
 
    if (argc > 1) {
        if (SERVICE_EV_UNKNOWN == (event = get_service_event(argv[1]))) {
@@ -9851,6 +9973,8 @@ int main(int argc, char **argv)
    rc = service_init(argc, argv);
    if (rc < 0) {
        service_close();
+       if(firewallfp)
+       fclose(firewallfp);
        return rc;
    }
 
@@ -9870,12 +9994,14 @@ int main(int argc, char **argv)
    case SERVICE_EV_SYSLOG_STATUS:
        sysevent_get(sysevent_fd, sysevent_token, "syslog-status", syslog_status, sizeof(syslog_status));
        ulogf(ULOG_FIREWALL, UL_INFO, "%s handling syslog-status=%s", service_name, syslog_status);
+       FIREWALL_DEBUG("%s handling syslog-status=%s\n" COMMA service_name COMMA syslog_status);
        if (0 == strcmp(syslog_status, "started")) {
            service_restart();
        }
        break;
    default:
        ulogf(ULOG_FIREWALL, UL_INFO, "%s received unhandled event", service_name);
+        FIREWALL_DEBUG("%s received unhandled event \n" COMMA service_name);
        break;
    }
 
@@ -9883,6 +10009,7 @@ int main(int argc, char **argv)
 
    if (flush)
       system("conntrack_flush");
-      
+        if(firewallfp)
+       fclose(firewallfp);
    return(rc);
 }

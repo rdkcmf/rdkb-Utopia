@@ -38,12 +38,27 @@
 
 
 #include <stdio.h>
+#include<stdlib.h>
 #include "ccsp_custom.h"
+extern FILE *firewallfp;
+#define FW_DEBUG 1
+
 
 void do_device_based_pp_disabled_appendrule(FILE *fp, const char *ins_num, const char *lan_ifname, const char *query);
 void do_device_based_pp_disabled_ip_appendrule(FILE *fp, const char *ins_num, const char *ipAddr);
 int do_parcon_mgmt_lan2wan_pc_site_appendrule(FILE *fp);
 void do_parcon_mgmt_lan2wan_pc_site_insertrule(FILE *fp, int index, char *nstdPort);
+
+#ifdef FW_DEBUG
+#define COMMA ,
+#define FIREWALL_DEBUG(x) \
+if(firewallfp != NULL){ \
+fprintf(firewallfp,"------FIREWALL_DEBUG:" x);}\
+else \
+printf(" FILE Pointer is NULL \n"); 
+#else 
+#define FIREWALL_DEBUG(x)
+#endif
 
 /*
  *  rdkb_arm is same as 3939/3941
