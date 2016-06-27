@@ -391,8 +391,11 @@ V_HANDLE_OLD_LOG_13_FLG=`sysevent get R13_LOG_HANDLE_FLG`
 if [ -z $V_HANDLE_OLD_LOG_13_FLG ]
 then
     old_sysevtlog_handle $DPC3939_OLD_SYSTERMLOG SYS_LOG_F_INSTANCE 
-    old_sysevtlog_handle $DPC3939_OLD_EVTLOG EVT_LOG_F_INSTANCE 
-    old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH $V_FW_LOG_FILE_PATH 
+    old_sysevtlog_handle $DPC3939_OLD_EVTLOG EVT_LOG_F_INSTANCE
+    #ARRISXB6-1518 - No Action Needed if Paths are the same
+    if [ "$V_FW_LOG_FILE_PATH" != "$DPC3939_OLD_FWLOG_FILE_PATH" ]; then
+        old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH $V_FW_LOG_FILE_PATH
+    fi
     sysevent set R13_LOG_HANDLE_FLG 1
 fi 
 
@@ -492,5 +495,3 @@ then
         fi
     done
 fi
-
-
