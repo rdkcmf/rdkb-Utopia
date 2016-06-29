@@ -33,7 +33,6 @@
    limitations under the License.
 **********************************************************************/
 #include "service_multinet_util.h"
-#include "service_multinet_base.h"
 #include <stdlib.h>
 
 // Zen is implementing collections
@@ -60,11 +59,6 @@ int addToList(PList list, void* itemData) {
 
 void* addAndAlloc(PList list, int dataSize) {
     PListItem item = calloc(1, sizeof(ListItem) + dataSize);
-	if (NULL == item)	
-	{
-		MNET_DEBUG("addAddAlloc has failed to allocate memory\n");
-		return NULL;
-	}
     addItem(list, item);
     
     item->data= (void*)(item +1);
