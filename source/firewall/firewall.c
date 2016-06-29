@@ -8836,7 +8836,7 @@ int prepare_ipv4_firewall(const char *fw_file)
    }
   
    // TODO: possibly remove bridge mode
-   if (isFirewallEnabled && !isBridgeMode && isWanServiceReady) {
+   if (isFirewallEnabled && !isBridgeMode ) { fprintf(stderr, "-- prepare_enabled_ipv4_firewall isWanServiceReady=%d\n", isWanServiceReady); //&& isWanServiceReady) {
       prepare_enabled_ipv4_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
    } else {
       prepare_disabled_ipv4_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
