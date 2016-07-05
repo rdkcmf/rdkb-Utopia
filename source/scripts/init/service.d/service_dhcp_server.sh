@@ -432,7 +432,7 @@ dhcp_server_start ()
    # that lease is not found in the dnsmasq.leases file
 
    
-   echo "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server from dhcp_server_start"
+   echo "[`uptime | cut -d "," -f1`] RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server from dhcp_server_start"
    $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
@@ -450,7 +450,7 @@ dhcp_server_start ()
 	      #isAvailablebrlan1=`ifconfig | grep brlan1`
 	      #if [ "$isAvailablebrlan1" != "" ]
               #then
-              	echo "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh from dhcpscript"
+              	echo "[`uptime | cut -d "," -f1`] RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh from dhcpscript"
               	gw_lan_refresh &
               #	echo "lan_not_restart NOT found! Restart lan!"
 	      #fi
@@ -465,7 +465,7 @@ dhcp_server_start ()
    sysevent set dns-status started
    sysevent set dhcp_server-status started
    sysevent set dhcp_server-progress completed
-   echo "DHCP SERVICE :dhcp_server-progress is set to completed "
+   echo "[`uptime | cut -d "," -f1`] DHCP SERVICE :dhcp_server-progress is set to completed "
 
    echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
    cat $RESOLV_CONF
