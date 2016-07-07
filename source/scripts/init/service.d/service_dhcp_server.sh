@@ -297,7 +297,7 @@ resync_to_nonvol ()
     
 }
 
-recover_l2sd0_100()
+recover_l2sd0()
 {
     ifconfig -a | grep l2sd0.100
     if [ $? == 1 ]; then
@@ -313,14 +313,10 @@ recover_l2sd0_100()
            $UTOPIA_PATH/service_multinet_exec multinet-start 1
            ifconfig -a | grep l2sd0.100
            if [ $? == 1 ]; then
-               echo "l2sd0.100 is not created after Second Retry, no more retries !!!"
-		   else
-		       echo "l2sd0.100 is created at the second retry call gw_lan_refresh"	
-		   	   gw_lan_refresh &
+                echo "l2sd0.100 is not created after Second Retry, no more retries !!!"
            fi
         else
-           echo "l2sd0.100 Created at First Retry itself call gw_lan_refresh"
-		   gw_lan_refresh &
+           echo "l2sd0.100 Created at First Retry itself"
         fi
     else
         ifconfig l2sd0.100 | grep UP
@@ -328,10 +324,7 @@ recover_l2sd0_100()
            echo "l2sd0.100 interface is not up"
         fi
     fi
-}
-
-recover_l2sd0_101()
-{	
+	
 	#l2sd0.101 case
     ifconfig -a | grep l2sd0.101
     if [ $? == 1 ]; then
@@ -474,24 +467,14 @@ dhcp_server_start ()
    sysevent set dhcp_server-progress completed
    echo "DHCP SERVICE :dhcp_server-progress is set to completed [`uptime | cut -d "," -f1`]"
 
-   BRLAN0_STATUS=`sysevent get multinet_1-status`   
-   echo "BRLAN0_STATUS= $BRLAN0_STATUS"     
-   if [ "$BRLAN0_STATUS" == "partial" ]; then
-       echo "l2sd0.100 is not created recover it"
-       recover_l2sd0_100    
-   fi  
-
-   BRLAN1_STATUS=`sysevent get multinet_2-status`   
-   echo "BRLAN1_STATUS=$BRLAN1_STATUS"  
-    
-   cat $DHCP_CONF | grep brlan1
-   if [ "$BRLAN1_STATUS" == "partial" ] && [ $? == 1 ]; then
-       echo "l2sd0.101 is not created and brlan1 initialization is not in progress recover it"
-       recover_l2sd0_101
-   fi    
-
    echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
    cat $RESOLV_CONF
+
+   isAvailablebrlan1=`ifconfig | grep brlan1`
+   if [ "$isAvailablebrlan1" != "" ] ; then
+        echo "l2sd0.100 and l2sd0.101 should have been present by now check and create"
+        recover_l2sd0
+   fi
 }
 
 #-----------------------------------------------------------------
