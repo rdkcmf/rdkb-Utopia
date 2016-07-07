@@ -400,7 +400,8 @@ removehttp()
 prepare_whitelist_urls()
 {
     #ACS_URL=""
-	Cloud_URL=""
+	Redirection_URL=""
+	CloudPersonalization_URL=""
 	isIPv4=""
 	isIPv6=""
 	nServer4=""
@@ -408,13 +409,20 @@ prepare_whitelist_urls()
     #EMS_URL=""
 	
 
-	# Cloud URL can be get from DML
-	Cloud_URL=`syscfg get redirection_url`
-	if [ "$Cloud_URL" != "" ]
+	# Redirection URL can be get from DML
+	Redirection_URL=`syscfg get redirection_url`
+	if [ "$Redirection_URL" != "" ]
 	then
-		Cloud_URL=`removehttp $Cloud_URL`
+		Redirection_URL=`removehttp $Redirection_URL`
 	fi
-	
+
+	# CloudPersonalization URL can be get from DML	
+	CloudPersonalization_URL=`syscfg get CloudPersonalizationURL`
+	if [ "$CloudPersonalization_URL" != "" ]
+	then
+		CloudPersonalization_URL=`removehttp $CloudPersonalization_URL`
+	fi
+
 	#Check in what mode erouter0 is in : ipv4/ipv6
 	isIPv4=`ifconfig erouter0 | grep inet | grep -v inet6`
 	if [ "$isIPv4" = "" ]
@@ -434,9 +442,14 @@ prepare_whitelist_urls()
 	if [ "$nServer4" != "" ]
 	then
 
-		if [ "$Cloud_URL" != "" ]; then
-			echo "server=/$Cloud_URL/$nServer4" >> $1
+		if [ "$Redirection_URL" != "" ]; then
+			echo "server=/$Redirection_URL/$nServer4" >> $1
 		fi
+
+		if [ "$CloudPersonalization_URL" != "" ]; then
+			echo "server=/$CloudPersonalization_URL/$nServer4" >> $1
+		fi
+
         if [ -f $STATIC_URLS_FILE ]; then
          STATIC_URL_LIST=`cat $STATIC_URLS_FILE`
          for whitelisting_url in $STATIC_URL_LIST
