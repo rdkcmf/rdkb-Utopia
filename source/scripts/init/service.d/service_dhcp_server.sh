@@ -297,62 +297,6 @@ resync_to_nonvol ()
     
 }
 
-recover_l2sd0()
-{
-    ifconfig -a | grep l2sd0.100
-    if [ $? == 1 ]; then
-        echo "l2sd0.100 interface is not created try creating it after 5 sec"
-        sleep 5
-        sysevent set multinet_1-status stopped
-        $UTOPIA_PATH/service_multinet_exec multinet-start 1
-        ifconfig -a | grep l2sd0.100
-        if [ $? == 1 ]; then
-           echo "l2sd0.100 is not created at First Retry, try again after 5 sec"
-           sleep 5
-           sysevent set multinet_1-status stopped
-           $UTOPIA_PATH/service_multinet_exec multinet-start 1
-           ifconfig -a | grep l2sd0.100
-           if [ $? == 1 ]; then
-                echo "l2sd0.100 is not created after Second Retry, no more retries !!!"
-           fi
-        else
-           echo "l2sd0.100 Created at First Retry itself"
-        fi
-    else
-        ifconfig l2sd0.100 | grep UP
-        if [ $? == 1 ]; then
-           echo "l2sd0.100 interface is not up"
-        fi
-    fi
-	
-	#l2sd0.101 case
-    ifconfig -a | grep l2sd0.101
-    if [ $? == 1 ]; then
-        echo "l2sd0.101 interface is not created try creatig it after 5 sec"
-        sleep 5
-        sysevent set multinet_2-status stopped
-        $UTOPIA_PATH/service_multinet_exec multinet-start 2
-        ifconfig -a | grep l2sd0.101
-        if [ $? == 1 ]; then
-           echo "l2sd0.101 is not created at First Retry, try again after 5 sec"
-           sleep 5
-           sysevent set multinet_2-status stopped
-           $UTOPIA_PATH/service_multinet_exec multinet-start 2
-           ifconfig -a | grep l2sd0.101
-            if [ $? == 1 ]; then
-                echo "l2sd0.101 is not created after Second Retry, no more retries !!!"
-            fi
-        else
-           echo "l2sd0.101 created at First Retry itself"
-        fi
-    else
-        ifconfig l2sd0.101 | grep UP
-        if [ $? == 1 ]; then
-           echo "l2sd0.101 interface is not up"
-           fi
-    fi
-}
-
 #-----------------------------------------------------------------
 dhcp_server_start ()
 {
@@ -469,12 +413,6 @@ dhcp_server_start ()
 
    echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
    cat $RESOLV_CONF
-
-   isAvailablebrlan1=`ifconfig | grep brlan1`
-   if [ "$isAvailablebrlan1" != "" ] ; then
-        echo "l2sd0.100 and l2sd0.101 should have been present by now check and create"
-        recover_l2sd0
-   fi
 }
 
 #-----------------------------------------------------------------
