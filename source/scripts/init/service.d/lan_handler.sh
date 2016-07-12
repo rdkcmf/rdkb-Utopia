@@ -171,7 +171,7 @@ case "$1" in
                     gw_lan_refresh&
                 fi
                	firewall
-                execute_dir /etc/utopia/post.d/
+                execute_dir /etc/utopia/post.d/ restart
             else
 				echo "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started

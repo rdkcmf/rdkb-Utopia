@@ -487,7 +487,7 @@ static int wan_addr_set(struct serv_wan *sw)
             vsystem("((nfq_handler 4 %s &)&)", val);
             sysevent_set(sw->sefd, sw->setok, "parcon_nfq_status", "started", 0);
         }
-        vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/");
+        vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/ restart");
     } else {
         fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);

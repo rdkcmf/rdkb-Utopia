@@ -86,6 +86,7 @@ void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
 #if !defined(NO_TRIGGER)
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
+   system("killall trigger");
    system("trigger");
 #endif
 #endif
