@@ -390,75 +390,87 @@ static int add_members(PL2Net network, PMember interfaceBuf, int numMembers)
    	char cmdBuff[128] = {0}; 
 	int i;
 	int offset = 0;
-    //register for member status
-    create_and_register_if(network, interfaceBuf, numMembers);
-    
-    //add vlans for ready members
-    //add_vlan_for_members(network, interfaceBuf, numMembers);
-	for (i = 0; i < numMembers; ++i) 
-	{
-        MNET_DEBUG(" -- interface:%s interface type:%s \n" COMMA interfaceBuf[i].interface->name COMMA interfaceBuf[i].interface->type->name)
-		if(!strncmp(interfaceBuf[i].interface->type->name, "SW", 2))
-		{
-			MNET_DEBUG(" -- Interface type is SW")
-			sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "addVlan", network->inst, network->vid, interfaceBuf[i].interface->name, interfaceBuf[i].bTagging ? "-t" : "");
-    
-			MNET_DEBUG(" -- Command for SW interface is:%s\n" COMMA cmdBuff)			
-	        system(cmdBuff);
-		}
-		else if(!strncmp(interfaceBuf[i].interface->type->name, "WiFi", 4))
-		{
-			MNET_DEBUG(" -- Interface type is WIFI")
-			sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", "addVlan", network->inst, network->vid, interfaceBuf[i].interface->name, interfaceBuf[i].bTagging ? "-t" : "");	
-			MNET_DEBUG(" -- Command for wifi interface is:%s\n" COMMA cmdBuff)			
-	        system(cmdBuff);
-		}
-		else if(!strncmp(interfaceBuf[i].interface->type->name, "Link", 4))
-		{
-			MNET_DEBUG(" --Interface type is Link")
-			if (interfaceBuf[i].bTagging) {
-                offset += snprintf(cmdBuff+offset, 
-                                sizeof(cmdBuff) - offset,
-                                "vconfig add %s %d ; ", 
-                                interfaceBuf[i].interface->name, 
-                                network->vid);
-            }
-    
-            offset += snprintf(cmdBuff+offset, 
-                               sizeof(cmdBuff) - offset,
-                               "brctl addif %s %s", 
-                               network->name,
-                               interfaceBuf[i].interface->name); 
-    
-            if (interfaceBuf[i].bTagging) {
-                offset += snprintf(cmdBuff+offset, 
-                            sizeof(cmdBuff) - offset,
-                            ".%d", 
-                            network->vid); 
-            }
-    
-            offset += snprintf(cmdBuff+offset, 
-                               sizeof(cmdBuff) - offset,
-                               " ; ifconfig %s up", 
-                               interfaceBuf[i].interface->name);
 
-            if (interfaceBuf[i].bTagging) {
-                offset += snprintf(cmdBuff+offset, 
-                               sizeof(cmdBuff) - offset,
-                               " ; ifconfig %s.%d up", 
-                               interfaceBuf[i].interface->name, 
-                               network->vid);
-            }	
-			MNET_DEBUG(" -- Command for Link type interface is:%s\n" COMMA cmdBuff)
-			system(cmdBuff);
-		}
-		else if(!strncmp(interfaceBuf[i].interface->type->name, "Gre", 4))
+	//For brlan2 and brlan3 case continue to use the old method of creating l2sd0 and gretap0 interfaces
+    if (1 != network->inst && 2 != network->inst)
+    {
+        //register for member status
+        create_and_register_if(network, interfaceBuf, numMembers);
+    
+    	//add vlans for ready members
+    	add_vlan_for_members(network, interfaceBuf, numMembers);
+	}
+	else
+	{
+		for (i = 0; i < numMembers; ++i) 
 		{
-			MNET_DEBUG("GRE case vlan creation is done as part of interface update\n")
-		}
-		else
-		{
-			MNET_DEBUG("Nothing to do for other interface types\n")
+        	MNET_DEBUG(" -- interface:%s interface type:%s \n" COMMA interfaceBuf[i].interface->name COMMA interfaceBuf[i].interface->type->name)
+			if(!strncmp(interfaceBuf[i].interface->type->name, "SW", 2))
+			{
+				MNET_DEBUG(" -- Interface type is SW")
+				sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "addVlan", network->inst, 
+														 network->vid, interfaceBuf[i].interface->name, interfaceBuf[i].bTagging ? "-t" : "");
+    
+				MNET_DEBUG(" -- Command for SW interface is:%s\n" COMMA cmdBuff)			
+		        system(cmdBuff);
+			}
+			else if(!strncmp(interfaceBuf[i].interface->type->name, "WiFi", 4))
+			{
+				MNET_DEBUG(" -- Interface type is WIFI")
+				sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", "addVlan", network->inst, 
+														 network->vid, interfaceBuf[i].interface->name, interfaceBuf[i].bTagging ? "-t" : "");	
+
+				MNET_DEBUG(" -- Command for wifi interface is:%s\n" COMMA cmdBuff)			
+		        system(cmdBuff);
+			}
+			else if(!strncmp(interfaceBuf[i].interface->type->name, "Link", 4))
+			{
+				MNET_DEBUG(" --Interface type is Link")
+				if (interfaceBuf[i].bTagging) 
+				{
+                	offset += snprintf(cmdBuff+offset, 
+                    		           sizeof(cmdBuff) - offset,
+                            		   "vconfig add %s %d ; ", 
+		                               interfaceBuf[i].interface->name, 
+        		                       network->vid);
+            	}
+    
+            	offset += snprintf(cmdBuff+offset, 
+                	               sizeof(cmdBuff) - offset,
+                    	           "brctl addif %s %s", 
+                        	       network->name,
+                            	   interfaceBuf[i].interface->name); 
+    
+	            if (interfaceBuf[i].bTagging) 
+				{
+                	offset += snprintf(cmdBuff+offset, 
+                    			       sizeof(cmdBuff) - offset,
+			                           ".%d", 
+            			               network->vid); 
+	            }
+    
+        		offset += snprintf(cmdBuff+offset, 
+    	                           sizeof(cmdBuff) - offset,
+                	               " ; ifconfig %s up", 
+                    	           interfaceBuf[i].interface->name);
+
+	            if (interfaceBuf[i].bTagging) 
+				{
+                	offset += snprintf(cmdBuff+offset, 
+                    		           sizeof(cmdBuff) - offset,
+                            		   " ; ifconfig %s.%d up", 
+		                               interfaceBuf[i].interface->name, 
+        		                       network->vid);
+            	}	
+				MNET_DEBUG(" -- Command for Link type interface is:%s\n" COMMA cmdBuff)
+				system(cmdBuff);
+			}
+			else
+			{
+				MNET_DEBUG("Other interface types are not processed for brlan0 and brlan1\n")
+			}
+        	memset(cmdBuff, 0, sizeof(cmdBuff));
+	        offset = 0;		
 		}
 	}
 }
@@ -468,55 +480,65 @@ static int remove_members(PL2Net network, PMember live_members, int numLiveMembe
 	char cmdBuff[128] = {0}; 
     int i;
     int offset = 0;
-  
-    unregister_if(network, live_members, numLiveMembers);
-    
-    //remove_vlan_for_members(network, live_members, numLiveMembers);
-	for (i = 0; i < numLiveMembers; ++i) 
-    {   
-        MNET_DEBUG(" -- interface:%s interface type:%s \n" COMMA live_members[i].interface->name COMMA live_members[i].interface->type->name)
-        if(!strncmp(live_members[i].interface->type->name, "SW", 2)) 
-        {
-            MNET_DEBUG(" -- Interface type is SW")
-            sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "delVlan", network->inst, network->vid, live_members[i].interface->name, live_members[i].bTagging ? "-t" : "");
-    
-            MNET_DEBUG(" -- Command for SW interface is:%s\n" COMMA cmdBuff)    
-            system(cmdBuff);
-        }
-        else if(!strncmp(live_members[i].interface->type->name, "WiFi", 4)) 
-        {
-            MNET_DEBUG(" -- Interface type is WIFI")
-            sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", "delVlan", network->inst, network->vid, live_members[i].interface->name, live_members[i].bTagging ? "-t" : "");
-            MNET_DEBUG(" -- Command for wifi interface is:%s\n" COMMA cmdBuff)
-            system(cmdBuff);
-        }
-        else if((!strncmp(live_members[i].interface->type->name, "Link", 4)) || 
-			    (!strncmp(live_members[i].interface->type->name, "Gre", 4)))
-        {
-            MNET_DEBUG(" --Interface type is Link / Gre\n")
-			if (live_members[i].bTagging) 
-			{
-                offset += snprintf(cmdBuff+offset, 
-                               sizeof(cmdBuff) - offset,
-                               "vconfig rem %s.%d",
-							   live_members[i].interface->name,
-                               network->vid); 
-            } 
-			else 
-			{
-                offset += snprintf(cmdBuff+offset, 
-                               sizeof(cmdBuff) - offset,
-                               "brctl delif %s %s", 
-							   network->name,
-                               live_members[i].interface->name);
 
-            }
-            MNET_DEBUG(" -- Command for Link type interface is:%s\n" COMMA cmdBuff)
-            system(cmdBuff);
-        }
-		else
-		{
-			MNET_DEBUG("Nothing to do for other interface types\n")
+	//For brlan2 and brlan3 case continue to use the old method of removing l2sd0 and gretap0 interfaces
+    if (1 != network->inst && 2 != network->inst)
+    {  
+    	unregister_if(network, live_members, numLiveMembers);    
+	    remove_vlan_for_members(network, live_members, numLiveMembers);
+	}	
+	else
+	{
+		for (i = 0; i < numLiveMembers; ++i) 
+    	{   
+        	MNET_DEBUG(" -- interface:%s interface type:%s \n" COMMA live_members[i].interface->name COMMA live_members[i].interface->type->name)
+	        if(!strncmp(live_members[i].interface->type->name, "SW", 2)) 
+    	    {
+        	    MNET_DEBUG(" -- Interface type is SW")
+            	sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "delVlan", network->inst, 
+														 network->vid, live_members[i].interface->name, live_members[i].bTagging ? "-t" : "");
+    
+	            MNET_DEBUG(" -- Command for SW interface is:%s\n" COMMA cmdBuff)    
+    	        system(cmdBuff);
+        	}
+	        else if(!strncmp(live_members[i].interface->type->name, "WiFi", 4)) 
+    	    {
+        	    MNET_DEBUG(" -- Interface type is WIFI")
+            	sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", "delVlan", network->inst, 
+														 network->vid, live_members[i].interface->name, live_members[i].bTagging ? "-t" : "");
+
+	            MNET_DEBUG(" -- Command for wifi interface is:%s\n" COMMA cmdBuff)
+    	        system(cmdBuff);
+        	}
+	        else if((!strncmp(live_members[i].interface->type->name, "Link", 4))) 
+        	{
+	            MNET_DEBUG(" --Interface type is Link / Gre\n")
+				if (live_members[i].bTagging) 
+				{
+            	    offset += snprintf(cmdBuff+offset, 
+                	    	           sizeof(cmdBuff) - offset,
+                    	    	       "vconfig rem %s.%d",
+									   live_members[i].interface->name,
+        		                       network->vid); 
+	            } 
+				else 
+				{
+            	    offset += snprintf(cmdBuff+offset, 
+	    		                       sizeof(cmdBuff) - offset,
+    	        	                   "brctl delif %s %s", 
+									   network->name,
+		                               live_members[i].interface->name);
+			
+            	}
+            	MNET_DEBUG(" -- Command for Link type interface is:%s\n" COMMA cmdBuff)
+            	system(cmdBuff);
+        	}
+			else
+			{
+				MNET_DEBUG("Nothing to do for other interface types\n")
+			}		
+        	memset(cmdBuff, 0, sizeof(cmdBuff));
+	        offset = 0;		
 		}
 	}
 }
