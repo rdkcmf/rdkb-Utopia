@@ -60,7 +60,12 @@
 #include "util.h"
 
 #define PROG_NAME       "SERVICE-WAN"
-#define DHCPC_PID_FILE  "/var/run/eRT_ti_udhcpc.pid"
+#if defined(_COSA_BCM_ARM_)
+	#define DHCPC_PID_FILE  "/tmp/udhcpc.erouter0.pid"
+#else
+	#define DHCPC_PID_FILE  "/var/run/eRT_ti_udhcpc.pid"
+#endif 
+
 //this value is from erouter0 dhcp client(5*127+10*4)
 #define SW_PROT_TIMO   675 
 #define RESOLV_CONF_FILE  "/etc/resolv.conf"
@@ -170,11 +175,16 @@ static int dhcp_stop(const char *ifname)
 
 static int dhcp_start(const char *ifname)
 {
-    int err;
+   int err;
+  /*TCHXB6 is configured to use udhcpc */
+#if defined (_COSA_BCM_ARM_)
+	err = vsystem("/sbin/udhcpc -i %s -p %s ",ifname, DHCPC_PID_FILE);
+#else
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                 "-H DocsisGateway -p %s -B -b 1",
                 ifname, DHCPC_PID_FILE);
 
+#endif 
 /*
 	err = vsystem("strace -o /tmp/stracelog -f ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
               "-H DocsisGateway -p %s -B -b 1",
