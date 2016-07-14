@@ -119,6 +119,8 @@ service_start ()
       #zqiu: monitor lan client traffic
       echo "* * * * *   /usr/ccsp/tad/rxtx_lan.sh" >> $CRONTAB_FILE
 
+      echo "1 */6 * * *   /usr/ccsp/tad/monitor_zombies.sh" >> $CRONTAB_FILE
+
       num1=$RANDOM
       num2=$RANDOM
       rand1=`expr $num1 % 60`
