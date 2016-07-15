@@ -746,7 +746,7 @@ int greDscp = 44; // Default initialized to 44
  */
 static char *trim(char *in)
 {
-                 FIREWALL_DEBUG("Entering *trim\n");         
+  //               FIREWALL_DEBUG("Entering *trim\n");         
    // trim the front of the string
    if (NULL == in) {
       return(NULL);
@@ -763,7 +763,7 @@ static char *trim(char *in)
       *end = '\0';
       end--;
    }
-                 FIREWALL_DEBUG("Exiting *trim\n");         
+    //             FIREWALL_DEBUG("Exiting *trim\n");         
    return(start);
 }
 
@@ -784,13 +784,13 @@ static char *trim(char *in)
  */
 static char *token_get(char *in, char delim)
 {
-                 FIREWALL_DEBUG("Entering *token_get\n");         
+      //           FIREWALL_DEBUG("Entering *token_get\n");         
    char *end = strchr(in, delim);
    if (NULL != end) {
       *end = '\0';
       end++;
    }
-                 FIREWALL_DEBUG("Exiting *token_get\n");         
+        //         FIREWALL_DEBUG("Exiting *token_get\n");         
    return(end);   
 }
 
@@ -813,7 +813,7 @@ static int time_delta(struct tm *time1, const char *time2, int *hours, int *mins
    int t2h;
    int t2m;
    sscanf(time2,"%d:%d", &t2h, &t2m);
-   FIREWALL_DEBUG("Entering time_delta\n");         
+  // FIREWALL_DEBUG("Entering time_delta\n");         
   if (time1->tm_hour > t2h) {
       *hours = *mins = 0;
       return(-1);
@@ -830,7 +830,7 @@ static int time_delta(struct tm *time1, const char *time2, int *hours, int *mins
       }
       return(0);
    }
-   FIREWALL_DEBUG("Exiting time_delta\n");         
+  // FIREWALL_DEBUG("Exiting time_delta\n");         
 }
  
 /*
@@ -853,7 +853,7 @@ static int substitute(char *in_str, char *out_str, const int size, char *from, c
     char *in_str_end  = in_str + strlen(in_str);
     char *out_str_end = out_str + size;
     int   num_subst   = 0;
-    FIREWALL_DEBUG("Entering substitute\n");         
+   // FIREWALL_DEBUG("Entering substitute\n");         
     while (in_str_p < in_str_end && out_str_p < out_str_end) {
        char *from_p;
        from_p = strstr(in_str_p, from);
@@ -900,7 +900,7 @@ static int substitute(char *in_str, char *out_str, const int size, char *from, c
     }
 
     out_str[size-1] = '\0';
-    FIREWALL_DEBUG("Exiting substitute\n");         
+   // FIREWALL_DEBUG("Exiting substitute\n");         
     return(num_subst);
 }
 
@@ -925,7 +925,7 @@ static char *make_substitutions(char *in_str, char *out_str, const int size)
     char *out_str_p = out_str;
     char *in_str_end = in_str + strlen(in_str);
     char *out_str_end = out_str + size;
-    FIREWALL_DEBUG("Entering *make_substitutions\n");         
+   // FIREWALL_DEBUG("Entering *make_substitutions\n");         
     while (in_str_p < in_str_end && out_str_p < out_str_end) {
        char token[50];
        if ('$' == *in_str_p) {
@@ -970,7 +970,7 @@ static char *make_substitutions(char *in_str, char *out_str, const int size)
    }
 
     out_str[size-1] = '\0';
-    FIREWALL_DEBUG("Exiting *make_substitutions\n");         
+   // FIREWALL_DEBUG("Exiting *make_substitutions\n");         
     return(out_str);
 }
  
@@ -992,7 +992,7 @@ static char *make_substitutions(char *in_str, char *out_str, const int size)
  */
 static char *match_keyword(FILE *fp, char *keyword, char delim, char *line, int size)
 {
-   FIREWALL_DEBUG("Entering *match_keyword\n");         
+  // FIREWALL_DEBUG("Entering *match_keyword\n");         
    while (NULL != fgets(line, size, fp) ) {
       char *keyword_candidate = NULL;
       char *next;
@@ -1025,7 +1025,7 @@ static char *match_keyword(FILE *fp, char *keyword, char delim, char *line, int 
          return(next);
       } 
    }
-   FIREWALL_DEBUG("Exiting *match_keyword\n");         
+  // FIREWALL_DEBUG("Exiting *match_keyword\n");         
    return(NULL);
 }
 
@@ -1059,7 +1059,7 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
 	char addr6[40], devname[20];
 	struct sockaddr_in6 sap;
     int    i = 0;
-    FIREWALL_DEBUG("Entering get_ip6address\n");         
+   // FIREWALL_DEBUG("Entering get_ip6address\n");         
     if (!ifname && !ipArry && !p_num)
         return -1;
     fp = fopen(_PROCNET_IFINET6, "r");
@@ -1091,7 +1091,7 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
     *p_num = i;
 
     fclose(fp);
-    FIREWALL_DEBUG("Exiting get_ip6address\n");         
+   // FIREWALL_DEBUG("Exiting get_ip6address\n");         
     return 0;
 }
 
@@ -1630,7 +1630,7 @@ static int prepare_globals_from_configuration(void)
  int do_raw_logs(FILE *fp)
 {
    char str[MAX_QUERY];
-   FIREWALL_DEBUG("Entering do_raw_logs\n");       
+  // FIREWALL_DEBUG("Entering do_raw_logs\n");       
  if (isLogEnabled) {
       if (isLogSecurityEnabled) {
          snprintf(str, sizeof(str),
@@ -1641,7 +1641,7 @@ static int prepare_globals_from_configuration(void)
    snprintf(str, sizeof(str),
             "-A xlog_drop_lanattack -j DROP");
    fprintf(fp, "%s\n", str);
-   FIREWALL_DEBUG("Exiting do_raw_logs\n");       
+  // FIREWALL_DEBUG("Exiting do_raw_logs\n");       
    return(0);
 }
 
@@ -1657,7 +1657,7 @@ static int prepare_globals_from_configuration(void)
  int do_logs(FILE *fp)
 {
    char str[MAX_QUERY];
-   FIREWALL_DEBUG("Entering do_logs\n");       
+  // FIREWALL_DEBUG("Entering do_logs\n");       
    /*
     * Aside from the general idea that logging is enabled,
     * we can turn on/off certain logs according to whether
@@ -1763,7 +1763,7 @@ static int prepare_globals_from_configuration(void)
    snprintf(str, sizeof(str),
             "-A xlogreject -j DROP");
    fprintf(fp, "%s\n", str);
-           FIREWALL_DEBUG("Exiting do_logs\n");       
+    //       FIREWALL_DEBUG("Exiting do_logs\n");       
    return(0);
 }
 
@@ -2793,14 +2793,14 @@ static int do_port_forwarding(FILE *nat_fp, FILE *filter_fp)
     *   a PREROUTING DNAT rule
     *   an ACCEPT rule
     */
-           FIREWALL_DEBUG("Entering do_port_forwarding\n");       
+      //     FIREWALL_DEBUG("Entering do_port_forwarding\n");       
    do_single_port_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_port_range_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_wellknown_ports_forwarding(nat_fp, filter_fp);
    do_ephemeral_port_forwarding(nat_fp, filter_fp);
    if (filter_fp)
     do_static_route_forwarding(filter_fp);
-           FIREWALL_DEBUG("Exiting do_port_forwarding\n");       
+        //   FIREWALL_DEBUG("Exiting do_port_forwarding\n");       
    return(0);
 }
 
@@ -3747,7 +3747,7 @@ static int do_lan2self_mgmt(FILE *fp)
 {
    int rc;
    char query[MAX_QUERY];
-           FIREWALL_DEBUG("Entering do_lan2self_mgmt\n");     
+         //  FIREWALL_DEBUG("Entering do_lan2self_mgmt\n");     
  query[0] = '\0';
    rc = syscfg_get(NULL, "mgmt_wifi_access", query, sizeof(query));
    if (0 == rc && '\0' != query[0] && 0 == strncmp(query, "0", sizeof(query)) ) {
@@ -3776,7 +3776,7 @@ static int do_lan2self_mgmt(FILE *fp)
 #if defined(CONFIG_CCSP_LAN_HTTP_ACCESS)
    lan_http_access(fp);
 #endif
-           FIREWALL_DEBUG("Exiting do_lan2self_mgmt\n");     
+          // FIREWALL_DEBUG("Exiting do_lan2self_mgmt\n");     
    return(0);
 }
  
@@ -3793,13 +3793,13 @@ static int do_lan2self_mgmt(FILE *fp)
  */
 static int do_lan2self(FILE *fp)
 {
-         FIREWALL_DEBUG("Entering do_lan2self\n");     
+        // FIREWALL_DEBUG("Entering do_lan2self\n");     
    if(isWanReady)
        do_lan2self_by_wanip(fp, AF_INET);
 
    do_lan2self_attack(fp);
    do_lan2self_mgmt(fp);
-         FIREWALL_DEBUG("Exiting do_lan2self\n");     
+        // FIREWALL_DEBUG("Exiting do_lan2self\n");     
    return(0);
 }
 
@@ -3831,7 +3831,7 @@ static int do_wan2self_attack(FILE *fp)
 
    char str[MAX_QUERY];
    char *logRateLimit = "-m limit --limit 6/h --limit-burst 1";
-         FIREWALL_DEBUG("Entering do_wan2self_attack\n");     
+        // FIREWALL_DEBUG("Entering do_wan2self_attack\n");     
    /*
     * Log probable DoS attack
     */
@@ -3996,7 +3996,7 @@ static int do_wan2self_attack(FILE *fp)
       fprintf(fp, "%s\n", str);
 
    }
-         FIREWALL_DEBUG("Exiting do_wan2self_attack\n");     
+        // FIREWALL_DEBUG("Exiting do_wan2self_attack\n");     
    return(0);
 }
 
@@ -4011,12 +4011,12 @@ static int do_wan2self_attack(FILE *fp)
 static int do_mgmt_override(FILE *nat_fp)
 {
    char str[MAX_QUERY];
-         FIREWALL_DEBUG("Entering do_mgmt_override\n");     
+       //  FIREWALL_DEBUG("Entering do_mgmt_override\n");     
   snprintf(str, sizeof(str),
             "-I prerouting_mgmt_override 1 -s %s/%s -d %s -p tcp  -m tcp --dport %s -j ACCEPT",
               lan_ipaddr, lan_netmask, lan_ipaddr, reserved_mgmt_port);
    fprintf(nat_fp, "%s\n", str);
-         FIREWALL_DEBUG("Exiting do_mgmt_override\n");     
+        // FIREWALL_DEBUG("Exiting do_mgmt_override\n");     
    return(0);
 }
 
@@ -4341,7 +4341,7 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
 
    char str[MAX_QUERY];
-         FIREWALL_DEBUG("Entering do_wan2self_ports\n");    
+        // FIREWALL_DEBUG("Entering do_wan2self_ports\n");    
    // since connection tracking is turned of if current_wan_ipaddr = 0.0.0.0
    // we need to explicitly allow dns
    if (!isWanReady) {
@@ -4461,7 +4461,7 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
        fprintf(filter_fp, "-A wan2self_ports -p tcp --dport 113 -j xlog_drop_wan2self\n"); // IDENT
        fprintf(filter_fp, "-A wan2self_ports -p icmp --icmp-type 8 -j xlog_drop_wan2self\n"); // DROP ICMP PING
    }
-         FIREWALL_DEBUG("Exiting do_wan2self_ports\n");    
+        // FIREWALL_DEBUG("Exiting do_wan2self_ports\n");    
    return(0);
 }
 /*
@@ -4474,7 +4474,7 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
  */
 static int do_wan2self_allow(FILE *filter_fp)
 {
-         FIREWALL_DEBUG("Entering do_wan2self_allow\n");    
+        // FIREWALL_DEBUG("Entering do_wan2self_allow\n");    
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    int i;
    //always allow ping if disable true static on firewall
@@ -4485,7 +4485,7 @@ static int do_wan2self_allow(FILE *filter_fp)
   }
 
 #endif
-	FIREWALL_DEBUG("Exiting do_wan2self_allow\n");	  
+//	FIREWALL_DEBUG("Exiting do_wan2self_allow\n");	  
 }
 /*
  *  Procedure     : do_wan2self
@@ -4501,13 +4501,13 @@ static int do_wan2self_allow(FILE *filter_fp)
  */
 static int do_wan2self(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
-         FIREWALL_DEBUG("Entering do_wan2self\n");    
+  //       FIREWALL_DEBUG("Entering do_wan2self\n");    
    do_wan2self_allow(filter_fp);
    do_wan2self_attack(filter_fp);
    do_wan2self_ports(mangle_fp, nat_fp, filter_fp);
    do_mgmt_override(nat_fp);
    do_remote_access_control(nat_fp, filter_fp, AF_INET);
-         FIREWALL_DEBUG("Exiting do_wan2self\n");    
+    //     FIREWALL_DEBUG("Exiting do_wan2self\n");    
    return(0);
 }
 
@@ -4784,7 +4784,7 @@ static int set_lan_access_restriction_stop(FILE *fp, int days, char *stop, int h
 {
    int eh;
    int em;
-    FIREWALL_DEBUG("Entering set_lan_access_restriction_stop\n");  
+   // FIREWALL_DEBUG("Entering set_lan_access_restriction_stop\n");  
    sscanf(stop, "%d:%d", &eh, &em);
 
    char str[MAX_QUERY];
@@ -4827,7 +4827,7 @@ static int set_lan_access_restriction_stop(FILE *fp, int days, char *stop, int h
    }
    *strp = '\0';
    fprintf(fp, " %s %s\n", str, "sysevent set firewall-restart");
-    FIREWALL_DEBUG("Exiting set_lan_access_restriction_stop\n");  
+   // FIREWALL_DEBUG("Exiting set_lan_access_restriction_stop\n");  
    return(0);
 }
 
