@@ -1049,6 +1049,7 @@ static void *sanity_thread_main(void *arg)
 
    unsigned int counter = 0;  // for SANITY debugging
    int modulo           = 30; // 5 mins    // for SANITY debugging
+   FILE *l_FsyseventFp = NULL;
 
    for ( ; ; ) {
       /*
@@ -1099,6 +1100,13 @@ static void *sanity_thread_main(void *arg)
             if (numLoops < waiting_pid[i].mark) {
                ulogf(ULOG_SYSTEM, UL_SYSEVENT, "Process (%d) (%s) runs too long. Killing it.", 
                      waiting_pid[i].pid, waiting_pid[i].name);
+               
+               //The below code is to log the processes (started by sysevent) 
+               //that are running for more than 300 sec.  
+               l_FsyseventFp = fopen("/rdklogs/logs/syseventd_kill.log", "a+"); 
+               fprintf(l_FsyseventFp, "Process (%d) (%s) runs for more than %d secs sending SIGKILL !!!", waiting_pid[i].pid, 
+                                      waiting_pid[i].name, MAX_ACTIVATION_BLOCKING_SECS);
+               fclose(l_FsyseventFp);
                kill(waiting_pid[i].pid, 9);
             }
          }
