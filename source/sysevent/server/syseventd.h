@@ -104,7 +104,9 @@ extern sem_t worker_sem;
 // the maximum number of seconds that an activated process can run
 // while blocking use of a thread. More than this and the process will 
 // be killed
-#define MAX_ACTIVATION_BLOCKING_SECS 150
+// This value is changed to 300 sec as some processes are taking time for completing.
+// e.g Multinet process is taking more time to finish in some of the field units.
+#define MAX_ACTIVATION_BLOCKING_SECS 300
 
 #define WORKER_THREAD_STACK_SIZE  65536
 
