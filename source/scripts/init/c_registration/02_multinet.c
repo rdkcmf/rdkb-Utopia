@@ -52,6 +52,8 @@ const char* SERVICE_NAME            = "multinet";
 
 #ifdef INTEL_PUMA7
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb6.sh";
+#elif (_COSA_BCM_ARM_)
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchxb6.sh";
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_exec";
 #endif
@@ -89,6 +91,14 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-down|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|"TUPLE_FLAG_EVENT,
     NULL };
+#elif (_COSA_BCM_ARM_)
+const char* SERVICE_CUSTOM_EVENTS[] = { 
+    "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_tchxb6.sh|"TUPLE_FLAG_EVENT,
+    NULL };
+
 #else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "multinet-syncNets|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
@@ -101,7 +111,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
-#ifndef INTEL_PUMA7
+#ifndef _COSA_BCM_ARM_ || ifndef INTEL_PUMA7
    system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
 #endif
 }
