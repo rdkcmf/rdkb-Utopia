@@ -414,6 +414,7 @@ static int wan_addr_set(struct serv_wan *sw)
 {
     char val[64];
     char state[16];
+    char mischandler_ready[10] ={0};
     int timo;
     FILE *fp;
     char ipaddr[16];
@@ -499,6 +500,15 @@ static int wan_addr_set(struct serv_wan *sw)
         }
         vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/ restart");
     } else {
+
+	sysevent_get(sw->sefd, sw->setok, "misc-ready-from-mischandler",mischandler_ready, sizeof(mischandler_ready));
+	if(strcmp(mischandler_ready,"true") == 0)
+	{
+		//only for first time
+		fprintf(stderr, "[%s] ready is set from misc handler. Doing gw_lan_refresh\n", PROG_NAME);
+		system("gw_lan_refresh ");
+		sysevent_set(sw->sefd, sw->setok, "misc-ready-from-mischandler", "false", 0);
+	}
         fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
