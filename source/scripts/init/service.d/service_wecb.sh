@@ -54,6 +54,7 @@ SERVICE_NAME="wecb"
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/ut_plat.sh
 
+export LOG4C_RCPATH=/rdklogger
 
 SELF_NAME="`basename $0`"
 
