@@ -101,7 +101,8 @@ if [ "1" = "$PROPAGATE_NS" ] || [ "1" = "$PROPOGATE_DOM" ] || [ "1" = "$SYSCFG_b
       fi
    fi
 fi
-
+#Disable this to alway pick lease value from syscfg.db
+DHCP_SLOW_START_NEEDED=0
 #DHCP_LEASE_TIME is the number of seconds or minutes or hours to give as a lease
 DHCP_LEASE_TIME=`syscfg get dhcp_lease_time`
 if [ "1" = "$DHCP_SLOW_START_NEEDED" ] ; then
