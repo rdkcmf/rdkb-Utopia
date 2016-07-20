@@ -983,3 +983,7 @@ $CloudPersonalizationURL=http://internet.xfinity.com
 $X_RDKCENTRAL-COM_LastReconnectReason=webpa_process_starts
 $X_RDKCENTRAL-COM_LastRebootReason=unknown
 $X_RDKCENTRAL-COM_LastRebootCounter=0
+
+# LogBackup parameters
+$logbackup_enable=true
+$logbackup_interval=30
