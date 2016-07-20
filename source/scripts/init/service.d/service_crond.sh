@@ -115,7 +115,7 @@ service_start ()
       echo "1 */6 * * *  /rdklogger/rxtx100.sh" >> $CRONTAB_FILE
       echo "2 */6 * * *  /usr/ccsp/tad/getSsidNames.sh" >> $CRONTAB_FILE
 #rdkb-4297 Runs on the 1st minute of every 12th hour
-      echo "1 */12 * * *  /fss/gw/usr/ccsp/pam/moca_status.sh" >> $CRONTAB_FILE
+      echo "1 */12 * * *  /usr/ccsp/pam/moca_status.sh" >> $CRONTAB_FILE
 
       #zqiu: monitor lan client traffic
       echo "* * * * *   /usr/ccsp/tad/rxtx_lan.sh" >> $CRONTAB_FILE
@@ -146,7 +146,7 @@ service_start ()
       echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE 
 
       # Generate Firewall statistics hourly 
-      echo "58 * * * * /fss/gw/usr/bin/GenFWLog" >> $CRONTAB_FILE 
+      echo "58 * * * * /usr/bin/GenFWLog" >> $CRONTAB_FILE 
 
       # add a ddns watchdog trigger to be run daily
       echo "#! /bin/sh" > /etc/cron/cron.daily/ddns_daily.sh
@@ -160,7 +160,7 @@ service_start ()
 
       # log mem and cpu info once an hour
       echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
-      echo "nice -n 19 sh /fss/gw/usr/ccsp/tad/log_mem_cpu_info.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
+      echo "nice -n 19 sh /usr/ccsp/tad/log_mem_cpu_info.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
       chmod 700 /etc/cron/cron.hourly/log_hourly.sh
    
       # add starting the process-monitor every minute
@@ -175,13 +175,19 @@ service_start ()
 
       # monitor syslog every 5 minute
       echo "#! /bin/sh" > /etc/cron/cron.every5minute/log_every5minute.sh
-      echo "/fss/gw/usr/sbin/log_handle.sh" >> /etc/cron/cron.every5minute/log_every5minute.sh
+      echo "/usr/sbin/log_handle.sh" >> /etc/cron/cron.every5minute/log_every5minute.sh
       chmod 700 /etc/cron/cron.every5minute/log_every5minute.sh
 
 	  #monitor start-misc in case wan is not online
       echo "#! /bin/sh" > /etc/cron/cron.everyminute/misc_handler.sh
-      echo "/fss/gw/etc/utopia/service.d/misc_handler.sh" >> /etc/cron/cron.everyminute/misc_handler.sh
+      echo "/etc/utopia/service.d/misc_handler.sh" >> /etc/cron/cron.everyminute/misc_handler.sh
       chmod 700 /etc/cron/cron.everyminute/misc_handler.sh
+
+	  #monitor start-misc in case wan is not online
+      echo "#! /bin/sh" > /etc/cron/cron.everyminute/selfheal_bootup.sh
+      echo "/usr/ccsp/tad/selfheal_bootup.sh" >> /etc/cron/cron.everyminute/selfheal_bootup.sh
+      chmod 700 /etc/cron/cron.everyminute/selfheal_bootup.sh
+
    fi
    
    # start the cron daemon
