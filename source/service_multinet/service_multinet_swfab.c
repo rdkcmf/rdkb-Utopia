@@ -91,8 +91,7 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
     List trunkPorts = {0};
     ListIterator portIter, matchIter;
     PListItem item;
-    PSWFabHAL hal = NULL;;
-	BOOL l_bHalCalled = FALSE;
+    PSWFabHAL hal = NULL;
     
     MNET_DEBUG("swfab_configVlan, net %d, numMembers %d, add: %hhu\n" COMMA net->inst COMMA members->numMembers COMMA add)
     
@@ -150,7 +149,8 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
     
     
     //Now iterate through the ports, and aggregate commands to each hal into a single call
-    for (i = 0; i < numConfigs; ++i) {
+    for (i = 0; i < numConfigs; ++i) 
+	{
         if (portConfigs[i].handled) continue;
         
         numArgs = 0;
@@ -168,21 +168,12 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
     	        portConfigs[j].handled =1;
         	}
         	MNET_DEBUG("swfab_configVlan, Calling configVlan on hal %d. numArgs %d\n" COMMA hal->id COMMA numArgs)
-			l_bHalCalled = TRUE;
 	        hal->configVlan(args, numArgs, add);
     	    MNET_DEBUG("swfab_configVlan, Hal %d returned.\n" COMMA hal->id)
 		}
-		else if (NULL == hal || FALSE == l_bHalCalled)
-		{			
-			if (!strncmp(portConfigs[i].config.platPort->portID, "l2sd0", 5))				
-			{
-				MNET_DEBUG("swfab_configVlan, hal pointer is NULL create l2sd0 directly\n");
-				args[numArgs].portID = portConfigs[i].config.platPort->portID;
-                args[numArgs].hints.network = net;
-                args[numArgs++].vidParams = portConfigs[i].config.vidParams;
-				
-				linuxIfConfigVlan(args, 1, add); //for l2sd0.100 / l2sd0.101 creation	
-			}
+	    else
+		{
+			MNET_DEBUG("hal is NULL continue to next port\n")
 			continue;
 		}
     }    

@@ -289,7 +289,14 @@ case "$1" in
 		NETID=$2
         VID=$3
 	
-		PORTS_ADD="${4}"
+        for i in ${4}; do
+            if [ x"-t" = x"$i" -o x = x"$i" ]; then
+                echo "Not adding $i to PORTS_ADD" 
+            else
+                PORTS_ADD="${PORTS_ADD} $i"
+            fi
+            shift
+        done
         PORTS_EXT_ADD=""
         
         #DEBUG
