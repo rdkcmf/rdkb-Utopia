@@ -52,7 +52,7 @@
 #ifndef _SYSCFG_H_
 #define _SYSCFG_H_
 
-#define SYSCFG_SZ (32 * (1024))       /* max file size - 32kb */
+#define SYSCFG_SZ (50 * (1024))       /* max file size - 50kb */
 
 #define NS_SEP "::"
 #define NS_SEP_SZ 2

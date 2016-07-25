@@ -66,17 +66,17 @@
 #define SYSCFG_SHM_PROJID    237
 /*
  * shared memory region size - multiple of 4K PAGE_SIZE. 
- * TODO - currently set to 64kb. make it expandable
+ * TODO - currently set to 128kb. make it expandable
  */
 #ifdef PAGE_SIZE
-   #define SYSCFG_SHM_SIZE      (16*PAGE_SIZE)
+   #define SYSCFG_SHM_SIZE      (32*PAGE_SIZE)
 #else
-   #define SYSCFG_SHM_SIZE      (16*getpagesize())
+   #define SYSCFG_SHM_SIZE      (32*getpagesize())
 #endif
 
 
 #define SYSCFG_STORE_PATH_SZ  128
-#define DEFAULT_MAX_FILE_SZ   (32*1024)
+#define DEFAULT_MAX_FILE_SZ   (50*1024)
 
 /*
  * Number of free table buckets
