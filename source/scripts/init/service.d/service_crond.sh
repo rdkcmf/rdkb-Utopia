@@ -161,6 +161,7 @@ service_start ()
       # log mem and cpu info once an hour
       echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
       echo "nice -n 19 sh /usr/ccsp/tad/log_mem_cpu_info.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
+      echo "sh /usr/ccsp/tad/uptime.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
       chmod 700 /etc/cron/cron.hourly/log_hourly.sh
    
       # add starting the process-monitor every minute
