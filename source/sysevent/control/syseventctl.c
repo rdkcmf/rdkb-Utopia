@@ -593,8 +593,7 @@ int main(int argc, char **argv)
    server_port = SE_SERVER_WELL_KNOWN_PORT;
    use_tcp = 0;
 
-   /*speed the sysevent command */
-   nice(-20);
+   //nice value of -20 is removed as syseventd should run with normal priority
 
    // parse commandline for options and readjust defaults if requested
    int next_arg = get_options(argc, argv);

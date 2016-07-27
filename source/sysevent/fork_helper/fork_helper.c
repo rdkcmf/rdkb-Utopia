@@ -411,8 +411,7 @@ static pid_t _eval(char *const prog, char *argv[], pid_t *pid)
       case(0):
       {
          /* child */
-         /*When start execution(shell..), we don't speed them. Adjust back the priority.*/
-         nice(+20);
+         //nice value of 20 is removed as syseventd should run with normal priority
 
          /*
           * redirect output from child process
@@ -735,9 +734,7 @@ int main(int argc, char **argv)
 {
    initialize_system();
 
-   /*speed the whole process to handle message*/
-   nice(-20);
-
+   //nice value of -20 is removed as syseventd should run with normal priority
    if (2 > argc) {
      ulog(ULOG_SYSTEM, UL_SYSEVENT, "Error: syseventd fork helper called without pipe. Aborting");
      return(-1);
