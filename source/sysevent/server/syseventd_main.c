@@ -108,7 +108,7 @@ int debug_num_accepts;
 /*
  * file where sysevent daemon pid is kept
  */
-#define SE_SERVER_PID_FILE "/tmp/var/run/syseventd.pid"
+#define SE_SERVER_PID_FILE "/var/run/syseventd.pid"
 
 
 #define LISTEN_IP_ADDR     INADDR_ANY
