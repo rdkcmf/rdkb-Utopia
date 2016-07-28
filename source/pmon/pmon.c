@@ -101,16 +101,18 @@ static void str_trim (char **p)
 /*
  * Returns 1 if process is found, 0 otherwise
  */
-static int find_process (const char *proc_name)
+static int find_process (const char *proc_name,const char *pidfile)
 {
     struct dirent *pentry;
-    char fname[64], buf[256], *name;
+    char fname[64], buf[256], *name , pidFname[64] = {0}, pid[16] = {0};
+    char *pos;
 
-    DIR *pdir = opendir("/proc");
-    if (NULL == pdir) {
-        return errno;
-    }
+  //  DIR *pdir = opendir("/proc");
+   // if (NULL == pdir) {
+     //   return errno;
+   // }
 
+   #if 0
     while ((pentry = readdir(pdir))) {
         if (!strcmp(pentry->d_name, ".") ||
             !strcmp(pentry->d_name, "..")) {
@@ -120,24 +122,41 @@ static int find_process (const char *proc_name)
         if (!str_isdigit(pentry->d_name)) {
             continue;
         }
+
+#endif
+
+ snprintf(pidFname, sizeof(pidFname), "%s",pidfile);
+        FILE *pidFp = fopen(pidFname, "r");
+        if(pidFp) {
+        	fgets(pid, sizeof(pid), pidFp);
+
+		 if((pos = strrchr(pid, '\n')) != NULL)
+        *pos = '\0';
+        	fclose(pidFp);
+        } else {
+        	return errno;
+        }
+
         // printf("%s", pentry->d_name);
-        snprintf(fname, sizeof(fname), "/proc/%s/cmdline", pentry->d_name);
+        snprintf(fname, sizeof(fname), "/proc/%s/cmdline",pid);
+       
+	
         FILE *fp = fopen(fname, "r");
         if (fp) {
             fgets(buf, sizeof(buf), fp);
             fclose(fp);
             name = strrchr(buf, '/');
             name = (NULL == name) ? buf : (name+1);
-            // printf("-%s ", name);
+            printf("name is -%s ", name);
             if (0 == strcmp(name, proc_name)) {
-                closedir(pdir);
+                //closedir(pdir);
                 /* process found */
                 return 1; 
             }
         }
-    }
+  //  }
 
-    closedir(pdir);
+   // closedir(pdir);
     /* process not found */
     return 0; 
 }
@@ -158,12 +177,17 @@ static int proc_mon (const char *proc_name, const char *pid_file, const char *cm
 {
     int pid;
 
-    if (find_process(proc_name)) {
+    char syscmd[350] = {0} ;
+    if (find_process(proc_name,pid_file)) {
         // process exists, nothing to do
         printf("pmon: %s process exists, nothing to do\n", proc_name);
         return 0;
     }
 
+    snprintf(syscmd, sizeof(syscmd), "echo \" RDKB_PROCESS_CRASHED : %s is not running, need restart \" >> /rdklogs/logs/SelfHeal.txt.0 ",proc_name);
+	system(syscmd);
+
+    
     printf("pmon: attempting to restart '%s' using '%s'\n", proc_name, cmd);
     if (pid_file) {
         printf("pmon: removing pid file %s\n", pid_file);

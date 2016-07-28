@@ -164,10 +164,10 @@ service_start ()
       echo "sh /usr/ccsp/tad/uptime.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
       chmod 700 /etc/cron/cron.hourly/log_hourly.sh
    
-      # add starting the process-monitor every minute
-      echo "#! /bin/sh" > /etc/cron/cron.everyminute/pmon_everyminute.sh
-      echo "/etc/utopia/service.d/pmon.sh" >> /etc/cron/cron.everyminute/pmon_everyminute.sh
-      chmod 700 /etc/cron/cron.everyminute/pmon_everyminute.sh
+      # add starting the process-monitor every 5 minute
+      echo "#! /bin/sh" > /etc/cron/cron.every5minute/pmon_every5minute.sh
+      echo "nice -n 19 sh /etc/utopia/service.d/pmon.sh" >> /etc/cron/cron.every5minute/pmon_every5minute.sh
+      chmod 700 /etc/cron/cron.every5minute/pmon_every5minute.sh
 
       # add a sysevent tick every minute
       echo "#! /bin/sh" > /etc/cron/cron.everyminute/sysevent_tick.sh
