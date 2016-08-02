@@ -396,10 +396,6 @@ dhcp_server_start ()
               #then
               	echo "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh_from_dhcpscript:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
               	gw_lan_refresh &
-                if [ ! -f "/tmp/gw_lan_refresh" ]; then
-                    echo "gw_lan_refresh is called for the first time trigger cosa_start_rem.sh execution"
-                    touch /tmp/gw_lan_refresh
-                fi
               #	echo "lan_not_restart NOT found! Restart lan!"
 	      #fi
 	    fi
@@ -407,6 +403,11 @@ dhcp_server_start ()
           rm -f /var/tmp/lan_not_restart
           echo "lan_not_restart found! Don't restart lan!"
      fi
+   fi
+
+   if [ ! -f "/tmp/dhcp_server_start" ]; then
+       echo "dhcp_server_start is called for the first time trigger cosa_start_rem.sh execution"
+       touch /tmp/dhcp_server_start
    fi
 
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
