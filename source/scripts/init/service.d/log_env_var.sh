@@ -7,15 +7,23 @@ else
 fi
 
 LOG_UPLOAD_FOLDER="/nvram"
-RDK_LOGGER_PATH="/fss/gw/rdklogger"
+RDK_LOGGER_PATH="/rdklogger"
 LOG_PATH="$LOG_FOLDER/logs/"
 
+ATOM_LOG_PATH="/rdklogs/logs/"
+ATOM_IP=""
 backupenable=`syscfg get logbackup_enable`
 isNvram2Supported="no"
 if [ -f /etc/device.properties ]
 then
    isNvram2Supported=`cat /etc/device.properties | grep NVRAM2_SUPPORTED | cut -f2 -d=`
+   atom_sync=`cat /etc/device.properties | grep ATOM_SYNC | cut -f2 -d=` 
 fi
+
+if [ "$atom_sync" = "yes" ]
+then
+   ATOM_IP=`cat /etc/device.properties | grep ATOM_IP | cut -f2 -d=` 
+fi	
 
 #if [ "$isNvram2Supported" = "yes" ] && [ "$backupenable" = "true" ]
 #then
