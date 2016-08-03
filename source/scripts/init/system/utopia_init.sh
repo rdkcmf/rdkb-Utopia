@@ -371,3 +371,5 @@ vconfig add l2sd0 106
 ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.106 lookup erouter
 
+echo "[utopia][init] completed creating utopia_inited flag"
+touch /tmp/utopia_inited
