@@ -16,16 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = service_wan
+AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_
 
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils
+ACLOCAL_AMFLAGS = -I m4
 
-AM_LDFLAGS =  -lpthread -lz
+bin_PROGRAMS = rpcclient
 
-service_wan_SOURCES = service_wan.c
+rpcclient_SOURCES = command.c rpc_specification_client.c rpc_specification_clnt.c rpc_specification_xdr.c
 
-service_wan_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
-                    $(top_builddir)/source/services/lib/libsrvmgr.la \
-                    $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                    $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                    $(top_builddir)/source/ulog/libulog.la
+rpcclient_LDFLAGS =  -lpthread -lz -lc
+

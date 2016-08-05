@@ -82,6 +82,10 @@ AC_CONFIG_FILES(
 	source/service_multinet/Makefile
 	source/service_routed/Makefile
 	source/util/Makefile
+	source/util/rpc/Makefile
+    source/util/rpc/client/Makefile
+    source/util/rpc/server/Makefile
+    source/util/utils/Makefile
 	source/trigger/Makefile
         source/scripts/Makefile
         source/scripts/init/Makefile

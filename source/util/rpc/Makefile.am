@@ -16,16 +16,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = service_wan
-
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils
-
-AM_LDFLAGS =  -lpthread -lz
-
-service_wan_SOURCES = service_wan.c
-
-service_wan_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
-                    $(top_builddir)/source/services/lib/libsrvmgr.la \
-                    $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                    $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                    $(top_builddir)/source/ulog/libulog.la
+SUBDIRS = client server

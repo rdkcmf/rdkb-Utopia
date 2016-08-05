@@ -22,7 +22,7 @@ AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 AM_LDFLAGS = -lpthread -lz \
-		$(top_builddir)/source/util/libutopiautil.la \
+		$(top_builddir)/source/util/utils/libutopiautil.la \
                 $(top_builddir)/source/services/lib/libsrvmgr.la \
                 $(top_builddir)/source/sysevent/lib/libsysevent.la \
                 $(top_builddir)/source/syscfg/lib/libsyscfg.la \
@@ -30,7 +30,7 @@ AM_LDFLAGS = -lpthread -lz \
 
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/services/lib
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/services/lib
 
 26_potd_SOURCES = 26_potd.c
 15_switchpmon_SOURCES = 15_switchpmon.c
