@@ -6053,7 +6053,7 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
 	}
 	else
 	{
-		do_parcon_mgmt_device(fp,iptype, NULL);
+		do_parcon_mgmt_device(nat_fp,iptype, NULL);
 	}
 #ifndef CONFIG_CISCO_FEATURE_CISCOCONNECT
     do_parcon_mgmt_site_keywd(fp,nat_fp, iptype, cron_fp);
@@ -9016,10 +9016,10 @@ static void do_ipv6_nat_table(FILE* fp)
    fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:443\n",IPv6);
    fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:80\n",IPv6);
    
-   do_parental_control(fp,NULL, 6);
-   fprintf(fp, "COMMIT\n");
     FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
 }
+
+static void do_ipv6_filter_table(FILE *fp);
 
 /*
  ****************************************************************
@@ -9058,15 +9058,121 @@ int prepare_ipv6_firewall(const char *fw_file)
    if (wan6_ifname[0] == '\0') 
        strcpy(wan6_ifname, current_wan_ifname);
 
+	int ret=0;
+	FILE *raw_fp=NULL;
+	FILE *mangle_fp=NULL;
+	FILE *filter_fp=NULL;
+	FILE *nat_fp=NULL;
+    /*
+    * We use 4 files to store the intermediary firewall statements.
+    * One file is for raw, another is for mangle, another is for 
+    * nat tables statements, and the other is for filter statements.
+    */
+	pid_t ourpid = getpid();
+	char  fname[50];
+	
+	snprintf(fname, sizeof(fname), "/tmp/raw6_%x", ourpid);
+	raw_fp = fopen(fname, "w+");
+	if (NULL == raw_fp) {
+		ret=-2;
+		goto clean_up_files;
+	}
+	
+	snprintf(fname, sizeof(fname), "/tmp/mangle6_%x", ourpid);
+	mangle_fp = fopen(fname, "w+");
+	if (NULL == mangle_fp) {
+		ret=-2;
+		goto clean_up_files;
+	}
+	snprintf(fname, sizeof(fname), "/tmp/filter6_%x", ourpid);
+	filter_fp = fopen(fname, "w+");
+	if (NULL == filter_fp) {
+		ret=-2;
+		goto clean_up_files;
+	}
+	snprintf(fname, sizeof(fname), "/tmp/nat6_%x", ourpid);
+	nat_fp = fopen(fname, "w+");
+	if (NULL == nat_fp) {
+		ret=-2;
+		goto clean_up_files;
+	}
+
 #ifdef INTEL_PUMA7
-   fprintf(fp, "*raw\n");
-   do_raw_table_puma7(fp);
-   fprintf(fp, "COMMIT\n");
+	fprintf(raw_fp, "*raw\n");
+	do_raw_table_puma7(raw_fp);
 #endif
    
-   do_ipv6_sn_filter(fp);
-   do_ipv6_nat_table(fp);
+	do_ipv6_sn_filter(mangle_fp);
+	do_ipv6_nat_table(nat_fp);
+	
+	do_ipv6_filter_table(filter_fp);
+	
+	do_parental_control(filter_fp,nat_fp, 6);
+	
+	/*add rules before this*/
 
+	fprintf(raw_fp, "COMMIT\n");
+	fprintf(mangle_fp, "COMMIT\n");
+	fprintf(nat_fp, "COMMIT\n");
+	fprintf(filter_fp, "COMMIT\n");
+	
+	rewind(raw_fp);
+	rewind(mangle_fp);
+	rewind(nat_fp);
+	rewind(filter_fp);
+	char string[MAX_QUERY]={0};
+	char *strp=NULL;
+	/*
+	* The raw table is before conntracking and is thus expensive
+	* So we dont set it up unless we actually used it
+	*/
+	if (isRawTableUsed) {
+		while (NULL != (strp = fgets(string, MAX_QUERY, raw_fp)) ) {
+		   fprintf(fp, "%s", string);
+		}
+	} else {
+		fprintf(fp, "*raw\n-F\nCOMMIT\n");
+	}
+	while (NULL != (strp = fgets(string, MAX_QUERY, mangle_fp)) ) {
+		fprintf(fp, "%s", string);
+	}
+	while (NULL != (strp = fgets(string, MAX_QUERY, nat_fp)) ) {
+		fprintf(fp, "%s", string);
+	}
+	while (NULL != (strp = fgets(string, MAX_QUERY, filter_fp)) ) {
+		fprintf(fp, "%s", string);
+	}
+
+clean_up_files:	 
+	if(fp)
+		fclose(fp);
+	if(raw_fp) {
+		fclose(raw_fp);
+		snprintf(fname, sizeof(fname), "/tmp/raw6_%x", ourpid);
+	 	unlink(fname);
+	}
+	if(mangle_fp) {
+		fclose(mangle_fp);
+		snprintf(fname, sizeof(fname), "/tmp/mangle6_%x", ourpid);
+	 	unlink(fname);
+	}
+	if(nat_fp) {
+		fclose(nat_fp);
+		snprintf(fname, sizeof(fname), "/tmp/filter6_%x", ourpid);
+	 	unlink(fname);
+	}
+	if(filter_fp) {
+		fclose(filter_fp);
+		snprintf(fname, sizeof(fname), "/tmp/nat6_%x", ourpid);
+		unlink(fname);
+	}
+	FIREWALL_DEBUG("Exiting prepare_ipv6_firewall \n"); 
+	return ret;
+}
+
+static void do_ipv6_filter_table(FILE *fp){
+	FIREWALL_DEBUG("Inside do_ipv6_filter_table \n");
+	
    fprintf(fp, "*filter\n");
    fprintf(fp, ":INPUT ACCEPT [0:0]\n");
    fprintf(fp, ":FORWARD ACCEPT [0:0]\n");
@@ -9571,9 +9677,6 @@ v6GPFirewallRuleNext:
 
 end_of_ipv6_firewall:
 
-   fprintf(fp, "COMMIT\n");
-
-   fclose(fp);
       FIREWALL_DEBUG("Exiting prepare_ipv6_firewall \n");
    return(0);
 }
