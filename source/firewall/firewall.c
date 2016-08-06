@@ -8988,7 +8988,6 @@ static void do_ipv6_sn_filter(FILE* fp) {
 		//fprintf(fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");	
 	//zqiu: XCONF <<
 	
-    fprintf(fp, "COMMIT\n");
      FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
 static void do_ipv6_nat_table(FILE* fp)
