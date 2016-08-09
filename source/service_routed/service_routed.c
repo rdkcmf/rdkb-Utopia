@@ -118,8 +118,60 @@ static int daemon_stop(const char *pid_file, const char *prog)
     return 0;
 }
 
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
+{
+    char active_insts[32] = {0};
+    char lan_pd_if[128] = {0};
+    char *p = NULL;
+    int i = 0;
+    char if_name[16] = {0};
+    char buf[64] = {0};
+
+    syscfg_get(NULL, "lan_pd_interfaces", lan_pd_if, sizeof(lan_pd_if));
+    if (lan_pd_if[0] == '\0') {
+        *num = 0;
+        return *num;
+    }
+
+    sysevent_get(sefd, setok, "multinet-instances", active_insts, sizeof(active_insts));
+    p = strtok(active_insts, " ");
+
+    while (p != NULL) {
+        snprintf(buf, sizeof(buf), "multinet_%s-name", p);
+        sysevent_get(sefd, setok, buf, if_name, sizeof(if_name));
+        if (if_name[0] != '\0' && strstr(lan_pd_if, if_name)) { /*active interface and need prefix delegation*/
+            insts[i] = atoi(p);
+            i++;
+        }
+
+        p = strtok(NULL, " ");
+    }
+
+    *num = i;
+
+    return *num;
+}
+#endif
+
 static int route_set(struct serv_routed *sr)
 {
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+    unsigned int l2_insts[4] = {0};
+    unsigned int enabled_iface_num = 0;
+    char evt_name[64] = {0};
+    char lan_if[32] = {0};
+    int i;
+
+    get_active_lanif(sr->sefd, sr->setok, l2_insts, &enabled_iface_num);
+    for (i = 0; i < enabled_iface_num; i++) {
+        snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
+        sysevent_get(sr->sefd, sr->setok, evt_name, lan_if, sizeof(lan_if));
+
+        vsystem("ip -6 rule add iif %s table all_lans", lan_if);
+        vsystem("ip -6 rule add iif %s table erouter", lan_if);
+    }
+#endif
     if (vsystem("ip -6 rule add iif brlan0 table erouter;"
             "gw=$(ip -6 route show default dev erouter0 | awk '/via/ {print $3}');"
             "if [ \"$gw\" != \"\" ]; then"
@@ -131,10 +183,26 @@ static int route_set(struct serv_routed *sr)
 
 static int route_unset(struct serv_routed *sr)
 {
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+    unsigned int l2_insts[4] = {0};
+    unsigned int enabled_iface_num = 0;
+    char evt_name[64] = {0};
+    char lan_if[32] = {0};
+    int i;
+
+    get_active_lanif(sr->sefd, sr->setok, l2_insts, &enabled_iface_num);
+    for (i = 0; i < enabled_iface_num; i++) {
+        snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
+        sysevent_get(sr->sefd, sr->setok, evt_name, lan_if, sizeof(lan_if));
+
+        vsystem("ip -6 rule del iif %s table all_lans", lan_if);
+        vsystem("ip -6 rule del iif %s table erouter", lan_if);
+    }
+#else
     if (vsystem("ip -6 route del default dev erouter0 table erouter"
             " && ip -6 rule del iif brlan0 table erouter") != 0)
         return -1;
-
+#endif
     return 0;
 }
 
@@ -143,6 +211,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     FILE *fp;
     char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16];
     char name_servs[1024] = {0};
+    char dnssl[2560] = {0};
     char prefix[64], orig_prefix[64], lan_addr[64];
     char preferred_lft[16], valid_lft[16];
     char m_flag[16], o_flag[16];
@@ -153,7 +222,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     int iresCode = 0;
     char responseCode[10];
     int inCaptivePortal = 0;
-    int nopt, i;
+    int nopt, i, j;
     char lan_if[IFNAMSIZ];
     char *start, *tok, *sp;
     static const char *zebra_conf_base = \
@@ -163,6 +232,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
         "!log stdout\n"
         "log file /var/log/zebra.log errors\n"
         "table 255\n";
+    unsigned int l2_insts[4] = {0};
+    unsigned int enabled_iface_num = 0;
+    char evt_name[64] = {0};
 
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
@@ -181,18 +253,33 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fclose(fp);
         return 0;
     }
-
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+    sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
+    sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
+    sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
+#else
     sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
+    syscfg_get(NULL, "lan_ifname", lan_if, sizeof(lan_if));
+#endif
     if (atoi(preferred_lft) <= 0)
         snprintf(preferred_lft, sizeof(preferred_lft), "300");
     if (atoi(valid_lft) <= 0)
         snprintf(valid_lft, sizeof(valid_lft), "300");
-    syscfg_get(NULL, "lan_ifname", lan_if, sizeof(lan_if));
 
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+    get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
+    for (i = 0; i < enabled_iface_num; i++) {
+        snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
+        sysevent_get(sefd, setok, evt_name, lan_if, sizeof(lan_if));
+        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", lan_if);
+        sysevent_get(sefd, setok, evt_name, prefix, sizeof(prefix));
+        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", lan_if);
+        sysevent_get(sefd, setok, evt_name, lan_addr, sizeof(lan_addr));
+#endif
     fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
             prefix, orig_prefix, lan_addr);
 
@@ -246,9 +333,17 @@ static int gen_zebra_conf(int sefd, token_t setok)
 	}
 
         /* static IPv6 DNS */
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION          
+            snprintf(rec, sizeof(rec), "dhcpv6spool%d0::optionnumber", i);
+            syscfg_get(NULL, rec, val, sizeof(val));
+#else
         syscfg_get(NULL, "dhcpv6spool00::optionnumber", val, sizeof(val));
+#endif
         nopt = atoi(val);
-        for (i = 0; i < nopt; i++) {
+        for (j = 0; j < nopt; j++) {
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION              
+             memset(name_servs, 0, sizeof(name_servs));
+#endif
             snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::bEnabled", i);
             syscfg_get(NULL, rec, val, sizeof(val));
             if (atoi(val) != 1)
@@ -291,7 +386,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
 
     fprintf(fp, "interface %s\n", lan_if);
     fprintf(fp, "   ip irdp multicast\n");
-
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION        
+    }
+#endif
     fclose(fp);
     return 0;
 }
@@ -364,7 +461,7 @@ static int rip_start(struct serv_routed *sr)
         return -1;
     }
 
-    sysevent_get(sr->sefd, sr->setok, "rip_enabled", enable, sizeof(enable));
+    syscfg_get(NULL, "rip_enabled", enable, sizeof(enable));
     if (strcmp(enable, "1") != 0) {
         fprintf(stderr, "%s: RIP not enabled\n", __FUNCTION__);
         return 0;

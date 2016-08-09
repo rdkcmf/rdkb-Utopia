@@ -81,6 +81,7 @@ AC_CONFIG_FILES(
 	source/service_wan/Makefile
 	source/service_multinet/Makefile
 	source/service_routed/Makefile
+        source/service_ipv6/Makefile
 	source/util/Makefile
 	source/util/rpc/Makefile
     source/util/rpc/client/Makefile

@@ -51,6 +51,18 @@
 
 const char* SERVICE_NAME            = "routed";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_routed.sh";
+
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+const char* SERVICE_CUSTOM_EVENTS[] = { 
+                                        "wan-status|/etc/utopia/service.d/service_routed.sh",
+                                        "lan-status|/etc/utopia/service.d/service_routed.sh",
+                                        "dhcpv6_option_changed|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        "ripd-restart|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        "zebra-restart|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        "staticroute-restart|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        NULL
+                                      };
+#else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "wan-status|/etc/utopia/service.d/service_routed.sh",
                                         "lan-status|/etc/utopia/service.d/service_routed.sh",
@@ -61,6 +73,8 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "staticroute-restart|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
                                         NULL
                                       };
+
+#endif
 
 void srv_register(void) {
    // not sure is the rm is necessary anymore

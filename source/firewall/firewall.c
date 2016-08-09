@@ -433,6 +433,12 @@ NOT_DEF:
 #endif
 #define FW_DEBUG 1
 
+#ifdef _COSA_FOR_BCI_
+#define BRIDGE_MODE_IP_ADDRESS "10.1.10.1"
+#else
+#define BRIDGE_MODE_IP_ADDRESS "10.0.0.1"
+#endif
+
 FILE *firewallfp = NULL;
 
 //#define CONFIG_BUILD_TRIGGER 1
@@ -4489,8 +4495,50 @@ static int do_wan2self_allow(FILE *filter_fp)
   }
 
 #endif
-//	FIREWALL_DEBUG("Exiting do_wan2self_allow\n");	  
 }
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+static int prepare_ipv6_multinet(FILE *fp) 
+{    
+    char active_insts[32] = {0};
+    char lan_pd_if[128] = {0};
+    char *p = NULL;
+    char iface_name[16] = {0};
+    char iface_ipv6addr[48] = {0};
+    char buf[64] = {0};
+
+    syscfg_get(NULL, "lan_pd_interfaces", lan_pd_if, sizeof(lan_pd_if));
+    if (lan_pd_if[0] == '\0') {
+        return -1;
+    }
+
+    sysevent_get(sysevent_fd, sysevent_token, "multinet-instances", active_insts, sizeof(active_insts));
+    p = strtok(active_insts, " ");
+
+    do {
+        snprintf(buf, sizeof(buf), "multinet_%s-name", p);
+        sysevent_get(sysevent_fd, sysevent_token, buf, iface_name, sizeof(iface_name));
+        if (strcmp(iface_name, lan_ifname) == 0) /*if primary lan, skip*/
+            continue;
+
+        if (strstr(lan_pd_if, iface_name)) { /*active interface and also ipv6 enable*/
+            /*
+            snprintf(buf, sizeof(buf), "ipv6_%s-addr", iface_name);
+            sysevent_get(sysevent_fd, sysevent_token, buf, iface_ipv6addr, sizeof(iface_ipv6addr));
+            */
+
+            fprintf(fp, "-A INPUT -i %s -j ACCEPT\n", iface_name);
+            fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", iface_name, current_wan_ifname);
+            fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", iface_name, ecm_wan_ifname);
+            fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", current_wan_ifname, iface_name);
+            fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", ecm_wan_ifname, iface_name);
+        }
+
+    } while ((p = strtok(NULL, " ")) != NULL);
+
+    return 0;
+
+}
+#endif
 /*
  *  Procedure     : do_wan2self
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -8734,7 +8782,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
 #if defined(_COSA_BCM_MIPS_)
    if(isBridgeMode) {       
-       fprintf(nat_fp, "-A PREROUTING -d 10.0.0.1/32 -i %s -p tcp -j DNAT --to-destination %s\n", current_wan_ifname, lan0_ipaddr);
+       fprintf(nat_fp, "-A PREROUTING -d %s/32 -i %s -p tcp -j DNAT --to-destination %s\n", BRIDGE_MODE_IP_ADDRESS, current_wan_ifname, lan0_ipaddr);
    }
 #endif
    do_port_forwarding(nat_fp, NULL);
@@ -9288,6 +9336,11 @@ static void do_ipv6_filter_table(FILE *fp){
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", emta_wan_ifname); // Echo request
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", emta_wan_ifname); // Echo reply
 
+    #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+      /*Add a simple logic here to make traffic allowed for lan interfaces
+       * exclude primary lan*/
+      prepare_ipv6_multinet(fp);
+    #endif
       /* not allow ping wan0 from brlan0 */
       int i;
       for(i = 0; i < ecm_wan_ipv6_num; i++){

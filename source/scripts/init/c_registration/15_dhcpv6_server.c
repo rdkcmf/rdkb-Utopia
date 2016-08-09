@@ -50,6 +50,13 @@
 
 const char* SERVICE_NAME            = "dhcpv6_server";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_dhcpv6_server.sh";
+
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+const char* SERVICE_CUSTOM_EVENTS[] = { 
+                                        "dhcpv6_option_changed|/etc/utopia/service.d/service_dhcpv6_server.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        NULL
+                                      };
+#else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "lan-status|/etc/utopia/service.d/service_dhcpv6_server.sh",
                                         "ipv6_nameserver|/etc/utopia/service.d/service_dhcpv6_server.sh",
@@ -59,6 +66,8 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "current_lan_ipv6address|/etc/utopia/service.d/service_dhcpv6_server.sh",
                                         NULL
                                       };
+#endif                                      
+                                   
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
