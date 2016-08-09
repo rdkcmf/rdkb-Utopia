@@ -16,7 +16,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-lib_LTLIBRARIES = libutopiautil.la
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util
-AM_LDFLAGS =  -lpthread -lz
-libutopiautil_la_SOURCES = util.c
+SUBDIRS = rpc utils
