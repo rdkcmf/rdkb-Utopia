@@ -987,3 +987,6 @@ $X_RDKCENTRAL-COM_LastRebootCounter=0
 # LogBackup parameters
 $logbackup_enable=true
 $logbackup_interval=30
+
+#Minimum memory threshold value
+$MinMemoryThreshold_Value=10
