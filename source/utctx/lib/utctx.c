@@ -117,6 +117,12 @@ typedef enum _Utopia_Type
 /* MACRO for determining if event 'z' is in bitmask 'y' */
 #define Utopia_EventSet(y,z) ((y & z) == z)
 
+/* RDKB-7126, CID-33554, out of bound access.
+** Macro for defining maximum size of "g_Utopia_Events" 
+** if a new event added require to increase the define.
+*/
+#define MAX_UTOPIA_EVENTS  22
+
 static struct
 {
     char* pszEventKey;
@@ -124,7 +130,7 @@ static struct
     char* pszWaitValue; /* Value of the sysevent to wait for */
     int   iWaitTimeout; /* Number of seconds to wait for change */
 }
-    g_Utopia_Events[] =
+    g_Utopia_Events[MAX_UTOPIA_EVENTS] =
 {
     /* Utopia_Event__NONE__ */             { 0,                      0, 0, 0 },
     /* Utopia_Event_Cron_Restart */        { "crond-restart",        0, 0, 0 },
@@ -1118,7 +1124,25 @@ static void s_UtopiaEvent_Trigger(UtopiaContext* pUtopiaCtx)
                 if (((Utopia_Event)i != Utopia_Event_DHCPServer_Restart ||
                      !Utopia_EventSet(pUtopiaCtx->bfEvents, Utopia_Event_LAN_Restart)))
                 {
-                    int ix = s_UtopiaEvent_EnumToIndex((Utopia_Event)i);
+                    unsigned int ix = s_UtopiaEvent_EnumToIndex((Utopia_Event)i);
+
+                    /* RDKB-7126, CID-33554, Out-of-bounds read
+                    ** Perform boundary check before passing index.
+                    ** this is to limit array access.defined for "g_Utopia_Events"
+                    ** with maximum "MAX_UTOPIA_EVENTS"
+                    */
+                    if(ix > MAX_UTOPIA_EVENTS-1)
+                    {
+                        ix = MAX_UTOPIA_EVENTS-1;
+                    }
+                    else if(ix < 0)
+                    {
+                        ix = 0;
+                    }
+                    else
+                    {
+                        ix =ix;
+                    }
 
                     /* Set the event notification if we need to */
                     if (g_Utopia_Events[ix].pszWaitKey != 0)
