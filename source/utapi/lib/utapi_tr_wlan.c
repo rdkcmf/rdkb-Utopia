@@ -214,6 +214,7 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127,CID-32897, free unused resources before exit */
         return retVal;
     }
     ptr = head;
@@ -289,6 +290,7 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127,CID-32897, free unused resources before exit */
         return retVal;
     }
     ptr = head;
@@ -709,6 +711,7 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127,CID-33277, free unused resource before exit*/
         return retVal;
     }
     ptr = head;
@@ -776,6 +779,7 @@ int Utopia_GetWifiRadioStats(unsigned long instanceNum, void *stats)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127, CID-33224, Free unused resource before exit*/
         return retVal;
     }
     ptr = head;
@@ -999,6 +1003,7 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127,CID-33259, free unused resource before exit*/
         return retVal;
     }
     ptr = head;
@@ -1085,6 +1090,7 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127, CID-33247, free unused resources before exit*/
         return retVal;
     }
     ptr = head;
@@ -1200,6 +1206,7 @@ int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127, CID-33106, free unused resources before exit*/
         return retVal;
     }
     ptr = head;
@@ -1586,6 +1593,7 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127,CID-32951, free unused resources before exit */
         return retVal;
     }
     ptr = head;
@@ -1688,6 +1696,7 @@ int Utopia_GetWifiAPInfo(UtopiaContext *ctx, char *pSSID, void *info)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127,CID-33342, free unused resources before exit */
         return retVal;
     }
     ptr = head;
@@ -1878,6 +1887,7 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); /*RDKB-7127,CID-32998, free unused resources before exit */
         return retVal;
     }
     ptr = head;
@@ -1959,6 +1969,7 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
          }
      }
      strcpy(cfg_t->PreSharedKey,""); /* PSK is to be always returned as EMPTY */     
+     free_paramList(head); /*RDKB-7127,CID-32998, free unused resources before exit */
      return SUCCESS;
 }
 
@@ -2275,6 +2286,7 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head);/*RDKB-7127, CID-33021, free unused resource before exit*/
         return retVal;
     }
     ptr = head;
@@ -2290,6 +2302,7 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
         }
     }
 
+    free_paramList(head);/*RDKB-7127, CID-33021, free unused resource before exit*/
     return ulAssocDevCount;
 
 }
@@ -2338,6 +2351,7 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head);/*RDKB-7127, CID-33011, free unused resource before exit*/
         return retVal;
     }
     ptr = head;
@@ -2371,6 +2385,8 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
             assocDev_t->Active = (0 == atoi(ptr->param_val)) ? FALSE : TRUE;
         }
     }
+
+    free_paramList(head);/*RDKB-7127, CID-33011, free unused resource before exit*/
 }
 
 unsigned long Utopia_GetWifiAPIndex(UtopiaContext *ctx, char *pSSID)
@@ -2493,6 +2509,7 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     if(retVal != SUCCESS){
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head);/*RDKB-7127, CID-33359, free unused resource before exit*/
         return retVal;
     }
     ptr = head;
