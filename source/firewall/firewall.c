@@ -1727,7 +1727,7 @@ static int prepare_globals_from_configuration(void)
    snprintf(str, sizeof(str),
             "-A xlog_accept_wan2self -j ACCEPT");
    fprintf(fp, "%s\n", str);
-#ifndef INTEL_PUMA7
+#if !(defined INTEL_PUMA7) && !(defined _COSA_BCM_ARM_)
    snprintf(str, sizeof(str),
             "-A xlog_drop_wan2lan -j DROP");
    fprintf(fp, "%s\n", str);
@@ -7811,7 +7811,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
 #endif
    fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
-#ifndef INTEL_PUMA7
+#if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
    fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
 #endif
    fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --set-dscp-class af22\n");
@@ -7938,7 +7938,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
 
-#ifdef INTEL_PUMA7
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
    //Avoid blocking packets at the Intel NIL layer
    fprintf(filter_fp, "-A FORWARD -i a-mux -j ACCEPT\n");
 #endif
@@ -8117,7 +8117,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", emta_wan_ifname);
    }
-#ifdef INTEL_PUMA7
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
 
    fprintf(filter_fp, "-A INPUT -i gmac5 -j ACCEPT\n");
 
