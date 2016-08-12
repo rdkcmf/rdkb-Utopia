@@ -152,7 +152,11 @@ static int dhcp_stop(const char *ifname)
     }
 
     if (pid <= 0)
+#if defined(_COSA_BCM_ARM_)
+    	   pid = pid_of("udhcpc", ifname);
+#else
         pid = pid_of("ti_udhcpc", ifname);
+#endif
 
     if (pid > 0) {
         kill(pid, SIGUSR2); // triger DHCP release
@@ -178,7 +182,7 @@ static int dhcp_start(const char *ifname)
    int err;
   /*TCHXB6 is configured to use udhcpc */
 #if defined (_COSA_BCM_ARM_)
-	err = vsystem("/sbin/udhcpc -i %s -p %s ",ifname, DHCPC_PID_FILE);
+	err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script",ifname, DHCPC_PID_FILE);
 #else
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                 "-H DocsisGateway -p %s -B -b 1",
@@ -522,7 +526,7 @@ static int wan_addr_set(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "wan-status", "started", 0);
 /*XB6 brlan0 comes up earlier so ned to find the way to restart the firewall
  IPv6 not yet supported so we can't restart in service routed  because of missing zebra.conf*/
-#ifdef INTEL_PUMA7
+#if  defined(INTEL_PUMA7) || defined(_COSA_BCM_ARM_)
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
 #endif
@@ -573,7 +577,11 @@ static int wan_dhcp_start(struct serv_wan *sw)
     int pid; 
     int has_pid_file = 0;
 
+#if defined(_COSA_BCM_ARM_)
+    pid = pid_of("udhcpc", sw->ifname);
+#else
     pid = pid_of("ti_udhcpc", sw->ifname);
+#endif
     if (access(DHCPC_PID_FILE, F_OK) == 0)
         has_pid_file = 1;
 
