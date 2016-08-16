@@ -1044,8 +1044,8 @@ static int handle_set_options_request(const int fd, const token_t who, se_set_op
  */
 static int handle_set_async_action_request(const int fd, const token_t who, se_set_async_action_msg *msg)
 {
-   int  subject_bytes;
-   int  function_bytes;
+   int  subject_bytes         = 0;
+   int  function_bytes        = 0; /*RDKB-7131, CID-33267, initialize before use*/
    char *subject_str          = NULL;
    char *function_str         = NULL;
    int   rc                   = 0;
