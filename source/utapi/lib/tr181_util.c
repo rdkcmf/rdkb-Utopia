@@ -51,7 +51,7 @@ int file_parse(char* file_name, param_node **head)
     char tok[] = ": \n";
     int  len   = 0;
 
-    if (!file_name) {
+    if (!file_name || !head) {
         sprintf(ulog_msg, "%s: Invalid Input Parameter !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_PARAM;
@@ -65,9 +65,18 @@ int file_parse(char* file_name, param_node **head)
     {
         if(line[0] == ' ' || line[0] == '\n')
             continue;
-
+        /*
+        ** RDKB-7130, CID-33065, free unused mem.
+        ** Change is made to make coverity complaint to plug resource leak
+        */
+        if(node)
+        {
+            free(node);
+            node = NULL;
+        }
         node = (param_node*)malloc(sizeof(param_node));
         if (!node) {
+            fclose(fp);/*RDKB-7130, CID-33164, free resources before exit*/
             sprintf(ulog_msg, "%s: Memory Allocation Error !!!", __FUNCTION__);
             ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             return ERR_INSUFFICIENT_MEM;
@@ -75,17 +84,19 @@ int file_parse(char* file_name, param_node **head)
 
         if((strstr(line, "MACAddress") != NULL) || (strstr(line, "BSSID") != NULL)){
             str   = strchr(line, ':');    
-	    name  = strtok(line, tok);
-            if(!strcasecmp(name, "MACAddressFilterList")){
-	        val   = str+1;
-                while(*(str++))
-                    len++;
-                val[len-1] = '\0'; /* str will point to ':', hence strlen(val) = strlen(str)-1 */
-		sprintf(ulog_msg, "%s: MACAddressFilterList = %slen = %d \n", __FUNCTION__, val, strlen(val));
-		ulogf(ULOG_CONFIG, UL_UTAPI, ulog_msg);
-            }else{
-	        val   = str+1;
-	        val[MAX_MAC_LEN] = '\0';
+            name  = strtok(line, tok);
+            if(name && str) { /*RDKB-7130, CID-33482, CID-33393, CID-32980; null check before use */
+                if(!strcasecmp(name, "MACAddressFilterList")){
+                    val   = str+1;
+                    while(*(str++))
+                        len++;
+                    val[len-1] = '\0'; /* str will point to ':', hence strlen(val) = strlen(str)-1 */
+                    sprintf(ulog_msg, "%s: MACAddressFilterList = %slen = %d \n", __FUNCTION__, val, strlen(val));
+                    ulogf(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+                }else{
+                    val   = str+1;
+                    val[MAX_MAC_LEN] = '\0';
+                }
             }
         }else{
             name = strtok(line, tok);
@@ -105,10 +116,12 @@ int file_parse(char* file_name, param_node **head)
            
         if(*head == NULL){
             *head = curNode = node;
+            node = NULL; /*RDKB-7130, CID-33065, make node NULL if used*/
         }else {
             if(curNode){
                 curNode->next = node;
                 curNode = curNode->next;
+                node = NULL; /*RDKB-7130, CID-33065, make node NULL if used*/
             }
         }
         name = NULL;
