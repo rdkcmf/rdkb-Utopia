@@ -85,6 +85,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
 
     retVal = file_parse(MOCA_SUM_FILE, &head);
     if(retVal != SUCCESS){
+	free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
@@ -128,6 +129,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
     
     retVal = file_parse(MOCA_MAC_NODE, &head);
     if(retVal != SUCCESS){
+	free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
@@ -154,6 +156,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
 
     retVal = file_parse(MOCA_PHY_FILE, &head);
     if(retVal != SUCCESS){
+        free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return retVal;
@@ -204,6 +207,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     if(retVal != SUCCESS){
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
 	return retVal;
     }
     ptr = head;
@@ -245,6 +249,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     if(retVal != SUCCESS){
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
 	return retVal;
     }
     ptr = head;
@@ -268,6 +273,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     
     retVal = file_parse(MOCA_MAC_FILE_1, &head);
     if(retVal != SUCCESS){
+	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
@@ -298,6 +304,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     
     retVal = file_parse(MOCA_PHY_FILE, &head);
     if(retVal != SUCCESS){
+	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
@@ -329,6 +336,7 @@ int Utopia_Count_AssociateDeviceEntry(int *devCount)
     create_file();    
     retVal = file_parse(MOCA_MAC_FILE_1, &head);
     if(retVal != SUCCESS){
+	free_paramList(head); /*RDKB-7129, CID-33166, free unused resources before exit*/
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
@@ -378,6 +386,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
 
     retVal = file_parse(MOCA_ASS_INST, &head);
     if(retVal != SUCCESS){
+	free_paramList(head); /*RDKB-7129, CID-33335, free unused resources before exit*/
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
@@ -430,6 +439,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
  
     retVal = file_parse(MOCA_STATS_FILE, &head);
     if(retVal != SUCCESS){
+	free_paramList(head); /*RDKB-7129, CID-33335, free unused resources before exit*/
 	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
@@ -464,6 +474,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
 
     retVal = file_parse(MOCA_STATS_FILE_1, &head);
     if(retVal != SUCCESS){
+        free_paramList(head); /*RDKB-7129, CID-33335, free unused resources before exit*/
         sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return retVal;
