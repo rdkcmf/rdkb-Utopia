@@ -634,6 +634,7 @@ int Utopia_GetDHCPServerLANHosts (UtopiaContext *ctx, int *count, dhcpLANHost_t 
         while (fgets(line, sizeof(line), fp)) {
            lan_hosts = (dhcpLANHost_t *) realloc(lan_hosts, sizeof(dhcpLANHost_t) * (ct+1));
            if (NULL == lan_hosts) {
+               fclose(fp); /*RDKB-7128, CID-33073, free unused resources before exit */
                return ERR_INSUFFICIENT_MEM;
            }
            s_parse_dhcp_lease(line, &lan_hosts[ct]);
@@ -710,6 +711,7 @@ int Utopia_GetARPCacheEntries (UtopiaContext *ctx, int *count, arpHost_t **out_h
         while (fgets(line, sizeof(line), fp)) {
            hosts = (arpHost_t *) realloc(hosts, sizeof(arpHost_t) * (ct+1));
            if (NULL == hosts) {
+               fclose(fp); /*RDKB-7128, CID-33193, free unused resources before exit */
                unlink(ARP_CACHE_FILE);
                return ERR_INSUFFICIENT_MEM;
            }
@@ -750,6 +752,7 @@ int Utopia_GetWLANClients (UtopiaContext *ctx, int *count, char **out_maclist)
         while (fgets(line, sizeof(line), fp)) {
            maclist = (char *) realloc(maclist, MACADDR_SZ * (ct+1));
            if (NULL == maclist) {
+               fclose(fp); /*RDKB-7128, CID-33326, free unused resources before exit*/
                unlink(WLAN_CLIENTLIST_TMP);
                return ERR_INSUFFICIENT_MEM;
            }
@@ -1777,11 +1780,11 @@ int Utopia_EditStaticRoute (UtopiaContext *ctx, int index, routeStatic_t *sroute
 
 int Utopia_GetStaticRouteCount (UtopiaContext *ctx, int *count)
 {
-    *count = 0;
-
     if (NULL == ctx || NULL == count) {
         return ERR_INVALID_ARGS;
     }
+
+    *count = 0; /*RDKB-7128, CID-33530, null check before use */
 
     Utopia_GetInt(ctx, UtopiaValue_StaticRoute_Count, count);
     return UT_SUCCESS;
@@ -1868,6 +1871,7 @@ int Utopia_GetStaticRouteTable (int *count, routeStatic_t **out_sroute)
 
     sroute = (routeStatic_t *) malloc(sizeof(routeStatic_t) * (*count));
     if (NULL == sroute) {
+        fclose(fp);/*RDKB-7128, CID-33470, free unused resources before exit*/
         return ERR_INSUFFICIENT_MEM;
     }
     bzero(sroute, sizeof(routeStatic_t) * (*count));
@@ -5142,7 +5146,7 @@ int Utopia_BackupConfiguration (char *out_config_fname)
     if (out_config_fname && *out_config_fname) {
         ulogf(ULOG_CONFIG, UL_UTAPI, "backup system configuration to %s", out_config_fname);
         int syscfg_len = 0;
-        char *buf;
+        char *buf = NULL;
 
         if (NULL == (buf = malloc(SYSCFG_SZ))) {
             return ERR_INSUFFICIENT_MEM;
@@ -5201,6 +5205,7 @@ int Utopia_BackupConfiguration (char *out_config_fname)
         if (sz != syscfg_len) {
             ulog_errorf(ULOG_CONFIG, UL_UTAPI, "backup content size didn't match: expected %d, real %d", syscfg_len, sz);
         }
+        free(buf); /*RDKB-7128, CID-33025, free unused resources before exit*/
         fclose(fp);
         return UT_SUCCESS;
     }
@@ -5316,6 +5321,7 @@ int Utopia_AcquireFirmwareUpgradeLock (int *lock_fd)
     
     // Return an error if someone else has the lock
     if (fcntl(fd, F_SETLK, &fl) == -1) {
+        fclose(fd); /*RDKB-7128, CID-32972, free unused resources before exit*/
         return ERR_FW_UPGRADE_LOCK_CONFLICT;
     }
     
@@ -5537,10 +5543,11 @@ int Utopia_SetWebUIAdminPasswd (UtopiaContext *ctx, char *username, char *cleart
     if (hashed_password[len - 1] == '\n') {
         hashed_password[len - 1] = 0;
     }
-    
+
+    pclose(fp); /*RDKB-7128, CID-33462; free unused resources*/
+
     UTOPIA_SET(ctx, UtopiaValue_HTTP_AdminPassword, hashed_password);
-    
-    pclose(fp);
+
     UTOPIA_SETBOOL(ctx, UtopiaValue_HTTP_AdminIsDefault, !strcmp(cleartext_password, DEFAULT_HTTP_ADMIN_PASSWORD));
 
 
@@ -5568,10 +5575,10 @@ int Utopia_SetWebUIAdminPasswd (UtopiaContext *ctx, char *username, char *cleart
     if (hashed_password[len - 1] == '\n') {
         hashed_password[len - 1] = 0;
     }
-   
+
+    pclose(fp); /*RDKB-7128, CID-33462; free unused resources*/
+
     UTOPIA_SET(ctx, UtopiaValue_User_AdminPassword, hashed_password);
-   
-    pclose(fp);
 
     sprintf(cmd, "/etc/init.d/password_functions.sh root_pw \"%s\"", 
             cleartext_password);
@@ -5597,10 +5604,10 @@ int Utopia_SetWebUIAdminPasswd (UtopiaContext *ctx, char *username, char *cleart
     if (hashed_password[len - 1] == '\n') {
         hashed_password[len - 1] = 0;
     }
-  
+
+    pclose(fp);/*RDKB-7128, CID-33462; free unused resources*/
+
     UTOPIA_SET(ctx, UtopiaValue_User_RootPassword, hashed_password);
-  
-    pclose(fp);
 
     return UT_SUCCESS;
 }
@@ -6872,7 +6879,11 @@ int Utopia_GetEthAssocDevices(int unitId, int portId ,unsigned char *macAddrList
         }else{
             continue;
         }
-        mac[MACADDR_SZ-1] = '\0'; /*We need only 17 chars */
+        /*RDKB-7128, CID-33504, NULL check before use */
+        if(mac)
+        {
+            mac[MACADDR_SZ-1] = '\0'; /*We need only 17 chars */
+        }
         getHexGeneric(mac,hexMac,MAC_SZ);
 
         /*we don't collect multicast MAC address*/
