@@ -155,16 +155,26 @@ int syscfg_get_encrypt (const char *ns, const char *name, char *out_val, int out
         return -1;
     }
 
-    char *val = _syscfg_get(ns, name);
-    if (val) {
-        char *val_decrypt = malloc(strlen(val));
-        if (NULL == val_decrypt) {
-            return ERR_MEM_ALLOC;
+    /*
+    ** RDKB-7135, CID-32913, length of the string should be at least 2
+    ** strlen replaced with safer strnlen to limit the memory allocated.
+    ** strnlen value incremented by 1 to append string termination.
+    */
+    if(outbufsz > 1)
+    {
+        char *val = _syscfg_get(ns, name);
+        if (val) {
+            char *val_decrypt = malloc(strnlen( val, MAX_NAME_LEN)+1); 
+            if (NULL == val_decrypt) {
+                return ERR_MEM_ALLOC;
+            }
+            memset(val_decrypt, 0, strnlen( val, MAX_NAME_LEN)+1);
+            encrypt_str(val, val_decrypt);
+            strncpy(out_val, val_decrypt, outbufsz-1);
+            out_val[outbufsz-1] = '\0';
+            free(val_decrypt);/*RDKB-7135, CID-33450, free unused resources before exit */
+            return 0;
         }
-        encrypt_str(val, val_decrypt);
-        strncpy(out_val, val_decrypt, outbufsz-1);
-        out_val[outbufsz-1] = '\0';
-        return 0;
     }
     return -1;
 }
@@ -187,6 +197,8 @@ int syscfg_get_encrypt (const char *ns, const char *name, char *out_val, int out
  */
 int syscfg_set_encrypt (const char *ns, const char *name, const char *value)
 {
+    int rc = 0;
+
     if (0 == syscfg_initialized || NULL == syscfg_ctx) {
         return ERR_NOT_INITIALIZED;
     }
@@ -194,14 +206,24 @@ int syscfg_set_encrypt (const char *ns, const char *name, const char *value)
         return ERR_INVALID_PARAM;
     }
 
-    char *value_encrypt = malloc(strlen(value));
+    /*
+    ** RDKB-7135, CID-32978,
+    ** strlen replaced with safer strnlen to limit the memory allocated.
+    ** strnlen value incremented by 1 to append string termination.
+    */
+    char *value_encrypt = malloc(strnlen(value, MAX_NAME_LEN)+1);
     if (NULL == value_encrypt) {
         return ERR_MEM_ALLOC;
     }
+    memset(value_encrypt, 0, strnlen(value, MAX_NAME_LEN)+1);
 
     encrypt_str(value, value_encrypt);
 
-    return _syscfg_set(ns, name, value_encrypt, 0);
+    rc = _syscfg_set( ns, name, value_encrypt, 0);
+
+    free(value_encrypt); /*Once the value is set free it*/
+
+    return rc;
 }
 
 /*
@@ -1510,8 +1532,8 @@ static void _syscfg_file_unlock (int fd)
 int load_from_file (const char *fname)
 {
     int fd;
-    char *inbuf, *buf;
-    char *name, *value;
+    char *inbuf = NULL, *buf = NULL;
+    char *name = NULL, *value = NULL;
 
     fd = open(fname, O_RDONLY);
     if (-1 == fd) {
@@ -1519,6 +1541,7 @@ int load_from_file (const char *fname)
     }
     inbuf = malloc(SYSCFG_SZ);
     if (NULL == inbuf) {
+        close(fd); /*RDKB-7135, CID-33110, free unused resources before exit*/
         return ERR_MEM_ALLOC;
     }
     int count = read(fd, inbuf, SYSCFG_SZ);
@@ -1533,7 +1556,9 @@ int load_from_file (const char *fname)
         if (name && value) {
             syscfg_set(NULL, name, value);
             free(name);
+            name = NULL; /*RDKB-7135, CID-33405, set null after free*/
             free(value);
+            value = NULL; /*RDKB-7135, CID-33137, set null after free*/
         }
 
         // skip any special chars leftover
