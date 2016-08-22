@@ -185,16 +185,17 @@ int mtd_write_from_file (const char *mtd_device, const char *file)
                 fprintf(stderr, "%s: Error writing to mtd %s, only %d off %d written\n",
                         __FUNCTION__, mtd_device, ct, n);
             }
-        } 
-        close(in_fd);
+        }
     }
 
+    close(in_fd);
     close(mtd_fd);
     return 0;
 
 err_mtd_write:
-    if (in_fd > 0) close(in_fd);
-    if (mtd_fd > 0) close(mtd_fd);
+    /*RDKB-7134, CID-33439, CID-33312; free resources before exit*/
+    if (in_fd != -1) close(in_fd);
+    if (mtd_fd != -1) close(mtd_fd);
     return rc;
 }
 
@@ -268,8 +269,9 @@ int mtd_read_to_file (const char *mtd_device, const char *file)
     return 0;
 
 err_mtd_read:
-    if (mtd_fd > 0) close(mtd_fd);
-    if (out_fd > 0) close(out_fd);
+    /*RDKB-7134, CID-33466, CID-33299; free resources before exit*/
+    if (mtd_fd != -1) close(mtd_fd);
+    if (out_fd != -1) close(out_fd);
     return rc;
 }
 
@@ -321,7 +323,8 @@ int mtd_hdr_check (const char *mtd_device)
     return 0;
 
 err_mtd_check:
-    if (mtd_fd > 0) close(mtd_fd);
+    /*RDKB-7134, CID-33089; free resources before exit*/
+    if (mtd_fd != -1 ) close(mtd_fd);
     return rc;
 }
 
