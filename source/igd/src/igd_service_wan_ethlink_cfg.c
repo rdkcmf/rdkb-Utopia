@@ -165,11 +165,12 @@ LOCAL INT32 _igd_service_WANEthernetLinkConfig_destroy(IN struct upnp_service *p
 {
 	/* pservice->serviceID is a 'const CHAR *' type and required to remove
 	   const before call free() function */
-	CHAR * serviceID = (CHAR *)pservice->serviceID;
+	CHAR * serviceID = (CHAR *)NULL;
 
 	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"Destroy WANConnectionDevice WANEthernetLinkConfig\n");
 	if(pservice==NULL)
 		return -1;
+	serviceID = (CHAR *)pservice->serviceID; /*RDKB-7138, CID-33146, use after null check */
 	SAFE_FREE(pservice->type);
 	SAFE_FREE(serviceID);
 	SAFE_FREE(pservice->state_variables);
