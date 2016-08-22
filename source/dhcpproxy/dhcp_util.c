@@ -103,7 +103,7 @@ int dhcp_create_socket(int port, const char* device_name)
 {
    int sock;
    struct sockaddr_in serv_addr;
-   const int flag_one;
+   const int flag_one = 0x00; /*RDKB-7146, CID-33246, initialize before use*/
 
    sock = socket(AF_INET, SOCK_DGRAM, 0);
    if (sock < 0)
@@ -158,14 +158,16 @@ int dhcp_recvfrom_to(int s, void *buf, size_t len, int flags,
                      struct sockaddr_in *from,
                      struct in_addr *to)
 {
-   struct msghdr msg;
-   struct iovec iov;
-   unsigned char msg_control[100];
+   struct msghdr msg = {0};
+   struct iovec iov = {0};
+   unsigned char msg_control[100] = {0};
    ssize_t size;
+
+   memset(&msg, 0, sizeof(msg)); /*RDKB-7146, CID-33564, initialize before use*/
 
    iov.iov_base = buf;
    iov.iov_len = len;
-   
+
    msg.msg_name = from;
    msg.msg_namelen = sizeof(*from);
    msg.msg_iov = &iov;
