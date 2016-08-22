@@ -94,11 +94,11 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 /* Use to get psm value via dbus instead of psmcli util */
 #ifndef _COSA_INTEL_XB3_ARM_
     int i;
-    char cmdBuff[512];
-    char valBuff[256];
+    char cmdBuff[512] = {0};
+    char valBuff[256] = {0};
     int offset = 0;
-    FILE* psmcliOut;
-    char* ifToken, *dash;
+    FILE* psmcliOut = NULL;
+    char* ifToken = NULL, *dash = NULL;
     
     int actualNumMembers = 0;
     
@@ -111,25 +111,30 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
     }
      
     psmcliOut = popen(cmdBuff, "r");
-    
-    for(i = 0; fgets(valBuff, sizeof(valBuff), psmcliOut); ++i) {
-        MNET_DEBUG("nv_get_members, current lookup line %s, i=%d\n" COMMA valBuff COMMA i)
-        ifToken = strtok(valBuff+2, "\" \n");
-        while(ifToken) { //FIXME: check for memberList overflow
-            MNET_DEBUG("nv_get_members, current lookup token %s\n" COMMA ifToken)
-            if ((dash = strchr(ifToken, '-'))){
-                *dash = '\0';
-                memberList[actualNumMembers].bTagging = 1;
-            } else {
-                memberList[actualNumMembers].bTagging = 0;
+
+    if(psmcliOut) { /*RDKB-7137, CID-33511, null before use*/
+
+        for(i = 0; fgets(valBuff, sizeof(valBuff), psmcliOut); ++i) {
+            MNET_DEBUG("nv_get_members, current lookup line %s, i=%d\n" COMMA valBuff COMMA i)
+            ifToken = strtok(valBuff+2, "\" \n");
+            while(ifToken) { //FIXME: check for memberList overflow
+                MNET_DEBUG("nv_get_members, current lookup token %s\n" COMMA ifToken)
+                if ((dash = strchr(ifToken, '-'))){
+                    *dash = '\0';
+                    memberList[actualNumMembers].bTagging = 1;
+                } else {
+                    memberList[actualNumMembers].bTagging = 0;
+                }
+                memberList[actualNumMembers].interface->map = NULL; // No mapping has been performed yet
+                strcpy(memberList[actualNumMembers].interface->name, ifToken);
+                strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+                if (dash) *dash = '-'; // replace character just in case it would confuse strtok
+                
+                ifToken = strtok(NULL, "\" \n");
             }
-            memberList[actualNumMembers].interface->map = NULL; // No mapping has been performed yet
-            strcpy(memberList[actualNumMembers].interface->name, ifToken);
-            strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
-            if (dash) *dash = '-'; // replace character just in case it would confuse strtok
-            
-            ifToken = strtok(NULL, "\" \n");
         }
+
+        pclose(psmcliOut); /*RDKB-7137, CID-33325, free unused resources before exit */
     }
 #else
     char  cmdBuff[512];
@@ -200,39 +205,43 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 
 int nv_get_bridge(int l2netInst, PL2Net net) 
 {
-    char cmdBuff[512];
+    char cmdBuff[512] = {0};
 	int  rc;
 	char *pStr = NULL;
 
 /* Use to get psm value via dbus instead of psmcli util */
 #ifndef _COSA_INTEL_XB3_ARM_
-    char valBuff[80];
-    char tmpBuf[15];
-    FILE* psmcliOut;
+    char valBuff[80] = {0};
+    char tmpBuf[15] = {0};
+    FILE* psmcliOut = NULL;
 
     snprintf(cmdBuff, sizeof(cmdBuff), 
             "psmcli get -e X dmsb.l2net.%d.Name X dmsb.l2net.%d.Vid X dmsb.l2net.%d.Enable", 
              l2netInst, l2netInst, l2netInst);
     psmcliOut = popen(cmdBuff, "r");
-    
-    fgets(valBuff, sizeof(valBuff), psmcliOut);
-    *strrchr(valBuff, '"') = '\0';
-    sscanf(valBuff, "X=\"%s\n", net->name); 
-    
-    fgets(valBuff, sizeof(valBuff), psmcliOut);
-    sscanf(valBuff, "X=\"%d\"\n", &net->vid);
-    
-    fgets(valBuff, sizeof(valBuff), psmcliOut);
-    sscanf(valBuff, "X=\"%s\"\n", tmpBuf);
-    if(!strcmp("FALSE", tmpBuf)) {
-        net->bEnabled = 0;
-    } else {
-        net->bEnabled = 1;
+
+    if(psmcliOut) /*RDKB-7137, CID-33276, null check before use */
+    {
+
+        fgets(valBuff, sizeof(valBuff), psmcliOut);
+        *strrchr(valBuff, '"') = '\0';
+        sscanf(valBuff, "X=\"%s\n", net->name); 
+
+        fgets(valBuff, sizeof(valBuff), psmcliOut);
+        sscanf(valBuff, "X=\"%d\"\n", &net->vid);
+
+        fgets(valBuff, sizeof(valBuff), psmcliOut);
+        sscanf(valBuff, "X=\"%s\"\n", tmpBuf);
+        if(!strcmp("FALSE", tmpBuf)) {
+            net->bEnabled = 0;
+        } else {
+            net->bEnabled = 1;
+        }
+
+        net->inst = l2netInst;
+
+        pclose(psmcliOut);
     }
-    
-    net->inst = l2netInst;
-    
-    pclose(psmcliOut);
 #else
 
 	/* dbus init based on bus handle value */
