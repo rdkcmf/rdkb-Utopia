@@ -772,7 +772,7 @@ IGD_pii_get_NAT_RSIP_status( IN INT32 WanDeviceIndex,
 {
     *natStatus = BOOL_TRUE;
     *rsipStatus = BOOL_FALSE;
-    boolean_t natEnable;
+    boolean_t natEnable = BOOL_TRUE; /*RDKB-7142, CID-32964; init before use */
 
     
     // PAL_LOG("igd_platform", "debug", "%s: Enter ", __FUNCTION__);
