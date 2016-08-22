@@ -190,15 +190,17 @@ void handle_dns_query(struct nfq_data *pkt)
                 fclose(mac2Ip);
                 return;
             }
+            fclose(mac2Ip); /*RDKB-7144, CID-33078, free resource after use*/
         }
 #if _NFQ_DEBUG_LEVEL == 1
         printf("\nsyncing ip address of deivce_%u\n", insNum);
 #endif
-        mac2Ip = fopen(mac, "w");
-        snprintf(ipAddr, sizeof(ipAddr), "%u.%u.%u.%u", srcIp[0], srcIp[1], srcIp[2], srcIp[3]);
-        fprintf(mac2Ip, "%s", ipAddr);
-        fclose(mac2Ip);
-
+        if((mac2Ip = fopen(mac, "w")) != NULL) /*RDKB-7144, CID-33323, free resource after use*/
+        {
+            snprintf(ipAddr, sizeof(ipAddr), "%u.%u.%u.%u", srcIp[0], srcIp[1], srcIp[2], srcIp[3]);
+            fprintf(mac2Ip, "%s", ipAddr);
+            fclose(mac2Ip);
+        }
         snprintf(cmd, sizeof(cmd), "iptables -F pp_disabled_%u", insNum);
 #if _NFQ_DEBUG_LEVEL == 1
         printf("system: %s\n", cmd);
@@ -313,7 +315,7 @@ void handle_dns_response(char *payload, uint32_t mark)
 //packet processing function
 static int dns_query_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *nfmsg, struct nfq_data *pkt, void *data)
 {
-    int id;
+    int id = 0x00; /*RDKB-7144, CID-33514, init before use */
     struct nfqnl_msg_packet_hdr *ph = nfq_get_msg_packet_hdr(pkt);
 
     if (ph)
@@ -327,7 +329,7 @@ static int dns_query_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg 
 //packet processing function
 static int dns_response_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *nfmsg, struct nfq_data *pkt, void *data)
 {
-    int id;
+    int id = 0x00; /*RDKB-7144, CID-33468, init before use */
     struct nfqnl_msg_packet_hdr *ph = nfq_get_msg_packet_hdr(pkt);
     char *payload;
     int len = nfq_get_payload(pkt, &payload);
@@ -346,7 +348,7 @@ static int dns_response_callback(struct nfq_q_handle *queueHandle, struct nfgenm
 //packet processing function
 static int http_get_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *nfmsg, struct nfq_data *pkt, void *data)
 {
-    int id, ret = -1;
+    int id = 0x00, ret = -1; /*RDKB-7144, CID-33291, init before use */
     struct nfqnl_msg_packet_hdr *ph = nfq_get_msg_packet_hdr(pkt);
     char *payload;
     char dstMac[64];
