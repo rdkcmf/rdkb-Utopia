@@ -70,7 +70,7 @@ do_start() {
       #chgrp admin $DIR_NAME
       #chmod 755 $DIR_NAME
    #fi
-
+    CM_IP=""
     CM_IP=`ifconfig wan0 | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
    # start a ssh daemon
    # echo "[utopia] Starting SSH daemon" > /dev/console
@@ -78,6 +78,11 @@ do_start() {
 #   /etc/init.d/dropbear start
    #dropbear -r /etc/rsa_key.priv
    #dropbear -E -s -b /etc/sshbanner.txt -s -a -p [$CM_IP]:22
+   if [ "$CM_IP" = "" ]
+   then
+      #wan0 should be in v4
+      CM_IP=`ifconfig wan0 | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+   fi   
    dropbear -E -s -a -p [$CM_IP]:22
    sysevent set ssh_daemon_state up
 }
