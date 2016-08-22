@@ -188,9 +188,9 @@ int ev_register_ifstatus(PL2Net net, PMember member, char* ifStatusEventName, ch
 }
 
 int ev_unregister_ifstatus(PL2Net net, char* ifStatusEventName) {
-    char paramName[80];
-    char asyncString[40];
-    async_id_t asyncID;
+    char paramName[80] = {0};
+    char asyncString[40] = {0};
+    async_id_t asyncID = {0}; /*RDKB-7137, CID-33218, init before use */
     
     snprintf(paramName, sizeof(paramName), MNET_IFSTATUS_ASYNCID_FORMAT(ifStatusEventName));
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive, 
