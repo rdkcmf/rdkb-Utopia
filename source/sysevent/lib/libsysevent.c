@@ -2060,7 +2060,7 @@ static int connect_to_sysevent_daemon(char *ip, unsigned short port, int* sockfd
  */ 
 int sysevent_open (char *ip, unsigned short port, int version, char *id, token_t *token)
 {
-   int                sockfd;
+   int                sockfd = -1;
 
    *token = TOKEN_NULL;
 
@@ -2094,8 +2094,11 @@ int sysevent_open (char *ip, unsigned short port, int version, char *id, token_t
    init_libsysevent(id);
 
    int rc;
-   rc = connect_to_sysevent_daemon(ip, port, &sockfd);
+   rc = connect_to_sysevent_daemon(ip, port, &sockfd); 
    if (0 != rc) {
+      if(sockfd != -1) { /*RDKB-7132, CID-33536, close socket handle before exit*/
+        close(sockfd);
+      }
       return(rc);
    } 
 
@@ -2147,7 +2150,7 @@ int sysevent_open (char *ip, unsigned short port, int version, char *id, token_t
  */ 
 int sysevent_local_open (char *target, int version, char *id, token_t *token)
 {
-   int                sockfd;
+   int                sockfd = -1;
 
    *token = TOKEN_NULL;
 
@@ -2177,6 +2180,9 @@ int sysevent_local_open (char *target, int version, char *id, token_t *token)
    int rc;
    rc = connect_to_local_sysevent_daemon(target, &sockfd);
    if (0 != rc) {
+      if (sockfd != -1) { /*RDKB-7132, CID-33207, close socket handle before exit*/
+         close(sockfd);
+      }
       return(rc);
    }
 
@@ -2344,7 +2350,7 @@ int sysevent_ping_test (int fd, token_t token, struct timeval* tv)
  */
 int sysevent_debug (char *ip, unsigned short port, int level)
 {
-   int                sockfd;
+   int                sockfd = -1;
 
    // make sure this is an unsigned short
    port &= 0x0000FFFF;
@@ -2367,6 +2373,9 @@ int sysevent_debug (char *ip, unsigned short port, int level)
    int rc;
    rc = connect_to_sysevent_daemon(ip, port, &sockfd);
    if (0 != rc) {
+      if (sockfd != -1) { /*RDKB-7132, CID-33027, close socket handle before exit*/
+         close(sockfd);
+      }
       return(rc);
    }
 
