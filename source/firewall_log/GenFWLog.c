@@ -123,7 +123,7 @@ int g_rule_tlb_len = 0;
 #define printf(x, argv...) 
 
 int fLock(){
-    int fd;
+    int fd = -1;
     struct flock fl; 
     int i = 0; 
     fl.l_type = F_WRLCK;  
@@ -132,7 +132,7 @@ int fLock(){
     fl.l_len = 0;  
     fl.l_pid = -1;  
 
-    if((fd=open(LOCK_FILE_NAME,O_CREAT| O_RDWR))>0){
+    if((fd=open(LOCK_FILE_NAME,O_CREAT| O_RDWR)) != -1){ /*RDKB-7143, CID-33171; validate open */
         do{
             if( -1  != fcntl(fd,F_SETLK,&fl)){
                 printf("GET W-LOCK SUCCESS\n");
@@ -586,9 +586,9 @@ void add_rule(rule_info_t *rule, int *num, int flag){
 
 void merger_rule(FILE* fd, int *num){
     char *line = NULL;
-    int ret;
+    int ret = 0;
     int size = 0;
-    rule_info_t info;
+    rule_info_t info = {0}; /*RDKB-7143, CID-33545; init before use */
 
     while(-1 != getline(&line, &size, fd)){
         ret = sscanf(line, "Count=\"%d\"; Time=\"%[^\"]\"; Action=\"%[^\"]\"; Desp=\"%[^\"]\";\n", &(info.count), info.time, info.action, info.desp);
