@@ -1059,14 +1059,6 @@ LOCAL struct upnp_service * _wan_connection_service_init (IN BOOL ppp_or_ip,
     if (!new_wan_connection_service->private)
     {
         PAL_LOG(WAN_CONNECTION_DEVICE_LOG_NAME, PAL_LOG_LEVEL_WARNING, "out of memory : private malloc error");
-        /*free event_variables just for sa:BEGIN*/
-        for(i=0; new_wan_connection_service->event_variables[i].name!= NULL; i++)
-        {
-            free(new_wan_connection_service->event_variables[i].value);
-        }
-        free(new_wan_connection_service->event_variables);
-        new_wan_connection_service->event_variables = NULL;
-        /*free event_variables just for sa:END*/
         _wan_connection_service_destroy(new_wan_connection_service);
         return NULL;
     }
@@ -1126,24 +1118,35 @@ LOCAL INT32 _wan_connection_service_destroy(IN struct upnp_service *service)
         return -1;
     }
 
-    /*destroy service_mutex*/
-    pthread_mutex_destroy (&(service->service_mutex));
-
+    /*RDKB-7139, CID-32721, null check before free */
     /*free serviceID*/
-    free((CHAR *)service->serviceID);
-    service->serviceID = NULL;
-
+    if((CHAR *)service->serviceID)
+    {
+        free((CHAR *)service->serviceID);
+        service->serviceID = NULL;
+    }
     /*free state_variables*/
-    free(service->state_variables);
-    service->state_variables = NULL;
-
+    if(service->state_variables)
+    {
+        free(service->state_variables);
+        service->state_variables = NULL;
+    }
     /*free event_variables*/
-    free(service->event_variables);
-    service->event_variables = NULL;
+    if(service->event_variables)
+    {
+        free(service->event_variables);
+        service->event_variables = NULL;
+    }
 
     /*free private*/
-    free(service->private);
-    service->private = NULL;
+    if(service->private)
+    {
+        free(service->private);
+        service->private = NULL;
+    }
+
+    /*destroy service_mutex*/
+    pthread_mutex_destroy (&(service->service_mutex));
 
     free(service);
 
