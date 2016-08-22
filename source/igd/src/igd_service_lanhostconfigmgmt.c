@@ -194,11 +194,13 @@ LOCAL INT32 _igd_service_LANHostConfigMgmt_destroy(IN struct upnp_service *pserv
 {
 	/* pservice->serviceID is a 'const CHAR *' type and required to remove
 	   const before call free() function */
-	CHAR * serviceID = (CHAR *)pservice->serviceID;
+	CHAR * serviceID = (CHAR *)NULL;
 
 	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"Destroy LANDevice LANHostConfigManagement");
 	if(pservice==NULL)
 		return -1;
+
+	serviceID = (CHAR *)pservice->serviceID; /*RDKB-7141, CID-33136, use after null check*/
 	SAFE_FREE(pservice->type);
 	SAFE_FREE(serviceID);
 	SAFE_FREE(pservice->state_variables);
