@@ -544,12 +544,12 @@ then
 elif [ "$EVENT" = "multinet-start" ]
 then
     MODE="start"
-elif [ "$EVENT" = "iot-up" ]
+elif [ "$EVENT" = "lnf-setup" ]
 then
-    MODE="iot-start"
-elif [ "$EVENT" = "iot-down" ]
+    MODE="lnf-start"
+elif [ "$EVENT" = "lnf-down" ]
 then
-    MODE="iot-stop"
+    MODE="lnf-stop"
 elif [ "$EVENT" = "multinet-down" ]
 then
     MODE="stop"
@@ -635,19 +635,19 @@ then
     #Restart the firewall after the network is set up
     echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=start"
     $SYSEVENT set firewall-restart    
-elif [ $MODE = "iot-start" ]
+elif [ $MODE = "lnf-start" ]
 then
     remove_all_from_group
     #Sync the group interfaces and raise status events
     sync_group_settings
     
-    #Restart the firewall after setting up IoT
-    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=iotstart"
+    #Restart the firewall after setting up LnF
+    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstart"
     $SYSEVENT set firewall-restart
-elif [ $MODE = "iot-stop" ]
+elif [ $MODE = "lnf-stop" ]
 then
     remove_all_from_group
-    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=iotstop"
+    echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
     $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ]
 then
