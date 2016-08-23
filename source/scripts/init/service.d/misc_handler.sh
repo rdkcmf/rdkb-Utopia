@@ -37,6 +37,7 @@
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 UTOPIA_PATH="/etc/utopia/service.d"
 source $UTOPIA_PATH/log_env_var.sh
+source /etc/utopia/service.d/ut_plat.sh
 
 if [ "$UPTIME" -lt 600 ]
 then
@@ -47,6 +48,21 @@ if [ "$LAN_WAN_READY" != "ready" ]
 then
 
     echo "[`date +'%Y-%m-%d:%H:%M:%S:%6N'`] RDKB_SELFHEAL : RDKB Firewall Recovery" >> $SELFHEALFILE
+
+    ipaddr=`sysevent get current_lan_ipaddr`
+    index=4
+    if [ x$ipaddr = x ]
+    then
+        echo " Current IP address is NULL "
+	eval `psmcli get -e CUR_IPV4ADDR ${IPV4_NV_PREFIX}.$index.${IPV4_NV_IP}`
+	if [ x$CUR_IPV4ADDR != x ]
+	then
+	    sysevent set current_lan_ipaddr $CUR_IPV4ADDR
+	else
+	    sysevent set current_lan_ipaddr `syscfg get lan_ipaddr`
+	fi
+    fi
+
     gw_lan_refresh &
     firewall
     execute_dir /etc/utopia/post.d/ restart
