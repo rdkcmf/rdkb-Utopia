@@ -667,6 +667,11 @@ static int ppFlushNeeded = 0;
 #define MAX_QUERY 256
 #define MAX_NAMESPACE 64
 
+
+#define MAX_SRC_IP_TABLE_ROW    10   /*RDKB-7145, CID-33123, defining max size for src_ip[MAX_SRC_IP_TABLE_ENTRY][]*/
+#define MAX_SRC_IP_ENTRY_LEN    25   /*RDKB-7145, CID-33123, defining max size for src_ip[][MAX_SRC_IP_ENTRY_LEN]*/
+
+
 /*
  * For URL blocking,
  * The string lengths of "http://" and "https://"
@@ -1019,15 +1024,15 @@ static char *match_keyword(FILE *fp, char *keyword, char delim, char *line, int 
          }
       } else {
          keyword_candidate = line;
-         next = token_get(keyword_candidate, delim);
          if (NULL != keyword_candidate) {
+            next = token_get(keyword_candidate, delim); /*RDKB-7145, CID-33413, use after null check*/
             keyword_candidate = trim(keyword_candidate);
          } else {
             continue;
          }
       }
 
-      if (0 == strcasecmp(keyword, keyword_candidate)) {
+      if (keyword_candidate && (0 == strcasecmp(keyword, keyword_candidate))) { /*RDKB-7145, CID-33413, use after null check*/
          return(next);
       } 
    }
@@ -2578,7 +2583,9 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
          // the rule we have looks like enabled|disabled,external_ip,external_port,internal_ip,internal_port,protocol,...
          char *next;
          char *token = in_rule;
-         next = token_get(token, ',');
+         if(token) { /*RDKB-7145, CID-33102, null check before use*/
+            next = token_get(token, ',');
+         }
          if (NULL == token || NULL == next || 0 == strcmp(token, "disabled")) {
             continue;
          }
@@ -3129,8 +3136,10 @@ static int write_qos_classification_statement (FILE *fp, FILE *qos_fp, char *nam
       }
 
       char *hook = next_token;
-      next_token = token_get(hook, '|');
       char subst_hook[MAX_QUERY];
+      if(hook){ /*RDKB-7145, CID-33153, null check before use*/
+         next_token = token_get(hook, '|');
+      }
       if (NULL == next_token || NULL == hook) {
          continue;
       } else {
@@ -4674,10 +4683,11 @@ if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_
  */
 static int set_lan_access_restriction_start_stop(FILE *fp, int days, char *start, char *stop, int h24)
 {
-   int sh;
-   int sm;
-   int eh;
-   int em;
+   /*RDKB-7145, CID-33449, CID-33381,  initialize before use */
+   int sh = 0;
+   int sm = 0; 
+   int eh = 0;
+   int em = 0;
       FIREWALL_DEBUG("Entering set_lan_access_restriction_start_stop\n");    
    /*
     * If the policy is for 7 days per week and NO start/stop times, then we dont need
@@ -4898,7 +4908,7 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
 {
 
    char *cron_file = crontab_dir"/"crontab_filename;
-   FILE *cron_fp; // the crontab file we use to set wakeups for timed firewall events
+   FILE *cron_fp = NULL; // the crontab file we use to set wakeups for timed firewall events
    cron_fp = fopen(cron_file, "w");
       
     FIREWALL_DEBUG("Entering do_lan_access_restrictions\n");  
@@ -4918,10 +4928,16 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
    query[0] = '\0';
    rc = syscfg_get(NULL, "InternetAccessPolicyCount", query, sizeof(query));
    if (0 != rc || '\0' == query[0]) {
+      if(cron_fp){ /*RDKB-7145,CID-33038, free resource before exit*/
+          fclose(cron_fp);
+      }
       return(0);
    } else {
       count = atoi(query);
       if (0 == count) {
+         if(cron_fp){ /*RDKB-7145,CID-33038, free resource before exit*/
+             fclose(cron_fp);
+         }
          return(0);
       }
       if (MAX_SYSCFG_ENTRIES < count) {
@@ -5125,7 +5141,7 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
 
       int i;
       int srcNum = 0;
-      char src_ip[10][25];
+      char src_ip[MAX_SRC_IP_TABLE_ROW][MAX_SRC_IP_ENTRY_LEN];
       // add ip hosts to classification table
       for (i=1; i<=count2; i++) {
          char tstr[50];
@@ -5133,7 +5149,21 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
          ip[0] = '\0';
          snprintf(tstr, sizeof(tstr), "ip_%d", i);
          rc = syscfg_get(namespace2, tstr, ip, sizeof(ip));
-         srcNum = i-1;
+
+         /* RDKB-7145, CID-33123, Out-of-bounds read
+         ** "srcNum" can reach a MAX value of "MAX_SYSCFG_ENTRIES-1".
+         ** Using which to access array src_ip[srcNum][] will lead to out of bound access.
+         ** Adding upper and lower boundary check to comply with Coverity Static analysis
+         */
+         if(i > MAX_SRC_IP_TABLE_ROW-1)
+         {
+             srcNum = MAX_SRC_IP_TABLE_ROW-1;
+         }
+         else
+         {
+             srcNum = i-1;
+         }
+
          sprintf(src_ip[srcNum], "%s.%s", lan_3_octets, ip);
          if (0 != rc || '\0' == ip[0]) {
             continue;
@@ -5461,8 +5491,9 @@ InternetAccessPolicyNext3:
       }
    }
 
-
-   fclose(cron_fp);
+   if (cron_fp) { /*RDKB-7145,CID-33038, free resource before exit*/
+       fclose(cron_fp);
+   }
    if (!isCronRestartNeeded) {
       unlink(cron_file);
    }
@@ -5799,11 +5830,9 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
     else
         snprintf(filePath, sizeof(filePath), "/var/.pc_url2ip_%s", insNum);
 
-    ipRecords = fopen(filePath, "r");
+    ipRecords = fopen(filePath, "w+"); /*RDKB-7145, CID-32907, optimizing the resource used*/
 
     if(ipRecords == NULL) {
-        ipRecords = fopen(filePath, "w+");
-
         struct addrinfo hints, *res, *p;
         int status;
 
@@ -5815,7 +5844,11 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
         hints.ai_socktype = SOCK_STREAM;
 
         if ((status = getaddrinfo(url, NULL, &hints, &res)) != 0) {
-            goto EXIT;
+            fclose(ipRecords);
+            if(dnsResponse == 0)
+                unlink(filePath);
+            FIREWALL_DEBUG("Exiting block_url_by_ipaddr\n");  
+            return;
         }
 
         for(p = res;p != NULL; p = p->ai_next) {
@@ -5841,23 +5874,24 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
 
     memset(ipAddr, 0, sizeof(ipAddr));
 
-    while(fgets(ipAddr, sizeof(ipAddr), ipRecords) != NULL) {
-        dnsResponse = 1;
-        len = strlen(ipAddr);
-        if(len > 0 && ipAddr[len-1] == '\n')
-            ipAddr[len-1] = '\0';
- 
-        if(nstdPort[0] == '\0')
-        {
-            fprintf(fp, "-A lan2wan_pc_site -d %s -p tcp -m tcp --dport 80 -m comment --comment \"host match %s \" -j %s\n", ipAddr, url, dropLog);
-            fprintf(fp, "-A lan2wan_pc_site -d %s -p tcp -m tcp --dport 443 -m comment --comment \"host match %s \" -j %s\n", ipAddr, url, dropLog);
-        }
-        else
-            fprintf(fp, "-A lan2wan_pc_site -d %s -p tcp -m tcp --dport %s -m comment --comment \"host match %s \" -j %s\n", ipAddr, nstdPort, url, dropLog);
-    }
+    if(ipRecords) {
+        while(fgets(ipAddr, sizeof(ipAddr), ipRecords) != NULL) {
+            dnsResponse = 1;
+            len = strlen(ipAddr);
+            if(len > 0 && ipAddr[len-1] == '\n')
+                ipAddr[len-1] = '\0';
 
-EXIT:
-    fclose(ipRecords);
+            if(nstdPort[0] == '\0')
+            {
+                fprintf(fp, "-A lan2wan_pc_site -d %s -p tcp -m tcp --dport 80 -m comment --comment \"host match %s \" -j %s\n", ipAddr, url, dropLog);
+                fprintf(fp, "-A lan2wan_pc_site -d %s -p tcp -m tcp --dport 443 -m comment --comment \"host match %s \" -j %s\n", ipAddr, url, dropLog);
+            }
+            else
+                fprintf(fp, "-A lan2wan_pc_site -d %s -p tcp -m tcp --dport %s -m comment --comment \"host match %s \" -j %s\n", ipAddr, nstdPort, url, dropLog);
+        }
+
+        fclose(ipRecords);
+    }
 
     if(dnsResponse == 0)
         unlink(filePath);
@@ -6070,8 +6104,10 @@ static int do_device_based_parcon(FILE *natFp, FILE* filterFp)
       }
    }
 
-   fclose(cron_fp);
-    FIREWALL_DEBUG("Exiting do_device_based_parcon\n"); 
+   if (cron_fp){ 
+	   fclose(cron_fp);
+   }
+   FIREWALL_DEBUG("Exiting do_device_based_parcon\n"); 
    return(0);
 }
 #endif
@@ -6112,7 +6148,7 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
 #endif
     do_parcon_mgmt_service(fp, iptype, cron_fp);
 
-    if (iptype == 4) {
+    if (cron_fp) { /*RDKB-7145, CID-33097,  free only a valid resource*/
         fclose(cron_fp);
     }
     FIREWALL_DEBUG("Exiting do_parental_control\n"); 
@@ -7767,16 +7803,15 @@ static int isInCaptivePortal()
    //Check the reponse code received from Web Service
    if((responsefd = fopen(networkResponse, "r")) != NULL) 
    {
-
        if(fgets(responseCode, sizeof(responseCode), responsefd) != NULL)
        {
-		  iresCode = atoi(responseCode);
+          iresCode = atoi(responseCode);
           if( iresCode == 204 ) 
           {
             isResponse204=1;
-            fclose(responsefd);
           }
        }
+       fclose(responsefd); /*RDKB-7145, CID-32924, free unused resources before exit */
    }
 
    FIREWALL_DEBUG("Exiting isInCaptivePortal\n");	 
@@ -8434,7 +8469,8 @@ static int prepare_subtables_ext(char *fname, FILE *raw_fp, FILE *mangle_fp, FIL
 			printf("%s", line);
 		}
 	}
-   FIREWALL_DEBUG("Exiting prepare_subtables_ext \n"); 	
+	fclose( ext_fp ); /*RDKB-7145, CID-33371, free unused resource before exit*/
+	FIREWALL_DEBUG("Exiting prepare_subtables_ext \n"); 	
 	return(0);
 }
 
@@ -8878,12 +8914,14 @@ int prepare_ipv4_firewall(const char *fw_file)
    snprintf(fname, sizeof(fname), "/tmp/mangle_%x", ourpid);
    FILE *mangle_fp = fopen(fname, "w+");
    if (NULL == mangle_fp) {
+      fclose(raw_fp);
       fclose(fp);
       return(-2);
    }
    snprintf(fname, sizeof(fname), "/tmp/filter_%x", ourpid);
    FILE *filter_fp = fopen(fname, "w+");
    if (NULL == filter_fp) {
+      fclose(raw_fp);
       fclose(fp);
       fclose(mangle_fp);
       return(-2);
@@ -8891,6 +8929,7 @@ int prepare_ipv4_firewall(const char *fw_file)
    snprintf(fname, sizeof(fname), "/tmp/nat_%x", ourpid);
    FILE *nat_fp = fopen(fname, "w+");
    if (NULL == nat_fp) {
+      fclose(raw_fp); /*RDKB-7145, CID-33445, free unused resource before exit */
       fclose(fp);
       fclose(mangle_fp);
       fclose(filter_fp);
