@@ -80,11 +80,11 @@
 
 source /etc/utopia/service.d/log_capture_path.sh
 
-echo "---------------------------------------------------------"
-echo "-------------------- service_wan.sh ---------------------"
-echo "---------------------------------------------------------"
-echo "RDKB_SYSTEM_BOOT_UP_LOG : service_wan.sh script called to bring up WAN INTERFACE"
-echo ">>>>> $1"
+echo_t "---------------------------------------------------------"
+echo_t "-------------------- service_wan.sh ---------------------"
+echo_t "---------------------------------------------------------"
+echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_wan.sh script called to bring up WAN INTERFACE"
+echo_t ">>>>> $1"
 set -x
 
 touch /var/resolv.conf
