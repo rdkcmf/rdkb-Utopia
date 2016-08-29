@@ -92,7 +92,7 @@
 #define pal_debug(fmt, args...)
 #endif
 
-static VOID PAL_xml_escape_real(const CHAR *str, CHAR *target, INT32 * length, INT32 attribute);
+static VOID PAL_xml_escape_real(const CHAR *string, CHAR *trgt, INT32 * len, INT32 attr);
 
 /************************************************************
  * Function: PAL_xml_nodelist_GetbyName 
@@ -664,49 +664,70 @@ CHAR *PAL_xml_escape(IN const CHAR *src_str, IN BOOL attribute)
 	return out;
 }
 
-static VOID PAL_xml_escape_real(const CHAR *str, CHAR *target, INT32 * length, INT32 attribute)
+static VOID PAL_xml_escape_real(const CHAR *string, CHAR *tgrt, INT32 * len, INT32 attr)
 {
-    INT32 len = 0;
+    INT32 length = 0;
     
-	if (target != NULL) {
-		for (; *str; str++) {
-			if (*str == '<'){
-				memcpy(target + len, "&lt;", 4);
-				len += 4;
-			}else if (attribute && (*str == '"')){
-				memcpy(target + len, "%22", 3);
-				len += 3;
-			}else if (*str == '>'){
-				memcpy(target + len, "&gt;", 4);
-				len += 4;
-			}else if (*str == '&'){
-				memcpy(target + len, "&amp;", 5);
-				len += 5;
-			}else{
-				target[len++] = *str;
+	if (tgrt != NULL) {
+		for (; *string; string++) {
+			switch(*string)
+			{
+			case '<':
+				memcpy(tgrt + length, "&lt;", 4);
+				length += 4;
+				break;
+			case '"':
+				if(attr)
+				{
+				memcpy(tgrt + length, "%22", 3);
+				length += 3;
+				}
+				break;
+			case '>':
+				memcpy(tgrt + length, "&gt;", 4);
+				length += 4;
+				break;
+			case '&':
+				memcpy(tgrt + length, "&amp;", 5);
+				length += 5;
+				break;	
+			default:
+				tgrt[length++] = *string;
+				break;		
 			}
 		}
-		target[len] = '\0';
+		tgrt[length] = '\0';
 
-		if (length != NULL)
-			*length = len;
+		if (len != NULL)
+			*len = length;
         
-	}else if (length != NULL){
+	}else if (len != NULL){
 
-		for (; *str; str++){
-			if (*str == '<'){
-				len += 4;
-			}else if (attribute && (*str == '"')){
-				len += 3;
-			}else if (*str == '>'){
-				len += 4;
-			}else if (*str == '&'){
-				len += 5;
-			}else{
-				len++;
-			}
+		for (; *string; string++){
+				switch(*string)
+				{
+					case '<':
+						length += 4;
+						break;
+					case '"':
+						if(attr)
+							{
+								length += 3;	
+							}
+						break;
+					case '>':
+						length += 4;
+						break;
+					case '&':
+						length += 5;
+						break;	
+					default:
+						length++;
+						break;		
+				}
+			
 		}
-		*length = len;
+		*len = length;
 	}
 }
 
