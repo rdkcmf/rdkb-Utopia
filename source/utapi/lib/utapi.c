@@ -5099,47 +5099,55 @@ int Utopia_RestoreFactoryDefaults (void)
     return SUCCESS;
 }
 
-/*
- * This came from trx.c in openwrt
- * Copyright (C) 2005 Mike Baker
- * Copyright (C) 2008 Felix Fietkau <nbd@openwrt.org>
- */
+
 static unsigned long *crc32 = NULL;
 
 static void init_crc32()
 {
-   unsigned long crc;
-   unsigned long poly = 0xEDB88320L;
-   int n, bit;
+   unsigned long crc_value;
+   unsigned long poly_value = 0xEDB88320L;
+   int loop_count, bit_value;
 
-   if (crc32)
+   if (NULL != crc32)
       return;
 
    crc32 = (unsigned long *) malloc(256 * sizeof(unsigned long));
-   if (!crc32) {
+   if (NULL == crc32) {
       perror("malloc");
       return;
    }
 
-   for (n = 0; n < 256; n++) {
-      crc = (unsigned long) n;
-      for (bit = 0; bit < 8; bit++)
-         crc = (crc & 1) ? (poly ^ (crc >> 1)) : (crc >> 1);
-      crc32[n] = crc;
+   for (loop_count = 0; loop_count < 256; loop_count++) 
+   {
+      crc_value = (unsigned long) loop_count;
+
+      for (bit_value = 0; bit_value < 8; bit_value++)
+      {
+         if(crc_value & 1)
+         {
+           crc_value = poly_value ^ (crc_value >> 1); 
+         }
+         else
+         {
+           crc_value = crc_value >> 1;
+         }
+       }
+        
+      crc32[loop_count] = crc_value;
    }
 }
 
-static unsigned int crc32buf(char *buf, size_t len)
+static unsigned int crc32buf(char *buffer, size_t length)
 {
-   unsigned int crc = 0xFFFFFFFF;
-   for (; len; len--, buf++) {
-      crc = crc32[(crc ^ *buf) & 0xff] ^ (crc >> 8);
+   unsigned int crc_value = 0xFFFFFFFF;
+   while(length)
+   {
+   	crc_value = crc32[(crc_value ^ *buffer) & 0xff] ^ (crc_value >> 8);
+  	 length--;
+   	buffer++;
    }
-   return crc;
+   return crc_value;
 }
-
-/* end of came from openwrt */
-
 
 int Utopia_BackupConfiguration (char *out_config_fname)
 {
