@@ -99,12 +99,10 @@ qtn_set_default_ssid(){
             $QWCFG_TEST push $QTN_INDEX ssid "$SSID"
         elif [ $ATH_INDEX -eq 6 -o $ATH_INDEX -eq 7 ]
         then
-            SSID_CATEGORY="IOT"
-            
-            #ADD MAC ADDRESS here
-            SSID="${SSID_CATEGORY}-$UNIQUE_ID"
-            #THEN SET SSID IOT-MAC (same for both 2.4 and 5G)
-            $QWCFG_TEST push $QTN_INDEX ssid "$SSID"
+            echo "SETTING LOST & FOUND CONF"
+            echo "SETTING LOST & FOUND CONF"
+            $QWCFG_TEST set $QTN_INDEX ssid_bcast 1
+            $QWCFG_TEST set $QTN_INDEX ssid D375C1D9F8B041E2A1995B784064977B
         fi
         
         #RADIO_DESC=""
@@ -350,7 +348,7 @@ get_expected_if_list() {
         
         #XFinity IoT network
         6)
-            IF_LIST="eth0.${BRIDGE_VLAN} ath6 ath7"
+            IF_LIST="ath6 ath7"
         ;;
         
     esac
