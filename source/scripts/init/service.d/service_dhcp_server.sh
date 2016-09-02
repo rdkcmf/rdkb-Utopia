@@ -104,8 +104,8 @@ fi
 lan_status_change ()
 {
 
-   echo "SERVICE DHCP : Inside lan status change with $1 and $2"
-   echo "SERVICE DHCP : Current lan status is : $CURRENT_LAN_STATE"
+   echo_t "SERVICE DHCP : Inside lan status change with $1 and $2"
+   echo_t "SERVICE DHCP : Current lan status is : $CURRENT_LAN_STATE"
 #   if [ "stopped" = "$1" ] ; then
 #         sysevent set dns-errinfo
 #         sysevent set dhcp_server_errinfo
@@ -122,12 +122,12 @@ lan_status_change ()
          prepare_hostname
          # also prepare dns part of dhcp conf cause we are the dhcp server too
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
-		 echo "SERVICE DHCP : Start dhcp-server from lan status change"
+		 echo_t "SERVICE DHCP : Start dhcp-server from lan status change"
          $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
          sysevent set dns-status started
       else
 	     sysevent set lan_status-dhcp started
-	     echo "SERVICE DHCP :  Call start DHCP server from lan status change with $2"
+	     echo_t "SERVICE DHCP :  Call start DHCP server from lan status change with $2"
          dhcp_server_start $2
       fi
 #   fi
@@ -317,7 +317,7 @@ dhcp_server_start ()
    fi
 
    sysevent set dhcp_server-progress inprogress
-   echo "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start"
+   echo_t "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start"
    sysevent set ${SERVICE_NAME}-errinfo
    #wait_till_end_state dhcp_server
    #wait_till_end_state dns
@@ -376,7 +376,7 @@ dhcp_server_start ()
    # that lease is not found in the dnsmasq.leases file
 
    
-   echo "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
+   echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
    $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
@@ -394,19 +394,19 @@ dhcp_server_start ()
 	      #isAvailablebrlan1=`ifconfig | grep brlan1`
 	      #if [ "$isAvailablebrlan1" != "" ]
               #then
-              	echo "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh_from_dhcpscript:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
+              	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh_from_dhcpscript:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
               	gw_lan_refresh &
               #	echo "lan_not_restart NOT found! Restart lan!"
 	      #fi
 	    fi
      else
           rm -f /var/tmp/lan_not_restart
-          echo "lan_not_restart found! Don't restart lan!"
+          echo_t "lan_not_restart found! Don't restart lan!"
      fi
    fi
 
    if [ ! -f "/tmp/dhcp_server_start" ]; then
-       echo "dhcp_server_start is called for the first time trigger cosa_start_rem.sh execution"
+       echo_t "dhcp_server_start is called for the first time trigger cosa_start_rem.sh execution"
        touch /tmp/dhcp_server_start
    fi
 
@@ -414,9 +414,9 @@ dhcp_server_start ()
    sysevent set dns-status started
    sysevent set dhcp_server-status started
    sysevent set dhcp_server-progress completed
-   echo "DHCP SERVICE :dhcp_server-progress_is_set_to_completed:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
+   echo_t "DHCP SERVICE :dhcp_server-progress_is_set_to_completed:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
 
-   echo "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
+   echo_t "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
    cat $RESOLV_CONF
 }
 
@@ -519,7 +519,7 @@ service_init
 
 case "$1" in
    ${SERVICE_NAME}-start)
-	  echo "SERVICE DHCP : Got start.. call dhcp_server_start"
+	  echo_t "SERVICE DHCP : Got start.. call dhcp_server_start"
       dhcp_server_start
       ;;
    ${SERVICE_NAME}-stop)
@@ -527,7 +527,7 @@ case "$1" in
       ;;
    ${SERVICE_NAME}-restart)
       #dhcp_server_stop
-	  echo "SERVICE DHCP : Got restart with $2.. Call dhcp_server_start"
+	  echo_t "SERVICE DHCP : Got restart with $2.. Call dhcp_server_start"
       dhcp_server_start $2
       ;;
    dns-start)
@@ -540,7 +540,7 @@ case "$1" in
       dns_start
       ;;
    lan-status)
-	  echo "SERVICE DHCP : Got lan_status"
+	  echo_t "SERVICE DHCP : Got lan_status"
       lan_status_change $CURRENT_LAN_STATE
 	  #if [ "$CURRENT_LAN_STATE" = "started" -a ! -f /tmp/fresh_start ]; then
 	  #	  gw_lan_refresh&
@@ -567,7 +567,7 @@ case "$1" in
       ;;
     ipv4_*-status)
         if [ x"up" = x$2 ]; then
-	        echo "SERVICE DHCP : Got ipv4 status"
+	        echo_t "SERVICE DHCP : Got ipv4 status"
             lan_status_change started lan_not_restart 
         fi
       ;;

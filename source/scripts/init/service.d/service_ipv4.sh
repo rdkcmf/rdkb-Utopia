@@ -242,7 +242,7 @@ apply_config () {
     sysevent set ${SERVICE_NAME}_${1}-ipv4addr $CUR_IPV4_ADDR
     sysevent set ${SERVICE_NAME}_${1}-ipv4subnet $CUR_IPV4_SUBNET
    
-    echo "service_ipv4 : Triggering RDKB_FIREWALL_RESTART" 
+    echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART" 
     sysevent set firewall-restart
     
     return 0
@@ -334,7 +334,7 @@ resync_all_instances () {
     done
     
     #DEBUG
-    echo "L3 Resync all instances. TO_REM:$TO_REM , TO_ADD:$TO_ADD"
+    echo_t "L3 Resync all instances. TO_REM:$TO_REM , TO_ADD:$TO_ADD"
     
     for inst in $TO_REM; do
         teardown_instance $inst
@@ -353,7 +353,7 @@ resync_all_instances () {
 #args: l3 instance
 resync_instance () {
 
-    echo "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance."
+    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance."
     eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
     
     if [ x = x$NV_ENABLED -o x$DM_FALSE = x$NV_ENABLED ]; then
@@ -371,7 +371,7 @@ resync_instance () {
     CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_${1}-ipv4subnet`
     
     #DEBUG
-    echo "RDKB_SYSTEM_BOOT_UP_LOG : Syncing l3 instance ($1), NV_ETHLOWER:$NV_ETHLOWER, NV_LOWER:$NV_LOWER , NV_ENABLED:$NV_ENABLED , NV_IP:$NV_IP , NV_SUBNET:$NV_SUBNET , LOWER:$LOWER , CUR_IPV4_ADDR:$CUR_IPV4_ADDR , CUR_IPV4_SUBNET:$CUR_IPV4_SUBNET"
+    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : Syncing l3 instance ($1), NV_ETHLOWER:$NV_ETHLOWER, NV_LOWER:$NV_LOWER , NV_ENABLED:$NV_ENABLED , NV_IP:$NV_IP , NV_SUBNET:$NV_SUBNET , LOWER:$LOWER , CUR_IPV4_ADDR:$CUR_IPV4_ADDR , CUR_IPV4_SUBNET:$CUR_IPV4_SUBNET"
     
     if [ x$NV_LOWER != x$LOWER ]; then
         #different lower layer, teardown and switch
@@ -402,7 +402,7 @@ resync_instance () {
 sync_tsip () {
 
     eval `psmcli get -e NV_TSIP_ENABLE ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_ENABLE} NV_TSIP_IP ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_IP} NV_TSIP_SUBNET ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_SUBNET} NV_TSIP_GATEWAY ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_GATEWAY}`
-    echo "Syncing from PSM True Static IP Enable:$NV_TSIP_ENABLE, IP:$NV_TSIP_IP, SUBNET:$NV_TSIP_SUBNET, GATEWAY:$NV_TSIP_GATEWAY"
+    echo_t "Syncing from PSM True Static IP Enable:$NV_TSIP_ENABLE, IP:$NV_TSIP_IP, SUBNET:$NV_TSIP_SUBNET, GATEWAY:$NV_TSIP_GATEWAY"
 
     #apply the new original true static ip
     if [ x != x$NV_TSIP_ENABLE -a x0 != x$NV_TSIP_ENABLE ]; then
@@ -428,7 +428,7 @@ sync_tsip_asn () {
 
     for cur_nv_inst in $NV_INST; do
         eval `psmcli get -e NV_TSIP_ASN_ENABLE ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_ENABLE} NV_TSIP_ASN_IP ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_IP} NV_TSIP_ASN_SUBNET ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_SUBNET}`
-        echo "Syncing from PSM asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
+        echo_t "Syncing from PSM asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
 
         if [ x != x$NV_TSIP_ASN_ENABLE -a x0 != x$NV_TSIP_ASN_ENABLE ]; then
             MASKBITS=`mask2cidr $NV_TSIP_ASN_SUBNET`
@@ -444,12 +444,12 @@ sync_tsip_asn () {
 resync_tsip () {
 
     eval `psmcli get -e NV_TSIP_ENABLE ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_ENABLE} NV_TSIP_IP ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_IP} NV_TSIP_SUBNET ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_SUBNET} NV_TSIP_GATEWAY ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_GATEWAY}`
-    echo "From PSM True Static IP Enable:${NV_TSIP_ENABLE}, IP:${NV_TSIP_IP}, SUBNET:${NV_TSIP_SUBNET}, GATEWAY:${NV_TSIP_GATEWAY}"
+    echo_t "From PSM True Static IP Enable:${NV_TSIP_ENABLE}, IP:${NV_TSIP_IP}, SUBNET:${NV_TSIP_SUBNET}, GATEWAY:${NV_TSIP_GATEWAY}"
 
     IPV4_ADDR=`sysevent get ipv4-tsip_IPAddress`
     IPV4_SUBNET=`sysevent get ipv4-tsip_Subnet`
     IPV4_GATEWAY=`sysevent get ipv4-tsip_Gateway`
-    echo "From Command line True Static IP Enable:$1, IP:${IPV4_ADDR}, SUBNET:${IPV4_SUBNET}, GATEWAY:${IPV4_GATEWAY}"
+    echo_t "From Command line True Static IP Enable:$1, IP:${IPV4_ADDR}, SUBNET:${IPV4_SUBNET}, GATEWAY:${IPV4_GATEWAY}"
 
     #delete the original true static ip first
     if [ x != x$NV_TSIP_IP -a x != x$NV_TSIP_SUBNET ]; then
@@ -492,12 +492,12 @@ resync_tsip () {
 resync_tsip_asn () {
 
     eval `psmcli get -e NV_TSIP_ASN_ENABLE ${IPV4_TSIP_ASNPREFIX}.${1}.${IPV4_TSIP_ENABLE} NV_TSIP_ASN_IP ${IPV4_TSIP_ASNPREFIX}.${1}.${IPV4_TSIP_IP} NV_TSIP_ASN_SUBNET ${IPV4_TSIP_ASNPREFIX}.${1}.${IPV4_TSIP_SUBNET}`
-    echo "From PSM asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
+    echo_t "From PSM asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
 
     IPV4_ENABLE=`sysevent get ipv4-tsip_asn_enable`
     IPV4_ADDR=`sysevent get ipv4-tsip_asn_ipaddress`
     IPV4_SUBNET=`sysevent get ipv4-tsip_asn_subnet`
-    echo "From CL  asn Enable:${IPV4_ENABLE}, IP:${IPV4_ADDR}, SUBNET:${IPV4_SUBNET}"
+    echo_t "From CL  asn Enable:${IPV4_ENABLE}, IP:${IPV4_ADDR}, SUBNET:${IPV4_SUBNET}"
 
     #delete the original additional subnet first
     if [ x != x$NV_TSIP_ASN_ENABLE -a x0 != x$NV_TSIP_ASN_ENABLE ]; then
@@ -521,7 +521,7 @@ resync_tsip_asn () {
 remove_tsip_config () {
 
     eval `psmcli get -e NV_TSIP_ENABLE ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_ENABLE} NV_TSIP_IP ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_IP} NV_TSIP_SUBNET ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_SUBNET} NV_TSIP_GATEWAY ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_GATEWAY}`
-    echo "Delete True Static IP Enable:$NV_TSIP_ENABLE, IP:$NV_TSIP_IP, SUBNET:$NV_TSIP_SUBNET, GATEWAY:$NV_TSIP_GATEWAY"
+    echo_t "Delete True Static IP Enable:$NV_TSIP_ENABLE, IP:$NV_TSIP_IP, SUBNET:$NV_TSIP_SUBNET, GATEWAY:$NV_TSIP_GATEWAY"
 
     if [ x != x$NV_TSIP_IP -a x != x$NV_TSIP_SUBNET ]; then
         MASKBITS=`mask2cidr $NV_TSIP_SUBNET`
@@ -544,7 +544,7 @@ remove_tsip_config () {
 
     for cur_nv_inst in $NV_INST; do
         eval `psmcli get -e NV_TSIP_ASN_ENABLE ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_ENABLE} NV_TSIP_ASN_IP ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_IP} NV_TSIP_ASN_SUBNET ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_SUBNET}`
-        echo "Delete asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
+        echo_t "Delete asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
 
         if [ x0 != x${NV_TSIP_ASN_ENABLE} ]; then
             MASKBITS=`mask2cidr $NV_TSIP_ASN_SUBNET`

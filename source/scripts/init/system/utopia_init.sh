@@ -111,10 +111,10 @@ echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 #    insmod /lib/modules/`uname -r`/kernel/drivers/wifi/wl.ko
 #    cp /etc/utopia/service.d/nvram.dat /tmp
 #fi
-echo "Starting log module.."
+echo_t "Starting log module.."
 /fss/gw/usr/sbin/log_start.sh
 
-echo "[utopia][init] Starting udev.."
+echo_t "[utopia][init] Starting udev.."
 
 # Spawn telnet daemon only for production images
 #if [ $debug_build -ne 0 ]; then
@@ -191,14 +191,14 @@ PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 #   fi
 #fi
 
-echo "[utopia][init] Starting syscfg using file store ($SYSCFG_FILE)"
+echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_FILE)"
 if [ -f $SYSCFG_FILE ]; then 
    syscfg_create -f $SYSCFG_FILE
 else
    echo -n > $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
    #>>zqiu
-   echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
+   echo_t "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    #<<zqiu
 fi
@@ -213,7 +213,7 @@ if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
 elif cat /proc/P-UNIT/status | grep -q "Last reset duration"; then
    PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk -F '[ |\.]' '{ print $7 }'`
 else
-   echo "[utopia][init] Cannot read the reset duration value from /proc/P-UNIT/status"
+   echo_t "[utopia][init] Cannot read the reset duration value from /proc/P-UNIT/status"
 fi
 
 # Set the factory reset key if it was pressed for longer than our threshold
@@ -224,7 +224,7 @@ fi
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
 if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
-   echo "[utopia][init] Performing factory reset"
+   echo_t "[utopia][init] Performing factory reset"
 # Remove log file first because it need get log file path from syscfg   
    /fss/gw/usr/sbin/log_handle.sh reset
    echo -e "\n" | syscfg_destroy 
@@ -257,11 +257,11 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    #>>zqiu
    create_wifi_default
    #<<zqiu
-   echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
+   echo_t "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
    syscfg_create -f $SYSCFG_FILE
 #>>zqiu
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
-    echo "[utopia][init] Performing wifi reset"
+    echo_t "[utopia][init] Performing wifi reset"
     create_wifi_default
     syscfg unset $FACTORY_RESET_KEY
 #<<zqiu
@@ -269,23 +269,23 @@ fi
 #echo "[utopia][init] Cleaning up vendor nvram"
 # /etc/utopia/service.d/nvram_cleanup.sh
 
-echo "*** HTTPS root certificate for TR69 ***"
+echo_t "*** HTTPS root certificate for TR69 ***"
 
 if [ ! -f /etc/cacert.pem ]; then
-	echo "HTTPS root certificate for TR69 is missing..."
+	echo_t "HTTPS root certificate for TR69 is missing..."
 
 else
-	echo "Copying HTTPS root certificate for TR69"
+	echo_t "Copying HTTPS root certificate for TR69"
 	if [ -f /nvram/cacert.pem ]; then
 		rm -f /nvram/cacert.pem
 	fi
 	cp -f /etc/cacert.pem /nvram/
 fi
 
-echo "[utopia][init] Starting system logging"
+echo_t "[utopia][init] Starting system logging"
 /etc/utopia/service.d/service_syslog.sh syslog-start
 
-echo "[utopia][init] Starting sysevent subsystem"
+echo_t "[utopia][init] Starting sysevent subsystem"
 #syseventd --threads 18
 syseventd
 
@@ -303,10 +303,10 @@ syseventd
 #insmod $MODULE_PATH/fat.ko
 #insmod $MODULE_PATH/vfat.ko
 
-echo "[utopia][init] Setting any unset system values to default"
+echo_t "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
 
-echo "[utopia][init] Applying iptables settings"
+echo_t "[utopia][init] Applying iptables settings"
 
 lan_ifname=`syscfg get lan_ifname`
 cmdiag_ifname=`syscfg get cmdiag_ifname`
@@ -341,7 +341,7 @@ ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icm
 #fi
 
 
-echo "[utopia][init] Processing registration"
+echo_t "[utopia][init] Processing registration"
 INIT_DIR=/etc/utopia/registration.d
 # run all executables in the sysevent registration directory
 # echo "[utopia][init] Running registration using $INIT_DIR"
@@ -361,7 +361,7 @@ ifconfig l2sd0.4090 192.168.251.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.4090 lookup erouter
 
 #--------Marvell LAN-side egress flood mitigation----------------
-echo "88E6172: Do not egress flood unicast with unknown DA"
+echo_t "88E6172: Do not egress flood unicast with unknown DA"
 swctl -c 11 -p 5 -r 4 -b 0x007b
 
 # Creating IOT VLAN on ARM
@@ -371,5 +371,5 @@ vconfig add l2sd0 106
 ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.106 lookup erouter
 
-echo "[utopia][init] completed creating utopia_inited flag"
+echo_t "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited

@@ -112,7 +112,7 @@ ap_addr() {
 
 
 #service_init 
-echo "RDKB_SYSTEM_BOOT_UP_LOG : lan_handler called with $1 $2"
+echo_t "RDKB_SYSTEM_BOOT_UP_LOG : lan_handler called with $1 $2"
 #echo "lan_handler called with $1 $2" > /dev/console
 
 case "$1" in
@@ -134,7 +134,7 @@ case "$1" in
       #if below value is 1, we already used old last_erouter_mode in ipv4_4-status
       SYSEVENT_ipv4_4_status_configured=`sysevent get ipv4_4_status_configured`
       if [ "0" != "$SYSCFG_last_erouter_mode" ] && [ 1x = "${SYSEVENT_ipv4_4_status_configured}"x ]; then
-          echo "lan_handler.sh: erouter_mode-updated, restart lan"
+          echo_t "lan_handler.sh: erouter_mode-updated, restart lan"
           LAN_INST=`sysevent get primary_lan_l3net`
           LAN_IFNAME=`sysevent get ipv4_${LAN_INST}-ifname`
           sysevent set ipv4-down $LAN_INST
@@ -149,12 +149,12 @@ case "$1" in
             sysevent set current_lan_ipaddr `sysevent get ipv4_${INST}-ipv4addr`
 
             if [ "$RG_MODE" = "2" -a x"ready" != x`sysevent get start-misc` ]; then
-				echo "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2"
+				echo_t "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2"
                 sysevent set lan-status started
                 firewall
                 execute_dir /etc/utopia/post.d/
             elif [ x"ready" != x`sysevent get start-misc` -a x != x`sysevent get current_wan_ipaddr` -a "0.0.0.0" != `sysevent get current_wan_ipaddr` ]; then
-				echo "LAN HANDLER : Triggering DHCP server using LAN status based on start misc"
+				echo_t "LAN HANDLER : Triggering DHCP server using LAN status based on start misc"
 				sysevent set lan-status started
                 STARTED_FLG=`sysevent get parcon_nfq_status`
 
@@ -167,15 +167,15 @@ case "$1" in
                 isAvailablebrlan1=`ifconfig | grep brlan1`
                 if [ "$isAvailablebrlan1" != "" ]
                 then
-                    echo "LAN HANDLER : Refreshing LAN from handler"
+                    echo_t "LAN HANDLER : Refreshing LAN from handler"
                     gw_lan_refresh&
                 fi
                	firewall
                 execute_dir /etc/utopia/post.d/ restart
             else
-				echo "LAN HANDLER : Triggering DHCP server using LAN status"
+				echo_t "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started
-		echo "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART"
+		echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART"
                 sysevent set firewall-restart
             fi
 
@@ -187,7 +187,7 @@ case "$1" in
             LAN_IFNAME=`sysevent get ipv4_${INST}-ifname`
             #if it's ipv4 only, not enable link local 
             SYSCFG_last_erouter_mode=`syscfg get last_erouter_mode`
-            echo "lan_handler.sh last_erouter_mode: $SYSCFG_last_erouter_mode"
+            echo_t "lan_handler.sh last_erouter_mode: $SYSCFG_last_erouter_mode"
             
             if [ "4" = $INST ];then
                 sysevent set ipv4_4_status_configured 1
@@ -205,11 +205,11 @@ case "$1" in
             #disable dnsmasq when ipv6 only mode and DSlite is disabled
             DSLITE_ENABLED=`sysevent get dslite_enabled`
 	    	DHCP_PROGRESS=`sysevent get dhcp_server-progress`
-			echo "LAN HANDLER : DHCP configuration status got is : $DHCP_PROGRESS"
+			echo_t "LAN HANDLER : DHCP configuration status got is : $DHCP_PROGRESS"
             if [ "2" = "$SYSCFG_last_erouter_mode" ] && [ "x1" != x$DSLITE_ENABLED ]; then
                 sysevent set dhcp_server-stop		    
             elif [ "0" != "$SYSCFG_last_erouter_mode" ] && [ "$DHCP_PROGRESS" != "inprogress" ] ; then
-				echo "LAN HANDLER : Triggering dhcp start based on last erouter mode"
+				echo_t "LAN HANDLER : Triggering dhcp start based on last erouter mode"
                 sysevent set dhcp_server-start
             fi
 
@@ -224,7 +224,7 @@ case "$1" in
                 #sysevent set desired_moca_link_state down
             fi
         fi
-        echo "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
+        echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
         sysevent set firewall-restart 
    ;;
    
@@ -258,12 +258,12 @@ case "$1" in
    ;;
 
    iot_status)
-            echo "IOT_LOG : lan_handler received $2 status"
+            echo_t "IOT_LOG : lan_handler received $2 status"
 
             if [ "$2" = "up" ]
             then
                $SERVICE_MULTINET_PATH/handle_sw.sh "addIotVlan" 0 106 "-t"
-               echo "IOT_LOG : lan_handler done with handle_sw call"
+               echo_t "IOT_LOG : lan_handler done with handle_sw call"
                $IOT_SERVICE_PATH/iot_service.sh "up"
             elif [ "$2" = "down" ]
             then
@@ -272,7 +272,7 @@ case "$1" in
             then 
                $IOT_SERVICE_PATH/iot_service.sh "bootup"
             fi
-            echo "IOT_LOG : lan_handler done with IOT service call"
+            echo_t "IOT_LOG : lan_handler done with IOT service call"
             
    ;;
    

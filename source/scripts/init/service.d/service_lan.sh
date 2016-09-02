@@ -415,7 +415,7 @@ do_stop()
 do_start_no_bridge()
 {
 #   echo "[lan] do_start_no_bridge called" > /dev/console
-   echo "SYSCFG_lan_dhcp_client = $SYSCFG_lan_dhcp_client"
+   echo_t "SYSCFG_lan_dhcp_client = $SYSCFG_lan_dhcp_client"
    if [ "1" = "$SYSCFG_lan_dhcp_client" ] ; then
 #      echo "starting up lan dhcp" > /dev/console
       ulog lan status "bringing up lan interface via dhcp"
@@ -682,7 +682,7 @@ service_start ()
          sysevent set ${SERVICE_NAME}-errinfo
          sysevent set ${SERVICE_NAME}-status started
 #song:         add_docsis_bridge
-         echo "service_lan : Triggering RDKB_FIREWALL_RESTART"
+         echo_t "service_lan : Triggering RDKB_FIREWALL_RESTART"
          sysevent set firewall-restart
       fi
 	  #rongwei added

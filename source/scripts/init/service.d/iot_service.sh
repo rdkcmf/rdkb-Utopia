@@ -68,30 +68,30 @@ subnet() {
 # Function to restart DHCP server and firewall
 restartServices()
 {
-  echo "IOT_LOG : Restart services"
+  echo_t "IOT_LOG : Restart services"
 
   sysevent set dhcp_server-restart lan_not_restart
 
-  echo "iotservice : Triggering RDKB_FIREWALL_RESTART"
+  echo_t "iotservice : Triggering RDKB_FIREWALL_RESTART"
   sysevent set firewall-restart
 }
 
-echo "IOT_LOG : iot_service received $1"
+echo_t "IOT_LOG : iot_service received $1"
 
 mask=`subnet $iot_ipaddress $iot_mask`
 
 if [ "$1" = "up" ]
 then
-   echo "IOT_LOG : Add ip rules, ip routes and restart services"
+   echo_t "IOT_LOG : Add ip rules, ip routes and restart services"
    ip rule add from $iot_ipaddress lookup $VID
    ip rule add from all iif $iot_interface lookup erouter
    ip rule add from all iif $iot_interface lookup $VID
    ip route add table $VID $mask/24 dev $iot_interface
    restartServices
-   echo "IOT_LOG : Completed ip rules, ip routes and restart services"
+   echo_t "IOT_LOG : Completed ip rules, ip routes and restart services"
 elif [ "$1" = "down" ]
 then
-   echo "IOT_LOG : Remove ip rules, ip routes and restart services"
+   echo_t "IOT_LOG : Remove ip rules, ip routes and restart services"
    ip rule del from $iot_ipaddress lookup $VID
    ip rule del from all iif $iot_interface lookup erouter
    ip rule del from all iif $iot_interface lookup $VID
@@ -101,20 +101,20 @@ then
    vconfig rem $iot_interface
 
    restartServices
-   echo "IOT_LOG : Completed removing ip rules, ip routes and restart services"
+   echo_t "IOT_LOG : Completed removing ip rules, ip routes and restart services"
 elif [ "$1" = "bootup" ]
 then
    #No need to call restart services as during bootup all configuration will be done
    isIotEnabled=`syscfg get lost_and_found_enable`
-   echo "IOT_LOG : IOT enabled is : $isIotEnabled"   
+   echo_t "IOT_LOG : IOT enabled is : $isIotEnabled"   
    if [ "$isIotEnabled" = "true" ]
    then
-      echo "IOT_LOG : Add ip rules, ip routes and restart services"
+      echo_t "IOT_LOG : Add ip rules, ip routes and restart services"
       ip rule add from $iot_ipaddress lookup $VID
       ip rule add from all iif $iot_interface lookup erouter
       ip rule add from all iif $iot_interface lookup $VID
       ip route add table $VID $mask/24 dev $iot_interface
-      echo "IOT_LOG : Completed ip rules, ip routes and restart services"
+      echo_t "IOT_LOG : Completed ip rules, ip routes and restart services"
    fi
 fi
 
