@@ -73,51 +73,23 @@ wait_qtn(){
 
 #Generate and set a default SSID for wifi AP
 #Assumes you have already set the variables $AP_NAME and $VAP_NAME
-qtn_set_default_ssid(){
-    if [ $USE_DEFAULT_SSID -ne 0 -a "$BRIDGE_NAME" != "brlan0" ]
-    then
-        
-        SSID_CATEGORY=""
-        #Captive portal will take care of setting the private network ssid and passphrase
-        #if [ $ATH_INDEX -eq 0 -o $ATH_INDEX -eq 1 ]
-        #then
-        #	SSID_CATEGORY="Private"
-        if [ $ATH_INDEX -eq 2 -o $ATH_INDEX -eq 3 ]
-        then
-            SSID_CATEGORY="XHS"
-            
-            #ADD MAC ADDRESS here
-            SSID="${SSID_CATEGORY}-$UNIQUE_ID"
-            #THEN SET SSID XHS-MAC (same for both 2.4 and 5G)
-            $QWCFG_TEST push $QTN_INDEX ssid "$SSID"
-        elif [ $ATH_INDEX -eq 4 -o $ATH_INDEX -eq 5 ]
-        then
-            SSID_CATEGORY="xfinitywifi"
-            SSID="${SSID_CATEGORY}"
-            
-            #THEN SET SSID "xfinitywifi"   (same for both 2.4 and 5G)
-            $QWCFG_TEST push $QTN_INDEX ssid "$SSID"
-        elif [ $ATH_INDEX -eq 6 -o $ATH_INDEX -eq 7 ]
-        then
-            echo "SETTING LOST & FOUND CONF"
-            echo "SETTING LOST & FOUND CONF"
-            $QWCFG_TEST set $QTN_INDEX ssid_bcast 1
-            $QWCFG_TEST set $QTN_INDEX ssid D375C1D9F8B041E2A1995B784064977B
-        fi
-        
-        #RADIO_DESC=""
-        #if [ "$RADIO" -eq "0" ]
-        #then
-        #	RADIO_DESC="5GHz"
-        #elif [ "$RADIO" -eq "2" ]
-        #then
-        #RADIO_DESC="2.4GHz"
-        #fi
-        ##SSID="${SSID_PREFIX} ${SSID_CATEGORY} ${RADIO_DESC} $UNIQUE_ID"
-        #NEXT 2 lines - CANNOT DO THIS HERE. THIS WILL ALSO SET Private SSID
-        ##SSID="${SSID_CATEGORY}-$UNIQUE_ID"
-        ##$QWCFG_TEST push $QTN_INDEX ssid "$SSID"
-    fi
+qtn_set_LnF_ssid(){
+
+          echo "VLAN_UTIL SETTING LOST & FOUND SSID"
+          $QWCFG_TEST set $QTN_INDEX ssid_bcast 0
+          $QWCFG_TEST set $QTN_INDEX ssid D375C1D9F8B041E2A1995B784064977B
+}
+
+qtn_set_LnF_passphrase(){
+        echo "VLAN_UTIL SETTING LOST & FOUND PASSPHRASE"
+	configparamgen 5 /tmp/tmp5
+	configparammod /tmp/tmp5
+
+	lpf=`cat /tmp/tmp5.mod`;
+
+	rm -f /tmp/tmp5
+	rm -f /tmp/tmp5.mod
+        $QWCFG_TEST set $QTN_INDEX ssid $lpf
 }
 
 #Setup QTN instance
@@ -151,7 +123,11 @@ setup_qtn(){
         
         #If configured to do so, set a default SSID name here
 	# Quantenna layer will set the default SSID, etc.
-        # qtn_set_default_ssid
+       if [ $ATH_INDEX -eq 6 -o $ATH_INDEX -eq 7 ]
+       then
+            qtn_set_LnF_ssid
+            qtn_set_LnF_passphrase
+       fi
     else
         #Remove vlan interface
         $IP link set $AP_NAME down
