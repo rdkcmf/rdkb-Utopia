@@ -88,6 +88,11 @@
 #define UTOPIA_TR181_PARAM_SIZE1        256
 #define UTOPIA_TR181_PARAM_SIZE2        1024
 
+#define CRC32_TABLE_SIZE 256
+#define POLYNOMIAL 0xEDB88320L
+
+#define CALCULATE_CRC32_TABLE_ENTRY(X) (((X) & 1) ? (POLYNOMIAL^ ((X) >> 1)) : ((X) >> 1))
+
 /*
  * utapi.c - 
  */
@@ -5100,51 +5105,50 @@ int Utopia_RestoreFactoryDefaults (void)
 }
 
 
-static unsigned long *crc32 = NULL;
+static unsigned long *crc32_table = NULL;
 
-static void init_crc32()
+static boolean_t crc32_table_initialized()
+{
+	if (NULL != crc32_table)
+	   return FALSE;
+
+	crc32_table= (unsigned long *) malloc(CRC32_TABLE_SIZE * sizeof(unsigned long));
+	if (NULL == crc32_table) {
+	   perror("malloc");
+	   return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void prepare_crc32_table()
 {
    unsigned long crc_value;
-   unsigned long poly_value = 0xEDB88320L;
+
    int loop_count, bit_value;
 
-   if (NULL != crc32)
+   if(!crc32_table_initialized())
       return;
 
-   crc32 = (unsigned long *) malloc(256 * sizeof(unsigned long));
-   if (NULL == crc32) {
-      perror("malloc");
-      return;
-   }
-
-   for (loop_count = 0; loop_count < 256; loop_count++) 
+   for (loop_count = 0; loop_count < CRC32_TABLE_SIZE; loop_count++)
    {
       crc_value = (unsigned long) loop_count;
 
       for (bit_value = 0; bit_value < 8; bit_value++)
-      {
-         if(crc_value & 1)
-         {
-           crc_value = poly_value ^ (crc_value >> 1); 
-         }
-         else
-         {
-           crc_value = crc_value >> 1;
-         }
-       }
-        
-      crc32[loop_count] = crc_value;
+         crc_value = CALCULATE_CRC32_TABLE_ENTRY(crc_value);
+
+      crc32_table[loop_count] = crc_value;
    }
 }
 
-static unsigned int crc32buf(char *buffer, size_t length)
+static unsigned int get_crc32_value(char *buffer, size_t length)
 {
    unsigned int crc_value = 0xFFFFFFFF;
    while(length)
    {
-   	crc_value = crc32[(crc_value ^ *buffer) & 0xff] ^ (crc_value >> 8);
-  	 length--;
-   	buffer++;
+      crc_value = crc32_table[(crc_value ^ *buffer) & 0xff] ^ (crc_value >> 8);
+      length--;
+      buffer++;
    }
    return crc_value;
 }
@@ -5175,14 +5179,14 @@ int Utopia_BackupConfiguration (char *out_config_fname)
             }
         }
 
-        init_crc32();
+        prepare_crc32_table();
                 
         config_hdr_t hdr;
     
         hdr.magic = CFG_MAGIC;
         hdr.len = syscfg_len;
         hdr.version = CFG_VERSION;
-        hdr.crc32 = crc32buf(buf, syscfg_len);
+        hdr.crc32 = get_crc32_value(buf, syscfg_len);
     
         ulogf(ULOG_CONFIG, UL_UTAPI, "backup crc32 0x%x", hdr.crc32);
 
@@ -5246,7 +5250,7 @@ int Utopia_RestoreConfiguration (char *config_fname)
         }
         fclose(fp);
 
-        init_crc32();
+        prepare_crc32_table();
 
         /*
          * Header check
@@ -5266,7 +5270,7 @@ int Utopia_RestoreConfiguration (char *config_fname)
             free(buf);
             return ERR_CFGRESTORE_BAD_VERSION;
         }
-        unsigned int expected_crc32 = crc32buf(buf, config_sz);
+        unsigned int expected_crc32 = get_crc32_value(buf, config_sz);
         if (hdr.crc32 != expected_crc32) {
             ulog_errorf(ULOG_CONFIG, UL_UTAPI, "restore: config hdr crc32 didn't match: expected 0x%x, actual 0x%x", hdr.crc32, expected_crc32);
             free(buf);
