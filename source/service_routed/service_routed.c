@@ -161,8 +161,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         "!password zebra\n"
         "!enable password admin\n"
         "!log stdout\n"
-        "log syslog\n"
-        "log file /var/log/zebra.log\n"
+        "log file /var/log/zebra.log errors\n"
         "table 255\n";
 
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
