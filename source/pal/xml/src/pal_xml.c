@@ -92,7 +92,12 @@
 #define pal_debug(fmt, args...)
 #endif
 
-static VOID PAL_xml_escape_real(const CHAR *string, CHAR *trgt, INT32 * len, INT32 attr);
+#define CHARACTER_LT '<'
+#define CHARACTER_GT '>'
+#define CHARACTER_QUOT '"'
+#define CHARACTER_AMP '&'
+
+static VOID PAL_xml_escape_convert(const CHAR *src_str, CHAR *dest_str, INT32 * len, INT32 attr);
 
 /************************************************************
  * Function: PAL_xml_nodelist_GetbyName 
@@ -654,80 +659,63 @@ CHAR *PAL_xml_escape(IN const CHAR *src_str, IN BOOL attribute)
 
     pal_debug("PAL_xml_escape start !\r\n");
 
-	PAL_xml_escape_real(src_str, NULL, &len, attribute);//caculate the memory size first
+	PAL_xml_escape_convert(src_str, NULL, &len, attribute);//caculate the memory size first
 	out = malloc(len + 1);
     if (out)
-	    PAL_xml_escape_real(src_str, out, NULL, attribute);
+	    PAL_xml_escape_convert(src_str, out, NULL, attribute);
 
     pal_debug("PAL_xml_escape end !\r\n");
     
 	return out;
 }
 
-static VOID PAL_xml_escape_real(const CHAR *string, CHAR *tgrt, INT32 * len, INT32 attr)
+static VOID PAL_xml_escape_convert(const CHAR *src_str, CHAR *dest_str, INT32 * len, INT32 attr)
 {
     INT32 length = 0;
-    
-	if (tgrt != NULL) {
-		for (; *string; string++) {
-			switch(*string)
-			{
-			case '<':
-				memcpy(tgrt + length, "&lt;", 4);
-				length += 4;
-				break;
-			case '"':
-				if(attr)
-				{
-				memcpy(tgrt + length, "%22", 3);
-				length += 3;
-				}
-				break;
-			case '>':
-				memcpy(tgrt + length, "&gt;", 4);
-				length += 4;
-				break;
-			case '&':
-				memcpy(tgrt + length, "&amp;", 5);
-				length += 5;
-				break;	
-			default:
-				tgrt[length++] = *string;
-				break;		
-			}
-		}
-		tgrt[length] = '\0';
+    const char *XML_ESCAPE_STRINGS[] = {"&lt;","%22","&gt;","&amp;"};
+    const int STRING_INDEX[] = {strlen(XML_ESCAPE_STRINGS[0]),strlen(XML_ESCAPE_STRINGS[1]),strlen(XML_ESCAPE_STRINGS[2]),strlen(XML_ESCAPE_STRINGS[3])};
+    int index;
 
-		if (len != NULL)
-			*len = length;
-        
-	}else if (len != NULL){
+    while(*src_str) {
+        switch(*src_str)
+        {
+        case CHARACTER_LT:
+            index = 0;
+            break;
+        case CHARACTER_QUOT:
+            index = attr ? 1 : -1;
+            break;
+        case CHARACTER_GT:
+            index = 2;
+            break;
+        case CHARACTER_AMP:
+            index = 3;
+            break;
+        default:
+            index = -1;
+            break;
+        }
 
-		for (; *string; string++){
-				switch(*string)
-				{
-					case '<':
-						length += 4;
-						break;
-					case '"':
-						if(attr)
-							{
-								length += 3;	
-							}
-						break;
-					case '>':
-						length += 4;
-						break;
-					case '&':
-						length += 5;
-						break;	
-					default:
-						length++;
-						break;		
-				}
-			
-		}
-		*len = length;
-	}
+        if (index != -1)
+        {
+            if (dest_str)
+                memcpy(dest_str+ length, XML_ESCAPE_STRINGS[index], STRING_INDEX[index]);
+            length += STRING_INDEX[index];
+        }
+        else
+        {
+            if (dest_str)
+                dest_str[length] = *src_str;
+            length++;
+        }
+        src_str++;
+    }
+
+    if (dest_str)
+        dest_str[length] = '\0';
+
+    if (len)
+        *len = length;
+
 }
 
