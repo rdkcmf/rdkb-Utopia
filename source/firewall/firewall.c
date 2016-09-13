@@ -9001,6 +9001,8 @@ static void do_ipv6_nat_table(FILE* fp)
    fprintf(fp, "%s\n", ":prerouting_devices - [0:0]");
    fprintf(fp, "%s\n", ":prerouting_redirect - [0:0]");
 
+   //zqiu: RDKB-7639: block device broken for IPv6
+   fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);  
  
    syscfg_get(NULL, "HTTP_Server_IPv6", IPv6, sizeof(IPv6));
    fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:80\n",IPv6);
