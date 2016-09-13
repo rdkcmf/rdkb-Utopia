@@ -294,11 +294,14 @@ case "$1" in
         SYSEVT_lan_ipaddr_v6=`sysevent get lan_ipaddr_v6`
         SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
         LAN_IFNAME=`sysevent get ipv4_${LAN_INST}-ifname`
+	    LAN_RESTARTED=`sysevent get lan_restarted`
 
-        if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ]; then
+        if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] || [ x"true" = x$LAN_RESTARTED ]; then
             ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
         fi
+
+	sysevent set lan_restarted done
 
    ;;
    # TODO: register for lan-stop and lan-start

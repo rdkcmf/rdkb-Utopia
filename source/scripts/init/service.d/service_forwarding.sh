@@ -93,7 +93,7 @@ service_start ()
       ulog forwarding status "$PID forwarding is starting"
       sysevent set ${SERVICE_NAME}-status starting 
       sysevent set ${SERVICE_NAME}-errinfo 
-
+	  LANRESTART_STATUS=`sysevent get lan_restarted`
       service_init
 
       # if we are in bridge mode then make sure that the wan, lan are down
@@ -134,6 +134,22 @@ service_start ()
                 sysevent set wan-stop
                 wait_till_state wan stopped
             fi
+	    
+	    if [ "true" = "$LANRESTART_STATUS" ] ; then
+		BREAK_LOOP=0
+	        BREAK_COUNT=0
+   		while [ $BREAK_LOOP -eq 0 ]
+   		do
+        	LAN_STATUS_FWD=`sysevent get lan-status`
+        	if [ "$LAN_STATUS_FWD" = "stopped" ] || [ "$BREAK_COUNT" -gt 10 ] ; then
+                	BREAK_LOOP=1
+        	else
+                	sleep 2
+        	fi
+        	BREAK_COUNT=$((BREAK_COUNT+1))
+   	    	done
+
+            fi
         fi
       fi
 
@@ -159,7 +175,7 @@ service_start ()
          ulog forwarding status "starting wan"
          sysevent set wan-start
          STATUS=`sysevent get lan-status`
-         if [ "started" != "$STATUS" ] ; then
+         if [ "started" != "$STATUS" ] || [ "true" = $LANRESTART_STATUS ] ; then
             ulog forwarding status "starting lan"
             sysevent set lan-start
          fi
