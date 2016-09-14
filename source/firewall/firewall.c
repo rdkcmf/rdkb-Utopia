@@ -7748,6 +7748,38 @@ static int isInCaptivePortal()
  ==========================================================================
  */
 
+//zqiu:
+static int prepare_xconf_rules(FILE *mangle_fp) {
+  /*ADDED TO SUPPORT XCONF SERVER REACHABILITY
+   * All egress traffic from the erouter0 interface 
+   * is marked with AF22 
+   */
+   
+   //zqiu: RDKB-4519 
+   //fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
+#if defined(_COSA_BCM_MIPS_)
+   fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
+#endif
+   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
+#if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
+   fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
+#endif
+   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --set-dscp-class af22\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
+   
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af32 -j CONNMARK --set-mark 0xA\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs1 -j CONNMARK --set-mark 0xB\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs5 -j CONNMARK --set-mark 0xC\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af22 -j CONNMARK --set-mark 0xD\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xA  -j DSCP --set-dscp-class af32\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xB -j DSCP --set-dscp-class cs1\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");
+   
+   /*XCONF RULES END*/
+   return 0;
+}
+ 
 /*
  *  Procedure     : prepare_subtables
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -7800,33 +7832,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(mangle_fp, "%s\n", ":postrouting_qos - [0:0]");
    fprintf(mangle_fp, "%s\n", ":postrouting_lan2lan - [0:0]");
 
-  /*ADDED TO SUPPORT XCONF SERVER REACHABILITY
-   * All egress traffic from the erouter0 interface 
-   * is marked with AF22 
-   */
-   
-   //zqiu: RDKB-4519 
-   //fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
-#if defined(_COSA_BCM_MIPS_)
-   fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
-#endif
-   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
-#if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
-   fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
-#endif
-   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --set-dscp-class af22\n");
-   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
-   
-   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af32 -j CONNMARK --set-mark 0xA\n");
-   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs1 -j CONNMARK --set-mark 0xB\n");
-   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs5 -j CONNMARK --set-mark 0xC\n");
-   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af22 -j CONNMARK --set-mark 0xD\n");
-   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xA  -j DSCP --set-dscp-class af32\n");
-   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xB -j DSCP --set-dscp-class cs1\n");
-   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
-   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");
-   
-   /*XCONF RULES END*/
+   prepare_xconf_rules(mangle_fp);
 
 #ifdef CONFIG_BUILD_TRIGGER
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
@@ -8698,11 +8704,15 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(mangle_fp, "%s\n", ":prerouting_qos - [0:0]");
    fprintf(mangle_fp, "%s\n", ":postrouting_qos - [0:0]");
    fprintf(mangle_fp, "%s\n", ":postrouting_lan2lan - [0:0]");
+   
+   //zqiu: RDKB-5686: xconf rule should work for pseudo bridge mode
+   prepare_xconf_rules(mangle_fp);
+
 #ifdef CONFIG_BUILD_TRIGGER
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_trigger\n");
 #endif
-#endif
+#endif   
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_lan2lan\n");
