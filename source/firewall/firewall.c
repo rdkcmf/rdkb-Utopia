@@ -1177,6 +1177,10 @@ static int prepare_globals_from_configuration(void)
 
 
    syscfg_get(NULL, "lan_ifname", lan_ifname, sizeof(lan_ifname));
+   if ('\0' == lan_ipaddr[0]) {
+        syscfg_get(NULL, "lan_ipaddr", lan_ipaddr, sizeof(lan_ipaddr));
+        sysevent_set(sysevent_fd, sysevent_token, "current_lan_ipaddr", lan_ipaddr, 0);
+   }
    //syscfg_get(NULL, "lan_ipaddr", lan_ipaddr, sizeof(lan_ipaddr));
    syscfg_get(NULL, "lan_netmask", lan_netmask, sizeof(lan_netmask)); 
    syscfg_get(NULL, "rip_enabled", rip_enabled, sizeof(rip_enabled)); 
