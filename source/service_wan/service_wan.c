@@ -422,6 +422,8 @@ static int wan_addr_set(struct serv_wan *sw)
     int timo;
     FILE *fp;
     char ipaddr[16];
+    char lanstatus[10] = {0};
+    char brmode[4] = {0};
 
     sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
     sysevent_set(sw->sefd, sw->setok, "wan-errinfo", NULL, 0);
@@ -492,6 +494,11 @@ static int wan_addr_set(struct serv_wan *sw)
      * "lan-status" and "wan-status" and determine which part should be launched. */
     sysevent_get(sw->sefd, sw->setok, "start-misc", val, sizeof(val));
     sysevent_get(sw->sefd, sw->setok, "current_lan_ipaddr", ipaddr, sizeof(ipaddr));
+
+    sysevent_get(sw->sefd, sw->setok,"bridge_mode", brmode, sizeof(brmode));
+    sysevent_get(sw->sefd, sw->setok,"lan-status", lanstatus, sizeof(lanstatus));
+    int bridgeMode = atoi(brmode);
+
     if (strcmp(val, "ready") != 0 && strlen(ipaddr) && strcmp(ipaddr, "0.0.0.0") != 0) {
         fprintf(stderr, "%s: start-misc: %s current_lan_ipaddr %s\n", __FUNCTION__, val, ipaddr);
         fprintf(stderr, "[%s] start firewall partially\n", PROG_NAME);
@@ -503,6 +510,8 @@ static int wan_addr_set(struct serv_wan *sw)
             sysevent_set(sw->sefd, sw->setok, "parcon_nfq_status", "started", 0);
         }
         vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/ restart");
+    } else if(bridgeMode != 0 && strcmp(lanstatus, "stopped") == 0 ) {
+    	vsystem("firewall && execute_dir /etc/utopia/post.d/ restart");
     } else {
 
 	sysevent_get(sw->sefd, sw->setok, "misc-ready-from-mischandler",mischandler_ready, sizeof(mischandler_ready));
