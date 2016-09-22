@@ -574,7 +574,7 @@ fi
    fi 
    #echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-leasefile=$DHCP_LEASE_FILE" >> $LOCAL_DHCP_CONF
-   echo "$PREFIX""dhcp-script=$DHCP_ACTION_SCRIPT" >> $LOCAL_DHCP_CONF
+  # echo "$PREFIX""dhcp-script=$DHCP_ACTION_SCRIPT" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-lease-max=$DHCP_NUM" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-hostsfile=$DHCP_STATIC_HOSTS_FILE" >> $LOCAL_DHCP_CONF
 
@@ -584,9 +584,9 @@ fi
    fi
 
 
-   if [ "$LOG_LEVEL" -gt 1 ] ; then
-      echo "$PREFIX""log-dhcp" >> $LOCAL_DHCP_CONF
-   fi
+   #if [ "$LOG_LEVEL" -gt 1 ] ; then
+    #  echo "$PREFIX""log-dhcp" >> $LOCAL_DHCP_CONF
+   #fi
 
    if [ "dns_only" != "$3" ] ; then
       prepare_dhcp_conf_static_hosts
