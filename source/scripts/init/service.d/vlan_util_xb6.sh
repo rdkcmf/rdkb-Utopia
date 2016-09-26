@@ -89,7 +89,8 @@ qtn_set_LnF_passphrase(){
 
 	rm -f /tmp/tmp5
 	rm -f /tmp/tmp5.mod
-        $QWCFG_TEST set $QTN_INDEX ssid $lpf
+        echo "LnF PassPhrase=$lpf"
+        $QWCFG_TEST set $QTN_INDEX passphrase $lpf
 }
 
 #Setup QTN instance
