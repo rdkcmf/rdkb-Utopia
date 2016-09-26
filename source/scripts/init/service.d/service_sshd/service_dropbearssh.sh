@@ -78,7 +78,7 @@ do_start() {
 #   /etc/init.d/dropbear start
    #dropbear -r /etc/rsa_key.priv
    #dropbear -E -s -b /etc/sshbanner.txt -s -a -p [$CM_IP]:22
-   dropbear -E -s -a -p [$CM_IP]:22
+   dropbear -E -s -b /etc/sshbanner.txt -a -p [$CM_IP]:22
    sysevent set ssh_daemon_state up
 }
 
