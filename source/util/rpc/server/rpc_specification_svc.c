@@ -21,6 +21,7 @@ rpc_tool1_1(struct svc_req *rqstp, register SVCXPRT *transp)
 {
 	union {
 		rpc_CommandBuf executecommand_1_arg;
+		rpc_CommandBuf exec_1_arg;
 	} argument;
 	char *result;
 	xdrproc_t _xdr_argument, _xdr_result;
@@ -36,6 +37,12 @@ rpc_tool1_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		_xdr_result = (xdrproc_t) xdr_rpc_CommandBuf;
 		local = (char *(*)(char *, struct svc_req *)) executecommand_1_svc;
 		break;
+	
+	case exec:
+		_xdr_argument = (xdrproc_t) xdr_rpc_CommandBuf;
+		_xdr_result = (xdrproc_t) xdr_int;
+		local = (char *(*)(char *, struct svc_req *)) exec_1_svc;
+		break;		
 
 	default:
 		svcerr_noproc (transp);

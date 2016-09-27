@@ -33,7 +33,31 @@ int ExecuteCommand(char *cmnd)
 	 	printf("ATOM CONSOLE OUTPUT IS NULL\n");
 	 }
 
+	return 1;
+
 }
+
+int ExeSysCmd(char *cmnd)
+{
+	CLIENT *clnt = NULL;
+        struct rpc_CommandBuf commandBuf;
+	strcpy(commandBuf.buffer,cmnd);
+        char* errStr;	
+	int *output = NULL;
+
+	clnt = getClientInstance();
+        if(clnt != NULL) {
+
+                output = exec_1(&commandBuf,clnt);
+                if(output == NULL){
+                        errStr = clnt_sperror(clnt,"RPC");
+                        if(isRPCConnectionLoss(errStr))
+                        return 0;
+                }
+        }
+	return 1;
+}
+
 int
 main (int argc, char *argv[],char **args)
 {
@@ -53,6 +77,19 @@ main (int argc, char *argv[],char **args)
 	}
 	iRet = initRPC(host);
 	if(iRet == 1) {
+
+		if(strcmp(argv[2],"sh") == 0)
+		{
+			if(argv[3] != NULL) 
+			iRet=ExeSysCmd(argv[3]);
+			else
+			iRet = ExecuteCommand(argv[2]);
+                        if(iRet == 0) {
+                                printf("RPC FAILED !!!\n");
+                        }
+			exit(0);
+			
+		}
 		iRet = ExecuteCommand(argv[2]);
 			if(iRet == 0) {
 				printf("RPC FAILED !!!\n");

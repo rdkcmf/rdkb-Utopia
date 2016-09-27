@@ -26,12 +26,18 @@ typedef struct rpc_CommandBuf rpc_CommandBuf;
 #define EXECUTECOMMAND 1
 extern  rpc_CommandBuf * executecommand_1(rpc_CommandBuf *, CLIENT *);
 extern  rpc_CommandBuf * executecommand_1_svc(rpc_CommandBuf *, struct svc_req *);
+#define exec 2
+extern  int * exec_1(rpc_CommandBuf *, CLIENT *);
+extern  int * exec_1_svc(rpc_CommandBuf *, struct svc_req *);
 extern int rpc_tool1_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
 #define EXECUTECOMMAND 1
 extern  rpc_CommandBuf * executecommand_1();
 extern  rpc_CommandBuf * executecommand_1_svc();
+#define exec 2
+extern  int * exec_1();
+extern  int * exec_1_svc();
 extern int rpc_tool1_1_freeresult ();
 #endif /* K&R C */
 
