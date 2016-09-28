@@ -616,6 +616,7 @@ then
     #Sync the group interfaces and raise status events
     sync_group_settings
     
+    ifconfig $BRIDGE_NAME 192.168.106.254    
     #Restart the firewall after setting up LnF
     echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstart"
     $SYSEVENT set firewall-restart
