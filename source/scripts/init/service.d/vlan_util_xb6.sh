@@ -77,7 +77,7 @@ qtn_set_LnF_ssid(){
 
           echo "VLAN_UTIL SETTING LOST & FOUND SSID"
           $QWCFG_TEST set $QTN_INDEX ssid_bcast 0
-          $QWCFG_TEST set $QTN_INDEX ssid D375C1D9F8B041E2A1995B784064977B
+          $QWCFG_TEST set $QTN_INDEX ssid A16746DF2466410CA2ED9FB2E32FE7D9
 }
 
 qtn_set_LnF_passphrase(){
