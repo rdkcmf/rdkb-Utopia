@@ -29,3 +29,14 @@ executecommand_1_svc(rpc_CommandBuf *argp, struct svc_req *rqstp)
 	} 
 	return 	NULL;
 }
+
+
+int * exec_1_svc(rpc_CommandBuf *cmd, struct svc_req *req)
+{
+	char cmdBuf[255]={0};
+	int ret = 1;
+    snprintf(cmdBuf,TEMP_BUF_LEN,"%s &\n",cmd->buffer);
+	system(cmdBuf);
+	return &ret;
+}
+
