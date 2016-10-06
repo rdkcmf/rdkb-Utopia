@@ -83,7 +83,7 @@ do_start() {
       #wan0 should be in v4
       CM_IP=`ifconfig wan0 | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
    fi   
-   dropbear -E -s -a -p [$CM_IP]:22
+   dropbear -E -s -b /etc/sshbanner.txt -a -p [$CM_IP]:22
    sysevent set ssh_daemon_state up
 }
 
