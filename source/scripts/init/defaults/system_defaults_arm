@@ -958,6 +958,8 @@ $todays_reboot_count=0
 $todays_reset_count=0
 $lastActiontakentime=0
 $process_memory_log_count=0
+$lastActiontakentimeforAtomHang=0
+$todays_atom_reboot_count=0
 
 #IOT VLAN
 $iot_ifname=l2sd0.106
