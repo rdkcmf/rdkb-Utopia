@@ -95,6 +95,10 @@
 #endif
 #include "ulog/ulog.h"
 
+#ifdef INCLUDE_BREAKPAD
+#include "breakpad_wrapper.h"
+#endif
+
 int debug_num_sets;
 int debug_num_gets;
 int debug_num_accepts;
@@ -472,6 +476,7 @@ static int initialize_system(void)
 
    daemon_init();
 
+#ifndef INCLUDE_BREAKPAD
    /* set up signal handling
     * we want:
     *    
@@ -664,6 +669,7 @@ static int initialize_system(void)
         }
       }
    }
+#endif
 
    // save our pid in the pid file
    pid_t pid = getpid();
@@ -1140,6 +1146,10 @@ int main (int argc, char **argv)
   global_client_accept_port     = SE_SERVER_WELL_KNOWN_PORT; 
   // how many worker threads do we use
   numThreads = NUM_WORKER_THREAD;
+
+#ifdef INCLUDE_BREAKPAD
+    breakpad_ExceptionHandler();
+#endif
 
 #ifdef SE_SERVER_CODE_DEBUG
 //       debugLevel = SHOW_ALL;
