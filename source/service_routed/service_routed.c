@@ -59,7 +59,7 @@
 
 #define ZEBRA_PID_FILE  "/var/zebra.pid"
 #define RIPD_PID_FILE   "/var/ripd.pid"
-#define ZEBRA_CONF_FILE "/etc/zebra.conf"
+#define ZEBRA_CONF_FILE "/var/zebra.conf"
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
 
 struct serv_routed {
