@@ -171,7 +171,8 @@ SYSCFG_MOUNT=/nvram
 SYSCFG_FILE=$SYSCFG_MOUNT/syscfg.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
-PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"  
+PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
+FACTORY_RESET_REASON=false  
 
 #syscfg_check -d $MTD_DEVICE
 #if [ $? = 0 ]; then
@@ -239,6 +240,10 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
 #   fi
 
 # Remove syscfg and PSM storage files
+
+#mark the factory reset flag 'on'
+   FACTORY_RESET_REASON=true 
+   
    rm -f $SYSCFG_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
@@ -370,6 +375,13 @@ swctl -c 16 -p 7 -v 106 -m 2 -q 1
 vconfig add l2sd0 106
 ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.106 lookup erouter
+
+# Check and set factory-reset as reboot reason 
+if ["$FACTORY_RESET_REASON"="true"]; then
+   echo_t "[utopia][init] Detected last reboot reason as factory-reset"
+   syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
+   syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+fi
 
 echo_t "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited
