@@ -160,15 +160,131 @@ calculate_dhcp_range () {
    done
    IFS=$SAVEIFS
 
-   # check if dhcp start is just a last octet
-   OCTET_NUM=`echo $DHCP_START|wc -m`
-   if [ "$OCTET_NUM" -gt "4" ] ; then # full ip address format
+
+   # Do a sanity check to make sure we got start address from DB
+   if [ "$DHCP_START" = "" ]
+   then
+       echo "DHCP_SERVER: Start IP is NULL"
+       DHCP_START=`syscfg get dhcp_start`
+   fi
+   echo "DHCP_SERVER: Start IP is $DHCP_START"
+
+   #
+   # Validate DHCP start IP.
+   # Valid IP should have:
+   #          - three 3 "." in it ( Eg: 192.168.100.2, 10.0.0.3)
+   #          - Last octet should not be NULL ( to avoid cases as "10.0.0.")
+   #
+   isStartIpValid=0
+   isEndIpValid=0
+   allIpsValid=0
+
+   # Validate starting address
+   OCTET_NUM=`echo $DHCP_START | grep -o "\." | wc -l`
+
+   #
+   # If total "."s are 3, then validate last octet
+   # Last octet should not be:
+   #          - NULL
+   #          - less than 2
+   #          - greater than 254
+   #
+   if [ "$OCTET_NUM" -eq "3" ]
+   then
+        START_ADDR_LAST_OCTET=`echo $DHCP_START | awk -F '\\.' '{print $NF}'`
+        if [ "$START_ADDR_LAST_OCTET" = "" ]
+        then
+            echo "DHCP_SERVER: Last octet of start IP is NULL"
+            isStartIpValid=0
+        else
+           cnt=`echo "$START_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
+           
+           if [ -z $cnt ];
+           then
+             echo "DHCP_SERVER: Last octet of start IP is character"
+             isStartIpValid=0
+           else
+             if [ "$START_ADDR_LAST_OCTET" -gt "254" ]
+             then
+                 echo "DHCP_SERVER: Last octet of start ip is greater than 254"
+                 isStartIpValid=0
+             elif [ "$START_ADDR_LAST_OCTET" -lt "2" ]
+             then
+                 echo "DHCP_SERVER: Last octet of start ip is less than 2"
+                 isStartIpValid=0
+             else
+                 echo "DHCP_SERVER: Last octet of start ip is valid"
+                 isStartIpValid=1
+             fi
+                 
+          fi
+       fi            
+   fi
+
+   # Get the ending address from syscfg DB
+   ENDING_ADDRESS=`syscfg get dhcp_end`
+   OCTET_NUM=`echo $ENDING_ADDRESS | grep -o "\." | wc -l`
+
+   #
+   # If total "."s are 3, then validate last octet
+   # Last octet should not be:
+   #          - NULL
+   #          - less than 2
+   #          - greater than 254
+   #
+   if [ "$OCTET_NUM" -eq "3" ]
+   then
+        END_ADDR_LAST_OCTET=`echo $ENDING_ADDRESS | awk -F '\\.' '{print $NF}'`
+        if [ "$END_ADDR_LAST_OCTET" = "" ]
+        then
+            echo "DHCP_SERVER: Last octet of end IP is NULL"
+            isEndIpValid=0
+        else
+           cnt=`echo "$END_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
+           
+           if [ -z $cnt ];
+           then
+             echo "DHCP_SERVER: Last octet of end IP is character"
+             isEndIpValid=0
+           else
+             if [ "$END_ADDR_LAST_OCTET" -gt "254" ]
+             then
+                 echo "DHCP_SERVER: Last octet of end ip is greater than 254"
+                 isEndIpValid=0
+             elif [ "$END_ADDR_LAST_OCTET" -lt "2" ]
+             then
+                 echo "DHCP_SERVER: Last octet of end ip is less than 2"
+                 isEndIpValid=0
+             else
+                 echo "DHCP_SERVER: Last octet of end ip is valid"
+                 isEndIpValid=1
+             fi
+                 
+          fi
+       fi            
+   fi
+
+   # If both Ips are valid, we should be able to proceed
+   if [ "$isEndIpValid" -eq "1" ] && [ "$isStartIpValid" -eq "1" ]
+   then
+       allIpsValid=1
+   fi
+
+   # full ip address format is valid
+   if [ "$allIpsValid" -eq "1" ] ; then 
       DHCP_START_ADDR=$DHCP_START
-      DHCP_END_ADDR=`syscfg get dhcp_end`
-   else                               # just last octet
-      if [ "$DHCP_START" -lt "2" ] ; then
-         DHCP_START=2
+      DHCP_END_ADDR=$ENDING_ADDRESS
+      echo "DHCP_SERVER: Start address from syscfg_db $DHCP_START_ADDR"
+      echo "DHCP_SERVER: End address from syscfg_db $DHCP_END_ADDR"
+   else   
+      # allIpsValid will be 0 if IP validation would have failed above.
+      # in that case, let us calculate the range
+      if [ "$allIpsValid" -eq "0" ]
+      then
+          echo "DHCP_SERVER: One or more of IPs are invalid"
+          DHCP_START=2
       fi
+      echo "DHCP_SERVER: Start address was corrupted. New value: $DHCP_START"
       DHCP_END=`expr $DHCP_START + $DHCP_NUM`
       DHCP_END=`expr $DHCP_END - 1`
 
@@ -185,7 +301,8 @@ calculate_dhcp_range () {
          DHCP_END=$DHCP_START
          DHCP_NUM=0
       fi
-
+      echo "DHCP_SERVER: End address $DHCP_END"
+      echo "DHCP_SERVER: No. of addresses $DHCP_NUM"
       # extract 1st 3 octets of the lan ip address and concatenate the
       # start and end octet for figuring out the dhcp address range
       TEMP=""
@@ -205,6 +322,9 @@ calculate_dhcp_range () {
 
       DHCP_START_ADDR=$LAST"."$DHCP_START
       DHCP_END_ADDR=$LAST"."$DHCP_END
+
+      echo "DHCP_SERVER: Start address to syscfg_db $DHCP_START_ADDR"
+      echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
       # update syscfg dhcp_start, dhcp_end to not use just last octet
       syscfg set dhcp_start $DHCP_START_ADDR
       syscfg set dhcp_end $DHCP_END_ADDR
