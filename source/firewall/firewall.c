@@ -7969,19 +7969,19 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromlan\n", lan_ifname);
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);    
    char IPv4[17] = "0"; 
-      
-   syscfg_get(NULL, "HTTP_Server_IP", IPv4, sizeof(IPv4));
-   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:80\n",IPv4);
+     
+   syscfg_set(NULL, "HTTP_Server_IP", lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:51515\n",lan_ipaddr);
   
 
-   IPv4[0] = '\0';
-   syscfg_get(NULL, "HTTPS_Server_IP", IPv4, sizeof(IPv4));
-   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination %s:443\n",IPv4);
+   //IPv4[0] = '\0';
+   syscfg_set(NULL, "HTTPS_Server_IP", lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination %s:51515\n",lan_ipaddr);
 
-   IPv4[0] = '\0';
-   syscfg_get(NULL, "Default_Server_IP", IPv4, sizeof(IPv4));
-   fprintf(nat_fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination %s:443\n",IPv4);
-   fprintf(nat_fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination %s:80\n",IPv4);
+   //IPv4[0] = '\0';
+   syscfg_set(NULL, "Default_Server_IP", lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination %s:51515\n",lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination %s:51515\n",lan_ipaddr);
    
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    if(isGuestNetworkEnabled) {
@@ -9106,17 +9106,17 @@ static void do_ipv6_nat_table(FILE* fp)
    fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);  
  
    syscfg_get(NULL, "HTTP_Server_IPv6", IPv6, sizeof(IPv6));
-   fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:80\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:51515\n",IPv6);
  	
 
    IPv6[0] = '\0';
    syscfg_get(NULL, "HTTPS_Server_IPv6", IPv6, sizeof(IPv6));
-   fprintf(fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination [%s]:443\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination [%s]:51515\n",IPv6);
       
    IPv6[0] = '\0';  
    syscfg_get(NULL, "Default_Server_IPv6", IPv6, sizeof(IPv6));
-   fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:443\n",IPv6);
-   fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:80\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:51515\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:51515\n",IPv6);
    
     FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
 }
