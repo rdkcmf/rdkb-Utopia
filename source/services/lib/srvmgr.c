@@ -252,11 +252,15 @@ static int sm_cancel_one_event(const char* srv_name, const char*event)
     * Now close up the whole in the array
     */
    do {
+      snprintf(async_name, sizeof(async_name), "%s%s%s_%d", SM_PREFIX, srv_name, SM_POSTFIX, idx);
       snprintf(async_next_name, sizeof(async_next_name), "%s%s%s_%d", SM_PREFIX, srv_name, SM_POSTFIX, idx+1);
+	  //printf("\n >>>>>> %s %d async_name = %s async_next_name = %s <<<<<< \n", __FUNCTION__, __LINE__,async_name, async_next_name);
       async_next_id_str[0] = '\0';
       sysevent_get(sysevent_fd, sysevent_token, async_next_name, async_next_id_str, sizeof(async_next_id_str));
       sysevent_set(sysevent_fd, sysevent_token, async_name, async_next_id_str, 0);
-   } while ('\0' == async_next_id_str[0]);
+      idx++;
+	  //printf("\n >>>>>> %s %d async_next_id_str = %s <<<<<< \n", __FUNCTION__, __LINE__,async_next_id_str);
+   } while ('\0' != async_next_id_str[0]);
       
    return(0);
 }
