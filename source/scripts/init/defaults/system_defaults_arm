@@ -994,3 +994,7 @@ $logbackup_interval=30
 
 #Minimum memory threshold value
 $MinMemoryThreshold_Value=10
+
+#Bridge mode MoCA status
+$MoCA_previous_status=0
+$MoCA_current_status=0
