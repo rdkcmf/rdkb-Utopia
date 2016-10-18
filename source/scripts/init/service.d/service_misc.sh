@@ -51,15 +51,15 @@ RG_MD=`syscfg get last_erouter_mode`
 /etc/utopia/service.d/service_igd.sh snmp_subagent-status
 #unit in bridge mode
 if [ "$BR_MD" != "0" -o "$RG_MD" = "0" ]; then
-    execute_dir /etc/utopia/post.d/
+#    execute_dir /etc/utopia/post.d/
 	firewall
 	exit 0;
 fi
 
 #when no cable plug in, timeout happened, we still need register the sysevent
-if [ "$UPTIME" -gt 600 ]; then
-    execute_dir /etc/utopia/post.d/ restart
-fi
+#if [ "$UPTIME" -gt 600 ]; then
+#    execute_dir /etc/utopia/post.d/ restart
+#fi
 
 if [ "$LAN_ST" != "started" ]; then
 	exit 0;
