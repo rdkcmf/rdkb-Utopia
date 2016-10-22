@@ -14,10 +14,13 @@ ATOM_LOG_PATH="/rdklogs/logs/"
 ATOM_IP=""
 backupenable=`syscfg get logbackup_enable`
 isNvram2Supported="no"
+UPLOAD_THRESHOLD=""
+
 if [ -f /etc/device.properties ]
 then
    isNvram2Supported=`cat /etc/device.properties | grep NVRAM2_SUPPORTED | cut -f2 -d=`
-   atom_sync=`cat /etc/device.properties | grep ATOM_SYNC | cut -f2 -d=` 
+   atom_sync=`cat /etc/device.properties | grep ATOM_SYNC | cut -f2 -d=`
+   UPLOAD_THRESHOLD=`cat /etc/device.properties | grep LOG_UPLOAD_THRESHOLD  | cut -f2 -d=`
 fi
 
 if [ "$atom_sync" = "yes" ]
@@ -36,6 +39,19 @@ fi
  LOG_BACK_UP_REBOOT="$LOG_UPLOAD_FOLDER/logbackupreboot/"
 #fi
 
+#If device is having SYNC PATH overrides, it will get applied here.
+if [ -f /etc/device.properties ]
+then
+	LOG_SYNC_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_PATH  | cut -f2 -d=`
+	LOG_SYNC_BACK_UP_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_PATH  | cut -f2 -d=`
+	LOG_SYNC_BACK_UP_REBOOT_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_REBOOT_PATH  | cut -f2 -d=`
+	if [ "$LOG_SYNC_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_REBOOT_PATH_override" != "" ]
+	then
+		LOG_SYNC_PATH=$LOG_SYNC_PATH_override
+		LOG_SYNC_BACK_UP_PATH=$LOG_SYNC_BACK_UP_PATH_override
+		LOG_SYNC_BACK_UP_REBOOT_PATH=$LOG_SYNC_BACK_UP_REBOOT_PATH_override
+	fi
+fi
 
 HAVECRASH="$LOG_FOLDER/processcrashed"
 FLAG_REBOOT="$LOG_FOLDER/waitingreboot"
@@ -59,6 +75,12 @@ else
       MAXSIZE=524288
 fi
 MAXLINESIZE=2
+
+#Devices that have more nvram size can override default upload threshold (1.5MB) through device.properties
+if [ "$UPLOAD_THRESHOLD" != "" ]
+then
+	MAXSIZE=$UPLOAD_THRESHOLD
+fi
 
 URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb.cgi"
 
