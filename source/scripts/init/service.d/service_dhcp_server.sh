@@ -378,6 +378,24 @@ dhcp_server_start ()
    
    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
    $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+   if [ $? -eq 0 ]; then
+   	echo "$SERVER process started successfully"
+   else
+	BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE | cut -f2 -d=`
+   	if [ "$BOX_TYPE" = "XB6" ]; then
+   
+        	COUNTER=0
+        	while [ $COUNTER -lt 5 ]; do
+   			echo "$SERVER process failed to start sleep for 5 sec and restart it"
+			sleep 5
+			$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF
+                	if [ $? -eq 0 ]; then
+				break
+			fi
+			COUNTER=$COUNTER+1
+		done
+	fi 
+   fi
 
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
          echo "#!/bin/sh" > $TIME_FILE
@@ -494,7 +512,26 @@ dns_start ()
    if [ "stopped" = $DHCP_STATE ]; then
       $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
    else
-      $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+      	 $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+
+  	 if [ $? -eq 0 ]; then
+   		echo "$SERVER process started successfully"
+   	 else
+		BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE | cut -f2 -d=`
+   		if [ "$BOX_TYPE" = "XB6" ]; then
+   
+        		COUNTER=0
+        		while [ $COUNTER -lt 5 ]; do
+   				echo "$SERVER process failed to start sleep for 5 sec and restart it"
+				sleep 5
+				$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF
+                		if [ $? -eq 0 ]; then
+					break
+				fi
+				COUNTER=$COUNTER+1
+			done
+		fi 
+   	fi
    fi
    
    sysevent set dns-status started
