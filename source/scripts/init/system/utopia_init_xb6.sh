@@ -387,7 +387,7 @@ execute_dir $INIT_DIR&
 #ip rule add from all iif l2sd0.106 lookup erouter
 
 # Check and set factory-reset as reboot reason 
-if ["$FACTORY_RESET_REASON"="true"]; then
+if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo_t "[utopia][init] Detected last reboot reason as factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
