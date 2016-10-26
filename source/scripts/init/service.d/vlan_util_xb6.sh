@@ -572,6 +572,14 @@ case $INSTANCE in
         BRIDGE_NAME="br106"
         BRIDGE_VLAN=106
     ;;
+    65)
+        BRIDGE_NAME="br65"
+        BRIDGE_VLAN=65
+    ;;
+    66)
+        BRIDGE_NAME="br66"
+        BRIDGE_VLAN=66
+    ;;
     *)
         #Unknown / unsupported instance number
         echo "$0 error: Unknown instance $INSTANCE"
