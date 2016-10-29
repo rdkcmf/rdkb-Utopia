@@ -381,6 +381,13 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo_t "[utopia][init] Detected last reboot reason as factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+else
+   rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
+   echo_t "[utopia][init] X_RDKCENTRAL-COM_LastRebootReason ($rebootReason)"
+   if [ "$rebootReason" = "factory-reset" ]; then
+      echo_t "[utopia][init] Setting last reboot reason as unknown"
+      syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
+   fi
 fi
 
 echo_t "[utopia][init] completed creating utopia_inited flag"
