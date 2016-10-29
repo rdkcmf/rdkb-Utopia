@@ -105,7 +105,7 @@
 #endif
 
 #define WANCONNECTIONSERVICEUPDATE_SECOND 2 
-#define PORTMAPPING_LEASE_UPDATE 1 /* changed to support decrementing leaseDuration every second */
+#define PORTMAPPING_LEASE_UPDATE 30 /* changed to support decrementing leaseDuration every second */
 
 #define WAN_CONNECTION_DEVICE_TYPE "urn:schemas-upnp-org:device:WANConnectionDevice:1"
 

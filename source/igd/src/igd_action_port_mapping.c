@@ -638,6 +638,9 @@ INT32 IGD_add_PortMapping(INOUT struct action_event *event)
         {
             strncpy(pii_pmEntry.description, portmapEntry.pmDescription, sizeof(pii_pmEntry.description)-1);
         }
+
+	// Setting the lease time for Port Mapping entry , once lease expires rule will get deleted from iptable
+	portmapEntry.pmLeaseTime = 172800;
         pii_pmEntry.leaseTime = portmapEntry.pmLeaseTime;
         ret = IGD_pii_add_portmapping_entry(pIndex->wan_device_index,
                                  pIndex->wan_connection_device_index,

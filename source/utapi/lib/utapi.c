@@ -2922,20 +2922,23 @@ int Utopia_ValidateDynPortMapping (int index)
 int Utopia_InvalidateDynPortMappings (void)
 {
     int i, count = s_get_portmapdyn_count();
-
     for (i = 1; i <= count; i++) {
         portMapDyn_t pmap;
         bzero(&pmap, sizeof(pmap));
         if (UT_SUCCESS == s_get_portmapdyn(i, &pmap)) {
-            if (0 == pmap.lease) {
+// Lease is not unlimited , commenting out below check
+/*            if (0 == pmap.lease) {
                 continue;
-            }
+            } */
             // ulogf(ULOG_CONFIG, UL_UTAPI, "dynamic port map: time check(%d): last_update+lease %ld, curtime %ld", i, (long)(pmap.last_updated + pmap.lease), (long)curtime);
 
-            pmap.lease -= 1;
-            if (pmap.lease == 0){
+            pmap.lease -= 30;
+            if (pmap.lease <= 0){
                 ulogf(ULOG_CONFIG, UL_UTAPI, "dynamic port map: lease time expired for entry %d (%s:%d<->%s:%d)",
                         i, pmap.external_host, pmap.external_port, pmap.internal_host, pmap.internal_port);
+            printf("dynamic port map: lease time expired for entry %d (%s:%d<->%s:%d)\n",
+	i, pmap.external_host, pmap.external_port, pmap.internal_host, pmap.internal_port);
+
                 Utopia_DeleteDynPortMappingIndex(i);
                 s_firewall_restart();
             }else
