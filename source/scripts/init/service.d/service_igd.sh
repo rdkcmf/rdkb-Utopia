@@ -60,6 +60,7 @@ SELF_NAME="`basename $0`"
 #IGD=/usr/sbin/IGD
 IGD=IGD
 UPNP_TMP=/var/tmp/upnp.ttl
+PRIVATE_LAN_IF="brlan0"
 
 resync_upnp() {
     local CURRENT_NETS="`sysevent get ${SERVICE_NAME}_current_nets`"
@@ -95,7 +96,14 @@ resync_upnp() {
             async="`sysevent async ipv4_${i}-status ${UTOPIAROOT}/service_${SERVICE_NAME}.sh`"
             sysevent set ${SERVICE_NAME}_${i}-ipv4async "$async"
         fi
-        handle_ipv4_status ${i} `sysevent get ipv4_${i}-status`
+
+	IFName=`sysevent get ipv4_${i}-ifname`
+
+	if [ "$IFName" = "$PRIVATE_LAN_IF" ]
+	then
+    	    handle_ipv4_status ${i} `sysevent get ipv4_${i}-status`
+	    break
+	fi
         
     done
     
