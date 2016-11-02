@@ -5821,7 +5821,7 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
 {
     char filePath[256];
     char ipAddr[40];
-    FILE *ipRecords;
+    FILE *ipRecords = NULL;
     int len;
     int dnsResponse = 0;
     FIREWALL_DEBUG("Entering block_url_by_ipaddr\n");  
@@ -5830,11 +5830,12 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
     else
         snprintf(filePath, sizeof(filePath), "/var/.pc_url2ip_%s", insNum);
 
-    ipRecords = fopen(filePath, "w+"); /*RDKB-7145, CID-32907, optimizing the resource used*/
+    ipRecords = fopen(filePath, "r");
 
     if(ipRecords == NULL) {
         struct addrinfo hints, *res, *p;
         int status;
+        ipRecords = fopen(filePath, "w+"); /*RDKB-7145, CID-32907, optimizing the resource used*/
 
         memset(&hints, 0, sizeof(hints));
         if(ipver == 6)
