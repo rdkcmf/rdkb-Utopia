@@ -340,7 +340,7 @@ NOT_DEF:
  ============================================================================
 */
 #include "autoconf.h"
-//zqiu: Need to enable kernel flag CONFIG_KERNEL_NF_TRIGGER_SUPPORT
+//zqiu: ARRISXB3-893
 #ifdef CONFIG_INTEL_NF_TRIGGER_SUPPORT
 #define CONFIG_KERNEL_NF_TRIGGER_SUPPORT CONFIG_INTEL_NF_TRIGGER_SUPPORT
 #endif
@@ -6161,7 +6161,7 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
  */
 static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 {
-   int rc;
+   int rc,flag = 0;
    char query[MAX_QUERY];
    FIREWALL_DEBUG("Entering do_parcon_mgmt_device\n"); 
    query[0] = '\0';
@@ -6194,7 +6194,9 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          rc = syscfg_get(namespace, "block", query, sizeof(query));
          if (0 != rc || '\0' == query[0] || query[0] == '0') block = 0;
 
-         if (allow_all != block) continue;
+        if((allow_all == 0) && (block == 0)) flag = 1; 
+
+        if (allow_all != block) continue;
 
 		 if (iptype == 4){
 	        int within_policy_start_stop = determine_enforcement_schedule2(cron_fp, namespace);
@@ -6206,8 +6208,14 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          query[0] = '\0';
          rc = syscfg_get(namespace, "mac_addr", query, sizeof(query));
          if (0 != rc || '\0' == query[0]) continue;
-
-         fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
+         if(flag == 1)
+         {
+            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j ACCEPT\n",query);
+         }
+         else
+         {
+            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
+         }
       }
 
       if (!allow_all) {
@@ -10219,7 +10227,12 @@ int main(int argc, char **argv)
    service_close();
 
    if (flush)
-      system("conntrack_flush");
+
+       //ARRISXB3-1949
+        system("echo disable > /proc/net/ti_pp ; " \
+        "conntrack_flush; expect_flush;" \
+        "echo enable > /proc/net/ti_pp ; ");
+
         if(firewallfp)
        fclose(firewallfp);
    return(rc);
