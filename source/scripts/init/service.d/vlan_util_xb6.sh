@@ -176,6 +176,12 @@ wait_for_gre_ready(){
     done
 }
 
+wait_for_erouter0_ready(){
+    while [ "`$SYSEVENT get wan-status`" != "started" ] ; do
+        echo "Waiting for erouter0 to be ready..."
+        sleep 1
+    done
+}
 #Do any gretap setup needed here, or call events, whatever
 #Also returns LAN_GRE_TUNNEL so we know which to use for the base tunnel
 #Syntax: setup_gretap [start|stop] bridge_name group_number
@@ -400,6 +406,7 @@ add_to_group() {
         #Handle the case for GRE tunnels
     elif [ "`echo \"$IF_TO_ADD\"|egrep -e \"${DEFAULT_GRE_TUNNEL}*\"`" != "" ]
     then
+	wait_for_erouter0_ready
         sh /etc/utopia/service.d/service_multinet/handle_gre.sh create $INSTANCE $DEFAULT_GRE_TUNNEL
         setup_gretap start $BRIDGE_NAME $BRIDGE_VLAN
     fi
