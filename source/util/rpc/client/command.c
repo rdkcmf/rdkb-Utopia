@@ -4,6 +4,7 @@
 #include "rpc_specification.h"
 #include "pthread.h"
 //char rpcServerIp[16] = "192.168.254.254";
+#define DEVICE_PROPS_FILE   "/etc/device.properties"
 
 int ExecuteCommand(char *cmnd)
 {
@@ -61,41 +62,77 @@ int ExeSysCmd(char *cmnd)
 int
 main (int argc, char *argv[],char **args)
 {
-	char *host;
-	char *armIp = "192.168.254.253";
-	char *atomIp = "192.168.254.254";
+    char *host;
     int iRet;
-	if (argc < 3) {
-	    printf("usage example: %s %s ls\n",argv[0],armIp);
-		exit (1);
-	}
-	host = argv[1];
-	if(strcmp(host,armIp)!=0 && strcmp(host,atomIp)!=0)
-	{
-	    printf("Server_host ip is wrong. ARM ip is 192.168.254.253 and ATOM ip is 192.168.254.254\n");
-	    return 0;
-	}
-	iRet = initRPC(host);
-	if(iRet == 1) {
+   
+    FILE *l_fFp = fopen(DEVICE_PROPS_FILE, "r");
+    char l_cArmArpingIP[64] = {""};
+    char l_cAtomArpingIP[64] = {""};
+    if (NULL != l_fFp)
+    {
+        char props[255] = {""};
+        while(fscanf(l_fFp,"%s", props) != EOF)
+        {
+            char *property = NULL;
+            if(property = strstr(props, "ARM_ARPING_IP="))
+            {
+                property = property + strlen("ARM_ARPING_IP=");
+                strncpy(l_cArmArpingIP, property, (strlen(props) - strlen("ARM_ARPING_IP=")));
+            }
+            if(property = strstr(props, "ATOM_ARPING_IP="))
+            {
+                property = property + strlen("ATOM_ARPING_IP=");
+                strncpy(l_cAtomArpingIP, property, (strlen(props) - strlen("ATOM_ARPING_IP=")));
+            }
+        }
+    }
+    else
+    {
+        printf("Failed to open device.properties file:%s\n", DEVICE_PROPS_FILE);
+    }
+    fclose(l_fFp);
 
-		if(strcmp(argv[2],"sh") == 0)
-		{
-			if(argv[3] != NULL) 
-			iRet=ExeSysCmd(argv[3]);
-			else
-			iRet = ExecuteCommand(argv[2]);
-                        if(iRet == 0) {
-                                printf("RPC FAILED !!!\n");
-                        }
-			exit(0);
-			
-		}
-		iRet = ExecuteCommand(argv[2]);
-			if(iRet == 0) {
-				printf("RPC FAILED !!!\n");
-			}
-	}
-	
-    exit (0);
+    if (0 == l_cArmArpingIP[0] || 0 == l_cAtomArpingIP[0])
+    {
+        printf("ARM / ATOM Interface IP is not present:%s %s\n", l_cArmArpingIP, l_cAtomArpingIP);
+        exit(0);
+    }
+
+    if (argc < 3) {
+        printf("usage example: %s %s ls\n",argv[0],l_cArmArpingIP);
+        exit(0);
+    }
+    host = argv[1];
+    if(strcmp(host,l_cArmArpingIP)!=0 && strcmp(host,l_cAtomArpingIP)!=0)
+    {
+        printf("Provided ip is wrong. ARM ip should be:%s and ATOM ip should be:%s\n", l_cArmArpingIP, l_cAtomArpingIP);
+        exit(0);
+    }
+    iRet = initRPC(host);
+    if(iRet == 1) 
+    {
+        if(strcmp(argv[2],"sh") == 0)
+        {
+            if(argv[3] != NULL) 
+                iRet = ExeSysCmd(argv[3]);
+            else
+                iRet = ExecuteCommand(argv[2]);
+            
+            if(iRet == 0) {
+                printf("RPC FAILED while executing the command:%s !!!\n", argv[2]);
+            }
+            exit(0);
+        }
+        iRet = ExecuteCommand(argv[2]);
+        if(iRet == 0) {
+            printf("RPC FAILED while executing the command:%s !!!\n", argv[2]);
+        }
+        exit(0);
+    }
+    else
+    {
+        printf("RPC FAILED while opening socket !!!\n");
+        exit(0);
+    }  
+    exit(1);
 }
-
