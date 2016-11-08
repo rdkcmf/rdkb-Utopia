@@ -242,7 +242,7 @@ case "$1" in
 
    ;;
    
-   pnm-status)
+   pnm-status | bring-lan)
         if [ x = x"`sysevent get lan_handler_async`" ]; then
             eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
             if [ x != x$INST ]; then 

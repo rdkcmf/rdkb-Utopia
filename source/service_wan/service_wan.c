@@ -66,6 +66,8 @@
 	#define DHCPC_PID_FILE  "/var/run/eRT_ti_udhcpc.pid"
 #endif 
 
+#define DHCPV6_PID_FILE "/var/run/erouter_dhcp6c.pid"
+
 //this value is from erouter0 dhcp client(5*127+10*4)
 #define SW_PROT_TIMO   675 
 #define RESOLV_CONF_FILE  "/etc/resolv.conf"
@@ -180,15 +182,35 @@ static int dhcp_stop(const char *ifname)
 static int dhcp_start(const char *ifname)
 {
    int err;
+   char l_cErouter_Mode[16], l_cWan_if_name[16];
+   int l_iErouter_Mode;
+
+   syscfg_get(NULL, "last_erouter_mode", l_cErouter_Mode, sizeof(l_cErouter_Mode));
+   l_iErouter_Mode = atoi(l_cErouter_Mode);
+
+   syscfg_get(NULL, "wan_physical_ifname", l_cWan_if_name, sizeof(l_cWan_if_name));
+   //if the syscfg is not giving any value hardcode it to erouter0
+   if (0 == l_cWan_if_name[0])
+   {   
+       strncpy(l_cWan_if_name, "erouter0", 8); 
+       l_cWan_if_name[8] = '\0';
+   }   
+
   /*TCHXB6 is configured to use udhcpc */
 #if defined (_COSA_BCM_ARM_)
-	err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script",ifname, DHCPC_PID_FILE);
+    err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script",ifname, DHCPC_PID_FILE);
 #else
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                 "-H DocsisGateway -p %s -B -b 1",
                 ifname, DHCPC_PID_FILE);
 
-#endif 
+    if ((l_iErouter_Mode == WAN_RTMOD_IPV6) || (l_iErouter_Mode == WAN_RTMOD_DS))
+    {   
+        fprintf(stderr, "%s: erouter Mode is:%d Starting DHCPv6 Client early \n", __FUNCTION__, l_iErouter_Mode);
+        err = vsystem("ti_dhcp6c -i %s -p %s -plugin /fss/gw/lib/libgw_dhcp6plg.so;sysevent set dhcpv6c_enabled 1",
+                      l_cWan_if_name, DHCPV6_PID_FILE);
+    }   
+#endif
 /*
 	err = vsystem("strace -o /tmp/stracelog -f ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
               "-H DocsisGateway -p %s -B -b 1",

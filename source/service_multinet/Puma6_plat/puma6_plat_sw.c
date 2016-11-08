@@ -45,7 +45,8 @@ extern int sysevent_fd_interactive;
 extern token_t sysevent_token_interactive;
 static unsigned char bLibInited = 0;
 
-
+#define DEVICE_PROPS_FILE   "/etc/device.properties"
+  
 static int psm_get_record(const char *name, char *val, int size)
 {
     FILE *fp;
@@ -73,70 +74,42 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
     memset(ifname, 0, 80);
     memset(temp_ifname, 0, 80);
 
-    if (100 == args[0].vidParams.vid) //brlan0 case
-    {   
-        for (i = 0; i < numArgs; ++i ) { 
-    
-            portState = (PSwPortState) args[i].portID;
-            stringIDExtSw(portState, ifname, sizeof(ifname));
-    
-            //#Args: netid, netvid, members...
-            sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
-    
-            system(cmdBuff);
-        }
-    }   
+    for (i = 0; i < numArgs; ++i ) { 
+        portState = (PSwPortState) args[i].portID;
+        stringIDExtSw(portState, temp_ifname, sizeof(temp_ifname));
+        if (args[i].vidParams.tagging)
+            strcat(temp_ifname, "-t");
 
-    else //brlan1 case
-    {   
-        for (i = 0; i < numArgs; ++i ) { 
-            portState = (PSwPortState) args[i].portID;
-            stringIDExtSw(portState, temp_ifname, sizeof(temp_ifname));
-            if (args[i].vidParams.tagging)
-                strcat(temp_ifname, "-t");
-
-            strcat(ifname, temp_ifname);
-            strcat(ifname, " ");
-        }
-        //Rag: netid and vlanid is same for all the args, so index zero is being used.
-        sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, ifname);
-        MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
-        system(cmdBuff);
+        strcat(ifname, temp_ifname);
+        strcat(ifname, " ");
     }
-
+#if defined(_COSA_INTEL_XB3_ARM_)
+    addVlan(args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+#else
+    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+    system(cmdBuff);
+#endif  
 }
 
 int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) {
     int i;
-
-    char cmdBuff[128];
     char portID[80];
+    char cmdBuff[128];
+
     memset(portID, 0, 80);
+    for (i = 0; i < numArgs; ++i ) { 
+        strcat(portID, (char*)args[i].portID);
+        if (args[i].vidParams.tagging)
+            strcat(portID, "-t");
 
-    if (100 == args[0].vidParams.vid)
-    {
-        for (i = 0; i < numArgs; ++i ) {
-            //#Args: netid, netvid, members...
-            sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[i].hints.network->inst, args[i].vidParams.vid, (char*)args[i].portID, args[i].vidParams.tagging ? "-t" : "");
-
-            system(cmdBuff);
-        }
+        strcat(portID, " ");
     }
-    else //blran1 case
-    {
-        for (i = 0; i < numArgs; ++i ) {
-            strcat(portID, (char*)args[i].portID);
-            if (args[i].vidParams.tagging)
-                strcat(portID, "-t");
-
-            strcat(portID, " ");
-        }
-
-        //Rag: netid and vlanid is same for all the args, so index zero is being used. 
-        sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, portID);
-        MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
-        system(cmdBuff);
-    }
+#if defined(_COSA_INTEL_XB3_ARM_)
+    addVlan(args[0].hints.network->inst, args[0].vidParams.vid, portID);
+#else
+    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, portID);
+    system(cmdBuff);
+#endif  
 }
 
 int stringIDIntSw (void* portID, char* stringbuf, int bufSize) {

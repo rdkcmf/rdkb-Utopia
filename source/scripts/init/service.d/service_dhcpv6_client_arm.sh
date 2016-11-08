@@ -165,11 +165,10 @@ service_enable ()
       return
    fi
 
+   service_start
    sysevent set dhcpv6c_enabled 1
    register_dhcpv6_client_handler
    DHCPV6C_ENABLED=1
-
-   service_start
 }
 
 service_disable ()
