@@ -42,7 +42,7 @@ const char* SERVICE_NAME            = "multinet";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb6.sh";
 #elif defined (_CBR_PRODUCT_REQ_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchcbr.sh";
-#elif (_COSA_BCM_ARM_)
+#elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchxb6.sh";
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_exec";
@@ -91,7 +91,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-down|/etc/utopia/service.d/vlan_util_tchcbr.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/vlan_util_tchcbr.sh|NULL|"TUPLE_FLAG_EVENT,
      NULL };
-#elif (_COSA_BCM_ARM_)
+#elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
@@ -113,7 +113,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
-#if !defined(_COSA_BCM_ARM_) || !defined(INTEL_PUMA7) || !defined(_CBR_PRODUCT_REQ_)
+#if !defined(_COSA_BCM_ARM_) || !defined(INTEL_PUMA7) || !defined(_CBR_PRODUCT_REQ_) || defined(_PLATFORM_RASPBERRYPI_)
    system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
 #endif
 }
