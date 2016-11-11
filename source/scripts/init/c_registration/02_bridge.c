@@ -51,7 +51,7 @@
 const char* SERVICE_NAME            = "bridge";
 #ifdef INTEL_PUMA7
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_puma7.sh";
-#elif (_COSA_BCM_ARM_)
+#elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_tchxb6.sh";
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge.sh";
