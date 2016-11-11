@@ -962,6 +962,8 @@ $lastActiontakentime=0
 $process_memory_log_count=0
 $lastActiontakentimeforAtomHang=0
 $todays_atom_reboot_count=0
+$Selfheal_DiagnosticMode=false
+$diagMode_LogUploadFrequency=1440
 
 #IOT VLAN
 $iot_ifname=l2sd0.106
