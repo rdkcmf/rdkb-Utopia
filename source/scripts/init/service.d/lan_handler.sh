@@ -146,6 +146,23 @@ case "$1" in
             INST=${1#*_}
             INST=${INST%-*}
             RG_MODE=`syscfg get last_erouter_mode`
+
+            LAN_IFNAME=`sysevent get ipv4_${INST}-ifname`
+            #if it's ipv4 only, not enable link local 
+            SYSCFG_last_erouter_mode=`syscfg get last_erouter_mode`
+            echo_t "lan_handler.sh last_erouter_mode: $SYSCFG_last_erouter_mode"
+
+
+            if [ "1" = "$SYSCFG_last_erouter_mode" ]; then
+                echo 0 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/autoconf     # Do not do SLAAC
+            else
+                echo 1 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/autoconf
+                echo 1 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/disable_ipv6
+                echo 0 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/disable_ipv6
+                echo 1 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/forwarding
+            fi
+
+
             sysevent set current_lan_ipaddr `sysevent get ipv4_${INST}-ipv4addr`
 
             if [ "$RG_MODE" = "2" -a x"ready" != x`sysevent get start-misc` ]; then
@@ -184,22 +201,10 @@ case "$1" in
             firewall_nfq_handler.sh &             
 
             sysevent set lan_start_time `cat /proc/uptime | cut -d'.' -f1`
-            LAN_IFNAME=`sysevent get ipv4_${INST}-ifname`
-            #if it's ipv4 only, not enable link local 
-            SYSCFG_last_erouter_mode=`syscfg get last_erouter_mode`
-            echo_t "lan_handler.sh last_erouter_mode: $SYSCFG_last_erouter_mode"
+
             
             if [ "4" = $INST ];then
                 sysevent set ipv4_4_status_configured 1
-            fi
-
-            if [ "1" = "$SYSCFG_last_erouter_mode" ]; then
-                echo 0 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/autoconf     # Do not do SLAAC
-            else
-                echo 1 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/autoconf
-                echo 1 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/disable_ipv6
-                echo 0 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/disable_ipv6
-                echo 1 > /proc/sys/net/ipv6/conf/$LAN_IFNAME/forwarding
             fi
 
             #disable dnsmasq when ipv6 only mode and DSlite is disabled
