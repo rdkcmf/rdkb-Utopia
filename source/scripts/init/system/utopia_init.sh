@@ -77,6 +77,12 @@ echo 4096 > /proc/sys/net/ipv6/neigh/default/gc_thresh1
 echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
 echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 
+# starting the rpcserver
+echo "[utopia][init] Starting rpcserver from arm" > /dev/console
+if [ -f /usr/bin/rpcserver ];then
+    /usr/bin/rpcserver &
+fi
+
 #echo "[utopia][init] Loading drivers"
 #MODULE_PATH=/fss/gw/lib/modules/`uname -r`/
 #insmod $MODULE_PATH/drivers/net/erouter_ni.ko netdevname=erouter0

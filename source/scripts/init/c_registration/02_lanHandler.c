@@ -52,6 +52,7 @@ const char* SERVICE_NAME            = "lan";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/lan_handler.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "pnm-status|/etc/utopia/service.d/lan_handler.sh",
+    "bring-lan|/etc/utopia/service.d/lan_handler.sh",
     "iot_status|/etc/utopia/service.d/lan_handler.sh",
     "ipv4-resync|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     "erouter_mode-updated|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,

@@ -38,6 +38,64 @@ AC_PROG_INSTALL
 AM_PROG_CC_C_O
 AM_PROG_LIBTOOL(libtool)
 
+# Specify ccsp cpu arch
+AC_ARG_WITH([ccsp-arch],
+[AC_HELP_STRING([--with-ccsp-arch={arm,atom,pc,mips}],
+                [specify the ccsp board CPU platform])],
+[case x"$withval" in
+   xarm)
+     CCSP_ARCH=arm
+     ;;
+   xatom)
+     CCSP_ARCH=atom
+     ;;
+   xpc)
+     CCSP_ARCH=pc
+     ;;
+   xmips)
+     CCSP_ARCH=mips
+     ;;
+   *)
+     AC_MSG_ERROR([$withval is an invalid option to --with-ccsp-arch])
+     ;;  
+ esac],
+[CCSP_ARCH=''])
+if test x"${CCSP_ARCH}" != x; then
+  AC_DEFINE_UNQUOTED(CCSP_ARCH, "$CCSP_ARCH",
+                     [The board CPU architecture])
+fi
+
+AM_CONDITIONAL(CCSP_ARCH_ARM, test "x$CCSP_ARCH" = xarm)
+AM_CONDITIONAL(CCSP_ARCH_ATOM, test "x$CCSP_ARCH" = xatom)
+AM_CONDITIONAL(CCSP_ARCH_PC, test "x$CCSP_ARCH" = xpc)
+AM_CONDITIONAL(CCSP_ARCH_MIPS, test "x$CCSP_ARCH" = xmips)
+
+# Specify ccsp platform (device)
+AC_ARG_WITH([ccsp-platform],
+[AC_HELP_STRING([--with-ccsp-platform={intel_usg,pc,bcm}],
+                [specify the ccsp platform])],
+[case x"$withval" in
+   xintel_usg)
+     CCSP_PLATFORM=intel_usg
+     ;;  
+   xpc)
+     CCSP_PLATFORM=pc
+     ;;
+   xbcm)
+     CCSP_PLATFORM=bcm
+     ;;
+   *)
+     AC_MSG_ERROR([$withval is an invalid option to --with-ccsp-platform])
+     ;;
+ esac],
+[CCSP_PLATFORM=''])
+if test x"${CCSP_PLATFORM}" != x; then
+  AC_DEFINE_UNQUOTED(CCSP_PLATFORM, "$CCSP_PLATFORM",
+                     [The CCSP platform device])
+fi
+
+AM_CONDITIONAL(CCSP_PLATFORM_BCM, test "x$CCSP_PLATFORM" = xbcm)
+
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
 
