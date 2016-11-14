@@ -4061,6 +4061,103 @@ static int remote_access_set_proto(FILE *filt_fp, FILE *nat_fp, const char *port
     return 0;
 }
 
+ /*
+  *  RDKB-7836	adding protocol verify the build prod or not.
+  *  Procedure	   : bIsProductionImage
+  *  Purpose	   : return True for production image.
+  *  Parameters    :
+  *  Return Values :
+  *  1             : 1 for prod images
+  *  2             : 0 for other images
+  */
+#define DEVICE_PROPERTIES    "/etc/device.properties"
+ static int bIsProductionImage( void)
+ {
+    char fileContent[255] = {'\0'};
+    FILE *deviceFilePtr;
+    char *pBldTypeStr = NULL;
+    int offsetValue = 0;
+    deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
+
+    if (deviceFilePtr) {
+        while ( fscanf(deviceFilePtr , "%s", fileContent) != EOF ) {
+            if ( (pBldTypeStr = strstr(fileContent, "BUILD_TYPE")) != NULL) {
+                offsetValue = strlen("BUILD_TYPE=");
+                pBldTypeStr = pBldTypeStr + offsetValue ;
+                break;
+            }
+        }
+        fclose(deviceFilePtr);
+        if(pBldTypeStr)
+        {
+            if(0 == strncmp(pBldTypeStr,"prod",5))
+            {
+                return 1;
+            }
+        }
+    }
+    return 0;
+ }
+
+
+ /*
+  *  RDKB-7836 setting the ssh rules for production image
+  *  Procedure     : remote_ssh_access_set_proto_prod
+  *  Purpose       : For Droping all the packets from .AF_INET6 family.
+  *  Parameters    :
+  *     filter_fp  : file to save ip table entry
+  *     port       : port string to which the protocol applied
+  *     src        : source ip str
+  *     family     : internet family
+  *     interface  : ip interface name
+  *  Return Values :
+  */
+ static void remote_ssh_access_set_proto_prodImg(FILE *filt_fp, const char *port, const char *src, int family, const char *interface)
+ {
+    FIREWALL_DEBUG("Entering remote_ssh_access_set_proto_prodImg\n");
+    if (family == AF_INET) {
+        fprintf(filt_fp, "-A wan2self_mgmt -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port);
+    } else {
+        fprintf(filt_fp, "-A INPUT -i %s %s -p tcp -m tcp --dport %s -j DROP\n", interface, src, port);
+    }
+    FIREWALL_DEBUG("Exiting remote_ssh_access_set_proto_prodImg\n");
+ }
+
+
+ /*
+ ** RDKB-7836 Defining Dropbear ssh management IP for iptable Init
+ ** Defining file for ssh allowed ip in production image
+ ** "/etc/dropbear/prodMgmtIps.cfg" contains the list jump servers that can "ssh" access box
+ ** In case it is reuqire to update then add/remove entry in "/etc/dropbear/prodMgmtIps.cfg"
+ ** In "prod" image if "" is then SSH will be disabled, esle available only to available IPs.
+ ** In "dev" image ssh is allowed.
+ */
+#define SSH_ACCESS_IP_LIST  "/etc/dropbear/prodMgmtIps.cfg"
+#define MAX_IPV6_STR_LEN    40
+ static void do_ssh_IpAccessTable(FILE *filt_fp, FILE *pSshMgmt_fp, const char *port, int family, const char *interface)
+ {
+    int ret=0;
+    char string[MAX_QUERY]={0};
+    char *strp=NULL;
+    int stringLen = 0;
+
+    FIREWALL_DEBUG("Entering do_ssh_IpAccessTable\n");
+    if(family == AF_INET6) {
+
+        if(pSshMgmt_fp != NULL) {
+            while (NULL != (strp = fgets(string, MAX_QUERY, pSshMgmt_fp)) ) {
+                stringLen = strnlen(string, MAX_IPV6_STR_LEN) - 1;/*To remove new line*/
+                if (*string && string[stringLen] == '\n') {
+                     string[stringLen] = '\0';
+                }
+                fprintf(filt_fp, "-A INPUT -i %s -s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, string, port);
+            }
+        }
+
+    }
+     FIREWALL_DEBUG("Exiting do_ssh_IpAccessTable\n");
+ }
+
 #define IPRANGE_UTKEY_PREFIX "mgmt_wan_iprange_"
 static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
 {
@@ -4079,6 +4176,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     unsigned char srcany = 0, validEntry = 0, noIPv6Entry = 0;
     char cm_ip_webaccess[2];
     char rg_ip_webaccess[2];
+    FILE *pSshMgmt_fp = NULL;
          FIREWALL_DEBUG("Entering do_remote_access_control\n");    
     httpport[0] = '\0';
     httpsport[0] = '\0';
@@ -4283,15 +4381,46 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    }  
 #endif
 
+   
    /* eCM SSH access */
+   /*
+   ** COMCAST Bussiness Requirement (RDKB-7836 )
+   ** Allow only certain IP's for ssh in production image.
+   ** Defining Dropbear ssh management IP for iptable Init
+   ** "/etc/dropbear/prodMgmtIps.cfg" contains the list jump servers that can "ssh" access box
+   ** In case it is reuqire to update then add/remove entry in "/etc/dropbear/prodMgmtIps.cfg".
+   ** In "prod" image if "" is then SSH will be disabled, esle available only to available IPs.
+   ** In "dev" image ssh is allowed.
+   */
    rc = syscfg_get(NULL, "mgmt_wan_sshaccess", query, sizeof(query));
    rc |= syscfg_get(NULL, "mgmt_wan_sshport", port, sizeof(port));
    if (rc == 0 && atoi(query) == 1) {
-       if(validEntry)
-           remote_access_set_proto(filter_fp, nat_fp, port, srcaddr, family, ecm_wan_ifname);
 
-       for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
-           remote_access_set_proto(filter_fp, nat_fp, port, iprangeAddr[i], family, ecm_wan_ifname);
+       if(bIsProductionImage()) {
+           pSshMgmt_fp = fopen(SSH_ACCESS_IP_LIST, "r");
+           if(pSshMgmt_fp == NULL) { /*ssh Management file not present drop all ssh packets on wan for production image*/
+               fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport %s -j DROP\n", ecm_wan_ifname, port);
+           } else {
+
+               /*Production image allow ssh acces only to the list */
+               do_ssh_IpAccessTable(filter_fp, pSshMgmt_fp, port,family, ecm_wan_ifname);
+
+               if(validEntry)
+                   remote_ssh_access_set_proto_prodImg(filter_fp, port, srcaddr, family, ecm_wan_ifname);
+
+               for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+                   remote_ssh_access_set_proto_prodImg(filter_fp, port, iprangeAddr[i], family, ecm_wan_ifname);
+
+               fclose(pSshMgmt_fp);
+           }
+
+       } else { /* Development image allow access to ssh as in legacy*/
+           if(validEntry)
+               remote_access_set_proto(filter_fp, nat_fp, port, srcaddr, family, ecm_wan_ifname);
+
+           for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+               remote_access_set_proto(filter_fp, nat_fp, port, iprangeAddr[i], family, ecm_wan_ifname);
+      }
    }
 
    /* eCM Telnet access */
