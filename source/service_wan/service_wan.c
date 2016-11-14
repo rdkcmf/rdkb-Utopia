@@ -203,7 +203,10 @@ static int dhcp_start(const char *ifname)
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                 "-H DocsisGateway -p %s -B -b 1",
                 ifname, DHCPC_PID_FILE);
+#endif
 
+    /*Following Boot time optimization changes are only for XB3*/
+#if defined(_COSA_INTEL_XB3_ARM_)
     if ((l_iErouter_Mode == WAN_RTMOD_IPV6) || (l_iErouter_Mode == WAN_RTMOD_DS))
     {   
         fprintf(stderr, "%s: erouter Mode is:%d Starting DHCPv6 Client early \n", __FUNCTION__, l_iErouter_Mode);
