@@ -123,7 +123,7 @@ lan_status_change ()
          # also prepare dns part of dhcp conf cause we are the dhcp server too
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
 		 echo_t "SERVICE DHCP : Start dhcp-server from lan status change"
-         $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+         $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
          sysevent set dns-status started
       else
 	     sysevent set lan_status-dhcp started
@@ -203,14 +203,14 @@ restart_request ()
    rm -f $PID_FILE
 
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
-      $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+      $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
       sysevent set dns-status started
    else
       # we use dhcp-authoritative flag to indicate that this is
       # the only dhcp server on the local network. This allows 
       # the dns server to give out a _requested_ lease even if
       # that lease is not found in the dnsmasq.leases file
-      $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+      $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
       if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ] ; then
          echo "#!/bin/sh" > $TIME_FILE
          echo "   sysevent set dhcp_server-restart" >> $TIME_FILE
@@ -377,7 +377,7 @@ dhcp_server_start ()
 
    
    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
-   $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+   $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
    if [ $? -eq 0 ]; then
    	echo "$SERVER process started successfully"
    else
@@ -388,7 +388,7 @@ dhcp_server_start ()
         	while [ $COUNTER -lt 5 ]; do
    			echo "$SERVER process failed to start sleep for 5 sec and restart it"
 			sleep 5
-			$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF
+			$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF
                 	if [ $? -eq 0 ]; then
 				break
 			fi
@@ -457,7 +457,7 @@ dhcp_server_stop ()
    sysevent set dhcp_server-status stopped
 
    # restart the dns server
-   $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+   $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
    sysevent set dns-status started
 }
 
@@ -510,9 +510,9 @@ dns_start ()
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
    if [ "stopped" = $DHCP_STATE ]; then
-      $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+      $SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
    else
-      $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+      	 $SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 
   	 if [ $? -eq 0 ]; then
    		echo "$SERVER process started successfully"
@@ -524,7 +524,7 @@ dns_start ()
         		while [ $COUNTER -lt 5 ]; do
    				echo "$SERVER process failed to start sleep for 5 sec and restart it"
 				sleep 5
-				$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF
+				$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF
                 		if [ $? -eq 0 ]; then
 					break
 				fi
