@@ -6242,41 +6242,6 @@ static int do_device_based_parcon(FILE *natFp, FILE* filterFp)
 }
 #endif
 
-
-/*
-** XDNS - Route DNS requests from LAN through dnsmasq.
-**/
-static int do_dns_route(FILE *nat_fp, int iptype) {
-
-	char xdnsflag[20] = {0};
-	int rc = syscfg_get(NULL, "X_RDKCENTRAL-COM_XDNS", xdnsflag, sizeof(xdnsflag));
-	if (0 != rc || '\0' == xdnsflag[0] ) //if flag not found
-	{
-		printf("### XDNS - Disabled. X_RDKCENTRAL-COM_XDNS not found. ### \n");
-	}
-	else if(0 == strcmp("0", xdnsflag)) //flag set to false
-	{
-		printf("### XDNS - Disabled. X_RDKCENTRAL-COM_XDNS is FALSE ###\n");
-	}
-	else if (0 == strcmp("1", xdnsflag)) //if set to true
-	{
-		// Route DNS requests from LAN through dnsmasq.
-		// To enable sending LAN device MAC upstream in DNS requests through dnsmasq with option '--add-mac'
-		if (iptype == 4)
-		{
-			if ('\0' != lan_ipaddr[0] && 0 != strcmp("0.0.0.0", lan_ipaddr) )
-			{
-				fprintf(nat_fp, "-A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				fprintf(nat_fp, "-A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				printf("### XDNS : Feature Enabled ### \n");
-			}
-		}
-	}
-
-	return 0;
-}
-
-
 /*
  *  Procedure     : do_parental_control
  *  Purpose       : prepare the iptables-restore statements for all
@@ -7229,10 +7194,6 @@ static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
    //do_lan_access_restrictions(filter_fp, nat_fp);
    do_lan2wan_disable(filter_fp);
    do_parental_control(filter_fp, nat_fp, 4);
-
-   /* XDNS - route dns req though dnsmasq */
-   do_dns_route(nat_fp, 4);
-
    #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    do_lan2wan_staticip(filter_fp);
    #endif
