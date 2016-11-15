@@ -564,6 +564,10 @@ static int wan_addr_set(struct serv_wan *sw)
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
 #endif
+
+    fprintf(stderr, "[%s] Synching DNS to ATOM...\n", PROG_NAME);
+    vsystem("/etc/utopia/service.d/service_wan/dns_sync.sh &");
+
     return 0;
 }
 
