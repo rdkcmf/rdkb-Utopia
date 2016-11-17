@@ -182,6 +182,7 @@ wait_for_erouter0_ready(){
         sleep 1
     done
 }
+
 #Do any gretap setup needed here, or call events, whatever
 #Also returns LAN_GRE_TUNNEL so we know which to use for the base tunnel
 #Syntax: setup_gretap [start|stop] bridge_name group_number
@@ -269,6 +270,19 @@ check_port_2(){
     fi
 }
 
+
+check_xfinity_wifi(){
+    #Only supports instance 1 or 2 currently
+       XFINITY_WIFI_CHECK_CMD="dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable"
+        
+       XFINITY_WIFI_ENABLE=`$XFINITY_WIFI_CHECK_CMD`
+        
+	echo "CHECKING XFINITY WIFI"
+	echo "CHECKING XFINITY WIFI"
+
+       isXfinityWiFiEnable=`echo "$XFINITY_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
+}
+
 #Returns a space-separated list of interfaces that should be in this group in the current operating mode
 #Returns the list in IF_LIST
 get_expected_if_list() {
@@ -321,12 +335,20 @@ get_expected_if_list() {
         
         #XFinity Hostspot 2.4 GHz
         3)
+	check_xfinity_wifi
+	if [ "$isXfinityWiFiEnable" = "true" ]
+	then
             IF_LIST="nmoca0.${BRIDGE_VLAN} ${DEFAULT_GRE_TUNNEL}.${BRIDGE_VLAN} ath4"
+	fi
         ;;
         
         #XFinity Hotspot 5 GHz
         4)
+	check_xfinity_wifi
+	if [ "$isXfinityWiFiEnable" = "true" ]
+	then
             IF_LIST="nmoca0.${BRIDGE_VLAN} ${DEFAULT_GRE_TUNNEL}.${BRIDGE_VLAN} ath5"
+	fi
         ;;
         
         #XFinity IoT network
@@ -406,9 +428,15 @@ add_to_group() {
         #Handle the case for GRE tunnels
     elif [ "`echo \"$IF_TO_ADD\"|egrep -e \"${DEFAULT_GRE_TUNNEL}*\"`" != "" ]
     then
-	wait_for_erouter0_ready
-        sh /etc/utopia/service.d/service_multinet/handle_gre.sh create $INSTANCE $DEFAULT_GRE_TUNNEL
-        setup_gretap start $BRIDGE_NAME $BRIDGE_VLAN
+	check_xfinity_wifi
+	if [ "$isXfinityWiFiEnable" = "true" ]
+	then
+		echo "Xfinity wifi enabled"
+		echo "Xfinity wifi enabled"
+		wait_for_erouter0_ready
+        	sh /etc/utopia/service.d/service_multinet/handle_gre.sh create $INSTANCE $DEFAULT_GRE_TUNNEL
+        	setup_gretap start $BRIDGE_NAME $BRIDGE_VLAN
+	fi
     fi
     
     $VLAN_UTIL add_interface $BRIDGE_NAME $IF_TO_ADD $VLAN_TO_ADD
