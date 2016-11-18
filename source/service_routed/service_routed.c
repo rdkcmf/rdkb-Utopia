@@ -208,7 +208,7 @@ static int route_unset(struct serv_routed *sr)
 
 static int gen_zebra_conf(int sefd, token_t setok)
 {
-    FILE *fp;
+    FILE *fp = NULL;
     char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16];
     char name_servs[1024] = {0};
     char dnssl[2560] = {0};
@@ -217,7 +217,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
     char buf[6];
-    FILE *responsefd;
+    FILE *responsefd = NULL;
     char *networkResponse = "/var/tmp/networkresponse.txt";
     int iresCode = 0;
     char responseCode[10];
@@ -316,6 +316,8 @@ static int gen_zebra_conf(int sefd, token_t setok)
        		{
 		  	iresCode = atoi(responseCode);
           	}
+            fclose(responsefd); /*RDKB-7136, CID-33268, free resource after use*/
+            responsefd = NULL;
    	}
         syscfg_get( NULL, "redirection_flag", buf, sizeof(buf));
     	if( buf != NULL )
@@ -325,13 +327,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
 			inCaptivePortal = 1;        		
 		}
 	}
-	
 	if(inCaptivePortal != 1)
 	{
 		if (strlen(lan_addr))
             			fprintf(fp, "   ipv6 nd rdnss %s 300\n", lan_addr);
 	}
-
         /* static IPv6 DNS */
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION          
             snprintf(rec, sizeof(rec), "dhcpv6spool%d0::optionnumber", i);
