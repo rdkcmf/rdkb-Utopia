@@ -26,6 +26,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 
 AM_LDFLAGS =  -lpthread -lz \
+              -lccsp_common \
                 $(top_builddir)/source/sysevent/lib/libsysevent.la \
                 $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                 $(top_builddir)/source/ulog/libulog.la
