@@ -644,6 +644,11 @@ then
     remove_all_from_group       
     #Sync the group interfaces and raise status events
     sync_group_settings
+    if [ $BRIDGE_NAME = "brlan0" ]
+    then
+        echo "DISABLE MULTICAST SNOOPING FOR $BRIDGE_NAME"
+        echo 0 >  /sys/devices/virtual/net/$BRIDGE_NAME/bridge/multicast_snooping
+    fi
 elif [ $MODE = "start" ]
 then
     remove_all_from_group       
