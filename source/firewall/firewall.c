@@ -7245,7 +7245,9 @@ static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
    do_parental_control(filter_fp, nat_fp, 4);
 
    /* XDNS - route dns req though dnsmasq */
+#ifdef XDNS_XB3
    do_dns_route(nat_fp, 4);
+#endif
 
    #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    do_lan2wan_staticip(filter_fp);
