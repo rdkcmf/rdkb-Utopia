@@ -156,11 +156,13 @@ handle_l2_status () {
         sysevent set ${SERVICE_NAME}_${1}-status pending
         if [ x = x$3 -o x$STOPPED_STATUS = x$3 ] && [ x != x$4 ] ; then
             BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE | cut -f2 -d=`
-            if [ "$BOX_TYPE" = "XB3" ]; then
-                echo "brlan0 initialization is done in PSM & brlan1 initialization is done in cosa_start_rem.sh"
+            BRIDGE_MODE=`sysevent get bridge_mode`
+            if [ "$BOX_TYPE" = "XB3" ] && [ "$BRIDGE_MODE" = "0" ]; then
+                echo "In Router mode:brlan0 initialization is done in PSM & brlan1 initialization is done in cosa_start_rem.sh"
             else
+                echo "In bridge mode:start brlan1 initialization"
                 sysevent set ${L2SERVICE_NAME}-up $2
-            fi
+            fi  
         fi        
     fi 
 }
