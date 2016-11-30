@@ -51,7 +51,7 @@ echo "bring_lan.sh script is called setting bring-lan to up" > /dev/console
 sysevent set bring-lan up
 
 BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE | cut -f2 -d=`
-BRIDGE_MODE=`sysevent get bridge_mode`
+BRIDGE_MODE=`syscfg get bridge_mode`
 if [ "$BOX_TYPE" = "XB3" ] && [ "$BRIDGE_MODE" = "0" ]; then
     echo "XB3 case:Router mode: Start brlan0 initialization" > /dev/console
     sysevent set multinet-up 1
