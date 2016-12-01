@@ -415,6 +415,7 @@ static int wan_iface_up(struct serv_wan *sw)
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/forwarding", "mta0", "0");
         break;
     default:
+        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", sw->ifname, "1");
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", sw->ifname, "0");
         break;
     }
