@@ -73,9 +73,10 @@ echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
 
 echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 
-echo 4096 > /proc/sys/net/ipv6/neigh/default/gc_thresh1
-echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
-echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
+#RDKB-9061 Fix
+#echo 4096 > /proc/sys/net/ipv6/neigh/default/gc_thresh1
+#echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
+#echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 
 # starting the rpcserver
 echo "[utopia][init] Starting rpcserver from arm" > /dev/console
