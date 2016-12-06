@@ -124,7 +124,7 @@ lan_status_change ()
          # also prepare dns part of dhcp conf cause we are the dhcp server too
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
 		 echo_t "SERVICE DHCP : Start dhcp-server from lan status change"
-	 if [ "$BOX_TYPE" = "XB3" ]; then
+	 if [ "$XDNS_ENABLE" = "true" ]; then
 		 $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
@@ -208,7 +208,7 @@ restart_request ()
    rm -f $PID_FILE
 
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
-      	 if [ "$BOX_TYPE" = "XB3" ]; then
+     if [ "$XDNS_ENABLE" = "true" ]; then
 		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
@@ -219,7 +219,7 @@ restart_request ()
       # the only dhcp server on the local network. This allows 
       # the dns server to give out a _requested_ lease even if
       # that lease is not found in the dnsmasq.leases file
-      	 if [ "$BOX_TYPE" = "XB3" ]; then
+      	 if [ "$XDNS_ENABLE" = "true" ]; then
 		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
@@ -391,7 +391,7 @@ dhcp_server_start ()
 
    
    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
-   if [ "$BOX_TYPE" = "XB3" ]; then
+   if [ "$XDNS_ENABLE" = "true" ]; then
 	$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
    else
 	$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
@@ -406,7 +406,12 @@ dhcp_server_start ()
         	while [ $COUNTER -lt 5 ]; do
    			echo "$SERVER process failed to start sleep for 5 sec and restart it"
 			sleep 5
-			$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF
+			if [ "$XDNS_ENABLE" = "true" ]; then
+				$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+			else
+				$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+			fi
+
                 	if [ $? -eq 0 ]; then
 				break
 			fi
@@ -480,7 +485,7 @@ dhcp_server_stop ()
    sysevent set dhcp_server-status stopped
 
    # restart the dns server
-   if [ "$BOX_TYPE" = "XB3" ]; then
+   if [ "$XDNS_ENABLE" = "true" ]; then
 	$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
    else
 	$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
@@ -538,13 +543,13 @@ dns_start ()
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
    if [ "stopped" = $DHCP_STATE ]; then
-	 if [ "$BOX_TYPE" = "XB3" ]; then
+	 if [ "$XDNS_ENABLE" = "true" ]; then
 		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
 	 fi
    else
-   	 if [ "$BOX_TYPE" = "XB3" ]; then
+   	 if [ "$XDNS_ENABLE" = "true" ]; then
 		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
@@ -559,7 +564,12 @@ dns_start ()
         		while [ $COUNTER -lt 5 ]; do
    				echo "$SERVER process failed to start sleep for 5 sec and restart it"
 				sleep 5
-				$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF
+				if [ "$XDNS_ENABLE" = "true" ]; then
+					$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+				else
+					$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+				fi
+
                 		if [ $? -eq 0 ]; then
 					break
 				fi

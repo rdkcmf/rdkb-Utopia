@@ -171,7 +171,8 @@ SYSCFG_MOUNT=/nvram
 SYSCFG_FILE=$SYSCFG_MOUNT/syscfg.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
-PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"  
+PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
+XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false  
 
 #syscfg_check -d $MTD_DEVICE
@@ -246,6 +247,7 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
    rm -f $TR69TLVFILE
    rm -f $REVERTFLAG
+   rm -f $XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME
    # Remove DHCP lease file
    rm -f /nvram/dnsmasq.leases
    rm -f /nvram/server-IfaceMgr.xml
