@@ -97,4 +97,7 @@ CONSOLEFILE="$LOG_FOLDER/logs/ArmConsolelog.txt.0"
 SELFHEALFILE="$LOG_FOLDER/logs/SelfHeal.txt.0"
 SELFHEALFILE_BOOTUP="$LOG_SYNC_PATH/SelfHealBootUp.txt.0"
 lockdir=$LOG_FOLDER/rxtx
+DCMRESPONSE="/nvram/DCMresponse.txt"
+DCMRESPONSE_TMP="/tmp/DCMresponse.txt"
+DCM_SETTINGS_PARSED="/tmp/DCMSettingsParsedForLogUpload"
 
