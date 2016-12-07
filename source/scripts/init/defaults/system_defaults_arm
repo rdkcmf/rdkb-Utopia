@@ -1003,3 +1003,4 @@ $MinMemoryThreshold_Value=10
 #Bridge mode MoCA status
 $MoCA_previous_status=0
 $MoCA_current_status=0
+$unit_activated=1
