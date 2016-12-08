@@ -210,6 +210,13 @@ else
    echo_t "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    #<<zqiu
+
+   # Put value 204 into networkresponse.txt file so that
+   # all LAN services start with a configuration which will
+   # redirect everything to Gateway IP.
+   # This value again will be modified from network_response.sh 
+   echo_t "[utopia][init] Echoing network response during Factory reset"
+   echo 204 > /var/tmp/networkresponse.txt
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
@@ -274,6 +281,14 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    echo_t "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
    syscfg_create -f $SYSCFG_FILE
 #>>zqiu
+   # Put value 204 into networkresponse.txt file so that
+   # all LAN services start with a configuration which will
+   # redirect everything to Gateway IP.
+   # This value again will be modified from network_response.sh 
+   echo_t "[utopia][init] Echoing network response during Factory reset"
+   echo 204 > /var/tmp/networkresponse.txt
+    
+
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
     echo_t "[utopia][init] Performing wifi reset"
     create_wifi_default
@@ -319,6 +334,16 @@ syseventd
 
 echo_t "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
+
+# Get the syscfg value which indicates whether unit is activated or not.
+# This value is set from network_response.sh based on the return code received.
+activated=`syscfg get unit_activated`
+echo_t "[utopia][init] Value of unit_activated got is : $activated"
+if [ "$activated" = "1" ]
+then
+    echo_t "[utopia][init] Echoing network response during Reboot"
+    echo 204 > /var/tmp/networkresponse.txt
+fi 
 
 echo_t "[utopia][init] Applying iptables settings"
 
