@@ -21,6 +21,7 @@ then
    isNvram2Supported=`cat /etc/device.properties | grep NVRAM2_SUPPORTED | cut -f2 -d=`
    atom_sync=`cat /etc/device.properties | grep ATOM_SYNC | cut -f2 -d=`
    UPLOAD_THRESHOLD=`cat /etc/device.properties | grep LOG_UPLOAD_THRESHOLD  | cut -f2 -d=`
+   model=`cat /etc/device.properties | grep MODEL_NUM  | cut -f2 -d=`
 fi
 
 if [ "$atom_sync" = "yes" ]
@@ -50,6 +51,15 @@ then
 		LOG_SYNC_PATH=$LOG_SYNC_PATH_override
 		LOG_SYNC_BACK_UP_PATH=$LOG_SYNC_BACK_UP_PATH_override
 		LOG_SYNC_BACK_UP_REBOOT_PATH=$LOG_SYNC_BACK_UP_REBOOT_PATH_override
+	fi
+fi
+
+#This change is needed for ArrisXB6 to choose sync location dynamically.
+if [ "$model" == "TG3482" ];then
+	if [ ! -d "/nvram2" ];then
+		LOG_SYNC_PATH="/nvram/logs/"
+		LOG_SYNC_BACK_UP_PATH="/nvram/logs/"
+		LOG_SYNC_BACK_UP_REBOOT_PATH="/nvram/logs/"
 	fi
 fi
 
