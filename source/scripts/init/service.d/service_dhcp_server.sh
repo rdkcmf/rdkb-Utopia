@@ -432,6 +432,11 @@ dhcp_server_start ()
               #then
               	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh_from_dhcpscript:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
               	gw_lan_refresh &
+                if [ ! -f "/tmp/gw_lan_refresh" ]; then
+                    echo "gw_lan_refresh is called for the first time notify SSID broadcast"
+                    rpcclient $ATOM_ARPING_IP "touch /tmp/broadcast_ssids"
+                    touch /tmp/gw_lan_refresh
+                fi
               #	echo "lan_not_restart NOT found! Restart lan!"
 	      #fi
 	    fi
