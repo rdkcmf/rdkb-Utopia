@@ -48,6 +48,7 @@
 #include <sys/file.h>
 #include <net/route.h>
 #include "util.h"
+#include "errno.h"
 
 int vsystem(const char *fmt, ...)
 {
@@ -100,7 +101,6 @@ int sysctl_iface_set(const char *path, const char *ifname, const char *content)
     return 0;
 }
 
-
 int iface_get_hwaddr(const char *ifname, char *mac, size_t size)
 {
     int sockfd;
@@ -116,8 +116,17 @@ int iface_get_hwaddr(const char *ifname, char *mac, size_t size)
     }
 
     snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", ifname);
-
-    if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) == -1) {
+    if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) == -1) 
+	{
+		if (ENODEV == errno)
+       	{
+        	fprintf(stderr, "%s interface is not present, cannot get MAC Address\n", ifname);
+        }
+        else
+        {
+        	fprintf(stderr, "%s interface is present, but got an error:%d while getting MAC Address\n", 
+					ifname, errno);
+        }
         perror("ioctl");
         close(sockfd);
         return -1;
@@ -129,6 +138,82 @@ int iface_get_hwaddr(const char *ifname, char *mac, size_t size)
 
     close(sockfd);
     return 0;
+}
+
+int iface_get_ipv4addr (const char *ifname, char *ipv4Addr, size_t size)
+{
+	int l_iSock_Fd;
+    struct ifreq l_sIfReq;
+
+    if (!ifname || !ipv4Addr || size < sizeof("000.000.000.000"))
+	{
+		fprintf(stderr, "Invalid input parameters for iface_get_ipv4addr function !!!\n");
+        return -1; 
+	}
+
+    if ((l_iSock_Fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) 
+	{
+		fprintf(stderr, "Error opening socket while getting the IPv4 Address of interface:%s\n", ifname);
+        return -1; 
+    }
+
+    snprintf(l_sIfReq.ifr_name, sizeof(l_sIfReq.ifr_name), "%s", ifname);
+    if (ioctl(l_iSock_Fd, SIOCGIFADDR, &l_sIfReq) == -1) 
+    {   
+        if (ENODEV == errno)
+        {
+            fprintf(stderr, "%s interface is not present, cannot get IPv4 Address\n", ifname);
+        }   
+        else
+        {   
+            fprintf(stderr, "%s interface is present, but got an error:%d while getting IPv4 Address\n", 
+                    ifname, errno);
+        }   
+        close(l_iSock_Fd);
+        return -1; 
+    }   
+
+	strncpy(ipv4Addr, inet_ntoa(((struct sockaddr_in *)&l_sIfReq.ifr_addr)->sin_addr), size);
+    close(l_iSock_Fd);
+    return 0;	
+}
+
+int is_iface_present(const char *ifname)
+{
+	int l_iSock_Fd;
+    struct ifreq l_sIfReq;
+
+    if (!ifname)
+	{
+		fprintf(stderr, "Interface name is empty !!!\n");
+        return 0; 
+	}
+
+    if ((l_iSock_Fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)  
+    {   
+        fprintf(stderr, "Error opening socket while checking whether interface:%s is present or not\n", ifname);
+        return 0; 
+    }   
+
+    snprintf(l_sIfReq.ifr_name, sizeof(l_sIfReq.ifr_name), "%s", ifname);
+    if (ioctl(l_iSock_Fd, SIOCGIFADDR, &l_sIfReq) == -1) 
+    {   
+        if (ENODEV == errno)
+        {
+            fprintf(stderr, "%s interface is not present, cannot get IPv4 Address\n", ifname);
+    		close(l_iSock_Fd);
+			return 0;
+        }
+        else
+        {
+            fprintf(stderr, "%s interface is present, but got an error:%d while getting IPv4 Address\n", 
+                    ifname, errno);
+        }
+        close(l_iSock_Fd);
+        return 0; 
+    }   
+    close(l_iSock_Fd);
+    return 1;	
 }
 
 int pid_of(const char *name, const char *keyword)

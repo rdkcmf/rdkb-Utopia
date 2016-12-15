@@ -50,6 +50,17 @@
 
 const char* SERVICE_NAME            = "lan";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/lan_handler.sh";
+
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+const char* SERVICE_CUSTOM_EVENTS[] = { 
+    "pnm-status|/etc/utopia/service.d/lan_handler.sh",
+    "bring-lan|/usr/bin/service_dhcp",
+    "lan-start|/usr/bin/service_dhcp",
+    "iot_status|/etc/utopia/service.d/lan_handler.sh",
+    "ipv4-resync|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
+    "erouter_mode-updated|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
+    NULL };
+#else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "pnm-status|/etc/utopia/service.d/lan_handler.sh",
     "bring-lan|/etc/utopia/service.d/lan_handler.sh",
@@ -57,6 +68,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "ipv4-resync|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     "erouter_mode-updated|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
+#endif	
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);

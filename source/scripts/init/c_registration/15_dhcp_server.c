@@ -50,13 +50,23 @@
 
 const char* SERVICE_NAME            = "dhcp_server";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_dhcp_server.sh";
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+const char* SERVICE_CUSTOM_EVENTS[] = { 
+                                        "syslog-status|/etc/utopia/service.d/service_dhcp_server.sh",
+                                        "lan-status|/usr/bin/service_dhcp",
+										"dhcp_server-restart|/usr/bin/service_dhcp",
+                                        "dhcp_server-start|/usr/bin/service_dhcp",
+                                        "dhcp_server-resync|/etc/utopia/service.d/service_dhcp_server.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        NULL 
+                                      };
+#else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "syslog-status|/etc/utopia/service.d/service_dhcp_server.sh",
                                         "lan-status|/etc/utopia/service.d/service_dhcp_server.sh",
                                         "dhcp_server-resync|/etc/utopia/service.d/service_dhcp_server.sh|NULL|"TUPLE_FLAG_EVENT,
                                         NULL 
                                       };
-
+#endif
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
