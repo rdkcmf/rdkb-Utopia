@@ -163,6 +163,18 @@ case "$1" in
             fi
 
 
+    if [ xbrlan0 = x${LAN_IFNAME} ]; then
+        SYSEVT_lan_ipaddr_v6_prev=`sysevent get lan_ipaddr_v6_prev`
+        SYSEVT_lan_ipaddr_v6=`sysevent get lan_ipaddr_v6`
+        SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
+
+        if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] && [ "$SYSEVT_lan_ipaddr_v6" != "" ]
+	 then
+            ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+            ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+        fi
+    fi
+
             sysevent set current_lan_ipaddr `sysevent get ipv4_${INST}-ipv4addr`
 
             if [ "$RG_MODE" = "2" -a x"ready" != x`sysevent get start-misc` ]; then
