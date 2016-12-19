@@ -42,7 +42,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "errno.h"
 //#include "nethelper.h"
+#define LOCAL_BRLAN1UP_FILE "/tmp/brlan1_up"
 
 /*
  * The service_multinet library provides service fuctions for manipulating the lifecycle 
@@ -146,6 +151,19 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
         MNET_DEBUG("nv fetch complete for %d. Name: %s, Vid: %d\n" COMMA l2netInst COMMA l2net.name COMMA l2net.vid)
         multinet_bridgeUp(&l2net, bFirewallRestart);
         MNET_DEBUG("multinet_bridgeUp for %d complete. \n" COMMA l2netInst)
+		// For brlan1 case create a temp file so that cosa_start_rem.sh execution can continue.
+        if (2 == l2netInst)
+        {
+            MNET_DEBUG("brlan1 case creating %s file \n" COMMA LOCAL_BRLAN1UP_FILE)
+            if(creat(LOCAL_BRLAN1UP_FILE, S_IRUSR | S_IWUSR) == -1)
+            {
+                MNET_DEBUG("%s file creation failed with error:%d\n" COMMA LOCAL_BRLAN1UP_FILE COMMA errno)
+            }
+            else
+            {
+                MNET_DEBUG("%s file creation is successful \n" COMMA LOCAL_BRLAN1UP_FILE)
+            }
+        }
     }
 }
 
