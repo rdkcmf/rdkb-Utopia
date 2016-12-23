@@ -86,11 +86,7 @@ service_stop () {
 
 service_init() {
 	#sysevent set ${SERVICE_NAME}-status "init"
-	#external MoCA chip
-	
-	swctl -c 23 -p 3 -s 01:00:5E:7F:FF:FA
-	#Intel MoCA chip
-	swctl -c 23 -p 1 -s 01:00:5E:7F:FF:FA
+    echo "swctl commands to set Multicast MAC is done as part of service_multinet"
 }
 
 handle_ipv4_status() {

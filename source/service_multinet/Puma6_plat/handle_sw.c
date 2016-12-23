@@ -304,4 +304,14 @@ int restore_ext_sw(char* argv[], int argc)
 {
 	printf("Inside restore_ext_sw function\n");
 }
+void setMulticastMac()
+{
+    //Following commands are used to set Multicast MAC Address
+    //swctl -c 23 -p 2 -s 01:00:5E:7F:FF:FA
+    //swctl -c 23 -p 3 -s 01:00:5E:7F:FF:FA
+    //swctl -c 23 -p 7 -s 01:00:5E:7F:FF:FA
+    swctl(23, 2, -1, -1, -1, -1, "01:00:5E:7F:FF:FA", NULL);
+    swctl(23, 3, -1, -1, -1, -1, "01:00:5E:7F:FF:FA", NULL);
+    swctl(23, 7, -1, -1, -1, -1, "01:00:5E:7F:FF:FA", NULL);
+}
 #endif
