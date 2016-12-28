@@ -189,6 +189,12 @@ service_start ()
       echo "/usr/ccsp/tad/selfheal_bootup.sh" >> /etc/cron/cron.everyminute/selfheal_bootup.sh
       chmod 700 /etc/cron/cron.everyminute/selfheal_bootup.sh
 
+	  #monitor cosa_start_rem triggered state in case its not triggered on 
+	  #bootup even after 10 minutes then we have to trigger this via cron
+	  echo "#! /bin/sh" > /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
+	  echo "/usr/ccsp/tad/selfheal_cosa_start_rem.sh" >> /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
+	  chmod 700 /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
+
    fi
    
    # start the cron daemon
