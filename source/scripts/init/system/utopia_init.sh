@@ -424,5 +424,8 @@ else
    fi
 fi
 
+echo_t "[utopia][init] started dropbear process"
+/etc/utopia/service.d/service_sshd.sh sshd-start &
+
 echo_t "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited
