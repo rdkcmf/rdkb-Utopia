@@ -360,7 +360,28 @@ resync_instance () {
 
     echo_t "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance."
     eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
-    
+
+    if [ "$NV_ETHLOWER" = "" ]
+    then
+	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER returned null, retrying"
+	NV_ETHLOWER=`psmcli get ${IPV4_NV_PREFIX}.${1}.EthLink`
+    fi
+    if [ "$NV_IP" = "" ]
+    then
+	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP returned null, retrying"
+	NV_IP=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP}`
+    fi
+     if [ "$NV_SUBNET" = "" ]
+    then
+        echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET returned null, retrying"
+        NV_SUBNET=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET}`
+    fi
+    if [ "$NV_ENABLED" = "" ]
+    then
+        echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED returned null, retrying"
+        NV_ENABLED=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
+    fi
+
     if [ x = x$NV_ENABLED -o x$DM_FALSE = x$NV_ENABLED ]; then
         teardown_instance $1
         return
@@ -369,6 +390,11 @@ resync_instance () {
     #Find l2net instance from EthLink instance.
     NV_LOWER=`psmcli get ${ETH_DM_PREFIX}.${NV_ETHLOWER}.l2net`
 
+    if [ "$NV_LOWER" = "" ]
+    then
+	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER returned null, retrying"
+	NV_LOWER=`psmcli get ${ETH_DM_PREFIX}.${NV_ETHLOWER}.l2net`
+    fi
     LOWER=`sysevent get ${SERVICE_NAME}_${1}-lower`
     #IP=`sysevent get ${SERVICE_NAME}_${1}-ipv4addr`
     #SUBNET=`sysevent get ${SERVICE_NAME}_${1}-ipv4subnet`

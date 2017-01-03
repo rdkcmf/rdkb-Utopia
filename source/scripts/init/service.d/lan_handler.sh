@@ -261,8 +261,28 @@ case "$1" in
    
    pnm-status | bring-lan)
         if [ x = x"`sysevent get lan_handler_async`" ]; then
-            eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
-            if [ x != x$INST ]; then 
+        eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
+	if [ "$INST" = "" ]
+	    then
+		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : INST returned null, retrying"
+		INST=`psmcli get dmsb.MultiLAN.PrimaryLAN_l3net`
+	fi
+	if [ "$L2INST" = "" ]
+	    then
+		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null, retrying"
+		L2INST=`psmcli get dmsb.MultiLAN.PrimaryLAN_l2net`
+	fi
+	if [ "$BRPORT" = "" ]
+	    then
+		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null, retrying"
+		BRPORT=`psmcli get dmsb.MultiLAN.PrimaryLAN_brport`
+	fi
+	if [ "$HSINST" = "" ]
+	    then
+		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null, retrying"
+		HSINST=`psmcli get dmsb.MultiLAN.HomeSecurity_l3net`
+	fi
+   if [ x != x$INST ]; then
                 async="`sysevent async ipv4_${INST}-status $THIS`"
                 sysevent set lan_handler_async "$async"
                 sysevent set primary_lan_l2net ${L2INST}
