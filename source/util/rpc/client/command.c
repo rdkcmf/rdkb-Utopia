@@ -95,18 +95,18 @@ main (int argc, char *argv[],char **args)
     if (0 == l_cArmArpingIP[0] || 0 == l_cAtomArpingIP[0])
     {
         printf("ARM / ATOM Interface IP is not present:%s %s\n", l_cArmArpingIP, l_cAtomArpingIP);
-        exit(0);
+        return 1;
     }
 
     if (argc < 3) {
         printf("usage example: %s %s ls\n",argv[0],l_cArmArpingIP);
-        exit(0);
+        return 1;
     }
     host = argv[1];
     if(strcmp(host,l_cArmArpingIP)!=0 && strcmp(host,l_cAtomArpingIP)!=0)
     {
         printf("Provided ip is wrong. ARM ip should be:%s and ATOM ip should be:%s\n", l_cArmArpingIP, l_cAtomArpingIP);
-        exit(0);
+        return 1;
     }
     iRet = initRPC(host);
     if(iRet == 1) 
@@ -120,19 +120,21 @@ main (int argc, char *argv[],char **args)
             
             if(iRet == 0) {
                 printf("RPC FAILED while executing the command:%s !!!\n", argv[2]);
+		return 1;
             }
-            exit(0);
+            return 0;
         }
         iRet = ExecuteCommand(argv[2]);
         if(iRet == 0) {
             printf("RPC FAILED while executing the command:%s !!!\n", argv[2]);
+	    return 1;
         }
-        exit(0);
+        return 0;
     }
     else
     {
         printf("RPC FAILED while opening socket !!!\n");
-        exit(0);
+        return 1;
     }  
-    exit(1);
+    return 0;
 }
