@@ -29,7 +29,7 @@ service_multinet_exec_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/source/
 service_multinet_exec_SOURCES = ep_access.c  ev_access.c  nv_access.c  service_multinet_handler.c  service_multinet_lib.c  service_multinet_main.c  service_multinet_swfab.c  service_multinet_swfab_deps.c  service_multinet_swfab_ep.c service_multinet_swfab_LinIF.c  util/service_multinet_util.c Puma6_plat/puma6_plat_map.c  Puma6_plat/puma6_plat_sw.c
 
 if !CCSP_PLATFORM_BCM
-service_multinet_exec_SOURCES += Puma6_plat/handle_sw.c
+service_multinet_exec_SOURCES += Puma6_plat/handle_sw.c Puma6_plat/configure_l2switch.c
 endif
 
 service_multinet_exec_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \

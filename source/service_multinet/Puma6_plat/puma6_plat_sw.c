@@ -84,7 +84,7 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
         strcat(ifname, " ");
     }
 #if defined(_COSA_INTEL_XB3_ARM_)
-    addVlan(args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+	MNET_DEBUG("L2SWITCH is already configured as part of utopia_init\n")
 #else
     sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, ifname);
     system(cmdBuff);
@@ -105,7 +105,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) {
         strcat(portID, " ");
     }
 #if defined(_COSA_INTEL_XB3_ARM_)
-    addVlan(args[0].hints.network->inst, args[0].vidParams.vid, portID);
+	MNET_DEBUG("L2SWITCH is already configured as part of utopia_init\n")
 #else
     sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, portID);
     system(cmdBuff);

@@ -67,6 +67,7 @@ FILE *mnetfp = NULL;
  int handle_syncNets(char* argv[], int argc);
  int handle_restart(char* argv[], int argc);
  int handle_ifStatus(char* argv[], int argc);
+ int configure_early(char* argv[], int argc);
  
  EntryCall calls[] = {
 	 {"multinet-up", handle_up},
@@ -77,6 +78,7 @@ FILE *mnetfp = NULL;
 	 {"multinet-syncMembers", handle_syncMembers},
 	 {"multinet-syncNets", handle_syncNets},
 	 {"multinet-restart", handle_restart},
+	 {"configure_early", configure_early},
  };
 	 
  
@@ -158,3 +160,13 @@ FILE *mnetfp = NULL;
      multinet_ifStatusUpdate_ids(l2netInst, argv[4], argv[5], argv[2], argv[6]);
  }
 
+int configure_early(char* argv[], int argc) 
+{
+    MNET_DEBUG("Main: configuring brlan0 and brlan1 early!!! \n")
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+    configure_l2switch_brlan0();
+	configure_l2switch_brlan1();
+	configure_l2switch_brlan2();
+	configure_l2switch_brlan3();
+#endif
+}
