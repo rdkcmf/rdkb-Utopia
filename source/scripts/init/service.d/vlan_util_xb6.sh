@@ -71,6 +71,23 @@ wait_qtn(){
     done
 }
 
+check_qtn_ready(){
+	local is_startprod_done iter
+	
+	iter=0
+	is_startprod_done=`$QWCFG_TEST get 0 start_prod_done | grep "value\[str\]"`
+	while [[ $is_startprod_done != *"1"* ]] ; do
+        	is_startprod_done=`$QWCFG_TEST get 0 start_prod_done | grep "value\[str\]"`
+		if [ $iter == 20 ]; then
+			echo "QTN driver is not ready yet..."
+			sleep $iter
+		else
+			sleep 1
+			iter=$((iter+1))
+		fi
+    	done
+}
+
 #Generate and set a default SSID for wifi AP
 #Assumes you have already set the variables $AP_NAME and $VAP_NAME
 qtn_set_LnF_ssid(){
@@ -100,6 +117,8 @@ setup_qtn(){
     QTN_MODE="$1"
     AP_NAME="$2"
     
+    check_qtn_ready
+
     qtn_init
     
     #First we need to map index to QTN internal indexand vlan ID
