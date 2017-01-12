@@ -33,6 +33,9 @@
 #------------------------------------------------------------------
 #   This file contains the code to initialize the board
 #------------------------------------------------------------------
+UTOPIA_PATH=/etc/utopia/service.d
+SWITCH_HANDLER=$UTOPIA_PATH/service_multinet/handle_sw.sh
+INIT_DIR=/etc/utopia/registration.d
 
 echo "*******************************************************************"
 echo "*                                                                  "
@@ -40,7 +43,7 @@ echo "* Copyright (c) 2010 by Cisco Systems, Inc. All Rights Reserved.   "
 echo "*                                                                  "
 echo "*******************************************************************"
 
-source /etc/utopia/service.d/log_capture_path.sh
+source $UTOPIA_PATH/log_capture_path.sh
 
 dmesg -n 5
 
@@ -312,7 +315,7 @@ else
 fi
 
 echo_t "[utopia][init] Starting system logging"
-/etc/utopia/service.d/service_syslog.sh syslog-start
+$UTOPIA_PATH/service_syslog.sh syslog-start
 
 echo_t "[utopia][init] Starting sysevent subsystem"
 #syseventd --threads 18
@@ -381,14 +384,12 @@ ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icm
 
 
 echo_t "[utopia][init] Processing registration"
-INIT_DIR=/etc/utopia/registration.d
 # run all executables in the sysevent registration directory
 # echo "[utopia][init] Running registration using $INIT_DIR"
 execute_dir $INIT_DIR&
 #init_inter_subsystem&
 
 #--------Set up private IPC vlan----------------
-SWITCH_HANDLER=/etc/utopia/service.d/service_multinet/handle_sw.sh
 vconfig add l2sd0 500
 $SWITCH_HANDLER addVlan 0 500 sw_6
 ifconfig l2sd0.500 192.168.101.1
@@ -425,7 +426,10 @@ else
 fi
 
 echo_t "[utopia][init] started dropbear process"
-/etc/utopia/service.d/service_sshd.sh sshd-start &
+$UTOPIA_PATH/service_sshd.sh sshd-start &
+
+echo_t "[utopia][init] configure brlan0 and brlan1 early"
+$UTOPIA_PATH/service_multinet_exec configure_early &
 
 echo_t "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited
