@@ -106,7 +106,8 @@ extern sem_t worker_sem;
 // be killed
 // This value is changed to 300 sec as some processes are taking time for completing.
 // e.g Multinet process is taking more time to finish in some of the field units.
-#define MAX_ACTIVATION_BLOCKING_SECS 300
+// This value is changed to 600 sec as part of RDKB-9495
+#define MAX_ACTIVATION_BLOCKING_SECS 600
 
 #define WORKER_THREAD_STACK_SIZE  65536
 

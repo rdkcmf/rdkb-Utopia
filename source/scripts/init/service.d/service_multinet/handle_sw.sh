@@ -141,8 +141,10 @@ handle_moca () {
             #adding trunking vlan
             if [ x = x"${MTPORTS}" ]; then
                 #need to enable vlans and convert untagged vlan if it exists
+				echo "--SW handler, swctl $PORTMAP_VENABLE_sw_5"
                 swctl $PORTMAP_VENABLE_sw_5
                 add_untagged_moca_vid_special $MUTPORT
+				echo "--SW handler, swctl -v $MUTPORT -m $NATIVE_MODE -q 1 $PORTMAP_sw_5"
                 swctl -v $MUTPORT -m $NATIVE_MODE -q 1 $PORTMAP_sw_5
             fi
             MTPORTS="${MTPORTS} $VID"
@@ -152,6 +154,7 @@ handle_moca () {
             if [ x != x"${MTPORTS}" ]; then
                 #add to moca filter, and add TAG
                 add_untagged_moca_vid_special $VID 
+				echo "--SW handler, swctl -v $MUTPORT -m $NATIVE_MODE -q 1 $PORTMAP_sw_5"
                 swctl -v $MUTPORT -m $NATIVE_MODE -q 1 $PORTMAP_sw_5
                 PORTMAP_sw_5=""
             fi
@@ -164,8 +167,10 @@ handle_moca () {
             MTPORTS="`echo $MTPORTS| sed 's/ *\<'$VID'\>\( *\)/\1/g'`"
             if [ x = x"${MTPORTS}" ]; then
                 #need to disable vlans and re-add untagged vlan if it exists
+				echo "--SW handler, swctl $PORTMAP_VDISABLE_sw_5"
                 swctl $PORTMAP_VDISABLE_sw_5
                 del_untagged_moca_vid_special $MUTPORT
+				echo "--SW handler, swctl -v $MUTPORT -m $UNTAGGED_MODE -q 1 $PORTMAP_sw_5"
                 swctl -v $MUTPORT -m $UNTAGGED_MODE -q 1 $PORTMAP_sw_5
             fi
             sysevent set sw_moca_tports "$MTPORTS"
@@ -239,6 +244,7 @@ sw_add_ports() {
         if [ $TAG = $UNTAGGED_MODE ]; then
             eval DEF_CMD=\"\${PORTMAP_DEF_${PORT}}\"
             if [ x != x"$DEF_CMD" ]; then
+				echo "--SW handler, swctl $DEF_CMD -v $1"
                 swctl $DEF_CMD -v $1
             fi
         fi
@@ -253,6 +259,7 @@ sw_add_ports() {
 restore_ext_sw() {
     EXTVIDS=`sysevent get sw_ext_vids`
     for i in $EXTVIDS; do
+		echo "--SW handler, swctl $PORTMAP_E2I -v $i -m $TAGGING_MODE -q 1"
         swctl $PORTMAP_E2I -v $i -m $TAGGING_MODE -q 1
         sw_add_ports $i "`sysevent get sw_vid_${i}_extports`" 1
     done
@@ -404,6 +411,9 @@ case "$1" in
              ifconfig $iot_interface $iot_ipaddress netmask $iot_mask up
              #DEBUG
              echo "IOT_LOG : --SW handler, adding vlan $VID for IOT"
+			 echo "--SW handler, swctl $PORTMAP_IOT_1 -v $VID -m $TAGGING_MODE -q 1"
+			 echo "--SW handler, swctl $PORTMAP_IOT_2 -v $VID -m $TAGGING_MODE -q 1"
+	
              swctl $PORTMAP_IOT_1 -v $VID -m $TAGGING_MODE -q 1
              swctl $PORTMAP_IOT_2 -v $VID -m $TAGGING_MODE -q 1
         else
@@ -491,6 +501,17 @@ case "$1" in
 #  Sysevent calls
     sw_ext_restore)
         restore_ext_sw
+    ;;
+
+    set_multicast_mac)
+        echo "--SW handler, swctl -c 23 -p 2 -s 01:00:5E:7F:FF:FA"
+        swctl -c 23 -p 2 -s 01:00:5E:7F:FF:FA
+
+        echo "--SW handler, swctl -c 23 -p 3 -s 01:00:5E:7F:FF:FA"
+        swctl -c 23 -p 3 -s 01:00:5E:7F:FF:FA
+
+        echo "--SW handler, swctl -c 23 -p 7 -s 01:00:5E:7F:FF:FA"
+        swctl -c 23 -p 7 -s 01:00:5E:7F:FF:FA
     ;;
     
     *)
