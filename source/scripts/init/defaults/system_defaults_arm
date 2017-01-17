@@ -932,6 +932,9 @@ $latest_reboot_time=
 $wifi_reset_count=0
 $latest_wifi_reset_time=
 
+# DHCP Server Detection utiliy based flag
+$DhcpServDetectEnable=false
+
 # EMS
 #$ems_server_url=http://96.119.182.89:8080/captiveportalEMS
 $ems_server_url=https://emsdev.sys.comcast.net:8080/captiveportalEMS
