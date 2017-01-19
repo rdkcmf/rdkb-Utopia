@@ -55,6 +55,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 										"multinet_1-status|/etc/utopia/service.d/service_wecb.sh",
                                         "snmp_subagent-status|/etc/utopia/service.d/service_wecb.sh",
                                         "ipv4_4-status|//etc/utopia/service.d/service_wecb.sh",
+                                        "moca_init|//etc/utopia/service.d/service_wecb.sh",
                                         NULL
                                       };
 

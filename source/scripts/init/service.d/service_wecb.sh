@@ -61,7 +61,7 @@ SELF_NAME="`basename $0`"
 service_start() {
 
 	INST=`sysevent get primary_lan_l3net`
-    if [ x`sysevent get ipv4_${INST}-status` = x$L3_UP_STATUS  -a x`sysevent get ${SERVICE_NAME}-status` != x"started" ] ; then
+    if [ x`sysevent get ipv4_${INST}-status` = x$L3_UP_STATUS  -a x`sysevent get ${SERVICE_NAME}-status` != x"started"  -a x"completed" = x`sysevent get moca_init` ] ; then
         ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service"
 	    ulimit -s 1024 && wecb_master&
 		echo '#!/bin/sh' > /var/volatile/wecb_master.sh
@@ -90,7 +90,8 @@ service_init() {
 }
 
 handle_ipv4_status() {
-	if [ x$1 = x`sysevent get primary_lan_l3net` ]; then
+
+	if [ x$1 = x`sysevent get primary_lan_l3net` ] && [ x"completed" = x`sysevent get moca_init` ]; then
 		if [ x$L3_UP_STATUS = x$2 ]; then
 			service_start;
 		else
@@ -123,6 +124,9 @@ case "$1" in
         INST=${1%-*}
         INST=${INST#*_}
         handle_ipv4_status $INST $2
+        ;;
+   moca_init)
+	service_start
         ;;
   *)
       echo "Usage: $SELF_NAME [${SERVICE_NAME}-start|${SERVICE_NAME}-stop|${SERVICE_NAME}-restart|lan-status]" >&2
