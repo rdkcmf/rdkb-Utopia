@@ -64,52 +64,90 @@ static int psm_get_record(const char *name, char *val, int size)
     return 0;
 }
 
-int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) {
+int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) 
+{
     int i;
     PSwPortState portState;
     char cmdBuff[128];
     char ifname[80];
     char temp_ifname[80];
-    char iot_enabled[20];
     memset(ifname, 0, 80);
     memset(temp_ifname, 0, 80);
 
-    for (i = 0; i < numArgs; ++i ) { 
-        portState = (PSwPortState) args[i].portID;
+    for (i = 0; i < numArgs; ++i ) 
+	{ 
+    	portState = (PSwPortState) args[i].portID;
         stringIDExtSw(portState, temp_ifname, sizeof(temp_ifname));
         if (args[i].vidParams.tagging)
-            strcat(temp_ifname, "-t");
+        	strcat(temp_ifname, "-t");
 
         strcat(ifname, temp_ifname);
         strcat(ifname, " ");
     }
 #if defined(_COSA_INTEL_XB3_ARM_)
-	MNET_DEBUG("L2SWITCH is already configured as part of utopia_init\n")
+	if (up)
+	{
+		MNET_DEBUG("Adding External ports:%s\n" COMMA ifname)
+		addVlan(args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+	}
+	else
+	{
+		MNET_DEBUG("Deleting External ports:%s\n" COMMA ifname)
+		sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "delVlan", 
+               	args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+
+       	MNET_DEBUG("configVlan_ESW delete command is %s\n" COMMA cmdBuff)
+       	system(cmdBuff);		
+	}
 #else
-    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+    //Rag: netid and vlanid is same for all the args, so index zero is being used.
+    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
+			args[0].hints.network->inst, args[0].vidParams.vid, ifname);
+
+    MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
     system(cmdBuff);
-#endif  
+#endif
 }
 
-int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) {
+int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) 
+{
     int i;
-    char portID[80];
     char cmdBuff[128];
-
+    char portID[80];
     memset(portID, 0, 80);
-    for (i = 0; i < numArgs; ++i ) { 
-        strcat(portID, (char*)args[i].portID);
+
+    for (i = 0; i < numArgs; ++i ) 
+	{ 
+    	strcat(portID, (char*)args[i].portID);
         if (args[i].vidParams.tagging)
-            strcat(portID, "-t");
+        	strcat(portID, "-t");
 
         strcat(portID, " ");
     }
+  
 #if defined(_COSA_INTEL_XB3_ARM_)
-	MNET_DEBUG("L2SWITCH is already configured as part of utopia_init\n")
-#else
-    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", args[0].hints.network->inst, args[0].vidParams.vid, portID);
+    if (up)
+    {
+		MNET_DEBUG("Adding ATOM ports:%s\n" COMMA portID)
+		addVlan(args[0].hints.network->inst, args[0].vidParams.vid, portID);
+    }
+    else
+    {
+        MNET_DEBUG("Deleting ATOM ports\n" COMMA portID)
+		sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", "delVlan",
+               	args[0].hints.network->inst, args[0].vidParams.vid, portID);
+
+        MNET_DEBUG("configVlan_WiFi, DeleteVlan command is %s\n" COMMA portID COMMA cmdBuff)
+	    system(cmdBuff);
+    }
+#else 
+    //Rag: netid and vlanid is same for all the args, so index zero is being used. 
+    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", 
+			args[0].hints.network->inst, args[0].vidParams.vid, portID);
+
+    MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
     system(cmdBuff);
-#endif  
+#endif
 }
 
 int stringIDIntSw (void* portID, char* stringbuf, int bufSize) {
@@ -131,19 +169,43 @@ int stringIDExtSw (void* portID, char* stringbuf, int bufSize) {
     return retval ? retval + 1 : 0;
 }
 
-int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up) {
+// This function is called for configuring MOCA ports 
+// For brlan0 it is untagged port sw_5
+// For brlan1 it is tagged port sw_5-t
+// For brlan2 and brlan3 this function is not called 
+int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up) 
+{
     int i;
     PSwPortState portState;
     char cmdBuff[128];
     char ifname[80];
     
-    for (i = 0; i < numArgs; ++i ) {
+    for (i = 0; i < numArgs; ++i ) 
+	{
         portState = (PSwPortState) args[i].portID;
         stringIDIntSw(portState, ifname, sizeof(ifname));
         
-        //#Args: netid, netvid, members...
-        sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
-        
-        system(cmdBuff);
-    }
+#if defined(_COSA_INTEL_XB3_ARM_)
+		if (up)
+		{
+			if (args[i].vidParams.tagging)
+            	strcat(ifname, "-t");
+
+           	MNET_DEBUG("Adding Internal switch ports:%s\n" COMMA ifname)
+			addVlan(args[i].hints.network->inst, args[i].vidParams.vid, ifname);
+		}
+		else
+		{
+           	MNET_DEBUG("Delete Internal switch ports:%s\n" COMMA ifname)
+			sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "delVlan",
+                   	args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
+
+           	system(cmdBuff);
+		}
+#else
+		sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
+				args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
+    	system(cmdBuff);
+#endif
+	}
 }

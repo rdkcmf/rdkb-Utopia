@@ -163,10 +163,6 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
             {
                 MNET_DEBUG("%s file creation is successful \n" COMMA LOCAL_BRLAN1UP_FILE)
             }
-#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
-            MNET_DEBUG("brlan1 is UP set MulticastMAC Address\n")
-            setMulticastMac();
-#endif
         }
     }
 }
