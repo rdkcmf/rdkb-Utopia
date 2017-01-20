@@ -6263,22 +6263,43 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 		// To enable sending LAN device MAC upstream in DNS requests through dnsmasq with option '--add-mac'
 		if (iptype == 4)
 		{
+			// Check if lan ip is up. Need to route dns requests to dnsmasq through lan0.
 			if ('\0' != lan_ipaddr[0] && 0 != strcmp("0.0.0.0", lan_ipaddr) )
 			{
 				fprintf(nat_fp, "-A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
 				fprintf(nat_fp, "-A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				printf("[XDNS] iptables -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				printf("[XDNS] iptables -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				printf("### XDNS : Feature Enabled ### \n");
+				printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+				printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+				printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
 			}
 			else
 			{
-				printf("### XDNS - Disabled. lan_ipaddr not found!. iptables rule not set for XDNS!\n");
+				printf("### XDNS - Disabled for ipv4. LAN IPv4 not up, iptables rule for xDNS not set!\n");
+			}
+		}
+		else if(iptype == 6)
+		{
+			char lan_ipv6addr[INET6_ADDRSTRLEN] = {0}; // MURUGAN - XDNS : ipv6 address of the lan interface
+			memset(lan_ipv6addr, 0, INET6_ADDRSTRLEN);
+			sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", lan_ipv6addr, sizeof(lan_ipv6addr));
+			printf("#########  XDNS : lan_ipv6addr = \"%s\"\n", lan_ipv6addr);
+			// Check if lan ipv6 is up.
+			if ('\0' != lan_ipv6addr[0] && 0 != strcmp("", lan_ipv6addr) && 0 != strcmp("::", lan_ipv6addr))
+			{
+				fprintf(nat_fp, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+				fprintf(nat_fp, "-A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+				printf("[XDNS] ip6tables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+				printf("[XDNS] ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+				printf("### XDNS : Feature Enabled (XDNS ipv6) ### \n");
+			}
+			else
+			{
+				printf("######## XDNS - Disabled for Ipv6. LAN IPv6 not up, ip6tables rule for xDNS not set ! ########\n");
 			}
 		}
 		else
 		{
-			printf("### XDNS - Disabled. Not IPv4! iptables rules not set!\n");
+			printf("### XDNS - Disabled. Invalid iptype!\n");
 		}
 	}
 	else
@@ -9397,6 +9418,11 @@ int prepare_ipv6_firewall(const char *fw_file)
 	
 	do_parental_control(filter_fp,nat_fp, 6);
 	
+	/* XDNS - route dns req though dnsmasq */
+#ifdef XDNS_ENABLE
+    do_dns_route(nat_fp, 6);
+#endif
+
 	/*add rules before this*/
 
 	fprintf(raw_fp, "COMMIT\n");

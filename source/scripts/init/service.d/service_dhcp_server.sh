@@ -125,7 +125,7 @@ lan_status_change ()
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
 		 echo_t "SERVICE DHCP : Start dhcp-server from lan status change"
 	 if [ "$XDNS_ENABLE" = "true" ]; then
-		 $SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+		 $SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
 	 fi
@@ -209,7 +209,7 @@ restart_request ()
 
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
      if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+		$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
 	 fi
@@ -220,7 +220,7 @@ restart_request ()
       # the dns server to give out a _requested_ lease even if
       # that lease is not found in the dnsmasq.leases file
       	 if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+		$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 	 fi
@@ -392,7 +392,7 @@ dhcp_server_start ()
    
    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
    if [ "$XDNS_ENABLE" = "true" ]; then
-	$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+	$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
    else
 	$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
    fi
@@ -407,7 +407,7 @@ dhcp_server_start ()
    			echo "$SERVER process failed to start sleep for 5 sec and restart it"
 			sleep 5
 			if [ "$XDNS_ENABLE" = "true" ]; then
-				$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+				$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 			else
 				$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 			fi
@@ -486,7 +486,7 @@ dhcp_server_stop ()
 
    # restart the dns server
    if [ "$XDNS_ENABLE" = "true" ]; then
-	$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+	$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
    else
 	$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
    fi
@@ -544,13 +544,13 @@ dns_start ()
    # that lease is not found in the dnsmasq.leases file
    if [ "stopped" = $DHCP_STATE ]; then
 	 if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
+		$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF #--enable-dbus
 	 fi
    else
    	 if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+		$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 	 else
 		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 	 fi
@@ -565,7 +565,7 @@ dns_start ()
    				echo "$SERVER process failed to start sleep for 5 sec and restart it"
 				sleep 5
 				if [ "$XDNS_ENABLE" = "true" ]; then
-					$SERVER -u nobody -q --resolv-file=/nvram/dnsmasq_servers.conf --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
+					$SERVER -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 				else
 					$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF #--enable-dbus
 				fi
