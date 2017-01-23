@@ -42,27 +42,35 @@
 
 void do_device_based_pp_disabled_appendrule(FILE *fp, const char *ins_num, const char *lan_ifname, const char *query)
 {
+#if !defined(_PLATFORM_RASPBERRYPI_)
      fprintf(fp, ":pp_disabled_%s - [0:0]\n", ins_num);
      fprintf(fp, "-A pp_disabled -j pp_disabled_%s\n", ins_num);
      fprintf(fp, "-A pp_disabled -i %s -m mac --mac-source %s -p tcp -m multiport --dports 80,443 -m state --state ESTABLISHED -m connbytes --connbytes 0:5 --connbytes-dir original --connbytes-mode packets -j GWMETA --dis-pp\n", lan_ifname, query);
+#endif
 }
 
 void do_device_based_pp_disabled_ip_appendrule(FILE *fp, const char *ins_num, const char *ipAddr)
 {
+#if !defined(_PLATFORM_RASPBERRYPI_)
 	fprintf(fp, "-A pp_disabled_%s -d %s -p tcp -m multiport --sports 80,443 -m state --state ESTABLISHED -m connbytes --connbytes 0:5 --connbytes-dir reply --connbytes-mode packets -j GWMETA --dis-pp\n", ins_num, ipAddr);
+#endif
 }
 
 int do_parcon_mgmt_lan2wan_pc_site_appendrule(FILE *fp)
 {
+#if !defined(_PLATFORM_RASPBERRYPI_)
 	fprintf(fp, "-A lan2wan_pc_site -p tcp -m multiport --dports 80,443,8080 -m state --state ESTABLISHED -m "
 				"connbytes --connbytes 0:5 --connbytes-dir original --connbytes-mode packets -j GWMETA --dis-pp\n");
+#endif
 	return 1;
 }
 
 void do_parcon_mgmt_lan2wan_pc_site_insertrule(FILE *fp, int index, char *nstdPort)
 {
+#if !defined(_PLATFORM_RASPBERRYPI_)
 	fprintf(fp, "-I lan2wan_pc_site %d -p tcp -m tcp --dport %s -m state --state ESTABLISHED -m "
 			"connbytes --connbytes 0:5 --connbytes-dir original --connbytes-mode packets -j GWMETA "
 			"--dis-pp\n", index, nstdPort);
+#endif
 }
 

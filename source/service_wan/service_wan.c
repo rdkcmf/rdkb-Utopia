@@ -980,8 +980,11 @@ static int wan_addr_set(struct serv_wan *sw)
         }
 
     /* Should not be executed before wan_service-status is set to started for _PLATFORM_IPQ_ */
-#if !defined(_PLATFORM_IPQ_)
+#if !defined(_PLATFORM_IPQ_) && !defined(_PLATFORM_RASPBERRYPI_)
         vsystem("firewall && gw_lan_refresh && execute_dir /etc/utopia/post.d/ restart");
+#endif
+#if defined(_PLATFORM_RASPBERRYPI_)
+        vsystem("firewall && execute_dir /etc/utopia/post.d/ restart");
 #endif
     } else if(bridgeMode != 0 && strcmp(lanstatus, "stopped") == 0 ) {
     	vsystem("firewall && execute_dir /etc/utopia/post.d/ restart");
@@ -991,10 +994,15 @@ static int wan_addr_set(struct serv_wan *sw)
 	if(strcmp(mischandler_ready,"true") == 0)
 	{
 		//only for first time
+#if !defined(_PLATFORM_RASPBERRYPI_)
 		fprintf(stderr, "[%s] ready is set from misc handler. Doing gw_lan_refresh\n", PROG_NAME);
 		system("gw_lan_refresh ");
+#endif
 		sysevent_set(sw->sefd, sw->setok, "misc-ready-from-mischandler", "false", 0);
 	}
+#if defined(_PLATFORM_RASPBERRYPI_)
+	vsystem("execute_dir /etc/utopia/post.d/ restart");
+#endif
         fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
