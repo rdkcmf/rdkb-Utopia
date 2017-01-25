@@ -179,41 +179,51 @@ static int dhcp_stop(const char *ifname)
     return 0;
 }
 
-static int dhcp_start(const char *ifname)
+static int dhcp_start(struct serv_wan *sw)
 {
-   int err;
-   char l_cErouter_Mode[16], l_cWan_if_name[16];
-   int l_iErouter_Mode;
+    char l_cErouter_Mode[16] = {0}, l_cWan_if_name[16] = {0}, l_cDhcpv6c_Enabled[8] = {0};
+    int l_iErouter_Mode, err;
 
-   syscfg_get(NULL, "last_erouter_mode", l_cErouter_Mode, sizeof(l_cErouter_Mode));
-   l_iErouter_Mode = atoi(l_cErouter_Mode);
+    syscfg_get(NULL, "last_erouter_mode", l_cErouter_Mode, sizeof(l_cErouter_Mode));
+    l_iErouter_Mode = atoi(l_cErouter_Mode);
 
-   syscfg_get(NULL, "wan_physical_ifname", l_cWan_if_name, sizeof(l_cWan_if_name));
-   //if the syscfg is not giving any value hardcode it to erouter0
-   if (0 == l_cWan_if_name[0])
-   {   
+    syscfg_get(NULL, "wan_physical_ifname", l_cWan_if_name, sizeof(l_cWan_if_name));
+    //if the syscfg is not giving any value hardcode it to erouter0
+    if (0 == l_cWan_if_name[0])
+    {   
        strncpy(l_cWan_if_name, "erouter0", 8); 
        l_cWan_if_name[8] = '\0';
-   }   
-
+    }
+    
   /*TCHXB6 is configured to use udhcpc */
 #if defined (_COSA_BCM_ARM_)
-    err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script",ifname, DHCPC_PID_FILE);
+    err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script",sw->ifname, DHCPC_PID_FILE);
 #else
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
-                "-H DocsisGateway -p %s -B -b 1",
-                ifname, DHCPC_PID_FILE);
+                 "-H DocsisGateway -p %s -B -b 1",
+                 sw->ifname, DHCPC_PID_FILE);
 #endif
 
     /*Following Boot time optimization changes are only for XB3*/
 #if defined(_COSA_INTEL_XB3_ARM_)
     if ((l_iErouter_Mode == WAN_RTMOD_IPV6) || (l_iErouter_Mode == WAN_RTMOD_DS))
     {   
-        fprintf(stderr, "%s: erouter Mode is:%d Starting DHCPv6 Client early \n", __FUNCTION__, l_iErouter_Mode);
-        err = vsystem("ti_dhcp6c -i %s -p %s -plugin /fss/gw/lib/libgw_dhcp6plg.so;sysevent set dhcpv6c_enabled 1",
-                      l_cWan_if_name, DHCPV6_PID_FILE);
-    }   
-#endif
+        sysevent_get(sw->sefd, sw->setok, "dhcpv6c_enabled", l_cDhcpv6c_Enabled, sizeof(l_cDhcpv6c_Enabled));
+        if ((!strncmp(l_cDhcpv6c_Enabled, "1", 1)) &&  
+            (1 == checkFileExists(DHCPV6_PID_FILE)))
+        {
+            fprintf(stderr, "DHCPv6 Client is already running not starting one more instance");
+        }
+        else
+        {
+            fprintf(stderr, "%s: erouter Mode is:%d No instances of ti_dhcpc are running starting DHCPv6 client\n", 
+                    __FUNCTION__, l_iErouter_Mode);
+            err = vsystem("ti_dhcp6c -i %s -p %s -plugin /fss/gw/lib/libgw_dhcp6plg.so;sysevent set dhcpv6c_enabled 1",
+                          l_cWan_if_name, DHCPV6_PID_FILE);
+        }
+    }
+#endif  
+
 /*
 	err = vsystem("strace -o /tmp/stracelog -f ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
               "-H DocsisGateway -p %s -B -b 1",
@@ -634,7 +644,7 @@ static int wan_dhcp_start(struct serv_wan *sw)
     else if (pid <= 0 && has_pid_file)
         dhcp_stop(sw->ifname);
 
-    return dhcp_start(sw->ifname);
+    return dhcp_start(sw);
 }
 
 static int wan_dhcp_stop(struct serv_wan *sw)
@@ -647,7 +657,7 @@ static int wan_dhcp_restart(struct serv_wan *sw)
     if (dhcp_stop(sw->ifname) != 0)
         fprintf(stderr, "%s: dhcp_stop error\n", __FUNCTION__);
 
-    return dhcp_start(sw->ifname);
+    return dhcp_start(sw);
 }
 
 static int wan_dhcp_release(struct serv_wan *sw)
@@ -674,7 +684,7 @@ static int wan_dhcp_renew(struct serv_wan *sw)
     char line[64], *cp;
 
     if ((fp = fopen(DHCPC_PID_FILE, "rb")) == NULL)
-        return dhcp_start(sw->ifname);
+        return dhcp_start(sw);
 
     if (fgets(pid, sizeof(pid), fp) != NULL && atoi(pid) > 0)
         kill(atoi(pid), SIGUSR1); // triger DHCP release

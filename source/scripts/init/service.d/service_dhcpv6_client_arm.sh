@@ -69,6 +69,7 @@ DHCPV6_BINARY=/sbin/ti_dhcp6c
 DHCPV6_CONF_FILE=/etc/dhcp6c.conf
 
 DHCPV6_PID_FILE=/var/run/erouter_dhcp6c.pid
+DHCPV6_REGISTER_FILE=/tmp/dhcpv6_registered_events
 
 service_init ()
 {
@@ -146,6 +147,7 @@ register_dhcpv6_client_handler()
    register_sysevent_handler $SERVICE_NAME current_wan_ifname /etc/utopia/service.d/service_dhcpv6_client.sh
    register_sysevent_handler $SERVICE_NAME bridge_mode /etc/utopia/service.d/service_dhcpv6_client.sh
    register_sysevent_handler $SERVICE_NAME wan-status /etc/utopia/service.d/service_dhcpv6_client.sh
+   touch $DHCPV6_REGISTER_FILE
 }
 
 unregister_dhcpv6_client_handler()
@@ -155,6 +157,7 @@ unregister_dhcpv6_client_handler()
    unregister_sysevent_handler $SERVICE_NAME current_wan_ifname
    unregister_sysevent_handler $SERVICE_NAME bridge_mode
    unregister_sysevent_handler $SERVICE_NAME wan-status
+   rm -f $DHCPV6_REGISTER_FILE
 }
 
 service_enable ()
@@ -162,6 +165,12 @@ service_enable ()
    if [ "$DHCPV6C_ENABLED" = "1" ]
    then
       ulog dhcpv6c status "DHCPv6 Client is already enabled"
+      if [ ! -f $DHCPV6_REGISTER_FILE ]; then
+          echo "DHCPv6 Client is enabled but events are not registered, registering it now"
+          register_dhcpv6_client_handler    
+      else
+          echo "DHCPv6 Client is enabled and events are registered"
+      fi
       return
    fi
 
