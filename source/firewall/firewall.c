@@ -4634,8 +4634,8 @@ static int do_wan2self_allow(FILE *filter_fp)
 
 #endif
 }
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
-static int prepare_ipv6_multinet(FILE *fp) 
+#if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) && ! defined(_CBR_PRODUCT_REQ_) 
+static int prepare_ipv6_multinet(FILE *fp)
 {    
     char active_insts[32] = {0};
     char lan_pd_if[128] = {0};
@@ -4648,7 +4648,6 @@ static int prepare_ipv6_multinet(FILE *fp)
     if (lan_pd_if[0] == '\0') {
         return -1;
     }
-
     sysevent_get(sysevent_fd, sysevent_token, "multinet-instances", active_insts, sizeof(active_insts));
     p = strtok(active_insts, " ");
 
@@ -6540,7 +6539,7 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
         if (count < 0) count = 0;
         if (count > MAX_SYSCFG_ENTRIES) count = MAX_SYSCFG_ENTRIES;
 
-#if !defined(_COSA_BCM_MIPS_)
+#if !defined(_COSA_BCM_MIPS_) && !defined(_CBR_PRODUCT_REQ_)
         ruleIndex += do_parcon_mgmt_lan2wan_pc_site_appendrule(fp);
 #endif
 
@@ -7805,6 +7804,10 @@ static void prepare_ipc_filter(FILE *filter_fp) {
     fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.4093");
     fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.4093");
 //zqiu<<
+#if defined (_COSA_BCM_ARM_)
+   fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "privbr");
+#endif
+
                 FIREWALL_DEBUG("Exiting prepare_ipc_filter\n"); 	  
 }
 
@@ -8074,7 +8077,7 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
  */
 static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
-   FIREWALL_DEBUG("Entering prepare_subtables \n"); 	
+   FIREWALL_DEBUG("Entering prepare_subtables \n"); 
    int i; 
    /*
     * raw
@@ -8224,11 +8227,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
 
-#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
+#if defined (INTEL_PUMA7) 
    //Avoid blocking packets at the Intel NIL layer
    fprintf(filter_fp, "-A FORWARD -i a-mux -j ACCEPT\n");
 #endif
-
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    fprintf(filter_fp, "%s\n", ":pp_disabled - [0:0]");
    if(isGuestNetworkEnabled) {
@@ -8251,7 +8253,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A lan2wan -p tcp --dport 80 -j lan2wan_httpget_intercept\n");
    fprintf(filter_fp, "-A lan2wan -p udp --dport 53 -j lan2wan_dnsq_intercept\n");
 #endif
-
    fprintf(filter_fp, "%s\n", ":lan2wan_misc - [0:0]");
 #ifdef CONFIG_BUILD_TRIGGER
    fprintf(filter_fp, "%s\n", ":lan2wan_triggers - [0:0]");
@@ -8275,7 +8276,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 //    fprintf(fp, ":lan2wan_http_nfqueue - [0:0]\n");
     fprintf(filter_fp, ":wan2lan_dnsr_nfqueue - [0:0]\n");
 #endif
-
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    fprintf(filter_fp, "%s\n", ":wan2lan_dns_intercept - [0:0]");
 #endif
@@ -8326,7 +8326,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":xlog_drop_lanattack - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogdrop - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogreject - [0:0]");
-
    // Allow local loopback traffic 
    fprintf(filter_fp, "-A INPUT -i lo -s 127.0.0.0/8 -j ACCEPT\n");
    if (isWanReady) {
@@ -8358,7 +8357,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
                "-A INPUT -i %s -j wan2self\n", default_wan_ifname);
       fprintf(filter_fp, "%s\n", str);
    }
-
    //Add wan2self restrictions to other wan interfaces
    //ping is allowed to cm and mta inferfaces regardless the firewall level
    fprintf(filter_fp, "-A INPUT -i %s -p icmp --icmp-type 8 -m limit --limit 3/second -j %s\n", ecm_wan_ifname, "xlog_accept_wan2self"); // ICMP PING
@@ -8403,7 +8401,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", emta_wan_ifname);
    }
-#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
+#if defined (INTEL_PUMA7) 
 
    fprintf(filter_fp, "-A INPUT -i gmac5 -j ACCEPT\n");
 
@@ -8433,7 +8431,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A FORWARD -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
    fprintf(filter_fp, "-A FORWARD -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
 #endif
-
    fprintf(filter_fp, "-A FORWARD -j general_forward\n");
    fprintf(filter_fp, "-A FORWARD -i %s -o %s -j wan2lan\n", current_wan_ifname, lan_ifname);
    fprintf(filter_fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, current_wan_ifname);
@@ -8444,7 +8441,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    
    fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
    fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
-
    // RDKB-4826 - IOT rules for DHCP
    static char iot_enabled[20];
    memset(iot_enabled, 0, sizeof(iot_enabled));
@@ -8468,7 +8464,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       //do_lan2wan_IoT_Allow(filter_fp);
       do_wan2lan_IoT_Allow(filter_fp);
    }
-
 
    /***********************
     * set lan to wan subrule by order 
@@ -8515,7 +8510,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
             break;
       }
    }
-
    //fprintf(filter_fp, "-A lan2self -m state --state INVALID -j DROP\n");
    //Block traffic to lan0. 192.168.100.3 is for ATOM dbus connection.
    if(isWanServiceReady) {
@@ -8546,7 +8540,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A wan2self -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
    //fprintf(filter_fp, "-A wan2self -j wan2self_mgmt\n");
    fprintf(filter_fp, "-A wan2self -j xlog_drop_wan2self\n");
-
 //   fprintf(filter_fp, "-A wan2lan -m state --state INVALID -j xlog_drop_wan2lan\n");
 
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
@@ -9568,7 +9561,7 @@ static void do_ipv6_filter_table(FILE *fp){
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", emta_wan_ifname); // Echo request
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", emta_wan_ifname); // Echo reply
 
-    #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+    #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) && ! defined(_CBR_PRODUCT_REQ_)
       /*Add a simple logic here to make traffic allowed for lan interfaces
        * exclude primary lan*/
       prepare_ipv6_multinet(fp);
@@ -9957,7 +9950,10 @@ v6GPFirewallRuleNext:
 
       // Accept blindly ESP/AH/SCTP
       fprintf(fp, "-A FORWARD -i %s -o %s -p esp -j ACCEPT\n", wan6_ifname, lan_ifname);
+//temp changes for CBR until brcm fixauthentication Head issue on brlan0 for v6
+#ifndef _CBR_PRODUCT_REQ_
       fprintf(fp, "-A FORWARD -i %s -o %s -m ah -j ACCEPT\n", wan6_ifname, lan_ifname);
+#endif
       fprintf(fp, "-A FORWARD -i %s -o %s -p 132 -j ACCEPT\n", wan6_ifname, lan_ifname);
 
       // Everything else is logged and declined
