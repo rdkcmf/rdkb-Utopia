@@ -38,171 +38,287 @@ void check_for_dependent_ports(char *port, int *tag, int *atom_port, int *ext_po
 	}
 }
 
-//handle_moca is a function for configuring MOCA port
-void handle_moca(int vlan_id, int tagged)
+// This function removes all the occurances of "to_remove_mem" from "from_member"
+void sw_remove_member(char *from_member, char *to_remove_mem)
 {
-	char l_cMoca_Tports[16] = {0}, l_cMoca_Utport[8] = {0};
+    int l_iIter = 0, l_iIter1 = 0, l_iIndex = 0, l_iTempIndex = 0;
+    char l_cTemp[64] = {0};
+
+	if (0 == from_member[0] || 0 == to_remove_mem[0])
+    {   
+        printf("One of the inputs is not correct not removing anything\n");    
+        return;
+    }   
+    while(from_member[l_iIter] !='\0') 
+    {   
+        l_iIter1 = 0;
+        if (!strncmp(&from_member[l_iIter], to_remove_mem, strlen(to_remove_mem)))
+        {   
+            printf("Matching %s\n", to_remove_mem);
+            l_iIter += strlen(to_remove_mem);
+        }   
+        l_cTemp[l_iIndex] = from_member[l_iIter]; 
+        l_iIter++;
+        l_iIndex++;
+   	}   
+   	l_cTemp[l_iIndex]='\0'; 
+   	strncpy(from_member, l_cTemp, (strlen(l_cTemp)+1));  
+   	printf("After removing all instances of:%s new string is: %s\n", to_remove_mem, from_member);
+}
+
+//handle_moca is a function for configuring MOCA port
+void handle_moca(int vlan_id, int *tagged, int add)
+{
+	char l_cMoca_Tports[16] = {0}, l_cMoca_Utport[8] = {0}, l_cMoca_Tport[8] = {0};
 	int l_iMoca_UtPort = 100;
 	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_tports", l_cMoca_Tports, sizeof(l_cMoca_Tports));
 	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_utport", l_cMoca_Utport, sizeof(l_cMoca_Utport));
 	
     printf("sw_moca_tports:%s sw_moca_utport:%s\n", l_cMoca_Tports, l_cMoca_Utport);
-    // adding a vlan to moca
-	if (TAGGING_MODE == tagged)
+
+	if (1 == add) //Add MOCA ports case
 	{
-    	// Adding trunking vlan
-		if (0 == l_cMoca_Tports[0])
+	    // adding a vlan to moca
+		if (TAGGING_MODE == *tagged)
 		{
-        	// Need to enable vlans and convert untagged vlan if it exists
-            MNET_DEBUG("--SW handler swctl %s\n" COMMA PORTMAP_VENABLE_sw_5);
-			swctl(20, 3, -1, -1, -1, -1, NULL, NULL);
-            // Not calling add_untagged_moca_vid_special $MUTPORT as mocactl is not there
-			if (0 == l_cMoca_Utport[0]) 
+    		// Adding trunking vlan
+			if (0 == l_cMoca_Tports[0])
 			{
-				printf("sw_moca_utport is empty using the default value 100\n");
+    	    	// Need to enable vlans and convert untagged vlan if it exists
+        	    MNET_DEBUG("--SW handler swctl %s\n" COMMA PORTMAP_VENABLE_sw_5);
+				swctl(20, 3, -1, -1, -1, -1, NULL, NULL);
+    	
+		        // Not calling add_untagged_moca_vid_special $MUTPORT as mocactl is not there
+				if (0 == l_cMoca_Utport[0]) 
+				{
+					printf("sw_moca_utport is empty using the default value 100\n");
+				}
+				else
+				{
+					l_iMoca_UtPort = atoi(l_cMoca_Utport);
+				}
+				if (access(MOCACTL, F_OK) == 0)
+	            {   
+    	            MNET_DEBUG("--SW handler mocactl -c 8 -e 1 -v %d \n" COMMA l_iMoca_UtPort);
+        	        snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), "mocactl -c 8 -e 1 -v %d", l_iMoca_UtPort);
+            	    system(l_cSystem_Cmd);
+	            }   
+    	        else
+        	    {   
+            	    printf("mocactl is not present error:%d, not adding moca vlanid\n", errno);
+	            }   
+    	        MNET_DEBUG("--SW handler swctl %s -v %d -m %d -q 1\n" COMMA PORTMAP_sw_5 COMMA l_iMoca_UtPort COMMA NATIVE_MODE);
+        	    swctl(16, 3, l_iMoca_UtPort, NATIVE_MODE, 1, -1, NULL, NULL);
+    
+            	strncat(l_cMoca_Tports, l_cMoca_Utport, sizeof(l_cMoca_Utport));    
+	            sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_tports", l_cMoca_Tports, 0);
 			}
 			else
 			{
-				l_iMoca_UtPort = atoi(l_cMoca_Utport);
+				printf("sw_moca_tports already has a value not doing anything \n");
 			}
-            MNET_DEBUG("--SW handler swctl %s -v %d -m %d -q 1\n" COMMA PORTMAP_sw_5 COMMA l_iMoca_UtPort COMMA NATIVE_MODE);
-			swctl(16, 3, l_iMoca_UtPort, NATIVE_MODE, 1, -1, NULL, NULL);
-		
-			strncat(l_cMoca_Tports, l_cMoca_Utport, sizeof(l_cMoca_Utport));	
-        	sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_tports", l_cMoca_Tports, 0);
 		}
 		else
 		{
-			printf("sw_moca_tports already has a value not doing anything \n");
+    		// Adding untagged vlan
+			if (0 == l_cMoca_Tports[0])
+			{
+        		// Add to moca filter, and add TAG
+	            // Not calling add_untagged_moca_vid_special $VID as mocactl is not there
+				if (0 == l_cMoca_Utport[0]) 
+        	    {
+            	    printf("sw_moca_utport is empty using the default value 100\n");
+	            }
+    	        else
+        	    {
+            	    l_iMoca_UtPort = atoi(l_cMoca_Utport);
+	            }
+
+				if (access(MOCACTL, F_OK) == 0)
+				{
+					MNET_DEBUG("--SW handler mocactl -c 8 -e 1 -v %d \n" COMMA vlan_id);
+					snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), "mocactl -c 8 -e 1 -v %d", vlan_id);
+					system(l_cSystem_Cmd);
+				}
+				else
+				{
+					printf("mocactl is not present error:%d, not adding moca vlanid\n", errno);
+				}
+    	        MNET_DEBUG("--SW handler swctl %s -v %d -m %d -q 1\n" COMMA PORTMAP_sw_5 COMMA l_iMoca_UtPort COMMA NATIVE_MODE);
+				swctl(16, 3, l_iMoca_UtPort, NATIVE_MODE, 1, -1, NULL, NULL);
+			}
+			else
+			{
+				printf("sw_moca_tports already has a value not doing anything \n");
+			}
+			sprintf(l_cMoca_Utport, "%d", vlan_id);
+			sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_utport", l_cMoca_Utport, 0);
 		}
 	}
-	else
+	else //Delete MOCA port case
 	{
-    	// Adding untagged vlan
-		if (0 == l_cMoca_Tports[0])
+		// Removing a vlan from moca
+		if (TAGGING_MODE == *tagged)
 		{
-        	// Add to moca filter, and add TAG
-            // Not calling add_untagged_moca_vid_special $VID as mocactl is not there
-			if (0 == l_cMoca_Utport[0]) 
-            {
-                printf("sw_moca_utport is empty using the default value 100\n");
+            // Removing trunking vlan
+			sprintf(l_cMoca_Tport, "%d", vlan_id);
+			sw_remove_member(l_cMoca_Tports, l_cMoca_Tport);
+			if (0 == l_cMoca_Tports[0])
+			{
+                // Need to disable vlans and re-add untagged vlan if it exists
+                MNET_DEBUG("--SW handler swctl %s\n" COMMA PORTMAP_VDISABLE_sw_5)
+				swctl(21, 3, -1, -1, -1, -1, NULL, NULL);
+
+				l_iMoca_UtPort = atoi(l_cMoca_Utport);
+				if (access(MOCACTL, F_OK) == 0)
+                {   
+                    MNET_DEBUG("--SW handler mocactl -c 8 -e 0 -v %d \n" COMMA l_cMoca_Utport);
+                    snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), "mocactl -c 8 -e 1 -v %d", l_cMoca_Utport);
+                    system(l_cSystem_Cmd);
+                }   
+                else
+                {   
+                    printf("mocactl is not present error:%d, not deleting moca vlanid\n", errno);
+                }
+				MNET_DEBUG("--SW handler swctl %s -v %d -m %d -q 1\n" COMMA PORTMAP_sw_5 COMMA l_iMoca_UtPort COMMA UNTAGGED_MODE)
+				swctl(16, 3, l_iMoca_UtPort, UNTAGGED_MODE, 1, -1, NULL, NULL);
             }
-            else
-            {
-                l_iMoca_UtPort = atoi(l_cMoca_Utport);
-            }
-            MNET_DEBUG("--SW handler swctl %s -v %d -m %d -q 1\n" COMMA PORTMAP_sw_5 COMMA l_iMoca_UtPort COMMA NATIVE_MODE);
-			swctl(16, 3, l_iMoca_UtPort, NATIVE_MODE, 1, -1, NULL, NULL);
+			sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_tports", l_cMoca_Tports, 0);
 		}
-		else
+        else
 		{
-			printf("sw_moca_tports already has a value not doing anything \n");
-		}
-		sprintf(l_cMoca_Utport, "%d", vlan_id);
-		sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_utport", l_cMoca_Utport, 0);
+        	// Removing untagged vlan
+			if (0 != l_cMoca_Tports[0])
+			{
+                // Del from moca filter, and add TAG
+				*tagged = TAGGING_MODE;
+				if (access(MOCACTL, F_OK) == 0)
+                {
+                    MNET_DEBUG("--SW handler mocactl -c 8 -e 0 -v %d \n" COMMA vlan_id);
+                    snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), "mocactl -c 8 -e 0 -v %d", vlan_id);
+                    system(l_cSystem_Cmd);
+                }
+                else
+                {
+                    printf("mocactl is not present error:%d, not deleting moca vlanid\n", errno);
+                }
+            }
+
+			l_iMoca_UtPort = atoi(l_cMoca_Utport);
+			if (l_iMoca_UtPort == vlan_id)
+			{
+				sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_utport", "", 0);
+            }
+        }	
 	}
 }
 
-void execSwCtl(char *port, int vlan_id, int tagged)
+void execSwCtl(char *port, int vlan_id, int tagged, int add)
 {
+	int command = 0, command_ven = 4, command_def = 34, l_iCmd_Rem = 1; 
+	int port_venable = 0, l_iPort;
+	char val[20] = {0}, sysevent_cmd[50] = {0};
+
 	printf("Inside execSwCtl function\n");
-	int port_venable = 0, command = 0, command_ven, command_def, l_iPort;
-	
-	char val[20];
-	char sysevent_cmd[50];
-    memset(val, 0x00, sizeof(val));
-    memset(sysevent_cmd, 0x00, sizeof(sysevent_cmd));
-
-	snprintf(sysevent_cmd, sizeof(sysevent_cmd), "sw_port_%s_venable",port);
-    sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, sysevent_cmd, val, sizeof(val));
-    port_venable = atoi(val);
-
-    printf("execSwCtl::port_venable for port:%s is:%d\n", port, port_venable);
-
+    printf("ADD / DELETE:%d %s port case\n", add, port);
 	if (!strncmp("sw_1", port, 4))
     {
-        printf("sw_1 case use PORTMAP_sw_1\n");
-		command_ven = 4;
-		command_def = 34;
 		l_iPort = 0;
     }
     else if (!strncmp("sw_2", port, 4))
     {
         printf("sw_2 case use PORTMAP_sw_2\n");
-		command_ven = 4;
-		command_def = 34;
 		l_iPort = 1;
     }
     else if (!strncmp("sw_3", port, 4))
     {
         printf("sw_3 case use PORTMAP_sw_3\n");
-		command_ven = 4;
-		command_def = 34;
 		l_iPort = 2;
     }
     else if (!strncmp("sw_4", port, 4))
     {
         printf("sw_4 case use PORTMAP_sw_4\n");
-		command_ven = 4;
-		command_def = 34;
 		l_iPort = 3;
     }
     else if (!strncmp("sw_5", port, 4))
     {
         printf("sw_5 case use PORTMAP_sw_5\n");
-		handle_moca(vlan_id, tagged); //sw_5 is a MOCA port
+		handle_moca(vlan_id, &tagged, add ? ADD: DELETE); //sw_5 is a MOCA port
 		command = 16;
 		command_def = 16;
 		command_ven = 20;
 		l_iPort = 3;
+		l_iCmd_Rem = 17;
     }
     else
     {
-        printf("It should not come here\n");
+        printf("It should not come here for port:%s\n", port);
+		return;
     }
-
-	if (1 != port_venable)
+	if (ADD == add) //Addition case
 	{
-		MNET_DEBUG("--SW handler swctl -c %d -p %d\n" COMMA command_ven COMMA l_iPort)
-		swctl(command_ven, l_iPort, -1, -1, -1, -1, NULL, NULL);
+		snprintf(sysevent_cmd, sizeof(sysevent_cmd), "sw_port_%s_venable",port);
+    	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, sysevent_cmd, val, sizeof(val));
+	    port_venable = atoi(val);
 
-	    printf("sysevent set %s 1\n", sysevent_cmd);
-        sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, sysevent_cmd, "1", 0);
+    	printf("execSwCtl::port_venable for port:%s is:%d\n", port, port_venable);
+		if (1 != port_venable)
+		{
+			MNET_DEBUG("--SW handler swctl -c %d -p %d\n" COMMA command_ven COMMA l_iPort)
+			swctl(command_ven, l_iPort, -1, -1, -1, -1, NULL, NULL);
+
+		    printf("sysevent set %s 1\n", sysevent_cmd);
+	        sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, sysevent_cmd, "1", 0);
+		}
+
+	    MNET_DEBUG("--SW handler swctl -c %d -p %d -v %d -m %d -q 1 \n" COMMA command COMMA l_iPort COMMA vlan_id COMMA tagged)
+		swctl(command, l_iPort, vlan_id, tagged, 1, -1, NULL, NULL); //e.g: swctl -c 0 -p 0 -v 100 -m 1 -q 1
+
+	    if (UNTAGGED_MODE == tagged && (strncmp("sw_5", port, 4)))
+    	{   
+    		printf("Untagged case execute swctl for port:%s\n", port);
+	        MNET_DEBUG("--SW handler swctl -c %d -p %d -v %d\n" COMMA command_def COMMA l_iPort COMMA vlan_id)
+			swctl(command_def, l_iPort, vlan_id, -1, -1, -1, NULL, NULL); //e.g swctl -c 34 -p 0 -v 100 
+	    }	
 	}
+	else //Delete case
+	{
+    	MNET_DEBUG("--SW handler, swctl -c %d -p %d -v %d\n" COMMA l_iCmd_Rem COMMA l_iPort COMMA vlan_id)
+		swctl(l_iCmd_Rem, l_iPort, vlan_id, -1, -1, -1, NULL, NULL);
+           
+		if (UNTAGGED_MODE == tagged) 
+		{
+			if (!strncmp("sw_5", port, 4))
+			{
+				MNET_DEBUG("--SW handler, swctl -c %d -p %d -v %d -m %d -q 1\n" COMMA command_def 
+							COMMA l_iPort COMMA 0 COMMA NATIVE_MODE)
 
-    MNET_DEBUG("--SW handler swctl -c %d -p %d -v %d -m %d -q 1 \n" COMMA command COMMA l_iPort COMMA vlan_id COMMA tagged)
-	swctl(command, l_iPort, vlan_id, tagged, 1, -1, NULL, NULL); //e.g: swctl -c 0 -p 0 -v 100 -m 1 -q 1
-
-    if (UNTAGGED_MODE == tagged && (strncmp("sw_5", port, 4)))
-    {   
-    	printf("Untagged case execute swctl for port:%s\n", port);
-        MNET_DEBUG("--SW handler swctl -c %d -p %d -v %d\n" COMMA command_def COMMA l_iPort COMMA vlan_id)
-		swctl(command_def, l_iPort, vlan_id, -1, -1, -1, NULL, NULL); //e.g swctl -c 34 -p 0 -v 100 
-    }	
+				swctl(command_def, l_iPort, 0, 0, 1, -1, NULL, NULL);
+			}
+			else
+			{		
+				MNET_DEBUG("--SW handler, swctl -c %d -p %d -v %d\n" COMMA command_def COMMA l_iPort COMMA 0)
+				swctl(command_def, l_iPort, 0, -1, -1, -1, NULL, NULL);
+			}
+		}
+	}
 }
 
 void sw_add_ports(int vlan_id, char* ports_add, int *atom_port, int *ext_port)
 {
 	printf("Inside sw_add_ports function ports_add is:%s\n", ports_add);
-	char port[10];
-	char cmdBuff[80];	
-	char sysevent_cmd[50];
-	char val[20];
+	char port[10] = {0};
+	int i = 0, tagged = UNTAGGED_MODE;
 
-	memset(port, 0x00, sizeof(port));	
-	memset(cmdBuff, 0x00, sizeof(cmdBuff));	
-	memset(sysevent_cmd, 0x00, sizeof(sysevent_cmd));	
-	memset(val, 0x00, sizeof(val));	
-
-	int i = 0, port_venable = 0;
-	int tagged = UNTAGGED_MODE;
-	
 	while(*ports_add != '\0')
 	{
 		if(*ports_add == ' ' || *(ports_add+1) == '\0')
 		{
 			if (*(ports_add+1) == '\0')
+            {
 				port[i] = *(ports_add);
+				port[i + 1] = '\0';
+            }
 
 			//check for dependent ports
 			check_for_dependent_ports(port, &tagged, atom_port, ext_port);
@@ -212,7 +328,7 @@ void sw_add_ports(int vlan_id, char* ports_add, int *atom_port, int *ext_port)
 				goto reset;
 			}
 
-			execSwCtl(port, vlan_id, tagged);
+			execSwCtl(port, vlan_id, tagged, ADD);
 			
 			reset:
 			memset(port, 0x00, sizeof(port));	
@@ -349,8 +465,12 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 			printf("sysevent set sw_ext_vids %s\n", l_cExt_Vids);
 			sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_ext_vids", l_cExt_Vids, 0);
 		}
+        l_iLen = strlen(ext_vidPorts);
+		if (0 != ext_vidPorts[0] && ext_vidPorts[l_iLen] != ' ')
+        	strncat(ext_vidPorts, " ", 1);
+
 		snprintf(sysevent_cmd, sizeof(sysevent_cmd), "sw_vid_%d_extports",vlan_id);
-		strcat(ext_vidPorts, ports_add);
+		strncat(ext_vidPorts, ports_add, (size_t)(strlen(ports_add)));
 		printf("sysevent set sw_vid_%d_extports %s\n", vlan_id, ext_vidPorts);
 		sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, sysevent_cmd, ext_vidPorts, 0);
 	}
@@ -368,16 +488,132 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 			MNET_DEBUG("--SW handler, swctl %s -v %d -m %d -q 1\n" COMMA PORTMAP_atom COMMA vlan_id COMMA TAGGING_MODE)
 			swctl(16, 0, vlan_id, TAGGING_MODE, 1, -1, NULL, NULL); //swctl -c 16 -p 0 -v <vlan_id> -m 2 -q 1
 		}
+		l_iLen = strlen(atom_vidPorts);
+        if (0 != atom_vidPorts[0] && atom_vidPorts[l_iLen] != ' ')
+            strncat(atom_vidPorts, " ", 1);
+
 		snprintf(sysevent_cmd, sizeof(sysevent_cmd), "sw_vid_%d_atomports",vlan_id);
-		strcat(atom_vidPorts, ports_add);
+		strncat(atom_vidPorts, ports_add, (size_t)(strlen(ports_add)));
 		printf("sysevent set sw_vid_%d_atomports %s\n", vlan_id, atom_vidPorts);
 		sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, sysevent_cmd, atom_vidPorts, 0);
 	}
 }
 
-int delVlan(char* argv[], int argc)
+void delVlan(int net_id, int vlan_id, char *ports_add)
 {
+	char l_cVid_Ports[64] = {0}, l_cExt_Vid_Ports[64] = {0};
+	char l_cAtom_Vid_Ports[32] = {0}, l_cExt_Vids[8] = {0};
+	char l_cCmd_Buff[128] = {0}, l_cVlan_Id[8] = {0}, l_cPort[8] = {0};
+	
+	int l_iAtom_Port, l_iExt_Port, l_iIter = 0, l_iTagged = UNTAGGED_MODE;
+
 	printf("Inside delVlan function\n");
+    printf("--SW handler, removing vlan %d on net %d for %s\n", vlan_id, net_id, ports_add);
+	if (0 == hdl_sw_sysevent_fd)
+	{
+		printf("hdl_sw_sysevent_fd is zero call handle_sw_init\n");
+		handle_sw_init();
+	}
+
+	snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "sw_vid_%d_ports",vlan_id);
+    sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, l_cCmd_Buff, l_cVid_Ports, sizeof(l_cVid_Ports));
+
+    snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "sw_vid_%d_extports",vlan_id);
+    sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, l_cCmd_Buff, l_cExt_Vid_Ports, sizeof(l_cExt_Vid_Ports));
+
+    snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "sw_vid_%d_atomports",vlan_id);
+    sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, l_cCmd_Buff, l_cAtom_Vid_Ports, sizeof(l_cAtom_Vid_Ports));
+        
+	while(*ports_add != '\0')
+    {
+        if(*ports_add == ' ' || *(ports_add+1) == '\0')
+        {
+			if (*(ports_add+1) == '\0')
+            {
+                l_cPort[l_iIter] = *(ports_add);
+                l_cPort[l_iIter + 1] = '\0';
+            }
+
+            //check for dependent ports
+            check_for_dependent_ports(l_cPort, &l_iTagged, &l_iAtom_Port, &l_iExt_Port);
+			sw_remove_member(l_cVid_Ports, l_cPort);
+            if (1 == l_iAtom_Port)
+            {
+                printf("Removing ATOM port:%s\n", l_cPort);
+				sw_remove_member(l_cAtom_Vid_Ports, l_cPort);	
+            }
+			else if (1 == l_iExt_Port)
+			{
+                printf("Removing External port:%s\n", l_cPort);
+				sw_remove_member(l_cExt_Vid_Ports, l_cPort);	
+				
+			}
+			else if (!strncmp(l_cPort, "sw_5", 4))
+			{
+                printf("Removing MOCA port:%s\n", l_cPort);
+			}
+			else
+			{
+				printf("It shouldnt come here for port:%s\n", l_cPort);
+				return;
+			}
+
+            execSwCtl(l_cPort, vlan_id, l_iTagged, DELETE);
+            memset(l_cPort, 0x00, sizeof(l_cPort));
+            l_iTagged = UNTAGGED_MODE;
+            l_iIter = 0;
+        }
+        else
+        {
+            if (*ports_add == '-' && *(ports_add+1) == 't')
+            {
+                l_iTagged = TAGGING_MODE;
+            }
+            else
+                l_cPort[l_iIter] = *(ports_add);
+            l_iIter++;
+        }
+        ports_add++;
+    }
+	// check for arm port removal (implicit rule)
+	if (0 == l_cVid_Ports[0])
+	{
+    	MNET_DEBUG("--SW handler, swctl %s -v %d\n" COMMA PORTMAP_REM_arm COMMA vlan_id)
+		swctl(17, 7, vlan_id, -1, -1, -1, NULL, NULL);
+			
+		snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "vconfig rem %s.%d", MGMT_PORT_LINUX_IFNAME, vlan_id);
+	    MNET_DEBUG("Removing vlan %s.%d\n" COMMA MGMT_PORT_LINUX_IFNAME COMMA vlan_id)
+	   	system(l_cCmd_Buff);
+    }
+	snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "sw_vid_%d_ports",vlan_id);
+    sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, l_cCmd_Buff, l_cVid_Ports, 0);
+        
+    // Add to switch connection ports if on external switch
+    if (0 == l_cExt_Vid_Ports[0])
+	{
+    	MNET_DEBUG("--SW handler, swctl %s -v %d" COMMA PORTMAP_REM_I2E COMMA vlan_id)
+		swctl(17, 2, vlan_id, -1, -1, -1, NULL, NULL);
+
+		MNET_DEBUG("--SW handler, swctl %s -v %d" COMMA PORTMAP_REM_E2I COMMA vlan_id)
+		swctl(1, 5, vlan_id, -1, -1, -1, NULL, NULL);
+            
+    	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_ext_vids", l_cExt_Vids, sizeof(l_cExt_Vids));
+		sprintf(l_cVlan_Id, "%d", vlan_id);
+		sw_remove_member(l_cExt_Vids, l_cVlan_Id);
+		sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_ext_vids", l_cExt_Vids, 0);
+    }
+    // Save list of members
+	snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "sw_vid_%d_extports",vlan_id);
+    sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, l_cCmd_Buff, l_cExt_Vid_Ports, 0);
+        
+    // check for atom port removal (implicit rule)
+	if (0 == l_cAtom_Vid_Ports[0])
+	{
+		MNET_DEBUG("--SW handler, swctl %s -v %d\n" COMMA PORTMAP_REM_atom COMMA vlan_id)
+		swctl(17, 0, vlan_id, -1, -1, -1, NULL, NULL);
+    }
+	snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "sw_vid_%d_atomports",vlan_id);
+    sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, l_cCmd_Buff, l_cAtom_Vid_Ports, 0);
 }
 
 int restore_ext_sw(char* argv[], int argc)

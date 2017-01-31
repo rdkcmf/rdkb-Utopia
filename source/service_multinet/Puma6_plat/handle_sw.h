@@ -4,6 +4,9 @@ const char TYPE[]="SW";
 #define UNTAGGED_MODE 1
 #define NATIVE_MODE 0
 
+#define ADD     1
+#define DELETE  0
+
 const char SW_ALL_PORTS[]="sw_1 sw_2 sw_3 sw_4 sw_5 atom arm I2E E2I";
 const char PORTMAP_sw_1[]="-c 0 -p 0";
 const char PORTMAP_sw_2[]="-c 0 -p 1";

@@ -82,7 +82,8 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
         	strcat(temp_ifname, "-t");
 
         strcat(ifname, temp_ifname);
-        strcat(ifname, " ");
+		if (i < (numArgs - 1)) 
+            strcat(ifname, " ");
     }
 #if defined(_COSA_INTEL_XB3_ARM_)
 	if (up)
@@ -93,11 +94,7 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
 	else
 	{
 		MNET_DEBUG("Deleting External ports:%s\n" COMMA ifname)
-		sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "delVlan", 
-               	args[0].hints.network->inst, args[0].vidParams.vid, ifname);
-
-       	MNET_DEBUG("configVlan_ESW delete command is %s\n" COMMA cmdBuff)
-       	system(cmdBuff);		
+        delVlan(args[0].hints.network->inst, args[0].vidParams.vid, ifname);
 	}
 #else
     //Rag: netid and vlanid is same for all the args, so index zero is being used.
@@ -122,7 +119,8 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
         if (args[i].vidParams.tagging)
         	strcat(portID, "-t");
 
-        strcat(portID, " ");
+		if (i < (numArgs - 1))
+            strcat(portID, " ");
     }
   
 #if defined(_COSA_INTEL_XB3_ARM_)
@@ -134,11 +132,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     else
     {
         MNET_DEBUG("Deleting ATOM ports\n" COMMA portID)
-		sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", "delVlan",
-               	args[0].hints.network->inst, args[0].vidParams.vid, portID);
-
-        MNET_DEBUG("configVlan_WiFi, DeleteVlan command is %s\n" COMMA portID COMMA cmdBuff)
-	    system(cmdBuff);
+		delVlan(args[0].hints.network->inst, args[0].vidParams.vid, portID);
     }
 #else 
     //Rag: netid and vlanid is same for all the args, so index zero is being used. 
@@ -197,10 +191,7 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
 		else
 		{
            	MNET_DEBUG("Delete Internal switch ports:%s\n" COMMA ifname)
-			sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", "delVlan",
-                   	args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
-
-           	system(cmdBuff);
+			delVlan(args[i].hints.network->inst, args[i].vidParams.vid, ifname);
 		}
 #else
 		sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
