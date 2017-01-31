@@ -143,6 +143,10 @@ handle_l2_status () {
             apply_config $1
             if [ 0 = $? ]; then
                 sysevent set ${SERVICE_NAME}_${1}-status $L3_UP_STATUS
+				if [ x4 = x$1 ]; then
+                    echo "IPv4 address is set for brlan0 MOCA interface is UP"
+                    print_uptime "boot_to_MOCA_uptime"
+                fi
             fi
         else
             #Otherwise, announce readiness for provisioning

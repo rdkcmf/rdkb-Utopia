@@ -441,6 +441,7 @@ dhcp_server_start ()
                     echo "gw_lan_refresh is called for the first time notify SSID broadcast"
                     rpcclient $ATOM_ARPING_IP "touch /tmp/broadcast_ssids"
                     touch /tmp/gw_lan_refresh
+                    print_uptime "boot_to_WIFI_uptime"
                 fi
               #	echo "lan_not_restart NOT found! Restart lan!"
 	      #fi
@@ -456,6 +457,16 @@ dhcp_server_start ()
        touch /tmp/dhcp_server_start
    fi
 
+   # This function is called for brlan0 and brlan1
+   # If l2sd0.101 is available then XHS service is available post all DHCP configuration   
+   isAvailableXHS=`ifconfig | grep l2sd0.101`
+   if [ "$isAvailableXHS" != "" ]; then
+       echo_t "Xfinityhome service is UP"
+       print_uptime "boot_to_XHOME_uptime"
+   else
+       echo "Xfinityhome service is not UP yet"
+   fi
+	
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
    sysevent set dns-status started
    sysevent set dhcp_server-status started
