@@ -293,11 +293,10 @@ LOCAL INT32 _handle_subscription_request(pal_upnp_subscription_request *sr_event
 	struct upnp_service *srv;
 	INT32 i=0;
 	INT32 eventVarNum = 0;
-	const CHAR **eventvar_names;
 	struct upnp_variable *var;
-	CHAR **eventvar_values;
 	INT32 ret;
 	INT32 result = -1;
+    pal_upnp_accept_subscription_request sub;
 
 	PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "upnp device udn: %s\n", sr_event->UDN);
 	PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "upnp service: %s\n", sr_event->ServiceId);
@@ -324,17 +323,17 @@ LOCAL INT32 _handle_subscription_request(pal_upnp_subscription_request *sr_event
 		eventVarNum++;
 		i++;
 	}
-	eventvar_names = malloc((eventVarNum+1) * sizeof(const CHAR *));
-	if(NULL == eventvar_names)
+	sub.var_names = malloc((eventVarNum+1) * sizeof(const CHAR *));
+	if(NULL == sub.var_names)
 	{
 		pthread_mutex_unlock(&(srv->service_mutex));
 		return result;
 	}
 	
-	eventvar_values = malloc((eventVarNum+1) * sizeof(const CHAR *));
-	if(NULL == eventvar_values)
+	sub.var_vals = malloc((eventVarNum+1) * sizeof(const CHAR *));
+	if(NULL == sub.var_vals)
 	{
-		free(eventvar_names);
+		free(sub.var_names);
 		pthread_mutex_unlock(&(srv->service_mutex));
 		return result;
 	}
@@ -343,19 +342,18 @@ LOCAL INT32 _handle_subscription_request(pal_upnp_subscription_request *sr_event
 
 	for(i=0; i<eventVarNum; i++) 
 	{
-		eventvar_names[i] = srv->event_variables[i].name;
-		eventvar_values[i] = PAL_xml_escape(srv->event_variables[i].value, 0);
-		PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "Evented:'%s' = '%s'\n", eventvar_names[i], eventvar_values[i]);
+		sub.var_names[i] = srv->event_variables[i].name;
+		sub.var_vals[i] = PAL_xml_escape(srv->event_variables[i].value, 0);
+		PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "Evented:'%s' = '%s'\n", sub.var_names[i], sub.var_vals[i]);
 	}
-	eventvar_names[i] = NULL;
-	eventvar_values[i] = NULL;
+        sub.var_names[i] = NULL;
+        sub.var_vals[i] = NULL;
+        sub.var_nb = eventVarNum;
+        sub.device_id = sr_event->UDN;
+        sub.service_id = sr_event->ServiceId;
+        memcpy(sub.sub_id,sr_event->Sid,PAL_UPNP_SID_SIZE);
 
-	ret = PAL_upnp_accept_subscription(device_handle,
-			       						sr_event->UDN, sr_event->ServiceId,
-			       						(const CHAR **)eventvar_names,
-			       						(const CHAR **)eventvar_values,
-			       						eventVarNum,
-			       						sr_event->Sid);
+	ret = PAL_upnp_accept_subscription(device_handle, &sub);
 	if (PAL_UPNP_E_SUCCESS == ret)
 	{
 		result = 0;
@@ -365,10 +363,10 @@ LOCAL INT32 _handle_subscription_request(pal_upnp_subscription_request *sr_event
 
 	for(i=0; i<eventVarNum; i++) 
 	{
-		free(eventvar_values[i]);
+		free(sub.var_vals[i]);
 	}
-	free(eventvar_names);
-	free(eventvar_values);
+	free(sub.var_names);
+	free(sub.var_vals);
 
 	return result;
 }

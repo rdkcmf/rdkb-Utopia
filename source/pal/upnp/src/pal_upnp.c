@@ -637,38 +637,22 @@ INT32 PAL_upnp_subscribe (IN pal_upnp_cp_handle handle,
  *
  *  Parameters:	
  *      handle: Input. The handle of the device.
- *      device_id: Input. The device ID of the subdevice of the 
- *		                   service generating the event
- *      service_id: Input.  The unique service identifier of the 
- *		                   service generating the event. 
- *		var_names: Input. Pointer to an array of event variables.
- *      var_vals: Input. Pointer to an array of values for 
- *		                 the event variables.
- *      var_nb: Input. The number of event variables in var_names.
- *      sub_id: Input.  The subscription ID of the newly 
- *		               registered control point.
+ *      sub: Input. The subscription request information.
  * 
  *  Description:
- *      This function accepts a subscription request and sends
- *	out the current state of the eventable variables for a service.  
- *	The device application should call this function when it receives a 
- *	UPNP_EVENT_SUBSCRIPTION_REQUEST callback. This function is sychronous
- *	and generates no callbacks.
+ *      This is synchronous function to accept a subscription request with
+ *      eventable variables for a service. To be called by device application
+ *	on receiving  UPNP_EVENT_SUBSCRIPTION_REQUEST callback.
  *
  *  Return Values: INT32
  *      0 if successful else error code. 
  ************************************************************/
 INT32 PAL_upnp_accept_subscription(IN pal_upnp_device_handle handle,
-                                 IN const CHAR *device_id,
-                                 IN const CHAR *service_id,
-                                 IN const CHAR **var_names,
-                                 IN const CHAR **var_vals,
-                                 IN INT32 var_nb,
-                                 IN pal_upnp_sid sub_id)
+                                 IN pal_upnp_accept_subscription_request *sub)
 {
     INT32 ret = 0;
 
-    ret = UpnpAcceptSubscription(handle, device_id, service_id, var_names, var_vals, var_nb, sub_id);
+    ret = UpnpAcceptSubscription(handle, sub->device_id, sub->service_id, sub->var_names, sub->var_vals, sub->var_nb, sub->sub_id);
     
     return ret;
 }
