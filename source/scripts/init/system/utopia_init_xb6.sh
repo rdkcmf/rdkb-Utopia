@@ -34,6 +34,18 @@
 #   This file contains the code to initialize the board
 #------------------------------------------------------------------
 
+changeFilePermissions() {
+
+	filepermission=$(stat -c %a $1)
+	
+	if [ $filepermission -eq 0 ] 
+	then
+		
+		chmod $2 $1
+		echo "[utopia][init] Modified File Permission to $2 for file - $1"
+	fi
+}
+
 echo "*******************************************************************"
 echo "*                                                                  "
 echo "* Copyright (c) 2010 by Cisco Systems, Inc. All Rights Reserved.   "
@@ -173,7 +185,7 @@ PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
-FACTORY_RESET_REASON=false  
+FACTORY_RESET_REASON=false
 
 #syscfg_check -d $MTD_DEVICE
 #if [ $? = 0 ]; then
@@ -196,9 +208,11 @@ FACTORY_RESET_REASON=false
 echo "[utopia][init] Starting syscfg using file store ($SYSCFG_FILE)"
 if [ -f $SYSCFG_FILE ]; then 
    syscfg_create -f $SYSCFG_FILE
+   changeFilePermissions $SYSCFG_FILE 666
 else
    echo -n > $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
+   changeFilePermissions $SYSCFG_FILE 666
    #>>zqiu
    echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
@@ -262,6 +276,7 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    #<<zqiu
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
    syscfg_create -f $SYSCFG_FILE
+   changeFilePermissions $SYSCFG_FILE 666
 #>>zqiu
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
