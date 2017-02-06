@@ -36,6 +36,7 @@ QTN_VLAN_BASE="2000"
 QTN_STATE="/var/run/.qtn_vlan_enabled"
 UNIQUE_ID=`ncpu_exec -ep "cat /sys/class/net/wan0/address"|egrep -e ".*:.*:.*:.*:.*:.*"|cut -d ":" -f 3-6`
 UNIQUE_ID=`echo "${UNIQUE_ID//:}"`
+WAN_MAC=`ncpu_exec -ep "cat /sys/class/net/wan0/address"`
 #GRE tunnel information
 DEFAULT_GRE_TUNNEL="gretap0"
 #Dummy MAC address to assign to GRE tunnels so we can add them to bridges
@@ -481,6 +482,15 @@ sync_group_settings() {
         #We need to destroy and re-create bridge
         $VLAN_UTIL del_group $BRIDGE_NAME
         $VLAN_UTIL add_group $BRIDGE_NAME $BRIDGE_VLAN
+        if [ $BRIDGE_NAME = "brlan0" ]; then
+          mac=$WAN_MAC
+          echo "############## CM  Mac Address is :$mac###############"          
+          last=`echo $mac | cut -f6 -d ':'`
+          last=`echo $(( 16#$last + 3 ))`          
+          newmac="${mac:0:15}`printf '%x\n' $last`"          	
+          ifconfig brlan0 hw ether $newmac up  
+          echo "################SETTING BRLAN0 mac to:$newmac###########"	
+        fi
     fi
 
     [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-status partial
