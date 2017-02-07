@@ -3,9 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "handle_sw.h"
 #include "swctl_hal.h"
 #include "service_multinet_base.h"
+#include "errno.h"
+
+#define MOCACTL "/usr/sbin/mocactl"
 
 int hdl_sw_sysevent_fd;
 token_t hdl_sw_sysevent_token;
@@ -71,6 +75,8 @@ void handle_moca(int vlan_id, int *tagged, int add)
 {
 	char l_cMoca_Tports[16] = {0}, l_cMoca_Utport[8] = {0}, l_cMoca_Tport[8] = {0};
 	int l_iMoca_UtPort = 100;
+	char l_cSystem_Cmd[128] = {0};
+
 	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_tports", l_cMoca_Tports, sizeof(l_cMoca_Tports));
 	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_utport", l_cMoca_Utport, sizeof(l_cMoca_Utport));
 	
