@@ -36,13 +36,17 @@
 
 changeFilePermissions() {
 
-	filepermission=$(stat -c %a $1)
+	if [ -e $1 ]; then 
+		filepermission=$(stat -c %a $1)
 	
-	if [ $filepermission -eq 0 ] 
-	then
+		if [ $filepermission -eq 0 ] 
+		then
 		
-		chmod $2 $1
-		echo "[utopia][init] Modified File Permission to $2 for file - $1"
+			chmod $2 $1
+			echo "[utopia][init] Modified File Permission to $2 for file - $1"
+		fi
+	else
+		echo "[utopia][init] changeFilePermissions: file $1 doesn't exist"
 	fi
 }
 
@@ -208,11 +212,9 @@ FACTORY_RESET_REASON=false
 echo "[utopia][init] Starting syscfg using file store ($SYSCFG_FILE)"
 if [ -f $SYSCFG_FILE ]; then 
    syscfg_create -f $SYSCFG_FILE
-   changeFilePermissions $SYSCFG_FILE 666
 else
    echo -n > $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
-   changeFilePermissions $SYSCFG_FILE 666
    #>>zqiu
    echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
@@ -276,7 +278,6 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    #<<zqiu
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
    syscfg_create -f $SYSCFG_FILE
-   changeFilePermissions $SYSCFG_FILE 666
 #>>zqiu
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
@@ -337,6 +338,9 @@ done
 
 echo "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
+
+#ARRISXB6-2998
+changeFilePermissions $SYSCFG_FILE 400
 
 echo "[utopia][init] Applying iptables settings"
 
