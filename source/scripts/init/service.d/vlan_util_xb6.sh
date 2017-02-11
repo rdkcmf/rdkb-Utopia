@@ -36,7 +36,7 @@ QTN_VLAN_BASE="2000"
 QTN_STATE="/var/run/.qtn_vlan_enabled"
 UNIQUE_ID=`ncpu_exec -ep "cat /sys/class/net/wan0/address"|egrep -e ".*:.*:.*:.*:.*:.*"|cut -d ":" -f 3-6`
 UNIQUE_ID=`echo "${UNIQUE_ID//:}"`
-WAN_MAC=`ncpu_exec -ep "cat /sys/class/net/wan0/address"`
+WAN_MAC=`arris_rpc_client arm nvm_get cm_mac`
 #GRE tunnel information
 DEFAULT_GRE_TUNNEL="gretap0"
 #Dummy MAC address to assign to GRE tunnels so we can add them to bridges
