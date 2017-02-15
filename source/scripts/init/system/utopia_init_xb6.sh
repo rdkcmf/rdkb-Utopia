@@ -39,7 +39,7 @@ changeFilePermissions() {
 	if [ -e $1 ]; then 
 		filepermission=$(stat -c %a $1)
 	
-		if [ $filepermission -eq 0 ] 
+		if [ $filepermission -ne $2 ] 
 		then
 		
 			chmod $2 $1

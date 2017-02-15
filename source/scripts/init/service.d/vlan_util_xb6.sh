@@ -572,7 +572,7 @@ echo $$ > ${LOCKFILE}
 #Temporary workaround: kill link monitor. No longer needed.
 #$KILLALL $QWCFG_TEST 2> /dev/null
 
-BRIDGE_MODE=`$SYSEVENT get bridge_mode`
+BRIDGE_MODE=`syscfg get bridge_mode`
 CMDIAG_IF=`syscfg get cmdiag_ifname`
 
 #Get event
