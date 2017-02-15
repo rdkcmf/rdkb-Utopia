@@ -73,20 +73,18 @@ wait_qtn(){
 }
 
 check_qtn_ready(){
-	local is_startprod_done iter
-	
-	iter=0
-	is_startprod_done=`$QWCFG_TEST get 0 start_prod_done | grep "value\[str\]"`
-	while [[ $is_startprod_done != *"1"* ]] ; do
-        	is_startprod_done=`$QWCFG_TEST get 0 start_prod_done | grep "value\[str\]"`
-		if [ $iter == 20 ]; then
-			echo "QTN driver is not ready yet..."
-			sleep $iter
-		else
-			sleep 1
-			iter=$((iter+1))
-		fi
-    	done
+        local is_startprod_done iter
+        qtn_ready_file=/tmp/.qtn_ready
+        iter=0
+        while [ ! -f "$qtn_ready_file" ] ; do
+                if [ $iter == 20 ]; then
+                        echo "QTN driver is not ready yet..."
+                        sleep $iter
+                else
+                        sleep 1
+                        iter=$((iter+1))
+                fi
+        done
 }
 
 #Generate and set a default SSID for wifi AP
