@@ -195,6 +195,10 @@ service_start ()
 	  echo "/usr/ccsp/tad/selfheal_cosa_start_rem.sh" >> /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 	  chmod 700 /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 
+	  # remove max cpu usage reached indication file once in 24 hours
+	  echo "#! /bin/sh" > /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
+	  echo "/usr/ccsp/tad/remove_max_cpu_usage_file.sh" >> /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
+	  chmod 700 /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
    fi
    
    # start the cron daemon
