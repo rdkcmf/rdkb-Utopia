@@ -9794,6 +9794,11 @@ v6GPFirewallRuleNext:
       // Logging and rejecting politely (rate limiting anyway)
       fprintf(fp, "-A INPUT -j LOG_INPUT_DROP \n");
 
+      //Adding rule for XB6 ARRISXB6-3348
+#if defined(INTEL_PUMA7)
+      fprintf(fp, "-A FORWARD -i brlan0 -o brlan0 -j lan2wan \n");
+#endif
+
       // Block the evil routing header type 0
       fprintf(fp, "-A FORWARD -m rt --rt-type 0 -j LOG_FORWARD_DROP \n");
 
