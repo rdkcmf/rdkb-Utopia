@@ -63,6 +63,8 @@ UPNP_TMP=/var/tmp/upnp.ttl
 PRIVATE_LAN_IF="brlan0"
 
 resync_upnp() {
+	sysevent set resync_upnp_process started
+
     local CURRENT_NETS="`sysevent get ${SERVICE_NAME}_current_nets`"
     local REM_NETS="${CURRENT_NETS}"
     local LOAD_NETS="`psmcli getallinst ${IPV4_NV_PREFIX}.`"
@@ -101,14 +103,20 @@ resync_upnp() {
 
 	if [ "$IFName" = "$PRIVATE_LAN_IF" ]
 	then
-    	    handle_ipv4_status ${i} `sysevent get ipv4_${i}-status`
+			curr_ipv4_proc_status=`sysevent get ipv4_status_process`
+			curr_resync_proc_status=`sysevent get resync_upnp_process`
+			if [ "$curr_ipv4_proc_status" = "" ] || [ "$curr_ipv4_proc_status" = "completed" ] || [ "$curr_resync_proc_status" = "completed" ]; then
+	    	    handle_ipv4_status ${i} `sysevent get ipv4_${i}-status`
+			fi
+			
 	    break
 	fi
         
     done
     
     sysevent set ${SERVICE_NAME}_current_nets "$LOAD_NETS"
-        
+
+    sysevent set resync_upnp_process completed    
 }
 
 handle_ipv4_status() {
@@ -179,7 +187,6 @@ init_once () {
 #    fi
 }
 
-
 #---------------------------------------------------------------
 
 service_init
@@ -214,7 +221,15 @@ case "$1" in
    ipv4_*-status)
         INST=${1%-*}
         INST=${INST#*_}
-        handle_ipv4_status $INST $2
+
+		curr_resync_proc_status=`sysevent get resync_upnp_process`
+		curr_ipv4_igd=`sysevent get ipv4_status_process`
+		if [ "$curr_resync_proc_status" = "" ] || [ "$curr_resync_proc_status" = "completed" ] || [ "$curr_ipv4_igd" = "completed" ]; then
+			sysevent set ipv4_status_process started	  
+	        handle_ipv4_status $INST $2
+			sysevent set ipv4_status_process completed	  
+		fi
+        
         ;;
   *)
       echo "Usage: $SELF_NAME [${SERVICE_NAME}-start|${SERVICE_NAME}-stop|${SERVICE_NAME}-restart|lan-status]" >&2
