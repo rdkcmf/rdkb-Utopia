@@ -9499,6 +9499,11 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, ":INPUT ACCEPT [0:0]\n");
    fprintf(fp, ":FORWARD ACCEPT [0:0]\n");
    fprintf(fp, ":OUTPUT ACCEPT [0:0]\n");
+   fprintf(fp, ":lan2wan - [0:0]\n");
+   fprintf(fp, ":lan2wan_pc_device - [0:0]\n");
+   fprintf(fp, ":lan2wan_pc_site - [0:0]\n");
+   fprintf(fp, ":lan2wan_pc_service - [0:0]\n");
+   fprintf(fp, ":wan2lan - [0:0]\n");
 
 #ifdef INTEL_PUMA7
    //Avoid blocking packets at the Intel NIL layer
@@ -9834,14 +9839,11 @@ v6GPFirewallRuleNext:
          fprintf(fp, "-A FORWARD -s %s -i %s -j LOG_FORWARD_DROP\n", prefix, wan6_ifname);
       }
 
-      fprintf(fp, ":lan2wan - [0:0]\n");
+
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, wan6_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, ecm_wan_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, emta_wan_ifname);
 
-      fprintf(fp, ":lan2wan_pc_device - [0:0]\n");
-      fprintf(fp, ":lan2wan_pc_site - [0:0]\n");
-      fprintf(fp, ":lan2wan_pc_service - [0:0]\n");
 
       fprintf(fp, "-A lan2wan -j lan2wan_pc_device\n");
       fprintf(fp, "-A lan2wan -j lan2wan_pc_site\n");
@@ -9902,7 +9904,7 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A FORWARD -p icmpv6 -m icmp6 --icmpv6-type 147 -m limit --limit 100/sec -j ACCEPT\n");
 
       // Traffic WAN to LAN
-      fprintf(fp, ":wan2lan - [0:0]\n");
+
       fprintf(fp, "-A wan2lan -m state --state INVALID -j LOG_FORWARD_DROP\n");
 
       fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, lan_ifname);
