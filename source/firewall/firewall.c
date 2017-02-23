@@ -9745,9 +9745,9 @@ static void do_ipv6_filter_table(FILE *fp){
       fprintf(fp, "-A INPUT ! -i %s -p udp --dport 161 -j ACCEPT\n", lan_ifname);
 #if defined(_COSA_BCM_ARM_)
 	  //SSH and HTTP port open for IPv6
-	  fprintf(fp, "-A INPUT 42 -p tcp -i privbr --dport 22 -j ACCEPT\n");
-	  fprintf(fp, "-A INPUT 43 -p tcp -i privbr --dport 80 -j ACCEPT\n");
-	  fprintf(fp, "-A INPUT 42 -p tcp -i privbr --dport 443 -j ACCEPT\n");
+	  fprintf(fp, "-I INPUT 42 -p tcp -i privbr --dport 22 -j ACCEPT\n");
+	  fprintf(fp, "-I INPUT 43 -p tcp -i privbr --dport 80 -j ACCEPT\n");
+	  fprintf(fp, "-I INPUT 42 -p tcp -i privbr --dport 443 -j ACCEPT\n");
 #endif
       // add user created rules from syscfg
       int  idx;
