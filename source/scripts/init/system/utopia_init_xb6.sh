@@ -340,7 +340,7 @@ echo "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
 
 #ARRISXB6-2998
-changeFilePermissions $SYSCFG_FILE 400
+changeFilePermissions $SYSCFG_FILE 644
 
 echo "[utopia][init] Applying iptables settings"
 
