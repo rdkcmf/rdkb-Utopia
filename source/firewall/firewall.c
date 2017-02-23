@@ -3855,26 +3855,26 @@ static int do_wan2self_attack(FILE *fp)
     * Log probable DoS attack
     */
    //Smurf attack, actually the below rules are to prevent us from being the middle-man host
-   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\"\n", logRateLimit);
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request -j xlog_drop_wanattack\n");
-   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\"\n", logRateLimit);
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request -j xlog_drop_wanattack\n");
 
    //ICMP Flooding. Mark traffic bit rate > 5/s as attack and limit 6 log entries per hour
    fprintf(fp, "-A wanattack -p icmp -m limit --limit 5/s --limit-burst 10 -j RETURN\n"); //stop traveling the rest of the wanattack chain
-   fprintf(fp, "-A wanattack -p icmp %s -j ULOG --ulog-prefix \"DoS Attack - ICMP Flooding\" --ulog-cprange 50\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p icmp %s -j LOG --log-prefix \"DoS Attack - ICMP Flooding\"\n", logRateLimit);
    fprintf(fp, "-A wanattack -p icmp -j xlog_drop_wanattack\n");
 
    //TCP SYN Flooding
    fprintf(fp, "-A wanattack -p tcp --syn -m limit --limit 10/s --limit-burst 20 -j RETURN\n");
-   fprintf(fp, "-A wanattack -p tcp --syn %s -j ULOG --ulog-prefix \"DoS Attack - TCP SYN Flooding\" --ulog-cprange 50\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p tcp --syn %s -j LOG --log-prefix \"DoS Attack - TCP SYN Flooding\"\n", logRateLimit);
    fprintf(fp, "-A wanattack -p tcp --syn -j xlog_drop_wanattack\n");
 
    //LAND Aattack - sending a spoofed TCP SYN pkt with the target host's IP address to an open port as both source and destination
    if(isWanReady) {
        /* Allow multicast packet through */
        fprintf(fp, "-A wanattack -p udp -s %s -d 224.0.0.0/8 -j RETURN\n", current_wan_ipaddr);
-       fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", current_wan_ipaddr, logRateLimit);
+       fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\"\n", current_wan_ipaddr, logRateLimit);
        fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", current_wan_ipaddr);
    }
 
@@ -5427,10 +5427,15 @@ InternetAccessPolicyNext3:
                else if (0 == strncmp(url, "https://", STRLEN_HTTPS_URL_PREFIX)) {
                   host_name_offset = STRLEN_HTTPS_URL_PREFIX;
                }
-
+#if defined(_PLATFORM_RASPBERRYPI_)
+               snprintf(str, sizeof(str), 
+                        "-A %s -p tcp -m tcp --dport 80 -d \"%s\" -j %s",
+                        rules_table, url + host_name_offset, block_site);
+#else
                snprintf(str, sizeof(str), 
                         "-A %s -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j %s",
                         rules_table, url + host_name_offset, block_site);
+#endif
                fprintf(fp, "%s\n", str);
 
                for(src_cnt; src_cnt <= srcNum; src_cnt++){
@@ -6727,8 +6732,13 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                 }
                 else
                 {
+#if defined(_PLATFORM_RASPBERRYPI_)
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
+#else
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
+#endif
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
                     if(iptype == 4)
                     {
