@@ -215,6 +215,7 @@ INT32 PAL_upnp_register_root_device(IN const CHAR *lo_path,
 {
     CHAR desc_doc_url[PAL_UPNP_DESC_URL_SIZE];
     CHAR *web_dir_path = NULL;
+    CHAR *upnp_server_ip = NULL;
     INT32 ret = 0;
 
 
@@ -226,7 +227,10 @@ INT32 PAL_upnp_register_root_device(IN const CHAR *lo_path,
     else
         web_dir_path = PAL_UPNP_DEFAULT_WEB_DIR;
 
-    snprintf(desc_doc_url, PAL_UPNP_DESC_URL_SIZE, "http://%s:%d/%s", UpnpGetServerIpAddress(),
+    if ( (upnp_server_ip = UpnpGetServerIpAddress()) == NULL )
+    	return -1;
+
+    snprintf(desc_doc_url, PAL_UPNP_DESC_URL_SIZE, "http://%s:%d/%s", upnp_server_ip,
              UpnpGetServerPort(), file_name);
 
     ret = UpnpSetWebServerRootDir( web_dir_path );
