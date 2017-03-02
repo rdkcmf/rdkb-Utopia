@@ -2816,6 +2816,26 @@ int Utopia_AddDynPortMapping (portMapDyn_t *pmap)
     return rc;
 }
 
+int Utopia_UpdateDynPortMapping_WithoutFirewallRestart (int index, portMapDyn_t *pmap)
+{
+
+
+    int count, rc;
+
+    ulog_pmap(__FUNCTION__, pmap);
+
+    count = s_get_portmapdyn_count();
+    if (index < 1 || index > count) {
+        return ERR_INVALID_ARGS;
+    }
+
+    if (UT_SUCCESS == (rc = s_add_portmapdyn(index, pmap))) {
+        return UT_SUCCESS;
+    }
+
+    return rc;
+}
+
 int Utopia_UpdateDynPortMapping (int index, portMapDyn_t *pmap)
 {
     int count, rc;

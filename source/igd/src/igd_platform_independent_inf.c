@@ -854,16 +854,26 @@ INT32 IGD_pii_add_portmapping_entry( IN INT32 WanDeviceIndex,
              * if for same internal client, update leasttime and return success
              */
             if (0 == strcmp(portmapEntry->internalClient, pmap.internal_host)) {
-                pmap.enabled = (boolean_t) portmapEntry->enabled;
+
                 if (portmapEntry->description != NULL) {
                     strncpy(pmap.name, portmapEntry->description, sizeof(pmap.name));
                 }
-                pmap.internal_port = portmapEntry->internalPort;
+		
                 pmap.lease = portmapEntry->leaseTime;
 
-                PAL_LOG("igd_platform", "debug", "%s: entry exists for same internal client, update entry (success)", __FUNCTION__);
+	        if (( portmapEntry->internalPort == pmap.internal_port ) && ( pmap.enabled == (boolean_t) portmapEntry->enabled ))
+	        {
+	            printf("Internal port is also same, no need to restart firewall\n");
+		    (void) Utopia_UpdateDynPortMapping_WithoutFirewallRestart(index, &pmap);
+	        } 
+	        else
+	        {
+	            printf("Internal port/ enabled status is different, update dyn port event. Need to restart firewall\n");
+	            pmap.enabled = (boolean_t) portmapEntry->enabled;
+                    pmap.internal_port = portmapEntry->internalPort;
+                    (void) Utopia_UpdateDynPortMapping(index, &pmap);
+		}
 
-                (void) Utopia_UpdateDynPortMapping(index, &pmap);
                 rc = 0;
             } else {
                 /*
