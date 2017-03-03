@@ -22,6 +22,7 @@ then
    atom_sync=`cat /etc/device.properties | grep ATOM_SYNC | cut -f2 -d=`
    UPLOAD_THRESHOLD=`cat /etc/device.properties | grep LOG_UPLOAD_THRESHOLD  | cut -f2 -d=`
    model=`cat /etc/device.properties | grep MODEL_NUM  | cut -f2 -d=`
+   BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
 fi
 
 if [ "$atom_sync" = "yes" ]
@@ -61,6 +62,10 @@ if [ "$model" == "TG3482" ];then
 		LOG_SYNC_BACK_UP_PATH="/nvram/logs/"
 		LOG_SYNC_BACK_UP_REBOOT_PATH="/nvram/logs/"
 	fi
+fi
+#TCCBBR product is a noMoca product. This nvram file shall be used by cosa_start_rem.sh .
+if [ "$BOX_TYPE" == "TCCBR" ];then
+	touch /nvram/disableCcspMoCA
 fi
 
 HAVECRASH="$LOG_FOLDER/processcrashed"
