@@ -6401,11 +6401,9 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 
         if (allow_all != block) continue;
 
-		 if (iptype == 4){
-	        int within_policy_start_stop = determine_enforcement_schedule2(cron_fp, namespace);
+	int within_policy_start_stop = determine_enforcement_schedule2(cron_fp, namespace);
 
-         	if (!within_policy_start_stop) continue;
-		 }
+        if (!within_policy_start_stop) continue;
 		 
 
          query[0] = '\0';
