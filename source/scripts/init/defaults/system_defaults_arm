@@ -1007,3 +1007,6 @@ $MinMemoryThreshold_Value=10
 $MoCA_previous_status=0
 $MoCA_current_status=0
 $unit_activated=1
+
+#Speedtest Enable
+$enable_speedtest=false
