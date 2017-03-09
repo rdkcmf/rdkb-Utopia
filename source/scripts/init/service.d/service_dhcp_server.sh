@@ -430,31 +430,25 @@ dhcp_server_start ()
    #USGv2: to refresh Ethernet ports/WiFI/MoCA
    PSM_MODE=`sysevent get system_psm_mode`
    if [ "$PSM_MODE" != "1" ]; then
-     if [ ! -f "/var/tmp/lan_not_restart" ] && [ "$1" != "lan_not_restart" ]; then
-        if [ x"ready" = x`sysevent get start-misc` ]; then
-	      #isAvailablebrlan1=`ifconfig | grep brlan1`
-	      #if [ "$isAvailablebrlan1" != "" ]
-              #then
-              	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh_from_dhcpscript:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
-              	gw_lan_refresh &
-                if [ ! -f "/tmp/gw_lan_refresh" ]; then
-                    print_uptime "boot_to_ETH_uptime"
-                    echo "gw_lan_refresh is called for the first time notify SSID broadcast"
-                    rpcclient $ATOM_ARPING_IP "touch /tmp/broadcast_ssids"
-                    touch /tmp/gw_lan_refresh
-                    print_uptime "boot_to_WIFI_uptime"
-                fi
-              #	echo "lan_not_restart NOT found! Restart lan!"
-	      #fi
-	    fi
-     else
-          rm -f /var/tmp/lan_not_restart
-          echo_t "lan_not_restart found! Don't restart lan!"
-     fi
+       if [ ! -f "/var/tmp/lan_not_restart" ] && [ "$1" != "lan_not_restart" ]; then
+           if [ x"ready" = x`sysevent get start-misc` ]; then
+               echo_t "RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh_from_dhcpscript:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
+               gw_lan_refresh &
+	       fi
+       else
+           rm -f /var/tmp/lan_not_restart
+           echo_t "lan_not_restart found! Don't restart lan!"
+       fi
    fi
 
    if [ ! -f "/tmp/dhcp_server_start" ]; then
-       echo_t "dhcp_server_start is called for the first time trigger cosa_start_rem.sh execution"
+       echo_t "dhcp_server_start is called for the first time private LAN initization is complete"
+       print_uptime "boot_to_ETH_uptime"
+
+       echo_t "LAN initization is complete notify SSID broadcast"
+       rpcclient $ATOM_ARPING_IP "touch /tmp/broadcast_ssids"
+       print_uptime "boot_to_WIFI_uptime"
+
        touch /tmp/dhcp_server_start
    fi
 
