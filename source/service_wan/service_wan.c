@@ -55,9 +55,13 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "sysevent/sysevent.h"
 #include "syscfg/syscfg.h"
 #include "util.h"
+#include "errno.h"
 
 #define PROG_NAME       "SERVICE-WAN"
 #if defined(_COSA_BCM_ARM_)
@@ -66,7 +70,8 @@
 	#define DHCPC_PID_FILE  "/var/run/eRT_ti_udhcpc.pid"
 #endif 
 
-#define DHCPV6_PID_FILE "/var/run/erouter_dhcp6c.pid"
+#define DHCPV6_PID_FILE 		"/var/run/erouter_dhcp6c.pid"
+#define DHCP6C_PROGRESS_FILE 	"/tmp/dhcpv6c_inprogress"
 
 //this value is from erouter0 dhcp client(5*127+10*4)
 #define SW_PROT_TIMO   675 
@@ -210,16 +215,35 @@ static int dhcp_start(struct serv_wan *sw)
     {   
         sysevent_get(sw->sefd, sw->setok, "dhcpv6c_enabled", l_cDhcpv6c_Enabled, sizeof(l_cDhcpv6c_Enabled));
         if ((!strncmp(l_cDhcpv6c_Enabled, "1", 1)) &&  
-            (1 == checkFileExists(DHCPV6_PID_FILE)))
+            (1 == checkFileExists(DHCPV6_PID_FILE)) &&
+   			(1 == checkFileExists(DHCP6C_PROGRESS_FILE)))
         {
-            fprintf(stderr, "DHCPv6 Client is already running not starting one more instance");
+            fprintf(stderr, "DHCPv6 Client is already running / going to start not starting one more instance\n");
         }
         else
         {
+			if(creat(DHCP6C_PROGRESS_FILE, S_IRUSR | S_IWUSR) == -1) 
+	        {   
+    	        fprintf(stderr, "File:%s creation failed with error:%d\n", errno, DHCP6C_PROGRESS_FILE);
+        	}   
+	        else
+    	    {   
+        	    fprintf(stderr, "File:%s created successfully\n", DHCP6C_PROGRESS_FILE);
+	        }
             fprintf(stderr, "%s: erouter Mode is:%d No instances of ti_dhcpc are running starting DHCPv6 client\n", 
                     __FUNCTION__, l_iErouter_Mode);
             err = vsystem("ti_dhcp6c -i %s -p %s -plugin /fss/gw/lib/libgw_dhcp6plg.so;sysevent set dhcpv6c_enabled 1",
                           l_cWan_if_name, DHCPV6_PID_FILE);
+
+    		if (0 == remove(DHCP6C_PROGRESS_FILE))
+		    {   
+        		fprintf(stderr, "remove of %s is successful\n", DHCP6C_PROGRESS_FILE);
+		    }   
+		    else
+		    {   
+		        fprintf(stderr, "remove of %s file is not successful error is:%d\n", 
+						DHCP6C_PROGRESS_FILE, errno);
+		    }
         }
     }
 #endif  

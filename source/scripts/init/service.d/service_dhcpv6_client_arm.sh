@@ -70,6 +70,7 @@ DHCPV6_CONF_FILE=/etc/dhcp6c.conf
 
 DHCPV6_PID_FILE=/var/run/erouter_dhcp6c.pid
 DHCPV6_REGISTER_FILE=/tmp/dhcpv6_registered_events
+DHCP6C_PROGRESS_FILE=/tmp/dhcpv6c_inprogress
 
 service_init ()
 {
@@ -116,8 +117,15 @@ service_start()
         service_stop
    elif [ ! -f $DHCPV6_PID_FILE ]
    then
-      mkdir -p /tmp/.dibbler-info
-      ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
+   		mkdir -p /tmp/.dibbler-info
+	  	if [ ! -f $DHCP6C_PROGRESS_FILE ]
+			touch $DHCP6C_PROGRESS_FILE
+			echo "Starting DHCPv6 Client from service_dhcpv6_client"
+        	ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
+			rm -f $DHCP6C_PROGRESS_FILE
+		else
+			echo "ti_dhcp6c process start in progress, not starting one more"
+		fi	
    fi
 }
 
@@ -191,7 +199,12 @@ service_disable ()
    sysevent set dhcpv6c_enabled 0
    unregister_dhcpv6_client_handler
    DHCPV6C_ENABLED=0
-
+   
+   if [ -f $DHCP6C_PROGRESS_FILE ]	
+       echo "Removing file:$DHCP6C_PROGRESS_FILE"
+	   rm -f $DHCP6C_PROGRESS_FILE	
+   fi
+			
    service_stop
 }
 
