@@ -70,7 +70,6 @@ DHCPV6_CONF_FILE=/etc/dhcp6c.conf
 
 DHCPV6_PID_FILE=/var/run/erouter_dhcp6c.pid
 DHCPV6_REGISTER_FILE=/tmp/dhcpv6_registered_events
-DHCPv6_CLIENT=ti_dhcp6c
 
 service_init ()
 {
@@ -118,22 +117,15 @@ service_start()
    elif [ ! -f $DHCPV6_PID_FILE ]
    then
       mkdir -p /tmp/.dibbler-info
-      pidof $DHCPv6_CLIENT > /dev/null
-      if [ $? -eq 0 ] ; then
-          echo "DHCPv6 Client instance is already running, not starting one more"
-      else
-          echo "No $DHCPv6_CLIENT instances running, starting DHCPv6 Client now"
-          $DHCPv6_CLIENT -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
-      fi
+      ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
    fi
 }
 
 service_stop()
 {
-   pidof $DHCPv6_CLIENT > /dev/null	
-   if [ -f $DHCPV6_PID_FILE ] || [ $? -eq 0 ]
+   if [ -f $DHCPV6_PID_FILE ]
    then
-      killall $DHCPv6_CLIENT
+      kill `cat $DHCPV6_PID_FILE`
       rm -f $DHCPV6_PID_FILE
    fi
 }
@@ -173,7 +165,6 @@ service_enable ()
    if [ "$DHCPV6C_ENABLED" = "1" ]
    then
       ulog dhcpv6c status "DHCPv6 Client is already enabled"
-
       if [ ! -f $DHCPV6_REGISTER_FILE ]; then
           echo "DHCPv6 Client is enabled but events are not registered, registering it now"
           register_dhcpv6_client_handler    
@@ -191,10 +182,9 @@ service_enable ()
 
 service_disable ()
 {
-   pidof $DHCPv6_CLIENT > /dev/null	
-   if [ ! "$DHCPV6C_ENABLED" = "1" ] && [ $? -eq 1 ]
+   if [ ! "$DHCPV6C_ENABLED" = "1" ]
    then
-      echo "DHCPv6 Client is not enabled and no $DHCPv6_CLIENT instances are running"
+      ulog dhcpv6c status "DHCPv6 Client is not enabled"
       return
    fi
 
