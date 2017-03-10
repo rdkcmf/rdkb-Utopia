@@ -121,6 +121,8 @@ service_start ()
       echo "* * * * *   /usr/ccsp/tad/rxtx_lan.sh" >> $CRONTAB_FILE
 
       echo "1 */6 * * *   /usr/ccsp/tad/monitor_zombies.sh" >> $CRONTAB_FILE
+#RDKB-9367, file handle monitor, needs to be run every 12 hours
+      echo "1 */12 * * *   /usr/ccsp/tad/FileHandle_Monitor.sh" >> $CRONTAB_FILE
 
       num1=$RANDOM
       num2=$RANDOM
