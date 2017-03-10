@@ -756,6 +756,20 @@ fi
 	  fi	      
    fi
 
+   #zqiu:mesh >>
+   meshEnabled=`syscfg get mesh_enable`
+   if [ "$meshEnabled" = "true" ]
+   then
+	echo "IOT_LOG : DHCP server configuring for Mesh"
+	echo "interface=l2sd0.112" >> $LOCAL_DHCP_CONF
+	echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+	echo "interface=l2sd0.113" >> $LOCAL_DHCP_CONF
+        echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+	echo "interface=l2sd0.4090" >> $LOCAL_DHCP_CONF
+	echo "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+   fi
+   #<<
+
    if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
    then
         # In factory default condition, prepare whitelisting and redirection IP
