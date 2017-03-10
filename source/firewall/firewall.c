@@ -629,6 +629,7 @@ static char guest_network_mask[20];
 #endif
 
 static int ppFlushNeeded = 0;
+static int isProdImage = 0;
 
 /*
  * For timed internet access rules we use cron 
@@ -1106,6 +1107,44 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
     return 0;
 }
 
+ /*
+  *  RDKB-7836	adding protocol verify the build prod or not.
+  *  Procedure	   : bIsProductionImage
+  *  Purpose	   : return True for production image.
+  *  Parameters    :
+  *  Return Values :
+  *  1             : 1 for prod images
+  *  2             : 0 for other images
+  */
+#define DEVICE_PROPERTIES    "/etc/device.properties"
+ static int bIsProductionImage( void)
+ {
+    char fileContent[255] = {'\0'};
+    FILE *deviceFilePtr;
+    char *pBldTypeStr = NULL;
+    int offsetValue = 0;
+    deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
+
+    if (deviceFilePtr) {
+        while ( fscanf(deviceFilePtr , "%s", fileContent) != EOF ) {
+            if ( (pBldTypeStr = strstr(fileContent, "BUILD_TYPE")) != NULL) {
+                offsetValue = strlen("BUILD_TYPE=");
+                pBldTypeStr = pBldTypeStr + offsetValue ;
+                break;
+            }
+        }
+        fclose(deviceFilePtr);
+        if(pBldTypeStr)
+        {
+            if(0 == strncmp(pBldTypeStr,"prod",5))
+            {
+                return 1;
+            }
+        }
+    }
+    return 0;
+ }
+
 /*
  *  Procedure     : prepare_globals_from_configuration
  *  Purpose       : use syscfg and sysevent to prepare information such as
@@ -1134,7 +1173,8 @@ static int prepare_globals_from_configuration(void)
    lan0_ipaddr[0] = '\0';
    sysevent_get(sysevent_fd, sysevent_token, "lan0_ipaddr", lan0_ipaddr, sizeof(lan0_ipaddr));
 #endif
-    
+   
+   isProdImage = bIsProductionImage(); 
    sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
    if ('\0' == current_wan_ifname[0]) {
@@ -4061,43 +4101,41 @@ static int remote_access_set_proto(FILE *filt_fp, FILE *nat_fp, const char *port
     return 0;
 }
 
- /*
-  *  RDKB-7836	adding protocol verify the build prod or not.
-  *  Procedure	   : bIsProductionImage
-  *  Purpose	   : return True for production image.
-  *  Parameters    :
-  *  Return Values :
-  *  1             : 1 for prod images
-  *  2             : 0 for other images
-  */
-#define DEVICE_PROPERTIES    "/etc/device.properties"
- static int bIsProductionImage( void)
- {
+
+static void whiteListArmAtomIP(FILE *filt_fp, const char *port, const char *interface)
+{
     char fileContent[255] = {'\0'};
     FILE *deviceFilePtr;
-    char *pBldTypeStr = NULL;
+    char *pInterfaceIPStr = NULL;
     int offsetValue = 0;
+    FIREWALL_DEBUG("Entering whiteListArmAtomIP\n");
+
+    if ( NULL == filt_fp || NULL == port || NULL == interface ) {
+        FIREWALL_DEBUG("Either of the input args are NULL ! ARM-ATOM IP not in whitelist.\n");
+        return;
+    }
     deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
 
     if (deviceFilePtr) {
         while ( fscanf(deviceFilePtr , "%s", fileContent) != EOF ) {
-            if ( (pBldTypeStr = strstr(fileContent, "BUILD_TYPE")) != NULL) {
-                offsetValue = strlen("BUILD_TYPE=");
-                pBldTypeStr = pBldTypeStr + offsetValue ;
-                break;
+            if ( ((pInterfaceIPStr = strstr(fileContent, "ATOM_INTERFACE_IP")) != NULL) ) {
+                offsetValue = strlen("ATOM_INTERFACE_IP=");
+            } else if ((pInterfaceIPStr = strstr(fileContent, "ARM_INTERFACE_IP")) != NULL){
+                offsetValue = strlen("ARM_INTERFACE_IP=");
+            } else {
+                continue ;
             }
+            pInterfaceIPStr = pInterfaceIPStr + offsetValue ;
+            if ( NULL != pInterfaceIPStr )
+                fprintf(filt_fp, "-A INPUT -i %s -s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, pInterfaceIPStr, port);
+
         }
         fclose(deviceFilePtr);
-        if(pBldTypeStr)
-        {
-            if(0 == strncmp(pBldTypeStr,"prod",5))
-            {
-                return 1;
-            }
-        }
     }
-    return 0;
- }
+    FIREWALL_DEBUG("Exiting whiteListArmAtomIP\n");
+    return ;
+}
+
 
 
  /*
@@ -4134,29 +4172,68 @@ static int remote_access_set_proto(FILE *filt_fp, FILE *nat_fp, const char *port
  */
 #define SSH_ACCESS_IP_LIST  "/etc/dropbear/prodMgmtIps.cfg"
 #define MAX_IPV6_STR_LEN    40
- static void do_ssh_IpAccessTable(FILE *filt_fp, FILE *pSshMgmt_fp, const char *port, int family, const char *interface)
+
+static void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, const char *interface)
  {
     int ret=0;
     char string[MAX_QUERY]={0};
+    FILE* pSshMgmt_fp = NULL ;
     char *strp=NULL;
     int stringLen = 0;
+    int enableFlag = 0;
 
     FIREWALL_DEBUG("Entering do_ssh_IpAccessTable\n");
-    if(family == AF_INET6) {
+    if ( family == AF_INET ) {
+        whiteListArmAtomIP(filt_fp, port, interface);
+    }
 
-        if(pSshMgmt_fp != NULL) {
-            while (NULL != (strp = fgets(string, MAX_QUERY, pSshMgmt_fp)) ) {
-                stringLen = strnlen(string, MAX_IPV6_STR_LEN) - 1;/*To remove new line*/
-                if (*string && string[stringLen] == '\n') {
-                     string[stringLen] = '\0';
-                }
-                fprintf(filt_fp, "-A INPUT -i %s -s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, string, port);
+    pSshMgmt_fp = fopen(SSH_ACCESS_IP_LIST, "r");
+    if(pSshMgmt_fp != NULL) {
+        while (NULL != (strp = fgets(string, MAX_QUERY, pSshMgmt_fp)) ) {
+            stringLen = strnlen(string, MAX_IPV6_STR_LEN) - 1;/*To remove new line*/
+            if (*string && string[stringLen] == '\n') {
+                 string[stringLen] = '\0';
+            }
+            /* Ignore Comments From Config File - line starting with # */
+            if (string[0] == '#' )
+                continue ;
+
+            // Loop until config under appropriate header is found
+            if(family == AF_INET6) {
+               // Skip All V4 Config
+               if ( NULL != strstr(string, "[PROD_JUMP_IPv6_LIST]") ) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            } else if ( family == AF_INET ) {
+               // Skip All V6 Config
+               if ( NULL != strstr(string, "[PROD_JUMP_IPv4_LIST]") ) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            }
+            if ( NULL != strstr(string, "[PROD_JUMP_IPv4_LIST]")
+                 || NULL != strstr(string, "[PROD_JUMP_IPv6_LIST]") ) {
+                if ( enableFlag == 1 )
+                    break ;
+                else
+                    continue ;
+            }
+            if ( enableFlag == 1) {
+                fprintf(filt_fp, "-A SSH_FILTER -s %s -j ACCEPT\n", string);
             }
         }
-
     }
-     FIREWALL_DEBUG("Exiting do_ssh_IpAccessTable\n");
+    fprintf(filt_fp, "-A SSH_FILTER -j DROP\n");
+
+    if(pSshMgmt_fp != NULL) {
+        fclose(pSshMgmt_fp);
+    }
+    FIREWALL_DEBUG("Exiting do_ssh_IpAccessTable\n");
+    return ;
+
  }
+
 
 #define IPRANGE_UTKEY_PREFIX "mgmt_wan_iprange_"
 static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
@@ -4176,7 +4253,6 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     unsigned char srcany = 0, validEntry = 0, noIPv6Entry = 0;
     char cm_ip_webaccess[2];
     char rg_ip_webaccess[2];
-    FILE *pSshMgmt_fp = NULL;
          FIREWALL_DEBUG("Entering do_remote_access_control\n");    
     httpport[0] = '\0';
     httpsport[0] = '\0';
@@ -4396,31 +4472,12 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    rc |= syscfg_get(NULL, "mgmt_wan_sshport", port, sizeof(port));
    if (rc == 0 && atoi(query) == 1) {
 
-       if(bIsProductionImage()) {
-           pSshMgmt_fp = fopen(SSH_ACCESS_IP_LIST, "r");
-           if(pSshMgmt_fp == NULL) { /*ssh Management file not present drop all ssh packets on wan for production image*/
-               fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport %s -j DROP\n", ecm_wan_ifname, port);
-           } else {
+       if(validEntry)
+           remote_access_set_proto(filter_fp, nat_fp, port, srcaddr, family, ecm_wan_ifname);
 
-               /*Production image allow ssh acces only to the list */
-               do_ssh_IpAccessTable(filter_fp, pSshMgmt_fp, port,family, ecm_wan_ifname);
-
-               if(validEntry)
-                   remote_ssh_access_set_proto_prodImg(filter_fp, port, srcaddr, family, ecm_wan_ifname);
-
-               for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
-                   remote_ssh_access_set_proto_prodImg(filter_fp, port, iprangeAddr[i], family, ecm_wan_ifname);
-
-               fclose(pSshMgmt_fp);
-           }
-
-       } else { /* Development image allow access to ssh as in legacy*/
-           if(validEntry)
-               remote_access_set_proto(filter_fp, nat_fp, port, srcaddr, family, ecm_wan_ifname);
-
-           for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
-               remote_access_set_proto(filter_fp, nat_fp, port, iprangeAddr[i], family, ecm_wan_ifname);
-      }
+       for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
+           remote_access_set_proto(filter_fp, nat_fp, port, iprangeAddr[i], family, ecm_wan_ifname);
+      
    }
 
    /* eCM Telnet access */
@@ -8377,6 +8434,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":xlog_drop_lanattack - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogdrop - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogreject - [0:0]");
+   if(isProdImage) {
+       fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
+       fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   }
    // Allow local loopback traffic 
    fprintf(filter_fp, "-A INPUT -i lo -s 127.0.0.0/8 -j ACCEPT\n");
    if (isWanReady) {
@@ -8451,6 +8512,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       fprintf(filter_fp, "-A INPUT -i %s -p udp --dport 443 -j DROP\n", emta_wan_ifname);
 
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", emta_wan_ifname);
+   }
+
+   if(isProdImage) {
+       do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
    }
 #if defined (INTEL_PUMA7) 
 
@@ -9083,6 +9148,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
        do_remote_access_control(NULL, filter_fp, AF_INET);
    }
 
+
    if(!isBridgeMode) //brlan0 exists
        fprintf(filter_fp, "-A INPUT -i %s -j lan2self_mgmt\n", lan_ifname);
 
@@ -9561,6 +9627,10 @@ static void do_ipv6_filter_table(FILE *fp){
 
    fprintf(fp, "%s\n", ":LOG_INPUT_DROP - [0:0]");
    fprintf(fp, "%s\n", ":LOG_FORWARD_DROP - [0:0]");
+   if(isProdImage) {
+       fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
+       fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   }
   
    fprintf(fp, "-A LOG_INPUT_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 INPUT drop\"\n",syslog_level);
    fprintf(fp, "-A LOG_FORWARD_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 FORWARD drop\"\n",syslog_level);
@@ -9721,7 +9791,9 @@ static void do_ipv6_filter_table(FILE *fp){
       //   fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport %s --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", wan6_ifname,port);
 
       do_remote_access_control(NULL, fp, AF_INET6);
-
+      if(isProdImage) {
+          do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
+      }
       // Development override
       if (isDevelopmentOverride) {
         fprintf(fp, "-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT\n");
