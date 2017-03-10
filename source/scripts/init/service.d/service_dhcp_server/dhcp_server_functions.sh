@@ -736,7 +736,10 @@ fi
    isBrlan1=`ifconfig | grep brlan1`
    if [ "$isBrlan1" != "" ]
    then
+      echo_t "DHCP_SERVER : brlan1 availble, creating dnsmasq entry "
       do_extra_pools
+   else
+       echo_t "DHCP_SERVER : brlan1 not available, cannot enter details in dnsmasq.conf"
    fi
 
    iotEnabled=`syscfg get lost_and_found_enable`
@@ -787,6 +790,10 @@ fi
 
 do_extra_pools () {
     POOLS="`sysevent get ${SERVICE_NAME}_current_pools`"
+    if [ x$POOLS = x ]; then
+        echo_t "DHCP_SERVER : dhcp_server pools not availble"
+    fi
+
     #DEBUG
     # echo "Extra pools: $POOLS"
     
@@ -794,23 +801,41 @@ do_extra_pools () {
         #DNS_S1 ${DHCPS_POOL_NVPREFIX}.${i}.${DNS_S1_DM} DNS_S2 ${DHCPS_POOL_NVPREFIX}.${i}.${DNS_S2_DM} DNS_S3 ${DHCPS_POOL_NVPREFIX}.${i}.${DNS_S3_DM}
         ENABLED=`sysevent get ${SERVICE_NAME}_${i}_enabled`
         if [ x"TRUE" != x$ENABLED ]; then
+            echo_t "DHCP_SERVER : ${SERVICE_NAME}_${i} is not enabled"
             continue;
         fi
         
         IPV4_INST=`sysevent get ${SERVICE_NAME}_${i}_ipv4inst`
         if [ x$L3_UP_STATUS != x`sysevent get ipv4_${IPV4_INST}-status` ]; then
+            echo_t "DHCP_SERVER : L3 is not up"
             continue
         fi
         
         m_DHCP_START_ADDR=`sysevent get ${SERVICE_NAME}_${i}_startaddr`
+        if [ x$m_DHCP_START_ADDR = x ]; then
+            echo_t "DHCP_SERVER : Start address for pool $i not availble"
+        fi
+
         m_DHCP_END_ADDR=`sysevent get ${SERVICE_NAME}_${i}_endaddr`
-        
+        if [ x$m_DHCP_END_ADDR = x ]; then
+            echo_t "DHCP_SERVER : End address for pool $i not availble"
+        fi
+
         m_LAN_SUBNET=`sysevent get ${SERVICE_NAME}_${i}_subnet`
+        if [ x$m_LAN_SUBNET = x ]; then
+            echo_t "DHCP_SERVER : Subnet not available for pool $i"
+        fi
+
         m_DHCP_LEASE_TIME=`sysevent get ${SERVICE_NAME}_${i}_leasetime`
+        if [ x$m_DHCP_LEASE_TIME = x ]; then
+            echo_t "DHCP_SERVER : Leasetime not available for pool $i"
+        fi
+
         IFNAME=`sysevent get ipv4_${IPV4_INST}-ifname`
         
         echo "${PREFIX}""interface="${IFNAME} >> $LOCAL_DHCP_CONF
         echo "${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}" >> $LOCAL_DHCP_CONF
+	echo_t "DHCP_SERVER : [BRLAN1] ${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}"
     done
 }
 
