@@ -267,7 +267,15 @@ calculate_dhcp_range () {
    # If both Ips are valid, we should be able to proceed
    if [ "$isEndIpValid" -eq "1" ] && [ "$isStartIpValid" -eq "1" ]
    then
-       allIpsValid=1
+       start_subnet=`echo $DHCP_START | cut -d"." -f1-3`
+       end_subnet=`echo $ENDING_ADDRESS | cut -d"." -f1-3`
+       if [ "$start_subnet" = "$end_subnet" ]
+       then
+          allIpsValid=1
+       else
+          echo "DHCP SERVER: Start address subnet $start_subnet and End address subnet $end_subnet are different."
+          allIpsValid=0
+       fi
    fi
 
    # full ip address format is valid
@@ -284,7 +292,7 @@ calculate_dhcp_range () {
           echo "DHCP_SERVER: One or more of IPs are invalid"
           DHCP_START=2
       fi
-      echo "DHCP_SERVER: Start address was corrupted. New value: $DHCP_START"
+      echo "DHCP_SERVER:New value of start address: $DHCP_START"
       DHCP_END=`expr $DHCP_START + $DHCP_NUM`
       DHCP_END=`expr $DHCP_END - 1`
 
