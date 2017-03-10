@@ -55,7 +55,10 @@
 #include "util.h"
 
 #define PROG_NAME       "SERVICE-ROUTED"
-
+#ifdef _CBR_PRODUCT_REQ_
+// undefining Prefix delegation flag
+#undef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+#endif
 
 #define ZEBRA_PID_FILE  "/var/zebra.pid"
 #define RIPD_PID_FILE   "/var/ripd.pid"
