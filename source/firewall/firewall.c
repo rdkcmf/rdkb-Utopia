@@ -6415,7 +6415,15 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          }
          else
          {
+            char buf[100];
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
+            if(cron_fp)
+            {
+               system("touch /tmp/conn_mac");
+               snprintf(buf, sizeof(buf), "echo %s >> /tmp/conn_mac", query);
+               system(buf);
+	       system("cat /tmp/conn_mac");
+            }
          }
       }
 
@@ -10144,7 +10152,113 @@ static service_ev_t get_service_event (const char *ev)
 	FIREWALL_DEBUG("Exiting service_ev_t get_service_event\n");
     return SERVICE_EV_UNKNOWN;
 }
-
+static BOOL isIPv6Addr(const char* ipAddr)
+{
+    if(strchr(ipAddr, ':') != NULL)
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+void RmConntrackEntry(char *IPaddr)
+{
+    char cmd[200] = {0};
+    memset(cmd,0,sizeof(cmd));
+    if(isIPv6Addr(IPaddr))
+    {
+        snprintf(cmd, sizeof(cmd), "conntrack -D -f ipv6 %s", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "ip6tables -I FORWARD -s %s -j DROP", IPaddr);
+        system(cmd);
+    }
+    else
+    {
+        snprintf(cmd, sizeof(cmd), "conntrack -D --orig-src %s", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "iptables -I FORWARD -s %s -j DROP", IPaddr);
+        system(cmd);
+    }
+}
+int CleanIPConntrack(char *physAddress)
+{
+    FILE *fp = NULL;
+    char buf[200] = {0};
+    char output[50] = {0};
+    memset(buf,0,200);
+    memset(output,0,50);
+    snprintf(buf, sizeof(buf), "ip nei show | grep brlan0 | grep -i %s | awk '{print $1}' ", physAddress);
+    system(buf);
+      if(!(fp = popen(buf, "r")))
+        {
+            return -1;
+        }
+    while(fgets(output, sizeof(output), fp)!=NULL)
+    {
+        output[strlen(output) - 1] = '\0';
+    	if(strstr(output,"fe80:"))
+		{
+	
+		}
+    	else
+   		 RmConntrackEntry(output);
+    }
+    pclose(fp);
+    return 0;
+}
+int IsFileExists(const char *fname)
+{
+    FILE *file;
+    if (file = fopen(fname, "r"))
+    {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
+BOOL validate_mac(char * physAddress)
+{
+	if(physAddress[2] == ':')
+		if(physAddress[5] == ':')
+			if(physAddress[8] == ':')
+				if(physAddress[11] == ':')
+					if(physAddress[14] == ':')
+						return TRUE;
+					
+					
+	return FALSE;
+}
+void ClearEstbConnection()
+{
+char mac[20];
+char buf[200] = {0};
+FILE *fp = NULL;
+memset(mac,0,20);
+memset(buf,0,200);
+    if(IsFileExists("/tmp/conn_mac"))
+    {
+      snprintf(buf, sizeof(buf), "cat /tmp/conn_mac|awk '{print $1}'");
+      system(buf);
+      if(!(fp = popen(buf, "r")))
+        {
+            return -1;
+        }
+		while(fgets(mac, sizeof(mac), fp)!=NULL)
+		{
+			mac[strlen(mac) - 1] = '\0';
+                  if(validate_mac(mac))
+                  {
+                        CleanIPConntrack(mac);
+                  }
+		}
+		  pclose(fp);
+		  system("rm /tmp/conn_mac");  
+    }
+}
 /*
  * Name           :  service_init
  * Purpose        :  Initialize resources & retrieve configurations
@@ -10315,6 +10429,7 @@ static int service_start ()
    /* ipv6 */
    prepare_ipv6_firewall(filename2);
    system("ip6tables-restore < /tmp/.ipt_v6");
+   ClearEstbConnection();
    /* start the other process as needed */
 #ifdef CONFIG_BUILD_TRIGGER
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
