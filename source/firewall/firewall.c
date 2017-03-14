@@ -7252,6 +7252,9 @@ static int do_lan2wan_misc(FILE *filter_fp)
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 1723 -j RETURN\n"); // VPN
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 3689 -j RETURN\n"); // ITUNES
       fprintf(filter_fp, "-A lan2wan_misc -m state --state RELATED,ESTABLISHED -j RETURN\n");
+      if (isDmzEnabled) {
+         fprintf(filter_fp, "-A lan2wan_misc -j lan2wan_dmz_accept\n");
+      }
       fprintf(filter_fp, "-A lan2wan_misc -j DROP\n");
    }
    FIREWALL_DEBUG("Exiting do_lan2wan_misc\n");
