@@ -7912,11 +7912,11 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     
     //zqiu: Mesh >>
 #if defined(ENABLE_FEATURE_MESHWIFI)
-    fprintf(filter_fp, "-A INPUT -i 169.254.0.0/24 -d l2sd0.112 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i l2sd0.112 -d 169.254.0.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.112 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
-    fprintf(filter_fp, "-A INPUT -i 169.254.1.0/24 -d l2sd0.113 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i l2sd0.113 -d 169.254.1.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.113 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
-    fprintf(filter_fp, "-A INPUT -i 192.168.251.0/24 -d l2sd0.4090 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -d 192.168.251.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #endif
     //<<
