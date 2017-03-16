@@ -119,6 +119,7 @@ service_start()
    then
    		mkdir -p /tmp/.dibbler-info
 	  	if [ ! -f $DHCP6C_PROGRESS_FILE ]
+		then
 			touch $DHCP6C_PROGRESS_FILE
 			echo "Starting DHCPv6 Client from service_dhcpv6_client"
         	ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
@@ -201,6 +202,7 @@ service_disable ()
    DHCPV6C_ENABLED=0
    
    if [ -f $DHCP6C_PROGRESS_FILE ]	
+   then	
        echo "Removing file:$DHCP6C_PROGRESS_FILE"
 	   rm -f $DHCP6C_PROGRESS_FILE	
    fi
