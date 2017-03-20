@@ -76,14 +76,21 @@ check_qtn_ready(){
         local is_startprod_done iter
         qtn_ready_file=/tmp/.qtn_ready
         iter=0
+		breakCounter=0
         while [ ! -f "$qtn_ready_file" ] ; do
                 if [ $iter == 20 ]; then
                         echo "QTN driver is not ready yet..."
                         sleep $iter
+						breakCounter=$((breakCounter+1))
                 else
                         sleep 1
                         iter=$((iter+1))
                 fi
+				
+		if [ $breakCounter -eq 12 ]; then
+			echo "`date`: QTN driver still not ready after 4 minutes breaking out"
+			break
+		fi
         done
 }
 
