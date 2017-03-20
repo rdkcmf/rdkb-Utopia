@@ -6473,7 +6473,18 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          else
          {
             char buf[100];
-            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
+//Managed Devices - Reports not get generated. so we need to log below rules 
+#if 0
+			fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
+#else
+			char drop_log[40] = { 0 };
+			snprintf(drop_log, sizeof(drop_log), "LOG_DeviceBlocked_%d_DROP", idx);
+			fprintf(fp, ":%s - [0:0]\n", drop_log);
+			fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
+			fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
+
+            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j %s\n",query,drop_log);            
+#endif /* 0 */
             if(cron_fp)
             {
                system("touch /tmp/conn_mac");
@@ -6484,8 +6495,20 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          }
       }
 
-      if (!allow_all) {
-        fprintf(fp, "-A prerouting_devices -p tcp -j prerouting_redirect\n");
+      if (!allow_all) 
+	  {
+// Managed Devices - Reports not get generated. so we need to log below rules 
+#if 0
+		fprintf(fp, "-A prerouting_devices -p tcp -j prerouting_redirect\n");
+#else
+		char drop_log[40] = { 0 };
+		snprintf(drop_log, sizeof(drop_log), "LOG_DeviceBlocked_DROP");
+		fprintf(fp, ":%s - [0:0]\n", drop_log);
+		fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
+		fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
+
+        fprintf(fp, "-A prerouting_devices -p tcp -j %s\n",drop_log);        
+#endif /* 0 */
       }
    }
    FIREWALL_DEBUG("Exiting do_parcon_mgmt_device\n"); 

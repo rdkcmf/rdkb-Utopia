@@ -62,7 +62,7 @@
 #define TEMP_FILE   "/tmp/.ipt_rule"
 #define TEMP_LOG_LIST "/tmp/.log_list"
 #define IPT_COUNT_CMD "iptables -L -n -v "
-#define IPT_NAT_COUNT_CMD "iptables -t nat -L parcon_walled_garden -n -v "
+#define IPT_NAT_COUNT_CMD "iptables -t nat -L -n -v "
 #define IP6T_COUNT_CMD "ip6tables -L -n -v "
 //#define FIREWALL_LOG_DIR "/nvram/log/firewall"
 char FIREWALL_LOG_DIR[50];
