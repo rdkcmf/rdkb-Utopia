@@ -206,6 +206,7 @@ case "$1" in
                 sysevent set lan-status started
 		echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART"
                 sysevent set firewall-restart
+                
             fi
 
             #sysevent set desired_moca_link_state up
@@ -243,6 +244,7 @@ case "$1" in
         fi
         echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
         sysevent set firewall-restart 
+        echo_t "EROUTER_LAN_INIT_END"
    ;;
    
    ipv4-resync)
@@ -260,6 +262,7 @@ case "$1" in
    ;;
    
    pnm-status | bring-lan)
+   	echo_t "EROUTER_LAN_INIT_START"
         if [ x = x"`sysevent get lan_handler_async`" ]; then
         eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
 	if [ "$INST" = "" ]
