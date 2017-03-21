@@ -10257,6 +10257,21 @@ void RmConntrackEntry(char *IPaddr)
         memset(cmd,0,sizeof(cmd));
         snprintf(cmd, sizeof(cmd), "iptables -I FORWARD -s %s -j DROP", IPaddr);
         system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "iptables -I FORWARD -s %s -m state --state ESTABLISHED -j DROP", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "iptables -I FORWARD -s %s -m udp -p udp -j DROP", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "iptables -I FORWARD -s %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "iptables -I FORWARD -d %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "iptables -I FORWARD -s %s -m tcp -p tcp -m state --state NEW -j ACCEPT", IPaddr);
+        system(cmd);
     }
 }
 int CleanIPConntrack(char *physAddress)
