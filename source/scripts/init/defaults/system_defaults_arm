@@ -929,6 +929,9 @@ $X_RDKCENTRAL-COM_NotifyComp_LoggerEnable=1
 $X_RDKCENTRAL-COM_Wecb_LoggerEnable=1
 $X_RDKCENTRAL-COM_PowerMgr_LoggerEnable=1
 
+# RDK Xi5 MoCA Enable
+$X_RDKCENTRAL-COM_EnableMoCAforXi5=false
+
 # RDK Log related data
 $reboot_count=0
 $latest_reboot_time=
