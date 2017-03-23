@@ -63,6 +63,8 @@ else
     debug_build=0
 fi
 
+firmware_name=`cat /version.txt | grep ^imagename= | cut -d "=" -f 2`
+echo_t "[utopia][init] DEVICE_INIT:$firmware_name"
 
 echo "[utopia][init] Tweaking network parameters" > /dev/console
 echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
