@@ -44,7 +44,10 @@ echo "*                                                                  "
 echo "*******************************************************************"
 
 source $UTOPIA_PATH/log_capture_path.sh
-
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
 dmesg -n 5
 
 TR69TLVFILE="/nvram/TLVData.bin"
@@ -63,8 +66,16 @@ else
     debug_build=0
 fi
 
-firmware_name=`cat /version.txt | grep ^imagename= | cut -d "=" -f 2`
-echo_t "[utopia][init] DEVICE_INIT:$firmware_name"
+if [ $BOX_TYPE == "XB3" ];then
+	if [ $MFG_NAME == "Arris" ]; then
+	       firmware_name=`cat /version.txt | grep ^imagename= | cut -d "=" -f 2`
+ 	else
+       		firmware_name=`cat /version.txt | grep ^imagename: | cut -d ":" -f 2`
+ 	fi
+else
+	firmware_name=`cat /version.txt | grep ^imagename= | cut -d "=" -f 2`
+fi
+echo_t "DEVICE_INIT:$firmware_name"
 
 
 echo "*******************************************************************"
