@@ -756,13 +756,13 @@ fi
 		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,infinite" >> $LOCAL_DHCP_CONF
 	  else
 		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
-	  fi	      
+	  fi
    fi
 
    #zqiu:mesh >>
-   meshEnabled=`syscfg get mesh_enable`
-   if [ "$meshEnabled" = "true" ]
-   then
+   #meshEnabled=`syscfg get mesh_enable`
+   #if [ "$meshEnabled" = "true" ]
+   #then
 	echo "IOT_LOG : DHCP server configuring for Mesh"
 	echo "interface=l2sd0.112" >> $LOCAL_DHCP_CONF
 	echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
@@ -770,7 +770,7 @@ fi
         echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
 	echo "interface=l2sd0.4090" >> $LOCAL_DHCP_CONF
 	echo "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
-   fi
+   #fi
    #<<
 
    if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
