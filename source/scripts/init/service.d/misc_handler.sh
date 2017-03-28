@@ -81,5 +81,21 @@ then
 
     rm /etc/cron/cron.everyminute/misc_handler.sh
 else
+    RG_MD=`syscfg get last_erouter_mode`
+    MLD_PID=`pidof mldproxy`
+    IGMP_PID=`pidof igmpproxy`
+
+    if [ "$IGMP_PID" = "" ]; then
+      if [ "$RG_MD" = "1" -o "$RG_MD" = "3" ]; then
+    	/etc/utopia/service.d/service_mcastproxy.sh lan-status&
+      fi
+    fi
+
+    if [ "$MLD_PID" = "" ]; then
+      if [ "$RG_MD" = "2" -o "$RG_MD" = "3" ]; then
+    	/etc/utopia/service.d/service_mldproxy.sh lan-status&
+      fi
+    fi
+
     rm /etc/cron/cron.everyminute/misc_handler.sh
 fi
