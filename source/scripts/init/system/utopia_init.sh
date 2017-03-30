@@ -66,6 +66,14 @@ fi
 firmware_name=`cat /version.txt | grep ^imagename= | cut -d "=" -f 2`
 echo_t "[utopia][init] DEVICE_INIT:$firmware_name"
 
+
+echo "*******************************************************************"
+echo "*                                                                  "
+echo_t "[utopia][init] P-UNIT status"
+cat /proc/P-UNIT/status
+echo "*                                                                  "
+echo "*******************************************************************"
+
 echo "[utopia][init] Tweaking network parameters" > /dev/console
 echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
 echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_syn_sent
