@@ -411,9 +411,9 @@ ifconfig l2sd0.4090 192.168.251.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.4090 lookup erouter
 
 #--------Set up Mesh vlan --------------------
-meshEnabled=`syscfg get mesh_enable`
-if [ "$meshEnabled" = "true" ]
-then
+#meshEnabled=`syscfg get mesh_enable`
+#if [ "$meshEnabled" = "true" ]
+#then
     swctl -c 16 -p 0 -v 112 -m 2 -q 1
     swctl -c 16 -p 7 -v 112 -m 2 -q 1
     swctl -c 16 -p 0 -v 113 -m 2 -q 1
@@ -422,7 +422,7 @@ then
     vconfig add l2sd0 113
     ifconfig l2sd0.112 169.254.0.254 netmask 255.255.255.0 up
     ifconfig l2sd0.113 169.254.1.254 netmask 255.255.255.0 up
-fi
+#fi
 
 #--------Marvell LAN-side egress flood mitigation----------------
 echo_t "88E6172: Do not egress flood unicast with unknown DA"
