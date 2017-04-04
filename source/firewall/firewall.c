@@ -10301,6 +10301,11 @@ int CleanIPConntrack(char *physAddress)
    		 RmConntrackEntry(output);
     }
     pclose(fp);
+#if defined (INTEL_PUMA7)  
+  //ARRISXB6-3890 sometimes conntrack -D not working on XB6  
+    system("conntrack -F");
+#endif 
+
     return 0;
 }
 int IsFileExists(const char *fname)
