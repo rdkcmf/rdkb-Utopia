@@ -330,10 +330,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
 			inCaptivePortal = 1;        		
 		}
 	}
+// Modifying rdnss value to fix the zebra config.
 	if(inCaptivePortal != 1)
 	{
 		if (strlen(lan_addr))
-            			fprintf(fp, "   ipv6 nd rdnss %s 300\n", lan_addr);
+            			fprintf(fp, "   ipv6 nd rdnss %s 86400\n", lan_addr);
 	}
         /* static IPv6 DNS */
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION          
@@ -382,7 +383,8 @@ static int gen_zebra_conf(int sefd, token_t setok)
        		}
 
         		for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
-            		fprintf(fp, "   ipv6 nd rdnss %s 300\n", tok);
+			// Modifying rdnss value to fix the zebra config.
+            		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
 		}
 	}
     

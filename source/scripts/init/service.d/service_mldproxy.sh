@@ -71,7 +71,9 @@ do_start_mldproxy () {
    else
       echo "phyint $WAN_IFNAME disabled" >> $LOCAL_CONF_FILE
    fi
-   echo "phyint $SYSCFG_lan_ifname downstream" >> $LOCAL_CONF_FILE
+
+#   Commenting brlan0 downstream from mldproxy config (RDKB-10413)
+#   echo "phyint $SYSCFG_lan_ifname downstream" >> $LOCAL_CONF_FILE
 
    cat $LOCAL_CONF_FILE > $CONF_FILE
    rm -f $LOCAL_CONF_FILE 
