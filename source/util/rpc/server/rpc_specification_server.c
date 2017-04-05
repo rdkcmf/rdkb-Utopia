@@ -14,7 +14,7 @@ executecommand_1_svc(rpc_CommandBuf *argp, struct svc_req *rqstp)
 {
 	char cmdBuf[255]={0};
 	snprintf(cmdBuf,TEMP_BUF_LEN,"%s 2>&1\n",argp->buffer);
-	printf("Server recieved command %s \n",cmdBuf);
+	//printf("Server recieved command %s \n",cmdBuf);
 	FILE *cmd = popen(cmdBuf, "r");
 	char line [128] = {0}; /* or other suitable maximum line size */
 	memset (output.buffer,0,4096);
