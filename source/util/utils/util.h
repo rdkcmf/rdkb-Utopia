@@ -46,6 +46,8 @@
 int vsystem(const char *fmt, ...);
 int sysctl_iface_set(const char *path, const char *ifname, const char *content);
 int iface_get_hwaddr(const char *ifname, char *mac, size_t size);
+int iface_get_ipv4addr(const char *ifname, char *ipv4Addr, size_t size);
+int is_iface_present(const char *ifname);
 
 int serv_can_start(int sefd, token_t tok, const char *servname);
 int serv_can_stop(int sefd, token_t tok, const char *servname);
