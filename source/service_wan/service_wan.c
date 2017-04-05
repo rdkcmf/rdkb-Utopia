@@ -300,6 +300,9 @@ static int wan_start(struct serv_wan *sw)
 {
     char status[16];
     int ret;
+   time_t rawtime;
+   rawtime=time(NULL);
+   printf("%ld EROUTER_WAN_INIT_START\n",rawtime);
     /* state check */
     sysevent_get(sw->sefd, sw->setok, "wan_service-status", status, sizeof(status));
     if (strcmp(status, "starting") == 0 || strcmp(status, "started") == 0) {
@@ -355,7 +358,8 @@ done:
 	sprintf(str,"/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false ");
 	system(str);
     }
-
+   rawtime=time(NULL);
+   printf("%ld EROUTER_WAN_INIT_END\n",rawtime);
     return 0;
 }
 
