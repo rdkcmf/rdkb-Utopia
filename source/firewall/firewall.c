@@ -9399,7 +9399,7 @@ static void do_ipv6_sn_filter(FILE* fp) {
         fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m limit --limit 20/sec -j ACCEPT\n", ifnames[i]);
         fprintf(fp, "-A PREROUTING -i %s -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP\n", ifnames[i]);
     }
-#if 0
+
 	//RDKB-10248: IPv6 Entries issue in ip neigh show 1. drop the NS 
 	FILE *fp1;
 	char ip[128]="";
@@ -9419,6 +9419,8 @@ static void do_ipv6_sn_filter(FILE* fp) {
         	fclose(fp1);
         }
 	//RDKB-10248: IPv6 Entries issue in ip neigh show 2. Bring back TOS mirroring 
+
+#if 0
         ////Commenting out all DSCP rules : RDKB-5254
 
 	//zqiu: XCONF >>  RDKB-4519
