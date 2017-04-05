@@ -68,6 +68,11 @@ if [ "$BOX_TYPE" == "TCCBR" ];then
 	touch /nvram/disableCcspMoCA
 fi
 
+#BCI devices do not support TR069. This nvram file shall be used by cosa_start_rem.sh .
+if [ "$BOX_TYPE" == "TCCBR" ];then
+       touch /nvram/disableCcspTr069PaSsp
+fi
+
 HAVECRASH="$LOG_FOLDER/processcrashed"
 FLAG_REBOOT="$LOG_FOLDER/waitingreboot"
 UPLOAD_ON_REBOOT="$LOG_UPLOAD_FOLDER/uploadonreboot"
