@@ -34,6 +34,13 @@
 #   limitations under the License.
 #######################################################################
 
+if [ -f /etc/device.properties ]
+then
+	. /etc/device.properties
+fi
+
+source /etc/utopia/service.d/log_env_var.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 V_EVT_LOG_FILE=""
 V_SYS_LOG_FILE=""
@@ -103,17 +110,30 @@ old_sysevtlog_handle(){
         #un-compress log file
         if [ -e $ZIP ]
         then
-             $RD_LOCK $ZIP -c '$UNCOMPRESS_CMD $ZIP'
-             ZIP_SZ=$(ls -l $ZIP | awk '{print $3}')
+	     if [ "x$BOX_TYPE" == "xXB3" ]; then
+		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
+	     else
+		     $RD_LOCK $ZIP -c '$UNCOMPRESS_CMD $ZIP'
+	     fi
+             ZIP_SZ=$(ls -l $ZIP | awk '{print $5}')
         else
              ZIP_SZ=0;
         fi
         $COMPRESS_CMD $NEW_ZIP ./* 
-        $WT_LOCK $ZIP -c 'mv $NEW_ZIP $ZIP'
+        if [ "x$BOX_TYPE" == "xXB3" ]; then
+		$WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
+	else
+		$WT_LOCK $ZIP -c 'mv $NEW_ZIP $ZIP'
+	fi
         for oldfile in $FILE ;
         do
-            echo "$WT_LOCK $oldfile -c rm -r $oldfile"
-            $WT_LOCK $oldfile -c 'rm -r $oldfile'
+		if [ "x$BOX_TYPE" == "xXB3" ]; then
+		    echo "$WT_LOCK $oldfile -c rm -r $oldfile"
+		    $WT_LOCK $oldfile -c rm -r $oldfile
+		else
+		    echo "$WT_LOCK $oldfile -c 'rm -r $oldfile'"
+		    $WT_LOCK $oldfile -c 'rm -r $oldfile'
+		fi
         done;
 
         rm -rf $DIR     
@@ -150,7 +170,11 @@ old_fwlog_handle(){
                 if [ "$filename" != "fwlog.$POSTFIX" ]
                 then
                     cp -f $1/$filename $2
-                    $WT_LOCK $1/$filename -c 'rm -r $1/$filename'
+	            if [ "x$BOX_TYPE" == "xXB3" ]; then
+	                    $WT_LOCK $1/$filename -c rm -r $1/$filename
+		    else
+                  	  $WT_LOCK $1/$filename -c 'rm -r $1/$filename'
+		    fi
                 fi
             done
         fi
@@ -315,12 +339,16 @@ compress()
         mkdir -p $DIR
         cd $DIR
         cp $FILE $NEW_NAME
-         FILE_SZ=$(ls -l | awk 'BEGIN {SUM=0}{SUM+=$3}END {print SUM}')
+         FILE_SZ=$(ls -l | awk 'BEGIN {SUM=0}{SUM+=$5}END {print SUM}')
         #un-compress log file
         if [ -e $ZIP ]
         then
-             $RD_LOCK $ZIP -c '$UNCOMPRESS_CMD $ZIP'
-             ZIP_SZ=$(ls -l $ZIP | awk '{print $3}')
+	     if [ "x$BOX_TYPE" == "xXB3" ]; then
+		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
+	    else
+		    $RD_LOCK $ZIP -c '$UNCOMPRESS_CMD $ZIP'
+	    fi
+             ZIP_SZ=$(ls -l $ZIP | awk '{print $5}')
         else
             ZIP_SZ=0;
         fi
@@ -332,7 +360,7 @@ compress()
             OLD_FILE_SIZE=0
             for filename in `ls ./`;
             do
-                 let "OLD_FILE_SIZE=$OLD_FILE_SIZE + $(ls -l $filename | awk '{print $3}')"
+                 let "OLD_FILE_SIZE=$OLD_FILE_SIZE + $(ls -l $filename | awk '{print $5}')"
                 OLD_FILE="$OLD_FILE $filename"
                 if [ $OLD_FILE_SIZE -ge $FILE_SZ  ]
                 then
@@ -345,18 +373,28 @@ compress()
         then
             rm $OLD_FILE
             # Remove old R1.3 log under /nvram
-            if [ -e $OLD_LOG_DIR_13 ]
-            then
-                rm -rf $OLD_LOG_DIR_13
-            fi
+	    # Old log is symbolic link to new log dir, no need to remove the old dir.
+          #  if [ -e $OLD_LOG_DIR_13 ]
+          # then
+                #rm -rf $OLD_LOG_DIR_13
+           #fi
         fi
 
         $COMPRESS_CMD $NEW_ZIP ./* 
-        $WT_LOCK $ZIP -c 'mv $NEW_ZIP $ZIP'
+        if [ "x$BOX_TYPE" == "xXB3" ]; then
+	        $WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
+	else
+	        $WT_LOCK $ZIP -c 'mv $NEW_ZIP $ZIP'
+	fi
         for oldfile in $FILE ;
         do
+        if [ "x$BOX_TYPE" == "xXB3" ]; then
             echo "$WT_LOCK $oldfile -c rm -r $oldfile"
+            $WT_LOCK $oldfile -c rm -r $oldfile
+	else
+            echo "$WT_LOCK $oldfile -c 'rm -r $oldfile'"
             $WT_LOCK $oldfile -c 'rm -r $oldfile'
+	fi
         done;
 
         rm -rf $DIR       
@@ -371,7 +409,11 @@ uncompress()
     DIR=$2
     TAR=$1
     cd $DIR
-    $RD_LOCK $TAR -c '$UNCOMPRESS_CMD $TAR'
+    if [ "x$BOX_TYPE" == "xXB3" ]; then
+	    $RD_LOCK $TAR -c $UNCOMPRESS_CMD $TAR
+    else
+	    $RD_LOCK $TAR -c '$UNCOMPRESS_CMD $TAR'
+    fi
 }
 
 V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
@@ -488,7 +530,7 @@ then
 
     for fw in `ls $V_FW_LOG_FILE_PATH`;
     do
-        if [ "$fw" != "fwlog.$POSTFIX" -a "$filename" != `date +%Y%m%d` ];
+        if [ "$fw" != "fwlog.$POSTFIX" -a "$fw" != `date +%Y%m%d` ];
         then
             log_handle.sh compress_fwlog &
             break
