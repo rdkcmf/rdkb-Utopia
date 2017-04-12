@@ -578,14 +578,6 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix)
 	}
 }
 
-int psm_get_val(char* param, char *val)
-{
-	int l_iRet_Val;
-
-	l_iRet_Val = PSM_VALUE_GET_STRING(param, val);
-	return l_iRet_Val;
-}
-
 //Input to this function
 //1st Input Lan IP Address and 2nd Input LAN Subnet Mask
 int prepare_dhcp_conf (char *input)
@@ -668,11 +660,11 @@ int prepare_dhcp_conf (char *input)
 	}	
    
    
-	l_iRet_Val = psm_get_val(PSM_NAME_NOTIFY_WIFI_CHANGES, l_cpPsm_Get);
+	l_iRet_Val = PSM_VALUE_GET_STRING(PSM_NAME_NOTIFY_WIFI_CHANGES, l_cpPsm_Get);
 	while ((CCSP_SUCCESS != l_iRet_Val && l_cpPsm_Get == NULL) && 
 		   (l_iRetry_Count++ < 2))
 	{
-		l_iRet_Val = psm_get_val(PSM_NAME_NOTIFY_WIFI_CHANGES, l_cpPsm_Get);
+		l_iRet_Val = PSM_VALUE_GET_STRING(PSM_NAME_NOTIFY_WIFI_CHANGES, l_cpPsm_Get);
 	}
     if (CCSP_SUCCESS == l_iRet_Val && l_cpPsm_Get != NULL)
 	{
@@ -700,11 +692,11 @@ int prepare_dhcp_conf (char *input)
     	fprintf(stderr, "wan_service-status is:%s\n", l_cWan_Service_Stat);
 
 		l_iRetry_Count = 0;
-		l_iRet_Val = psm_get_val(PSM_NAME_WIFI_RES_MIG, l_cpPsm_Get);
+		l_iRet_Val = PSM_VALUE_GET_STRING(PSM_NAME_WIFI_RES_MIG, l_cpPsm_Get);
 		while ((CCSP_SUCCESS != l_iRet_Val && l_cpPsm_Get == NULL) && 
 			   (l_iRetry_Count++ < 2))
 		{
-			l_iRet_Val = psm_get_val(PSM_NAME_WIFI_RES_MIG, l_cpPsm_Get);
+			l_iRet_Val = PSM_VALUE_GET_STRING(PSM_NAME_WIFI_RES_MIG, l_cpPsm_Get);
 		}
     	if (CCSP_SUCCESS == l_iRet_Val && l_cpPsm_Get != NULL)
 		{

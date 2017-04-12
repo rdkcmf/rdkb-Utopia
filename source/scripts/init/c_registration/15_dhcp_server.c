@@ -56,6 +56,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "lan-status|/usr/bin/service_dhcp",
 										"dhcp_server-restart|/usr/bin/service_dhcp",
                                         "dhcp_server-start|/usr/bin/service_dhcp",
+                                        "dhcp_server-stop|/usr/bin/service_dhcp",
                                         "dhcp_server-resync|/etc/utopia/service.d/service_dhcp_server.sh|NULL|"TUPLE_FLAG_EVENT,
                                         NULL 
                                       };

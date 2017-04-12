@@ -663,7 +663,7 @@ case "$1" in
     ipv4_*-status)
         if [ x"up" = x$2 ]; then
 	        echo_t "SERVICE DHCP : Got ipv4 status"
-            lan_status_change started lan_not_restart 
+            service_dhcp lan-status started lan_not_restart
         fi
       ;;
    *)

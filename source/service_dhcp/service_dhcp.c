@@ -391,7 +391,16 @@ int main(int argc, char *argv[])
 	}
     else if (!strncmp(argv[1], "lan-status", 10))
 	{
-		lan_status_change(NULL);
+		//If lan-status is called with lan_not_restart then 
+		//the same is used in further function calls
+		if (4 == argc)
+		{	
+			lan_status_change(argv[3]);
+		}
+		else
+		{
+			lan_status_change(NULL);
+		}
 	}
 	else if (!strncmp(argv[1], "bring-lan", 9))
 	{
