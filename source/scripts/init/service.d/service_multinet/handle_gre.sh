@@ -364,7 +364,9 @@ get_ssids() {
     #localifs=`psmcli get $HS_PSM_BASE.${1}.$GRE_PSM_LOCALIFS`		
 	localif_1=`psmcli get $HS_PSM_BASE.${1}.interface.1.$GRE_PSM_LOCALIFS`		
 	localif_2=`psmcli get $HS_PSM_BASE.${1}.interface.2.$GRE_PSM_LOCALIFS`	
-	localifs="$localif_1,$localif_2";
+	localif_3=Device.WiFi.SSID.9.
+	localif_4=Device.WiFi.SSID.10.
+	localifs="$localif_1,$localif_2,$localif_3,$localif_4";
     OLD_IFS="$IFS"
     IFS=","
     for i in $localifs; do
