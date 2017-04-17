@@ -447,6 +447,24 @@ vconfig add l2sd0 106
 ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.106 lookup erouter
 
+# Creating MDC VLAN on ARM
+if [ -e /usr/bin/Arm_Mdc ]; then
+
+  echo "Starting mdc-vlan config"
+  echo "Adding l2sd0.4040 for mdc"
+  swctl -c 16 -p 0 -v 4040 -m 2 -q 1
+  swctl -c 16 -p 7 -v 4040 -m 2 -q 1
+  vconfig add l2sd0 4040
+  echo "Added l2sd0.4040 for mdc"
+  ifconfig l2sd0.4040 192.168.250.2 netmask 255.255.255.0 up
+  ip rule add to 192.168.250.1 lookup all_mdc
+  ip route add default via 192.168.250.1 dev l2sd0.4040 table all_mdc
+
+fi
+
+ip rule add to 192.168.254.254 lookup 2
+ip route add default via 192.168.254.254 dev l2sd0.4093 table 2
+
 # Check and set factory-reset as reboot reason 
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo_t "[utopia][init] Detected last reboot reason as factory-reset"

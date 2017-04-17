@@ -61,6 +61,34 @@ SERVICE_NAME="ipv6"
 #   - Check the error code (check_err will set service's status and service's errinfo upon error)
 #   - If no error then set the service's status
 #----------------------------------------------------------------------------------------
+ipv6_notification_start ()
+{
+    count=0;
+    while [ $count -lt 24 ] #2 mins loop 5*24 = 120 secs
+    do
+        ipv6check=`ifconfig erouter0 | grep "inet6 addr" | grep Global | awk -F ":" '{print $NF}'`
+	if [ "$ipv6check" == "Global" ];then
+            echo "ipv6 available"
+            sysevent set ipv6-notification up
+            exit
+        else
+	    #ipv6 not available, sleep for 5 secs
+            sleep 5
+        fi
+	count=$((count+1))
+        if [ $count -eq 24 ];then
+            echo "Maximum loop reached, exiting script"
+	fi
+    done
+
+}
+ipv6_notification_stop ()
+{
+    CURRENT_ipv6_STATUS=`sysevent get ipv6-notification`
+    if [ "up" = "$CURRENT_WAN_STATUS" ];then
+        sysevent set ipv6-notification down
+    fi
+}
 
 case "$1" in
    ${SERVICE_NAME}-start)
@@ -112,6 +140,15 @@ case "$1" in
      fi
      ;;
 
+  wan-status)
+      CURRENT_WAN_STATUS=`sysevent get wan-status`
+      CURRENT_LAN_STATUS=`sysevent get lan-status`
+      if [ "started" = "$CURRENT_WAN_STATUS" ] ; then
+         ipv6_notification_start
+      elif [ "stopped" = "$CURRENT_WAN_STATUS" ] ; then
+         ipv6_notification_stop
+      fi
+      ;;
    *)
       echo "Usage: $SERVICE_NAME [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" > /dev/console
       exit 3

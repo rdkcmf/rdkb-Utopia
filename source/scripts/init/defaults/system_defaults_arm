@@ -577,6 +577,12 @@ $firewall_development_override=0
 
 $dmz_enabled=0
 
+#mdc-enabled
+$MDC-ENABLED=0
+#mdc-logging
+$X_RDKCENTRAL-COM_MDC_LogLevel=4
+$X_RDKCENTRAL-COM_MDC_LoggerEnable=1
+
 $block_webproxy=0
 $block_java=0
 $block_activex=0

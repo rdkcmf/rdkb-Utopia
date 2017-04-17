@@ -377,6 +377,7 @@ NOT_DEF:
 #define PORTMAPPING_2WAY_PASSTHROUGH
 #define MAX_URL_LEN 1024 
 #define IF_IPV6ADDR_MAX 16
+#define DESTADDRS_MAX 6
 
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
 #define PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK "18080" // the same as the port in lighttpd.conf
@@ -579,6 +580,16 @@ static char iptables_pri_level[IPT_PRI_MAX];
 //static int  porttriggering_pri;
 //static int  firewall_pri;
 //static int  dmz_pri;
+#if defined(_MDC_SUPPORTED_)
+/*mdc-firewall*/
+static char DestAddrs[DESTADDRS_MAX][25];
+static char SrcAdd[256];//dynamic rule -s address
+static char DestAdd[256];//dynamic -d ip addr
+static char SrcStatAdd[256];//static src addr
+static char DestStatAdd[256];//static dest addr
+static char count[256];//ip entry count
+/*------------*/
+#endif
 
 static int isFirewallEnabled;
 static int isHairpin;
@@ -732,6 +743,14 @@ inline int SET_IPT_PRI_MODULD(char *s){
 
 #define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str)) 
 #define PSM_VALUE_GET_INS(name, pIns, ppInsArry) PsmGetNextLevelInstances(bus_handle, CCSP_SUBSYS, name, pIns, ppInsArry)
+
+#if defined(_MDC_SUPPORTED_)
+/*mdc-firewall rules*/
+#define PSM_SRC_ADDRESS_VALUE  "Device.X_RDKCENTRAL-COM_MDC.SrcAddress"
+#define PSM_SRC_STAT_ADDRESS_VALUE  "Device.X_RDKCENTRAL-COM_MDC.SrcStatAddress"
+#define PSM_DEST_STAT_ADDRESS_VALUE "Device.X_RDKCENTRAL-COM_MDC.DestStatAddress"
+#define PSM_GET_ENTRY_COUNT_VALUE "Device.X_RDKCENTRAL-COM_MDC.IpAddress.IpEntryCount"
+#endif
 
 /* 
  */
@@ -1156,7 +1175,15 @@ static int prepare_globals_from_configuration(void)
    char tmp[100];
    char *pStr = NULL;
    int i;
+#if defined(_MDC_SUPPORTED_)
+   /*mdc-firewall*/
+   char param[256];
+   char param2[256];
+   char param3[256];
+#endif
+
    FIREWALL_DEBUG("Entering prepare_globals_from_configuration\n");       
+
    tmp[0] = '\0';
    // use wan protocol determined wan interface name if possible, else use default (the name used by the OS)
    default_wan_ifname[0] = '\0';
@@ -1169,6 +1196,16 @@ static int prepare_globals_from_configuration(void)
    lan_ipaddr[0] = '\0';
    transparent_cache_state[0] = '\0';
    wan_service_status[0] = '\0';
+
+#if defined(_MDC_SUPPORTED_)
+   /*mdc-firewall*/
+   SrcAdd[0] = '\0';
+   SrcStatAdd[0]='\0';
+   DestStatAdd[0]= '\0';
+   memset(&DestAddrs[0][0], 0, sizeof(DestAddrs));
+   /*------------*/
+#endif
+
 #if defined(_COSA_BCM_MIPS_)
    lan0_ipaddr[0] = '\0';
    sysevent_get(sysevent_fd, sysevent_token, "lan0_ipaddr", lan0_ipaddr, sizeof(lan0_ipaddr));
@@ -1656,6 +1693,53 @@ static int prepare_globals_from_configuration(void)
           pStr = NULL;
        }   
    }
+
+#if defined(_MDC_SUPPORTED_)
+   /*Get defaults for mdc-firewall */
+   rc = PSM_VALUE_GET_STRING(PSM_SRC_ADDRESS_VALUE,pStr);
+      if(rc == CCSP_SUCCESS && pStr != NULL){
+         strcpy(SrcAdd, pStr);
+         Ansc_FreeMemory_Callback(pStr);
+         pStr = NULL;
+      }
+
+      rc = PSM_VALUE_GET_STRING(PSM_SRC_STAT_ADDRESS_VALUE,pStr);
+      if(rc == CCSP_SUCCESS && pStr != NULL){
+         strcpy(SrcStatAdd, pStr);
+         Ansc_FreeMemory_Callback(pStr);
+         pStr = NULL;
+      }
+      rc = PSM_VALUE_GET_STRING(PSM_DEST_STAT_ADDRESS_VALUE,pStr);
+      if(rc == CCSP_SUCCESS && pStr != NULL){
+         strcpy(DestStatAdd, pStr);
+         Ansc_FreeMemory_Callback(pStr);
+         pStr = NULL;
+      }
+      count[0]='\0'; //mdc-ipentry-count
+      int k;
+      rc = PSM_VALUE_GET_STRING(PSM_GET_ENTRY_COUNT_VALUE,pStr);
+      if(rc == CCSP_SUCCESS && pStr != NULL){
+         strcpy(count, pStr);
+         k=atoi(count);
+         Ansc_FreeMemory_Callback(pStr);
+         pStr = NULL;
+      }
+
+   if ( k > DESTADDRS_MAX ){
+      FIREWALL_DEBUG("IpEntryCount to big, %d \n" COMMA k );
+      k = DESTADDRS_MAX;
+   }
+   for ( i=0; i<k; i++ ){
+      sprintf(param,"Device.X_RDKCENTRAL-COM_MDC.IpAddress.%d.DestAddress",i+1);
+      rc = PSM_VALUE_GET_STRING(param,pStr);
+      if(rc == CCSP_SUCCESS && pStr != NULL){
+         strcpy(&DestAddrs[i][0], pStr);
+         Ansc_FreeMemory_Callback(pStr);
+         pStr = NULL;
+      }
+   }
+#endif
+
     FIREWALL_DEBUG("Exiting prepare_globals_from_configuration\n");       
    return(0);
 }
@@ -9068,7 +9152,9 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    do_filter_table_general_rules(filter_fp);
    do_raw_logs(raw_fp);
    do_logs(filter_fp);
-   
+#if defined(_MDC_SUPPORTED_)
+   do_mdc2wan(filter_fp, nat_fp);//mdc2wan
+#endif
    prepare_multinet_mangle(mangle_fp);
    
    //do_multinet_patch(mangle_fp, nat_fp, filter_fp);
@@ -10165,6 +10251,81 @@ end_of_ipv6_firewall:
       FIREWALL_DEBUG("Exiting prepare_ipv6_firewall \n");
    return(0);
 }
+
+#if defined(_MDC_SUPPORTED_)
+int do_mdc2wan_enable(FILE *filter_fp,FILE *nat_fp)
+{
+    int i;
+    int numDestAddrs;
+
+    FIREWALL_DEBUG("Entering %s\n" COMMA __func__);
+
+    fprintf(nat_fp, "%s\n", ":prerouting_frommdc - [0:0]");
+    fprintf(nat_fp, "%s\n", ":postrouting_tomdc - [0:0]");
+
+    fprintf(nat_fp, "-I PREROUTING -j prerouting_frommdc\n");
+    fprintf(nat_fp, "-I POSTROUTING -j postrouting_tomdc\n");
+
+    // Allow traffic between ARM and ATOM on VLAN 4040
+    fprintf(filter_fp, "-I INPUT -i l2sd0.4040 -j ACCEPT\n");
+
+    // Allow forwarded NAT packets for MDC
+    fprintf(filter_fp, "-I FORWARD -i l2sd0.4040 -p tcp -m tcp --sport 8080 -s 192.168.250.1 -j ACCEPT\n");
+    fprintf(filter_fp, "-I FORWARD -o l2sd0.4040 -p tcp -m tcp --dport 8080 -d 192.168.250.1 -j ACCEPT\n");
+
+    numDestAddrs = atoi( count );
+    if ( numDestAddrs > DESTADDRS_MAX ){
+       FIREWALL_DEBUG("IpEntryCount to big, %d \n" COMMA numDestAddrs );
+       numDestAddrs = DESTADDRS_MAX;
+    }
+
+    for ( i=0; i < numDestAddrs; i++){
+        fprintf(nat_fp,
+                "-I prerouting_frommdc -i brlan0 -p tcp -m tcp "
+                "--dport 80 -d %s ! -s %s -j DNAT --to-destination 192.168.250.1:8080 \n",
+                &DestAddrs[i][0], SrcAdd);
+    }
+
+    fprintf(nat_fp,"-I postrouting_tomdc -p tcp -m tcp --dport 8080 -d %s -j SNAT --to-source %s\n",DestStatAdd,SrcStatAdd);
+
+    FIREWALL_DEBUG("Exiting %s\n" COMMA __func__);
+
+    return(0);
+}
+
+int do_mdc2wan_disable(FILE *filter_fp,FILE *nat_fp)
+{
+    FIREWALL_DEBUG("Entering %s\n" COMMA __func__);
+
+    // Allow internal VLAN 4040 traffic between ARM and ATOM for pings. Don't
+    // need NAT because MDC is disabled. Stuff from LAN will not be
+    // forwarded to l2sd0.4040
+    fprintf(filter_fp, "-I INPUT -i l2sd0.4040 -j ACCEPT\n");
+
+    FIREWALL_DEBUG("Exiting %s\n" COMMA __func__);
+
+    return(0);
+
+}
+
+int do_mdc2wan(FILE *filter_fp,FILE *nat_fp)
+{
+   char query[MAX_QUERY];
+   int count;
+   query[0] = '\0';
+   int isMdcFirewallEnabled=0;
+   syscfg_get(NULL, "MDC-ENABLED", query, sizeof(query));
+   isMdcFirewallEnabled=atoi(query);
+   if (isMdcFirewallEnabled) {
+      do_mdc2wan_enable(filter_fp,nat_fp);
+   }
+   else {
+          do_mdc2wan_disable(filter_fp,nat_fp);
+        }
+   return(0);
+}
+#endif
+
 
 /*
  ********************************************************************
