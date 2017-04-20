@@ -56,7 +56,6 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "pnm-status|/etc/utopia/service.d/lan_handler.sh",
     "bring-lan|/usr/bin/service_dhcp",
     "lan-start|/usr/bin/service_dhcp",
-    "lan-restart|/usr/bin/service_dhcp",
     "iot_status|/etc/utopia/service.d/lan_handler.sh",
     "ipv4-resync|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     "erouter_mode-updated|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
