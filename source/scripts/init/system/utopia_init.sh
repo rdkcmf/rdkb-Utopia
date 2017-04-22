@@ -249,6 +249,7 @@ if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
    PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Reset duration from shadow register"|awk -F '[ |\.]' '{ print $9 }'`
    # Clear the Reset duration from shadow register value
    # echo "1" > /proc/P-UNIT/clr_reset_duration_shadow
+    touch /var/tmp/utopia_cleared_shadow_reg.txt
    clean_reset_duration;
 elif cat /proc/P-UNIT/status | grep -q "Last reset duration"; then
    PUNIT_RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk -F '[ |\.]' '{ print $7 }'`
