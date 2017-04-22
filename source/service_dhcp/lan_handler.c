@@ -11,6 +11,10 @@
 #define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
 
+#define IPV4_NV_PREFIX  "dmsb.l3net"
+#define IPV4_NV_IP      "V4Addr"
+#define IPV4_NV_SUBNET  "V4SubnetMask"
+
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 
@@ -388,3 +392,136 @@ void ipv4_status(int l3_inst, char *status)
     fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler\n");
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
 }
+
+void lan_restart()
+{
+	char l_cLanIpAddr[16] = {0}, l_cLanNetMask[16] = {0};
+	char l_cPsmGetLanIp[16] = {0}, l_cPsmGetLanSubNet[16] = {0};
+	char l_cLanInst[8] = {0}, l_cLanRestarted[8] = {0};
+	char l_cSysevent_Cmd[255] = {0}, l_cLanIfName[16] = {0};
+	char l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[32] = {0};
+	char l_cLan_IpAddrv6[64] = {0}, l_cPsm_Parameter[255] = {0};
+	char *l_cpPsm_Get = NULL;
+
+	int l_iLanInst, l_iRetVal;
+
+	syscfg_get(NULL, "lan_ipaddr", l_cLanIpAddr, sizeof(l_cLanIpAddr));
+	fprintf(stderr, "Lan IP Address:%s\n", l_cLanIpAddr);
+
+	syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
+	fprintf(stderr, "Lan Subnet Mask:%s\n", l_cLanNetMask);
+
+	sysevent_get(g_iSyseventfd, g_tSysevent_token, "primary_lan_l3net", 
+				 l_cLanInst, sizeof(l_cLanInst));
+
+	l_iLanInst = atoi(l_cLanInst);
+
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), 
+			"%s.%s.%s", IPV4_NV_PREFIX, l_cLanInst, IPV4_NV_IP);
+
+    l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+   	if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+	{
+        strncpy(l_cPsmGetLanIp, l_cpPsm_Get, sizeof(l_cPsmGetLanIp));
+   	    fprintf(stderr, "PSM GET of LAN IP Addr:%s\n", 
+				l_cPsmGetLanIp);
+	}
+	else
+	{
+		fprintf(stderr, "Error:%d while getting:%s or value is empty\n", 
+                l_iRetVal, l_cPsm_Parameter);
+	}
+
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), 
+			"%s.%s.%s", IPV4_NV_PREFIX, l_cLanInst, IPV4_NV_SUBNET);
+
+    l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+   	if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+	{
+        strncpy(l_cPsmGetLanSubNet, l_cpPsm_Get, sizeof(l_cPsmGetLanSubNet));
+   	    fprintf(stderr, "PSM GET of LAN Subnet Mask:%s\n", 
+				l_cPsmGetLanSubNet);
+	}
+	else
+	{
+		fprintf(stderr, "Error:%d while getting:%s or value is empty\n", 
+                l_iRetVal, l_cPsm_Parameter);
+	}
+
+	if ((strncmp(l_cLanIpAddr, l_cPsmGetLanIp, sizeof(l_cLanIpAddr))) ||
+		(strncmp(l_cLanNetMask, l_cPsmGetLanSubNet, sizeof(l_cLanNetMask))))
+	{
+		snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), 
+				"%s.%s.%s", IPV4_NV_PREFIX, l_cLanInst, IPV4_NV_IP);
+
+    	l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, l_cLanIpAddr);
+   		if (CCSP_SUCCESS == l_iRetVal)
+		{
+   	    	fprintf(stderr, "Successful in setting:%s\n", 
+					l_cPsm_Parameter);
+		}
+		else
+		{
+			fprintf(stderr, "Error:%d while Setting:%s\n", 
+            	    l_iRetVal, l_cPsm_Parameter);
+		}
+
+		snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), 
+				"%s.%s.%s", IPV4_NV_PREFIX, l_cLanInst, IPV4_NV_SUBNET);
+
+    	l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, l_cLanNetMask);
+   		if (CCSP_SUCCESS == l_iRetVal)
+		{
+   	    	fprintf(stderr, "Successful in setting:%s\n", 
+					l_cPsm_Parameter);
+		}
+		else
+		{
+			fprintf(stderr, "Error:%d while Setting:%s\n", 
+            	    l_iRetVal, l_cPsm_Parameter);
+		}
+
+        // TODO check for lan network being up ?
+		sysevent_set(g_iSyseventfd, g_tSysevent_token, 
+					 "ipv4-resync", l_cLanInst, 0);
+	}
+	//handle ipv6 address on brlan0. 
+	//Because it's difficult to add ipv6 operation in ipv4 process. 
+	//So just put here as a temporary method
+	sprintf(l_cSysevent_Cmd, "ipv4_%d-ifname", l_iLanInst);	
+	sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, 
+				 l_cLanIfName, sizeof(l_cLanIfName));
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_ipaddr_v6_prev", 
+                 l_cLan_IpAddrv6_prev, sizeof(l_cLan_IpAddrv6_prev));
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_ipaddr_v6", 
+                 l_cLan_IpAddrv6, sizeof(l_cLan_IpAddrv6));
+    
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_prefix_v6", 
+                 l_cLan_PrefixV6, sizeof(l_cLan_PrefixV6));
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_restarted", 
+                 l_cLanRestarted, sizeof(l_cLanRestarted));
+
+    if ((strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) && 
+		(0 != l_cLan_IpAddrv6[0]))
+    {
+		if (0 != l_cLan_IpAddrv6_prev[0])
+		{
+        	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+            	     "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
+                	 l_cLan_IpAddrv6_prev, l_cLanIfName);
+
+	        executeCmd(l_cSysevent_Cmd);
+		}
+   
+        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                 "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
+                 l_cLan_IpAddrv6, l_cLanIfName);
+
+        executeCmd(l_cSysevent_Cmd);
+    }
+	sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_restarted", "done", 0);
+}
+

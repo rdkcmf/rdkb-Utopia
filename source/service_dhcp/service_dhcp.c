@@ -18,6 +18,7 @@
 #include "lan_handler.h"
 #include "dhcp_server_functions.h"
 #include "service_dhcp_server.h"
+#include "service_ipv4.h"
 #include "errno.h"
 #include "util.h"
 
@@ -406,6 +407,10 @@ int main(int argc, char *argv[])
 	{
 		bring_lan_up();
 	}
+	else if (!strncmp(argv[1], "lan-restart", 11))
+	{
+		lan_restart();
+	}
 	else if ((!strncmp(argv[1], "ipv4_4-status", 17)) ||
              (!strncmp(argv[1], "ipv4_5-status", 17)))
 	{
@@ -421,11 +426,47 @@ int main(int argc, char *argv[])
 	}
 	else if (!strncmp(argv[1], "lan-start", 9))
 	{
-		sysevent_get(g_iSyseventfd, g_tSysevent_token, "primary_lan_l3net", l_cL3Inst, sizeof(l_cL3Inst));	
+		sysevent_get(g_iSyseventfd, g_tSysevent_token, 
+					 "primary_lan_l3net", l_cL3Inst, 
+					 sizeof(l_cL3Inst));	
+
 		l_iL3Inst = atoi(l_cL3Inst);
 		fprintf(stderr, "Calling ipv4_up with L3 Instance:%d\n", l_iL3Inst);
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-up", l_cL3Inst, 0);
 	}
+	//service_ipv4.sh related
+	else if(!strncmp(argv[1], "ipv4-up", 7)) 
+    {   
+        fprintf(stderr, "%s case\n", argv[1]);
+        if (argc > 2)
+        {
+            ipv4_up(argv[2]);
+        }
+        else
+        {
+            printf("Insufficient number of arguments for %s\n", argv[1]);
+        }
+    }   
+    else if((!strncmp(argv[1], "multinet_1-status", 17)) ||  
+            (!strncmp(argv[1], "multinet_2-status", 17)) ||  
+            (!strncmp(argv[1], "multinet_3-status", 17)) ||
+            (!strncmp(argv[1], "multinet_4-status", 17)))
+    {   
+        int l_iL2Inst, l_iL3Inst;
+        fprintf(stderr, "%s case\n", argv[1]);
+        if (argc > 3)
+        {   
+            sscanf(argv[1], "multinet_%d-status", &l_iL2Inst);
+            //handle_l2_status $3 $INST $2
+            //$1 - multinet_*-status $2 - status $3 - L3 Instance number
+            l_iL3Inst = atoi(argv[3]);
+            handle_l2_status(l_iL3Inst, l_iL2Inst, argv[2], 0); 
+        }
+        else
+        {
+            printf("Insufficient number of arguments for %s\n", argv[1]);
+        }
+    }
 	close(g_iSyseventfd); //can be a memory / fd leak if not done
 	fclose(g_fArmConsoleLog);
 	return 0;
