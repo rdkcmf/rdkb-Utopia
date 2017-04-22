@@ -77,19 +77,6 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ipv4.sh";
  * keep the define outside of the string quotation symbols
  * eg. "event3|/etc/code|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_SERIAL
  */
-#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
-const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "ipv4-resyncAll|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-resync|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-down|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-up|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-set_dyn_config|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-sync_tsip_all|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-stop_tsip_all|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-resync_tsip|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-resync_tsip_asn|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    NULL };
-#else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "ipv4-resyncAll|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
     "ipv4-resync|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
@@ -101,7 +88,6 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "ipv4-resync_tsip|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
     "ipv4-resync_tsip_asn|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
-#endif
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
