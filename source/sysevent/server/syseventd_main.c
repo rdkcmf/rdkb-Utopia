@@ -807,7 +807,7 @@ static int initialize_system(void)
 
    memset(&se_server_addr, 0, sizeof(se_server_addr));
    se_server_addr.sin_family      = AF_INET;
-   se_server_addr.sin_addr.s_addr = htonl(LISTEN_IP_ADDR);
+   se_server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
    se_server_addr.sin_port        = htons(global_client_accept_port);
 
    if (0 > (bind(global_tcp_fd, (struct sockaddr *) &se_server_addr, sizeof(se_server_addr))) ) {
@@ -875,7 +875,7 @@ static int initialize_system(void)
       struct sockaddr_in6 server6;
 
       server6.sin6_family = AF_INET6;
-      server6.sin6_addr = in6addr_any;
+      server6.sin6_addr = in6addr_loopback;
       server6.sin6_port = htons(global_client_accept_port);
 
       if (0 > (bind(global_tcp_fd, (struct sockaddr *) &server6, sizeof(server6))) ) {
@@ -892,7 +892,7 @@ static int initialize_system(void)
 
         memset(&se_server_addr, 0, sizeof(se_server_addr));
         se_server_addr.sin_family      = AF_INET;
-        se_server_addr.sin_addr.s_addr = htonl(LISTEN_IP_ADDR);
+        se_server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         se_server_addr.sin_port        = htons(global_client_accept_port);
 
         if (0 > (bind(global_tcp_fd, (struct sockaddr *) &se_server_addr, sizeof(se_server_addr))) ) {
