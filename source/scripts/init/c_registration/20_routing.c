@@ -51,10 +51,6 @@
 
 const char* SERVICE_NAME            = "routed";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_routed.sh";
-#ifdef _CBR_PRODUCT_REQ_
-// undefining Prefix delegation flag
-#undef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
-#endif
 
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
 const char* SERVICE_CUSTOM_EVENTS[] = { 
