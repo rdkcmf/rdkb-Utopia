@@ -153,8 +153,10 @@ void bring_lan_up()
 void ipv4_status(int l3_inst, char *status)
 {
 	char l_cSysevent_Cmd[255] = {0}, l_cLanIfName[16] = {0};
-	char l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[8] = {0}, l_cLan_IpAddrv6[16] = {0};
-	char l_cCur_Ipv4_Addr[16] = {0}, l_cLan_Status[16] = {0}, l_cBrlan0_Mac[32] = {0};
+	char l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[8] = {0}; 
+	char l_cLan_IpAddrv6[64] = {0};
+	char l_cCur_Ipv4_Addr[16] = {0}, l_cLan_Status[16] = {0};
+	char l_cBrlan0_Mac[32] = {0};
 	char l_cLast_Erouter_Mode[8] = {0}, l_cFileName[255] = {0};
 	char l_cDsLite_Enabled[8] = {0}, l_cDhcp_Server_Prog[16] = {0};
 	char l_cIpv6_Prefix[64] = {0}, l_cLan_Uptime[16] = {0};
