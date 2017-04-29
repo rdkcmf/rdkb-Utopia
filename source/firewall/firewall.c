@@ -748,6 +748,52 @@ int greDscp = 44; // Default initialized to 44
                      utilities
  =================================================================
  */
+static int privateIpCheck(char *ip_to_check)
+{
+    struct in_addr l_sIpValue, l_sDhcpStart, l_sDhcpEnd;
+    long int l_iIpValue, l_iDhcpStart, l_iDhcpEnd;
+	char l_cDhcpStart[16] = {0}, l_cDhcpEnd[16] = {0};
+	int l_iRes;
+
+	if (NULL == ip_to_check || 0 == ip_to_check[0])
+	{
+		printf("Invalied IP Address to check\n");
+		return 1;
+	}
+
+	syscfg_get(NULL, "dhcp_start", l_cDhcpStart, sizeof(l_cDhcpStart));
+	syscfg_get(NULL, "dhcp_end", l_cDhcpEnd, sizeof(l_cDhcpEnd));
+
+    l_iRes = inet_pton(AF_INET, ip_to_check, &l_sIpValue);
+    l_iRes &= inet_pton(AF_INET, l_cDhcpStart, &l_sDhcpStart);
+    l_iRes &= inet_pton(AF_INET, l_cDhcpEnd, &l_sDhcpEnd);
+
+    l_iIpValue = (long int)l_sIpValue.s_addr;
+    l_iDhcpStart = (long int)l_sDhcpStart.s_addr;
+    l_iDhcpEnd = (long int)l_sDhcpEnd.s_addr;
+
+	switch(l_iRes) 
+	{
+    	case 1:
+        	if (l_iIpValue <= l_iDhcpEnd && l_iIpValue >= l_iDhcpStart)
+		  	{	
+            	printf("IP Address:%s is in private address range\n", ip_to_check); 
+				return 1;
+			}
+          	else
+			{
+                printf("IP Address:%s is not in private address range\n", ip_to_check); 
+          		return 0;
+			}
+       case 0:
+          printf("invalid input / dhcp start / dhcp end values\n");
+          return 1;
+       default:
+          printf("inet_pton conversion error:%d\n", errno);
+          return 1;
+    }
+}
+
 /*
  * Procedure     : trim
  * Purpose       : trims a string
@@ -1948,7 +1994,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       char str[MAX_QUERY];
       
       if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) {
-         if (isNatReady) {
+	     if (isNatReady && !(isBridgeMode && privateIpCheck(toip))) {
             snprintf(str, sizeof(str),
                      "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
                      natip4, external_port, toip, port_modifier);
@@ -2026,7 +2072,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          }
       }
       if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
-         if (isNatReady) {
+		 if (isNatReady && !(isBridgeMode && privateIpCheck(toip))) {
             snprintf(str, sizeof(str),
                      "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
                      natip4, external_port, toip, port_modifier);
@@ -2325,7 +2371,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
       char str[MAX_QUERY];
       
       if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) {
-         if (isNatReady) {
+		 if (isNatReady && !(isBridgeMode && privateIpCheck(toip))) {
             snprintf(str, sizeof(str),
                      "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
                      natip4, sdport, edport, toip, target_internal_port);
@@ -2378,7 +2424,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          }
       }
       if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
-         if (isNatReady) {
+		 if (isNatReady && !(isBridgeMode && privateIpCheck(toip))) {
             snprintf(str, sizeof(str),
                      "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
                      natip4, sdport, edport, toip, target_internal_port);
@@ -2553,7 +2599,7 @@ static int do_wellknown_ports_forwarding(FILE *nat_fp, FILE *filter_fp)
          }
 
          char str[MAX_QUERY];
-         if (isWanReady) {
+		 if (isWanReady && !(isBridgeMode && privateIpCheck(toip))) {
             snprintf(str, sizeof(str),
                      "-A prerouting_fromwan -p %s -m %s -d %s --dport %s -j DNAT --to-destination %s.%s%s",
                      port_prot, port_prot, current_wan_ipaddr, port_val, lan_3_octets, toip, port_modifier);
@@ -2681,7 +2727,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
          
          char str[MAX_QUERY];
          if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) {
-            if (isNatReady) {
+			if (isNatReady && !(isBridgeMode && privateIpCheck(toip))) {
                snprintf(str, sizeof(str),
                         "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
                         natip4, external_dest_port, external_ip, toip, port_modifier);
@@ -2717,7 +2763,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
             }
          }
          if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
-            if (isNatReady) {
+			if (isNatReady && !(isBridgeMode && privateIpCheck(toip))) {
                snprintf(str, sizeof(str),
                        "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
                        natip4, external_dest_port, external_ip, toip, port_modifier);
