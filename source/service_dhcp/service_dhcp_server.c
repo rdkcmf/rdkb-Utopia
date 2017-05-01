@@ -64,11 +64,7 @@ void dhcp_server_stop()
 	
 	sprintf(l_cSystemCmd, "%s unsetproc dhcp_server", PMON);
 	l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
-    if (0 == l_iSystem_Res)
-    {
-		fprintf(stderr, "%s command executed successfully\n", l_cSystemCmd);
-	}
-	else
+    if (0 != l_iSystem_Res)
 	{
 		fprintf(stderr, "%s command didnt execute successfully\n", l_cSystemCmd);
 	}
@@ -90,7 +86,6 @@ void dhcp_server_stop()
         sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF, g_cDhcp_Script);
     }
 
-    fprintf(stderr, "Starting dns-server: %s now\n", l_cSystemCmd);
     l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
     if (0 == l_iSystem_Res)
     {
@@ -122,7 +117,6 @@ int dhcp_server_start (char *input)
 
     // DHCP Server Enabled
     syscfg_get(NULL, "dhcp_server_enabled", l_cDhcpServerEnable, sizeof(l_cDhcpServerEnable));
-    fprintf(stderr, "dhcp_server_enabled is:%s\n", l_cDhcpServerEnable);
 
 	if (!strncmp(l_cDhcpServerEnable, "0", 1))
 	{
@@ -167,12 +161,12 @@ int dhcp_server_start (char *input)
 	l_bFiles_Diff = compare_files(DHCP_CONF, l_cDhcp_Tmp_Conf);
 	if (FALSE == l_bFiles_Diff) //Files are not identical
 	{	
-		fprintf(stderr, "files are not identical restart\n");
+		fprintf(stderr, "files are not identical restart dnsmasq\n");
 		l_bRestart = TRUE;
 	}
 	else
 	{
-		fprintf(stderr, "files are identical not restarting\n");
+		fprintf(stderr, "files are identical not restarting dnsmasq\n");
 	}
 	
 	l_fFp = fopen(PID_FILE, "r");
@@ -250,7 +244,6 @@ int dhcp_server_start (char *input)
     	sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF, g_cDhcp_Script);
 	}
 
-	fprintf(stderr, "Starting dnsmasq: %s now\n", l_cSystemCmd);
 	l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
 	if (0 == l_iSystem_Res)
 	{
@@ -287,14 +280,8 @@ int dhcp_server_start (char *input)
         chmod 700 $TIME_FILE
    	fi*/
 
-	//PSM Mode
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "system_psm_mode", l_cPsm_Mode, sizeof(l_cPsm_Mode));
-	fprintf(stderr, "PSM Mode is:%s\n", l_cPsm_Mode);
-
-	//start-misc
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "start-misc", l_cStart_Misc, sizeof(l_cStart_Misc));
-	fprintf(stderr, "start-misc is:%s\n", l_cStart_Misc);
-
 	if (strcmp(l_cPsm_Mode, "1")) //PSM Mode is Not 1
 	{
 		if ((access("/var/tmp/lan_not_restart", F_OK) == -1 && errno == ENOENT) && 
@@ -319,10 +306,6 @@ int dhcp_server_start (char *input)
 		if(creat("/tmp/dhcp_server_start", S_IRUSR | S_IWUSR) == -1)
 		{
 			fprintf(stderr, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
-		}
-		else
-		{
-			fprintf(stderr, "File: /tmp/dhcp_server_start creation is successful\n");
 		}
 		system("print_uptime \"boot_to_ETH_uptime\"");
        	
@@ -355,23 +338,19 @@ int service_dhcp_init()
     char l_cDhcpSlowStartQuanta[8] = {0};
 
 	syscfg_get(NULL, "dhcp_server_propagate_wan_nameserver", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
-	fprintf(stderr, "dhcp_server_propagate_wan_nameserver is:%s\n", l_cPropagate_Ns);
 	if (strncmp(l_cPropagate_Ns, "1", 1))
 	{
-    	syscfg_get(NULL, "block_nat_redirection", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
 	    fprintf(stderr, "Propagate NS is set from block_nat_redirection value is:%s\n", l_cPropagate_Ns);
+    	syscfg_get(NULL, "block_nat_redirection", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
 	}
 
 	syscfg_get(NULL, "dhcp_server_propagate_wan_domain", l_cPropagate_Dom, sizeof(l_cPropagate_Dom));
-	fprintf(stderr, "dhcp_server_propagate_wan_domain is:%s\n", l_cPropagate_Dom);
 
 	// Is dhcp slow start feature enabled
 	int l_iSlow_Start_Needed;
 	syscfg_get(NULL, "dhcp_server_slow_start", l_cSlow_Start, sizeof(l_cSlow_Start));
-	fprintf(stderr, "dhcp_server_slow_start is:%s\n", l_cSlow_Start);
 
 	syscfg_get(NULL, "byoi_enabled", l_cByoi_Enabled, sizeof(l_cByoi_Enabled));
-	fprintf(stderr, "byoi_enabled is:%s\n", l_cByoi_Enabled);
 
 	if ((!strncmp(l_cPropagate_Ns, "1", 1)) || (!strncmp(l_cPropagate_Dom, "1", 1)) ||
 	    (!strncmp(l_cByoi_Enabled, "1", 1)))
@@ -404,13 +383,11 @@ int service_dhcp_init()
 
 	// DHCP_LEASE_TIME is the number of seconds or minutes or hours to give as a lease
 	syscfg_get(NULL, "dhcp_lease_time", g_cDhcp_Lease_Time, sizeof(g_cDhcp_Lease_Time));
-	fprintf(stderr, "dhcp_lease_time is:%s\n", g_cDhcp_Lease_Time);
 
 	if (1 == l_iSlow_Start_Needed)
 	{
 	    int l_iDhcpSlowQuanta;
     	syscfg_get(NULL, "temp_dhcp_lease_length", l_cTemp_Dhcp_Lease, sizeof(l_cTemp_Dhcp_Lease));
-	    fprintf(stderr, "temp_dhcp_lease_length is:%s\n", l_cTemp_Dhcp_Lease);
 
     	if (0 == l_cTemp_Dhcp_Lease[0])
 	    {
@@ -510,7 +487,8 @@ void lan_status_change(char *input)
         fprintf(stderr, "SERVICE DHCP : Start dhcp-server from lan status change");
 		if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
 	    {    
-    	    sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s", SERVER, DHCP_CONF, g_cDhcp_Script);
+    	    sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s", 
+					SERVER, DHCP_CONF, g_cDhcp_Script);
     	}    
     	else //If XDNS is not enabled 
     	{    

@@ -52,13 +52,8 @@ int prepare_hostname()
 	FILE *l_fHosts_Name_File = NULL;
 	int l_iRes = 0;
     
-	//HostName
     syscfg_get(NULL, "hostname", l_cHostName, sizeof(l_cHostName));
-    fprintf(stderr, "hostname is:%s\n", l_cHostName);
-    
-	//Current LAN IP Address
     syscfg_get(NULL, "current_lan_ipaddr", l_cCurLanIP, sizeof(l_cCurLanIP));
-    fprintf(stderr, "current_lan_ipaddr is:%s\n", l_cCurLanIP);
 
 	l_fHosts_File = fopen(HOSTS_FILE, "a+");
     l_fHosts_Name_File = fopen(HOSTNAME_FILE, "a+");
@@ -69,10 +64,6 @@ int prepare_hostname()
 		if (ERROR == l_iRes)
 		{
 			fprintf(stderr, "Un-Successful in setting hostname error is:%d\n", errno);
-		}
-		else
-		{
-			fprintf(stderr, "Successful in setting hostname\n");
 		}
 		if (NULL == l_fHosts_Name_File)
 	    {
@@ -132,13 +123,8 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	
 	struct sockaddr_in l_sSocAddr;
 
-	//LAN IP Address
     syscfg_get(NULL, "lan_ipaddr", l_cLanIPAddress, sizeof(l_cLanIPAddress));
-    fprintf(stderr, "lan_ipaddr is:%s\n", l_cLanIPAddress);
-    
-    //LAN Subnet Mask
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
-    fprintf(stderr, "lan_netmask is:%s\n", l_cLanNetMask);
 
 	subnet(l_cLanIPAddress, l_cLanNetMask, l_cLanSubnet);
 
@@ -288,14 +274,8 @@ void prepare_dhcp_conf_static_hosts()
         fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalStatHosts, errno);
         return;
     }
-    else
-    {
-        fprintf(stderr, "File: %s creation is successful\n", l_cLocalStatHosts);
-    }
-
     syscfg_get(NULL, "dhcp_num_static_hosts", l_cDhcpStatHosts, sizeof(l_cDhcpStatHosts));
 	l_iStatHostsNum = atoi(l_cDhcpStatHosts);
-    fprintf(stderr, "dhcp_num_static_hosts is:%d\n", l_iStatHostsNum);
 	
 	for (l_iIter = 1; l_iIter <= l_iStatHostsNum; l_iIter++)
 	{
@@ -324,12 +304,7 @@ void prepare_dhcp_options_wan_dns()
         fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalDhcpOpt, errno);
         return;
     }    
-    else 
-    {    
-        fprintf(stderr, "File: %s creation is successful\n", l_cLocalDhcpOpt);
-    } 
 	syscfg_get(NULL, "dhcp_server_propagate_wan_nameserver", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
-	fprintf(stderr, "dhcp_server_propagate_wan_nameserver is:%s\n", l_cPropagate_Ns);
 
 	if (strncmp(l_cPropagate_Ns, "1", 1))
 	{
@@ -340,8 +315,6 @@ void prepare_dhcp_options_wan_dns()
 	if (!strncmp(l_cPropagate_Ns, "1", 1))	
 	{
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan_dhcp_dns", l_cWan_Dhcp_Dns, sizeof(l_cWan_Dhcp_Dns));	
-
-		fprintf(stderr, "wan_dhcp_dns is:%s\n", l_cWan_Dhcp_Dns);
 		if (0 != l_cWan_Dhcp_Dns[0])
 		{
 			l_cToken = strtok(l_cWan_Dhcp_Dns, " ");
@@ -381,8 +354,6 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 	
     // Redirection URL can be get from DML
     syscfg_get(NULL, "redirection_url", l_cRedirect_Url, sizeof(l_cRedirect_Url));
-    fprintf(stderr, "redirection_url is:%s\n", l_cRedirect_Url);
-	
 	if (0 != l_cRedirect_Url[0])
 	{
 	    if (NULL != (l_cRemoveHttp = strstr(l_cRedirect_Url, "http://")))
@@ -424,10 +395,7 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 			fprintf(stderr, "CloudPersonalizationURL doesnt contain http / https tag\n");
 		}
 	}
-    fprintf(stderr, "CloudPersonalizationURL after stripping http is:%s\n", l_cCloud_Personal_Url);
-
 	iface_get_ipv4addr(WAN_IF_NAME, l_cErouter0_Ipv4Addr, sizeof(l_cErouter0_Ipv4Addr));
-	fprintf(stderr, "erouter0 IPv4 Address is:%s\n", l_cErouter0_Ipv4Addr);
     if (0 != l_cErouter0_Ipv4Addr[0])
    	{
     	//TODO see if getting IPv4 name server can be moved to a function
@@ -466,7 +434,6 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 
 	if (0 != l_cNsServer4[0])
 	{
-		fprintf(stderr, "IPv4 nameserver is present, whitelist urls\n");
 		fprintf(fp_local_dhcp_conf, "server=/%s/%s\n", l_cRedirect_Url, l_cNsServer4);	
 		fprintf(fp_local_dhcp_conf, "server=/%s/%s\n", l_cCloud_Personal_Url, l_cNsServer4);
 
@@ -504,7 +471,6 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix)
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 				 "dhcp_server_current_pools", l_cPools, sizeof(l_cPools));
 
-	fprintf(stderr, "DHCP_SERVER : dhcp_server pools not availble\n");
 	l_cToken = strtok(l_cPools, "\n");
 	while(l_cToken != NULL)	
 	{
@@ -515,15 +481,12 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix)
     		sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 						 l_cSysevent_Cmd, l_cDhcpEnabled, sizeof(l_cDhcpEnabled));
 
-			fprintf(stderr, "l_cSysevent_Cmd:%s is:%s\n", l_cSysevent_Cmd, l_cDhcpEnabled);	
 			if (!strncmp(l_cDhcpEnabled, "TRUE", 4))
 			{
-				fprintf(stderr, "dhcp_server_%d_enabled is true\n", l_iPool);
 				sprintf(l_cSysevent_Cmd, "dhcp_server_%d_ipv4inst", l_iPool);
     			sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 							 l_cSysevent_Cmd, l_cIpv4Inst, sizeof(l_cIpv4Inst));
 				l_iIpv4Inst = atoi(l_cIpv4Inst);	
-				fprintf(stderr, "Ipv4 Instance is:%d\n", l_iIpv4Inst);
 				
 				sprintf(l_cSysevent_Cmd, "ipv4_%d-status", l_iIpv4Inst);	
     			sysevent_get(g_iSyseventfd, g_tSysevent_token, 
@@ -582,7 +545,6 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix)
 //1st Input Lan IP Address and 2nd Input LAN Subnet Mask
 int prepare_dhcp_conf (char *input)
 {
-	fprintf(stderr, "Inside prepare_dhcp_conf function\n");  
     char l_cNetwork_Res[8] = {0}, l_cLocalDhcpConf[32] = {0};
     char l_cLanIPAddress[16] = {0}, l_cLanNetMask[16] = {0}, l_cLan_if_name[16] = {0};
     char l_cCaptivePortalEn[8] = {0}, l_cRedirect_Flag[8] = {0}, l_cMigCase[8] = {0};
@@ -609,10 +571,6 @@ int prepare_dhcp_conf (char *input)
 		fprintf(stderr, "dns_only case prefix is #\n");
 		l_cDns_Only_Prefix[0] = '#';
 	}
-	else
-	{
-		fprintf(stderr, "not a dns_only case prefix is empty\n");
-	}
 
 	sprintf(l_cLocalDhcpConf, "/tmp/dnsmasq.conf%d", getpid());
 	l_fLocal_Dhcp_ConfFile = fopen(l_cLocalDhcpConf, "a+"); //It will create a file and open
@@ -621,31 +579,12 @@ int prepare_dhcp_conf (char *input)
         fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalDhcpConf, errno);
 		return 0;
     }   
-    else
-    {   
-        fprintf(stderr, "File: %s creation is successful\n", l_cLocalDhcpConf);
-    }
    	
-    //LAN IP Address
     syscfg_get(NULL, "lan_ipaddr", l_cLanIPAddress, sizeof(l_cLanIPAddress));
-    fprintf(stderr, "lan_ipaddr is:%s\n", l_cLanIPAddress);
-    
-    //LAN Subnet Mask
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
-    fprintf(stderr, "lan_netmask is:%s\n", l_cLanNetMask);
-
-    //Lan Interface
     syscfg_get(NULL, "lan_ifname", l_cLan_if_name, sizeof(l_cLan_if_name));
-    fprintf(stderr, "lan_ifname is:%s\n", l_cLan_if_name);
-
-    //Captive Portal Enable Flag
     syscfg_get(NULL, "CaptivePortal_Enable", l_cCaptivePortalEn, sizeof(l_cCaptivePortalEn));
-    fprintf(stderr, "CaptivePortal_Enable is:%s\n", l_cCaptivePortalEn);
-
-    //Redirection Flag
     syscfg_get(NULL, "redirection_flag", l_cRedirect_Flag, sizeof(l_cRedirect_Flag));
-    fprintf(stderr, "redirection_flag is:%s\n", l_cRedirect_Flag);
-
 
     l_fNetRes = fopen(NETWORK_RES_FILE, "r");
     if (NULL == l_fNetRes)
@@ -655,7 +594,6 @@ int prepare_dhcp_conf (char *input)
     else
 	{
         fscanf(l_fNetRes,"%s", l_cNetwork_Res);
-		fprintf(stderr, "%s file is present read network response\n", NETWORK_RES_FILE);
 		fclose(l_fNetRes);
 	}	
    
@@ -683,13 +621,9 @@ int prepare_dhcp_conf (char *input)
 	if (IS_MIG_CHECK_NEEDED(g_cMfg_Name))
 	{
 		fprintf(stderr, "Wifi Migration checks are needed\n");
-	    //Migration Case
-    	syscfg_get(NULL, "migration_cp_handler", l_cMigCase, sizeof(l_cMigCase));
-	    fprintf(stderr, "migration_cp_handler is:%s\n", l_cMigCase);
-
-    	//Wan Service status
+    	
+		syscfg_get(NULL, "migration_cp_handler", l_cMigCase, sizeof(l_cMigCase));
 	    sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan_service-status", l_cWan_Service_Stat, sizeof(l_cWan_Service_Stat));
-    	fprintf(stderr, "wan_service-status is:%s\n", l_cWan_Service_Stat);
 
 		l_iRetry_Count = 0;
 		l_iRet_Val = PSM_VALUE_GET_STRING(PSM_NAME_WIFI_RES_MIG, l_cpPsm_Get);
@@ -804,7 +738,6 @@ int prepare_dhcp_conf (char *input)
 			l_fDef_Resolv = fopen(DEFAULT_RESOLV_CONF, "a+");	
 			if (NULL != l_fDef_Resolv)
 			{
-				fprintf(stderr, "%s file creation is successful\n", DEFAULT_RESOLV_CONF);
     			fprintf(l_fDef_Resolv, "nameserver 127.0.0.1\n");
 			    fprintf(l_fLocal_Dhcp_ConfFile, "resolv-file=%s\n",DEFAULT_RESOLV_CONF);
 				fclose(l_fDef_Resolv);
@@ -828,19 +761,16 @@ int prepare_dhcp_conf (char *input)
 
 	//Propagate Domain
 	syscfg_get(NULL, "dhcp_server_propagate_wan_domain", l_cPropagate_Dom, sizeof(l_cPropagate_Dom));
-    fprintf(stderr, "dhcp_server_propagate_wan_domain is:%s\n", l_cPropagate_Dom);	
 
 	// if we are provisioned to use the wan domain name, the we do so
    	// otherwise we use the lan domain name
 	if (!strncmp(l_cPropagate_Dom, "1", 1))
 	{
     	sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_domain", l_cLan_Domain, sizeof(l_cLan_Domain));
-		fprintf(stderr, "l_cPropagate_Dom is 1, dhcp_domain is:%s\n", l_cLan_Domain);
 	}	
 	if (0 == l_cLan_Domain[0])	
 	{
 		syscfg_get(NULL, "lan_domain", l_cLan_Domain, sizeof(l_cLan_Domain));
-		fprintf(stderr, "lan_domain is NULL get it from lan_domain:%s\n", l_cLan_Domain);
 	}
 	if (0 != l_cLan_Domain[0])
 	{
@@ -849,7 +779,6 @@ int prepare_dhcp_conf (char *input)
 
 	//Log Level is not used but still retaining the code
 	syscfg_get(NULL, "log_level", l_cLog_Level, sizeof(l_cLog_Level));
-    fprintf(stderr, "log_level is:%s\n", l_cLog_Level);
 	if (0 == l_cLog_Level[0])
 	{
 		strncmp(l_cLog_Level, "1", 1);
@@ -864,8 +793,6 @@ int prepare_dhcp_conf (char *input)
 	fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-leasefile=%s\n", l_cDns_Only_Prefix, DHCP_LEASE_FILE);
 	//DHCP_NUM is the number of available dhcp address for the lan
 	syscfg_get(NULL, "dhcp_num", l_cDhcp_Num, sizeof(l_cDhcp_Num));
-	fprintf(stderr, "dhcp_num is:%s\n", l_cDhcp_Num);
-
 	if (0 == l_cDhcp_Num[0])
 	{
 	    fprintf(stderr, "DHCP NUM is empty, set the dhcp_num integer as zero\n");
@@ -916,30 +843,16 @@ int prepare_dhcp_conf (char *input)
 
 	//Lost And Found Enable
     syscfg_get(NULL, "lost_and_found_enable", l_cIotEnabled, sizeof(l_cIotEnabled));
-    fprintf(stderr, "lost_and_found_enable is:%s\n", l_cIotEnabled);
-	
 	if (!strncmp(l_cIotEnabled, "true", 4))
 	{
     	fprintf(stderr, "IOT_LOG : DHCP server configuring for IOT\n");
 
-		//IOT Interface
 	    syscfg_get(NULL, "iot_ifname", l_cIotIfName, sizeof(l_cIotIfName));
-    	fprintf(stderr, "iot_ifname is:%s\n", l_cIotIfName);
-
-		//IOT Start Address
 	    syscfg_get(NULL, "iot_dhcp_start", l_cIotStartAddr, sizeof(l_cIotStartAddr));
-    	fprintf(stderr, "iot_dhcp_start is:%s\n", l_cIotStartAddr);
-		
-		//IOT End Address
 	    syscfg_get(NULL, "iot_dhcp_end", l_cIotEndAddr, sizeof(l_cIotEndAddr));
-    	fprintf(stderr, "iot_dhcp_end is:%s\n", l_cIotEndAddr);
-		
-		//IOT Netmask
 	    syscfg_get(NULL, "iot_netmask", l_cIotNetMask, sizeof(l_cIotNetMask));
-    	fprintf(stderr, "iot_netmask is:%s\n", l_cIotNetMask);
 		
     	fprintf(l_fLocal_Dhcp_ConfFile, "interface=%s\n", l_cIotIfName);
-	
 		if (!strncmp(g_cDhcp_Lease_Time, "-1", 2))
 		{
 			//TODO add dns_only prefix 
