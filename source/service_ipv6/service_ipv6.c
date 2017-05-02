@@ -256,7 +256,40 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
     
     if(iana == NULL || iapd == NULL)
         return -1;
-
+#ifdef _CBR_PRODUCT_REQ_ 
+	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_T1_SYSEVENT_NAME, action, sizeof(action));
+	if(action[0]!='\0')
+	{
+		if(!strcmp(action,"'\\0'"))
+			strcpy(iapd->t1,"0");
+		else
+			strcpy(iapd->t1,strtok (action,"'"));
+	}
+	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_T2_SYSEVENT_NAME, action, sizeof(action));
+	if(action[0]!='\0')
+	{
+		if(!strcmp(action,"'\\0'"))
+			strcpy(iapd->t2,"0");
+		else
+			strcpy(iapd->t2,strtok (action,"'"));
+	}
+	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, action, sizeof(action));
+	if(action[0]!='\0')
+	{
+		if(!strcmp(action,"'\\0'"))
+			strcpy(iapd->pretm,"0");
+		else
+			strcpy(iapd->pretm,strtok (action,"'"));
+	}
+	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME, action, sizeof(action));	
+	if(action[0]!='\0')
+	{
+		if(!strcmp(action,"'\\0'"))
+			strcpy(iapd->vldtm,"0");
+		else
+			strcpy(iapd->vldtm,strtok (action,"'"));
+	}
+#else
     fd = open(config_file, O_RDWR);
 
     if (fd < 0) {
@@ -310,7 +343,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
    sysevent_set(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, iapd->pretm, 0);
    sysevent_set(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME, iapd->vldtm, 0);
 #endif
-
+#endif	
     return 0;
 }
 
@@ -884,7 +917,11 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
             /*pd pool*/
             if(get_pd_pool(si6, &pd_pool) == 0) {
                 fprintf(fp, "   pd-class {\n");
-                fprintf(fp, "       pd-pool %s - %s /%d\n", pd_pool.start, pd_pool.end, pd_pool.prefix_length);
+#ifdef _CBR_PRODUCT_REQ_
+                fprintf(fp, "       pd-pool %s /%d\n", pd_pool.start, pd_pool.prefix_length);
+#else
+				fprintf(fp, "       pd-pool %s - %s /%d\n", pd_pool.start, pd_pool.end, pd_pool.prefix_length);
+#endif	
                 fprintf(fp, "       pd-length %d\n", pd_pool.pd_length);
 
                 if (ret == 0 ) {
@@ -1001,13 +1038,14 @@ static int serv_ipv6_start(struct serv_ipv6 *si6)
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
-
+	/* For CBR product the lan(brlan0) v6 address set is done as part of PandM process*/
+#ifndef _CBR_PRODUCT_REQ_
     if (lan_addr6_set(si6) !=0) {
         fprintf(stderr, "assign IPv6 address for lan interfaces error!\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
-
+#endif
     /*start zebra*/
     sysevent_set(si6->sefd, si6->setok, "zebra-restart", NULL, 0);
 
@@ -1033,13 +1071,13 @@ static int serv_ipv6_stop(struct serv_ipv6 *si6)
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
-
+#ifndef _CBR_PRODUCT_REQ_
     if (lan_addr6_unset(si6) !=0) {
         fprintf(stderr, "unset IPv6 address for lan interfaces error!\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
-
+#endif
     sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "stopped", 0);
     return 0;
 }
