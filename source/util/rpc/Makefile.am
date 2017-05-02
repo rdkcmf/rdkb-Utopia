@@ -16,4 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = client server
+SUBDIRS = server
+
+if ENABLE_RPCCLIENT
+SUBDIRS += client
+endif

@@ -96,6 +96,25 @@ fi
 
 AM_CONDITIONAL(CCSP_PLATFORM_BCM, test "x$CCSP_PLATFORM" = xbcm)
 
+
+# rpcclient
+AC_ARG_WITH([rpcclient],
+[AC_HELP_STRING([--with-rpcclient={enable,disable}],
+                [enable/disable rpccleint from build])],
+[case x"$withval" in
+   xenable)
+     RPC_CLIENT=enable
+     ;;
+   xfalse)
+     RPC_CLIENT=disable
+     ;;
+   *)
+     AC_MSG_ERROR([$withval is an invalid option to --with-rpcclient])
+     ;;
+ esac],
+)
+AM_CONDITIONAL(ENABLE_RPCCLIENT, test "x$RPC_CLIENT" = xenable)
+
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
 
