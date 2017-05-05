@@ -38,9 +38,8 @@ extern void subnet(char *ipv4Addr,
 unsigned int countSetBits(int byte)
 {
     unsigned int l_iCount = 0;
-    if (isValidSubnetByte(byte))
+    if (isValidSubnetByte(byte) || 0 == byte)
     {   
-        fprintf(stderr, "Valid subnet byte:%d\n", byte);
         while (byte)
         {   
             byte &= (byte-1);
@@ -60,7 +59,6 @@ unsigned int mask2cidr(char *subnetMask)
     int l_iFirstByte, l_iSecondByte, l_iThirdByte, l_iFourthByte;
     int l_iCIDR = 0;
 
-    fprintf(stderr, "subnetmask to convert to CIDR is:%s\n", subnetMask);
     sscanf(subnetMask, "%d.%d.%d.%d", &l_iFirstByte, &l_iSecondByte, 
 			&l_iThirdByte, &l_iFourthByte);
 
@@ -73,7 +71,6 @@ unsigned int mask2cidr(char *subnetMask)
 
 void remove_config(int l3_inst)
 {
-	fprintf(stderr, "Inside remove_config function\n");
 	char l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0};
 	char l_cIfName[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cSubnet[16] = {0};
 	int l_iRT_Table, l_iCIDR;	
@@ -152,7 +149,6 @@ void remove_config(int l3_inst)
 
 void teardown_instance(int l3_inst)
 {
-	fprintf(stderr, "Inside teardown_instance fn input is:%d\n", l3_inst);
 	char l_cAsyncIDString[16] = {0}, l_cIpv4_Instances[8] = {0};
 	char l_cLower[8] = {0}, l_cActiveInstances[8] = {0};
 	char l_cSysevent_Cmd[255] = {0};
@@ -212,7 +208,6 @@ void sync_tsip ()
 		if (l_cpPsm_Get != NULL)
 		{
 			strncpy(l_cNv_Tsip_Enable, l_cpPsm_Get, sizeof(l_cNv_Tsip_Enable));
-    	    fprintf(stderr, "dmsb.truestaticip.Enable is %s\n", l_cNv_Tsip_Enable);
         	Ansc_FreeMemory_Callback(l_cpPsm_Get);
 	        l_cpPsm_Get = NULL;
 		}
@@ -235,7 +230,6 @@ void sync_tsip ()
 		if (l_cpPsm_Get != NULL)
 	    {
     	    strncpy(l_cNvTsip_IpAddr, l_cpPsm_Get, sizeof(l_cNvTsip_IpAddr));
-        	fprintf(stderr, "dmsb.truestaticip.Ipaddress is %s\n", l_cNvTsip_IpAddr);
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}
@@ -258,9 +252,6 @@ void sync_tsip ()
 		if (l_cpPsm_Get != NULL)
 	    {
     	    strncpy(l_cNvTsip_IpSubnet, l_cpPsm_Get, sizeof(l_cNvTsip_IpSubnet));
-        	fprintf(stderr, "dmsb.truestaticip.Subnetmask is %s\n", 
-					l_cNvTsip_IpSubnet);
-
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}
@@ -285,7 +276,6 @@ void sync_tsip ()
 		if (l_cpPsm_Get != NULL)
 	    {
     	    strncpy(l_cNvTsip_Gateway, l_cpPsm_Get, sizeof(l_cNvTsip_Gateway));
-        	fprintf(stderr, "dmsb.truestaticip.Gateway is %s\n", l_cNvTsip_Gateway);
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}
@@ -331,7 +321,6 @@ void sync_tsip ()
 
 void sync_tsip_asn () 
 {
-	fprintf(stderr, "Inside sync_tsip_asn function\n");
 	char l_cNv_Tsip_Asn_Ip[16] = {0}, l_cNv_Tsip_Asn_Subnet[16] = {0}, l_cSubnet[16] = {0};
 	char l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
 	unsigned int l_iTs_Asn_Count = 0;
@@ -472,9 +461,6 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
     int l_iRT_Table, l_iCIDR;   
 	FILE *l_fArp_Ignore = NULL;
     
-	fprintf(stderr, "Inside apply_config function static values:%s  %s\n", 
-			staticIpv4Addr, staticIpv4Subnet);
-
 	if (NULL == staticIpv4Addr || 0 == staticIpv4Addr[0])
 	{
 		fprintf(stderr, "Static IPv4 Address is empty get it from ipv4_%d-ipv4addr\n", 
@@ -544,8 +530,6 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	{
 		char l_cLast_Erouter_Mode[8] = {0};
     	syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
-	    fprintf(stderr, "last erouter mode is:%s\n", l_cLast_Erouter_Mode);
-	
 		if ((!strncmp(l_cLast_Erouter_Mode, "1", 1)) || (!strncmp(l_cLast_Erouter_Mode, "3", 1)))
 		{
 			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
@@ -662,7 +646,6 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 
 void load_static_l3 (int l3_inst) 
 {
-	fprintf(stderr, "Inside load_static_l3 function\n");
 	char l_cStatic_V4_Addr[16] = {0}, l_cStatic_V4_Subnet[16] = {0};
 	char l_cPsm_Parameter[255] = {0};
 	char l_cSysevent_Cmd[255] = {0};
@@ -677,7 +660,6 @@ void load_static_l3 (int l3_inst)
 		if(l_cpPsm_Get != NULL)
     	{    
         	strncpy(l_cStatic_V4_Addr, l_cpPsm_Get, sizeof(l_cStatic_V4_Addr));
-	        fprintf(stderr, "Static IPv4 Address is %s\n", l_cStatic_V4_Addr);
     	    Ansc_FreeMemory_Callback(l_cpPsm_Get);
         	l_cpPsm_Get = NULL;
 		}
@@ -698,7 +680,6 @@ void load_static_l3 (int l3_inst)
 		if (l_cpPsm_Get != NULL)
 	    { 
     	    strncpy(l_cStatic_V4_Subnet, l_cpPsm_Get, sizeof(l_cStatic_V4_Subnet));
-        	fprintf(stderr, "Static IPv4 Subnetmask is %s\n", l_cStatic_V4_Subnet);
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}
@@ -755,10 +736,6 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 	char l_cIfName[16] = {0};
 	char l_cL2Inst[8] = {0};
 
-	fprintf(stderr, "Inside handle_l2_status function input L3 Instance:%d ", l3_inst);
-	fprintf(stderr, "L2 Instance:%d, Multinet Status:%s input:%d\n", 
-			l2_inst, net_status, input);
-
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "multinet_%d-localready", l2_inst);
     sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 				 l_cSysevent_Cmd, l_cLocalReady, sizeof(l_cLocalReady));
@@ -782,7 +759,6 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ifname", l3_inst);
    		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cIfName, 0);
 
-		fprintf(stderr, "Calling load_static_l3 function with input:%d\n", l3_inst);
 		load_static_l3(l3_inst);
 	}
     else
@@ -987,10 +963,8 @@ void resync_instance (int l3_inst)
 			l_cNv_Ip, l_cNv_Subnet, l_cLower, l_cCur_Ipv4_Addr, l_cCur_Ipv4_Subnet);
 
 	l_iL2Inst = atoi(l_cNv_Lower);
-	fprintf(stderr, "L2 Instance from NV_LOWER:%s is:%d\n", l_cNv_Lower, l_iL2Inst);	
 	if (strncmp(l_cNv_Lower, l_cLower, 1)) //NV_LOWER != LOWER
 	{
-		fprintf(stderr, "NV_LOWER and LOWER are not equal\n");
         //#different lower layer, teardown and switch
 		if (0 != l_cLower[0])
 		{
@@ -1037,15 +1011,11 @@ void resync_instance (int l3_inst)
 						 l_cSysevent_Cmd, l_cNv_Lower_Status, 
 						 sizeof(l_cNv_Lower_Status));
 
-			fprintf(stderr, "sysevent get multinet_%s-status is:%s\n", 
-					l_cNv_Lower, l_cNv_Lower_Status);	
-			fprintf(stderr, "Calling handle_l2_status for L3 Instance:%d\n", l3_inst);
 			handle_l2_status(l3_inst, l_iL2Inst, l_cNv_Lower_Status, 1);
         }
 	}
     else
 	{
-		fprintf(stderr, "NV_LOWER and LOWER are equal\n");
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4_static", l3_inst);
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 					 l_cSysevent_Cmd, l_cIpv4_Static, 
@@ -1058,16 +1028,12 @@ void resync_instance (int l3_inst)
 				(strncmp(l_cCur_Ipv4_Subnet, l_cNv_Subnet, 15)))
 			{
                 // Same lower layer, but static IP info changed.
-				fprintf(stderr, "Calling remove_config with input:%d\n", l3_inst);
 				remove_config(l3_inst);
-
 				snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
 						 "multinet_%s-status", l_cNv_Lower);
      			sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 							 l_cSysevent_Cmd, l_cNv_Lower_Status, 
 							 sizeof(l_cNv_Lower_Status));
-				fprintf(stderr, "sysevent get multinet_%s-status is:%s\n", 
-						l_cNv_Lower, l_cNv_Lower_Status);	
 
 				//4th parameter is not passed in shell script but passing it as zero in C code
 				handle_l2_status(l3_inst, l_iL2Inst, l_cNv_Lower_Status, 0);
@@ -1094,7 +1060,6 @@ void ipv4_up(char *l3_inst)
     else
 	{
 		fprintf(stderr, "Lower is not empty Calling handle_l2_status\n");
-
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
 				 "multinet_%s-status", l_cLower);
 

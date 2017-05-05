@@ -33,7 +33,6 @@ void bring_lan_up()
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_handler_async", 
 				 l_cAsyncId, sizeof(l_cAsyncId));
 
-	fprintf(stderr, "Inside bring_lan_up \n");
 	if (0 == l_cAsyncId[0])
 	{
 		//L3 Instance
@@ -165,17 +164,14 @@ void ipv4_status(int l3_inst, char *status)
 	struct sysinfo l_sSysInfo;
 	FILE *l_fFp = NULL;	
 
-	fprintf(stderr, "Inside ipv4_status L3Instance:%d L3Status:%s\n", l3_inst, status);
 	if (!strncmp(status, "up", 2))
 	{	
     	syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
-	    fprintf(stderr, "last erouter mode is:%s\n", l_cLast_Erouter_Mode);
 
 		sprintf(l_cSysevent_Cmd, "ipv4_%d-ifname", l3_inst);	
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cLanIfName, sizeof(l_cLanIfName));
 
         // if it's ipv4 only, not enable link local 
-        fprintf(stderr, "lan_handler.sh last_erouter_mode:%s\n", l_cLast_Erouter_Mode);
 		if (!strncmp(l_cLast_Erouter_Mode, "1", 1))
 		{
 			//Do not do SLAAC
@@ -286,7 +282,6 @@ void ipv4_status(int l3_inst, char *status)
 
 		char l_cStart_Misc[16] = {0};
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, "start-misc", l_cStart_Misc, sizeof(l_cStart_Misc));
-		fprintf(stderr, "start-misc is:%s\n", l_cStart_Misc);
 
 		char l_cCurrentWan_IpAddr[16] = {0};
 	    sysevent_get(g_iSyseventfd, g_tSysevent_token, "current_wan_ipaddr", 
@@ -315,11 +310,13 @@ void ipv4_status(int l3_inst, char *status)
 				l_iRes = iface_get_hwaddr(LAN_IF_NAME, l_cBrlan0_Mac, sizeof(l_cBrlan0_Mac));
 				if (0 == l_iRes)
 				{
-					fprintf(stderr, "Successful in getting %s MAC address:%s\n", LAN_IF_NAME, l_cBrlan0_Mac);
+					fprintf(stderr, "Successful in getting %s MAC address:%s\n", 
+									LAN_IF_NAME, l_cBrlan0_Mac);
 				}
 				else
 				{
-					fprintf(stderr, "Un-Successful in getting %s MAC address\n", LAN_IF_NAME);
+					fprintf(stderr, "Un-Successful in getting %s MAC address\n", 
+									LAN_IF_NAME);
 				}
             }
 
@@ -408,10 +405,8 @@ void lan_restart()
 	int l_iLanInst, l_iRetVal;
 
 	syscfg_get(NULL, "lan_ipaddr", l_cLanIpAddr, sizeof(l_cLanIpAddr));
-	fprintf(stderr, "Lan IP Address:%s\n", l_cLanIpAddr);
 
 	syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
-	fprintf(stderr, "Lan Subnet Mask:%s\n", l_cLanNetMask);
 
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "primary_lan_l3net", 
 				 l_cLanInst, sizeof(l_cLanInst));
@@ -425,8 +420,6 @@ void lan_restart()
    	if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
 	{
         strncpy(l_cPsmGetLanIp, l_cpPsm_Get, sizeof(l_cPsmGetLanIp));
-   	    fprintf(stderr, "PSM GET of LAN IP Addr:%s\n", 
-				l_cPsmGetLanIp);
 	}
 	else
 	{
@@ -441,8 +434,6 @@ void lan_restart()
    	if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
 	{
         strncpy(l_cPsmGetLanSubNet, l_cpPsm_Get, sizeof(l_cPsmGetLanSubNet));
-   	    fprintf(stderr, "PSM GET of LAN Subnet Mask:%s\n", 
-				l_cPsmGetLanSubNet);
 	}
 	else
 	{
@@ -526,4 +517,3 @@ void lan_restart()
     }
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_restarted", "done", 0);
 }
-

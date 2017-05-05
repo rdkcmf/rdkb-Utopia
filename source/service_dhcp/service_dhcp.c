@@ -50,8 +50,6 @@ int dbusInit( void )
 
     if(g_vBus_handle == NULL)
     {
-        fprintf(stderr, "dbusInit, called\n");
-
         // Dbus connection init
         #ifdef DBUS_INIT_SYNC_MODE
         ret = CCSP_Message_Bus_Init_Synced(g_cComponent_id,
@@ -135,10 +133,6 @@ void get_device_props()
                 strncpy(g_cAtom_Arping_IP, property, (strlen(props) - strlen("ATOM_ARPING_IP=")));
             }
         }
-		fprintf(stderr, "BOX_TYPE=%s\n", g_cBox_Type);
-		fprintf(stderr, "XDNS_ENABLE=%s\n", g_cXdns_Enabled);
-		fprintf(stderr, "MFG_NAME=%s\n", g_cMfg_Name);
-		fprintf(stderr, "ATOM_ARPING_IP=%s\n", g_cAtom_Arping_IP);
         fclose(l_fFp);
     }   
 }
@@ -147,11 +141,7 @@ void executeCmd(char *cmd)
 {
 	int l_iSystem_Res;
 	l_iSystem_Res = system(cmd);
-    if (0 == l_iSystem_Res || ECHILD == errno)
-    {
-        fprintf(stderr, "%s command executed successfully\n", cmd);
-    }
-    else
+    if (0 != l_iSystem_Res && ECHILD == errno)
     {
         fprintf(stderr, "%s command didnt execute successfully\n", cmd);
     }
@@ -183,13 +173,10 @@ void remove_file(char *tb_removed_file)
 {
     int l_iRemove_Res;
     l_iRemove_Res = remove(tb_removed_file);
-    if (0 == l_iRemove_Res)
+    if (0 != l_iRemove_Res)
     {
-        fprintf(stderr, "remove of %s is successful\n", tb_removed_file);
-    }
-    else
-    {
-        fprintf(stderr, "remove of %s file is not successful error is:%d\n", tb_removed_file, errno);
+        fprintf(stderr, "remove of %s file is not successful error is:%d\n", 
+				tb_removed_file, errno);
     }
 }
 
@@ -259,19 +246,13 @@ BOOL compare_files(char *input_file1, char *input_file2)
         l_cCmpRes = strcmp(l_cFilebuff, l_cFilebuff2);
         if (l_cCmpRes != 0)
         {
-            fprintf(stderr, "The files differ on line %d.\n", l_iLineNum);
             fclose(l_fP1);
             fclose(l_fP2);
             return FALSE;
         }
-        else
-        {
-            fprintf(stderr, "Line %d is matching\n", l_iLineNum);
-        }
         l_cpFgets_Res = fgets(l_cFilebuff, MAXLINE, l_fP1);
         l_cpFgets_Res2 = fgets(l_cFilebuff2, MAXLINE, l_fP2);
     }
-    fprintf(stderr, "The files %s %s are identical\n", input_file1, input_file2);
     fclose(l_fP1);
     fclose(l_fP2);
     return TRUE;
@@ -319,7 +300,6 @@ void subnet(char *ipv4Addr, char *ipv4Subnet, char *subnet)
 
 int sysevent_syscfg_init()
 {
-	fprintf(stderr, "Initializing sysevent and syscfg descriptors\n");
 	g_iSyseventfd = sysevent_open("127.0.0.1", SE_SERVER_WELL_KNOWN_PORT, SE_VERSION,
                                                "service_dhcp", &g_tSysevent_token);
 
@@ -337,10 +317,6 @@ int sysevent_syscfg_init()
     {    
         fprintf(stderr, "service_dhcp::sysevent_open failed\n");
 		return ERROR;
-    }        
-    else 
-    {    
-        fprintf(stderr, "service_dhcp::sysevent_open success\n");
     }        
 
     if (syscfg_init() != 0) {
@@ -372,12 +348,9 @@ int main(int argc, char *argv[])
 	}
 
 	if (0 == g_iSyseventfd)
-    {
-        fprintf(stderr, "sysevent file descriptor is zero call service_dhcp_init\n");
 		sysevent_syscfg_init();
-    }
+	
 	fprintf(stderr, "%s case\n", argv[1]);
-
 	if ((!strncmp(argv[1], "dhcp_server-start", 17)) ||
 		(!strncmp(argv[1], "dhcp_server-restart", 19)))
 	{
@@ -437,7 +410,6 @@ int main(int argc, char *argv[])
 	//service_ipv4.sh related
 	else if(!strncmp(argv[1], "ipv4-up", 7)) 
     {   
-        fprintf(stderr, "%s case\n", argv[1]);
         if (argc > 2)
         {
             ipv4_up(argv[2]);
@@ -453,7 +425,6 @@ int main(int argc, char *argv[])
             (!strncmp(argv[1], "multinet_4-status", 17)))
     {   
         int l_iL2Inst, l_iL3Inst;
-        fprintf(stderr, "%s case\n", argv[1]);
         if (argc > 3)
         {   
             sscanf(argv[1], "multinet_%d-status", &l_iL2Inst);
