@@ -375,7 +375,7 @@ get_ssids() {
         #zqiu: Radio instance number should be get from the DML, instead of real radio id in bbhm +1
 		#radio=$(( `psmcli get $WIFI_PSM_PREFIX.${winst}.${WIFI_RADIO_INDEX}` + 1 ))
         radio=`dmcli eRT getv ${i}LowerLayers  | grep string,  | awk '{print $5}' | cut -d . -f 4 `
-        expr match "$radios" '.*\b\('$winst'\)\b.*' > /dev/null
+        expr match "$radios" '.*\b\('$radio'\)\b.*' > /dev/null
         if [ 0 != $? ]; then
             #add this radio instance
             radios="$radios $radio"
