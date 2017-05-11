@@ -416,6 +416,11 @@ vconfig add l2sd0 500
 $SWITCH_HANDLER addVlan 0 500 sw_6
 ifconfig l2sd0.500 192.168.101.1
 
+#start  ntpd server on ARM
+if [ "x$BOX_TYPE" = "xXB3" ]
+then
+	ntpd -I $SOURCE_PING_INTF
+fi
 #--------Set up Radius vlan -------------------
 vconfig add l2sd0 4090
 $SWITCH_HANDLER addVlan 0 4090 sw_6

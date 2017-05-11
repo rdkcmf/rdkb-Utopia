@@ -54,6 +54,7 @@ AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir
 02_managed_SOURCES = 02_managed.c
 25_crond_SOURCES = 25_crond.c
 10_ntpclient_SOURCES = 10_ntpclient.c
+10_ntpd_SOURCES = 10_ntpd.c
 20_routing_SOURCES = 20_routing.c
 02_multinet_SOURCES = 02_multinet.c
 04_byoi_gap_SOURCES = 04_byoi_gap.c
