@@ -68,6 +68,9 @@ FILE *mnetfp = NULL;
  int handle_restart(char* argv[], int argc);
  int handle_ifStatus(char* argv[], int argc);
  int set_multicast_mac(char* argv[], int argc);
+ int add_ipc_vlan(char* argv[], int argc);
+ int add_radius_vlan(char* argv[], int argc);
+ int create_mesh_vlan(char* argv[], int argc);
  
  EntryCall calls[] = {
 	 {"multinet-up", handle_up},
@@ -79,6 +82,9 @@ FILE *mnetfp = NULL;
 	 {"multinet-syncNets", handle_syncNets},
 	 {"multinet-restart", handle_restart},
 	 {"set_multicast_mac", set_multicast_mac},
+	 {"add_ipc_vlan", add_ipc_vlan},
+	 {"add_radius_vlan", add_radius_vlan},
+	 {"create_mesh_vlan", create_mesh_vlan},
  };
 	 
  
@@ -165,5 +171,26 @@ FILE *mnetfp = NULL;
 	MNET_DEBUG("Setting Multicast MACs early\n")
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
 	setMulticastMac();
+#endif
+ }
+
+ int add_ipc_vlan(char* argv[], int argc)
+ {
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+    addIpcVlan();
+#endif	
+ }
+
+ int add_radius_vlan(char* argv[], int argc)
+ {
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+    addRadiusVlan();
+#endif
+ }
+
+ int create_mesh_vlan(char* argv[], int argc)
+ {
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+    createMeshVlan();
 #endif
  }
