@@ -18,6 +18,7 @@
 #define DHCP_CONF   "/var/dnsmasq.conf"
 #define PID_FILE    "/var/run/dnsmasq.pid"
 #define RPC_CLIENT	"/usr/bin/rpcclient"
+#define XHS_IF_NAME "brlan1"
 
 #define ERROR   	-1
 #define SUCCESS 	0
@@ -314,6 +315,18 @@ int dhcp_server_start (char *input)
 		executeCmd(l_cRpc_Cmd);
        	system("print_uptime \"boot_to_WIFI_uptime\"");
 	}
+   
+    // This function is called for brlan0 and brlan1
+    // If brlan1 is available then XHS service is available post all DHCP configuration   
+    if (is_iface_present(XHS_IF_NAME))
+    {   
+        fprintf(stderr, "Xfinityhome service is UP\n");
+        system("print_uptime \"boot_to_XHOME_uptime\"");
+    }   
+    else
+    {   
+        fprintf(stderr, "Xfinityhome service is not UP yet\n");
+    }
 
 	sprintf(l_cPmonCmd, "%s setproc dhcp_server %s %s \"%s dhcp_server-restart\"", 
 			PMON, BIN, PID_FILE, THIS);

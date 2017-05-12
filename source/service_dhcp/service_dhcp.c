@@ -141,7 +141,7 @@ void executeCmd(char *cmd)
 {
 	int l_iSystem_Res;
 	l_iSystem_Res = system(cmd);
-    if (0 != l_iSystem_Res && ECHILD == errno)
+    if (0 != l_iSystem_Res && ECHILD != errno)
     {
         fprintf(stderr, "%s command didnt execute successfully\n", cmd);
     }
