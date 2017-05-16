@@ -135,8 +135,6 @@
 *     Notes: All the below functions should be implemented based on your   
 *     products when you port IGD to them
 ************************************************************************/
-
-
 /************************************************************
  * Function: IGD_pii_get_serial_number
  *
