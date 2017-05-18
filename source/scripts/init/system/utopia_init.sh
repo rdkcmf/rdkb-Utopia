@@ -484,8 +484,8 @@ else
    fi
 fi
 
-echo_t "[utopia][init] started dropbear process"
-$UTOPIA_PATH/service_sshd.sh sshd-start &
+#echo_t "[utopia][init] started dropbear process"
+#$UTOPIA_PATH/service_sshd.sh sshd-start &
 
 echo_t "[utopia][init] setting Multicast MAC before any switch configs"
 $UTOPIA_PATH/service_multinet_exec set_multicast_mac &

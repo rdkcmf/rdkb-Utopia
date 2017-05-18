@@ -106,11 +106,11 @@ service_start() {
 	#if [ "$SSH_ENABLE" = "0" ]; then
 
 		if [ ! -f "$PID_FILE" ] ; then
-			while [ "started" != "$CURRENT_WAN_STATE" ]
-			do
-				sleep 1
-				CURRENT_WAN_STATE=`sysevent get wan-status`
-			done
+			#while [ "started" != "$CURRENT_WAN_STATE" ]
+			#do
+				#sleep 1
+				#CURRENT_WAN_STATE=`sysevent get wan-status`
+			#done
 
 		do_start
 		fi
@@ -135,15 +135,27 @@ service_stop () {
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
 
-service_lanwan_status ()
+#service_lanwan_status ()
+#{
+      #CURRENT_LAN_STATE=`sysevent get lan-status`
+      #CURRENT_WAN_STATE=`sysevent get wan-status`
+      #if [ "stopped" = "$CURRENT_LAN_STATE" ] && [ "stopped" == "$CURRENT_WAN_STATE" ] ; then
+         #service_stop
+      #else
+         #service_start
+      #fi
+#}
+
+service_wan_status ()
 {
-      CURRENT_LAN_STATE=`sysevent get lan-status`
       CURRENT_WAN_STATE=`sysevent get wan-status`
-      if [ "stopped" = "$CURRENT_LAN_STATE" ] && [ "stopped" == "$CURRENT_WAN_STATE" ] ; then
+      #if [ "stopped" = "$CURRENT_WAN_STATE" ] ; then
+       #  service_stop
+      #else
+      if [ "started" = "$CURRENT_WAN_STATE" ] ; then
          service_stop
-      else
          service_start
-      fi
+      fi 
 }
 
 service_bridge_status ()
@@ -169,11 +181,11 @@ case "$1" in
       service_stop
       service_start
       ;;
-  lan-status)
-      service_lanwan_status
-      ;;
+  #lan-status)
+      #service_lanwan_status
+      #;;
   wan-status)
-      service_lanwan_status
+      service_wan_status
       ;;
   bridge-status)
       service_bridge_status
