@@ -7532,7 +7532,9 @@ static void add_usgv2_wan2lan_general_rules(FILE *fp)
     fprintf(fp, "-A wan2lan_misc -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
 
     if (strncasecmp(firewall_level, "High", strlen("High")) == 0) {
-        
+        if (isDmzEnabled) {
+            fprintf(fp, "-A wan2lan_misc -j wan2lan_dmz\n");
+        }
         fprintf(fp, "-A wan2lan_misc -j xlog_drop_wan2lan\n");
 
     } else if (strncasecmp(firewall_level, "Medium", strlen("Medium")) == 0) {
