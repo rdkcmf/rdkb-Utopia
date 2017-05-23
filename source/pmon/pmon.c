@@ -134,7 +134,10 @@ static int find_process (const char *proc_name,const char *pidfile)
         *pos = '\0';
         	fclose(pidFp);
         } else {
-        	return errno;
+//              return errno;
+//Restart will not happen if PID file is not present
+                return 0;
+
         }
 
         // printf("%s", pentry->d_name);
