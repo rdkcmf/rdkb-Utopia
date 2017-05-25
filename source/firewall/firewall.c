@@ -6458,11 +6458,21 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 			// Check if lan ip is up. Need to route dns requests to dnsmasq through lan0.
 			if ('\0' != lan_ipaddr[0] && 0 != strcmp("0.0.0.0", lan_ipaddr) )
 			{
-				fprintf(nat_fp, "-A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				fprintf(nat_fp, "-A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-				printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
+	                #if defined (INTEL_PUMA7)
+                                fprintf(nat_fp, "-A prerouting_fromlan ! -s 169.254.0.0/16 -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                fprintf(nat_fp, "-A prerouting_fromlan ! -s 169.254.0.0/16 -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
+                        #else
+
+                                fprintf(nat_fp, "-A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                fprintf(nat_fp, "-A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
+                        #endif
+
 			}
 			else
 			{
