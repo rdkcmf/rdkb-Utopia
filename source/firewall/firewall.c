@@ -1897,6 +1897,10 @@ static int prepare_globals_from_configuration(void)
          snprintf(str, sizeof(str),
                   "-A xlog_drop_lan2wan -j LOG --log-prefix \"UTOPIA: FW.LAN2WAN DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
          fprintf(fp, "%s\n", str);
+
+         snprintf(str, sizeof(str),
+                  "-A LOG_TR69_DROP -j LOG --log-prefix \"TR-069 ACS Server Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
+         fprintf(fp, "%s\n", str);
       }
 
    }
@@ -1943,6 +1947,10 @@ static int prepare_globals_from_configuration(void)
 
    snprintf(str, sizeof(str),
             "-A xlogreject -p tcp -m tcp -j REJECT --reject-with tcp-reset");
+   fprintf(fp, "%s\n", str);
+
+   snprintf(str, sizeof(str),
+            "-A LOG_TR69_DROP -j DROP");
    fprintf(fp, "%s\n", str);
    // for non tcp
    snprintf(str, sizeof(str),
@@ -4381,6 +4389,75 @@ static void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, co
     return ;
 
  }
+
+
+/*
+ *  RDKB-11175 Enable Firewall Rules To Enable TR-069 Connections Only From Whitelisted Servers
+ *  Procedure     : do_tr69_whitelistTable
+ *  Purpose       : To set iptables rules to allow access only to whitelisted IP's in config file (/etc/tr69MgmtIps.cfg)
+ *  Parameters    :
+ *     filt_fp    : file to save ip table entry
+ *     family     : internet family
+ *  Return Values :
+ */
+#define TR69_ACS_WHITELIST  "/etc/tr69MgmtIps.cfg"
+static void do_tr69_whitelistTable(FILE *filt_fp, int family)
+{
+    char string[MAX_QUERY]={0};
+    FILE* pTr69Mgmt_fp = NULL ;
+    char *strp=NULL;
+    int stringLen = 0;
+    int enableFlag = 0;
+
+    FIREWALL_DEBUG("Entering do_tr69_whitelistTable\n");
+
+    pTr69Mgmt_fp = fopen(TR69_ACS_WHITELIST, "r");
+    if(pTr69Mgmt_fp != NULL) {
+        while (NULL != (strp = fgets(string, MAX_QUERY, pTr69Mgmt_fp)) ) {
+            printf("String  = %s\n", string);
+            stringLen = strnlen(string, MAX_IPV6_STR_LEN) - 1;/*To remove new line*/
+            if (*string && string[stringLen] == '\n') {
+                 string[stringLen] = '\0';
+            }
+            /* Ignore Comments From Config File - line starting with # */
+            if (string[0] == '#' )
+                continue ;
+
+            // Loop until config under appropriate header is found
+            if(family == AF_INET6) {
+               // Skip All V4 Config
+               if ( NULL != strstr(string, "[TR69_ACS_IPV6_LIST]")) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            } else if ( family == AF_INET) {
+               // Skip All V6 Config
+               if ( NULL != strstr(string, "[TR69_ACS_IPV4_LIST]") ) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            }
+            if ( NULL != strstr(string, "[TR69_ACS_IPV4_LIST]")
+                 || NULL != strstr(string, "[TR69_ACS_IPV6_LIST]") ) {
+                if ( enableFlag == 1 )
+                    break ;
+                else
+                    continue ;
+            }
+            if ( enableFlag == 1) {
+                fprintf(filt_fp, "-A tr69_filter -s %s -j ACCEPT\n", string);
+            }
+        }
+    }
+    fprintf(filt_fp, "-A tr69_filter -j LOG_TR69_DROP\n");
+
+    if(pTr69Mgmt_fp != NULL) {
+        fclose(pTr69Mgmt_fp);
+    }
+    FIREWALL_DEBUG("Exiting do_tr69_whitelistTable\n");
+    return ;
+
+}
 
 
 #define IPRANGE_UTKEY_PREFIX "mgmt_wan_iprange_"
@@ -8619,6 +8696,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":xlog_drop_lanattack - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogdrop - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogreject - [0:0]");
+   //tr69 chains for logging and filtering
+   fprintf(filter_fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
+   fprintf(filter_fp, "%s\n", ":tr69_filter - [0:0]");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
    if(isProdImage) {
        fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
@@ -8666,6 +8747,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    {
       fprintf(filter_fp, "-A INPUT -i %s -d 192.168.100.1 -j ACCEPT\n", cmdiag_ifname);
    }
+
+   do_tr69_whitelistTable(filter_fp, AF_INET);
 
 #ifdef _COSA_BCM_MIPS_
     // Allow all traffic to the private interface priv0
@@ -9819,6 +9902,12 @@ static void do_ipv6_filter_table(FILE *fp){
 
    fprintf(fp, "%s\n", ":LOG_INPUT_DROP - [0:0]");
    fprintf(fp, "%s\n", ":LOG_FORWARD_DROP - [0:0]");
+   //tr69 chains for logging and filtering
+   fprintf(fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
+   fprintf(fp, "%s\n", ":tr69_filter - [0:0]");
+   fprintf(fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
+   fprintf(fp, "-A LOG_TR69_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"TR-069 ACS Server Blocked:\"\n",syslog_level);
+   fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
    if(isProdImage) {
        fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
@@ -9877,6 +9966,8 @@ static void do_ipv6_filter_table(FILE *fp){
       fprintf(fp, "-A INPUT -m rt --rt-type 0 -j DROP\n");
 
       fprintf(fp, "-A INPUT -m state --state INVALID -j LOG_INPUT_DROP\n");
+
+      do_tr69_whitelistTable(fp, AF_INET6);
 
 #if defined(_COSA_BCM_MIPS_)
       fprintf(fp, "-A INPUT -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
