@@ -9,7 +9,9 @@
 #include "service_multinet_base.h"
 #include "errno.h"
 
-#define MOCACTL "/usr/sbin/mocactl"
+#define MOCACTL 	"/usr/sbin/mocactl"
+#define IPC_VLAN	500	
+#define RADIUS_VLAN	4090	
 
 int hdl_sw_sysevent_fd;
 token_t hdl_sw_sysevent_token;
@@ -42,7 +44,7 @@ void check_for_dependent_ports(char *port, int *tag, int *atom_port, int *ext_po
 // This function removes all the occurances of "to_remove_mem" from "from_member"
 void sw_remove_member(char *from_member, char *to_remove_mem)
 {
-    int l_iIter = 0, l_iIter1 = 0, l_iIndex = 0, l_iTempIndex = 0;
+    int l_iIter = 0, l_iIndex = 0;
     char l_cTemp[64] = {0};
 
 	if (0 == from_member[0] || 0 == to_remove_mem[0])
@@ -52,7 +54,6 @@ void sw_remove_member(char *from_member, char *to_remove_mem)
     }   
     while(from_member[l_iIter] !='\0') 
     {   
-        l_iIter1 = 0;
         if (!strncmp(&from_member[l_iIter], to_remove_mem, strlen(to_remove_mem)))
         {   
             l_iIter += strlen(to_remove_mem);
@@ -631,5 +632,32 @@ void setMulticastMac()
 
     MNET_DEBUG("--SW handler, swctl -c 23 -p 7 -s 01:00:5E:7F:FF:FA\n")
     swctl(23, 7, -1, -1, -1, -1, "01:00:5E:7F:FF:FA", NULL);
+}
+
+void addIpcVlan()
+{
+	addVlan(0, IPC_VLAN, "sw_6");
+}
+
+void addRadiusVlan()
+{
+	addVlan(0, RADIUS_VLAN, "sw_6");
+}
+
+void createMeshVlan()
+{
+	char cmdBuff[255] = {0};
+	
+	swctl(16, 0, 112, TAGGING_MODE, 1, -1, NULL, NULL);
+	swctl(16, 7, 112, TAGGING_MODE, 1, -1, NULL, NULL);
+	snprintf(cmdBuff, sizeof(cmdBuff), 
+			 "vconfig add l2sd0 112; ifconfig l2sd0.112 169.254.0.254 netmask 255.255.255.0 up");
+    system(cmdBuff);
+	
+	swctl(16, 0, 113, TAGGING_MODE, 1, -1, NULL, NULL);
+	swctl(16, 7, 113, TAGGING_MODE, 1, -1, NULL, NULL);
+	snprintf(cmdBuff, sizeof(cmdBuff), 
+			 "vconfig add l2sd0 113; ifconfig l2sd0.113 169.254.1.254 netmask 255.255.255.0 up");
+    system(cmdBuff);
 }
 #endif

@@ -413,7 +413,11 @@ execute_dir $INIT_DIR&
 
 #--------Set up private IPC vlan----------------
 vconfig add l2sd0 500
-$SWITCH_HANDLER addVlan 0 500 sw_6
+if [ $BOX_TYPE == "XB3" ];then
+	$UTOPIA_PATH/service_multinet_exec add_ipc_vlan &
+else
+	$SWITCH_HANDLER addVlan 0 500 sw_6
+fi
 ifconfig l2sd0.500 192.168.101.1
 
 #start  ntpd server on ARM
@@ -423,23 +427,13 @@ then
 fi
 #--------Set up Radius vlan -------------------
 vconfig add l2sd0 4090
-$SWITCH_HANDLER addVlan 0 4090 sw_6
+if [ $BOX_TYPE == "XB3" ];then
+	$UTOPIA_PATH/service_multinet_exec add_radius_vlan &
+else
+	$SWITCH_HANDLER addVlan 0 4090 sw_6 
+fi
 ifconfig l2sd0.4090 192.168.251.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.4090 lookup erouter
-
-#--------Set up Mesh vlan --------------------
-#meshEnabled=`syscfg get mesh_enable`
-#if [ "$meshEnabled" = "true" ]
-#then
-    swctl -c 16 -p 0 -v 112 -m 2 -q 1
-    swctl -c 16 -p 7 -v 112 -m 2 -q 1
-    swctl -c 16 -p 0 -v 113 -m 2 -q 1
-    swctl -c 16 -p 7 -v 113 -m 2 -q 1
-    vconfig add l2sd0 112
-    vconfig add l2sd0 113
-    ifconfig l2sd0.112 169.254.0.254 netmask 255.255.255.0 up
-    ifconfig l2sd0.113 169.254.1.254 netmask 255.255.255.0 up
-#fi
 
 #--------Marvell LAN-side egress flood mitigation----------------
 echo_t "88E6172: Do not egress flood unicast with unknown DA"
@@ -489,6 +483,3 @@ $UTOPIA_PATH/service_sshd.sh sshd-start &
 
 echo_t "[utopia][init] setting Multicast MAC before any switch configs"
 $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
-
-echo_t "[utopia][init] completed creating utopia_inited flag"
-touch /tmp/utopia_inited

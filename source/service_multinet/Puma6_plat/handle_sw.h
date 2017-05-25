@@ -56,3 +56,6 @@ const char MGMT_PORT_LINUX_IFNAME[]="l2sm0";
 
 void addVlan(int, int, char*);
 void setMulticastMac();
+void addIpcVlan();
+void addRadiusVlan();
+void createMeshVlan();
