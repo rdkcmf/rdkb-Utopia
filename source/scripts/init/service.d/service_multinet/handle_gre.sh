@@ -397,6 +397,7 @@ set_ssids_enabled() {
     get_ssids $1
     for instance in $ssids; do
        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_RouterEnabled bool $2 &
+       $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_EnableOnline bool true &
         eval eval mask=\\\${mask_\${ssid_${instance}_radio}}
         eval eval mask_\${ssid_${instance}_radio}=$(( (2 ** ($instance - 1)) + $mask )) 
     done
