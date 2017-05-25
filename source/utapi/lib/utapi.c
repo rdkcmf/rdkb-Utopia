@@ -2559,8 +2559,9 @@ static int s_add_portmapdyn (int index, portMapDyn_t *pmap)
                                (long)(pmap->last_updated),
                                pmap->name);
 
-    snprintf(param, sizeof(param), "portmap_dyn_%d", index);
+#if 0
     sysevent_get(se_fd, se_token, param, unique, sizeof(unique));
+
     if (0 == *unique || 0 == strcasecmp(unique, "none")) {
         // add new unique entry
         sysevent_set_unique(se_fd, se_token, "portmap_dyn_pool", value, unique, sizeof(unique));
@@ -2571,6 +2572,13 @@ static int s_add_portmapdyn (int index, portMapDyn_t *pmap)
         ulogf(ULOG_CONFIG, UL_UTAPI, "%s: add entry (index %d): overwrite unique entry %s", __FUNCTION__, index, unique);
         sysevent_set(se_fd, se_token, unique, value, 0);
     }
+#else
+    snprintf(param, sizeof(param), "portmap_dyn_%d", index);
+	sysevent_set(se_fd, se_token, param, value, 0);
+	ulogf(ULOG_CONFIG, UL_UTAPI, "%s: add entry (index %d): add/overwrite entry param %s value:%s", __FUNCTION__, index, 
+							param,
+							value);
+#endif /* 0 */
 
     return UT_SUCCESS;
 }
@@ -2597,8 +2605,7 @@ static int s_del_portmapdyn (int index)
     snprintf(param, sizeof(param), "portmap_dyn_%d", index);
     sysevent_get(se_fd, se_token, param, unique, sizeof(unique));
     if (strlen(unique) > 0 && 0 != strcasecmp(unique, "none")) {
-        ulogf(ULOG_CONFIG, UL_UTAPI, "%s: delete contents of entry %s:%s", __FUNCTION__, param, unique);
-        sysevent_set(se_fd, se_token, unique, "none", 0);
+		sysevent_set(se_fd, se_token, param, "none", 0);
     }
 
     // bubble swap the references after 'index'th entry
@@ -2633,12 +2640,14 @@ static int s_get_portmapdyn (int index, portMapDyn_t *portmap)
     char buf[1024], param[128], unique[128] = {0}, *p, *next;
 
     snprintf(param, sizeof(param), "portmap_dyn_%d", index);
+#if 0
     sysevent_get(se_fd, se_token, param, unique, sizeof(unique));
     if (0 == *unique || 0 == strcasecmp(unique, "none")) {
         return ERR_ITEM_NOT_FOUND;
     }
+#endif
 
-    sysevent_get(se_fd, se_token, unique, buf, sizeof(buf));
+    sysevent_get(se_fd, se_token, param, buf, sizeof(buf));
     // ulogf(ULOG_CONFIG, UL_UTAPI, "%s: retrieving entry (index %d) using unique %s", __FUNCTION__, index, unique);
     // ulogf(ULOG_CONFIG, UL_UTAPI, "%s: processing entry (index %d) %s", __FUNCTION__, index, buf);
 

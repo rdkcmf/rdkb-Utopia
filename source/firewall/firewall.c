@@ -2742,13 +2742,29 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
    char          in_rule[MAX_QUERY];
    char          subst[MAX_QUERY];
            FIREWALL_DEBUG("Entering do_ephemeral_port_forwarding\n");       
-   iterator = SYSEVENT_NULL_ITERATOR;
-   do {
-      name[0] = rule[0] = subst[0] = '\0';
-      memset(in_rule, 0, sizeof(in_rule));
+//   iterator = SYSEVENT_NULL_ITERATOR;
+   int count = 0,
+   	   index = 1;
+   char buf[128] = {0};
+
+   sysevent_get(sysevent_fd, sysevent_token, "portmap_dyn_count", buf, sizeof(buf));
+   if (*buf) {
+	   count = atoi(buf);
+   }
+
+   for( index = 1; index <= count; ++index ) 
+   {
+		name[0] = rule[0] = subst[0] = '\0';
+		memset(in_rule, 0, sizeof(in_rule));
+#if 0
       sysevent_get_unique(sysevent_fd, sysevent_token,
                           "portmap_dyn_pool", &iterator,
                           name, sizeof(name), in_rule, sizeof(in_rule));
+#else
+		snprintf(name, sizeof(name), "portmap_dyn_%d", index);
+		sysevent_get(sysevent_fd, sysevent_token, name, in_rule, sizeof(in_rule));
+#endif /* 0 */
+
       if ('\0' != in_rule[0]) {
          // the rule we have looks like enabled|disabled,external_ip,external_port,internal_ip,internal_port,protocol,...
          char *next;
@@ -2883,7 +2899,9 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
             }
          }
       }
-   } while (SYSEVENT_NULL_ITERATOR != iterator);
+   }
+
+  //while (SYSEVENT_NULL_ITERATOR != iterator);
            FIREWALL_DEBUG("Exiting do_ephemeral_port_forwarding\n");       
    return(0);
 }
