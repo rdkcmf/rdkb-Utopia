@@ -467,8 +467,10 @@ int service_dhcp_init()
 	//Will revert this change when RDKB-11307 is done.
 #if ! defined(_COSA_BCM_ARM_)
 	{
-		strncpy(g_cDhcp_Script, "--dhcp-script=/etc/utopia/service.d/service_lan/dhcp_lease_sync.sh", 
-				sizeof(g_cDhcp_Script));
+//		strncpy(g_cDhcp_Script, "--dhcp-script=/etc/utopia/service.d/service_lan/dhcp_lease_sync.sh", 
+//				sizeof(g_cDhcp_Script));
+
+		memset(g_cDhcp_Script, 0x00, sizeof(g_cDhcp_Script));
 	}
 #else
 	{

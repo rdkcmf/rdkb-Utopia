@@ -11,4 +11,4 @@ fi
 DHCP_LEASE_FILE_ARM="/nvram/dnsmasq.leases"
 DHCP_LEASE_FILE_ATOM="/nvram/dnsmasq.leases"
 
-nice -n 19 scp $DHCP_LEASE_FILE_ARM root@$ATOM_IP:$DHCP_LEASE_FILE_ATOM  > /dev/null 2>&1
+scp $DHCP_LEASE_FILE_ARM root@$ATOM_IP:$DHCP_LEASE_FILE_ATOM  > /dev/null 2>&1
