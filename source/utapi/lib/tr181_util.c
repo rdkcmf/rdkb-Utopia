@@ -110,6 +110,7 @@ int file_parse(char* file_name, param_node **head)
             node->param_val[strlen(val)] = '\0';
         }else{
             free(node);
+	    node = NULL;
             continue;
         }
         node->next = NULL;
