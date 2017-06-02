@@ -662,14 +662,12 @@ case "$1" in
       ;;
     ipv4_*-status)
         if [ x"up" = x$2 ]; then
-             echo_t "SERVICE DHCP : Got ipv4 status"
-             # TCXB6-1652
-             if [ "$BOX_TYPE" = "XB6" ] && [ "$MANUFACTURE" = "Technicolor" ]; then
-                 lan_status_change started lan_not_restart
-             else
-                 service_dhcp lan-status started lan_not_restart
-             fi
-
+            echo_t "SERVICE DHCP : Got ipv4 status"
+            if [ "$BOX_TYPE" = "XB3" ]; then
+                service_dhcp lan-status started lan_not_restart
+            else
+                lan_status_change started lan_not_restart
+            fi
         fi
       ;;
    *)
