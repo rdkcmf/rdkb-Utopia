@@ -59,11 +59,11 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
-   system ("/etc/utopia/service.d/pmon.sh register sshd");
+   system ("/etc/utopia/service.d/pmon.sh register ssh");
 }
 
 void srv_unregister(void) {
-   system ("/etc/utopia/service.d/pmon.sh unregister sshd");
+   system ("/etc/utopia/service.d/pmon.sh unregister ssh");
    sm_unregister(SERVICE_NAME);
 }
 
