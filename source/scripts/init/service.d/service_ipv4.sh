@@ -38,69 +38,6 @@ STATIC_IPV4SUBNET=""
 STATIC_IPV4ADDR=""
 EMPTY_IPADDR="0.0.0.0"
 
-
-subnet() {
-    if [ "$2" ]; then
-        NM="$2"
-    else
-        NM="248.0.0.0"
-    fi
-    if [ "$1" ]; then
-        IP="$1"
-    else
-        IP="255.253.252.100"
-    fi
-    #
-    n="${NM%.*}";m="${NM##*.}"
-    l="${IP%.*}";r="${IP##*.}";c=""
-    if [ "$m" = "0" ]; then
-        c=".0"
-        m="${n##*.}";n="${n%.*}"
-        r="${l##*.}";l="${l%.*}"
-        if [ "$m" = "0" ]; then
-            c=".0$c"
-            m="${n##*.}";n="${n%.*}"
-            r="${l##*.}";l="${l%.*}"
-            if [ "$m" = "0" ]; then
-                c=".0$c"
-                m=$n
-                r=$l;l=""
-            fi
-        fi
-    fi
-    let s=256-$m
-    let r=$r/$s*$s
-    if [ "$l" ]; then
-        SNW="$l.$r$c"
-    else
-        SNW="$r$c"
-    fi
-
-    echo $SNW
-}
-
-mask2cidr() {
-    nbits=0
-    IFS=.
-    echo "Mask2cidr called on :${1}:" > /dev/console
-    for dec in $1 ; do
-        echo "dec:${dec}:" > /dev/console
-        case $dec in
-            255) let nbits+=8;;
-            254) let nbits+=7;;
-            252) let nbits+=6;;
-            248) let nbits+=5;;
-            240) let nbits+=4;;
-            224) let nbits+=3;;
-            192) let nbits+=2;;
-            128) let nbits+=1;;
-            0);;
-            *) echo "Error: $dec is not recognised"; exit 1
-        esac
-    done
-    echo $nbits
-}
-
 service_start() {
 echo
 

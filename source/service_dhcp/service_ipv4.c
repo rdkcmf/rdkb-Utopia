@@ -11,10 +11,6 @@
 #define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
 
-#define isValidSubnetByte(byte) (((byte == 255) || (byte == 254) || (byte == 252) || \
-                                  (byte == 248) || (byte == 240) || (byte == 224) || \
-                                  (byte == 192) || (byte == 128)) ? 1 : 0)
-
 #define IPV4_TSIP_PREFIX    "dmsb.truestaticip"
 #define IPV4_TSIP_ASNPREFIX "dmsb.truestaticip.Asn"
 #define IPV4_TSIP_ENABLE    "Enable"
@@ -29,46 +25,14 @@ extern token_t g_tSysevent_token;
 extern char g_cBox_Type[8];
 
 extern void executeCmd(char *);
+extern unsigned int mask2cidr(char *subnetMask);
+extern unsigned int countSetBits(int byte);
 extern void subnet(char *ipv4Addr, 
-				   char *ipv4Subnet, char *subnet);
+                   char *ipv4Subnet, char *subnet);
 
 //=======================
 //service_ipv4.sh conversion
 //======================
-unsigned int countSetBits(int byte)
-{
-    unsigned int l_iCount = 0;
-    if (isValidSubnetByte(byte) || 0 == byte)
-    {   
-        while (byte)
-        {   
-            byte &= (byte-1);
-            l_iCount++;
-        }   
-        return l_iCount;
-    }   
-    else
-    {   
-        fprintf(stderr, "Invalid subnet byte:%d\n", byte);
-        return 0;
-    }    
-}
- 
-unsigned int mask2cidr(char *subnetMask)
-{
-    int l_iFirstByte, l_iSecondByte, l_iThirdByte, l_iFourthByte;
-    int l_iCIDR = 0;
-
-    sscanf(subnetMask, "%d.%d.%d.%d", &l_iFirstByte, &l_iSecondByte, 
-			&l_iThirdByte, &l_iFourthByte);
-
-    l_iCIDR += countSetBits(l_iFirstByte);
-    l_iCIDR += countSetBits(l_iSecondByte);
-    l_iCIDR += countSetBits(l_iThirdByte);
-    l_iCIDR += countSetBits(l_iFourthByte);
-    return l_iCIDR;
-}
-
 void remove_config(int l3_inst)
 {
 	char l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0};
