@@ -515,13 +515,16 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix)
 								 l_cSysevent_Cmd, l_cIfName, sizeof(l_cIfName));
 
 					//TODO prefix is not considered for first drop
-					fprintf(local_dhcpconf_file, "%sinterface=%s\n", prefix, l_cIfName);
-					fprintf(local_dhcpconf_file, "%sdhcp-range=set:%d,%s,%s,%s,%s\n", prefix, l_iPool,
-							l_cDhcp_Start_Addr, l_cDhcp_End_Addr, l_cLan_Subnet, l_cDhcp_Lease_Time);
+                                        if ((0 != l_cDhcp_Start_Addr[0]) && (0 != l_cDhcp_End_Addr[0]))
+					{
+						fprintf(local_dhcpconf_file, "%sinterface=%s\n", prefix, l_cIfName);
+						fprintf(local_dhcpconf_file, "%sdhcp-range=set:%d,%s,%s,%s,%s\n", prefix, l_iPool,
+								l_cDhcp_Start_Addr, l_cDhcp_End_Addr, l_cLan_Subnet, l_cDhcp_Lease_Time);
 
-					fprintf(stderr, "DHCP_SERVER : [BRLAN1] %sdhcp-range=set:%d,%s,%s,%s,%s\n", 
-									prefix, l_iPool, l_cDhcp_Start_Addr, l_cDhcp_End_Addr, 
-									l_cLan_Subnet, l_cDhcp_Lease_Time);
+						fprintf(stderr, "DHCP_SERVER : [BRLAN1] %sdhcp-range=set:%d,%s,%s,%s,%s\n", 
+										prefix, l_iPool, l_cDhcp_Start_Addr, l_cDhcp_End_Addr, 
+										l_cLan_Subnet, l_cDhcp_Lease_Time);
+					}
 				}
 				else
 				{

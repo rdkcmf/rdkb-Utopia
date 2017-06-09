@@ -798,7 +798,7 @@ fi
 
 do_extra_pools () {
     POOLS="`sysevent get ${SERVICE_NAME}_current_pools`"
-    if [ x$POOLS = x ]; then
+    if [ x"$POOLS" = x ]; then
         echo_t "DHCP_SERVER : dhcp_server pools not availble"
     fi
 
@@ -841,9 +841,12 @@ do_extra_pools () {
 
         IFNAME=`sysevent get ipv4_${IPV4_INST}-ifname`
         
-        echo "${PREFIX}""interface="${IFNAME} >> $LOCAL_DHCP_CONF
-        echo "${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}" >> $LOCAL_DHCP_CONF
-	echo_t "DHCP_SERVER : [BRLAN1] ${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}"
+       if [ x"$m_DHCP_START_ADDR" != "x" ] && [ x"$m_DHCP_END_ADDR" != "x" ]
+	then
+		echo "${PREFIX}""interface="${IFNAME} >> $LOCAL_DHCP_CONF
+		echo "${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}" >> $LOCAL_DHCP_CONF
+		echo_t "DHCP_SERVER : [BRLAN1] ${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}"
+	fi
     done
 }
 
