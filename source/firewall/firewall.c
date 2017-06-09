@@ -2085,180 +2085,162 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       
       char str[MAX_QUERY];
       
-      if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) 
-      {
-          if (!(isBridgeMode && privateIpCheck(toip))) 
-          { 
-	          if (isNatReady) 
-			  {
-                  snprintf(str, sizeof(str),
-                  		   "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                   		   natip4, external_port, toip, port_modifier);
-            	  fprintf(nat_fp, "%s\n", str);
-         	  }
+      if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&
+		  (!(isBridgeMode && privateIpCheck(toip))))
+	  {
+	     if (isNatReady) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
+                     natip4, external_port, toip, port_modifier);
+            fprintf(nat_fp, "%s\n", str);
+         }
          
-         	  if(isHairpin)
-			  {
-                  if (isNatReady) 
-				  {
-               	      snprintf(str, sizeof(str),
-                      		   "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                               natip4, external_port, toip, port_modifier);
-               	      fprintf(nat_fp, "%s\n", str);
+         if(isHairpin){
+             if (isNatReady) {
+               snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
+                        natip4, external_port, toip, port_modifier);
+               fprintf(nat_fp, "%s\n", str);
  
-                      if(strcmp(internal_port, "0"))
-					  {
-                          tmp = internal_port; 
-                	  }
-					  else
-					  {
-                          tmp = external_port;
-                      }
-                	  snprintf(str, sizeof(str),
-                    		   "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                     		   lan_3_octets, lan_netmask, toip, tmp, natip4);
-                	  fprintf(nat_fp, "%s\n", str);
-            	  }
-         	  }
-			  else if (!isNatRedirectionBlocked) 
-			  {
-                  snprintf(str, sizeof(str),
-                  		   "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     	   lan_ipaddr, external_port, toip, port_modifier);
-            	  fprintf(nat_fp, "%s\n", str);
+                if(strcmp(internal_port, "0")){
+                    tmp = internal_port; 
+                }else{
+                    tmp = external_port;
+                }
+                snprintf(str, sizeof(str),
+                    "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+                     lan_3_octets, lan_netmask, toip, tmp, natip4);
+                fprintf(nat_fp, "%s\n", str);
+            }
+         }else if (!isNatRedirectionBlocked) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
+                     lan_ipaddr, external_port, toip, port_modifier);
+            fprintf(nat_fp, "%s\n", str);
          
-            	  if (isNatReady) 
-				  {
-                      snprintf(str, sizeof(str),
-                      	  	   "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                               natip4, external_port, toip, port_modifier);
-                      fprintf(nat_fp, "%s\n", str);
-                  }
+            if (isNatReady) {
+               snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
+                        natip4, external_port, toip, port_modifier);
+               fprintf(nat_fp, "%s\n", str);
+            }
 
-            	  if(strcmp(internal_port, "0"))
-				  {
-                      snprintf(str, sizeof(str),
-                      	       "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                        	   lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
-                	  fprintf(nat_fp, "%s\n", str);
-            	  }
-				  else
-				  {
-                      snprintf(str, sizeof(str),
-                         	   "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                        	   lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
-                	  fprintf(nat_fp, "%s\n", str);
-            	  }
-         	  }
-          	  if (filter_fp) 
-		  	  {
-                  if(strcmp(internal_port, "0"))
-			  	  {
-               	      snprintf(str, sizeof(str),
-                   			   "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                    			toip, internal_port);
-	               	  fprintf(filter_fp, "%s\n", str);
+            if(strcmp(internal_port, "0")){
+                snprintf(str, sizeof(str),
+                         "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+                        lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
+                fprintf(nat_fp, "%s\n", str);
+            }else{
+                snprintf(str, sizeof(str),
+                         "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+                        lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
+                fprintf(nat_fp, "%s\n", str);
+            }
+         }
+         if (filter_fp) {
+            if(strcmp(internal_port, "0")){
+                snprintf(str, sizeof(str),
+                        "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
+                        toip, internal_port);
+                fprintf(filter_fp, "%s\n", str);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-				      snprintf(str, sizeof(str),
-        	     			   "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
-            	     		   toip, internal_port);
-            		  fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                 "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
+                 toip, internal_port);
+            fprintf(filter_fp, "%s\n", str);
 #endif
-         	  	  }
-			  	  else
-			  	  {
-                  	  snprintf(str, sizeof(str),
-                   			   "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                   			   toip, external_port);
-	            	  fprintf(filter_fp, "%s\n", str);
+         }else{
+            snprintf(str, sizeof(str),
+                      "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
+                     toip, external_port);
+            fprintf(filter_fp, "%s\n", str);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-        	    	  snprintf(str, sizeof(str),
-    	           		   	   "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
-            	   			   toip, external_port);
-            		  fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                 "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
+                 toip, external_port);
+            fprintf(filter_fp, "%s\n", str);
 #endif
-       		  	  }
-            	  fprintf(filter_fp, "%s\n", str);
-       	  	  }
-		  } 
-      } 
-      if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
-		 if (!(isBridgeMode && privateIpCheck(toip))) 
-		 {
-		 	if (isNatReady) {
-            	snprintf(str, sizeof(str),
-                	     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                    	 natip4, external_port, toip, port_modifier);
-            	fprintf(nat_fp, "%s\n", str);
-         	}
-         	if(isHairpin){
-            	 if (isNatReady) {
-               		snprintf(str, sizeof(str),
-                    	    "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                        	natip4, external_port, toip, port_modifier);
-               		fprintf(nat_fp, "%s\n", str);
+         }
+
+            fprintf(filter_fp, "%s\n", str);
+         }
+      }
+      if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) && 
+		  (!(isBridgeMode && privateIpCheck(toip))))	
+	  {
+		 if (isNatReady) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
+                     natip4, external_port, toip, port_modifier);
+            fprintf(nat_fp, "%s\n", str);
+         }
+         if(isHairpin){
+             if (isNatReady) {
+               snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
+                        natip4, external_port, toip, port_modifier);
+               fprintf(nat_fp, "%s\n", str);
  
-                	if(strcmp(internal_port, "0")){
-                    	tmp = internal_port; 
-                	}else{
-                    	tmp = external_port;
-                	}
-                	snprintf(str, sizeof(str),
-                    		"-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                     		lan_3_octets, lan_netmask, toip, tmp, natip4);
-                	fprintf(nat_fp, "%s\n", str);
-            	}
-         	}else if (!isNatRedirectionBlocked) {
-            	snprintf(str, sizeof(str),
-                	     "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                    	 lan_ipaddr, external_port, toip, port_modifier);
-            	fprintf(nat_fp, "%s\n", str);
+                if(strcmp(internal_port, "0")){
+                    tmp = internal_port; 
+                }else{
+                    tmp = external_port;
+                }
+                snprintf(str, sizeof(str),
+                    "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+                     lan_3_octets, lan_netmask, toip, tmp, natip4);
+                fprintf(nat_fp, "%s\n", str);
+            }
+         }else if (!isNatRedirectionBlocked) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
+                     lan_ipaddr, external_port, toip, port_modifier);
+            fprintf(nat_fp, "%s\n", str);
 
-            	if (isNatReady) {
-               		snprintf(str, sizeof(str),
-                    	    "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                        	natip4, external_port, toip, port_modifier);
-               		fprintf(nat_fp, "%s\n", str);
-            	}
+            if (isNatReady) {
+               snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
+                        natip4, external_port, toip, port_modifier);
+               fprintf(nat_fp, "%s\n", str);
+            }
 
-            	if(strcmp(internal_port, "0")){
-                	snprintf(str, sizeof(str),
-                    		 "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                    		lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
-                			fprintf(nat_fp, "%s\n", str);
-            	}else{
-                	snprintf(str, sizeof(str),
-                    		 "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                    		lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
-                	fprintf(nat_fp, "%s\n", str);
-            	}
-         	}
-         	if (filter_fp) {
-            	if(strcmp(internal_port, "0")){
-	                snprintf(str, sizeof(str),
-    	                "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-        	            toip, internal_port);
-            	    fprintf(filter_fp, "%s\n", str);
+            if(strcmp(internal_port, "0")){
+                snprintf(str, sizeof(str),
+                     "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+                    lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
+                fprintf(nat_fp, "%s\n", str);
+            }else{
+                snprintf(str, sizeof(str),
+                     "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+                    lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
+                fprintf(nat_fp, "%s\n", str);
+            }
+         }
+         if (filter_fp) {
+            if(strcmp(internal_port, "0")){
+                snprintf(str, sizeof(str),
+                    "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
+                    toip, internal_port);
+                fprintf(filter_fp, "%s\n", str);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-	            snprintf(str, sizeof(str),
-    	        	     "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
-        		         toip, internal_port);
-	            fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                 "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
+                 toip, internal_port);
+            fprintf(filter_fp, "%s\n", str);
 #endif
-    	     	}else{
-        	    	snprintf(str, sizeof(str),
-            			     "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-		                	 toip, external_port);
-	        	    fprintf(filter_fp, "%s\n", str);
+         }else{
+            snprintf(str, sizeof(str),
+                 "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
+                 toip, external_port);
+            fprintf(filter_fp, "%s\n", str);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-    	        	snprintf(str, sizeof(str),
-        	        		 "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
-		    	             toip, external_port);
-        	    	fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                 "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
+                 toip, external_port);
+            fprintf(filter_fp, "%s\n", str);
 #endif
-             	}
-         	}
-		 }
+            }
+         }
       }
 #ifndef PORTMAPPING_2WAY_PASSTHROUGH
             if (filter_fp) {
@@ -2347,7 +2329,9 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
            * so if it get failed, keep doing the next step */ 
           if(0 == rc && '\0' != public_ip[0] ){
               // do one-2-one nat 
-              if( 0 != strcmp("0.0.0.0", public_ip)){
+              if ((0 != strcmp("0.0.0.0", public_ip)) &&
+				  (!(isBridgeMode && privateIpCheck(toip))))
+			  {
 /* if TRUE static IP not be configed , skip one 2 one nat */
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
                  if (isWanReady && isWanStaticIPReady) {
@@ -2484,115 +2468,115 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
       
       char str[MAX_QUERY];
       
-      if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) {
-		 if (!(isBridgeMode && privateIpCheck(toip)))
-		 {
-		 	if (isNatReady) {
-            	snprintf(str, sizeof(str),
-                	     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                    	 natip4, sdport, edport, toip, target_internal_port);
-	            fprintf(nat_fp, "%s\n", str);
-    	     }
+      if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&
+		  (!(isBridgeMode && privateIpCheck(toip))))
+	  {
+		 if (isNatReady) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
+                     natip4, sdport, edport, toip, target_internal_port);
+            fprintf(nat_fp, "%s\n", str);
+         }
 
-        	 if(isHairpin){
-            	 if (isNatReady) {
-	                snprintf(str, sizeof(str),
-    		                "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-            	            natip4, sdport, edport, toip, target_internal_port);
-                	fprintf(nat_fp, "%s\n", str);
+         if(isHairpin){
+             if (isNatReady) {
+                snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
+                        natip4, sdport, edport, toip, target_internal_port);
+                fprintf(nat_fp, "%s\n", str);
  
-	                snprintf(str, sizeof(str),
-    	    	            "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-        	    	         lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
-                	fprintf(nat_fp, "%s\n", str);
-            	}
-         	}else if (!isNatRedirectionBlocked) {
-            	snprintf(str, sizeof(str),
-                	     "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                    	 lan_ipaddr, sdport, edport, toip, target_internal_port);
-	            fprintf(nat_fp, "%s\n", str);
+                snprintf(str, sizeof(str),
+                    "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+                     lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
+                fprintf(nat_fp, "%s\n", str);
+            }
+         }else if (!isNatRedirectionBlocked) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
+                     lan_ipaddr, sdport, edport, toip, target_internal_port);
+            fprintf(nat_fp, "%s\n", str);
 
-    	        if (isNatReady) {
-        	       snprintf(str, sizeof(str),
-            	            "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                	        natip4, sdport, edport, toip, target_internal_port);
-               	   fprintf(nat_fp, "%s\n", str);
-            	}
+            if (isNatReady) {
+               snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
+                        natip4, sdport, edport, toip, target_internal_port);
+               fprintf(nat_fp, "%s\n", str);
+            }
 
-            	snprintf(str, sizeof(str),
-                	     "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                    	lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
-	            fprintf(nat_fp, "%s\n", str);
-    	    }
-         	if (filter_fp) {
-           		snprintf(str, sizeof(str),
-               		    "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                   		toip, match_internal_port);
-		        fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                     "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+                    lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
+            fprintf(nat_fp, "%s\n", str);
+         }
+
+         if (filter_fp) {
+            snprintf(str, sizeof(str),
+                    "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
+                    toip, match_internal_port);
+            fprintf(filter_fp, "%s\n", str);
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-    		    snprintf(str, sizeof(str),
-        	   	        "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
-            	        toip, match_internal_port);
-		        fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                    "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
+                    toip, match_internal_port);
+            fprintf(filter_fp, "%s\n", str);
 #endif
-    	 	}
-		 }
+         }
       }
-      if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
-		 if (!(isBridgeMode && privateIpCheck(toip)))
-		 {
-			 if (isNatReady) {
-    	        snprintf(str, sizeof(str),
-        	             "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-            	         natip4, sdport, edport, toip, target_internal_port);
-	            fprintf(nat_fp, "%s\n", str);
-    	     }
+      if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&
+          (!(isBridgeMode && privateIpCheck(toip))))
+	  {
+		 if (isNatReady) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
+                     natip4, sdport, edport, toip, target_internal_port);
+            fprintf(nat_fp, "%s\n", str);
+         }
  
-        	 if(isHairpin){
-            	 if (isNatReady) {
-                	snprintf(str, sizeof(str),
+         if(isHairpin){
+             if (isNatReady) {
+                snprintf(str, sizeof(str),
                         "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
                         natip4, sdport, edport, toip, target_internal_port);
-        	        fprintf(nat_fp, "%s\n", str);
- 	
-    	            snprintf(str, sizeof(str),
-        		            "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                		     lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
-	                fprintf(nat_fp, "%s\n", str);
-    	        }
-         	}else if (!isNatRedirectionBlocked) {
-            	snprintf(str, sizeof(str),
-                	     "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                    	 lan_ipaddr, sdport, edport, toip, target_internal_port);
-            	fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "%s\n", str);
+ 
+                snprintf(str, sizeof(str),
+                    "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+                     lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
+                fprintf(nat_fp, "%s\n", str);
+            }
+         }else if (!isNatRedirectionBlocked) {
+            snprintf(str, sizeof(str),
+                     "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
+                     lan_ipaddr, sdport, edport, toip, target_internal_port);
+            fprintf(nat_fp, "%s\n", str);
 
-            	if (isNatReady) {
-               		snprintf(str, sizeof(str),
-                    	    "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                        	natip4, sdport, edport, toip, target_internal_port);
-               		fprintf(nat_fp, "%s\n", str);
-            	}
+            if (isNatReady) {
+               snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
+                        natip4, sdport, edport, toip, target_internal_port);
+               fprintf(nat_fp, "%s\n", str);
+            }
 
-            	snprintf(str, sizeof(str),
-                	    "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                    	lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
-	            fprintf(nat_fp, "%s\n", str);
-    	    }
-        	if(filter_fp){
-            	snprintf(str, sizeof(str),
-	                    "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-    	                toip, match_internal_port);
-        	    fprintf(filter_fp, "%s\n", str);
+            snprintf(str, sizeof(str),
+                    "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+                    lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
+            fprintf(nat_fp, "%s\n", str);
+        }
+
+        if(filter_fp){
+            snprintf(str, sizeof(str),
+                    "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
+                    toip, match_internal_port);
+            fprintf(filter_fp, "%s\n", str);
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-	         	snprintf(str, sizeof(str),
-    	        	      "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
-	        	          toip, match_internal_port);
-		         fprintf(filter_fp, "%s\n", str);
+         snprintf(str, sizeof(str),
+                  "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
+                  toip, match_internal_port);
+         fprintf(filter_fp, "%s\n", str);
 #endif
-        	}
-		 }
+        }
       }
 #ifndef PORTMAPPING_2WAY_PASSTHROUGH
     if(filter_fp) {
@@ -2864,83 +2848,81 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
 
          
          char str[MAX_QUERY];
-         if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) {
-			if (!(isBridgeMode && privateIpCheck(toip)))
-			{
-				if (isNatReady) {
-	               snprintf(str, sizeof(str),
-    	                    "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
-        	                natip4, external_dest_port, external_ip, toip, port_modifier);
-            	   fprintf(nat_fp, "%s\n", str);
-	            }
+         if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&
+  			 (!(isBridgeMode && privateIpCheck(toip))))
+		 {
+			if (isNatReady) {
+               snprintf(str, sizeof(str),
+                        "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+                        natip4, external_dest_port, external_ip, toip, port_modifier);
+               fprintf(nat_fp, "%s\n", str);
+            }
 
-    	        if (!isNatRedirectionBlocked) {
-        	       if (0 == strcmp("none", fromip)) {
-            	      snprintf(str, sizeof(str),
-                		       "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
-                        	   lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
-	                  fprintf(nat_fp, "%s\n", str);
+            if (!isNatRedirectionBlocked) {
+               if (0 == strcmp("none", fromip)) {
+                  snprintf(str, sizeof(str),
+                        "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+                        lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
+                  fprintf(nat_fp, "%s\n", str);
 
-    	              if (isNatReady) {
-        	             snprintf(str, sizeof(str),
-            		               "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
-                    		       natip4, external_dest_port, external_ip, toip, port_modifier);
-	                     fprintf(nat_fp, "%s\n", str);
-    	              }
+                  if (isNatReady) {
+                     snprintf(str, sizeof(str),
+                           "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+                           natip4, external_dest_port, external_ip, toip, port_modifier);
+                     fprintf(nat_fp, "%s\n", str);
+                  }
 
-        	          snprintf(str, sizeof(str),
-            		            "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                    		   lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
-		              fprintf(nat_fp, "%s\n", str);
-        	       }
+                  snprintf(str, sizeof(str),
+                        "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+                       lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
+                  fprintf(nat_fp, "%s\n", str);
                }
+            }
 
-               if(filter_fp) {
-               		snprintf(str, sizeof(str),
-                    	    "-A wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+            if(filter_fp) {
+                snprintf(str, sizeof(str),
+                        "-A wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
                             external_ip, toip, dport);
-	                fprintf(filter_fp, "%s\n", str);
-    	        }
-			}
+                fprintf(filter_fp, "%s\n", str);
+            }
          }
-         if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
-			if (!(isBridgeMode && privateIpCheck(toip)))
-			{
-				if (isNatReady) {
-	               snprintf(str, sizeof(str),
-    		                "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
-            	           natip4, external_dest_port, external_ip, toip, port_modifier);
-               		fprintf(nat_fp, "%s\n", str);
-            	}
+         if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&
+             (!(isBridgeMode && privateIpCheck(toip))))
+		 {
+			if (isNatReady) {
+               snprintf(str, sizeof(str),
+                       "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+                       natip4, external_dest_port, external_ip, toip, port_modifier);
+               fprintf(nat_fp, "%s\n", str);
+            }
 
-            	if (!isNatRedirectionBlocked) {
-               		if (0 == strcmp("none", fromip)) {
-                  		snprintf(str, sizeof(str),
-                    			 "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
-		          			     lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
-		                fprintf(nat_fp, "%s\n", str);
+            if (!isNatRedirectionBlocked) {
+               if (0 == strcmp("none", fromip)) {
+                  snprintf(str, sizeof(str),
+                    "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+                    lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
+                  fprintf(nat_fp, "%s\n", str);
 
-        		        if (isNatReady) {
-                     		snprintf(str, sizeof(str),
-				                     "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
-				                     natip4, external_dest_port, external_ip, toip, port_modifier);
-		                     fprintf(nat_fp, "%s\n", str);
-        	            }
+                  if (isNatReady) {
+                     snprintf(str, sizeof(str),
+                       "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+                       natip4, external_dest_port, external_ip, toip, port_modifier);
+                     fprintf(nat_fp, "%s\n", str);
+                  }
 
-		                snprintf(str, sizeof(str),
-                		        "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-        		                 lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
-		                fprintf(nat_fp, "%s\n", str);
-        	        }
-            	}
+                  snprintf(str, sizeof(str),
+                        "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+                          lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
+                  fprintf(nat_fp, "%s\n", str);
+               }
+            }
 
-            	if(filter_fp) {
-                	snprintf(str, sizeof(str),
-                    	     "-A wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
-                        	 external_ip, toip, dport);
-	                fprintf(filter_fp, "%s\n", str);
-    	        }
-			}
+            if(filter_fp) {
+                snprintf(str, sizeof(str),
+                        "-A wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+                            external_ip, toip, dport);
+                fprintf(filter_fp, "%s\n", str);
+            }
          }
       }
    }
