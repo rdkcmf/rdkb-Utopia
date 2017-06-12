@@ -116,6 +116,14 @@ qtn_set_LnF_passphrase(){
         $QWCFG_TEST set $QTN_INDEX passphrase $lpf
 }
 
+qtn_set_mesh(){
+  $QWCFG_TEST set $QTN_INDEX ssid we.piranha.off
+  # Default passphrase will be qtn01234
+  $QWCFG_TEST set $QTN_INDEX ssid_bcast 0
+  $QWCFG_TEST set $QTN_INDEX iface_enable 0
+  $QWCFG_TEST commit
+}
+
 #Setup QTN instance
 #Syntax: setup_qtn [start|stop] athX
 #Parameters: [start|stop] name(as in athX),
@@ -134,7 +142,16 @@ setup_qtn(){
     then
         #Create VAP
         $QWCFG_TEST push $QTN_INDEX vap_emerged 1
-        
+
+        #If configured to do so, set a default SSID name here
+        # Quantenna layer will set the default SSID, etc.
+        if [ $ATH_INDEX -eq 6 ] || [ $ATH_INDEX -eq 7 ]; then
+                qtn_set_LnF_ssid
+                qtn_set_LnF_passphrase
+        elif [ $ATH_INDEX -eq 12 ] || [ $ATH_INDEX -eq 13 ]; then
+                qtn_set_mesh
+        fi
+
         #Bind internal interface to vlan we can use
         $QWCFG_TEST set $QTN_INDEX bind_vlan $QTN_VLAN
         
@@ -147,13 +164,6 @@ setup_qtn(){
         #Base interface and vlan interface must be up
         $IP link set $AP_NAME up
         
-        #If configured to do so, set a default SSID name here
-	# Quantenna layer will set the default SSID, etc.
-       if [ $ATH_INDEX -eq 6 -o $ATH_INDEX -eq 7 ]
-       then
-            qtn_set_LnF_ssid
-            qtn_set_LnF_passphrase
-       fi
     else
         #Remove vlan interface
         $IP link set $AP_NAME down
@@ -177,6 +187,10 @@ qtn_init(){
         echo > $QTN_STATE
         $QWCFG_TEST set 0 enable_vlan 1
         $IP link set $BASE_WIFI_IF up
+        setup_qtn start ath12
+        setup_qtn start ath13
+        $IFCONFIG ath12 169.254.0.1 netmask 255.255.255.0
+        $IFCONFIG ath13 169.254.1.1 netmask 255.255.255.0
     fi
 }
 
