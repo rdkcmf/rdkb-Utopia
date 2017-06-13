@@ -184,13 +184,19 @@ void copy_file(char *input_file, char *target_file)
         {
             fputs(l_cLine, l_fTargetFile);
         }
-        fclose(l_fInputFile);
-        fclose(l_fTargetFile);
     }
 	else
 	{
 		fprintf(stderr, "copy of files failed due to error in opening one of the files \n");
 	}
+
+    if(l_fInputFile) {
+	fclose(l_fInputFile);
+    }
+
+    if(l_fTargetFile) {
+	fclose(l_fTargetFile);
+    }
 }
 
 void remove_file(char *tb_removed_file)
@@ -258,6 +264,7 @@ BOOL compare_files(char *input_file1, char *input_file2)
     l_fP2 = fopen(input_file2, "r");/* opens Second file which is also read */
     if (l_fP2 == NULL)
     {
+	fclose(l_fP1);
         fprintf(stderr, "Can't open %s for reading\n", input_file2);
         return FALSE;
     }
