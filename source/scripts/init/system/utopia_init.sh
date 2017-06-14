@@ -421,9 +421,14 @@ fi
 ifconfig l2sd0.500 192.168.101.1
 
 #start  ntpd server on ARM
+NTP_CONF=/etc/ntp.conf
+NTP_CONF_TMP=/tmp/ntp.conf
 if [ "x$BOX_TYPE" = "xXB3" ]
 then
-	ntpd -I $SOURCE_PING_INTF
+	cp $NTP_CONF $NTP_CONF_TMP
+	echo "interface ignore wildcard" >> $NTP_CONF_TMP
+	echo "interface listen $ARM_INTERFACE_IP" >> $NTP_CONF_TMP
+	ntpd -c $NTP_CONF_TMP 
 fi
 #--------Set up Radius vlan -------------------
 vconfig add l2sd0 4090
