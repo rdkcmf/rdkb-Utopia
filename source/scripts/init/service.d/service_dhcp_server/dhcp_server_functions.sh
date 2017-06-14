@@ -28,6 +28,10 @@
 # exploitation of this work without authorization could subject the
 # perpetrator to criminal and civil liability.
 #------------------------------------------------------------------
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
 
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
@@ -736,19 +740,23 @@ fi
    #if [ "$meshEnabled" = "true" ]
    #then
    echo "IOT_LOG : DHCP server configuring for Mesh"
-   if [ -f "/usr/bin/rpcclient" ] ; then
-	#for xb3/puma6
-	echo "interface=l2sd0.112" >> $LOCAL_DHCP_CONF
-	echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
-	echo "interface=l2sd0.113" >> $LOCAL_DHCP_CONF
-        echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
-	echo "interface=l2sd0.4090" >> $LOCAL_DHCP_CONF
-	echo "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+   if [ -z ${BOX_TYPE+x} ]; then
+       echo "BOX_TYPE not set in device.properties"
    else
-	echo "interface=b12" >> $LOCAL_DHCP_CONF
-        echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
-        echo "interface=br13" >> $LOCAL_DHCP_CONF
-        echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+       if [ "$BOX_TYPE" = "XB3" ]; then
+           #for xb3/puma6
+           echo "interface=l2sd0.112" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+           echo "interface=l2sd0.113" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+           echo "interface=l2sd0.4090" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+       elif [ "$BOX_TYPE" = "XB6" ]; then
+           echo "interface=ath12" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+           echo "interface=ath13" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+       fi
    fi
    #fi
    #<<
