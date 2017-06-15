@@ -45,7 +45,6 @@ extern token_t g_tSysevent_token;
 extern char g_cDhcp_Lease_Time[8], g_cTime_File[64];
 extern char g_cBox_Type[8], g_cXdns_Enabled[8];
 extern char g_cAtom_Arping_IP[16];
-char g_cDhcp_Script[128];
 
 void dhcp_server_stop()
 {
@@ -79,12 +78,12 @@ void dhcp_server_stop()
 	memset(l_cSystemCmd, 0x00, sizeof(l_cSystemCmd));
 	if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
     {
-        sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",
-				SERVER, DHCP_CONF, g_cDhcp_Script);
+        sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s",
+				SERVER, DHCP_CONF);
     }
     else //If XDNS is not enabled 
     {
-        sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF, g_cDhcp_Script);
+        sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s", SERVER, DHCP_CONF);
     }
 
     l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
@@ -238,11 +237,11 @@ int dhcp_server_start (char *input)
 	int l_iDnamasq_Retry;	
 	if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
 	{
-		sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",                SERVER, DHCP_CONF, g_cDhcp_Script);	
+		sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s",                SERVER, DHCP_CONF);	
 	}
 	else //If XDNS is not enabled 
 	{
-    	sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF, g_cDhcp_Script);
+    	sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s", SERVER, DHCP_CONF);
 	}
 
 	l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
@@ -463,20 +462,6 @@ int service_dhcp_init()
 	    strncpy(g_cDhcp_Lease_Time, "24h", sizeof(g_cDhcp_Lease_Time));
 	}
 
-//	if (access(RPC_CLIENT, F_OK) == 0) TCXB6-1382 Commenting out as this check is impacting TCXB6 and CBR Broadband platform.
-	//Will revert this change when RDKB-11307 is done.
-#if ! defined(_COSA_BCM_ARM_)
-	{
-//		strncpy(g_cDhcp_Script, "--dhcp-script=/etc/utopia/service.d/service_lan/dhcp_lease_sync.sh", 
-//				sizeof(g_cDhcp_Script));
-
-		memset(g_cDhcp_Script, 0x00, sizeof(g_cDhcp_Script));
-	}
-#else
-	{
-		memset(g_cDhcp_Script, 0x00, sizeof(g_cDhcp_Script));
-	}
-#endif
 	get_device_props();
     return SUCCESS;
 }
@@ -502,13 +487,13 @@ void lan_status_change(char *input)
         fprintf(stderr, "SERVICE DHCP : Start dhcp-server from lan status change");
 		if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
 	    {    
-    	    sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s", 
-					SERVER, DHCP_CONF, g_cDhcp_Script);
+    	    sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s", 
+					SERVER, DHCP_CONF);
     	}    
     	else //If XDNS is not enabled 
     	{    
         	snprintf(l_cSystemCmd, sizeof(l_cSystemCmd), 
-					"%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF, g_cDhcp_Script);
+					"%s -u nobody -P 4096 -C %s", SERVER, DHCP_CONF);
     	}
 		fprintf(stderr, "Starting dnsmasq: %s now\n", l_cSystemCmd);
 	    l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command

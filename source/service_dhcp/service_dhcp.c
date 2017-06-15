@@ -157,7 +157,7 @@ void copy_file(char *input_file, char *target_file)
     FILE *l_fTargetFile = NULL, *l_fInputFile = NULL;
 
 	l_fInputFile = fopen(input_file, "r");
-    l_fTargetFile = fopen(target_file, "a+");
+    l_fTargetFile = fopen(target_file, "w+"); //RDK-B 12160
     if ((NULL != l_fInputFile) && (NULL != l_fTargetFile))
     {
         while(fgets(l_cLine, sizeof(l_cLine), l_fInputFile) != NULL)
