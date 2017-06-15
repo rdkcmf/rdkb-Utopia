@@ -889,10 +889,10 @@ int prepare_dhcp_conf (char *input)
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n"); 
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.4090\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite\n"); 
-#else
-        fprintf(l_fLocal_Dhcp_ConfFile, "interface=b12\n");
+#elif defined (INTEL_PUMA7) // XB6 ATOM
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath12\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n"); 
-        fprintf(l_fLocal_Dhcp_ConfFile, "interface=br13\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath13\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n"); 
 #endif
 	if (TRUE == l_bCaptivePortal_Mode)
