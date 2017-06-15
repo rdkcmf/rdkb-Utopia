@@ -767,6 +767,7 @@ int greDscp = 44; // Default initialized to 44
                      utilities
  =================================================================
  */
+static int do_block_ports(FILE *filter_fp);
 static int privateIpCheck(char *ip_to_check)
 {
     struct in_addr l_sIpValue, l_sDhcpStart, l_sDhcpEnd;
@@ -8728,6 +8729,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":tr69_filter - [0:0]");
    fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
+   do_block_ports(filter_fp);	
    if(isProdImage) {
        fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
@@ -9279,7 +9281,16 @@ static int do_raw_table_puma7(FILE *fp)
               
 ===========================================================================
 */
-
+static int do_block_ports(FILE *filter_fp)
+{
+   /* Blocking zebra ports except for brlan0 interface */
+   fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 2601 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 2601 -j DROP\n");
+   /* Blocking IGD ports except for brlan0 interface */
+   fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 49152:49153 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 49152:49153 -j DROP\n");
+   return 0;
+}
 
 /*
  *  Procedure     : prepare_enabled_ipv4_firewall
@@ -9936,6 +9947,7 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
    fprintf(fp, "-A LOG_TR69_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"TR-069 ACS Server Blocked:\"\n",syslog_level);
    fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
+   do_block_ports(fp);
    if(isProdImage) {
        fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
