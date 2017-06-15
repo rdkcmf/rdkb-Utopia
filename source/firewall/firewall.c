@@ -6590,6 +6590,7 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 			if ('\0' != lan_ipaddr[0] && 0 != strcmp("0.0.0.0", lan_ipaddr) )
 			{
 	                #if defined (INTEL_PUMA7)
+				// Prerouting is bypassed for the Xi devices (Needed only for XB6)
                                 fprintf(nat_fp, "-A prerouting_fromlan ! -s 169.254.0.0/16 -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 fprintf(nat_fp, "-A prerouting_fromlan ! -s 169.254.0.0/16 -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
@@ -6619,11 +6620,20 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 			// Check if lan ipv6 is up.
 			if ('\0' != lan_ipv6addr[0] && 0 != strcmp("", lan_ipv6addr) && 0 != strcmp("::", lan_ipv6addr))
 			{
-				fprintf(nat_fp, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
-				fprintf(nat_fp, "-A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
-				printf("[XDNS] ip6tables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
-				printf("[XDNS] ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+	                #if defined (INTEL_PUMA7)
+                                // Prerouting is bypassed for the Xi devices (Needed only for XB6)
+                                fprintf(nat_fp, "-A PREROUTING ! -s 2603:2000::/20  -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+			        fprintf(nat_fp, "-A PREROUTING ! -s 2603:2000::/20  -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+				printf("[XDNS] ip6tables -t nat -A PREROUTING  -s 2603:2000::/20 -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+				printf("[XDNS] ip6tables -t nat -A PREROUTING  -s 2603:2000::/20 -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
 				printf("### XDNS : Feature Enabled (XDNS ipv6) ### \n");
+                        #else
+				fprintf(nat_fp, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+                                fprintf(nat_fp, "-A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+                                printf("[XDNS] ip6tables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+                                printf("[XDNS] ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+                                printf("### XDNS : Feature Enabled (XDNS ipv6) ### \n");
+                        #endif
 			}
 			else
 			{
