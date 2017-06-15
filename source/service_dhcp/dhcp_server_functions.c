@@ -119,7 +119,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	int l_iNetMask_Last_Oct = 0, l_iStartAddr_Last_Oct = 0, l_iEndAddr_Last_Oct;
 	int l_iStartIpValid = 0, l_iEndIpValid = 0;
 	int l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct, l_iLast_Ip;
-	int l_idhcp_num;
+	int l_idhcp_num, l_iCIDR;
 	
 	struct sockaddr_in l_sSocAddr;
 
@@ -169,10 +169,11 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	// Start Address is not valid lets calculate it
 	if (0 == l_iStartIpValid)
 	{
-		sscanf(l_cLanIPAddress, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
-		l_iLastOct = 2;
-		sprintf(l_cDhcp_Start, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);			
-		syscfg_set(NULL, "dhcp_start", l_cDhcp_Start);			
+        fprintf(stderr, "DHCP Start Address:%s is not valid re-calculating it\n", l_cDhcp_Start);
+        sscanf(l_cLanSubnet, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
+        l_iLastOct = 2;
+        sprintf(l_cDhcp_Start, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);    
+        syscfg_set(NULL, "dhcp_start", l_cDhcp_Start);
 	}
  	
     syscfg_get(NULL, "dhcp_end", l_cDhcp_End, sizeof(l_cDhcp_End));
@@ -216,32 +217,42 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 		syscfg_get(NULL, "dhcp_num", l_cDhcp_Num, sizeof(l_cDhcp_Num));
 		fprintf(stderr, "dhcp_num is:%s\n", l_cDhcp_Num);
 
-		if (0 == l_cDhcp_Num[0])
-		{
-		    fprintf(stderr, "DHCP NUM is empty, set the dhcp_num integer as zero\n");
-	    	l_idhcp_num = 0;
-		}
-      	//DHCP_END=`expr $DHCP_START + $DHCP_NUM`
-      	//DHCP_END=`expr $DHCP_END - 1`
-		l_iEndAddr_Last_Oct = 2 + l_idhcp_num - 1; //DHCP_START = 2
-		l_iLast_Ip = l_iNetMask_Last_Oct + l_iEndAddr_Last_Oct;
+		fprintf(stderr, "DHCP END Address:%s is not valid re-calculating it\n", l_cDhcp_End);
+        l_iCIDR = mask2cidr(l_cLanNetMask);
+        //Extract 1st 3 octets of the lan subnet and 
+        //set the last octet to 253 for the start address
+        if (24 == l_iCIDR)
+        {
+            sscanf(l_cLanSubnet, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
+            l_iLastOct = 253;
+            sprintf(l_cDhcp_End, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+        }
+        //Extract 1st 2 octets of the lan subnet and 
+        //set the last remaining to 255.253 for the start address
+        else if (16 == l_iCIDR)
+        {
+            sscanf(l_cLanSubnet, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
+            l_iThirdOct = 255;
+            l_iLastOct = 253;
 
-		while (l_iLast_Ip > 254)
-		{
-			l_iEndAddr_Last_Oct = l_iEndAddr_Last_Oct -1;
-			l_iLast_Ip = l_iEndAddr_Last_Oct + l_iEndAddr_Last_Oct;
-			l_iEndAddr_Last_Oct = l_idhcp_num - 1;
-		}
-	
-		if (2 > l_iEndAddr_Last_Oct)
-		{
-			l_iEndAddr_Last_Oct = 2;
-			l_idhcp_num = 0;
-		}
+            sprintf(l_cDhcp_End, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+        }
+        //Extract 1st octet of the lan subnet and 
+        //set the last remaining octets to 255.255.253 for the start address
+        else if (8 == l_iCIDR)
+        {
+            sscanf(l_cLanSubnet, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
+            l_iSecOct = 255;
+            l_iThirdOct = 255;
+            l_iLastOct = 253;
 
-		sscanf(l_cLanIPAddress, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
-        sprintf(l_cDhcp_End, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iEndAddr_Last_Oct);
-        syscfg_set(NULL, "dhcp_end", l_cDhcp_End);	
+            sprintf(l_cDhcp_End, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+        }
+        else
+        {
+            fprintf(stderr, "Invalid Subnet mask\n");
+        }
+        syscfg_set(NULL, "dhcp_end", l_cDhcp_End);
 	}
 
 	if (!strncmp(g_cDhcp_Lease_Time, "-1", 2))

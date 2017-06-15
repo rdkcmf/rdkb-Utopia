@@ -150,196 +150,168 @@ fi
 #   The lan interface netmask
 #--------------------------------------------------------------
 calculate_dhcp_range () {
-   # extract last octet of the lan netmask
-   NETMASK_LAST_OCTET=""
-   SAVEIFS=$IFS
-   IFS=.
-   for p in $2
-   do
-       NETMASK_LAST_OCTET=$p
-   done
-   IFS=$SAVEIFS
+	LAN_SUBNET=`subnet $1 $2` 
+   	# Do a sanity check to make sure we got start address from DB
+   	if [ "$DHCP_START" = "" ]
+   	then
+    	echo "DHCP_SERVER: Start IP is NULL"
+ 	   	DHCP_START=`syscfg get dhcp_start`
+   	fi  
+   	echo "DHCP_SERVER: Start IP is $DHCP_START LAN Subnet is $LAN_SUBNET"
 
+   	# Validate DHCP start IP.
+   	# Valid IP should have:
+   	#          - three 3 "." in it ( Eg: 192.168.100.2, 10.0.0.3)
+   	#          - Last octet should not be NULL ( to avoid cases as "10.0.0.")
+   	#   
+   	isStartIpValid=0
+   	isEndIpValid=0
+   	allIpsValid=0
 
-   # Do a sanity check to make sure we got start address from DB
-   if [ "$DHCP_START" = "" ]
-   then
-       echo "DHCP_SERVER: Start IP is NULL"
-       DHCP_START=`syscfg get dhcp_start`
-   fi
-   echo "DHCP_SERVER: Start IP is $DHCP_START"
+   	# Validate starting address
+   	OCTET_NUM=`echo $DHCP_START | grep -o "\." | wc -l`
 
-   #
-   # Validate DHCP start IP.
-   # Valid IP should have:
-   #          - three 3 "." in it ( Eg: 192.168.100.2, 10.0.0.3)
-   #          - Last octet should not be NULL ( to avoid cases as "10.0.0.")
-   #
-   isStartIpValid=0
-   isEndIpValid=0
-   allIpsValid=0
-
-   # Validate starting address
-   OCTET_NUM=`echo $DHCP_START | grep -o "\." | wc -l`
-
-   #
-   # If total "."s are 3, then validate last octet
-   # Last octet should not be:
-   #          - NULL
-   #          - less than 2
-   #          - greater than 254
-   #
-   if [ "$OCTET_NUM" -eq "3" ]
-   then
-        START_ADDR_LAST_OCTET=`echo $DHCP_START | awk -F '\\.' '{print $NF}'`
+   	# If total "."s are 3, then validate last octet
+   	# Last octet should not be:
+   	#          - NULL
+   	#          - less than 2
+   	#          - greater than 254
+   	#   
+   	if [ "$OCTET_NUM" -eq "3" ]
+   	then
+    	START_ADDR_LAST_OCTET=`echo "$DHCP_START" | awk -F '\.' '{print $NF}'`
         if [ "$START_ADDR_LAST_OCTET" = "" ]
         then
             echo "DHCP_SERVER: Last octet of start IP is NULL"
             isStartIpValid=0
         else
-           cnt=`echo "$START_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
-           
-           if [ -z $cnt ];
-           then
-             echo "DHCP_SERVER: Last octet of start IP is character"
-             isStartIpValid=0
-           else
-             if [ "$START_ADDR_LAST_OCTET" -gt "254" ]
-             then
-                 echo "DHCP_SERVER: Last octet of start ip is greater than 254"
-                 isStartIpValid=0
-             elif [ "$START_ADDR_LAST_OCTET" -lt "2" ]
-             then
-                 echo "DHCP_SERVER: Last octet of start ip is less than 2"
-                 isStartIpValid=0
-             else
-                 echo "DHCP_SERVER: Last octet of start ip is valid"
-                 isStartIpValid=1
-             fi
-                 
-          fi
-       fi            
-   fi
+        	cnt=`echo "$START_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
+           	START_SUBNET=`subnet $DHCP_START $2`
+           	echo "START_SUBNET is: $START_SUBNET, LAN_SUBNET=$LAN_SUBNET"
+           	if [ -z $cnt ];
+           	then
+            	echo "DHCP_SERVER: Last octet of start IP is character"
+             	isStartIpValid=0
+           	else
+            	if [ "$START_ADDR_LAST_OCTET" -gt "254" ]
+             	then
+                	echo "DHCP_SERVER: Last octet of start ip is greater than 254"
+                 	isStartIpValid=0
+             	elif [ "$START_ADDR_LAST_OCTET" -lt "2" ]
+             	then
+			 	 	echo "DHCP_SERVER: Last octet of start ip is less than 2"
+                 	isStartIpValid=0
+             	elif [ "$START_SUBNET" != "$LAN_SUBNET" ]
+             	then
+                	echo "DHCP_SERVER: DHCP Start Address:$DHCP_START is not in the LAN SUBNET:$LAN_SUBNET"
+                 	isStartIpValid=0
+             	else
+                	echo "DHCP_SERVER: DHCP START Address:$DHCP_START is valid"
+                 	isStartIpValid=1
+                    DHCP_START_ADDR=$DHCP_START
+             	fi
+          	fi
+       	fi
+   	fi
 
-   # Get the ending address from syscfg DB
-   ENDING_ADDRESS=`syscfg get dhcp_end`
-   OCTET_NUM=`echo $ENDING_ADDRESS | grep -o "\." | wc -l`
+   	if [ "$isStartIpValid" -eq "0" ]
+   	then
+    	echo "DHCP_SERVER: DHCP START Address:$DHCP_START is not valid re-calculating it"
+      	# extract 1st 3 octets of the lan subnet and set the last octet to 2 for the start address
+      	DHCP_START_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-3`
 
-   #
-   # If total "."s are 3, then validate last octet
-   # Last octet should not be:
-   #          - NULL
-   #          - less than 2
-   #          - greater than 254
-   #
-   if [ "$OCTET_NUM" -eq "3" ]
-   then
-        END_ADDR_LAST_OCTET=`echo $ENDING_ADDRESS | awk -F '\\.' '{print $NF}'`
+      	DHCP_START=2
+      	DHCP_START_ADDR="$DHCP_START_ADDR"".""$DHCP_START"
+	  	echo "DHCP_SERVER: Start address to syscfg_db $DHCP_START_ADDR"
+      	# update syscfg dhcp_start
+      	syscfg set dhcp_start $DHCP_START_ADDR
+      	syscfg commit
+   	fi
+
+
+   	# Get the ending address from syscfg DB
+   	ENDING_ADDRESS=`syscfg get dhcp_end`
+   	OCTET_NUM=`echo $ENDING_ADDRESS | grep -o "\." | wc -l`
+
+   	#
+   	# If total "."s are 3, then validate last octet
+   	# Last octet should not be:
+   	#          - NULL
+   	#          - less than 2
+   	#          - greater than 254
+   	#
+	if [ "$OCTET_NUM" -eq "3" ]
+   	then
+    	END_ADDR_LAST_OCTET=`echo $ENDING_ADDRESS | awk -F '\\.' '{print $NF}'`
         if [ "$END_ADDR_LAST_OCTET" = "" ]
         then
             echo "DHCP_SERVER: Last octet of end IP is NULL"
             isEndIpValid=0
         else
-           cnt=`echo "$END_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
-           
-           if [ -z $cnt ];
-           then
-             echo "DHCP_SERVER: Last octet of end IP is character"
-             isEndIpValid=0
-           else
-             if [ "$END_ADDR_LAST_OCTET" -gt "254" ]
-             then
-                 echo "DHCP_SERVER: Last octet of end ip is greater than 254"
-                 isEndIpValid=0
-             elif [ "$END_ADDR_LAST_OCTET" -lt "2" ]
-             then
-                 echo "DHCP_SERVER: Last octet of end ip is less than 2"
-                 isEndIpValid=0
-             else
-                 echo "DHCP_SERVER: Last octet of end ip is valid"
-                 isEndIpValid=1
-             fi
-                 
-          fi
-       fi            
-   fi
+        	cnt=`echo "$END_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
+   			END_SUBNET=`subnet $ENDING_ADDRESS $2`	   	        
+   	       	if [ -z $cnt ];
+           	then
+            	echo "DHCP_SERVER: Last octet of end IP is character"
+             	isEndIpValid=0
+           	else
+            	if [ "$END_ADDR_LAST_OCTET" -gt "254" ]
+             	then
+                	echo "DHCP_SERVER: Last octet of end ip is greater than 254"
+                 	isEndIpValid=0
+             	elif [ "$END_ADDR_LAST_OCTET" -lt "2" ]
+             	then
+                	echo "DHCP_SERVER: Last octet of end ip is less than 2"
+                 	isEndIpValid=0
+				elif [ "$END_SUBNET" != "$LAN_SUBNET" ]
+            	then
+            		echo "DHCP_SERVER: DHCP END Address:$ENDING_ADDRESS is not in the LAN SUBNET:$LAN_SUBNET"
+                	isEndIpValid=0
+	            else
+    	            echo "DHCP_SERVER: DHCP END Address:$ENDING_ADDRESS is valid"
+        	        isEndIpValid=1
+                    DHCP_END_ADDR=$ENDING_ADDRESS
+            	fi
+          	fi
+       	fi            
+   	fi
 
-   # If both Ips are valid, we should be able to proceed
-   if [ "$isEndIpValid" -eq "1" ] && [ "$isStartIpValid" -eq "1" ]
-   then
-       start_subnet=`echo $DHCP_START | cut -d"." -f1-3`
-       end_subnet=`echo $ENDING_ADDRESS | cut -d"." -f1-3`
-       if [ "$start_subnet" = "$end_subnet" ]
-       then
-          allIpsValid=1
-       else
-          echo "DHCP SERVER: Start address subnet $start_subnet and End address subnet $end_subnet are different."
-          allIpsValid=0
-       fi
-   fi
+    if [ "$isEndIpValid" -eq "0" ]
+    then
+    	echo "DHCP_SERVER: DHCP END Address:$ENDING_ADDRESS is not valid re-calculating it"
+      	MASKBITS=`mask2cidr $2`
+      	echo "MASKBITS is: $MASKBITS"
 
-   # full ip address format is valid
-   if [ "$allIpsValid" -eq "1" ] ; then 
-      DHCP_START_ADDR=$DHCP_START
-      DHCP_END_ADDR=$ENDING_ADDRESS
-      echo "DHCP_SERVER: Start address from syscfg_db $DHCP_START_ADDR"
-      echo "DHCP_SERVER: End address from syscfg_db $DHCP_END_ADDR"
-   else   
-      # allIpsValid will be 0 if IP validation would have failed above.
-      # in that case, let us calculate the range
-      if [ "$allIpsValid" -eq "0" ]
-      then
-          echo "DHCP_SERVER: One or more of IPs are invalid"
-          DHCP_START=2
-      fi
-      echo "DHCP_SERVER:New value of start address: $DHCP_START"
-      DHCP_END=`expr $DHCP_START + $DHCP_NUM`
-      DHCP_END=`expr $DHCP_END - 1`
+      	# extract 1st 3 octets of the lan subnet and set the last octet to 253 for the start address  
+      	if [ "$MASKBITS" -eq "24" ]
+      	then
+          	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-3`
+          	DHCP_END=253
+          	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
-      # ensure that we are not allocating the broadcast address
-      LAST_IP=`expr $NETMASK_LAST_OCTET + $DHCP_END`
-      while [ "$LAST_IP" -gt "254" ]
-      do
-         DHCP_END=`expr $DHCP_END - 1`
-         LAST_IP=`expr $NETMASK_LAST_OCTET + $DHCP_END`
-         DHCP_NUM=`expr $DHCP_NUM - 1`
-      done
+          	echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
+      	# extract 1st 2 octets of the lan subnet and set the last remaining to 255.253 for the start address  
+      	elif [ "$MASKBITS" -eq "16" ]
+      	then
+        	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-2`
+          	DHCP_END="255.253"
+          	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
-      if [ "$DHCP_START" -gt "$DHCP_END" ] ; then
-         DHCP_END=$DHCP_START
-         DHCP_NUM=0
-      fi
-      echo "DHCP_SERVER: End address $DHCP_END"
-      echo "DHCP_SERVER: No. of addresses $DHCP_NUM"
-      # extract 1st 3 octets of the lan ip address and concatenate the
-      # start and end octet for figuring out the dhcp address range
-      TEMP=""
-      LAST=""
-      SAVEIFS=$IFS
-      IFS=.
-      for p in $1
-      do
-         if [ "" = "$LAST" ] ; then
-            LAST=$TEMP
-         else
-            LAST=$LAST"."$TEMP
-         fi
-         TEMP=$p
-      done
-      IFS=$SAVEIFS
+          	echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
+      	# extract 1st octet of the lan subnet and set the last remaining octets to 255.255.253 for the start address  
+      	elif [ "$MASKBITS" -eq "8" ]
+      	then
+          	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1`
+          	DHCP_END="255.255.253"
+          	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
-      DHCP_START_ADDR=$LAST"."$DHCP_START
-      DHCP_END_ADDR=$LAST"."$DHCP_END
-
-      echo "DHCP_SERVER: Start address to syscfg_db $DHCP_START_ADDR"
-      echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
-      # update syscfg dhcp_start, dhcp_end to not use just last octet
-      syscfg set dhcp_start $DHCP_START_ADDR
-      syscfg set dhcp_end $DHCP_END_ADDR
-      syscfg commit
-      DHCP_FIRST_OCTETS=$LAST
-   fi
-   
+          	echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
+      	else
+        	echo "DHCP_SERVER: Invalid subnet mask $2"   
+      	fi
+      	syscfg set dhcp_end $DHCP_END_ADDR
+      	syscfg commit
+   	fi
 }
 
 #--------------------------------------------------------------
