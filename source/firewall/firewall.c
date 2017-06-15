@@ -641,6 +641,7 @@ static char guest_network_mask[20];
 
 static int ppFlushNeeded = 0;
 static int isProdImage = 0;
+static int isComcastImage = 0;
 
 /*
  * For timed internet access rules we use cron 
@@ -1211,6 +1212,40 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
     return 0;
  }
 
+ /*
+  *  RDKB-12305  Adding method to check whether comcast device or not
+  *  Procedure     : bIsComcastImage
+  *  Purpose       : return True for Comcast build.
+  *  Parameters    :
+  *  Return Values :
+  *  1             : 1 for comcast images
+  *  2             : 0 for other images
+  */
+ static int bIsComcastImage( void)
+ {
+    char fileContent[255] = {'\0'};
+    FILE *deviceFilePtr;
+    char *pPartnerId = NULL;
+    int offsetValue = 0;
+    int isComcastImg = 1;
+    deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
+
+    if (deviceFilePtr) {
+        while (fscanf(deviceFilePtr , "%s", fileContent) != EOF ) {
+            if ((pPartnerId = strstr(fileContent, "PARTNER_ID")) != NULL) {
+                isComcastImg = 0;
+                break;
+            }
+        }
+        fclose(deviceFilePtr);
+    } else {
+        return 0;
+    }
+
+    return isComcastImg;
+ }
+
+
 /*
  *  Procedure     : prepare_globals_from_configuration
  *  Purpose       : use syscfg and sysevent to prepare information such as
@@ -1259,6 +1294,7 @@ static int prepare_globals_from_configuration(void)
 #endif
    
    isProdImage = bIsProductionImage(); 
+   isComcastImage = bIsComcastImage();
    sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
    if ('\0' == current_wan_ifname[0]) {
@@ -1899,9 +1935,11 @@ static int prepare_globals_from_configuration(void)
                   "-A xlog_drop_lan2wan -j LOG --log-prefix \"UTOPIA: FW.LAN2WAN DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
          fprintf(fp, "%s\n", str);
 
-         snprintf(str, sizeof(str),
+         if(isComcastImage) {
+             snprintf(str, sizeof(str),
                   "-A LOG_TR69_DROP -j LOG --log-prefix \"TR-069 ACS Server Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+             fprintf(fp, "%s\n", str);
+         }
       }
 
    }
@@ -1950,9 +1988,11 @@ static int prepare_globals_from_configuration(void)
             "-A xlogreject -p tcp -m tcp -j REJECT --reject-with tcp-reset");
    fprintf(fp, "%s\n", str);
 
-   snprintf(str, sizeof(str),
+   if(isComcastImage) {
+       snprintf(str, sizeof(str),
             "-A LOG_TR69_DROP -j DROP");
-   fprintf(fp, "%s\n", str);
+       fprintf(fp, "%s\n", str);
+   }
    // for non tcp
    snprintf(str, sizeof(str),
             "-A xlogreject -j DROP");
@@ -8725,10 +8765,12 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":xlog_drop_lanattack - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogdrop - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlogreject - [0:0]");
-   //tr69 chains for logging and filtering
-   fprintf(filter_fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
-   fprintf(filter_fp, "%s\n", ":tr69_filter - [0:0]");
-   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
+   if(isComcastImage) {
+       //tr69 chains for logging and filtering
+       fprintf(filter_fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
+       fprintf(filter_fp, "%s\n", ":tr69_filter - [0:0]");
+       fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
+   }
    do_block_ports(filter_fp);	
    if(isProdImage) {
        fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
@@ -8778,7 +8820,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       fprintf(filter_fp, "-A INPUT -i %s -d 192.168.100.1 -j ACCEPT\n", cmdiag_ifname);
    }
 
-   do_tr69_whitelistTable(filter_fp, AF_INET);
+   if(isComcastImage)
+   {
+      do_tr69_whitelistTable(filter_fp, AF_INET);
+   }
 
 #ifdef _COSA_BCM_MIPS_
     // Allow all traffic to the private interface priv0
@@ -9941,12 +9986,14 @@ static void do_ipv6_filter_table(FILE *fp){
 
    fprintf(fp, "%s\n", ":LOG_INPUT_DROP - [0:0]");
    fprintf(fp, "%s\n", ":LOG_FORWARD_DROP - [0:0]");
-   //tr69 chains for logging and filtering
-   fprintf(fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
-   fprintf(fp, "%s\n", ":tr69_filter - [0:0]");
-   fprintf(fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
-   fprintf(fp, "-A LOG_TR69_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"TR-069 ACS Server Blocked:\"\n",syslog_level);
-   fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
+   if(isComcastImage) {
+       //tr69 chains for logging and filtering
+       fprintf(fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
+       fprintf(fp, "%s\n", ":tr69_filter - [0:0]");
+       fprintf(fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
+       fprintf(fp, "-A LOG_TR69_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"TR-069 ACS Server Blocked:\"\n",syslog_level);
+       fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
+   }
    do_block_ports(fp);
    if(isProdImage) {
        fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
@@ -10007,7 +10054,9 @@ static void do_ipv6_filter_table(FILE *fp){
 
       fprintf(fp, "-A INPUT -m state --state INVALID -j LOG_INPUT_DROP\n");
 
-      do_tr69_whitelistTable(fp, AF_INET6);
+      if(isComcastImage) {
+          do_tr69_whitelistTable(fp, AF_INET6);
+      }
 
 #if defined(_COSA_BCM_MIPS_)
       fprintf(fp, "-A INPUT -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
