@@ -107,6 +107,7 @@ MNET_DEBUG(" CMD : %s \n" COMMA cmdBuf)
 
     if (offset) 
         system(cmdBuf);
+    return 0;
 }
 
 

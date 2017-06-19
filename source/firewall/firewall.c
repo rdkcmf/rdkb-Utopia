@@ -3928,6 +3928,7 @@ static int do_lan2self_by_wanip6(FILE *filter_fp)
         fprintf(filter_fp, "-A INPUT -i %s -d %s -p tcp --match multiport --dports 23,22,80,443,161 -j LOG_INPUT_DROP\n", lan_ifname, ecm_wan_ipv6[i]);
     }
            FIREWALL_DEBUG("Exiting do_lan2self_by_wanip6\n");     
+    return 0;
 }
 
 static int do_lan2self_by_wanip(FILE *filter_fp, int family)
@@ -3972,6 +3973,7 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
    fprintf(filter_fp, "-A lan2self_by_wanip -p udp --dport 161 -j xlog_drop_lan2self\n"); //SNMP
    fprintf(filter_fp, "-A lan2self_by_wanip -p icmp --icmp-type 8 -j xlog_drop_lan2self\n"); // ICMP PING request
            FIREWALL_DEBUG("Exiting do_lan2self_by_wanip\n");     
+    return 0;
 }
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
 /*
@@ -4974,6 +4976,7 @@ static int do_wan2self_allow(FILE *filter_fp)
   }
 
 #endif
+    return 0;
 }
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) && ! defined(_CBR_PRODUCT_REQ_) 
 static int prepare_ipv6_multinet(FILE *fp)
@@ -8246,6 +8249,7 @@ static int prepare_multinet_filter_input(FILE *filter_fp) {
     
                  FIREWALL_DEBUG("Exiting prepare_multinet_filter_input\n"); 	 
     
+    return 0;
 }
 
 static int prepare_multinet_filter_output(FILE *filter_fp) {
@@ -8367,6 +8371,7 @@ static int prepare_multinet_mangle(FILE *mangle_fp) {
 
    } while (SYSEVENT_NULL_ITERATOR != iterator);
       FIREWALL_DEBUG("Exiting prepare_multinet_mangle\n"); 	
+    return 0;
 }
 
 

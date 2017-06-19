@@ -200,6 +200,7 @@ int ev_unregister_ifstatus(PL2Net net, char* ifStatusEventName) {
     
     sysevent_rmcallback(sysevent_fd_interactive, sysevent_token_interactive,
         asyncID);
+    return 0;
 }
 
 int ev_firewall_restart(void) {
@@ -207,6 +208,7 @@ int ev_firewall_restart(void) {
     MNET_DEBUG("ev_firewall_restart Triggering RDKB_FIREWALL_RESTART\n")
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive,
                  "firewall-restart", "", 0);
+    return 0;
 }
 
 int ev_string_to_status(char* stringStatus, SERVICE_STATUS* status) {
@@ -223,6 +225,7 @@ int ev_string_to_status(char* stringStatus, SERVICE_STATUS* status) {
         MNET_DEBUG("ev_string_to_status: about to set status(%p) to %d\n" COMMA status COMMA STATUS_STOPPED)
         *status = STATUS_STOPPED;
     }
+    return 0;
 }
 
 int ev_set_name(PL2Net net) {

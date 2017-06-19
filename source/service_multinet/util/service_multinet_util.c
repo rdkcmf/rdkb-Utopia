@@ -55,6 +55,7 @@ int addToList(PList list, void* itemData) {
     item->data = itemData;
     
     addItem(list, item);
+    return 0;
 }
 
 void* addAndAlloc(PList list, int dataSize) {
@@ -87,6 +88,7 @@ int removeFromList(PList list, PListItem item) {
     
     list->count--;
     free(item);
+    return 0;
 }
 
 int clearList(PList list) {
@@ -103,6 +105,7 @@ int clearList(PList list) {
     
     list->first = list->last = NULL;
     list->count = 0;
+    return 0;
 }
 
 int listSize(PList list) {
@@ -113,6 +116,7 @@ int initIterator(PList list, PListIterator iterator) {
     iterator->current = list->first;
     iterator->bGiven = 0;
     iterator->list = list;
+    return 0;
 }
 //int copyIterator(PListIterator to, PListIterator from);
 PListItem getNext(PListIterator iterator) {
@@ -137,4 +141,5 @@ int removeCurrent(PListIterator iterator) {
         iterator->current = iterator->current->next;
         removeFromList(iterator->list, delItem);
     }
+    return 0;
 }

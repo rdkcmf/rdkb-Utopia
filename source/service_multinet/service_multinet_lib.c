@@ -72,6 +72,7 @@ static int nethelper_bridgeCreate(char* brname) {
     snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s; ifconfig %s up", brname, brname);
     MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff)
     system(cmdBuff);
+    return 0;
 }
 
 static int nethelper_bridgeDestroy(char* brname) {
@@ -79,6 +80,7 @@ static int nethelper_bridgeDestroy(char* brname) {
     char cmdBuff[80];
     snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s down; brctl delbr %s", brname, brname);
     system(cmdBuff);
+    return 0;
 }
 
 /* Public interface section */
@@ -165,6 +167,7 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
             }
         }
     }
+    return 0;
 }
 
 
@@ -199,6 +202,7 @@ int multinet_bridgeDown(PL2Net network){
     
     ep_clear(network);
     ep_rem_active_net(network);
+    return 0;
 }
 int multinet_bridgeDownInst(int l2netInst){
     L2Net l2net;
@@ -206,6 +210,7 @@ int multinet_bridgeDownInst(int l2netInst){
         nv_get_bridge(l2netInst, &l2net);
         multinet_bridgeDown(&l2net);
     }
+    return 0;
 }
 
 int multinet_Sync(PL2Net network, PMember members, int numMembers){
@@ -288,7 +293,7 @@ int multinet_Sync(PL2Net network, PMember members, int numMembers){
     
     //Sync name TODO Deferred!
     
-    
+    return 0;
 }
 int multinet_SyncInst(int l2netInst){
     L2Net nv_net;
@@ -362,6 +367,7 @@ int multinet_ifStatusUpdate(PL2Net network, PMember interface, IF_STATUS status)
     
     ev_set_netStatus(network, check_status(live_members, numLiveMembers));
     MNET_DEBUG("multinet_ifStatusUpdate: exit\n")
+    return 0;
 }
 int multinet_ifStatusUpdate_ids(int l2netInst, char* ifname, char* ifType, char* status, char* tagging){ 
     IFType type = {0};
@@ -410,12 +416,15 @@ static int add_members(PL2Net network, PMember interfaceBuf, int numMembers)
     
     //add vlans for ready members
     add_vlan_for_members(network, interfaceBuf, numMembers);                                
+
+    return 0;
 }
 
 static int remove_members(PL2Net network, PMember live_members, int numLiveMembers) 
 {
     unregister_if(network, live_members, numLiveMembers);
     remove_vlan_for_members(network, live_members, numLiveMembers);    
+    return 0;
 }
 
 static SERVICE_STATUS check_status(PMember live_members, int numLiveMembers) {

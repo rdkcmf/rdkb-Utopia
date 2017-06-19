@@ -96,6 +96,7 @@ int ep_set_allMembers(PL2Net net, PMember members, int numMembers) {
     snprintf(netmemberskey, sizeof(netmemberskey), MNET_EP_ALLMEMBERS_KEY_FORMAT(net->inst));
     
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, netmemberskey, offset ? iflistbuf : NULL, 0);
+    return 0;
 }
 
 int ep_add_active_net(PL2Net net) { // TODO deferred
@@ -152,14 +153,16 @@ int ep_set_bridge(PL2Net net) {
     snprintf(keybuf, sizeof(keybuf),  MNET_EP_BRIDGE_NAME_FORMAT(net->inst));
     snprintf(valbuf, sizeof(valbuf), "%s", net->name);
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, valbuf, 0);
-    
+    return 0;
 }
 
 int ep_set_rawString(char* key, char* value) {
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, key, value, 0);
+    return 0;
 }
 int ep_get_rawString(char* key, char* value, int valueSize) {
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive,key, value, valueSize);
+    return 0;
 }
 
 int ep_clear(PL2Net net) {
@@ -172,6 +175,7 @@ int ep_clear(PL2Net net) {
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, NULL, 0);
     
     ep_set_allMembers(net, NULL, 0);
+    return 0;
 }
 
 // int ep_add_members(PL2Net net, PMember members, int numMembers){

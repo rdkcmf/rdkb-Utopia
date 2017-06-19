@@ -139,7 +139,8 @@ int saveVlanState(PVlanTrunkState vidState) {
     }
     if (vidState->trunksDirty)
         ep_set_trunkPort_vidMembers(vidState->vid, portMemberNameList, numPorts);
-    
+
+	return 0;
 }
 
 int loadVlanState(PVlanTrunkState vidState){
@@ -183,7 +184,7 @@ int loadVlanState(PVlanTrunkState vidState){
         newPort->dirty = 0;
     }
     vidState->trunksDirty = 0;
-    
+	return 0;
 }
 
 //TODO optimize so that exec calls don't have to load the whole tree every time.
