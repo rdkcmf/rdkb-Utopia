@@ -78,7 +78,7 @@ void dhcp_server_stop()
 	memset(l_cSystemCmd, 0x00, sizeof(l_cSystemCmd));
 	if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
     {
-        sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-interfaces --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s",
+        sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s",
 				SERVER, DHCP_CONF);
     }
     else //If XDNS is not enabled 
@@ -237,7 +237,7 @@ int dhcp_server_start (char *input)
 	int l_iDnamasq_Retry;	
 	if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
 	{
-		sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-interfaces --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s",                SERVER, DHCP_CONF);	
+		sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s",                SERVER, DHCP_CONF);	
 	}
 	else //If XDNS is not enabled 
 	{
@@ -487,7 +487,7 @@ void lan_status_change(char *input)
         fprintf(stderr, "SERVICE DHCP : Start dhcp-server from lan status change");
 		if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
 	    {    
-    	    sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-interfaces --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s", 
+    	    sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s", 
 					SERVER, DHCP_CONF);
     	}    
     	else //If XDNS is not enabled 
