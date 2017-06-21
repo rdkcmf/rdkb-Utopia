@@ -128,8 +128,8 @@ qtn_set_mesh(){
 #Syntax: setup_qtn [start|stop] athX
 #Parameters: [start|stop] name(as in athX),
 setup_qtn(){
-    QTN_MODE="$1"
-    AP_NAME="$2"
+    local QTN_MODE="$1"
+    local AP_NAME="$2"
     
     check_qtn_ready
 
