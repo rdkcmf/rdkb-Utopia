@@ -1012,3 +1012,6 @@ $process_memory_log_count=0
 $lan_pd_interfaces=brlan0
 @erouter_topology-mode=1
 $migration_cp_handler=false
+$PasswordLockoutEnable=true
+$PasswordLockoutAttempts=3
+$PasswordLockoutTime=300000

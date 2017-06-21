@@ -1024,3 +1024,6 @@ $unit_activated=1
 
 #Speedtest Enable
 $enable_speedtest=false
+$PasswordLockoutEnable=true
+$PasswordLockoutAttempts=3
+$PasswordLockoutTime=300000

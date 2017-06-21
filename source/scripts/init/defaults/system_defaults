@@ -916,3 +916,6 @@ $wan_default_gateway=0.0.0.0
 $nameserver1=0.0.0.0
 $nameserver2=0.0.0.0
 $hostname=Docsis-Gateway
+$PasswordLockoutEnable=true
+$PasswordLockoutAttempts=3
+$PasswordLockoutTime=300000

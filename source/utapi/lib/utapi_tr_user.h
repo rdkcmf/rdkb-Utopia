@@ -78,6 +78,7 @@ userCfg
     char                            Username[64];
     char                            Password[64];
     char                            Language[16];
+    char 	            NumOfFailedAttempts;
     USER_ACCESS_PERMISSIONS         AccessPermissions;
 }userCfg_t;
 
