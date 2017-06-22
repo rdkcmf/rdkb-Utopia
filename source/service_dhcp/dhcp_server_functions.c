@@ -55,8 +55,9 @@ int prepare_hostname()
     syscfg_get(NULL, "hostname", l_cHostName, sizeof(l_cHostName));
     syscfg_get(NULL, "current_lan_ipaddr", l_cCurLanIP, sizeof(l_cCurLanIP));
 
-	l_fHosts_File = fopen(HOSTS_FILE, "a+");
-    l_fHosts_Name_File = fopen(HOSTNAME_FILE, "a+");
+    // Open in Write mode each time for avoiding duplicate entries RDKB- 12295
+	l_fHosts_File = fopen(HOSTS_FILE, "w+");
+    l_fHosts_Name_File = fopen(HOSTNAME_FILE, "w+");
 
     if (0 != l_cHostName[0]) 
     {
@@ -279,7 +280,7 @@ void prepare_dhcp_conf_static_hosts()
     FILE *l_fLocalStatHosts = NULL;
 
     sprintf(l_cLocalStatHosts, "/tmp/dhcp_static_hosts%d", getpid());
-    l_fLocalStatHosts = fopen(l_cLocalStatHosts, "a+"); //It will create a file and open
+    l_fLocalStatHosts = fopen(l_cLocalStatHosts, "w+"); //It will create a file and open, re-write fresh RDK-B 12160
     if(NULL == l_fLocalStatHosts)
     {
         fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalStatHosts, errno);
