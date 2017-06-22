@@ -8322,6 +8322,8 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i ath13 -d 169.254.1.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath13 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #endif
+#elif defined(PARODUS_ENABLE)
+    fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -d 192.168.251.0/24 -p tcp --dport 6666 -j ACCEPT\n");
 #endif
     //<<
 
