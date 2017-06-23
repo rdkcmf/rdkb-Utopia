@@ -124,6 +124,7 @@ static CHAR DESC_DOC_PATH[60];
 
 LOCAL INT32 _igd_root_device_init(VOID);
 LOCAL INT32 _igd_root_device_destroy(IN struct upnp_device *device);
+LOCAL INT32 _igd_root_device_registerAndgetsignal( VOID );
 
 LOCAL struct upnp_service *IGD_services[] = 
 {
@@ -312,8 +313,7 @@ main( IN INT32 argc,
         (void) argc;
         (void) argv;
     	
-    	sigset_t sigsToCatch;
-    	INT32 sig;
+    	INT32 receivedsignal;
     	INT32 ret;
         char igd_upnp_interface[10];
         char igd_advr_expire[10] = {'\0'};
@@ -388,24 +388,54 @@ main( IN INT32 argc,
 		}
 
 		do {
-			  sigemptyset(&sigsToCatch);
-			  sigaddset(&sigsToCatch, SIGINT);
-			  sigaddset(&sigsToCatch, SIGTERM);
-			  sigaddset(&sigsToCatch, SIGUSR1);
-			  pthread_sigmask(SIG_SETMASK, &sigsToCatch, NULL);
-			  sigwait(&sigsToCatch, &sig);
-			  PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"Caught signal %d...\n", sig);
-			  switch (sig) {
-			  case SIGUSR1:
-				break;
-			  default:
-				break;
-			  }
-		} while (sig!=SIGTERM && sig!=SIGINT);
-	
+			  receivedsignal = _igd_root_device_registerAndgetsignal( );
+			  PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"Received signal is %d\n", receivedsignal);
 
-    	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"Shutting down on signal %d...\n", sig );
+			  /*
+			     * SIGTERM - 15
+			     * SIGINT - 2
+			     */
+			     
+		} while ( ( 15 != receivedsignal )  && ( 2 != receivedsignal ) );
+
+    	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"Shutting down on signal %d...\n", receivedsignal );
     	PAL_upnp_device_destroy(&IGD_device);
     	exit( 0 );
 }
 
+/************************************************************
+ * Function: _igd_root_device_registerAndgetsignal 
+ *
+ *  Parameters:	
+ *      none
+ *      fp: Input/Output. the description file pointer.
+ * 
+ *  Description:
+ *      This functions generate the description file of the Root device.
+ *
+ *  Return Values: INT32
+ *      return received signal value
+ ************************************************************/ 
+LOCAL INT32 _igd_root_device_registerAndgetsignal( VOID )
+{
+	sigset_t signaltocatch;
+	INT32 	 receivedsignal;
+
+	/* Nullify all signal before registration */
+	sigemptyset(&signaltocatch);
+
+	/*
+	   * SIGTERM  - 15
+	   * SIGUSR1  - 10
+	   * SIGINT    - 2
+	   */
+	sigaddset( &signaltocatch, 15 ); 
+	sigaddset( &signaltocatch, 10 ); 
+	sigaddset( &signaltocatch, 2 );	 
+	
+	pthread_sigmask( SIG_SETMASK, &signaltocatch, NULL );
+
+	sigwait( &signaltocatch, &receivedsignal );
+
+	return receivedsignal;
+}
