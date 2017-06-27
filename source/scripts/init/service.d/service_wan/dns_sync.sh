@@ -8,6 +8,9 @@ retries=0
 
 ATOM_INTERFACE_IP=`cat /etc/device.properties | grep ATOM_INTERFACE_IP | cut -f 2 -d"="`
 LAN_IP=`syscfg get lan_ipaddr`
+PEER_COMM_DAT="/etc/dropbear/elxrretyt.swr"
+PEER_COMM_ID="/tmp/elxrretyt-$$.swr"
+CONFIGPARAMGEN="/usr/bin/configparamgen"
 
 while :
 do
@@ -32,14 +35,16 @@ then
 	echo "$LAN_IP" >> $TMP_RESOLV_FILE
 fi
 
-scp $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
+$CONFIGPARAMGEN jx $PEER_COMM_DAT $PEER_COMM_ID
+scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
+
 if [ $? -eq 0 ]; then
 	echo "scp is successful at first instance"
 else
 	retries=0
 	while :
 	do
-		scp $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
+		scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
 		if [ $? -eq 0 -o  $retries -le 2 ]
 		then
 			echo "scp is successful at iteration:$retries"
@@ -50,3 +55,5 @@ else
 		fi 
 	done	
 fi
+
+rm -f $PEER_COMM_ID

@@ -10,5 +10,11 @@ fi
 
 DHCP_LEASE_FILE_ARM="/nvram/dnsmasq.leases"
 DHCP_LEASE_FILE_ATOM="/nvram/dnsmasq.leases"
+PEER_COMM_DAT="/etc/dropbear/elxrretyt.swr"
+PEER_COMM_ID="/tmp/elxrretyt-$$.swr"
+CONFIGPARAMGEN="/usr/bin/configparamgen"
 
-scp $DHCP_LEASE_FILE_ARM root@$ATOM_IP:$DHCP_LEASE_FILE_ATOM  > /dev/null 2>&1
+
+$CONFIGPARAMGEN jx $PEER_COMM_DAT $PEER_COMM_ID
+scp -i $PEER_COMM_ID $DHCP_LEASE_FILE_ARM root@$ATOM_IP:$DHCP_LEASE_FILE_ATOM  > /dev/null 2>&1
+rm -f $PEER_COMM_ID
