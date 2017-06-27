@@ -460,8 +460,8 @@ dhcp_server_start ()
    fi
 
    # This function is called for brlan0 and brlan1
-   # If l2sd0.101 is available then XHS service is available post all DHCP configuration   
-   isAvailableXHS=`ifconfig | grep l2sd0.101`
+   # If XHS_INTERFACE is available then XHS service is available post all DHCP configuration   
+   isAvailableXHS=`ifconfig | grep $XHS_INTERFACE`
    if [ "$isAvailableXHS" != "" ]; then
        echo_t "Xfinityhome service is UP"
        print_uptime "boot_to_XHOME_uptime"
