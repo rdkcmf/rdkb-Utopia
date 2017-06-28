@@ -100,28 +100,33 @@ typedef struct PseudoHeaderv6 {
     u_int8_t next_hdr;
 } PseudoHeaderv6;
 
-unsigned short csum(unsigned short *ptr,int nbytes)
+unsigned short tcp_checksum(unsigned short *buffer, int byte_count)
 {
-    register long sum;
-    unsigned short oddbyte;
-    register short answer;
+    register long word_sum;
+    int word_count;
+    int i;
 
-    sum=0;
-    while(nbytes>1) {
-        sum+=*ptr++;
-        nbytes-=2;
-    }
-    if(nbytes==1) {
-        oddbyte=0;
-        *((u_char*)&oddbyte)=*(u_char*)ptr;
-        sum+=oddbyte;
+    word_sum = 0;
+    word_count = byte_count >> 1;
+
+    for(i = 0; i < word_count ; i++) {
+	word_sum += buffer[i];
     }
 
-    sum = (sum>>16)+(sum & 0xffff);
-    sum = sum + (sum>>16);
-    answer=(short)~sum;
+    if( byte_count & 1 ) {
+	word_sum += *(unsigned char*)&buffer[i];
+    }
+
+    unsigned short carry = (unsigned short) (word_sum >> 16);
     
-    return(answer);
+    while (0 != carry)
+    {
+        word_sum = (word_sum & 0xffff) + carry;
+        carry = (unsigned short) (word_sum >> 16);
+    }
+
+    return (short)(~word_sum);
+
 }
 
 int SendRawPacket(int rawsock, unsigned char *pkt, int pkt_len, char *dstIp, unsigned short dstPort)
@@ -297,7 +302,7 @@ void CreatePseudoHeaderAndComputeTcpChecksum(int family, struct tcphdr *tcp_head
     memcpy((hdr + pseudo_offset + tcp_header->doff*4), data, dataSize);
 
     /* Calculate the Checksum */
-    tcp_header->check = csum((unsigned short *)hdr, header_len);
+    tcp_header->check = tcp_checksum((unsigned short *)hdr, header_len);
 
     /* Free the PseudoHeader */
     free(hdr);
