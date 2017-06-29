@@ -769,6 +769,8 @@ int greDscp = 44; // Default initialized to 44
  =================================================================
  */
 static int do_block_ports(FILE *filter_fp);
+static void filterPortMap(FILE *filt_fp);
+
 static int privateIpCheck(char *ip_to_check)
 {
     struct in_addr l_sIpValue, l_sDhcpStart, l_sDhcpEnd;
@@ -8783,6 +8785,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    }
+   filterPortMap(filter_fp);
    // Allow local loopback traffic 
    fprintf(filter_fp, "-A INPUT -i lo -s 127.0.0.0/8 -j ACCEPT\n");
    if (isWanReady) {
@@ -9342,6 +9345,54 @@ static int do_block_ports(FILE *filter_fp)
    fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 49152:49153 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 49152:49153 -j DROP\n");
    return 0;
+}
+
+/**
+ *  Enable portmap traffic only on loopback and PEER IP
+ */
+static void filterPortMap(FILE *filt_fp)
+{
+    const char *port = "111";
+    char fileContent[255] = {'\0'};
+    FILE *deviceFilePtr;
+    char *pInterfaceIPStr = NULL;
+    int offsetValue = 0;
+    FIREWALL_DEBUG("Entering filterPortMap\n");
+
+    if ( NULL == filt_fp ) {
+        FIREWALL_DEBUG("Input file is empty. Ignoring firewall rules for portmap !!!\n");
+        return;
+    }
+
+    // Enable traffic from lo 
+    fprintf(filt_fp, "-A INPUT -s 127.0.0.1 -p tcp -m tcp --dport 111 -j ACCEPT\n");
+    fprintf(filt_fp, "-A INPUT -s 127.0.0.1 -p udp -m udp --dport 111 -j ACCEPT\n");
+   
+    deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
+
+    if (deviceFilePtr) {
+        while ( fscanf(deviceFilePtr , "%s", fileContent) != EOF ) {
+            if ( ((pInterfaceIPStr = strstr(fileContent, "HOST_ARPING_IP")) != NULL) ) {
+                offsetValue = strlen("HOST_ARPING_IP=");
+            } else if ((pInterfaceIPStr = strstr(fileContent, "PEER_ARPING_IP")) != NULL){
+                offsetValue = strlen("PEER_ARPING_IP=");
+            } else {
+                continue ;
+            }
+            pInterfaceIPStr = pInterfaceIPStr + offsetValue ;
+            if ( NULL != pInterfaceIPStr ) {
+                fprintf(filt_fp, "-A INPUT -s %s -p tcp -m tcp --dport 111 -j ACCEPT\n", pInterfaceIPStr);
+                fprintf(filt_fp, "-A INPUT -s %s -p udp -m udp --dport 111 -j ACCEPT\n", pInterfaceIPStr);
+                // Either of one will be present on one processor
+                break ;
+            }
+        }
+        fprintf(filt_fp, "-A INPUT -p tcp -m tcp --dport 111 -j DROP\n");
+        fprintf(filt_fp, "-A INPUT -p udp -m udp --dport 111 -j DROP\n");
+        fclose(deviceFilePtr);
+    }
+    FIREWALL_DEBUG("Exiting filterPortMap\n");
+    return ;
 }
 
 /*
