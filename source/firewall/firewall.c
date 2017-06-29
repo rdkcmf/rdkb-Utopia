@@ -8678,6 +8678,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if defined (INTEL_PUMA7) 
    //Avoid blocking packets at the Intel NIL layer
    fprintf(filter_fp, "-A FORWARD -i a-mux -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -i host0 -s 192.168.100.0/255.255.255.0 -j ACCEPT\n");
+   fprintf(filter_fp, "-A OUTPUT -o host0 -d 192.168.100.0/255.255.255.0 -j ACCEPT\n");
 #endif
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    fprintf(filter_fp, "%s\n", ":pp_disabled - [0:0]");

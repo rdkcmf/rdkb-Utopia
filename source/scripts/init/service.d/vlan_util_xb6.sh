@@ -31,6 +31,8 @@ BRIDGE_MODE=0
 #Set this to 1 to set SSID name in this script to default
 USE_DEFAULT_SSID=1
 BASE_WIFI_IF="host0"
+BASE_WIFI_IP="192.168.100.10"
+QTN_BR0_IP="192.168.100.100"
 #Base vlan ID to use internally in QTN
 QTN_VLAN_BASE="2000"
 QTN_STATE="/var/run/.qtn_vlan_enabled"
@@ -116,6 +118,30 @@ qtn_set_LnF_passphrase(){
         $QWCFG_TEST set $QTN_INDEX passphrase $lpf
 }
 
+qtn_configure_LnF_radius(){
+    echo "VLAN_UTIL SETTING LOST & FOUND RADIUS CONFIG"
+
+    auth_secret=$(/usr/bin/configparamgen jx /etc/lnf/edorbdvzr.uix /dev/stdout)
+
+    $QWCFG_TEST set $QTN_INDEX vap_emerged 1
+
+    $QWCFG_TEST set $QTN_INDEX ssid_bcast 0
+
+    $QWCFG_TEST set $QTN_INDEX ssid D375C1D9F8B041E2A1995B784064977B
+
+    $QWCFG_TEST set $QTN_INDEX radius_conf "$BASE_WIFI_IP 1812 $auth_secret;$BASE_WIFI_IP 1812 $auth_secret"
+
+    $QWCFG_TEST set $QTN_INDEX beacon_type WPAand11i
+
+    $QWCFG_TEST set $QTN_INDEX wpa_encryption_mode TKIPandAESEncryption
+
+    $QWCFG_TEST set $QTN_INDEX authentication EAPAuthentication
+
+    $QWCFG_TEST set $QTN_INDEX wpa_rekey_interval 3600
+    $QWCFG_TEST set $QTN_INDEX iface_enable 1
+    $QWCFG_TEST commit
+}
+
 qtn_set_mesh(){
   $QWCFG_TEST set $QTN_INDEX ssid we.piranha.off
   # Default passphrase will be qtn01234
@@ -148,6 +174,8 @@ setup_qtn(){
         if [ $ATH_INDEX -eq 6 ] || [ $ATH_INDEX -eq 7 ]; then
                 qtn_set_LnF_ssid
                 qtn_set_LnF_passphrase
+        elif [ $ATH_INDEX -eq 10 ] || [ $ATH_INDEX -eq 11 ]; then
+                qtn_configure_LnF_radius
         elif [ $ATH_INDEX -eq 12 ] || [ $ATH_INDEX -eq 13 ]; then
                 qtn_set_mesh
         fi
@@ -186,7 +214,9 @@ qtn_init(){
     then
         echo > $QTN_STATE
         $QWCFG_TEST set 0 enable_vlan 1
-        $IP link set $BASE_WIFI_IF up
+        $IFCONFIG $BASE_WIFI_IF $BASE_WIFI_IP up
+        $QCSAPI_PCIE set_ip br0 ipaddr $QTN_BR0_IP
+        $QCSAPI_PCIE set_ip br0 netmask 255.255.255.0
         setup_qtn start ath12
         setup_qtn start ath13
         $IFCONFIG ath12 169.254.0.1 netmask 255.255.255.0
@@ -392,7 +422,7 @@ get_expected_if_list() {
         
         #XFinity IoT network
         6)
-            IF_LIST="ath6 ath7"
+            IF_LIST="ath6 ath7 ath10 ath11"
         ;;
         
     esac
