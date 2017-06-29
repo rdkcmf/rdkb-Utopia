@@ -8785,7 +8785,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    }
+#if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
+#endif
    // Allow local loopback traffic 
    fprintf(filter_fp, "-A INPUT -i lo -s 127.0.0.0/8 -j ACCEPT\n");
    if (isWanReady) {
