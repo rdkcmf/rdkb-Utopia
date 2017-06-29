@@ -89,16 +89,16 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-syncMembers|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-down|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|"TUPLE_FLAG_EVENT,
-    "lnf-setup|/etc/utopia/service.d/vlan_util_xb6.sh|"TUPLE_FLAG_EVENT, 
+    "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "lnf-setup|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT, 
     NULL };
 #elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-down|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/vlan_util_tchxb6.sh|"TUPLE_FLAG_EVENT,
-    "lnf-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "lnf-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 
 #else
