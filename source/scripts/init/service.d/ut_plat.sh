@@ -150,23 +150,32 @@ subnet() {
 }
 
 mask2cidr() {
-    nbits=0
-    IFS=.
-    echo "Mask2cidr called on :${1}:" > /dev/console
-    for dec in $1 ; do
-        echo "dec:${dec}:" > /dev/console
-        case $dec in
-            255) let nbits+=8;;
-            254) let nbits+=7;;
-            252) let nbits+=6;;
-            248) let nbits+=5;;
-            240) let nbits+=4;;
-            224) let nbits+=3;;
-            192) let nbits+=2;;
-            128) let nbits+=1;;
-            0);;
-            *) echo "Error: $dec is not recognised"; exit 1
-        esac
-    done
-    echo $nbits
+	numberofbits=0
+	echo "Mask2cidr called on :${1}:" > /dev/console
+	fields=`echo $1 | sed 's/\./ /g'`
+	for field in $fields ; do
+		echo "dec:${field}:" > /dev/console
+		if [ $field -eq 255 ]; then
+			numberofbits=$((numberofbits + 8))
+		elif [ $field -eq 254 ]; then
+			numberofbits=$((numberofbits + 7))
+		elif [ $field -eq 252 ]; then
+			numberofbits=$((numberofbits + 6))
+		elif [ $field -eq 248 ]; then
+			numberofbits=$((numberofbits + 5))
+		elif [ $field -eq 240 ]; then
+			numberofbits=$((numberofbits + 4))
+		elif [ $field -eq 224 ]; then
+			numberofbits=$((numberofbits + 3))
+		elif [ $field -eq 192 ]; then
+			numberofbits=$((numberofbits + 2))
+		elif [ $field -eq 128 ]; then
+			numberofbits=$((numberofbits + 1))
+		elif [ $field -eq 0 ]; then
+			:
+		else
+			echo "Error: $field is not recognised"; exit 1
+		fi
+	done
+	echo $numberofbits
 }
