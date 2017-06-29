@@ -96,6 +96,14 @@ BIN=pmon
 #   "samba      none                    /etc/init.d/samba restart
 
 do_check_process() {
+
+	UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+	if [ "$UPTIME" -lt 600 ]
+	then
+	    echo "Uptime is less than 10 mins, exiting from pmon."
+	    exit 0
+	fi
+
     # echo "[utopia] Running process monitor" > /dev/console
     LOCAL_CONF_FILE=/tmp/pmon.conf$$
     rm -f $LOCAL_CONF_FILE
