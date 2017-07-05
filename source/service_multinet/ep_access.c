@@ -66,7 +66,9 @@ int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
             live_members[curNumMembers].bTagging = 0;
         }
         live_members[curNumMembers].interface->map = NULL;
-        strcpy(live_members[curNumMembers++].interface->name, ifnamebuf);
+        /* ifnamebuf is 32 bytes, target is 16 so avoid string overflow. */
+        strncpy(live_members[curNumMembers].interface->name, ifnamebuf, sizeof(live_members[curNumMembers].interface->name)-1);
+        curNumMembers++;
              
         ifToken = strtok(NULL, " ");
     }
