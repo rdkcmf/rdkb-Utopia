@@ -94,9 +94,9 @@ main (int argc, char **argv)
               while(token != NULL)
               {
 #ifdef _COSA_INTEL_USG_ATOM_
-                if(!strcmp("PEER_ARPING_IP",token))
+                if(!strcmp("ATOM_ARPING_IP",token))
 #elif _COSA_INTEL_USG_ARM_
-                if(!strcmp("HOST_ARPING_IP",token))
+                if(!strcmp("ARM_ARPING_IP",token))
 #else
                 if(!strcmp("PEER_ARPING_IP",token))
 #endif
