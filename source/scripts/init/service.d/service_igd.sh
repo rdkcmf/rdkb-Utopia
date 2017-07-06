@@ -184,6 +184,7 @@ init_once () {
 #        echo "$UPNP_TTL" > $UPNP_TMP
         mkdir -p /var/IGD
         (cd /var/IGD; ln -sf /etc/IGD/* .)
+	chmod 0755 /var/IGD/
 #    fi
 }
 
