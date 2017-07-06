@@ -215,7 +215,7 @@ LOCAL INT32 _igd_root_device_init(VOID)
 	}
 	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"\nRoot Device UUID:%s\n",IGD_device.udn);
 	
-	mkdir("/var/IGD",0777);
+	mkdir("/var/IGD",0755);
 	unlink(DESC_DOC_PATH);
 	fp=fopen(DESC_DOC_PATH, "w");
 	if(fp==NULL)
