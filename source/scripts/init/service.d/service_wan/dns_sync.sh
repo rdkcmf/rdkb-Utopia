@@ -45,9 +45,14 @@ else
 	while :
 	do
 		scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
-		if [ $? -eq 0 -o  $retries -le 2 ]
+		if [ $? -eq 0 -o  $retries -gt 4 ]
 		then
-			echo "scp is successful at iteration:$retries"
+		    if [ $retries -le 4 ]
+		    then
+			    echo "scp is successful at iteration:$retries"
+			else
+			    echo "scp of resolv.conf failed."
+			fi 
 			break	
 		else
 			sleep 5
