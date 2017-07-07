@@ -47,7 +47,7 @@ else
 		scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
 		if [ $? -eq 0 -o  $retries -gt 4 ]
 		then
-		    if [ $retries -le 4 ]
+		    if [ $? -eq 0 ]
 		    then
 			    echo "scp is successful at iteration:$retries"
 			else
