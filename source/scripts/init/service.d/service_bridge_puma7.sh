@@ -141,14 +141,65 @@ cmdiag_if()
     fi
 }
 
+#--------------------------------------------------------------
+# add_ebtable_rule
+# Add rule in ebtable nat PREROUTING chain
+#--------------------------------------------------------------
+add_ebtable_rule()
+{
+    # Add the rule to redirect diagnostic traffic to CM-LAN in bridge mode
+    prod_model=`awk -F'[-=]' '/^VERSION/ {print $2}' /etc/versions`
+    cmdiag_if=`syscfg get cmdiag_ifname`
+    cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
+
+    wan_if=`syscfg get wan_physical_ifname`
+    cmdiag_ip="192.168.100.1"
+    subnet_wan=`ip route show | awk '/'$wan_if'/ {print $1}'`
+
+    ip route del $subnet_wan dev $wan_if
+    ip route add $subnet_wan dev $cmdiag_if #proto kernel scope link src $cmdiag_ip
+
+    dst_ip="10.0.0.1" # RT-10-580 @ XB3 
+    ip addr add $dst_ip/24 dev $cmdiag_if
+    ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
+    ip rule add from $dst_ip lookup $BRIDGE_MODE_TABLE
+}
+
+#--------------------------------------------------------------
+# del_ebtable_rule
+# Delete rule in ebtable nat PREROUTING chain
+#--------------------------------------------------------------
+del_ebtable_rule()
+{
+    prod_model=`awk -F'[-=]' '/^VERSION/ {print $2}' /etc/versions`
+    cmdiag_if=`syscfg get cmdiag_ifname`
+    cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
+
+    wan_if=`syscfg get wan_physical_ifname`
+    wan_ip=`sysevent get ipv4_wan_ipaddr`
+    subnet_wan=`ip route show | grep $cmdiag_if | grep -v 192.168.100. | grep -v 10.0.0 | awk '/'$cmdiag_if'/ {print $1}'`
+
+    ip route del $subnet_wan dev $cmdiag_if
+    ip route add $subnet_wan dev $wan_if proto kernel scope link src $wan_ip
+
+    dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
+    ip addr del $dst_ip/24 dev $cmdiag_if
+    ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
+    ip rule del from $dst_ip lookup $BRIDGE_MODE_TABLE
+}
+
 routing_rules(){
     if [ "$1" = "enable" ] ; then
         #Send responses from $BRIDGE_NAME IP to a separate bridge mode route table
         ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
         ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
+        add_ebtable_rule
     else
         ip rule del from $LAN_IP lookup $BRIDGE_MODE_TABLE
         ip route flush table $BRIDGE_MODE_TABLE
+        del_ebtable_rule
     fi
 }
 
