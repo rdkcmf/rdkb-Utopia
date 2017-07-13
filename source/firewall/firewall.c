@@ -8492,7 +8492,7 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
 #if defined(_COSA_BCM_MIPS_)
    fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
 #endif
-   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class cs1\n");  //RDKB-2763
+   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");  //RDKB-2763 - PRASH: REverting back changes, download does not work with cs1
 #if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
    fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
 #endif
