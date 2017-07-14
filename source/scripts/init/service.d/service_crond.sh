@@ -197,13 +197,6 @@ service_start ()
 	  echo "/usr/ccsp/tad/selfheal_cosa_start_rem.sh" >> /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 	  chmod 700 /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 
-      #Run mesh log message collector every 10 minutes for telemetry processing. 
-      if [ -f /usr/ccsp/mesh/meshwifi_log.sh ] ; then
-          echo "#! /bin/sh" > /etc/cron/cron.every10minute/cron_meshwifi_log.sh
-          echo "/usr/ccsp/mesh/meshwifi_log.sh" >> /etc/cron/cron.every10minute/cron_meshwifi_log.sh
-          chmod 700 /etc/cron/cron.every10minute/cron_meshwifi_log.sh
-      fi
-  
 	  # remove max cpu usage reached indication file once in 24 hours
 	  echo "#! /bin/sh" > /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
 	  echo "/usr/ccsp/tad/remove_max_cpu_usage_file.sh" >> /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
