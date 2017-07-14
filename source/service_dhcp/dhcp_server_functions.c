@@ -570,6 +570,7 @@ int prepare_dhcp_conf (char *input)
 	char l_cDhcp_Num[16] = {0}, l_cLan_Status[16] = {0};
     char l_cWan_Service_Stat[16] = {0}, l_cDns_Only_Prefix[8] = {0};
 	char *l_cpPsm_Get = NULL;
+	char cGui_Url[64] = {0};
 
 	int l_iMkdir_Res, l_idhcp_num, l_iRet_Val;
 	int l_iRetry_Count = 0;
@@ -904,6 +905,8 @@ int prepare_dhcp_conf (char *input)
         prepare_whitelist_urls(l_fLocal_Dhcp_ConfFile);
     	sysevent_set(g_iSyseventfd, g_tSysevent_token, "captiveportaldhcp", "completed", 0);
 	}
+	strncpy(cGui_Url,"webui-xb3-cpe-srvr.xcal.tv",sizeof(cGui_Url));
+	fprintf(l_fLocal_Dhcp_ConfFile, "address=/%s/%s\n", cGui_Url,l_cLanIPAddress);
 	remove_file(DHCP_CONF);
 	fclose(l_fLocal_Dhcp_ConfFile);
 	copy_file(l_cLocalDhcpConf, DHCP_CONF);
