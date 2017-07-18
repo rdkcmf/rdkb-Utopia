@@ -167,6 +167,26 @@ struct dhcpv6_tag tag_list[] =
 } \
 
 
+uint64_t helper_ntoh64(const uint64_t *inputval)
+{
+    uint64_t returnval;
+    uint8_t *data = (uint8_t *)&returnval;
+
+    data[0] = *inputval >> 56;
+    data[1] = *inputval >> 48;
+    data[2] = *inputval >> 40;
+    data[3] = *inputval >> 32;
+    data[4] = *inputval >> 24;
+    data[5] = *inputval >> 16;
+    data[6] = *inputval >> 8;
+    data[7] = *inputval >> 0;
+
+    return returnval;
+}
+uint64_t helper_hton64(const uint64_t *inputval)
+{
+    return (helper_ntoh64(inputval));
+}
 static int daemon_stop(const char *pid_file, const char *prog)
 {
     FILE *fp;
@@ -530,10 +550,16 @@ static int divide_ipv6_prefix(struct serv_ipv6 *si6)
     p_prefix = sub_prefixes;
 
     memcpy((void *)&tmp_prefix, (void *)prefix, 8); // the first 64 bits of mso prefix value
+#ifdef _CBR_PRODUCT_REQ_
+	tmp_prefix = helper_ntoh64(&tmp_prefix); // The memcpy is copying in reverse order due to LEndianess
+#endif
     tmp_prefix &= ((~0) << delta_bits);
     for (i = 0; i < sub_prefix_num; i ++) {
         sub_prefix = tmp_prefix | (i << (delta_bits - bit_boundary));
         memset(buf, 0, sizeof(buf));
+#ifdef _CBR_PRODUCT_REQ_	
+		sub_prefix = helper_hton64(&sub_prefix);// The memcpy is copying in reverse order due to LEndianess
+#endif
         memcpy((void *)buf, (void *)&sub_prefix, 8);
         inet_ntop(AF_INET6, buf, p_prefix->value, INET6_ADDRSTRLEN);
         p_prefix->len = mso_prefix.len + bit_boundary;
@@ -550,9 +576,15 @@ static int divide_ipv6_prefix(struct serv_ipv6 *si6)
     p_prefix = sub_prefixes;
     inet_pton(AF_INET6, p_prefix->value, prefix);
     memcpy((void *)&tmp_prefix, (void *)prefix, 8); //the first 64 bits of the first sub-prefix
+#ifdef _CBR_PRODUCT_REQ_
+	tmp_prefix = helper_ntoh64(&tmp_prefix); // The memcpy is copying in reverse order due to LEndianess
+#endif
     for (i = 0; i < enabled_iface_num; i++) {
         //p_prefix->b_used = 1;
         memset(buf, 0, sizeof(buf));
+#ifdef _CBR_PRODUCT_REQ_
+		tmp_prefix = helper_hton64(&tmp_prefix);// The memcpy is copying in reverse order due to LEndianess
+#endif		
         memcpy((void *)buf, (void *)&tmp_prefix, 8);
         inet_ntop(AF_INET6, buf, iface_prefix, INET6_ADDRSTRLEN);
         strcat(iface_prefix, "/64");
