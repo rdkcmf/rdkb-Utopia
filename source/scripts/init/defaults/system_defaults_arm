@@ -1027,3 +1027,4 @@ $enable_speedtest=false
 $PasswordLockoutEnable=true
 $PasswordLockoutAttempts=3
 $PasswordLockoutTime=300000
+$HTTPSecurityHeaderEnable=true
