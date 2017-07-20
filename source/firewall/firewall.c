@@ -8676,9 +8676,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
 
-#if defined (INTEL_PUMA7) 
+#if defined (INTEL_PUMA7)
    //Avoid blocking packets at the Intel NIL layer
    fprintf(filter_fp, "-A FORWARD -i a-mux -j ACCEPT\n");
+#endif
+#if defined(INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
    fprintf(filter_fp, "-A INPUT -i host0 -s 192.168.100.0/255.255.255.0 -j ACCEPT\n");
    fprintf(filter_fp, "-A OUTPUT -o host0 -d 192.168.100.0/255.255.255.0 -j ACCEPT\n");
 #endif
