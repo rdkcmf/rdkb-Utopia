@@ -2150,10 +2150,13 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                 }else{
                     tmp = external_port;
                 }
+                //ARRISXB6-4723 - Below SNAT rule is causing access issues for LAN-wifi clients when port forwarding is enabled in XB6, hence the conditional check.
+                #ifndef INTEL_PUMA7
                 snprintf(str, sizeof(str),
                     "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
                      lan_3_octets, lan_netmask, toip, tmp, natip4);
                 fprintf(nat_fp, "%s\n", str);
+                #endif
             }
          }else if (!isNatRedirectionBlocked) {
             snprintf(str, sizeof(str),
@@ -2229,10 +2232,13 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                 }else{
                     tmp = external_port;
                 }
+                //ARRISXB6-4723 - Below SNAT rule is causing access issues for LAN-wifi clients when port forwarding is enabled in XB6, hence the conditional check.
+                #ifndef INTEL_PUMA7
                 snprintf(str, sizeof(str),
                     "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
                      lan_3_octets, lan_netmask, toip, tmp, natip4);
                 fprintf(nat_fp, "%s\n", str);
+                #endif
             }
          }else if (!isNatRedirectionBlocked) {
             snprintf(str, sizeof(str),
