@@ -1201,4 +1201,8 @@ typedef struct dns_client{
 int Utopia_SetDNSEnable(UtopiaContext *ctx, boolean_t enable);
 int Utopia_GetDNSEnable(UtopiaContext *ctx, boolean_t* enable);
 int Utopia_GetDNSServer(UtopiaContext *ctx, DNS_Client_t * dns);
+
+int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCallForAdd );
+int Utopia_privateIpCheck(char *ip_to_check);
+
 #endif // _UTAPI_H_

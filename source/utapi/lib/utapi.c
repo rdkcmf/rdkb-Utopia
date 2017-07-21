@@ -2818,7 +2818,13 @@ int Utopia_AddDynPortMapping (portMapDyn_t *pmap)
     count = s_get_portmapdyn_count();
     if (UT_SUCCESS == (rc = s_add_portmapdyn(count+1, pmap))) {
         s_set_portmapdyn_count(count+1);
+
+/* Instead  firewall restart we have to add explicit rule */
+#if 0
         s_firewall_restart();
+#else
+		Utopia_IPRule_ephemeral_port_forwarding( pmap, TRUE );
+#endif /* 0 */
         return UT_SUCCESS;
     }
 
@@ -2858,7 +2864,14 @@ int Utopia_UpdateDynPortMapping (int index, portMapDyn_t *pmap)
 
     if (UT_SUCCESS == (rc = s_add_portmapdyn(index, pmap))) {
         // note, don't increment count, this is just an "update" to existing entry
-        s_firewall_restart();
+/* Instead firewall restart we have to delete and add explicit rule */
+#if 0
+		s_firewall_restart();
+#else
+		Utopia_IPRule_ephemeral_port_forwarding( pmap, FALSE );
+		Utopia_IPRule_ephemeral_port_forwarding( pmap, TRUE );
+#endif /* 0 */
+
         return UT_SUCCESS;
     }
 
@@ -2868,7 +2881,8 @@ int Utopia_UpdateDynPortMapping (int index, portMapDyn_t *pmap)
 
 int Utopia_DeleteDynPortMappingIndex (int index)
 {
-    int count, rc;
+    int count, rc, rc_del;
+    portMapDyn_t pmap;
 
     ulogf(ULOG_CONFIG, UL_UTAPI, "%s: at index %d", __FUNCTION__, index);
 
@@ -2877,9 +2891,22 @@ int Utopia_DeleteDynPortMappingIndex (int index)
         return ERR_INVALID_ARGS;
     }
 
+	/* Get the corresponding port mapping information */
+    bzero(&pmap, sizeof(pmap));
+    rc_del = s_get_portmapdyn(index, &pmap); 
+
     if (UT_SUCCESS == (rc = s_del_portmapdyn(index))) {
         s_set_portmapdyn_count(count-1);
-        s_firewall_restart();
+
+/* Instead firewall restart we have to delete explicit rule */
+#if 0
+		s_firewall_restart();
+#else
+		if( UT_SUCCESS == rc_del ) 
+		{
+			Utopia_IPRule_ephemeral_port_forwarding( &pmap, FALSE );
+		}
+#endif /* 0 */
     }
 
     return rc;
@@ -2969,7 +2996,7 @@ int Utopia_InvalidateDynPortMappings (void)
 	i, pmap.external_host, pmap.external_port, pmap.internal_host, pmap.internal_port);
 
                 Utopia_DeleteDynPortMappingIndex(i);
-                s_firewall_restart();
+                //s_firewall_restart();
             }else
                 s_add_portmapdyn(i, &pmap);    /* decrement leaseDuration every second */
         }
@@ -7236,4 +7263,279 @@ int Utopia_set_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsign
 	}
 	
 	return SUCCESS;
+}
+
+int Utopia_privateIpCheck(char *ip_to_check)
+{
+    struct in_addr l_sIpValue, l_sDhcpStart, l_sDhcpEnd;
+    long int l_iIpValue, l_iDhcpStart, l_iDhcpEnd;
+	char l_cDhcpStart[16] = {0}, l_cDhcpEnd[16] = {0};
+	int l_iRes;
+
+	if (NULL == ip_to_check || 0 == ip_to_check[0])
+	{
+		return 1;
+	}
+
+	syscfg_get(NULL, "dhcp_start", l_cDhcpStart, sizeof(l_cDhcpStart));
+	syscfg_get(NULL, "dhcp_end", l_cDhcpEnd, sizeof(l_cDhcpEnd));
+
+    l_iRes = inet_pton(AF_INET, ip_to_check, &l_sIpValue);
+    l_iRes &= inet_pton(AF_INET, l_cDhcpStart, &l_sDhcpStart);
+    l_iRes &= inet_pton(AF_INET, l_cDhcpEnd, &l_sDhcpEnd);
+
+    l_iIpValue = (long int)l_sIpValue.s_addr;
+    l_iDhcpStart = (long int)l_sDhcpStart.s_addr;
+    l_iDhcpEnd = (long int)l_sDhcpEnd.s_addr;
+
+	switch(l_iRes) 
+	{
+    	case 1:
+        	if (l_iIpValue <= l_iDhcpEnd && l_iIpValue >= l_iDhcpStart)
+		  	{	
+				return 1;
+			}
+          	else
+			{
+          		return 0;
+			}
+       case 0:
+          return 1;
+       default:
+          return 1;
+    }
+}
+
+int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCallForAdd )
+{
+	token_t	se_token;
+	int		se_fd 		 = s_sysevent_connect( &se_token ),
+			isBridgeMode = FALSE,
+			isWanReady   = FALSE,
+			isNatReady	 = FALSE,
+			isNatRedirectionBlocked = FALSE,
+			rc = 0;
+	char 	external_ip[ 64 ],
+			external_dest_port[ 64 ],
+			str[ 512 ],
+			port_modifier[ 10 ],
+			event_string[ 64 ],
+			natip4[ 64 ],
+			fromip[ 64 ],
+			fromport[ 16 ],
+			toip[ 64 ],
+			dport[ 16 ],
+			lan_ipaddr[ 64 ],
+			lan_3_octets[ 32 ],
+			*p,
+			lan_netmask[ 32 ],
+			ciptableOprationCode = 'D';
+
+	if ( 0 > se_fd ) 
+	{
+	   return ERR_SYSEVENT_CONN;
+	}
+
+	/* port mapping is not enabled so no need to do anything */
+	if( FALSE == pmap->enabled )
+	{
+		return ERR_INVALID_VALUE;
+	}
+
+	/* Get Bridge-Mode value */
+	memset( event_string, 0, sizeof( event_string ) );
+    sysevent_get(se_fd, se_token, "bridge_mode", event_string, sizeof( event_string ) - 1 );
+	isBridgeMode		= ( 0 == strcmp( "0", event_string ) ) ? 0 : 1;
+
+	/* NAT Ip4  & NAT, WAN Ready */
+	memset( natip4, 0, sizeof( natip4 ) );
+    sysevent_get(se_fd, se_token, "current_wan_ipaddr", natip4, sizeof( natip4 ) - 1 );
+	isWanReady		  	= ( 0 == strcmp( "0.0.0.0", natip4 ) ) ? 0 : 1;
+	isNatReady		  	= isWanReady;
+
+	/* Lan IP Address, Octets and LAN Net mask */
+	memset( lan_ipaddr, 0, sizeof( lan_ipaddr ) );
+    sysevent_get(se_fd, se_token, "current_lan_ipaddr", lan_ipaddr, sizeof( lan_ipaddr ) - 1 );
+
+	// the first 3 octets of the lan ip address
+	memset( lan_3_octets, 0, sizeof( lan_3_octets ) );
+	snprintf( lan_3_octets, sizeof( lan_3_octets ), "%s", lan_ipaddr );
+	for ( p = lan_3_octets + strlen( lan_3_octets ); p >= lan_3_octets; p-- ) 
+	{
+	   if ( *p == '.' ) 
+	   {
+		  *p = '\0';
+		  break;
+	   } 
+	   else 
+	   {
+		  *p = '\0';
+	   }
+	}
+
+	memset( lan_netmask, 0, sizeof( lan_netmask ) );
+	syscfg_get( NULL, "lan_netmask", lan_netmask, sizeof( lan_netmask ) ); 
+
+	/* NatRedirectionBlocked status */
+	memset( event_string, 0, sizeof( event_string ) );
+	rc = syscfg_get( NULL, "block_nat_redirection", event_string, sizeof( event_string ));
+	if ( ( 0 == rc ) && ('\0' != event_string[ 0 ] ) ) 
+	{
+	   if ( 0 == strcmp( "1", event_string))
+	   {
+		  isNatRedirectionBlocked = 1;
+	   }
+	}
+
+	/* 
+	 * 1 - isCallForAdd, for Add so needs to append Operation Code as 'A'
+ 	 * 0 - isCallForAdd, for Delete so needs to append Operation Code as 'D'
+	 */
+	if ( TRUE == isCallForAdd )
+	{
+		ciptableOprationCode = 'A';
+	}
+	else
+	{
+		ciptableOprationCode = 'D';
+	}
+		
+
+	/* external & destination IP-Host */
+	memset( external_ip, 0, sizeof( external_ip ) );
+	memset( external_dest_port, 0, sizeof( external_dest_port ) );	
+	memset( fromip, 0, sizeof( fromip ) );
+	memset( fromport, 0, sizeof( fromport ) );	
+	memset( toip, 0, sizeof( toip ) );
+	memset( dport, 0, sizeof( dport ) );	
+
+	sprintf( fromip, "%s", (strlen(pmap->external_host) == 0) ? "none" : pmap->external_host );
+	sprintf( fromport, "%d", pmap->external_port );
+
+	sprintf( toip, "%s", pmap->internal_host );
+	sprintf( dport, "%d", pmap->internal_port );
+
+	if ( 0 != strcmp( "none", fromip ) ) 
+	{
+		snprintf( external_ip, sizeof( external_ip ), "-s %s", fromip ); 
+	} 
+
+	if ( 0 != strcmp( "none", fromport ) ) 
+	{
+		snprintf( external_dest_port, sizeof( external_dest_port ), "--dport %s", fromport );
+	} 
+
+	if ( ('\0' == dport[ 0 ] ) || ( 0 == strcmp( fromport, dport ) ) ) 
+	{
+		port_modifier[ 0 ] = '\0';
+	} 
+	else 
+	{
+		snprintf( port_modifier, sizeof( port_modifier ), ":%s", dport );
+	}
+
+	     
+	if ( ( ( BOTH_TCP_UDP == pmap->protocol ) || ( TCP == pmap->protocol ) ) && \
+		 ( !( isBridgeMode && Utopia_privateIpCheck( pmap->internal_host ) ) )
+		)
+	{
+		if ( isNatReady ) 
+		{
+			memset( str, 0, sizeof( str ) );
+			snprintf(str, sizeof(str), 
+				"iptables -t nat -%c prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+				ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
+			system( str );
+		}
+
+		if ( !isNatRedirectionBlocked ) 
+		{
+			if (0 == strcmp("none", fromip)) 
+			{
+				memset( str, 0, sizeof( str ) );
+				snprintf(str, sizeof(str),
+					"iptables -t nat -%c prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+					ciptableOprationCode,lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
+				system( str );
+
+				if ( isNatReady )
+				{
+					memset( str, 0, sizeof( str ) );
+					snprintf(str, sizeof(str),
+						"iptables -t nat -%c prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+						ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
+					system( str );
+				}
+
+				memset( str, 0, sizeof( str ) );
+				snprintf(str, sizeof(str),
+					"iptables -t nat -%c postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+					ciptableOprationCode,lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
+				system( str );
+			}
+		}
+
+		/*  it will applicable during router mode */
+		if( 0 == isBridgeMode )
+		{
+			memset( str, 0, sizeof( str ) );
+			snprintf(str, sizeof(str),
+				"iptables -t filter -%c wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+				ciptableOprationCode,external_ip, toip, dport);
+			system( str );
+		}
+	}
+
+     if ( ( ( BOTH_TCP_UDP == pmap->protocol ) || ( UDP == pmap->protocol ) ) && \
+		  ( !( isBridgeMode && Utopia_privateIpCheck( pmap->internal_host ) ) )
+		)
+	 {
+		if (isNatReady) 
+		{
+		   memset( str, 0, sizeof( str ) );
+           snprintf(str, sizeof(str),
+                   "iptables -t nat -%c prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+                   ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
+		   system( str );
+        }
+
+        if ( !isNatRedirectionBlocked ) 
+		{
+           if (0 == strcmp("none", fromip)) 
+		   {
+			  memset( str, 0, sizeof( str ) );
+              snprintf(str, sizeof(str),
+                "iptables -t nat -%c prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+                ciptableOprationCode,lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
+			  system( str );
+
+              if ( isNatReady ) 
+			  {
+				 memset( str, 0, sizeof( str ) );
+                 snprintf(str, sizeof(str),
+                   "iptables -t nat -%c prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+                   ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
+				 system( str );
+              }
+
+			  memset( str, 0, sizeof( str ) );
+              snprintf(str, sizeof(str),
+                    "iptables -t nat -%c postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+                      ciptableOprationCode,lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
+			  system( str );
+           }
+        }
+
+		/*  it will applicable during router mode */
+		if( 0 == isBridgeMode )
+		{
+			memset( str, 0, sizeof( str ) );
+			snprintf(str, sizeof(str),
+					"iptables -t filter -%c wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+						ciptableOprationCode,external_ip, toip, dport);
+			system( str );
+		}
+     }
+ 
+  return SUCCESS;
 }
