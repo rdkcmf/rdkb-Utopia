@@ -642,6 +642,8 @@ static char guest_network_mask[20];
 static int ppFlushNeeded = 0;
 static int isProdImage = 0;
 static int isComcastImage = 0;
+static int isRFCSSHEnableIpv4 = 0;
+static int isRFCSSHEnableIpv6 = 0;
 
 /*
  * For timed internet access rules we use cron 
@@ -1247,6 +1249,29 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
     return isComcastImg;
  }
 
+#define RFC_SSH_ENABLE_IPV4 "/tmp/.RFC_enableSSH_IPV4"
+#define RFC_SSH_ENABLE_IPV6 "/tmp/.RFC_enableSSH_IPV6"
+
+static int bIsRFCSSHEnable(void)
+{
+    FIREWALL_DEBUG("Entering bIsRFCSSHEnable\n");
+    if ( access( RFC_SSH_ENABLE_IPV4, F_OK ) != -1 )
+    {
+        isRFCSSHEnableIpv4 = 1;
+        FIREWALL_DEBUG("RFC SSH Enabled\n");
+        return 1;
+    }
+    else if ( access( RFC_SSH_ENABLE_IPV6, F_OK ) != -1 )
+    {
+        isRFCSSHEnableIpv6 = 1;
+        FIREWALL_DEBUG("RFC SSH Enabled\n");
+        return 1;
+    }
+    FIREWALL_DEBUG("RFC SSH Not Enabled\n");
+    FIREWALL_DEBUG("Exting bIsRFCSSHEnable\n");
+    return 0;
+}
+
 
 /*
  *  Procedure     : prepare_globals_from_configuration
@@ -1297,6 +1322,7 @@ static int prepare_globals_from_configuration(void)
    
    isProdImage = bIsProductionImage(); 
    isComcastImage = bIsComcastImage();
+   bIsRFCSSHEnable();
    sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
    if ('\0' == current_wan_ifname[0]) {
@@ -1942,6 +1968,16 @@ static int prepare_globals_from_configuration(void)
                   "-A LOG_TR69_DROP -j LOG --log-prefix \"TR-069 ACS Server Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
              fprintf(fp, "%s\n", str);
          }
+
+         if(isProdImage || isRFCSSHEnableIpv4) {
+             snprintf(str, sizeof(str),
+                  "-A LOG_SSH_ACCEPT -j LOG --log-prefix \"SSH Connection Allowed: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
+             fprintf(fp, "%s\n", str);
+
+             snprintf(str, sizeof(str),
+                  "-A LOG_SSH_DROP -j LOG --log-prefix \"SSH Connection Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
+             fprintf(fp, "%s\n", str);
+         }
       }
 
    }
@@ -1993,6 +2029,16 @@ static int prepare_globals_from_configuration(void)
    if(isComcastImage) {
        snprintf(str, sizeof(str),
             "-A LOG_TR69_DROP -j DROP");
+       fprintf(fp, "%s\n", str);
+   }
+
+   if(isProdImage || isRFCSSHEnableIpv4) {
+       snprintf(str, sizeof(str),
+            "-A LOG_SSH_ACCEPT -j ACCEPT");
+       fprintf(fp, "%s\n", str);
+
+       snprintf(str, sizeof(str),
+            "-A LOG_SSH_DROP -j DROP");
        fprintf(fp, "%s\n", str);
    }
    // for non tcp
@@ -4443,11 +4489,11 @@ static void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, co
                     continue ;
             }
             if ( enableFlag == 1) {
-                fprintf(filt_fp, "-A SSH_FILTER -s %s -j ACCEPT\n", string);
+                fprintf(filt_fp, "-A SSH_FILTER -s %s -j LOG_SSH_ACCEPT\n", string);
             }
         }
     }
-    fprintf(filt_fp, "-A SSH_FILTER -j DROP\n");
+    fprintf(filt_fp, "-A SSH_FILTER -j LOG_SSH_DROP\n");
 
     if(pSshMgmt_fp != NULL) {
         fclose(pSshMgmt_fp);
@@ -4457,6 +4503,61 @@ static void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, co
 
  }
 
+ /*
+ ** RDKB-8977 Configurable SSH IP's
+ ** "/tmp/.RFC_SSHWhiteList.list" contains the list of Ips obtanied from RFC feature control at startup that can "ssh" to the box
+ ** This will be applied to all image types unless this RFC feature is disbaled.
+ */
+
+#define RFC_SSH_ACCESS_IP_LIST "/tmp/.RFC_SSHWhiteList.list"
+
+static void do_rfc_sshWhiteList(FILE *filt_fp, const char *port, int family, const char *interface)
+ {
+    char string[MAX_QUERY]={0};
+    FILE* pSshMgmt_fp = NULL ;
+    char *strp=NULL;
+    int stringLen = 0;
+    int enableFlag = 0;
+
+    FIREWALL_DEBUG("Entering do_rfc_sshWhiteList\n");
+
+    if ( family == AF_INET && isProdImage == 0 ) {
+        whiteListArmAtomIP(filt_fp, port, interface);
+    }
+
+    pSshMgmt_fp = fopen(RFC_SSH_ACCESS_IP_LIST, "r");
+    if(pSshMgmt_fp != NULL) {
+        FIREWALL_DEBUG("RFC_SSH_ACCESS_IP_LIST present\n");
+        while (NULL != (strp = fgets(string, MAX_QUERY, pSshMgmt_fp)) ) {
+            stringLen = strnlen(string, MAX_IPV6_STR_LEN) - 1;
+            if (*string && string[stringLen] == '\n') {
+                 string[stringLen] = '\0';
+            }
+            if(family == AF_INET6) {
+               if ( NULL != strstr(string, "[SSH_IPV6_LIST]") ) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            } else if ( family == AF_INET ) {
+               if ( NULL != strstr(string, "[SSH_IPV4_LIST]") ) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            }
+            if ( enableFlag == 1) {
+                fprintf(filt_fp, "-A SSH_FILTER -s %s -j LOG_SSH_ACCEPT\n", string);
+            }
+        }
+    }
+    if ( enableFlag == 1 && isProdImage == 0 )
+        fprintf(filt_fp, "-A SSH_FILTER -j LOG_SSH_DROP\n");
+
+    if(pSshMgmt_fp != NULL) {
+        fclose(pSshMgmt_fp);
+    }
+    FIREWALL_DEBUG("Exiting do_rfc_sshWhiteList\n");
+    return ;
+ }
 
 /*
  *  RDKB-11175 Enable Firewall Rules To Enable TR-069 Connections Only From Whitelisted Servers
@@ -8794,9 +8895,12 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "%s\n", ":tr69_filter - [0:0]");
        fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
    }
-   if(isProdImage) {
+   if(isProdImage || isRFCSSHEnableIpv4) {
+       fprintf(filter_fp, "%s\n", ":LOG_SSH_ACCEPT - [0:0]");
+       fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
        fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+       
    }
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
@@ -8885,6 +8989,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    if(isProdImage) {
        do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
    }
+
+   if(isRFCSSHEnableIpv4) {
+       do_rfc_sshWhiteList(filter_fp, "22", AF_INET, ecm_wan_ifname);
+   }
+
 #if defined (INTEL_PUMA7) 
 
    fprintf(filter_fp, "-A INPUT -i gmac5 -j ACCEPT\n");
@@ -10071,9 +10180,15 @@ static void do_ipv6_filter_table(FILE *fp){
        fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
    }
    do_block_ports(fp);	
-   if(isProdImage) {
+   if(isProdImage || isRFCSSHEnableIpv6) {
+       fprintf(fp, "%s\n", ":LOG_SSH_ACCEPT - [0:0]");
+       fprintf(fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
        fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
        fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+       fprintf(fp, "-A LOG_SSH_ACCEPT -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Allowed:\"\n",syslog_level);
+       fprintf(fp, "-A LOG_SSH_ACCEPT -j ACCEPT\n");
+       fprintf(fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
+       fprintf(fp, "-A LOG_SSH_DROP -j DROP\n");
    }
   
    fprintf(fp, "-A LOG_INPUT_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 INPUT drop\"\n",syslog_level);
@@ -10241,6 +10356,9 @@ static void do_ipv6_filter_table(FILE *fp){
       do_remote_access_control(NULL, fp, AF_INET6);
       if(isProdImage) {
           do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
+      }
+      if(isRFCSSHEnableIpv6) {
+          do_rfc_sshWhiteList(fp, "22", AF_INET6, ecm_wan_ifname);
       }
       // Development override
       if (isDevelopmentOverride) {
