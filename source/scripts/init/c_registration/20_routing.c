@@ -49,9 +49,15 @@
 #include <stdlib.h>
 #include "srvmgr.h"
 
+#if defined _CBR_PRODUCT_REQ_
+    #define CONSOLE_LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
+#else
+    #define CONSOLE_LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
+#endif
+
 #define DBG_PRINT(fmt ...)     {\
 					FILE     *fp        = NULL;\
-                                        fp = fopen ( "/rdklogs/logs/ArmConsolelog.txt.0", "a+");\
+                                        fp = fopen ( CONSOLE_LOG_FILE, "a+");\
                                         if (fp)\
                                         {\
                                             fprintf(fp,fmt);\

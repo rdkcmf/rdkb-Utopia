@@ -35,7 +35,11 @@
 
 #define ERROR	-1
 #define SUCCESS	0		
-#define ARM_CONSOLE_LOG_FILE	"/rdklogs/logs/ArmConsolelog.txt.0"
+#if defined _CBR_PRODUCT_REQ_
+    #define ARM_CONSOLE_LOG_FILE	"/rdklogs/logs/Consolelog.txt.0"
+#else
+    #define ARM_CONSOLE_LOG_FILE	"/rdklogs/logs/ArmConsolelog.txt.0"
+#endif
 
 const char* const g_cComponent_id = "ccsp.servicedhcp";
 void* g_vBus_handle = NULL;
