@@ -494,3 +494,6 @@ fi
 
 echo_t "[utopia][init] setting Multicast MAC before any switch configs"
 $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
+
+echo_t "[utopia][init] completed creating utopia_inited flag"
+touch /tmp/utopia_inited
