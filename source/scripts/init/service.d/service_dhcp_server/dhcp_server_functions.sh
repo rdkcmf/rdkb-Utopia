@@ -55,7 +55,6 @@ COMCAST_DEFAULT_URL="www.comcast.com"
 COMCAST_ACTIVATE_URL="https://activate.comcast.com"
 COMCAST_ACTIVATE_URL_2="https://caap-pdca.sys.comcast.net"
 COMCAST_HTTP_URL="http://comcast.com"
-GUI_URL="webui-xb3-cpe-srvr.xcal.tv"
 
 # Variables needed for captive portal mode : end
 
@@ -761,18 +760,16 @@ fi
    fi
    #fi
    #<<
-   addr=`syscfg get lan_ipaddr`
+
    if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
    then
         # In factory default condition, prepare whitelisting and redirection IP
-	#addr=`syscfg get lan_ipaddr`
+	addr=`syscfg get lan_ipaddr`
 	echo "address=/#/$addr" >> $LOCAL_DHCP_CONF
 	echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
         prepare_whitelist_urls $LOCAL_DHCP_CONF
 	sysevent set captiveportaldhcp completed
    fi
-
-   echo "address=/$GUI_URL/$addr" >> $LOCAL_DHCP_CONF
    cat $LOCAL_DHCP_CONF > $DHCP_CONF
    rm -f $LOCAL_DHCP_CONF
 
