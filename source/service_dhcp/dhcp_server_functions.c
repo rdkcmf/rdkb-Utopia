@@ -890,7 +890,7 @@ int prepare_dhcp_conf (char *input)
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n"); 
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.4090\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite\n"); 
-#elif defined (INTEL_PUMA7) // XB6 ATOM
+#elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath12\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n"); 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath13\n");
