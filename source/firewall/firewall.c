@@ -6400,7 +6400,7 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
         struct addrinfo hints, *res, *p;
         int status;
         ipRecords = fopen(filePath, "w+"); /*RDKB-7145, CID-32907, optimizing the resource used*/
-
+ 	if (ipRecords != NULL) { /*RDKB-12965 & CID:-32907 & CID:-34143 */
         memset(&hints, 0, sizeof(hints));
         if(ipver == 6)
             hints.ai_family = AF_INET6;
@@ -6435,6 +6435,7 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
 
         freeaddrinfo(res);
         rewind(ipRecords);
+	}
     }
 
     memset(ipAddr, 0, sizeof(ipAddr));
