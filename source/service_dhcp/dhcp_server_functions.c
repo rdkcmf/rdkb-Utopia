@@ -579,7 +579,7 @@ int prepare_dhcp_conf (char *input)
 
     BOOL l_bCaptivePortal_Mode = FALSE;
 	BOOL l_bCaptive_Check = FALSE;
-	BOOL l_bMig_Case;
+	BOOL l_bMig_Case = TRUE;
 
 	if ((NULL != input) && (!strncmp(input, "dns_only", 8)))
 	{
@@ -638,6 +638,16 @@ int prepare_dhcp_conf (char *input)
 		fprintf(stderr, "Wifi Migration checks are needed\n");
     	
 		syscfg_get(NULL, "migration_cp_handler", l_cMigCase, sizeof(l_cMigCase));
+                if(!strncmp(l_cMigCase, "true", 4))
+                {
+                    fprintf(stderr, "DHCP SERVER : Initialize migration case variable to true\n");
+                    l_bMig_Case = TRUE;
+                }
+                else
+                {
+                   fprintf(stderr, "DHCP SERVER : Initialize migration case variable to false\n");
+                   l_bMig_Case = FALSE;
+                }
 	    sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan_service-status", l_cWan_Service_Stat, sizeof(l_cWan_Service_Stat));
 
 		l_iRetry_Count = 0;
