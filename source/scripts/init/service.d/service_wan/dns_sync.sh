@@ -7,6 +7,7 @@ ATOM_USER_NAME=root
 retries=0
 
 ATOM_INTERFACE_IP=`cat /etc/device.properties | grep ATOM_INTERFACE_IP | cut -f 2 -d"="`
+ATOM_RPC_IP=`cat /etc/device.properties | grep ATOM_ARPING_IP | cut -f 2 -d"="`
 LAN_IP=`syscfg get lan_ipaddr`
 PEER_COMM_DAT="/etc/dropbear/elxrretyt.swr"
 PEER_COMM_ID="/tmp/elxrretyt-$$.swr"
@@ -51,7 +52,9 @@ else
 		    then
 			    echo "scp is successful at iteration:$retries"
 			else
-			    echo "scp of resolv.conf failed."
+			    echo "scp of resolv.conf failed. trying rpcclient"
+			    FILE_STR=`cat $TMP_RESOLV_FILE`
+			    rpcclient $ATOM_RPC_IP "echo \"$FILE_STR\" > $RESOLV_CONF"
 			fi 
 			break	
 		else
