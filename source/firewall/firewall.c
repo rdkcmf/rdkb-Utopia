@@ -9683,7 +9683,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 
    if(isWanServiceReady || isBridgeMode) {
 #if defined(_COSA_BCM_MIPS_)
-       fprintf(filter_fp, "-A INPUT -p tcp --dport 80 -d %s -j ACCEPT\n",lan0_ipaddr);
+       fprintf(filter_fp, "-A INPUT -p tcp -m multiport --dports 80,443 -d %s -j ACCEPT\n",lan0_ipaddr);
 #endif
        fprintf(filter_fp, "-A INPUT ! -i %s -j wan2self_mgmt\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname);
        do_remote_access_control(NULL, filter_fp, AF_INET);
