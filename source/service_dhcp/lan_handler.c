@@ -6,6 +6,7 @@
 #include "syscfg/syscfg.h"
 #include "lan_handler.h"
 #include "util.h"
+#include <sys/time.h>
 
 #define THIS			"/usr/bin/service_dhcp"
 #define LAN_IF_NAME     "brlan0"
@@ -20,6 +21,26 @@ extern token_t g_tSysevent_token;
 
 extern void executeCmd(char *);
 
+void get_dateanduptime(char *buffer, int *uptime)
+{
+    struct 	timeval  tv;
+    struct 	tm       *tm;
+    struct 	sysinfo info;
+    char 	fmt[ 64 ], buf [64];
+
+    sysinfo( &info );
+    gettimeofday( &tv, NULL );
+    
+    if( (tm = localtime( &tv.tv_sec ) ) != NULL)
+    {
+	strftime( fmt, sizeof( fmt ), "%y%m%d-%T.%%06u", tm );
+	snprintf( buf, sizeof( buf ), fmt, tv.tv_usec );
+    }
+    
+    sprintf( buffer, "%s", buf);
+    *uptime= info.uptime;
+}
+
 void bring_lan_up()
 {
 	char l_cAsyncId[16] = {0}, l_cPsm_Parameter[255] = {0};
@@ -29,7 +50,10 @@ void bring_lan_up()
 	int l_iRet_Val;
 	async_id_t l_sAsyncID;
 	char *l_cParam[1] = {0};
-
+	int uptime = 0;
+	char buffer[64]= { 0 };
+	get_dateanduptime(buffer,&uptime);
+    fprintf(stderr, "%s Lan_init_start:%d\n",buffer,uptime);
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_handler_async", 
 				 l_cAsyncId, sizeof(l_cAsyncId));
 
@@ -163,7 +187,8 @@ void ipv4_status(int l3_inst, char *status)
 	int l_iRes;
 	struct sysinfo l_sSysInfo;
 	FILE *l_fFp = NULL;	
-
+	int uptime = 0;
+	char buffer[64] = { 0 };
 	if (!strncmp(status, "up", 2))
 	{	
     	syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
@@ -390,6 +415,8 @@ void ipv4_status(int l3_inst, char *status)
     }
     fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler\n");
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
+    get_dateanduptime(buffer,&uptime);
+    fprintf(stderr, "%s Lan_init_complete:%d\n",buffer,uptime);
 }
 
 void lan_restart()

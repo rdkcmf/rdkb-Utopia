@@ -62,6 +62,9 @@
 #include "syscfg/syscfg.h"
 #include "util.h"
 #include "errno.h"
+#include <sys/sysinfo.h>
+#include <time.h>
+#include <sys/time.h>
 
 #define PROG_NAME       "SERVICE-WAN"
 #if defined(_COSA_BCM_ARM_)
@@ -257,13 +260,34 @@ int checkFileExists(const char *fname)
     return 0;
 }
 
+void get_dateanduptime(char *buffer, int *uptime)
+{
+    struct 	timeval  tv;
+    struct 	tm       *tm;
+    struct 	sysinfo info;
+    char 	fmt[ 64 ], buf [64];
+
+    sysinfo( &info );
+    gettimeofday( &tv, NULL );
+    
+    if( (tm = localtime( &tv.tv_sec ) ) != NULL)
+    {
+	strftime( fmt, sizeof( fmt ), "%y%m%d-%T.%%06u", tm );
+	snprintf( buf, sizeof( buf ), fmt, tv.tv_usec );
+    }
+    
+    sprintf( buffer, "%s", buf);
+    *uptime= info.uptime;
+}
+
 static int wan_start(struct serv_wan *sw)
 {
     char status[16];
     int ret;
-   time_t rawtime;
-   rawtime=time(NULL);
-   printf("%ld EROUTER_WAN_INIT_START\n",rawtime);
+	int uptime = 0;
+	char buffer[64] = {0};
+    get_dateanduptime(buffer,&uptime);
+	printf("%s Wan_init_start:%d\n",buffer,uptime);
     /* state check */
     sysevent_get(sw->sefd, sw->setok, "wan_service-status", status, sizeof(status));
     if (strcmp(status, "starting") == 0 || strcmp(status, "started") == 0) {
@@ -323,8 +347,8 @@ done:
 	sprintf(str,"/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false ");
 	system(str);
     }
-   rawtime=time(NULL);
-   printf("%ld EROUTER_WAN_INIT_END\n",rawtime);
+    get_dateanduptime(buffer,&uptime);
+	printf("%s Wan_init_complete:%d\n",buffer,uptime);
     return 0;
 }
 
