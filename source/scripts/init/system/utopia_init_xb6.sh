@@ -421,6 +421,12 @@ else
    if [ "$rebootReason" = "factory-reset" ]; then
       echo_t "[utopia][init] Setting last reboot reason as unknown"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
+   else
+      if [ -f /nvram/restore_reboot ];then
+         syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
+         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+         rm -f /nvram/restore_reboot
+      fi
    fi
 fi
 
