@@ -18,9 +18,27 @@
 
 #define DEVICE_PROPERTIES "/etc/device.properties"
 
+#ifdef _COSA_INTEL_USG_ARM_
+	#define LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
+
+#elif _COSA_INTEL_USG_ATOM_
+	#define LOG_FILE "/rdklogs/logs/AtomConsolelog.txt.0"
+#else
+	#define LOG_FILE "/rdklogs/logs/rpcserver.txt"
+#endif
+
+#define RPC_PRINT(fmt ...)      logfp = fopen ( LOG_FILE , "a+");\
+                                if (logfp)\
+                                {\
+                                        fprintf(logfp,fmt);\
+                                        fclose(logfp);\
+                                }\
+
+
 static void
 rpc_tool1_1(struct svc_req *rqstp, register SVCXPRT *transp)
 {
+	FILE *logfp = NULL;
 	union {
 		rpc_CommandBuf executecommand_1_arg;
 		rpc_CommandBuf exec_1_arg;
@@ -60,7 +78,7 @@ rpc_tool1_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		svcerr_systemerr (transp);
 	}
 	if (!svc_freeargs (transp, (xdrproc_t) _xdr_argument, (caddr_t) &argument)) {
-		fprintf (stderr, "%s", "unable to free arguments");
+		RPC_PRINT ("%s unable to free arguments, exiting\n",__FUNCTION__);
 		exit (1);
 	}
 	return;
@@ -82,6 +100,7 @@ main (int argc, char **argv)
         int udpSock, tcpSock;
         int ret;
         struct sockaddr_in ip_addr;
+	FILE *logfp = NULL;
         memset(&ip_addr, '\0', sizeof(ip_addr));
 
         // Get PEER_ARPING_IP from device.properties file
@@ -101,9 +120,9 @@ main (int argc, char **argv)
                 if(!strcmp("PEER_ARPING_IP",token))
 #endif
                 {
-                  printf("rpcserver - %s, ARPING_IP found\n",__FUNCTION__);
+                  RPC_PRINT("rpcserver - %s, ARPING_IP found\n",__FUNCTION__);
                   token = strtok(NULL, splitChar);
-                  printf("rpcserver - %s,token of ip : %s\n",__FUNCTION__,token);
+                  RPC_PRINT("rpcserver - %s,token of ip : %s\n",__FUNCTION__,token);
                   //Populate values for socket creation and break form loop
                   ip_addr.sin_family = AF_INET;
                   ip_addr.sin_addr.s_addr = inet_addr(token);
@@ -112,7 +131,7 @@ main (int argc, char **argv)
                 }
                 else
                 {
-                   printf("rpcserver - %s, ARPING_IP NOT found\n",__FUNCTION__);
+                   RPC_PRINT("rpcserver - %s, ARPING_IP NOT found\n",__FUNCTION__);
                    token=NULL;
                 }
               }
@@ -124,72 +143,72 @@ main (int argc, char **argv)
         }
         else
         {
-            printf("rpcserver - %s, fPointer is NULL, can't open /etc/device.properties\n",__FUNCTION__);
+            RPC_PRINT("rpcserver - %s, fPointer is NULL, can't open /etc/device.properties\n",__FUNCTION__);
         }
      
         // If ARPING_IP is not found, then start rpcserver on RPC_ANYSOCK 
         if(found==0)
         {
-            printf("rpcserver - %s, ARPING_IP NOT found, starting udp rpcserver on RPC_ANYSOCK\n",__FUNCTION__);
+            RPC_PRINT("rpcserver - %s, ARPING_IP NOT found, starting udp rpcserver on RPC_ANYSOCK\n",__FUNCTION__);
             transp = svcudp_create(RPC_ANYSOCK);
         }
         else
         {
             //Create UDP socket and bind it before passing to svcudp_create()
-            printf("rpcserver - %s, Starting udp rpcserver on ARPING_IP\n",__FUNCTION__);
+            RPC_PRINT("rpcserver - %s, Starting udp rpcserver on ARPING_IP\n",__FUNCTION__);
             udpSock=socket(AF_INET, SOCK_DGRAM, 0);
             if (udpSock < 0) {
-               printf("rpcserver - %s, udp socket creation failed\n",__FUNCTION__);
+               RPC_PRINT("rpcserver - %s, udp socket creation failed\n",__FUNCTION__);
                return udpSock;
             }
             int yes=1; 
             if (setsockopt(udpSock,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) < 0)
             {
-               printf("rpcserver - %s setsockopt failed\n",__FUNCTION__);
+               RPC_PRINT("rpcserver - %s setsockopt failed\n",__FUNCTION__);
                exit(1);
             }
             ret = bind(udpSock, (struct sockaddr*)(&ip_addr), sizeof(ip_addr));
             if (ret < 0) {
-               printf("rpcserver - %s, bind failed %d\n",__FUNCTION__,ret);
+               RPC_PRINT("rpcserver - %s, bind failed %d\n",__FUNCTION__,ret);
                return ret;
             }
             transp = svcudp_create(udpSock);
         }
 	if (transp == NULL) {
-		fprintf (stderr, "%s", "cannot create udp service.");
+		RPC_PRINT ("cannot create udp service.\n");
 		exit(1);
 	}
 	if (!svc_register(transp, RPC_TOOL1, RPC_TOOL1_V1, rpc_tool1_1, IPPROTO_UDP)) {
-		fprintf (stderr, "%s", "unable to register (RPC_TOOL1, RPC_TOOL1_V1, udp).");
+		RPC_PRINT ("unable to register (RPC_TOOL1, RPC_TOOL1_V1, udp).\n");
 		exit(1);
 	}
 
         // If ARPING_IP is not found, then start rpcserver on RPC_ANYSOCK
         if(found==0)
         {
-            printf("rpcserver - %s, ARPING_IP NOT found, starting tcp rpcserver on RPC_ANYSOCK\n",__FUNCTION__);
+            RPC_PRINT("rpcserver - %s, ARPING_IP NOT found, starting tcp rpcserver on RPC_ANYSOCK\n",__FUNCTION__);
 	    transp = svctcp_create(RPC_ANYSOCK, 0, 0);
         }
         else
         {
             //Create TCP socket and bind it before passing to svctcp_create()
-            printf("rpcserver - %s, Starting tcp rpcserver on ARPING_IP\n",__FUNCTION__);
+            RPC_PRINT("rpcserver - %s, Starting tcp rpcserver on ARPING_IP\n",__FUNCTION__);
             tcpSock = socket(AF_INET, SOCK_STREAM, 0);
             if(tcpSock < 0 )
             {
-               printf("rpcserver - %s, tcp socket creation failed\n",__FUNCTION__);
+               RPC_PRINT("rpcserver - %s, tcp socket creation failed\n",__FUNCTION__);
                return tcpSock;
             }
             int yes=1;
             if (setsockopt(tcpSock,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) < 0)
             {
-               printf("rpcserver - %s tcp setsockopt failed\n",__FUNCTION__);
+               RPC_PRINT("rpcserver - %s tcp setsockopt failed\n",__FUNCTION__);
                exit(1);
             }
        
             ret = bind(tcpSock, (struct sockaddr*)(&ip_addr), sizeof(ip_addr));
             if (ret < 0) {
-               printf("rpcserver - %s, bind failed\n",__FUNCTION__);
+               RPC_PRINT("rpcserver - %s, bind failed\n",__FUNCTION__);
                return ret;
             }
        	    transp = svctcp_create(tcpSock, 0, 0);
@@ -197,16 +216,16 @@ main (int argc, char **argv)
         found=0;
 
 	if (transp == NULL) {
-		fprintf (stderr, "%s", "cannot create tcp service.");
+		RPC_PRINT("%s cannot create tcp service, exiting\n",__FUNCTION__);
 		exit(1);
 	}
 	if (!svc_register(transp, RPC_TOOL1, RPC_TOOL1_V1, rpc_tool1_1, IPPROTO_TCP)) {
-		fprintf (stderr, "%s", "unable to register (RPC_TOOL1, RPC_TOOL1_V1, tcp).");
+		RPC_PRINT ("%s unable to register (RPC_TOOL1, RPC_TOOL1_V1, tcp), exiting\n",__FUNCTION__);
 		exit(1);
 	}
 
 	svc_run ();
-	fprintf (stderr, "%s", "svc_run returned");
+	RPC_PRINT ("%s svc_run returned,exiting\n",__FUNCTION__);
 	exit (1);
 	/* NOTREACHED */
 }

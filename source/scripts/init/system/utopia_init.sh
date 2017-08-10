@@ -102,11 +102,6 @@ echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 #echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
 #echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 
-# starting the rpcserver
-echo "[utopia][init] Starting rpcserver from arm" > /dev/console
-if [ -f /usr/bin/rpcserver ];then
-    /usr/bin/rpcserver &
-fi
 
 #echo "[utopia][init] Loading drivers"
 #MODULE_PATH=/fss/gw/lib/modules/`uname -r`/
@@ -491,6 +486,12 @@ fi
 
 #echo_t "[utopia][init] started dropbear process"
 #$UTOPIA_PATH/service_sshd.sh sshd-start &
+
+# starting the rpcserver
+echo "[utopia][init] Starting rpcserver in arm" 
+if [ -f /usr/bin/rpcserver ];then
+    /usr/bin/rpcserver &
+fi
 
 echo_t "[utopia][init] setting Multicast MAC before any switch configs"
 $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
