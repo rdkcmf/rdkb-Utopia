@@ -10480,8 +10480,8 @@ v6GPFirewallRuleNext:
       // Logging and rejecting politely (rate limiting anyway)
       fprintf(fp, "-A INPUT -j LOG_INPUT_DROP \n");
 
-      //Adding rule for XB6 ARRISXB6-3348
-#if defined(INTEL_PUMA7)
+      //Adding rule for XB6 ARRISXB6-3348 and TCXB6-2262
+#if defined(INTEL_PUMA7) || defined(_COSA_BCM_ARM_)
       fprintf(fp, "-A FORWARD -i brlan0 -o brlan0 -j lan2wan \n");
 #endif
 
