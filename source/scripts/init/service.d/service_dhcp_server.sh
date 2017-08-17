@@ -468,11 +468,8 @@ dhcp_server_start ()
    else
        echo "Xfinityhome service is not UP yet"
    fi
-
-   if [ $BOX_TYPE != XB6 ];then
-      $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart"
-   fi
-
+	
+   $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
    sysevent set dns-status started
    sysevent set dhcp_server-status started
    sysevent set dhcp_server-progress completed
@@ -494,11 +491,7 @@ dhcp_server_stop ()
    #dns is always running
    prepare_hostname
    prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
-
-   if [ $BOX_TYPE != XB6 ];then
-      $PMON unsetproc dhcp_server
-   fi
-
+   $PMON unsetproc dhcp_server
    sysevent set dns-status stopped
    killall `basename $SERVER`
    rm -f $PID_FILE
@@ -517,10 +510,7 @@ dhcp_server_stop ()
 #-----------------------------------------------------------------
 dns_stop ()
 {
-   if [ $BOX_TYPE != XB6 ];then
-      $PMON unsetproc dhcp_server
-   fi
-
+   $PMON unsetproc dhcp_server
    killall `basename $SERVER`
    rm -f $PID_FILE
    sysevent set dns-status stopped
@@ -614,9 +604,7 @@ dns_start ()
          chmod 700 $TIME_FILE
    fi
 
-   if [ $BOX_TYPE != XB6 ];then
-      $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dns-restart"
-   fi
+   $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dns-restart"
 }
 
 #-----------------------------------------------------------------------
