@@ -113,7 +113,7 @@ old_sysevtlog_handle(){
 	     if [ "x$BOX_TYPE" == "xXB3" ]; then
 		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
 	     else
-		     $RD_LOCK $ZIP -c '$UNCOMPRESS_CMD $ZIP'
+		     $RD_LOCK $ZIP -c "$UNCOMPRESS_CMD $ZIP"
 	     fi
              ZIP_SZ=$(ls -l $ZIP | awk '{print $5}')
         else
@@ -123,7 +123,7 @@ old_sysevtlog_handle(){
         if [ "x$BOX_TYPE" == "xXB3" ]; then
 		$WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
 	else
-		$WT_LOCK $ZIP -c 'mv $NEW_ZIP $ZIP'
+		$WT_LOCK $ZIP -c "mv $NEW_ZIP $ZIP"
 	fi
         for oldfile in $FILE ;
         do
@@ -132,7 +132,7 @@ old_sysevtlog_handle(){
 		    $WT_LOCK $oldfile -c rm -r $oldfile
 		else
 		    echo "$WT_LOCK $oldfile -c 'rm -r $oldfile'"
-		    $WT_LOCK $oldfile -c 'rm -r $oldfile'
+		    $WT_LOCK $oldfile -c "rm -r $oldfile"
 		fi
         done;
 
@@ -173,7 +173,7 @@ old_fwlog_handle(){
 	            if [ "x$BOX_TYPE" == "xXB3" ]; then
 	                    $WT_LOCK $1/$filename -c rm -r $1/$filename
 		    else
-                  	  $WT_LOCK $1/$filename -c 'rm -r $1/$filename'
+                  	  $WT_LOCK $1/$filename -c "rm -r $1/$filename"
 		    fi
                 fi
             done
@@ -346,7 +346,7 @@ compress()
 	     if [ "x$BOX_TYPE" == "xXB3" ]; then
 		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
 	    else
-		    $RD_LOCK $ZIP -c '$UNCOMPRESS_CMD $ZIP'
+		    $RD_LOCK $ZIP -c "$UNCOMPRESS_CMD $ZIP"
 	    fi
              ZIP_SZ=$(ls -l $ZIP | awk '{print $5}')
         else
@@ -384,7 +384,7 @@ compress()
         if [ "x$BOX_TYPE" == "xXB3" ]; then
 	        $WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
 	else
-	        $WT_LOCK $ZIP -c 'mv $NEW_ZIP $ZIP'
+	        $WT_LOCK $ZIP -c "mv $NEW_ZIP $ZIP"
 	fi
         for oldfile in $FILE ;
         do
@@ -393,7 +393,7 @@ compress()
             $WT_LOCK $oldfile -c rm -r $oldfile
 	else
             echo "$WT_LOCK $oldfile -c 'rm -r $oldfile'"
-            $WT_LOCK $oldfile -c 'rm -r $oldfile'
+            $WT_LOCK $oldfile -c "rm -r $oldfile"
 	fi
         done;
 
@@ -412,7 +412,7 @@ uncompress()
     if [ "x$BOX_TYPE" == "xXB3" ]; then
 	    $RD_LOCK $TAR -c $UNCOMPRESS_CMD $TAR
     else
-	    $RD_LOCK $TAR -c '$UNCOMPRESS_CMD $TAR'
+	    $RD_LOCK $TAR -c "$UNCOMPRESS_CMD $TAR"
     fi
 }
 
