@@ -144,6 +144,7 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
     int   actualNumMembers = 0,
 		  i,
 		  rc;
+    int   HomeIsolation_en = 0;
 
 	/* dbus init based on bus handle value */
 	if(bus_handle == NULL)
@@ -154,7 +155,17 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 		MNET_DEBUG("nv_get_members, Dbus init error\n")
 		return 0;
 	}
-
+#if defined(MOCA_HOME_ISOLATION)
+	if(net->inst == 1)
+	{
+		memset(cmdBuff,0,sizeof(cmdBuff));
+		snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.HomeNetworkIsolation"); 
+		rc = PSM_VALUE_GET_STRING(cmdBuff, pStr);
+		if(rc == CCSP_SUCCESS && pStr != NULL)
+                HomeIsolation_en = atoi(pStr);
+		MNET_DEBUG("nv_get_members, HomeIsolation_en %d\n" COMMA HomeIsolation_en )
+	}
+#endif
     for (i = 0; i < sizeof(typeStrings)/sizeof(*typeStrings); ++i) 
 	{
 		/* dmsb.l2net.%d.Members.%s*/
@@ -182,11 +193,38 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 				}
 				
 				memberList[actualNumMembers].interface->map = NULL; // No mapping has been performed yet
-				strcpy(memberList[actualNumMembers].interface->name, ifToken);
-
-				MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
-
-				strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+#if defined(MOCA_HOME_ISOLATION)
+				if(net->inst == 1)
+				{
+					if(HomeIsolation_en == 0)
+					{
+						
+						strcpy(memberList[actualNumMembers].interface->name, ifToken);
+						MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
+						strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+					}
+					else
+					{
+						
+						MNET_DEBUG("%s, interface token %s\n" COMMA __FUNCTION__ COMMA ifToken )
+						if(0 != strcmp(ifToken,"sw_5"))
+						{
+						strcpy(memberList[actualNumMembers].interface->name, ifToken);
+						MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
+						strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+	
+						}
+					}
+				}
+				else
+				{
+#endif
+					strcpy(memberList[actualNumMembers].interface->name, ifToken);
+					MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
+					strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+#if defined(MOCA_HOME_ISOLATION)
+				}
+#endif
 
 				if (dash) *dash = '-'; // replace character just in case it would confuse strtok
 				

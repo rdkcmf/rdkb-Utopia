@@ -9594,7 +9594,57 @@ static void filterPortMap(FILE *filt_fp)
     FIREWALL_DEBUG("Exiting filterPortMap\n");
     return ;
 }
+#if defined(MOCA_HOME_ISOLATION)
+static int prepare_MoCA_bridge_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
+{
+char *pVal = NULL;
+char pLan[10], mLan[10];
+int   HomeIsolation_en = 0;
+int retPsm = 0;
+const char *HomeNetIsolation = "dmsb.l2net.HomeNetworkIsolation";
+const char *HomePrivateLan = "dmsb.l2net.1.Name";
+const char *HomeMoCALan = "dmsb.l2net.9.Name";
+   if(bus_handle != NULL)
+   {
+       retPsm = PSM_VALUE_GET_STRING(HomeNetIsolation, pVal);
+       if(retPsm == CCSP_SUCCESS && pVal != NULL)
+       {
+          HomeIsolation_en = atoi(pVal);
+          Ansc_FreeMemory_Callback(pVal);
+          pVal = NULL;
+       }  
+   }
+   if(HomeIsolation_en == 1)
+   {
+       retPsm = PSM_VALUE_GET_STRING(HomePrivateLan, pVal);
+       if(retPsm == CCSP_SUCCESS && pVal != NULL)
+       {
+          strcpy(pLan,pVal);
+          Ansc_FreeMemory_Callback(pVal);
+          pVal = NULL;
+       }
+       retPsm = PSM_VALUE_GET_STRING(HomeMoCALan, pVal);
+       if(retPsm == CCSP_SUCCESS && pVal != NULL)
+       {
+          strcpy(mLan,pVal);
+          Ansc_FreeMemory_Callback(pVal);
+          pVal = NULL;
+       }
+       if((strlen(pLan) != 0)&&(strlen(mLan) != 0))
+       {
+          fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", mLan);
+          fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", pLan,mLan);
+          fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", mLan,pLan);
+          fprintf(filter_fp, "-A FORWARD -i erouter0 -o %s -j ACCEPT\n",mLan);
+          fprintf(filter_fp, "-A FORWARD -i %s -o erouter0 -j ACCEPT\n", mLan);
+          fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", mLan,mLan);
+          fprintf(filter_fp, "-A OUTPUT -o %s -j ACCEPT\n",mLan);
+ 
+       }
 
+   } 
+}
+#endif
 /*
  *  Procedure     : prepare_enabled_ipv4_firewall
  *  Purpose       : prepare ipv4 firewall
@@ -9659,7 +9709,9 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    prepare_multinet_mangle(mangle_fp);
    
    //do_multinet_patch(mangle_fp, nat_fp, filter_fp);
-
+#if defined(MOCA_HOME_ISOLATION)
+   prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
+#endif
    fprintf(raw_fp, "%s\n", "COMMIT");
    fprintf(mangle_fp, "%s\n", "COMMIT");
    fprintf(nat_fp, "%s\n", "COMMIT");
@@ -10154,7 +10206,9 @@ int prepare_ipv6_firewall(const char *fw_file)
 #ifdef XDNS_ENABLE
     do_dns_route(nat_fp, 6);
 #endif
-
+#if defined(MOCA_HOME_ISOLATION)
+        prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
+#endif
 	/*add rules before this*/
 
 	fprintf(raw_fp, "COMMIT\n");

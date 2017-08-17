@@ -56,7 +56,9 @@ SERVICE_NAME="mcastproxy"
 SELF_NAME="`basename $0`"
 
 BIN=igmpproxy
+BIN2=smcroute
 CONF_FILE=/tmp/igmpproxy.conf
+CONF_FILE_2=/tmp/smcroute.conf
 
 do_start_igmpproxy () {
    LOCAL_CONF_FILE=/tmp/igmpproxy.conf$$
@@ -79,19 +81,42 @@ do_start_igmpproxy () {
    for interface in $INTERFACE_LIST
    do
        if [ $interface != $SYSCFG_lan_ifname ] && [ $interface != $WAN_IFNAME ]; then
-           echo "phyint $interface disabled" >> $LOCAL_CONF_FILE
+         if [ $interface = $MOCA_INTERFACE ];then
+          echo "phyint $interface downstream" >> $LOCAL_CONF_FILE
+          MOCA_LAN_UP=1
+         else 
+          echo "phyint $interface disabled" >> $LOCAL_CONF_FILE
+         fi
        fi
    done
+#HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+if [ "$HOME_LAN_ISOLATION" -eq 1 ]; then
+if [ "$MOCA_LAN_UP" -eq 1 ]; then
+   echo "phyint $SYSCFG_lan_ifname enable ttl-threshold 11" >> $LOCAL_CONF_FILE
+   echo "phyint $MOCA_INTERFACE enable ttl-threshold 3" >> $LOCAL_CONF_FILE
+   echo "mgroup from $SYSCFG_lan_ifname group 239.255.255.250" >> $LOCAL_CONF_FILE
+   echo "mgroup from $MOCA_INTERFACE group 239.255.255.250" >> $LOCAL_CONF_FILE
+   echo "mroute from $SYSCFG_lan_ifname group 239.255.255.250 to brlan10" >> $LOCAL_CONF_FILE
+   echo "mroute from $MOCA_INTERFACE group 239.255.255.250 to brlan0" >> $LOCAL_CONF_FILE
+fi
+   cat $LOCAL_CONF_FILE > $CONF_FILE_2
+   rm -f $LOCAL_CONF_FILE
+   $BIN2 -f $CONF_FILE_2 -d &
 
+else
    cat $LOCAL_CONF_FILE > $CONF_FILE
    rm -f $LOCAL_CONF_FILE 
    $BIN -c $CONF_FILE &
+fi
 }
 
 service_init ()
 {
    eval `utctx_cmd get igmpproxy_enabled lan_ifname`
    WAN_IFNAME=`sysevent get current_wan_ifname`
+   HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+   MOCA_INTERFACE=`psmcli get dmsb.l2net.9.Name`
+
 }
 
 service_start () 
@@ -109,9 +134,13 @@ service_stop ()
 {
    ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
 
+if [ "$HOME_LAN_ISOLATION" -eq 1 ]; then
+   killall $BIN2
+   rm -rf $CONF_FILE_2
+else
    killall $BIN
    rm -rf $CONF_FILE
-
+fi
    sysevent set ${SERVICE_NAME}-errinfo
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
