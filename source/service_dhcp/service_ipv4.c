@@ -729,7 +729,7 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 	{
 		fprintf(stderr, "Multinet status:%s is neither partial nor ready\n", net_status);
     	// l2 down
-		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ifname", l3_inst);
+		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-status", l3_inst);
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "pending", 0);
 
 		if (((0 == net_status[0]) || (!strncmp(net_status, "stopped", 7))) && (0 != input))
