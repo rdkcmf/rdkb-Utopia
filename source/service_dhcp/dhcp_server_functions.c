@@ -692,64 +692,26 @@ int prepare_dhcp_conf (char *input)
 
 	if (l_bCaptive_Check)
 	{
-    	if  ((!strncmp(l_cNetwork_Res, "204", 3)) && (!strncmp(l_cRedirect_Flag, "true", 4)) && 
+           if  ((!strncmp(l_cNetwork_Res, "204", 3)) && (!strncmp(l_cRedirect_Flag, "true", 4)) && 
 			 (!strncmp(l_cWifi_Not_Configured, "true", 4))) 
-		{
-			l_bCaptivePortal_Mode = TRUE;
-            fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
-			if (access("/nvram/reverted", F_OK) == 0) //If file is present
-			{
-				fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");
-				remove_file("/nvram/reverted");
-			}
-		}
-       	else
-	   	{
-			l_bCaptivePortal_Mode = FALSE;
-            fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
-			fprintf(stderr, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
-		}
+           {
+              l_bCaptivePortal_Mode = TRUE;
+              fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
+              if (access("/nvram/reverted", F_OK) == 0) //If file is present
+              {
+                 fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");
+                 remove_file("/nvram/reverted");
+              }
+           }
+           else
+           {
+              l_bCaptivePortal_Mode = FALSE;
+              fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
+              fprintf(stderr, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
+           }
 	}
 
-	if (IS_MIG_CHECK_NEEDED(g_cMfg_Name))
-	{
-		fprintf(stderr, "Migration checks are needed\n");
-	   	//We need to enable the Captive Portal even response result is not got yet.
-   		//This can let lan side get redirected early.
-		if (FALSE == l_bCaptivePortal_Mode && (!strncmp(l_cRedirect_Flag, "true", 4)) &&
-			(!strncmp(l_cWifi_Not_Configured, "true", 4)))
-		{
-			if (!strncmp(l_cWan_Service_Stat, "started", 7))
-			{
-	        	fprintf(stderr, "DHCP SERVER: WAN has started, but has no response from network\n");
-			}
-       
-			else
-			{
-				if ((!strncmp(l_cRedirect_Flag, "true", 4)) && (!strncmp(l_cWifi_Not_Configured, "true", 4)))
-				{
-	            	l_bCaptivePortal_Mode = TRUE;
-    	           	fprintf(stderr, "DHCP SERVER: started before wan and in captive_port mode\n");
-					if (access("/nvram/reverted", F_OK) == 0) //If file is present
-					{
-						fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");
-						remove_file("/nvram/reverted");
-					}
-				}
-        	   	else
-				{
-	            	l_bCaptivePortal_Mode = FALSE;
-    	           	fprintf(stderr, "DHCP SERVER: started before wan and not in captive_port mode\n");
-				}
-			}
-		}	
-	}
-	else
-	{
-		fprintf(stderr, "Migration checks are not needed\n");
-	}	
-
-	fprintf(l_fLocal_Dhcp_ConfFile, "domain-needed\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "domain-needed\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "bogus-priv\n");
 
 	if (TRUE == l_bCaptivePortal_Mode)
