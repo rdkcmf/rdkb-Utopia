@@ -217,10 +217,12 @@ qtn_init(){
         $IFCONFIG $BASE_WIFI_IF $BASE_WIFI_IP up
         $QCSAPI_PCIE set_ip br0 ipaddr $QTN_BR0_IP
         $QCSAPI_PCIE set_ip br0 netmask 255.255.255.0
-        setup_qtn start ath12
-        setup_qtn start ath13
-        $IFCONFIG ath12 169.254.0.1 netmask 255.255.255.0
-        $IFCONFIG ath13 169.254.1.1 netmask 255.255.255.0
+        $NCPU_EXEC -e 'ifconfig ndp0 mtu 1600; ifconfig wifi0.0 mtu 1600'
+        $IP link add ath12 link host0 type vlan id 2012
+        $IP link add ath13 link host0 type vlan id 2013
+        $IFCONFIG host0 mtu 1600
+        $IFCONFIG ath12 169.254.0.1 netmask 255.255.255.0 mtu 1600
+        $IFCONFIG ath13 169.254.1.1 netmask 255.255.255.0 mtu 1600
     fi
 }
 
