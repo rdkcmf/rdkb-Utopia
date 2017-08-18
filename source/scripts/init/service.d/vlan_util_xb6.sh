@@ -31,8 +31,8 @@ BRIDGE_MODE=0
 #Set this to 1 to set SSID name in this script to default
 USE_DEFAULT_SSID=1
 BASE_WIFI_IF="host0"
-BASE_WIFI_IP="192.168.100.10"
-QTN_BR0_IP="192.168.100.100"
+BASE_WIFI_IP="192.168.147.10"
+QTN_BR0_IP="192.168.147.100"
 #Base vlan ID to use internally in QTN
 QTN_VLAN_BASE="2000"
 QTN_STATE="/var/run/.qtn_vlan_enabled"

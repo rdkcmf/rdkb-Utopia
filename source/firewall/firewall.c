@@ -8861,8 +8861,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A FORWARD -i a-mux -j ACCEPT\n");
 #endif
 #if defined(INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
-   fprintf(filter_fp, "-A INPUT -i host0 -s 192.168.100.0/255.255.255.0 -j ACCEPT\n");
-   fprintf(filter_fp, "-A OUTPUT -o host0 -d 192.168.100.0/255.255.255.0 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -i host0 -s 192.168.147.0/255.255.255.0 -j ACCEPT\n");
+   fprintf(filter_fp, "-A OUTPUT -o host0 -d 192.168.147.0/255.255.255.0 -j ACCEPT\n");
 #endif
 
    fprintf(filter_fp, "-A OUTPUT -o lo -p tcp -m tcp --sport 49152:49153 -j ACCEPT\n");
