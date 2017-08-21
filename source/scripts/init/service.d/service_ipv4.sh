@@ -32,6 +32,10 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
 
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
 
 
 STATIC_IPV4SUBNET=""
@@ -160,6 +164,11 @@ apply_config () {
     if [ xbrlan0 = x${IFNAME} ]; then
         snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 161
         snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 162
+		
+	#XB6 Kernel chooses erouter0 as default. Need brlan0 route for XHS (ARRISXB6-5086)
+        if [ "$BOX_TYPE" = "XB6" ]; then
+		ip route add 239.255.255.250/32 dev brlan0
+	fi
     fi
     
     #assign lan interface a global ipv6 address
@@ -226,6 +235,11 @@ remove_config () {
     if [ xbrlan0 = x${IFNAME} ]; then
         snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 161
         snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 162
+		
+	#XB6 Kernel chooses erouter0 as default. Need brlan0 route for XHS (ARRISXB6-5086)
+        if [ "$BOX_TYPE" = "XB6" ]; then
+		ip route delete 239.255.255.250/32 dev brlan0
+	fi
     fi
 
     # END ROUTING TODO
