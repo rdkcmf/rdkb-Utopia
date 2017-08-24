@@ -48,9 +48,11 @@
 #include "errno.h"
 //#include "nethelper.h"
 #define LOCAL_BRLAN1UP_FILE "/tmp/brlan1_up"
-
-/*
- * The service_multinet library provides service fuctions for manipulating the lifecycle 
+#if defined(MOCA_HOME_ISOLATION)
+#define LOCAL_MOCABR_UP_FILE "/tmp/MoCABridge_up"
+#define MOCA_BRIDGE_IP "169.254.30.1"
+#endif
+ /* The service_multinet library provides service fuctions for manipulating the lifecycle 
  * and live configuration of system bridges and their device specific interface members. 
  * Authoritative configuration is considered to be held in nonvol storage, so most functions
  * will take this external configuration as input. 
@@ -80,7 +82,19 @@ static int nethelper_bridgeDestroy(char* brname) {
     snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s down; brctl delbr %s", brname, brname);
     system(cmdBuff);
 }
+#if defined(MOCA_HOME_ISOLATION)
+void ConfigureMoCABridge(L2Net l2net)
+{
+    char cmdBuff[512];
+    snprintf(cmdBuff, sizeof(cmdBuff), "ip link set %s allmulticast on; ifconfig %s %s;ip link set %d up",l2net.name, l2net.name, MOCA_BRIDGE_IP,l2net.name);
+    system(cmdBuff);
+    system("echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts");
+    system("sysctl -w net.ipv4.conf.all.arp_announce=3");
+    system("ip rule add from all iif brlan10 lookup all_lans");
+    system("ip rule add from all iif brlan0 lookup moca");
 
+}
+#endif
 /* Public interface section */
 
 /* multinet_bridgeUp
@@ -164,6 +178,22 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
                 MNET_DEBUG("%s file creation is successful \n" COMMA LOCAL_BRLAN1UP_FILE)
             }
         }
+#if defined(MOCA_HOME_ISOLATION)
+	if(9 == l2netInst)
+	{
+	    ConfigureMoCABridge(l2net);
+            MNET_DEBUG("MoCA Bridge case creating %s file \n" COMMA LOCAL_MOCABR_UP_FILE)
+            if(creat(LOCAL_MOCABR_UP_FILE, S_IRUSR | S_IWUSR) == -1)
+            {
+                MNET_DEBUG("%s file creation failed with error:%d\n" COMMA LOCAL_MOCABR_UP_FILE COMMA errno)
+            }
+            else
+            {
+                MNET_DEBUG("%s file creation is successful \n" COMMA LOCAL_MOCABR_UP_FILE)
+            }
+
+	}
+#endif
     }
 }
 
