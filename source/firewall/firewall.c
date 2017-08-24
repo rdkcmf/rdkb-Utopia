@@ -10148,8 +10148,13 @@ int prepare_ipv6_firewall(const char *fw_file)
    
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipv6_interface", wan6_ifname, sizeof(wan6_ifname));
    
-   if (wan6_ifname[0] == '\0') 
-       strcpy(wan6_ifname, current_wan_ifname);
+    if (wan6_ifname[0] == '\0') {
+        /* Fix 'Destination buffer is too small'. */
+        if (strlen(current_wan_ifname) > (sizeof(wan6_ifname)-1)) {
+            FIREWALL_DEBUG("current_wan_ifname is greater than destination buffer.\n");
+        }
+        strncpy(wan6_ifname, current_wan_ifname, sizeof(wan6_ifname)-1);
+    }
 
 	int ret=0;
 	FILE *raw_fp=NULL;

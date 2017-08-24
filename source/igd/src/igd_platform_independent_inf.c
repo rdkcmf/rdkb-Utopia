@@ -1102,7 +1102,8 @@ INT32 IGD_pii_get_portmapping_entry_generic( IN INT32 WanDeviceIndex,
         PortmappingEntry->externalPort = portmap.external_port;
         strcpy(PortmappingEntry->remoteHost, portmap.external_host); 
         PortmappingEntry->internalPort = portmap.internal_port;
-        strcpy(PortmappingEntry->internalClient, portmap.internal_host); 
+        /* internalClient is smaller than internal_host, avoid string overrun. */
+        strncpy(PortmappingEntry->internalClient, portmap.internal_host, IPV4_ADDR_LEN-1);
 
         PAL_LOG("igd_platform", "debug", "%s: Lock released ", __FUNCTION__);
         Utopia_Free(&ctx, 0);
@@ -1173,7 +1174,8 @@ INT32 IGD_pii_get_portmapping_entry_specific( IN INT32 WanDeviceIndex,
             strncpy(PortmappingEntry->description, pmap.name, PORT_MAP_DESCRIPTION_LEN);
             PortmappingEntry->leaseTime = pmap.lease;       
             PortmappingEntry->internalPort = pmap.internal_port;
-            strcpy(PortmappingEntry->internalClient, pmap.internal_host); 
+            /* internalClient is smaller than internal_host, avoid string overrun. */
+            strncpy(PortmappingEntry->internalClient, pmap.internal_host, IPV4_ADDR_LEN-1);
 
             rc = 0;
         } else {
