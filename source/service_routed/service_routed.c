@@ -61,6 +61,7 @@
 #define ZEBRA_CONF_FILE "/var/zebra.conf"
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
 
+
 struct serv_routed {
     int         sefd;
     int         setok;
@@ -268,6 +269,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
         snprintf(preferred_lft, sizeof(preferred_lft), "300");
     if (atoi(valid_lft) <= 0)
         snprintf(valid_lft, sizeof(valid_lft), "300");
+
+    if ( atoi(preferred_lft) > atoi(valid_lft) )
+        snprintf(preferred_lft, sizeof(preferred_lft), "%s",valid_lft);
 
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
     get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
