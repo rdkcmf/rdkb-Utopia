@@ -131,31 +131,38 @@ FILE *mnetfp = NULL;
  int handle_up(char* argv[], int argc) {
      MNET_DEBUG("Main: handle_up")
     multinet_bridgeUpInst(atoi(argv[2]), 0);
+     return 0;
  }
  int handle_down(char* argv[], int argc) {
      MNET_DEBUG("Main: handle_down")
      multinet_bridgeDownInst(atoi(argv[2]));
+     return 0;
  }
  int handle_start(char* argv[], int argc){
      MNET_DEBUG("Main: handle_start")
      multinet_bridgeUpInst(atoi(argv[2]), 1);
+     return 0;
  }
  int handle_stop(char* argv[], int argc){
      MNET_DEBUG("Main: handle_stop")
      multinet_bridgeDownInst(atoi(argv[2]));
+     return 0;
  }
  int handle_syncMembers(char* argv[], int argc){
      MNET_DEBUG("Main: handle_syncMembers")
      multinet_SyncInst(atoi(argv[2]));
+     return 0;
  }
  int handle_syncNets(char* argv[], int argc){
      MNET_DEBUG("Main: handle_syncNets NOT SUPPORTED")
         //deferred
+     return 0;
  }
  int handle_restart(char* argv[], int argc){
      MNET_DEBUG("Main: handle_restart")
     multinet_bridgeDownInst(atoi(argv[2]));
     multinet_bridgeUpInst(atoi(argv[2]), 0);
+    return 0;
  }
  //exeName, eventName, statusValue, netIdString, ifname, iftype, tag?
  int handle_ifStatus(char* argv[], int argc){
@@ -164,6 +171,7 @@ FILE *mnetfp = NULL;
      sscanf(argv[3], "%d", &l2netInst);
      
      multinet_ifStatusUpdate_ids(l2netInst, argv[4], argv[5], argv[2], argv[6]);
+     return 0;
  }
 
  int set_multicast_mac(char* argv[], int argc)
@@ -172,6 +180,7 @@ FILE *mnetfp = NULL;
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
 	setMulticastMac();
 #endif
+    return 0;
  }
 
  int add_ipc_vlan(char* argv[], int argc)
@@ -179,6 +188,7 @@ FILE *mnetfp = NULL;
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     addIpcVlan();
 #endif	
+    return 0;
  }
 
  int add_radius_vlan(char* argv[], int argc)
@@ -186,6 +196,7 @@ FILE *mnetfp = NULL;
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     addRadiusVlan();
 #endif
+    return 0;
  }
 
  int create_mesh_vlan(char* argv[], int argc)
@@ -193,4 +204,5 @@ FILE *mnetfp = NULL;
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     createMeshVlan();
 #endif
+    return 0;
  }

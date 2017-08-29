@@ -178,6 +178,7 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
 		}
     }    
     saveVlanState(vlanState);    
+    return 0;
 }
 
 void printPlatport(PPlatformPort port) {

@@ -104,6 +104,7 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
     MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
     system(cmdBuff);
 #endif
+    return 0;
 }
 
 int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) 
@@ -142,6 +143,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
     system(cmdBuff);
 #endif
+    return 0;
 }
 
 int stringIDIntSw (void* portID, char* stringbuf, int bufSize) {
@@ -199,4 +201,5 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
     	system(cmdBuff);
 #endif
 	}
+    return 0;
 }
