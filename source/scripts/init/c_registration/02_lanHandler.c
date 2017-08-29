@@ -71,15 +71,21 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 #endif	
 
 void srv_register(void) {
+   DBG_PRINT("02_lanhandler : %s Entry\n", __FUNCTION__);
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
+   DBG_PRINT("02_lanhandler : %s Exit\n", __FUNCTION__);   
 }
 
 void srv_unregister(void) {
+   DBG_PRINT("02_lanhandler : %s Entry\n", __FUNCTION__);
    sm_unregister(SERVICE_NAME);
+   DBG_PRINT("02_lanhandler : %s Exit\n", __FUNCTION__);   
 }
 
 int main(int argc, char **argv)
 {
+	DBG_PRINT("02_lanhandler : %s Entry\n", __FUNCTION__);
+
    cmd_type_t choice = parse_cmd_line(argc, argv);
    
    switch(choice) {
@@ -97,6 +103,9 @@ int main(int argc, char **argv)
       default:
          printf("%s called with invalid parameter (%s)\n", argv[0], 1==argc ? "" : argv[1]);
    }   
+
+   DBG_PRINT("02_lanhandler : %s Exit\n", __FUNCTION__);
+   
    return(0);
 }
 

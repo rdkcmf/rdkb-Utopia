@@ -47,6 +47,22 @@
 #ifndef _SRVMGR_H_
 #define _SRVMGR_H_
 
+#if defined _CBR_PRODUCT_REQ_
+#define CONSOLE_LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
+#else
+#define CONSOLE_LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
+#endif
+
+#define DBG_PRINT(fmt ...)     {\
+										FILE     *fp        = NULL;\
+                                        fp = fopen ( CONSOLE_LOG_FILE, "a+");\
+                                        if (fp)\
+                                        {\
+                                            fprintf(fp,fmt);\
+                                            fclose(fp);\
+                                        }\
+                               }\
+
 /*
  * These are flags which correspond to sysevent.h flags.
  * They MUST be in sync

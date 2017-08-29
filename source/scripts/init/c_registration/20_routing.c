@@ -49,22 +49,6 @@
 #include <stdlib.h>
 #include "srvmgr.h"
 
-#if defined _CBR_PRODUCT_REQ_
-    #define CONSOLE_LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
-#else
-    #define CONSOLE_LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
-#endif
-
-#define DBG_PRINT(fmt ...)     {\
-					FILE     *fp        = NULL;\
-                                        fp = fopen ( CONSOLE_LOG_FILE, "a+");\
-                                        if (fp)\
-                                        {\
-                                            fprintf(fp,fmt);\
-                                            fclose(fp);\
-                                        }\
-                               }\
-
 const char* SERVICE_NAME            = "routed";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_routed.sh";
 
