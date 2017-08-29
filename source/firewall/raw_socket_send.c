@@ -166,26 +166,64 @@ struct ethhdr* CreateEthernetHeader(char *src_mac, char *dst_mac, int protocol)
     return (ethernet_header);
 }
 
-/* Ripped from Richard Stevans Book */
-unsigned short ComputeChecksum(unsigned char *data, int len)
+/* ComputeChecksum() */
+unsigned short ComputeChecksum( void *data, unsigned long length )
 {
-    long sum = 0;  /* assume 32 bit long, 16 bit short */
-    unsigned short *temp = (unsigned short *)data;
+	unsigned short	*tempUshort 	  = NULL,
+					 UshortForPadding = 0;
+	unsigned char	*tempUchar		  = NULL;
+	unsigned long	 checksum		  = 0;
 
-    while(len > 1){
-        sum += *temp++;
-        if(sum & 0x80000000)   /* if high order bit set, fold */
-            sum = (sum & 0xFFFF) + (sum >> 16);
-        len -= 2;
-    }
+	/*
+	 * retrieve the shortcut pointer
+	 */
+	tempUshort = (unsigned short*)data;
 
-    if(len)       /* take care of left over byte */
-        sum += (unsigned short) *((unsigned char *)temp);
+	/*
+	 * loop to calculate the check sum
+	 */
+	while ( length > 1 )
+	{
+		checksum += *tempUshort;
+		tempUshort++;
 
-    while(sum>>16)
-        sum = (sum & 0xFFFF) + (sum >> 16);
+		/*
+		 * if high-order bit set, fold
+		 */
+		if ( checksum & 0x80000000 )
+		{
+			checksum = ( checksum & 0xFFFF ) + ( checksum >> 16 );
+		}
 
-    return ~sum;
+		/*
+		 * modify length
+		 */
+		length -= 2;
+	}
+
+	/*
+	 * take care of left over bytes.
+	 * note: although it's impossible...
+	 */
+	if ( length )
+	{
+		UshortForPadding			= 0;
+		*(unsigned char*)&UshortForPadding	= *(unsigned char*)tempUshort;
+		checksum				   += UshortForPadding;
+	}
+
+	/*
+	 * fold the result checksum
+	 */
+	while ( checksum >> 16 )
+	{
+		checksum = ( checksum & 0xFFFF ) + ( checksum >> 16 );
+	}
+
+	/*
+	 * return complement of checksum
+	 */
+	return	~((unsigned short)checksum);
 }
 
 void *CreateIPHeader(int family, char *srcIp, char *dstIp, unsigned int dataSize)
