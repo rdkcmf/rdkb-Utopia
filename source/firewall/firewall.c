@@ -4052,7 +4052,7 @@ static int do_lan2self_by_wanip6(FILE *filter_fp)
            FIREWALL_DEBUG("Entering do_lan2self_by_wanip6\n");     
     int i;
     for(i = 0; i < ecm_wan_ipv6_num; i++){
-        fprintf(filter_fp, "-A INPUT -i %s -d %s -p tcp --match multiport --dports 23,22,80,443 -j LOG_INPUT_DROP\n", lan_ifname, ecm_wan_ipv6[i]);
+        fprintf(filter_fp, "-A INPUT -i %s -d %s -p tcp --match multiport --dports 23,22,80,443,161 -j LOG_INPUT_DROP\n", lan_ifname, ecm_wan_ipv6[i]);
     }
            FIREWALL_DEBUG("Exiting do_lan2self_by_wanip6\n");     
     return 0;
@@ -4097,7 +4097,7 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
        fprintf(filter_fp, "-A lan2self_by_wanip -p tcp --dport %s -j xlog_drop_lan2self\n", httpsport); //GUI on mgmt_wan port
 
    fprintf(filter_fp, "-A lan2self_by_wanip -p tcp -m multiport --dports 80,443 -j xlog_drop_lan2self\n"); //GUI on standard ports
-   //fprintf(filter_fp, "-A lan2self_by_wanip -p udp --dport 161 -j xlog_drop_lan2self\n"); //SNMP
+   fprintf(filter_fp, "-A lan2self_by_wanip -p udp --dport 161 -j xlog_drop_lan2self\n"); //SNMP
    fprintf(filter_fp, "-A lan2self_by_wanip -p icmp --icmp-type 8 -j xlog_drop_lan2self\n"); // ICMP PING request
            FIREWALL_DEBUG("Exiting do_lan2self_by_wanip\n");     
     return 0;
@@ -9194,7 +9194,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "-A general_input -i %s -p udp --dport 68 -j ACCEPT\n", ecm_wan_ifname);
        fprintf(filter_fp, "-A general_input -i %s -p udp --dport 68 -j ACCEPT\n", emta_wan_ifname);
    }
-//   fprintf(filter_fp, "-A general_input -i %s -p udp -m udp --dport 161 -j xlog_drop_lan2self\n", lan_ifname);
+   fprintf(filter_fp, "-A general_input -i %s -p udp -m udp --dport 161 -j xlog_drop_lan2self\n", lan_ifname);
    fprintf(filter_fp, "-A lan2self ! -d %s -j lan2self_by_wanip\n", lan_ipaddr);
    fprintf(filter_fp, "-A lan2self -j lan2self_mgmt\n");
    fprintf(filter_fp, "-A lan2self -j lanattack\n");
@@ -10557,8 +10557,8 @@ static void do_ipv6_filter_table(FILE *fp){
       fprintf(fp, "-A INPUT -i %s -p 4 -j ACCEPT\n", wan6_ifname);
 
       //SNMP
-      fprintf(fp, "-A INPUT -i %s -p udp --dport 161 -j ACCEPT\n", ecm_wan_ifname);
-      fprintf(fp, "-A INPUT -i %s -p udp --dport 161 -j ACCEPT\n", lan_ifname);
+      //fprintf(fp, "-A INPUT -i %s -p udp --dport 161 -j ACCEPT\n", ecm_wan_ifname);
+      fprintf(fp, "-A INPUT ! -i %s -p udp --dport 161 -j ACCEPT\n", lan_ifname);
 #if defined(_COSA_BCM_ARM_)
 	  //SSH and HTTP port open for IPv6
 	  fprintf(fp, "-I INPUT 42 -p tcp -i privbr --dport 22 -j ACCEPT\n");
