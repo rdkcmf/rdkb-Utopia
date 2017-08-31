@@ -244,8 +244,9 @@ case "$1" in
         fi
         echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
         sysevent set firewall-restart 
-        echo_t "EROUTER_LAN_INIT_END"
-   ;;
+        uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
+	echo_t "Lan_init_complete:$uptime"
+     ;;
    
    ipv4-resync)
         LAN_INST=`sysevent get primary_lan_l3net`
@@ -262,8 +263,9 @@ case "$1" in
    ;;
    
    pnm-status | bring-lan)
-   	echo_t "EROUTER_LAN_INIT_START"
-        if [ x = x"`sysevent get lan_handler_async`" ]; then
+        uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
+	echo_t "Lan_init_start:$uptime"
+   	if [ x = x"`sysevent get lan_handler_async`" ]; then
         eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
 	if [ "$INST" = "" ]
 	    then
