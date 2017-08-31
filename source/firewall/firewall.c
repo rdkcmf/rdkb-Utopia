@@ -8407,7 +8407,7 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i l2sd0.113 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -d 192.168.251.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
-#elif defined (INTEL_PUMA7) // XB6 ATOM
+#elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
     fprintf(filter_fp, "-A INPUT -i ath12 -d 169.254.0.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath12 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath13 -d 169.254.1.0/24 -j ACCEPT\n");
