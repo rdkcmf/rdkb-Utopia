@@ -122,6 +122,7 @@ qtn_configure_LnF_radius(){
     echo "VLAN_UTIL SETTING LOST & FOUND RADIUS CONFIG"
 
     auth_secret=$(/usr/bin/configparamgen jx /etc/lnf/edorbdvzr.uix /dev/stdout)
+    erouter0_ip=$(ifconfig erouter0 | awk '/inet addr/{print substr($2,6)}')
 
     $QWCFG_TEST set $QTN_INDEX vap_emerged 1
 
@@ -139,6 +140,14 @@ qtn_configure_LnF_radius(){
 
     $QWCFG_TEST set $QTN_INDEX wpa_rekey_interval 3600
     $QWCFG_TEST set $QTN_INDEX iface_enable 1
+  
+    if [ $erouter0_ip != "" ]; then
+    $QWCFG_TEST set $QTN_INDEX nas_ip $erouter0_ip
+	echo "Configuring $erouter0_ip as NAS-IP for LnF radius interface $QTN_INDEX"
+    else
+    $QWCFG_TEST set $QTN_INDEX nas_ip "0.0.0.0"
+        echo "No ip of erouter0, configuring 0.0.0.0 as NAS-IP for LnF radius interface $QTN_INDEX"
+    fi
     $QWCFG_TEST commit
 }
 
