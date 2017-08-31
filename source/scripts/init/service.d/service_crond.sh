@@ -74,8 +74,9 @@ register_docsis_init_handler ()
 
 service_start () 
 {
-   register_docsis_init_handler
    if [ "x1" != "x`sysevent get docsis-initialized`" ]; then
+     echo "SERVICE_CROND : register_docsis_init_handler"
+     register_docsis_init_handler
       return
    fi
    ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
