@@ -51,7 +51,7 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/ipv6_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 source /etc/utopia/service.d/sysevent_functions.sh
-
+source /etc/utopia/service.d/log_capture_path.sh
 # This handler is called not only to start/stop/restart the service
 # but also when WAN or LAN status is updated as well as current_wan_ifname
 # and when DHCPv6 has received a reply or a time-out
@@ -97,23 +97,29 @@ service_init ()
 
 service_start()
 {
+   echo_t "SERVICE_DHCP6C : SERVICE START"
    if [ "$SYSCFG_last_erouter_mode" != "2" -a "$SYSCFG_last_erouter_mode" != "3" ]
    then
       # Non IPv6 Mode
+     echo_t "SERVICE_DHCP6C : Non IPv6 Mode, service_stop"
       service_stop
    elif [ "$WAN_LINK_STATUS" = "down" ]
    then
       # WAN LINK is Down
+     echo_t "SERVICE_DHCP6C : WAN LINK is Down, service_stop"
       service_stop
    elif [ "$WAN_INTERFACE_NAME" = "" ]
    then
       # WAN Interface not configured
+     echo_t "SERVICE_DHCP6C : WAN Interface not configured, service_stop"
       service_stop
    elif [ "$BRIDGE_MODE" = "1" -o "$BRIDGE_MODE" = "2" ]
    then
+     echo_t "SERVICE_DHCP6C : BridgeMode, service_stop"
       service_stop
    elif [ "$WAN_STATE" = "stopped" ]
    then
+        echo_t "SERVICE_DHCP6C : WAN state stopped, service_stop"
         service_stop
    elif [ ! -f $DHCPV6_PID_FILE ]
    then
@@ -121,26 +127,30 @@ service_start()
 	  	if [ ! -f $DHCP6C_PROGRESS_FILE ]
 		then
 			touch $DHCP6C_PROGRESS_FILE
-			echo "Starting DHCPv6 Client from service_dhcpv6_client"
-        	ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
+			echo_t "SERVICE_DHCP6C : Starting DHCPv6 Client from service_dhcpv6_client"
+        		ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
 			rm -f $DHCP6C_PROGRESS_FILE
+			echo_t "SERVICE_DHCP6C : dhcp6c PID is `cat $DHCPV6_PID_FILE`"
 		else
-			echo "ti_dhcp6c process start in progress, not starting one more"
+			echo "SERVICE_DHCP6C : ti_dhcp6c process start in progress, not starting one more"
 		fi	
    fi
 }
 
 service_stop()
 {
+   echo_t "SERVICE_DHCP6C : SERVICE STOP"
    if [ -f $DHCPV6_PID_FILE ]
    then
-      kill `cat $DHCPV6_PID_FILE`
+     echo_t "SERVICE_DHCP6C : Killing `cat $DHCPV6_PID_FILE`"
+      kill -9 `cat $DHCPV6_PID_FILE`
       rm -f $DHCPV6_PID_FILE
    fi
 }
 
 service_update()
 {
+   echo_t "SERVICE_DHCP6C : SERVICE UPDATE, DHCPV6C_ENABLED is $DHCPV6C_ENABLED"
    if [ "$DHCPV6C_ENABLED" = "1" ]
    then
       service_start
@@ -171,9 +181,11 @@ unregister_dhcpv6_client_handler()
 
 service_enable ()
 {
+   echo_t "SERVICE_DHCP6C : SERVICE ENABLE"
    if [ "$DHCPV6C_ENABLED" = "1" ]
    then
       ulog dhcpv6c status "DHCPv6 Client is already enabled"
+      echo_t "SERVICE_DHCP6C : DHCPv6 Client is already enabled"
       if [ ! -f $DHCPV6_REGISTER_FILE ]; then
           echo "DHCPv6 Client is enabled but events are not registered, registering it now"
           register_dhcpv6_client_handler    
@@ -191,9 +203,11 @@ service_enable ()
 
 service_disable ()
 {
+   echo_t "SERVICE_DHCP6C : SERVICE DISABLE, DHCPV6C_ENABLED is $DHCPV6C_ENABLED"
    if [ ! "$DHCPV6C_ENABLED" = "1" ]
    then
       ulog dhcpv6c status "DHCPv6 Client is not enabled"
+      echo_t "SERVICE_DHCP6C : DHCPv6 Client is not enabled"
       return
    fi
 
@@ -214,11 +228,11 @@ service_disable ()
 # Entry
 # The first parameter is the name of the event that caused this handler to be activated
 #-------------------------------------------------------------------------------------------
-
+echo_t "SERVICE_DHCP6C : service_dhcpv6_client 1st param is $1, 2nd param is $2"
 service_init 
 
 case "$1" in
-   enable)
+   enable)	
       service_enable
       ;;
    disable)
