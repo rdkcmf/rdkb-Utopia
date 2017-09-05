@@ -353,7 +353,7 @@ $lan_netmask=255.255.255.0
 #   This may be blank or unassigned if no lan domain is desired
 #   however for internal dns lookups it is usually desirable to
 #   have a lan domain
-$lan_domain=utopia.net
+$lan_domain=
 
 $StaticRouteCount=0
 

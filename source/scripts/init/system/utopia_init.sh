@@ -270,6 +270,14 @@ else
    echo 204 > /var/tmp/networkresponse.txt
 fi
 
+SYSCFG_LAN_DOMAIN=`syscfg get lan_domain` 
+
+if [ "$SYSCFG_LAN_DOMAIN" == "utopia.net" ]; then
+   echo_t "[utopia][init] Setting lan domain to NULL"
+   syscfg set lan_domain ""
+   syscfg commit
+fi
+
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
 if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
    # Note: Only new P-UNIT firmwares and Linux drivers (>= 1.1.x) support this.
