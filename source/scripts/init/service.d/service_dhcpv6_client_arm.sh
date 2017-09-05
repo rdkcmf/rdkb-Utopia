@@ -84,7 +84,7 @@ service_init ()
    fi
 
    # The more information from SYSEVENT
-   WAN_INTERFACE_NAME=`sysevent get current_wan_ifname`
+   WAN_INTERFACE_NAME=`sysevent get wan_ifname`
    LAN_STATE=`sysevent get lan-status`
    WAN_STATE=`sysevent get wan-status`
    PHY_WAN_STATE=`sysevent get current_ipv4_link_state`
