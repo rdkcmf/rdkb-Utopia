@@ -80,6 +80,20 @@ static int convert = 0;
 // we can use one global id for sysevent because we are single threaded
 token_t global_id;
 
+#if defined _CBR_PRODUCT_REQ_
+	#define LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
+#else
+	#define LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
+#endif
+
+#define APPLY_PRINT(fmt ...)   {\
+   FILE *logfp = fopen ( LOG_FILE , "a+");\
+   if (logfp)\
+   {\
+        fprintf(logfp,fmt);\
+        fclose(logfp);\
+   }\
+}\
 /*
  * Procedure     : trim
  * Purpose       : trims a string
@@ -167,7 +181,8 @@ static int set_sysevent(char *name, char *value, int flags)
 //         printf("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, get_val, flags);
       } else {
          rc = sysevent_set(global_fd, global_id, name, value, 0);
-//         printf("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, value, flags);
+         APPLY_PRINT("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, value, flags);
+         printf("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, value, flags);
       }
    } else {
       rc = 0;
@@ -492,7 +507,9 @@ int main(int argc, char **argv)
    parse_command_line(argc, argv);
 
    global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
+   APPLY_PRINT("[Utopia] global_fd is %d\n",global_fd);
    if (0 == global_fd) {
+      APPLY_PRINT("[Utopia] %s unable to register with sysevent daemon.\n", argv[0]);
       printf("[Utopia] %s unable to register with sysevent daemon.\n", argv[0]);
    }
    int rc;
@@ -502,6 +519,21 @@ int main(int argc, char **argv)
              argv[0], rc);
       sysevent_close(global_fd, global_id);
       return(-1);
+   }
+
+
+
+   if ( global_fd <= 0 )
+   {		
+	APPLY_PRINT("[Utopia] Retrying sysevent open\n");
+
+	global_fd=0;
+   	global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
+	APPLY_PRINT("[Utopia] Global fd after retry is %d\n",global_fd);	
+
+	if ( global_fd <= 0)
+		APPLY_PRINT("[Utopia] Retrying sysevent open also failed %d\n",global_fd);
+	
    }
 
    set_defaults();
