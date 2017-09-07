@@ -651,6 +651,12 @@ static int wan_addr_unset(struct serv_wan *sw)
 
     vsystem("ip -4 addr flush dev %s", sw->ifname);
 
+    /*For XB3 disable dhcpv6 client */
+#if defined(_COSA_INTEL_XB3_ARM_)
+	fprintf(stderr, "Disabling DHCPv6 Client now\n");
+    system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");	
+#endif
+
     printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
 
