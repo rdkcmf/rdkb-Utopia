@@ -223,6 +223,9 @@ qtn_init(){
     then
         echo > $QTN_STATE
         $QWCFG_TEST set 0 enable_vlan 1
+        $QWCFG_TEST delete_vap 22 #ath12
+        $QWCFG_TEST delete_vap 6 #ath13
+        $QWCFG_TEST commit
         $IFCONFIG $BASE_WIFI_IF $BASE_WIFI_IP up
         $QCSAPI_PCIE set_ip br0 ipaddr $QTN_BR0_IP
         $QCSAPI_PCIE set_ip br0 netmask 255.255.255.0
