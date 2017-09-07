@@ -352,6 +352,7 @@ syseventd
 #insmod $MODULE_PATH/fat.ko
 #insmod $MODULE_PATH/vfat.ko
 
+sleep 1 
 echo_t "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
 
