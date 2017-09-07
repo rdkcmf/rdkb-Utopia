@@ -56,7 +56,7 @@ then
 fi
 
 #This change is needed for ArrisXB6 to choose sync location dynamically.
-if [ "$model" == "TG3482" ];then
+if [ "$model" == "TG3482G" ];then
 	if [ ! -d "/nvram2" ];then
 		LOG_SYNC_PATH="/nvram/logs/"
 		LOG_SYNC_BACK_UP_PATH="/nvram/logs/"
