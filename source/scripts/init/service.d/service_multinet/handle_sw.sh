@@ -112,7 +112,7 @@ ATOM_PORTS='ath*|sw_6'
 EXT_DEP="I2E-t E2I-a"
 ATOM_DEP="atom-t"
 
-MGMT_PORT_LINUX_IFNAME=l2sm0
+#MGMT_PORT_LINUX_IFNAME=l2sm0
 
 add_untagged_moca_vid_special () {
     if [ x$1 = x ]; then
@@ -318,10 +318,10 @@ case "$1" in
         fi
         
         #add the management virtual interface first
-        if [ x = x"$VIDPORTS" ]; then
-            vconfig add $MGMT_PORT_LINUX_IFNAME ${VID}
-            ifconfig $MGMT_PORT_LINUX_IFNAME.${VID} up
-        fi
+#        if [ x = x"$VIDPORTS" ]; then
+#            vconfig add $MGMT_PORT_LINUX_IFNAME ${VID}
+#            ifconfig $MGMT_PORT_LINUX_IFNAME.${VID} up
+#        fi
         
         sw_add_ports $VID "$PORTS_ADD"
         
@@ -471,7 +471,7 @@ case "$1" in
             #DEBUG
             echo "--SW handler, swctl $PORTMAP_REM_arm -v $3"
             swctl $PORTMAP_REM_arm -v $3
-            vconfig rem $MGMT_PORT_LINUX_IFNAME.$3
+#            vconfig rem $MGMT_PORT_LINUX_IFNAME.$3
         fi
         sysevent set sw_vid_$3_ports "${VIDPORTS}"
         

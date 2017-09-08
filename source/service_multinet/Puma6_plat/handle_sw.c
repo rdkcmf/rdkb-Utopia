@@ -409,11 +409,11 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 
 	if (!vidPorts[0])
 	{
-	    snprintf(cmdBuff, sizeof(cmdBuff), "vconfig add %s %d; ifconfig %s.%d up", 
+/*	    snprintf(cmdBuff, sizeof(cmdBuff), "vconfig add %s %d; ifconfig %s.%d up",
 				 MGMT_PORT_LINUX_IFNAME, vlan_id, MGMT_PORT_LINUX_IFNAME, vlan_id);
 	    MNET_DEBUG("Creating vlan:%d for l2sm0 interface command is:%s\n" 
 					COMMA vlan_id COMMA cmdBuff)
-	    system(cmdBuff);    
+	    system(cmdBuff);    */
 
 	    MNET_DEBUG("--SW handler, swctl %s -v %d -m %d -q 1\n" 
 					COMMA PORTMAP_arm COMMA vlan_id COMMA TAGGING_MODE)
@@ -577,10 +577,10 @@ void delVlan(int net_id, int vlan_id, char *ports_add)
 	{
     	MNET_DEBUG("--SW handler, swctl %s -v %d\n" COMMA PORTMAP_REM_arm COMMA vlan_id)
 		swctl(17, 7, vlan_id, -1, -1, -1, NULL, NULL);
-			
+/*
 		snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "vconfig rem %s.%d", MGMT_PORT_LINUX_IFNAME, vlan_id);
 	    MNET_DEBUG("Removing vlan %s.%d\n" COMMA MGMT_PORT_LINUX_IFNAME COMMA vlan_id)
-	   	system(l_cCmd_Buff);
+		system(l_cCmd_Buff);*/
     }
 	snprintf(l_cCmd_Buff, sizeof(l_cCmd_Buff), "sw_vid_%d_ports",vlan_id);
     sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, l_cCmd_Buff, l_cVid_Ports, 0);

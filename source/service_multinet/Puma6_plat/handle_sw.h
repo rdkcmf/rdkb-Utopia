@@ -52,7 +52,7 @@ const char PORTMAP_VENABLE_E2I[]="-c 4 -p 5";
 const char EXT_DEP[]="I2E-t E2I-a";
 const char ATOM_DEP[]="atom-t";
 
-const char MGMT_PORT_LINUX_IFNAME[]="l2sm0";
+//const char MGMT_PORT_LINUX_IFNAME[]="l2sm0";
 
 void addVlan(int, int, char*);
 void setMulticastMac();
