@@ -8368,6 +8368,7 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
     sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
     
+    do_block_ports(filter_fp);    
     tok = strtok(inst_resp, " ");
     
     if (tok) do {
@@ -8418,7 +8419,6 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
 #endif
     //<<
 
-    do_block_ports(filter_fp);    
     snprintf(net_query, sizeof(net_query), "multinet-instances");
     sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
     
@@ -9441,14 +9441,16 @@ static int do_raw_table_puma7(FILE *fp)
 static int do_block_ports(FILE *filter_fp)
 {
    /* Blocking zebra ports except for brlan0 interface */
-   fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 2601 -j ACCEPT\n");
-   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 2601 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 2601 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 2601 -j DROP\n");
    /* Blocking IGD ports except for brlan0 interface */
    fprintf(filter_fp, "-A INPUT -i lo  -p tcp -m tcp --dport 49152:49153 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -i lo -p udp -m udp --dport 1900 -j ACCEPT\n");
 
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 49152:49153 -j DROP\n");
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 1900 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 51515 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 51515 -j DROP\n");
    return 0;
 }
 
