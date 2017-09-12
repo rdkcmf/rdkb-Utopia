@@ -51,6 +51,8 @@ dmesg -n 5
 
 TR69TLVFILE="/nvram/TLVData.bin"
 REVERTFLAG="/nvram/reverted"
+MAINT_START="/nvram/.FirmwareUpgradeStartTime"
+MAINT_END="/nvram/.FirmwareUpgradeEndTime"
 # determine the distro type (GAP or GNP)
 if [ -n "$(grep TPG /etc/drg_version.txt)" ]; then
     distro=GAP
@@ -302,6 +304,8 @@ fi
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
    rm -f $TR69TLVFILE
    rm -f $REVERTFLAG
+   rm -f $MAINT_START
+   rm -f $MAINT_END
    # Remove DHCP lease file
    rm -f /nvram/dnsmasq.leases
    rm -f /nvram/server-IfaceMgr.xml
