@@ -81,7 +81,7 @@ do_start_igmpproxy () {
    for interface in $INTERFACE_LIST
    do
        if [ $interface != $SYSCFG_lan_ifname ] && [ $interface != $WAN_IFNAME ]; then
-         if [ $interface = $MOCA_INTERFACE ];then
+         if [ "$interface" = "$MOCA_INTERFACE" ];then
           echo "phyint $interface downstream" >> $LOCAL_CONF_FILE
           MOCA_LAN_UP=1
          else 
@@ -90,8 +90,8 @@ do_start_igmpproxy () {
        fi
    done
 #HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
-if [ "$HOME_LAN_ISOLATION" -eq 1 ]; then
-if [ "$MOCA_LAN_UP" -eq 1 ]; then
+if [ "$HOME_LAN_ISOLATION" == "1" ]; then
+if [ "$MOCA_LAN_UP" == "1" ]; then
    echo "phyint $SYSCFG_lan_ifname enable ttl-threshold 11" >> $LOCAL_CONF_FILE
    echo "phyint $MOCA_INTERFACE enable ttl-threshold 3" >> $LOCAL_CONF_FILE
    echo "mgroup from $SYSCFG_lan_ifname group 239.255.255.250" >> $LOCAL_CONF_FILE
