@@ -269,8 +269,27 @@ case "$1" in
         eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
 	if [ "$INST" = "" ]
 	    then
-		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : INST returned null, retrying"
-		INST=`psmcli get dmsb.MultiLAN.PrimaryLAN_l3net`
+		echo_t "THE INSTANT=$INST"
+		echo_t "THE INSTANT=$INST"
+		if [ "$BOX_TYPE" = "TCCBR" ]; then
+                	COUNTER=1
+			while [ $COUNTER -lt 10 ]; do
+				echo_t "RDKB_SYSTEM_BOOT_UP_LOG : INST returned null , retrying $COUNTER"
+				INST=`psmcli get dmsb.MultiLAN.PrimaryLAN_l3net`
+				echo_t "THE INSTANCE=$INST"
+				sleep 1
+				if [ x != x$INST ]; then
+					echo_t "BREAK THE INSTANCE=$INST"
+		   			break
+				fi
+			        COUNTER=`expr $COUNTER + 1`
+				echo_t "THE COUNTER =$COUNTER"
+			done
+		else
+			echo_t "RDKB_SYSTEM_BOOT_UP_LOG : INST rerurned null, retrying"
+			INST=`psmcli get dmsb.MultiLAN.PrimaryLAN_l3net`
+		fi
+		
 	fi
 	if [ "$L2INST" = "" ]
 	    then
@@ -287,7 +306,8 @@ case "$1" in
 		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null, retrying"
 		HSINST=`psmcli get dmsb.MultiLAN.HomeSecurity_l3net`
 	fi
-   if [ x != x$INST ]; then
+   	if [ x != x$INST ]; then
+		echo_t "SO FAR SO GOOD ALL IS WELL SENDING L3 NET EVENT"
                 async="`sysevent async ipv4_${INST}-status $THIS`"
                 sysevent set lan_handler_async "$async"
                 sysevent set primary_lan_l2net ${L2INST}
@@ -295,7 +315,13 @@ case "$1" in
                 sysevent set homesecurity_lan_l3net ${HSINST}
                 sysevent set primary_lan_l3net ${INST}
                 
-            fi
+	elif [ "$BOX_TYPE" = "TCCBR" ]; then
+		if [ "$INST" = "" ]; then
+			echo "*****SET THE PRIMARY LAN ******" > /dev/null
+  			syseven set primary_lan_l3net 4
+		fi
+	fi
+
         fi
    ;;
 
