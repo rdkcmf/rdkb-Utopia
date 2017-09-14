@@ -8593,6 +8593,16 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs1 -j CONNMARK --set-mark 0xB\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs5 -j CONNMARK --set-mark 0xC\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af22 -j CONNMARK --set-mark 0xD\n");
+   //zqiu: RDKB-11338
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs0 -j CONNMARK --set-mark 0x1A\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs4 -j CONNMARK --set-mark 0x1B\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af41 -j CONNMARK --set-mark 0x1C\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs3 -j CONNMARK --set-mark 0x1D\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1D  -j DSCP --set-dscp-class cs3\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1C -j DSCP --set-dscp-class af41\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1B -j DSCP --set-dscp-class cs4\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1A -j DSCP --set-dscp-class cs0\n");
+
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xA  -j DSCP --set-dscp-class af32\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xB -j DSCP --set-dscp-class cs1\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
