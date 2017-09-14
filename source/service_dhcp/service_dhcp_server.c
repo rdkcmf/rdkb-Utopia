@@ -110,6 +110,7 @@ int dhcp_server_start (char *input)
 	BOOL l_bRestart = FALSE, l_bFiles_Diff = FALSE, l_bPid_Present = FALSE;
 	FILE *l_fFp = NULL;
 	int l_iSystem_Res;
+	int fd = 0; /* RDKB-12965 & CID:- 34528*/
 
 	char *l_cToken = NULL;	
 
@@ -177,6 +178,7 @@ int dhcp_server_start (char *input)
 	else	
 	{
 		fgets(l_cCurrent_PID, sizeof(l_cCurrent_PID), l_fFp);
+		fclose(l_fFp); /*RDKB-12965 & CID:-34555*/
 	}	
 	if (0 == l_cCurrent_PID[0])
 	{
@@ -303,9 +305,11 @@ int dhcp_server_start (char *input)
    	if (access("/tmp/dhcp_server_start", F_OK) == -1 && errno == ENOENT) //If file not present
 	{
     	print_with_uptime("dhcp_server_start is called for the first time private LAN initization is complete");
-		if(creat("/tmp/dhcp_server_start", S_IRUSR | S_IWUSR) == -1)
+		if((fd = creat("/tmp/dhcp_server_start", S_IRUSR | S_IWUSR)) == -1) /* RDKB-12965 & CID:- 34528*/
 		{
 			fprintf(stderr, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
+		} else  { /* RDKB-12965 & CID:- 34528*/	
+			close(fd);
 		}
 		system("print_uptime \"boot_to_ETH_uptime\"");
        	

@@ -161,6 +161,8 @@ int multinet_bridgeUp(PL2Net network, int bFirewallRestart){
 }
 int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
     L2Net l2net;
+    int fd = 0;/*RDKB-12965 & CID:- 34240*/
+	memset(&l2net,0,sizeof(l2net)); /*RDKB-12965 & CID:-33815*/
     if(!ep_netIsStarted(l2netInst)) {
         MNET_DEBUG("Found %d is not started. Starting.\n" COMMA l2netInst)
         nv_get_bridge(l2netInst, &l2net);
@@ -171,13 +173,14 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
         if (2 == l2netInst)
         {
             MNET_DEBUG("brlan1 case creating %s file \n" COMMA LOCAL_BRLAN1UP_FILE)
-            if(creat(LOCAL_BRLAN1UP_FILE, S_IRUSR | S_IWUSR) == -1)
+            if((fd = creat(LOCAL_BRLAN1UP_FILE, S_IRUSR | S_IWUSR)) == -1) /*RDKB-12965 & CID:- 34240*/
             {
                 MNET_DEBUG("%s file creation failed with error:%d\n" COMMA LOCAL_BRLAN1UP_FILE COMMA errno)
             }
             else
             {
                 MNET_DEBUG("%s file creation is successful \n" COMMA LOCAL_BRLAN1UP_FILE)
+		close(fd); /*RDKB-12965 & CID:- 34240*/
             }
         }
 #if defined(MOCA_HOME_ISOLATION)

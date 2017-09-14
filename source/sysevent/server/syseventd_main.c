@@ -1133,10 +1133,12 @@ static void *sanity_thread_main(void *arg)
                
                //The below code is to log the processes (started by sysevent) 
                //that are running for more than 300 sec.  
-               l_FsyseventFp = fopen("/rdklogs/logs/syseventd_kill.log", "a+"); 
+               l_FsyseventFp = fopen("/rdklogs/logs/syseventd_kill.log", "a+");
+		if (l_FsyseventFp != NULL) { /*RDKB-12965 & CID:-34067*/
                fprintf(l_FsyseventFp, "Process (%d) (%s) runs for more than %d secs sending SIGKILL !!!", waiting_pid[i].pid, 
                                       waiting_pid[i].name, MAX_ACTIVATION_BLOCKING_SECS);
                fclose(l_FsyseventFp);
+		}
                kill(waiting_pid[i].pid, 9);
             }
          }

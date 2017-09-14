@@ -341,9 +341,11 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
                     iapd->value.v6pref, iapd->len, iapd->t1, iapd->t2, iapd->pretm, iapd->vldtm);
         } else {
             fprintf(stderr, "Get the IA_NA and IA_PD failed.\n");
+	    close(fd); /*RDKB-12965 & CID:-34141*/
             return -1;
         }
     } else {
+	close(fd); /*RDKB-12965 & CID:-34141*/
         return -1;
     }
 
@@ -865,6 +867,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
         fprintf(stderr, "[%s] ipv6 prefix is not divided.\n", __FUNCTION__);
         return -1;
     }
+    memset(&dhcpv6s_pool_cfg, 0, sizeof(dhcpv6s_pool_cfg_t)); /*RDKB-12965 & CID:-34146*/
 
     fp = fopen(DHCPV6S_CONF_FILE, "w+");
     if (fp == NULL)
@@ -1001,8 +1004,10 @@ OPTIONS:
         } 
         fprintf(fp, "}\n");
 
-        if (dhcpv6s_pool_cfg.opts != NULL)
+        if (dhcpv6s_pool_cfg.opts != NULL) {
             free(dhcpv6s_pool_cfg.opts);
+	   dhcpv6s_pool_cfg.opts = NULL; /*RDKB-12965 & CID:-34148*/
+	}
     }
 
     fclose(fp);

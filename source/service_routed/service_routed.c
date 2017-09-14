@@ -222,7 +222,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     int iresCode = 0;
     char responseCode[10];
     int inCaptivePortal = 0;
-    int nopt, i, j;
+    int nopt, i = 0, j = 0; /*RDKB-12965 & CID:-34147*/
     char lan_if[IFNAMSIZ];
     char *start, *tok, *sp;
     static const char *zebra_conf_base = \
@@ -348,22 +348,22 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION              
              memset(name_servs, 0, sizeof(name_servs));
 #endif
-            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::bEnabled", i);
+            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::bEnabled", j); /*RDKB-12965 & CID:-34147*/
             syscfg_get(NULL, rec, val, sizeof(val));
             if (atoi(val) != 1)
                 continue;
 
-            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::Tag", i);
+            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::Tag", j);
             syscfg_get(NULL, rec, val, sizeof(val));
             if (atoi(val) != 23)
                 continue;
 
-            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::PassthroughClient", i);
+            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::PassthroughClient", j);
             syscfg_get(NULL, rec, val, sizeof(val));
             if (strlen(val) > 0)
                 continue;
 
-            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::Value", i);
+            snprintf(rec, sizeof(rec), "dhcpv6spool0option%d::Value", j);
             syscfg_get(NULL, rec, val, sizeof(val));
             if (strlen(val) == 0)
                 continue;

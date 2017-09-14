@@ -109,6 +109,9 @@ int prepare_hostname()
 	{
 		fprintf(stderr, "Hosts file: %s creation failed \n", HOSTS_FILE);
 	}
+	if (NULL != l_fHosts_Name_File) { /*RDKB-12965 & CID:-34535*/
+		fclose(l_fHosts_Name_File);
+	}
 	return 0;
 }
 
