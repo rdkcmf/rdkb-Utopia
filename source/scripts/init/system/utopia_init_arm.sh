@@ -194,12 +194,42 @@ PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 #   fi
 #fi
 
+CheckAndReCreateDB()
+{
+	NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
+	if [ "$NVRAMFullStatus" != "" ]; then
+		if [ -f "/rdklogger/rdkbLogMonitor.sh" ]
+		then
+			  #Remove Old backup files if there	
+			  sh /rdklogger/rdkbLogMonitor.sh "remove_old_logbackup"		 
+
+		  	  #Re-create syscfg create again
+			  syscfg_create -f $SYSCFG_FILE
+			  if [ $? != 0 ]; then
+				  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
+				  if [ "$NVRAMFullStatus" != "" ]; then
+					 echo_t "[utopia][init] NVRAM Full(100%) and below is the dump"
+					 du -h $SYSCFG_MOUNT 
+					 ls -al $SYSCFG_MOUNT	 
+				  fi
+			  fi 
+		fi
+	fi 
+}
+
 echo "[utopia][init] Starting syscfg using file store ($SYSCFG_FILE)"
 if [ -f $SYSCFG_FILE ]; then 
    syscfg_create -f $SYSCFG_FILE
+   if [ $? != 0 ]; then
+	 CheckAndReCreateDB
+   fi
 else
    echo -n > $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
+   if [ $? != 0 ]; then
+	  CheckAndReCreateDB
+   fi
+  
    #>>zqiu
    echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
@@ -264,6 +294,9 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    #<<zqiu
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
    syscfg_create -f $SYSCFG_FILE
+   if [ $? != 0 ]; then
+	 CheckAndReCreateDB
+   fi
 #>>zqiu
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
