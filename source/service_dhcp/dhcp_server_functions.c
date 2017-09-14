@@ -34,12 +34,13 @@
 
 #define PSM_NAME_NOTIFY_WIFI_CHANGES    "eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges"
 #define PSM_NAME_WIFI_RES_MIG           "eRT.com.cisco.spvtg.ccsp.Device.WiFi.WiFiRestored_AfterMigration"
-#define IS_MIG_CHECK_NEEDED(MFG_NAME)	(!strncmp(MFG_NAME, "Arris", 5)) ? (FALSE) : (TRUE)
+#define IS_MIG_CHECK_NEEDED(MIG_CHECK)	(!strncmp(MIG_CHECK, "true", 4)) ? (TRUE) : (FALSE)
 
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 extern char g_cDhcp_Lease_Time[8];
 extern char g_cMfg_Name[8];
+extern char g_cMig_Check[8];
 
 extern void subnet(char *ipv4Addr, char *ipv4Subnet, char *subnet);
 extern void copy_file(char *, char *);
@@ -633,7 +634,7 @@ int prepare_dhcp_conf (char *input)
 	}
 	fprintf(stderr, "DHCP SERVER : CaptivePortal_Enabled is %s\n", l_cCaptivePortalEn);
 	
-	if (IS_MIG_CHECK_NEEDED(g_cMfg_Name))
+	if (IS_MIG_CHECK_NEEDED(g_cMig_Check))
 	{
 		fprintf(stderr, "Wifi Migration checks are needed\n");
     	
@@ -681,7 +682,7 @@ int prepare_dhcp_conf (char *input)
 		fprintf(stderr, "Migration checks are not needed\n");
 	}
 
-	if (IS_MIG_CHECK_NEEDED(g_cMfg_Name))
+	if (IS_MIG_CHECK_NEEDED(g_cMig_Check))
 	{
 		l_bCaptive_Check = ((!strncmp(l_cCaptivePortalEn, "true", 4)) && (FALSE == l_bMig_Case)) ? (TRUE) : (FALSE);
 	}

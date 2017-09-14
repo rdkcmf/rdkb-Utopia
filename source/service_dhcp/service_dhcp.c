@@ -50,6 +50,7 @@ token_t g_tSysevent_token;
 char g_cDhcp_Lease_Time[8] = {0}, g_cTime_File[64] = {0};
 char g_cBox_Type[8] = {0}, g_cXdns_Enabled[8] = {0};
 char g_cMfg_Name[8] = {0}, g_cAtom_Arping_IP[16] = {0};
+char g_cMig_Check[8] = {0};
 
 int dbusInit( void )
 {
@@ -130,10 +131,10 @@ void get_device_props()
                 property = property + strlen("XDNS_ENABLE=");
                 strncpy(g_cXdns_Enabled, property, (strlen(props) - strlen("XDNS_ENABLE=")));
             }
-			if(NULL != (property = strstr(props, "MFG_NAME=")))
+            if(NULL != (property = strstr(props, "MIG_CHECK=")))
             {
-                property = property + strlen("MFG_NAME=");
-                strncpy(g_cMfg_Name, property, (strlen(props) - strlen("MFG_NAME=")));
+                property = property + strlen("MIG_CHECK=");
+                strncpy(g_cMig_Check, property, (strlen(props) - strlen("MIG_CHECK=")));
             }
 			if(NULL != (property = strstr(props, "ATOM_ARPING_IP=")))
             {
