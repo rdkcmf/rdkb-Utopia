@@ -271,7 +271,7 @@ case "$1" in
 	    then
 		echo_t "THE INSTANT=$INST"
 		echo_t "THE INSTANT=$INST"
-		if [ "$BOX_TYPE" = "TCCBR" ]; then
+		if [ "$BOX_TYPE" = "TCCBR" ] || [ "$MODEL_NUM" = "CGM4140COM" ] ; then
                 	COUNTER=1
 			while [ $COUNTER -lt 10 ]; do
 				echo_t "RDKB_SYSTEM_BOOT_UP_LOG : INST returned null , retrying $COUNTER"
