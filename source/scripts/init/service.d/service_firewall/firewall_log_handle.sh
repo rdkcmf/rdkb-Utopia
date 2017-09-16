@@ -42,7 +42,7 @@ CONN_F=`sysevent get firewall_flush_conntrack`
 WANIP=`sysevent get current_wan_ipaddr`
 if [ "$CONN_F" == "1" ] && [ "$WANIP" != "0.0.0.0" ]
 then
-    conntrack_flush
+    echo disable > /proc/net/ti_pp; conntrack_flush; echo enable > /proc/net/ti_pp
     sysevent set firewall_flush_conntrack 0
 fi
 
