@@ -1008,6 +1008,8 @@ $todays_reset_count=0
 $lastActiontakentime=0
 $process_memory_log_count=0
 
+$PeriodicFWCheck_Enable=false
+
 #ipv6 pd
 $lan_pd_interfaces=brlan0
 @erouter_topology-mode=1

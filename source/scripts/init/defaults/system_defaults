@@ -908,6 +908,8 @@ $MoCAExtSsidWpsSsidIndex=10001000
 
 $MoCAExtSsidNum=0
 
+$PeriodicFWCheck_Enable=false
+
 #static ip defaults
 $staticdns_enable=0
 $wan_ipaddr=0.0.0.0
