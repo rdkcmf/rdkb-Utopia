@@ -75,6 +75,7 @@ int prepare_hostname()
 		{
 			fprintf(l_fHosts_Name_File, "%s\n", l_cHostName);
 			fclose(l_fHosts_Name_File);
+			l_fHosts_Name_File = NULL;
 			if (NULL != l_fHosts_File)
 			{
 				fprintf(l_fHosts_File, "%s		%s\n", l_cCurLanIP, l_cHostName);
