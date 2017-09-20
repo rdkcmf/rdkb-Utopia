@@ -11212,6 +11212,13 @@ static int service_start ()
    /* ipv6 */
    prepare_ipv6_firewall(filename2);
    system("ip6tables-restore < /tmp/.ipt_v6");
+
+   /* RFC REFRESH for dynamic whitelisting of IPs */
+   if (access("/tmp/RFC/.RFC_SSHWhiteList.list", F_OK) != -1 && access("/tmp/.rfcLock", F_OK) == -1) {
+      FIREWALL_DEBUG("RFC file for SSH present. Whitelisting IP's\n");
+      system("sh /lib/rdk/rfc_refresh.sh SSH_REFRESH &");
+   }
+
    ClearEstbConnection();
    /* start the other process as needed */
 #ifdef CONFIG_BUILD_TRIGGER
