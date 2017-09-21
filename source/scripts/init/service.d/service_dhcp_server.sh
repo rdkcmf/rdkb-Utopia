@@ -464,7 +464,10 @@ dhcp_server_start ()
    isAvailableXHS=`ifconfig | grep $XHS_INTERFACE`
    if [ "$isAvailableXHS" != "" ]; then
        echo_t "Xfinityhome service is UP"
-       print_uptime "boot_to_XHOME_uptime"
+       if [ ! -f "/tmp/xhome_start" ]; then
+           print_uptime "boot_to_XHOME_uptime"
+           touch /tmp/xhome_start
+       fi
    else
        echo "Xfinityhome service is not UP yet"
    fi

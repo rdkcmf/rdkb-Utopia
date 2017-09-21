@@ -324,7 +324,18 @@ int dhcp_server_start (char *input)
     if (is_iface_present(XHS_IF_NAME))
     {   
         fprintf(stderr, "Xfinityhome service is UP\n");
-        system("print_uptime \"boot_to_XHOME_uptime\"");
+        if (access("/tmp/xhome_start", F_OK) == -1 && errno == ENOENT)
+        {
+            if((fd = creat("/tmp/xhome_start", S_IRUSR | S_IWUSR)) == -1)
+            {
+                fprintf(stderr, "File: /tmp/xhome_start creation failed with error:%d\n", errno);
+            }
+            else
+            {
+                close(fd);
+            }
+            system("print_uptime \"boot_to_XHOME_uptime\"");
+        }
     }   
     else
     {   

@@ -616,6 +616,7 @@ void load_static_l3 (int l3_inst)
 	char *l_cpPsm_Get = NULL;
 	int l_iRet_Val;
 	BOOL l_bApplyConfig_Res;
+	int fd = 0;
 
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.l3net.%d.V4Addr", l3_inst);
 	l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
@@ -677,8 +678,18 @@ void load_static_l3 (int l3_inst)
 			{
             	fprintf(stderr, "IPv4 address is set for %s interface MOCA interface is UP\n",
 					    LAN_IF_NAME);
-
-                system("print_uptime \"boot_to_MOCA_uptime\"");
+                if (access("/tmp/moca_start", F_OK) == -1 && errno == ENOENT)
+                {
+                        if((fd = creat("/tmp/moca_start", S_IRUSR | S_IWUSR)) == -1)
+                        {
+                                fprintf(stderr, "File: /tmp/moca_start creation failed with error:%d\n", errno);
+                        }
+                        else
+                        {
+                                close(fd);
+                        }
+                        system("print_uptime \"boot_to_MOCA_uptime\"");
+                }
             }
         }
 	}	
