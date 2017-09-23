@@ -405,10 +405,6 @@ done:
 	
     system("sh /etc/network_response.sh &");
 
-    char wan_st[100] = {0};
-    sprintf(wan_st, "/etc/webgui.sh wan-started");
-    system(wan_st);
-
     ret = checkFileExists(WAN_STARTED);
     printf("Check wan started ret is %d\n",ret);
     if ( 0 == ret )
@@ -467,11 +463,6 @@ static int wan_stop(struct serv_wan *sw)
 
     printf("%s wan_service-status is stopped, take log back up\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopped", 0);
-
-    char wan_st[100] = {0};
-    sprintf(wan_st, "/etc/webgui.sh wan-stopped");
-    system(wan_st);
-
 	char  str[100] = {0};
 	sprintf(str,"/rdklogger/backupLogs.sh false \"\" wan-stopped");
     system(str);
