@@ -17,9 +17,6 @@ BRIDGE_MODE_TABLE=69
 #Mode passed in by commandline, can be "enable" or "disable"
 SCRIPT_MODE="$1"
 
-# Current gw ip address
-LAN_IP=`syscfg get lan_ipaddr`
-
 #Set max CPE bypass to 2 in order to account for mta0 and erouter0
 set_max_cpe_bypass() {
     ncpu_exec -e "(echo 2 > /proc/arris/max_cpe_bypass)" 
@@ -155,13 +152,18 @@ add_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
+    # wan_if=`syscfg get wan_physical_ifname`
+    # cmdiag_ip="192.168.100.1"
+    # subnet_wan=`ip route show | awk '/'$wan_if'/ {print $1}'`
+
+    #ip route del $subnet_wan dev $wan_if
+    #ip route add $subnet_wan dev $cmdiag_if #proto kernel scope link src $cmdiag_ip
+
     dst_ip="10.0.0.1" # RT-10-580 @ XB3 
-    if [ $LAN_IP != $dst_ip ]; then
-        ip addr add $dst_ip/24 dev $cmdiag_if
-        ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
-        echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
-        ip rule add from $dst_ip lookup $BRIDGE_MODE_TABLE
-    fi
+    ip addr add $dst_ip/24 dev $cmdiag_if
+    ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
+    ip rule add from $dst_ip lookup $BRIDGE_MODE_TABLE
 }
 
 #--------------------------------------------------------------
@@ -174,13 +176,18 @@ del_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
+    # wan_if=`syscfg get wan_physical_ifname`
+    # wan_ip=`sysevent get ipv4_wan_ipaddr`
+    # subnet_wan=`ip route show | grep $cmdiag_if | grep -v 192.168.100. | grep -v 10.0.0 | awk '/'$cmdiag_if'/ {print $1}'`
+
+    # ip route del $subnet_wan dev $cmdiag_if
+    # ip route add $subnet_wan dev $wan_if proto kernel scope link src $wan_ip
+
     dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
-    if [ $LAN_IP != $dst_ip ]; then
-        ip addr del $dst_ip/24 dev $cmdiag_if
-        ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
-        echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
-        ip rule del from $dst_ip lookup $BRIDGE_MODE_TABLE
-    fi
+    ip addr del $dst_ip/24 dev $cmdiag_if
+    ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
+    ip rule del from $dst_ip lookup $BRIDGE_MODE_TABLE
 }
 
 routing_rules(){
@@ -304,6 +311,7 @@ BRIDGE_NAME="$SYSCFG_lan_ifname"
 CMDIAG_IF=`syscfg get cmdiag_ifname`
 CMDIAG_MAC=`ncpu_exec -ep "(cat /sys/class/net/lan0/address)"`
 INSTANCE=`sysevent get primary_lan_l2net`
+#LAN_IP=`syscfg get lan_ipaddr`
 LAN_IP="10.0.0.1"
 LAN_NETMASK=`syscfg get lan_netmask`
 
