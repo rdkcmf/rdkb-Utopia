@@ -195,11 +195,11 @@ routing_rules(){
         #Send responses from $BRIDGE_NAME IP to a separate bridge mode route table
         ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
         ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
-        # add_ebtable_rule
+        add_ebtable_rule
     else
         ip rule del from $LAN_IP lookup $BRIDGE_MODE_TABLE
         ip route flush table $BRIDGE_MODE_TABLE
-        # del_ebtable_rule
+        del_ebtable_rule
     fi
 }
 
@@ -311,8 +311,7 @@ BRIDGE_NAME="$SYSCFG_lan_ifname"
 CMDIAG_IF=`syscfg get cmdiag_ifname`
 CMDIAG_MAC=`ncpu_exec -ep "(cat /sys/class/net/lan0/address)"`
 INSTANCE=`sysevent get primary_lan_l2net`
-#LAN_IP=`syscfg get lan_ipaddr`
-LAN_IP="10.0.0.1"
+LAN_IP=`syscfg get lan_ipaddr`
 LAN_NETMASK=`syscfg get lan_netmask`
 
 case "$1" in
