@@ -9111,6 +9111,15 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    
    fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
    fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
+#if defined(_COSA_BCM_ARM_)
+   fprintf(filter_fp, "-I FORWARD -d 192.168.100.1/32 -i %s -j DROP\n", lan_ifname);
+   fprintf(filter_fp, "-I FORWARD -d 172.31.0.0/16 -i %s -j DROP\n", lan_ifname);
+#endif
+#if defined(_ROGERS_BUILDS_)
+//TODO: temp fix for ARRISXB6-5624
+   fprintf(filter_fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
+#endif
+
    // RDKB-4826 - IOT rules for DHCP
    static char iot_enabled[20];
    memset(iot_enabled, 0, sizeof(iot_enabled));
@@ -10624,7 +10633,10 @@ v6GPFirewallRuleNext:
 
       // Logging and rejecting politely (rate limiting anyway)
       fprintf(fp, "-A INPUT -j LOG_INPUT_DROP \n");
-
+#if defined(_ROGERS_BUILDS_)
+      //TODO: temp fix for ARRISXB6-5624
+      fprintf(fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
+#endif
       //Adding rule for XB6 ARRISXB6-3348 and TCXB6-2262
 #if defined(INTEL_PUMA7) || defined(_COSA_BCM_ARM_)
       fprintf(fp, "-A FORWARD -i brlan0 -o brlan0 -j lan2wan \n");
