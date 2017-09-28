@@ -80,7 +80,7 @@ fi
 
 firmware_name=`cat /version.txt | grep ^imagename: | cut -d ":" -f 2`
 utc_time=`date -u`
-echo "[$utc_time] DEVICE_INIT:$firmware_name"
+echo "[$utc_time] [utopia][init] DEVICE_INIT:$firmware_name"
 
 echo "[utopia][init] Tweaking network parameters" > /dev/console
 echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
