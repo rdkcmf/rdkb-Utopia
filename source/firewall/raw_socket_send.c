@@ -38,6 +38,7 @@
 #include <sys/socket.h>
 #include <features.h>
 #include <linux/if_packet.h>
+#include <netinet/if_ether.h>
 #include <linux/if_ether.h>
 #include <errno.h>
 #include <sys/ioctl.h>
