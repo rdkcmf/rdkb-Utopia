@@ -324,11 +324,13 @@ check_port_2(){
     case $INSTANCE in
         #XFinity Private LAN
         1)
-            PORT_CMD="dmcli eRT getv Device.Bridging.Bridge.1.Port.8.Enable"
+            PORT_NUM=`psmcli get dmsb.MultiLAN.PrimaryLAN_HsPorts`
+            PORT_CMD="dmcli eRT getv Device.Bridging.Bridge.1.Port.${PORT_NUM}.Enable"
         ;;
         #XFinity Home
         2)
-            PORT_CMD="dmcli eRT getv Device.Bridging.Bridge.2.Port.2.Enable"        
+            PORT_NUM=`psmcli get dmsb.MultiLAN.HomeSecurity_HsPorts`
+            PORT_CMD="dmcli eRT getv Device.Bridging.Bridge.2.Port.${PORT_NUM}.Enable"        
         ;;    
     esac
         
