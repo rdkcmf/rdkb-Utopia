@@ -187,6 +187,77 @@ static int dhcp_stop(const char *ifname)
     return 0;
 }
 
+#if defined (_COSA_BCM_ARM_)
+#define VENDOR_SPEC_FILE "/etc/udhcpc.vendor_specific"
+#define VENDOR_OPTIONS_LENGTH 100
+
+/***
+ * Parses a file containing vendor specific options
+ *
+ * options:  buffer containing the returned parsed options
+ * length:   length of options
+ *
+ * returns:  0 on successful parsing, else -1
+ ***/
+static int dhcp_parse_vendor_info( char *options, const int length )
+{
+    FILE *fp;
+    char subopt_num[12], subopt_value[64];
+    int num_read;
+    
+    if ((fp = fopen(VENDOR_SPEC_FILE, "ra")) != NULL) {
+        int opt_len = 0;   //Total characters read
+        
+        //Start the string off with "43:"
+        opt_len = sprintf(options, "43:");
+
+        while ((num_read = fscanf(fp, "%11s %63s", subopt_num, subopt_value)) == 2) {
+            char *ptr;
+     
+            if (length - opt_len < 6) {
+                fprintf( stderr, "%s: Too many options\n", __FUNCTION__ );
+                return -1;
+            }
+            
+            //Print the option number
+            if (strcmp(subopt_num, "SUBOPTION2") == 0) {
+                opt_len += sprintf(options + opt_len, "02");
+            }
+            else if (strcmp(subopt_num, "SUBOPTION3") == 0) {
+                opt_len += sprintf(options + opt_len, "03");
+            }
+            else {
+                fprintf( stderr, "%s: Invalid suboption\n", __FUNCTION__ );
+                return -1;
+            }
+            
+            //Print the length of the sub-option value
+            opt_len += sprintf(options + opt_len, "%02x", strlen(subopt_value));
+
+            //Print the sub-option value in hex
+            for (ptr=subopt_value; (char)*ptr != (char)0; ptr++) {
+                if (length - opt_len <= 2) {
+                    fprintf( stderr, "%s: Too many options\n", __FUNCTION__ );
+                    return -1;
+                }
+                opt_len += sprintf(options + opt_len, "%02x", *ptr);
+            }
+        } //while
+        
+        if ((num_read != EOF) && (num_read != 2)) {
+            fprintf(stderr, "%s: Error parsing file\n", __FUNCTION__);
+            return -1;
+        }
+    }
+    else {
+        fprintf(stderr, "%s: Cannot read %s\n", __FUNCTION__, VENDOR_SPEC_FILE);
+        return -1;
+    }
+    
+    return 0;
+}
+#endif
+
 static int dhcp_start(struct serv_wan *sw)
 {
     char l_cErouter_Mode[16] = {0}, l_cWan_if_name[16] = {0}, l_cDhcpv6c_Enabled[8] = {0};
@@ -205,7 +276,11 @@ static int dhcp_start(struct serv_wan *sw)
     
   /*TCHXB6 is configured to use udhcpc */
 #if defined (_COSA_BCM_ARM_)
-    err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script",sw->ifname, DHCPC_PID_FILE);
+    char options[VENDOR_OPTIONS_LENGTH];
+
+    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+    }
 #else
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 1",
