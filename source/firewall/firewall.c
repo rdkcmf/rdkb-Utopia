@@ -9453,6 +9453,9 @@ static int do_raw_table_puma7(FILE *fp)
 */
 static int do_block_ports(FILE *filter_fp)
 {
+   /* Blocking block page ports except for brlan0 interface */
+   fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 51515 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 51515 -j DROP\n");
    /* Blocking zebra ports except for brlan0 interface */
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 2601 -j DROP\n");
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 2601 -j DROP\n");
@@ -10006,7 +10009,7 @@ static void do_ipv6_nat_table(FILE* fp)
 {
  FIREWALL_DEBUG("Inside do_ipv6_nat_table \n");
     char mcastAddrStr[64];
-    char IPv6[64] = "0";
+    char IPv6[INET6_ADDRSTRLEN] = "0";
 	int rc;
     fprintf(fp, "*nat\n");
 	
@@ -10015,17 +10018,14 @@ static void do_ipv6_nat_table(FILE* fp)
 
    //zqiu: RDKB-7639: block device broken for IPv6
    fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);  
+
+   memset(IPv6, 0, INET6_ADDRSTRLEN);
+   sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", IPv6, sizeof(IPv6));
  
-   syscfg_get(NULL, "HTTP_Server_IPv6", IPv6, sizeof(IPv6));
    fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:51515\n",IPv6);
  	
-
-   IPv6[0] = '\0';
-   syscfg_get(NULL, "HTTPS_Server_IPv6", IPv6, sizeof(IPv6));
    fprintf(fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination [%s]:51515\n",IPv6);
       
-   IPv6[0] = '\0';  
-   syscfg_get(NULL, "Default_Server_IPv6", IPv6, sizeof(IPv6));
    fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:51515\n",IPv6);
    fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:51515\n",IPv6);
    
@@ -10936,6 +10936,21 @@ void RmConntrackEntry(char *IPaddr)
         system(cmd);
         memset(cmd,0,sizeof(cmd));
         snprintf(cmd, sizeof(cmd), "ip6tables -I FORWARD -s %s -j DROP", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "ip6tables -I FORWARD -s %s -m state --state ESTABLISHED -j DROP", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "ip6tables -I FORWARD -s %s -m udp -p udp -j DROP", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "ip6tables -I FORWARD -s %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "ip6tables -I FORWARD -d %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
+        system(cmd);
+        memset(cmd,0,sizeof(cmd));
+        snprintf(cmd, sizeof(cmd), "ip6tables -I FORWARD -s %s -m tcp -p tcp -m state --state NEW -j ACCEPT", IPaddr);
         system(cmd);
     }
     else
