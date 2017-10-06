@@ -698,16 +698,16 @@ service_start ()
          sysevent set firewall-restart
       fi
 	  #rongwei added
-	  killall wecb_master 2>/dev/null
+#	  killall wecb_master 2>/dev/null
 	  killall CcspHomeSecurity 2>/dev/null
-	  ulimit -s 200 && wecb_master& 
+#	  ulimit -s 200 && wecb_master& 
 	  sleep 1
 	  ###echo `ps | grep wecb_master | grep -v grep | awk '{print $1}'` > /var/run/wecb_master.pid
-	  echo '#!/bin/sh' > /var/wecb_master.sh
-	  echo 'ulimit -s 200 && wecb_master&' >> /var/wecb_master.sh 
-	  chmod +x /var/wecb_master.sh
-	  /etc/utopia/service.d/pmon.sh register wecb_master
-	  /etc/utopia/service.d/pmon.sh setproc wecb_master wecb_master /var/run/wecb_master.pid "/var/wecb_master.sh" 
+#	  echo '#!/bin/sh' > /var/wecb_master.sh
+#	  echo 'ulimit -s 200 && wecb_master&' >> /var/wecb_master.sh 
+#	  chmod +x /var/wecb_master.sh
+#	  /etc/utopia/service.d/pmon.sh register wecb_master
+#	  /etc/utopia/service.d/pmon.sh setproc wecb_master wecb_master /var/run/wecb_master.pid "/var/wecb_master.sh" 
 	  CcspHomeSecurity 8081&
    fi
 }
@@ -738,7 +738,7 @@ service_stop ()
 	  #unregister wecb_master from pmon to let this script to bring it up when lan restart.
 	  /etc/utopia/service.d/pmon.sh unregister wecb_master 
 	  #rongwei added
-	  killall wecb_master 2>/dev/null
+#	  killall wecb_master 2>/dev/null
 	  killall CcspHomeSecurity 2>/dev/null
    fi
 }
