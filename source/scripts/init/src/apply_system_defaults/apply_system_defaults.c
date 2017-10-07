@@ -80,8 +80,8 @@ static int convert = 0;
 // we can use one global id for sysevent because we are single threaded
 token_t global_id;
 
-#if defined _CBR_PRODUCT_REQ_
-	#define LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
+#if defined (_CBR_PRODUCT_REQ_) || defined (_XB6_PRODUCT_REQ_)
+        #define LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
 #else
 	#define LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
 #endif
