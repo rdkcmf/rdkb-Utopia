@@ -527,6 +527,13 @@ else
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
          rm -f /nvram/restore_reboot
+      else
+         RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk '{ print $7 }'`
+         result=`echo "$RESET_DURATION $BUTTON_THRESHOLD"| awk '{if ($1 > 0 && $1 < $2) print $1}'`
+         if [ "$result" != "" ]; then
+            syscfg set X_RDKCENTRAL-COM_LastRebootReason "pin-reset"
+            syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+         fi
       fi
    fi
 fi
