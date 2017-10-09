@@ -151,6 +151,9 @@ service_start ()
       # Generate Firewall statistics hourly 
       echo "58 * * * * /usr/bin/GenFWLog" >> $CRONTAB_FILE 
 
+	  # Monitor syscfg DB every 15minutes 
+      echo "*/15 * * * * /usr/ccsp/tad/syscfg_recover.sh" >> $CRONTAB_FILE 
+
       # add a ddns watchdog trigger to be run daily
       echo "#! /bin/sh" > /etc/cron/cron.daily/ddns_daily.sh
       echo "sysevent set ddns-start " >> /etc/cron/cron.daily/ddns_daily.sh
