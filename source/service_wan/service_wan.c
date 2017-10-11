@@ -281,6 +281,15 @@ static int dhcp_start(struct serv_wan *sw)
     if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
         err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
     }
+    else {
+        /*
+           Temp fix for RPi, fallback to previous behaviour if there are problems
+           parsing VENDOR_SPEC_FILE. Not ideal, but better than not starting DHCP
+           at all? Fixme: needs more review.
+        */
+        err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE);
+    }
+
 #else
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 1",
