@@ -293,6 +293,14 @@ static int dhcp_start(struct serv_wan *sw)
     if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
         err = v_secure_system("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
     }
+    else {
+        /*
+           Temp fix for RPi, fallback to previous behaviour if there are problems
+           parsing VENDOR_SPEC_FILE. Not ideal, but better than not starting DHCP
+           at all? Fixme: needs more review.
+        */
+        err = v_secure_system("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE);
+    }
 
 #elif defined(_PLATFORM_IPQ_)
     err = vsystem("/sbin/udhcpc -t 5 -n -i %s -p %s -s /etc/udhcpc.script",sw->ifname, DHCPC_PID_FILE);
