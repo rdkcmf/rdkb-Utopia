@@ -534,6 +534,7 @@ add_to_group() {
 #update the multinet status.  Defaults to "true".
 sync_group_settings() {
     RAISE_EVENTS="$1"
+    NEED_LAN_UPDATE="false"
 
     [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-localready 1
     
@@ -577,6 +578,7 @@ sync_group_settings() {
         if [ $IF_BELONGS -eq 0 ]
         then
             remove_from_group $EXISTING_IF
+            NEED_LAN_UPDATE="true"
         fi
     done
     
@@ -594,6 +596,7 @@ sync_group_settings() {
         if [ $IF_FOUND -ne 1 ]
         then
             add_to_group $NEEDED_IF
+            NEED_LAN_UPDATE="true"
         fi
     done
 
@@ -602,6 +605,13 @@ sync_group_settings() {
      then
          ncpu_exec -e "(echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt)"
      fi
+
+    if [ "$NEED_LAN_UPDATE" = "true" ]
+    then
+        echo "calling gw_lan_refresh to update group setting"
+        gw_lan_refresh
+    fi
+
 
     [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-status ready
 }
