@@ -543,7 +543,7 @@ static int wan_addr_set(struct serv_wan *sw)
     char val[64];
     char state[16];
     char mischandler_ready[10] ={0};
-    int timo;
+    int timo,count=0;
     FILE *fp;
     char ipaddr[16];
     char lanstatus[10] = {0};
@@ -591,13 +591,47 @@ static int wan_addr_set(struct serv_wan *sw)
     if (strlen(val))
         sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", val, 0);
     else
-        sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", "255.255.255.0", 0);
+    {
+        do
+       {
+	   count++;
+	   sleep(2);
+   	   sysevent_get(sw->sefd, sw->setok, "ipv4_wan_subnet", val, sizeof(val));
+	   if ( '\0' == val[0] )
+		   printf("ipv4_wan_subnet is NULL, retry count is %d\n",count);
+	   else
+		   printf("ipv4_wan_subnet value is %s, count is %d\n",val,count);
 
-    sysevent_get(sw->sefd, sw->setok, "ipv4_wan_ipaddr", val, sizeof(val));
+       } while ( 0 == strlen(val) && count < 3 );
+	count=0; 
+    	if (strlen(val))
+		sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", val, 0);
+	else
+	        sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", "255.255.255.0", 0);
+    }
+    
+   sysevent_get(sw->sefd, sw->setok, "ipv4_wan_ipaddr", val, sizeof(val));
     if (strlen(val))
         sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", val, 0);
     else
-        sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
+    {
+       do
+       {
+           count++;
+	    sleep(2);
+	    sysevent_get(sw->sefd, sw->setok, "ipv4_wan_ipaddr", val, sizeof(val));
+	    if ( '\0' == val[0] )
+		   printf("ipv4_wan_ipaddr is NULL, retry count is %d\n",count);
+	    else
+		   printf("ipv4_wan_ipaddr value is %s, count is %d\n",val,count);
+
+       } while ( 0 == strlen(val) && count < 3 );
+	count=0; 
+   	if (strlen(val))
+       		 sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", val, 0);
+	else
+	        sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
+     }
 
     syscfg_get(NULL, "dhcp_server_propagate_wan_domain", val, sizeof(val));
     if (atoi(val) != 1)
