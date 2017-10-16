@@ -228,7 +228,7 @@ CheckAndReCreateDB()
 			  if [ $? != 0 ]; then
 				  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
 				  if [ "$NVRAMFullStatus" != "" ]; then
-					 echo_t "[utopia][init] NVRAM Full(100%) and below is the dump"
+					 echo "[utopia][init] NVRAM Full(100%) and below is the dump"
 					 du -h $SYSCFG_MOUNT 
 					 ls -al $SYSCFG_MOUNT	 
 				  fi
@@ -254,12 +254,19 @@ else
    echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    #<<zqiu
+
+   # Put value 204 into networkresponse.txt file so that
+   # all LAN services start with a configuration which will
+   # redirect everything to Gateway IP.
+   # This value again will be modified from network_response.sh 
+   echo "[utopia][init] Echoing network response during Factory reset"
+   echo 204 > /var/tmp/networkresponse.txt
 fi
 
 SYSCFG_LAN_DOMAIN=`syscfg get lan_domain` 
 
 if [ "$SYSCFG_LAN_DOMAIN" == "utopia.net" ]; then
-   echo_t "[utopia][init] Setting lan domain to NULL"
+   echo "[utopia][init] Setting lan domain to NULL"
    syscfg set lan_domain ""
    syscfg commit
 fi
@@ -328,6 +335,14 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    fi
    
 #>>zqiu
+   # Put value 204 into networkresponse.txt file so that
+   # all LAN services start with a configuration which will
+   # redirect everything to Gateway IP.
+   # This value again will be modified from network_response.sh 
+   echo "[utopia][init] Echoing network response during Factory reset"
+   echo 204 > /var/tmp/networkresponse.txt
+    
+
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
     create_wifi_default
@@ -390,6 +405,16 @@ apply_system_defaults
 
 #ARRISXB6-2998
 changeFilePermissions $SYSCFG_FILE 644
+
+# Get the syscfg value which indicates whether unit is activated or not.
+# This value is set from network_response.sh based on the return code received.
+activated=`syscfg get unit_activated`
+echo "[utopia][init] Value of unit_activated got is : $activated"
+if [ "$activated" = "1" ]
+then
+    echo "[utopia][init] Echoing network response during Reboot"
+    echo 204 > /var/tmp/networkresponse.txt
+fi 
 
 echo "[utopia][init] Applying iptables settings"
 
@@ -458,14 +483,14 @@ execute_dir $INIT_DIR&
 
 # Check and set factory-reset as reboot reason 
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
-   echo_t "[utopia][init] Detected last reboot reason as factory-reset"
+   echo "[utopia][init] Detected last reboot reason as factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 else
    rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
-   echo_t "[utopia][init] X_RDKCENTRAL-COM_LastRebootReason ($rebootReason)"
+   echo "[utopia][init] X_RDKCENTRAL-COM_LastRebootReason ($rebootReason)"
    if [ "$rebootReason" = "factory-reset" ]; then
-      echo_t "[utopia][init] Setting last reboot reason as unknown"
+      echo "[utopia][init] Setting last reboot reason as unknown"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
    else
       if [ -f /nvram/restore_reboot ];then
