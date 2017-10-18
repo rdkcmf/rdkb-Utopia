@@ -1013,7 +1013,7 @@ $X_RDKCENTRAL-COM_LastRebootReason=unknown
 $X_RDKCENTRAL-COM_LastRebootCounter=0
 
 $PeriodicFWCheck_Enable=false
-
+$DeferFWDownloadReboot=290
 # LogBackup parameters
 $logbackup_enable=true
 $logbackup_interval=30
