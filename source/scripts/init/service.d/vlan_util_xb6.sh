@@ -541,8 +541,9 @@ sync_group_settings() {
     #Check if bridge exists and if ID is correct.  If not, delete and re-create.
     CURRENT_VLAN=`$VLAN_UTIL show_vlan $BRIDGE_NAME`
     CMD_STATUS=$?
-    
-    if [ $CMD_STATUS -ne 0 -o "$CURRENT_VLAN" != "$BRIDGE_VLAN" ]
+    LINK_STATUS=`ifconfig $BRIDGE_NAME | head -3 | tail -1 | grep UP`
+    BRLAN0_STATUS=$?
+    if [ $CMD_STATUS -ne 0 -o "$CURRENT_VLAN" != "$BRIDGE_VLAN" -o $BRLAN0_STATUS -ne 0 ]
     then
         echo "Group $BRIDGE_NAME doesn't exist or has wrong VLAN ID, re-creating"
         #We need to destroy and re-create bridge
