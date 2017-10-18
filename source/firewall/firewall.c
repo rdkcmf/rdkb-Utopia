@@ -366,7 +366,7 @@ NOT_DEF:
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-
+#include <sys/file.h>
 //#include "utapi.h"
 #include "ccsp_psm_helper.h"
 #include <ccsp_base_api.h>
@@ -458,6 +458,12 @@ enum{
     NAT_STATICIP,
     NAT_DISABLE_STATICIP,
 };
+#define PCMD_LIST "/tmp/.pcmd"
+
+typedef struct _decMacs_
+{
+char mac[19];
+}devMacSt;
 
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP 
 #define MAX_TS_ASN_COUNT 64
@@ -6853,25 +6859,49 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
  */
 
 static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp);
+static int do_parcon_device_cloud_mgmt(FILE *fp, int iptype, FILE *cron_fp);
 static int do_parcon_mgmt_service(FILE *fp, int iptype, FILE *cron_fp);
 static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *cron_fp);
 
 static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
 
     char *cron_file = crontab_dir"/"crontab_filename;
+    int bCloudEnable = FALSE;
     FILE *cron_fp = NULL; // the crontab file we use to set wakeups for timed firewall events
     FIREWALL_DEBUG("Entering do_parental_control\n"); 
     //only do cron configuration once   
     if (iptype == 4) {
         cron_fp = fopen(cron_file, "a+");
     }
+	char buf[8];
+	memset(buf, 0, sizeof(buf));
+        syscfg_get( NULL, "cloud_enable_flag", buf, sizeof(buf));
+    	if( buf != NULL )
+    		{
+    		    if (strcmp(buf,"1") == 0)
+    		        bCloudEnable = TRUE;
+    		    else
+    		        bCloudEnable = FALSE;
+    		}
+
 	if (iptype == 4)
 	{
-    	do_parcon_mgmt_device(nat_fp, iptype, cron_fp);
+		if(bCloudEnable)
+		{
+			do_parcon_device_cloud_mgmt(nat_fp, iptype, cron_fp);
+		}
+		else
+    		do_parcon_mgmt_device(nat_fp, iptype, cron_fp);
 	}
 	else
 	{
+		if(bCloudEnable)
+		{
+		do_parcon_device_cloud_mgmt(nat_fp,iptype, NULL);
+		}
+		else
 		do_parcon_mgmt_device(nat_fp,iptype, NULL);
+		
 	}
 #ifndef CONFIG_CISCO_FEATURE_CISCOCONNECT
     do_parcon_mgmt_site_keywd(fp,nat_fp, iptype, cron_fp);
@@ -6985,6 +7015,90 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
    FIREWALL_DEBUG("Exiting do_parcon_mgmt_device\n"); 
    return(0);
 }
+
+devMacSt * getPcmdList(int *devCount)
+{
+int count = 0;
+int numDev = 0;
+int i = 0;
+FILE * fp;
+char buf[19];
+devMacSt *devMacs = NULL;
+devMacSt *dev = NULL;
+memset(buf, 0, sizeof(buf));
+   fp = fopen (PCMD_LIST, "r");
+   if(fp != NULL)
+   {
+	if(flock(fileno(fp), LOCK_EX) == -1)
+		printf("Error while locking file\n");
+ 		while( fgets ( buf, sizeof(buf), fp ) != NULL ) 
+        	{
+			if(count == 0){
+			numDev = atoi(buf);            		
+			printf("numDev = %d \n",numDev);
+			*devCount = numDev;
+			devMacs = (devMacSt *)calloc(numDev,sizeof(devMacSt));
+			dev = devMacs;
+			}
+			else
+			{
+				memset(devMacs->mac, 0, sizeof(devMacs->mac));
+				strncpy(devMacs->mac,buf,17);		
+				printf("devMacs->mac = %s \n",devMacs->mac);
+				++devMacs;
+			}
+			count++;
+			memset(buf, 0, sizeof(buf));
+        	}
+                fflush(fp); flock(fileno(fp), LOCK_UN);
+		fclose(fp);
+   }
+   else
+   printf("Error: Not able to read " PCMD_LIST "\n" );
+
+
+printf("Exit getPcmdList\n");
+return dev;
+}
+
+static int do_parcon_device_cloud_mgmt(FILE *fp, int iptype, FILE *cron_fp)
+{
+   int rc,flag = 0;
+   FIREWALL_DEBUG("Entering do_parcon_device_cloud_mgmt\n"); 
+   int count = 0;
+   int idx;
+   devMacSt *devM;
+   devMacSt *devMacs2 = getPcmdList(&count);
+   devM = devMacs2;
+      for (idx = 0; idx < count; idx++) {
+            char buf[100];
+//Managed Devices - Reports not get generated. so we need to log below rules 
+	if(devMacs2)
+	{
+
+			char drop_log[40] = { 0 };
+			snprintf(drop_log, sizeof(drop_log), "LOG_DeviceBlocked_%d_DROP", idx+1);
+			fprintf(fp, ":%s - [0:0]\n", drop_log);
+			fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
+			fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
+
+            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j %s\n",devMacs2->mac,drop_log);            
+
+               system("touch /tmp/conn_mac");
+               snprintf(buf, sizeof(buf), "echo %s >> /tmp/conn_mac", devMacs2->mac);
+               system(buf);
+	       system("cat /tmp/conn_mac");
+	}
+	++devMacs2;
+	
+      }
+	if(devM)
+	free(devM);
+   
+   FIREWALL_DEBUG("Exiting do_parcon_device_cloud_mgmt\n"); 
+   return(0);
+}
+
 
 /*
  * add parental control managed service(ports) rules
