@@ -141,7 +141,7 @@ qtn_configure_LnF_radius(){
     $QWCFG_TEST set $QTN_INDEX wpa_rekey_interval 3600
     $QWCFG_TEST set $QTN_INDEX iface_enable 1
   
-    if [ $erouter0_ip != "" ]; then
+    if [ "$erouter0_ip" != "" ]; then
     $QWCFG_TEST set $QTN_INDEX nas_ip $erouter0_ip
 	echo "Configuring $erouter0_ip as NAS-IP for LnF radius interface $QTN_INDEX"
     else

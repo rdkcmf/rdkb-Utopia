@@ -134,7 +134,7 @@ service_stop ()
 {
    ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
 
-if [ "$HOME_LAN_ISOLATION" -eq 1 ]; then
+if [ "$HOME_LAN_ISOLATION" -eq "1" ]; then
    killall $BIN2
    rm -rf $CONF_FILE_2
 else
