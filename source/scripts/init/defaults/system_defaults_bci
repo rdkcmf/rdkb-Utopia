@@ -1010,6 +1010,10 @@ $process_memory_log_count=0
 
 $PeriodicFWCheck_Enable=false
 
+#WiFi password display Feature control Enabled
+$SNMPPSWDCTRLFLAG=true
+$TR069PSWDCTRLFLAG=true
+
 #ipv6 pd
 $lan_pd_interfaces=brlan0
 @erouter_topology-mode=1

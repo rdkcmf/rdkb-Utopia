@@ -910,6 +910,10 @@ $MoCAExtSsidNum=0
 
 $PeriodicFWCheck_Enable=false
 
+#WiFi password display Feature control Enabled
+$SNMPPSWDCTRLFLAG=true
+$TR069PSWDCTRLFLAG=true
+
 #static ip defaults
 $staticdns_enable=0
 $wan_ipaddr=0.0.0.0
