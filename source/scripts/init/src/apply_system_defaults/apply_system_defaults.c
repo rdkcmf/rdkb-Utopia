@@ -233,10 +233,11 @@ static int set_syscfg(char *name, char *value)
    rc = syscfg_get(ns, name, get_val, sizeof(get_val));
    if (0 != rc || 0 == strlen(get_val) || (force && strcmp(get_val, value)) ) {
       rc = syscfg_set(ns, name, value);
-      printf("[utopia] [init] apply_system_defaults set <$%s::%s, %s> set(rc=%d)\n", ns, name, value, rc);
+      printf("[utopia] [init] apply_system_defaults set <$%s::%s, %s> set(rc=%d) get_val %s force %d  \n", ns, name, value, rc,get_val,force);
       syscfg_dirty++;
    } else {
       rc = 0;
+      printf("[utopia] [init] syscfg_get <$%s::%s> fail\n", ns, name);
    }
    return(rc);
 }
