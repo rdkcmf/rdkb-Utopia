@@ -151,7 +151,6 @@ cmdiag_if()
 add_ebtable_rule()
 {
     # Add the rule to redirect diagnostic traffic to CM-LAN in bridge mode
-    prod_model=`awk -F'[-=]' '/^VERSION/ {print $2}' /etc/versions`
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
@@ -170,7 +169,6 @@ add_ebtable_rule()
 #--------------------------------------------------------------
 del_ebtable_rule()
 {
-    prod_model=`awk -F'[-=]' '/^VERSION/ {print $2}' /etc/versions`
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
