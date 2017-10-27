@@ -8891,6 +8891,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "%s\n", ":tr69_filter - [0:0]");
        fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
    }
+
+   fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+
    fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
@@ -10231,6 +10235,10 @@ static void do_ipv6_filter_table(FILE *fp){
        fprintf(fp, "-A LOG_TR69_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"TR-069 ACS Server Blocked:\"\n",syslog_level);
        fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
    }
+
+   fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
+   fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+
    do_block_ports(fp);	
    fprintf(fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
