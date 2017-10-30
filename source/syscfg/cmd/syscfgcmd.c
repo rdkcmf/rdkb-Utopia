@@ -257,8 +257,11 @@ int main(int argc, char **argv)
     }
 
     if (0 == strcmp(program, "syscfg_destroy")) {
-        printf("WARNING!!! Are your sure you want to destroy system configuration?\n This will cause the system to be unstable. Press CTRL-C to abort or ENTER to proceed.\n");
-        getchar();
+        // check to see if we are going to force the destroy, if not, prompt the user
+        if (argc < 2 || (argc >= 2 && 0 != strcasecmp(argv[1], "-f"))) {
+            printf("WARNING!!! Are your sure you want to destroy system configuration?\n This will cause the system to be unstable. Press CTRL-C to abort or ENTER to proceed.\n");
+            getchar();
+        }
         rc = syscfg_init();
         if (rc != 0) {
             printf("ERROR: syscfg initialization failure (%d)\n", rc);
