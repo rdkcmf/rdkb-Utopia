@@ -2018,6 +2018,10 @@ static int prepare_globals_from_configuration(void)
          snprintf(str, sizeof(str),
                   "-A LOG_SSH_DROP -j LOG --log-prefix \"SSH Connection Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
          fprintf(fp, "%s\n", str);
+
+         snprintf(str, sizeof(str),
+                  "-A SNMPDROPLOG -j LOG --log-prefix \"SNMP DROP Connection Blocked: \" --log-level %d  -m limit --limit 1/minute --limit-burst 1", syslog_level);
+         fprintf(fp, "%s\n", str);
       }
 
    }
@@ -2074,6 +2078,10 @@ static int prepare_globals_from_configuration(void)
 
    snprintf(str, sizeof(str),
             "-A LOG_SSH_DROP -j DROP");
+   fprintf(fp, "%s\n", str);
+   //SNMPv3 
+   snprintf(str, sizeof(str),
+            "-A SNMPDROPLOG -j DROP");
    fprintf(fp, "%s\n", str);
    // for non tcp
    snprintf(str, sizeof(str),
@@ -4466,8 +4474,7 @@ static void whiteListArmAtomIP(FILE *filt_fp, const char *port, const char *inte
     FIREWALL_DEBUG("Exiting remote_ssh_access_set_proto_prodImg\n");
  }
 
-
- /*
+/*
  ** RDKB-7836 Defining Dropbear ssh management IP for iptable Init
  ** Defining file for ssh allowed ip in production image
  ** "/etc/dropbear/prodMgmtIps.cfg" contains the list jump servers that can "ssh" access box
@@ -4476,7 +4483,7 @@ static void whiteListArmAtomIP(FILE *filt_fp, const char *port, const char *inte
  ** In "dev" image ssh is allowed.
  */
 #define SSH_ACCESS_IP_LIST  "/etc/dropbear/prodMgmtIps.cfg"
-#define MAX_IPV6_STR_LEN    40
+#define MAX_IPV6_STR_LEN    48
 
 static void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, const char *interface)
  {
@@ -4535,6 +4542,73 @@ static void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, co
         fclose(pSshMgmt_fp);
     }
     FIREWALL_DEBUG("Exiting do_ssh_IpAccessTable\n");
+    return ;
+
+ }
+
+
+ /*
+ ** RDKB-14687 Defining SNMP v3  management IP for iptable Init
+ ** Defining file for SNMPv3 allowed ip 
+ ** "/etc/snmp/snmpMgmtIps.cfg" contains the list jump servers that can "ssh" access box
+ ** In case it is reuqire to update then add/remove entry in "/etc/snmp/snmpMgmtIps.cfg"
+ */
+#define SNMP_ACCESS_IP_LIST  "/etc/snmp/snmpMgmtIps.cfg"
+
+static void do_snmp_IpAccessTable(FILE *filt_fp, const char *port, int family)
+ {
+    int ret=0;
+    char string[MAX_QUERY]={0};
+    FILE* pSnmpMgmt_fp = NULL ;
+    char *strp=NULL;
+    int stringLen = 0;
+    int enableFlag = 0;
+
+    FIREWALL_DEBUG("Entering do_snmp_IpAccessTable\n");
+
+    pSnmpMgmt_fp = fopen(SNMP_ACCESS_IP_LIST, "r");
+    if(pSnmpMgmt_fp != NULL) {
+        while (NULL != (strp = fgets(string, MAX_QUERY, pSnmpMgmt_fp)) ) {
+            stringLen = strnlen(string, MAX_IPV6_STR_LEN) - 1;/*To remove new line*/
+            if (*string && string[stringLen] == '\n') {
+                 string[stringLen] = '\0';
+            }
+            /* Ignore Comments From Config File - line starting with # */
+            if (string[0] == '#' )
+                continue ;
+
+            // Loop until config under appropriate header is found
+            if(family == AF_INET6) {
+               // Skip All V4 Config
+               if ( NULL != strstr(string, "[SNMP_SCOUT_IPv6_LIST]") ) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            } else if ( family == AF_INET ) {
+               // Skip All V6 Config
+               if ( NULL != strstr(string, "[SNMP_SCOUT_IPv4_LIST]") ) {
+                   enableFlag = 1;
+                   continue ;
+               }
+            }
+            if ( NULL != strstr(string, "[SNMP_SCOUT_IPv4_LIST]")
+                 || NULL != strstr(string, "[SNMP_SCOUT_IPv6_LIST]") ) {
+                if ( enableFlag == 1 )
+                    break ;
+                else
+                    continue ;
+            }
+            if ( enableFlag == 1) {
+                fprintf(filt_fp, "-A SNMP_FILTER -s %s -j ACCEPT\n", string);
+            }
+        }
+    }
+    fprintf(filt_fp, "-A SNMP_FILTER -j SNMPDROPLOG\n");
+
+    if(pSnmpMgmt_fp != NULL) {
+        fclose(pSnmpMgmt_fp);
+    }
+    FIREWALL_DEBUG("Exiting do_snmp_IpAccessTable\n");
     return ;
 
  }
@@ -8898,6 +8972,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+
+   //SNMPv3 chains for logging and filtering
+   fprintf(filter_fp, "%s\n", ":SNMPDROPLOG - [0:0]");
+   fprintf(filter_fp, "%s\n", ":SNMP_FILTER - [0:0]");
+   fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
        
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
@@ -8950,6 +9029,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    {
       do_tr69_whitelistTable(filter_fp, AF_INET);
    }
+  
 
 #ifdef _COSA_BCM_MIPS_
     // Allow all traffic to the private interface priv0
@@ -8988,6 +9068,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    } else {
        fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
    }
+
+   do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
 
 #if defined (INTEL_PUMA7) 
 
@@ -10245,7 +10327,15 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    fprintf(fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
    fprintf(fp, "-A LOG_SSH_DROP -j DROP\n");
-  
+
+//SNMPv3 chains for logging and filtering
+   fprintf(fp, "%s\n", ":SNMPDROPLOG - [0:0]");
+   fprintf(fp, "%s\n", ":SNMP_FILTER - [0:0]");
+   fprintf(fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
+   fprintf(fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
+   fprintf(fp, "-A SNMPDROPLOG -j DROP\n");
+
+ 
    fprintf(fp, "-A LOG_INPUT_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 INPUT drop\"\n",syslog_level);
    fprintf(fp, "-A LOG_FORWARD_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 FORWARD drop\"\n",syslog_level);
    fprintf(fp, "-A LOG_INPUT_DROP -j DROP\n"); 
@@ -10414,6 +10504,8 @@ static void do_ipv6_filter_table(FILE *fp){
       } else {
           fprintf(fp, "-A SSH_FILTER -j ACCEPT\n");
       }
+
+      do_snmp_IpAccessTable(fp, "10161", AF_INET6);
 
       // Development override
       if (isDevelopmentOverride) {
