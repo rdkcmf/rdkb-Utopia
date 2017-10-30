@@ -474,7 +474,7 @@ $igmpproxy_enabled=1
 $mldproxy_enabled=1
 
 # UPnP InternetGatewayDevice (IGD) settings
-$upnp_igd_enabled=1
+$upnp_igd_enabled=0
 $igd_allow_userconfig=1
 $igd_allow_wandisable=0
 $upnp_igd_advr_expire=1800
