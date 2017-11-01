@@ -39,6 +39,36 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#if defined (INTEL_PUMA7)
+#include <unistd.h>
+#define MAX_CMD_LEN 256
+#define MAX_IF_NAME_SIZE 32
+#endif
+
+#if defined (INTEL_PUMA7)
+//Check if network interface is really connected to this bridge
+int ep_check_if_really_bridged(PL2Net net, char *ifname){
+    char *cmd[MAX_CMD_LEN];
+    char ifnamebuf[MAX_IF_NAME_SIZE];
+
+    char *dash;
+
+    strncpy(ifnamebuf, ifname, MAX_IF_NAME_SIZE);
+
+    //If name is x-t, strip off -t and change name to x.[vlan id]
+    if ((dash = strchr(ifnamebuf, '-'))){
+        *dash = '\0';
+    }
+
+    snprintf(cmd, MAX_CMD_LEN, "/sys/class/net/%s/brif/%s", net->name, ifnamebuf);
+    if (access(cmd, F_OK) == -1) {
+        //Network interface is NOT connected to this bridge
+        return 1;
+    }
+
+    return 0;
+}
+#endif
 
 int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
     int i;
@@ -59,6 +89,15 @@ int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
         
         sscanf(ifToken, MNET_EP_MEMBER_FORMAT( ifnamebuf ,live_members[curNumMembers].interface->type->name, &live_members[curNumMembers].bReady));
         
+#if defined (INTEL_PUMA7)
+        //If the interface is ready, verify that it's really connected to this bridge
+        if (live_members[curNumMembers].bReady && ep_check_if_really_bridged(net, ifnamebuf)){
+            MNET_DEBUG("Port %s NOT really connected to bridge %s!\n" COMMA ifnamebuf COMMA net->name);
+            ifToken = strtok(NULL, " ");
+            continue;
+        }
+#endif
+
         if ((dash = strchr(ifnamebuf, '-'))){
             *dash = '\0';
             live_members[curNumMembers].bTagging = 1;
@@ -87,12 +126,18 @@ int ep_set_allMembers(PL2Net net, PMember members, int numMembers) {
     iflistbuf[0] = '\0';
     
     for (i = 0; i < numMembers; ++i) {
-        MNET_DEBUG("ep_set_allMembers, Writing Member %d," COMMA i)
-        MNET_DEBUG(" %s\n" COMMA members[i].interface->name)
-        snprintf(ifnamebuf, sizeof(ifnamebuf), "%s%s", members[i].interface->name, members[i].bTagging ? "-t" : "");
-        offset += snprintf(iflistbuf + offset, 
-                           sizeof(iflistbuf) - offset, " "
-                           MNET_EP_MEMBER_SET_FORMAT(ifnamebuf, members[i].interface->type->name, members[i].bReady));
+        if (members[i].bReady == STATUS_STARTED) {
+            MNET_DEBUG("ep_set_allMembers, Writing Member %d," COMMA i);
+                MNET_DEBUG(" %s\n" COMMA members[i].interface->name);
+                snprintf(ifnamebuf, sizeof(ifnamebuf), "%s%s", members[i].interface->name, members[i].bTagging ? "-t" : "");
+                offset += snprintf(iflistbuf + offset, 
+                                   sizeof(iflistbuf) - offset, " "
+                                   MNET_EP_MEMBER_SET_FORMAT(ifnamebuf, members[i].interface->type->name, members[i].bReady));
+        }
+        else
+        {
+            MNET_DEBUG("ep_set_allMembers, Skipping Member %d," COMMA i);
+        }
     }
     
     snprintf(netmemberskey, sizeof(netmemberskey), MNET_EP_ALLMEMBERS_KEY_FORMAT(net->inst));

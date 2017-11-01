@@ -50,9 +50,7 @@
 
 const char* SERVICE_NAME            = "multinet";
 
-#ifdef INTEL_PUMA7
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb6.sh";
-#elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
+#if defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchxb6.sh";
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_exec";
@@ -84,15 +82,7 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_ex
  * keep the define outside of the string quotation symbols
  * eg. "event3|/etc/code|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_SERIAL
  */
-#ifdef INTEL_PUMA7
-const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-down|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "lnf-setup|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT, 
-    NULL };
-#elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
+#if defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
@@ -107,6 +97,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-syncMembers|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "multinet-down|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+    "lnf-setup|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "sw_ext_restore|/etc/utopia/service.d/service_multinet/handle_sw.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 #endif
@@ -114,8 +105,11 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 void srv_register(void) {
 	DBG_PRINT("02_multinet : %s Entry\n", __FUNCTION__);
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
-#ifndef _COSA_BCM_ARM_ || ifndef INTEL_PUMA7 || ifdef _PLATFORM_RASPBERRYPI_
+#ifndef _COSA_BCM_ARM_ || ifdef INTEL_PUMA7 || ifdef _PLATFORM_RASPBERRYPI_
    system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
+#endif
+#if defined (INTEL_PUMA7)
+   system("touch /var/multinet_exec_enabled");
 #endif
 	DBG_PRINT("02_multinet : %s Exit\n", __FUNCTION__);
 }

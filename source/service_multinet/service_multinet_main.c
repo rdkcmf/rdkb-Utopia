@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
@@ -48,6 +49,12 @@
 
 #ifndef SERVICE_MULTINET_EXE_PATH
 #define SERVICE_MULTINET_EXE_PATH "/etc/utopia/service.d/service_multinet_exec"
+#endif
+
+#if defined (INTEL_PUMA7)
+#define P7_LEGACY_MULTINET_HANDLER "/etc/utopia/service.d/vlan_util_xb6.sh"
+#define P7_PP_ON_ATOM "/etc/utopia/use_multinet_exec"
+#define MAX_CMD 255
 #endif
 
 FILE *mnetfp = NULL;
@@ -59,6 +66,7 @@ FILE *mnetfp = NULL;
      entryCallback action;
  } EntryCall;
  
+ int handle_lnf_setup(char* argv[], int argc);
  int handle_up(char* argv[], int argc);
  int handle_down(char* argv[], int argc);
  int handle_start(char* argv[], int argc);
@@ -73,6 +81,7 @@ FILE *mnetfp = NULL;
  int create_mesh_vlan(char* argv[], int argc);
  
  EntryCall calls[] = {
+	 {"lnf-setup", handle_lnf_setup},
 	 {"multinet-up", handle_up},
 	 //{"multinet-ifStatus", handle_ifStatus},
 	 {"multinet-down", handle_down},
@@ -89,8 +98,24 @@ FILE *mnetfp = NULL;
 	 
  
  int main(int argc, char* argv[]) {
-     int retval;
-    int i;
+	int retval;
+	int i;
+
+#if defined (INTEL_PUMA7)
+//Puma 7 SoC supports using a different multinet handler for PP on ARM use case
+//If PP is not on Atom, call the legacy multinet handler instead of this one
+	char cmd[MAX_CMD];
+	if (access(P7_PP_ON_ATOM, F_OK)) {
+		snprintf(cmd, MAX_CMD, "%s", P7_LEGACY_MULTINET_HANDLER);
+		for (i=1;i<argc;i++) {
+			strncat(cmd, " ", sizeof(cmd) - strnlen(cmd, MAX_CMD-1) - 1);
+			strncat(cmd, argv[i], sizeof(cmd) - strnlen(cmd, MAX_CMD-1) - 1);
+		}
+		MNET_DEBUG("Forwarding command to legacy handler: %s\n" COMMA cmd);
+		return system(cmd);
+ 	}	
+#endif
+
 	if (argc < 2) return 1;
         
 	if(mnetfp == NULL) {
@@ -128,6 +153,11 @@ FILE *mnetfp = NULL;
 }
 
 //exeName, eventName, netIdString
+ int handle_lnf_setup(char* argv[], int argc) {
+     MNET_DEBUG("Main: handle_lnf_setup")
+     multinet_bridgeDownInst(atoi(argv[2]));
+     multinet_bridgeUpInst(atoi(argv[2]), 0);
+ }
  int handle_up(char* argv[], int argc) {
      MNET_DEBUG("Main: handle_up")
     multinet_bridgeUpInst(atoi(argv[2]), 0);

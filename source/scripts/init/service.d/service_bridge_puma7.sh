@@ -29,7 +29,6 @@ source /etc/utopia/service.d/event_handler_functions.sh
 #source /etc/utopia/service.d/brcm_ethernet_helper.sh
 
 SERVICE_NAME="bridge"
-MULTINET_HANDLER="/etc/utopia/service.d/vlan_util_xb6.sh"
 
 #Separate routing table used to ensure that responses from the web UI go directly to the LAN interface, not out erouter0
 BRIDGE_MODE_TABLE=69
@@ -231,7 +230,8 @@ service_start(){
         routing_rules enable
         
         #Sync bridge ports
-        $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+        sysevent set multinet-down $INSTANCE
+        sysevent set multinet-up $INSTANCE
         
         #Block traffic coming from the lbr0 connector interfaces at the MUX
         filter_local_traffic enable
@@ -262,7 +262,8 @@ service_stop(){
         block_bridge
         
         #Sync bridge members
-        $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+        sysevent set multinet-down $INSTANCE
+        sysevent set multinet-up $INSTANCE
                 
         #Disconnect management interface
         cmdiag_if disable

@@ -321,6 +321,47 @@ setup_gretap(){
     fi
 }
 
+#Update the list of active multinet instances
+update_instances(){
+    INSTANCES=`sysevent get multinet-instances`
+
+    echo "got instances $INSTANCES"
+
+    if [ "$1" = "start" ] ; then
+        #Add to list of instances
+        NEWINST="$INSTANCES"
+        FOUND=0
+        for MYINST in $INSTANCES
+        do
+            if [ "$MYINST" = "$INSTANCE" ] ; then
+                FOUND=1
+            fi
+        done
+        if [ $FOUND -eq 0 ] ; then
+            if [ "$NEWINST" = "" ] ; then
+                NEWINST="$INSTANCE"
+            else
+                NEWINST="$NEWINST $INSTANCE"
+            fi
+        fi
+    else
+        #Remove from list of instances
+        NEWINST=""
+        for MYINST in $INSTANCES
+        do
+            if [ "$MYINST" != "$INSTANCE" ] ; then
+                if [ "$NEWINST" = "" ] ; then
+                    NEWINST="$MYINST"
+                else
+                    NEWINST="$NEWINST $MYINST"
+                fi
+            fi
+        done
+    fi
+
+    sysevent set multinet-instances "$NEWINST"
+}
+
 #Gets a space-separated list of interfaces currently in a group
 #Returns the list in CURRENT_IF_LIST
 get_current_if_list() {
@@ -670,6 +711,9 @@ sync_group_settings() {
 
 
     [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-status ready
+    #Update active instances
+    update_instances start
+
 }
 
 #Remove any interfaces from this group
@@ -684,6 +728,23 @@ print_syntax(){
 }
 
 #Script execution begins here
+#Use multinet event handler for PP on Atom builds
+if [ -e /etc/utopia/use_multinet_exec ] ; then
+    if [ "$1" = "multinet-up" -o "$1" = "multinet-start" ] ; then
+        STATUS=`sysevent get multinet_${2}-status`
+        case "$STATUS" in
+            "ready"|"pending"|"partial"|"restarting")
+                /etc/utopia/service.d/service_multinet_exec multinet-syncMembers $2
+            ;;
+            *)
+                /etc/utopia/service.d/service_multinet_exec $*
+            ;;
+        esac
+    else
+        /etc/utopia/service.d/service_multinet_exec $*
+    fi
+else
+
 while [ -e ${LOCKFILE} ] ; do
     #See if process is still running
     kill -0 `cat ${LOCKFILE}`
@@ -857,6 +918,7 @@ then
 elif [ $MODE = "lnf-stop" ]
 then
     remove_all_from_group
+    update_instances stop
     echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
     $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ]
@@ -872,6 +934,7 @@ then
 
     #Send event that LAN is stopped
     $SYSEVENT set multinet_${INSTANCE}-status stopped
+    update_instances stop
 elif [ "$MODE" = "syncmembers" ]
 then
     #Sync the group interfaces and raise status events
@@ -898,3 +961,4 @@ fi
 
 #Script finished, remove lock file
 rm -f ${LOCKFILE}
+fi

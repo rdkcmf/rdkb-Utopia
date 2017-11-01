@@ -72,11 +72,14 @@ AM_CONDITIONAL(CCSP_ARCH_MIPS, test "x$CCSP_ARCH" = xmips)
 
 # Specify ccsp platform (device)
 AC_ARG_WITH([ccsp-platform],
-[AC_HELP_STRING([--with-ccsp-platform={intel_usg,pc,bcm}],
+[AC_HELP_STRING([--with-ccsp-platform={intel_usg,pc,bcm,intel_puma7}],
                 [specify the ccsp platform])],
 [case x"$withval" in
    xintel_usg)
      CCSP_PLATFORM=intel_usg
+     ;;  
+   xintel_puma7)
+     CCSP_PLATFORM=intel_puma7
      ;;  
    xpc)
      CCSP_PLATFORM=pc
@@ -95,6 +98,7 @@ if test x"${CCSP_PLATFORM}" != x; then
 fi
 
 AM_CONDITIONAL(CCSP_PLATFORM_BCM, test "x$CCSP_PLATFORM" = xbcm)
+AM_CONDITIONAL(CCSP_PLATFORM_INTEL_PUMA7, test "x$CCSP_PLATFORM" = xintel_puma7)
 
 AC_ARG_ENABLE([parodus],
 [  --enable-parodus    Turn on parodus],

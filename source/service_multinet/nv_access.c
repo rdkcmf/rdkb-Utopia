@@ -42,7 +42,7 @@
 #include "ccsp_memory.h"
 #endif /* _COSA_INTEL_XB3_ARM_ */
 char* typeStrings[] = {
-    "SW", "Gre", "Link", "Eth", "WiFi"
+    "SW", "Gre", "Link", "Eth", "WiFi", "Moca"
 };
 
 

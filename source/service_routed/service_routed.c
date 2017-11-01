@@ -123,7 +123,6 @@ static int daemon_stop(const char *pid_file, const char *prog)
     return 0;
 }
 
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
 static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
 {
     char active_insts[32] = {0};
@@ -170,7 +169,6 @@ static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsign
 
     return *num;
 }
-#endif
 
 static int route_set(struct serv_routed *sr)
 {
