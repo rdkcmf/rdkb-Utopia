@@ -701,7 +701,7 @@ static struct tm local_now;
  * iptables priority level 
  */
 
-inline void SET_IPT_PRI_DEFAULT(void){
+static inline void SET_IPT_PRI_DEFAULT(void){
   iptables_pri_level[IPT_PRI_PORTMAPPING -1 ]= IPT_PRI_PORTMAPPING; 
   iptables_pri_level[IPT_PRI_PORTTRIGGERING -1]= IPT_PRI_PORTTRIGGERING; 
   iptables_pri_level[IPT_PRI_DMZ-1]= IPT_PRI_DMZ; 
@@ -712,7 +712,7 @@ inline void SET_IPT_PRI_DEFAULT(void){
 }
 
 
-inline int SET_IPT_PRI_MODULD(char *s){
+static inline int SET_IPT_PRI_MODULD(char *s){
     if(strcmp(s, "portmapping") == 0)
        return IPT_PRI_PORTMAPPING;
     else if(strcmp(s, "porttriggering") == 0)
