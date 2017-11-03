@@ -296,7 +296,7 @@ fi
 
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
-if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
+if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
    echo_t "[utopia][init] Performing factory reset"
 
 SYSCFG_PARTNER_FR="`syscfg get PartnerID_FR`"
@@ -358,7 +358,7 @@ fi
    echo 204 > /var/tmp/networkresponse.txt
     
 
-elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
+elif [ "$FACTORY_RESET_WIFI" = "$SYSCFG_FR_VAL" ]; then
     echo_t "[utopia][init] Performing wifi reset"
     create_wifi_default
     syscfg unset $FACTORY_RESET_KEY
@@ -475,7 +475,7 @@ execute_dir $INIT_DIR&
 
 #--------Set up private IPC vlan----------------
 vconfig add l2sd0 500
-if [ $BOX_TYPE == "XB3" ];then
+if [ "$BOX_TYPE" = "XB3" ];then
 	$UTOPIA_PATH/service_multinet_exec add_ipc_vlan &
 else
 	$SWITCH_HANDLER addVlan 0 500 sw_6
@@ -485,7 +485,7 @@ ifconfig l2sd0.500 192.168.101.1
 #start  ntpd server on ARM
 NTP_CONF=/etc/ntp.conf
 NTP_CONF_TMP=/tmp/ntp.conf
-if [ "x$BOX_TYPE" = "xXB3" ]
+if [ "$BOX_TYPE" = "XB3" ]
 then
 	cp $NTP_CONF $NTP_CONF_TMP
 	echo "interface ignore wildcard" >> $NTP_CONF_TMP
@@ -494,7 +494,7 @@ then
 fi
 #--------Set up Radius vlan -------------------
 vconfig add l2sd0 4090
-if [ $BOX_TYPE == "XB3" ];then
+if [ "$BOX_TYPE" = "XB3" ];then
 	$UTOPIA_PATH/service_multinet_exec add_radius_vlan &
 else
 	$SWITCH_HANDLER addVlan 0 4090 sw_6 
