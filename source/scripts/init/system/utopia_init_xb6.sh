@@ -428,7 +428,7 @@ until [ -e "/tmp/syseventd_connection" ]; do
     
     if [ $attemptCounter -lt 3 ]
     then
-       sleep 2s
+       sleep 2
        let "attemptCounter++"
     else
        break
