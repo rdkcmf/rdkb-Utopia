@@ -911,9 +911,9 @@ $MoCAExtSsidNum=0
 
 $PeriodicFWCheck_Enable=false
 
-#WiFi password display Feature control Enabled
-$SNMPPSWDCTRLFLAG=true
-$TR069PSWDCTRLFLAG=true
+#WiFi password Get/Set disabled by default
+$SNMPPSWDCTRLFLAG=false
+$TR069PSWDCTRLFLAG=false
 
 #static ip defaults
 $staticdns_enable=0

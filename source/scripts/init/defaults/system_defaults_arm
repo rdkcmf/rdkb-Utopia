@@ -1015,9 +1015,9 @@ $X_RDKCENTRAL-COM_LastRebootCounter=0
 $PeriodicFWCheck_Enable=false
 $DeferFWDownloadReboot=290
 
-#WiFi password display Feature control Enabled
-$SNMPPSWDCTRLFLAG=true
-$TR069PSWDCTRLFLAG=true
+#WiFi password Get/Set disabled by default
+$SNMPPSWDCTRLFLAG=false
+$TR069PSWDCTRLFLAG=false
 
 # LogBackup parameters
 $logbackup_enable=true
