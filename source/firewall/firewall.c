@@ -565,6 +565,7 @@ static char rip_interface_wan[20];  // if rip is enabled, then is it enabled on 
 static char nat_enabled[20];      // is nat enabled
 static char dmz_enabled[20];      // is dmz enabled
 static char firewall_enabled[20]; // is the firewall enabled
+static char container_enabled[20]; // is the container enabled
 static char bridge_mode[20];      // is system in bridging mode
 static char log_level[5];         // if logging is enabled then this is the log level
 static int  log_leveli;           // an integer version of the above
@@ -582,6 +583,7 @@ static char captivePortalEnabled[50]; //to ccheck captive portal is enabled or n
 static char redirectionFlag[50]; //Captive portal mode flag
 
 static char iptables_pri_level[IPT_PRI_MAX];
+static char lxcBridgeName[20];
 //static int  portmapping_pri;        
 //static int  porttriggering_pri;
 //static int  firewall_pri;
@@ -649,6 +651,7 @@ static char guest_network_mask[20];
 static int ppFlushNeeded = 0;
 static int isProdImage = 0;
 static int isComcastImage = 0;
+static int isContainerEnabled = 0;
 
 /*
  * For timed internet access rules we use cron 
@@ -1327,6 +1330,41 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
     return isComcastImg;
  }
 
+
+
+static int bIsContainerEnabled( void)
+ {
+    char *pContainerSupport = NULL, *pLxcBridge = NULL;
+    int ret = 0, isContainerEnabled = 0, offsetValue = 0;
+    char fileContent[255] = {'\0'};
+    FILE *deviceFilePtr;
+
+    FIREWALL_DEBUG("Entering bIsContainerEnabled\n");
+    deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
+
+    if (deviceFilePtr) {
+        while (fscanf(deviceFilePtr , "%s", fileContent) != EOF ) {
+            if ((pContainerSupport = strstr(fileContent, "CONTAINER_SUPPORT")) != NULL) {
+                offsetValue = strlen("CONTAINER_SUPPORT=");
+                pContainerSupport = pContainerSupport + offsetValue;
+                if (0 == strncmp(pContainerSupport, "1", 1)) {
+                   isContainerEnabled = 1;
+                }
+            } else if ((pLxcBridge = strstr(fileContent, "LXC_BRIDGE_NAME")) != NULL) {
+                offsetValue = strlen("LXC_BRIDGE_NAME=");
+                pLxcBridge = pLxcBridge + offsetValue ;
+                strcpy(lxcBridgeName, pLxcBridge);
+            } else {
+                continue;
+            }
+        }
+        fclose(deviceFilePtr);
+    }
+ 
+    FIREWALL_DEBUG("Exiting bIsContainerEnabled\n");
+    return isContainerEnabled;
+ }
+
 /*
  *  Procedure     : prepare_globals_from_configuration
  *  Purpose       : use syscfg and sysevent to prepare information such as
@@ -1424,6 +1462,7 @@ static int prepare_globals_from_configuration(void)
    memset(nat_enabled, 0, sizeof(nat_enabled));
    memset(dmz_enabled, 0, sizeof(dmz_enabled));
    memset(firewall_enabled, 0, sizeof(firewall_enabled));
+   memset(container_enabled, 0, sizeof(container_enabled));
    memset(bridge_mode, 0, sizeof(bridge_mode));
    memset(log_level, 0, sizeof(log_level));
 
@@ -1440,6 +1479,7 @@ static int prepare_globals_from_configuration(void)
    syscfg_get(NULL, "nat_enabled", nat_enabled, sizeof(nat_enabled)); 
    syscfg_get(NULL, "dmz_enabled", dmz_enabled, sizeof(dmz_enabled)); 
    syscfg_get(NULL, "firewall_enabled", firewall_enabled, sizeof(firewall_enabled)); 
+   syscfg_get(NULL, "containersupport", container_enabled, sizeof(container_enabled)); 
    //mipieper - change for pseudo bridge
    //syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode)); 
    sysevent_get(sysevent_fd, sysevent_token, "bridge_mode", bridge_mode, sizeof(bridge_mode));
@@ -1473,6 +1513,9 @@ static int prepare_globals_from_configuration(void)
    get_ip6address(ecm_wan_ifname, ecm_wan_ipv6, &ecm_wan_ipv6_num);
    //get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num);
 
+   if (0 == strcmp("true", container_enabled)) {
+      isContainerEnabled = bIsContainerEnabled();
+   }
    isCacheActive     = (0 == strcmp("started", transparent_cache_state)) ? 1 : 0;
    isFirewallEnabled = (0 == strcmp("0", firewall_enabled)) ? 0 : 1;  
    isWanReady        = (0 == strcmp("0.0.0.0", current_wan_ipaddr)) ? 0 : 1;
@@ -4466,7 +4509,32 @@ static void whiteListArmAtomIP(FILE *filt_fp, const char *port, const char *inte
     return ;
 }
 
+static void do_container_allow(FILE *pFilter, FILE *pMangle, FILE *pNat, int family)
+{
+    FIREWALL_DEBUG("Entering do_container_allow\n");
 
+    if (NULL == pFilter || NULL == pMangle || NULL == pNat)
+       return;
+
+    if (family == AF_INET) {
+       fprintf(pFilter, "-I INPUT -i %s -p udp --dport 67 -j ACCEPT\n", lxcBridgeName);
+       fprintf(pFilter, "-I INPUT -i %s -p tcp --dport 67 -j ACCEPT\n", lxcBridgeName);
+       fprintf(pFilter, "-I INPUT -i %s -p udp --dport 53 -j ACCEPT\n", lxcBridgeName);
+       fprintf(pFilter, "-I INPUT -i %s -p tcp --dport 53 -j ACCEPT\n", lxcBridgeName);
+       fprintf(pMangle, "-I POSTROUTING -o %s -p udp -m udp --dport 68 -j CHECKSUM --checksum-fill\n", lxcBridgeName);
+       fprintf(pNat, "-I POSTROUTING -s 147.0.3.0/24 ! -d 147.0.3.0/24 -j MASQUERADE\n");
+    }
+ 
+    if (family == AF_INET6) {
+       fprintf(pNat, "-I POSTROUTING -s 2301:db8:1::/64 ! -d 2301:db8:1::/64 -j MASQUERADE\n");
+    }
+
+    fprintf(pFilter, "-I FORWARD -i %s -j ACCEPT\n", lxcBridgeName);
+    fprintf(pFilter, "-I FORWARD -o %s -j ACCEPT\n", lxcBridgeName);
+    
+    FIREWALL_DEBUG("Exiting do_container_allow\n");
+    return;
+}
 
  /*
   *  RDKB-7836 setting the ssh rules for production image
@@ -9177,6 +9245,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       do_tr69_whitelistTable(filter_fp, AF_INET);
    }
   
+   if (isContainerEnabled) {
+       do_container_allow(filter_fp, mangle_fp, nat_fp, AF_INET);
+   }
 
 #ifdef _COSA_BCM_MIPS_
     // Allow all traffic to the private interface priv0
@@ -10388,6 +10459,10 @@ int prepare_ipv6_firewall(const char *fw_file)
 	do_ipv6_filter_table(filter_fp);
 	
 	do_parental_control(filter_fp,nat_fp, 6);
+
+        if (isContainerEnabled) {
+            do_container_allow(filter_fp, mangle_fp, nat_fp, AF_INET6);
+        }
 	
 	/* XDNS - route dns req though dnsmasq */
 #ifdef XDNS_ENABLE
@@ -11520,6 +11595,11 @@ static int service_start ()
    if (access("/tmp/RFC/.RFC_SSHWhiteList.list", F_OK) != -1 && access("/tmp/.rfcLock", F_OK) == -1) {
       FIREWALL_DEBUG("RFC file for SSH present. Whitelisting IP's\n");
       system("sh /lib/rdk/rfc_refresh.sh SSH_REFRESH &");
+   }
+
+   if (isContainerEnabled && access("/tmp/container_env.sh", F_OK) != -1 && access("/tmp/.lxcIptablesLock", F_OK) == -1) {
+      FIREWALL_DEBUG("LXC Support enabled. Adding rules for lighttpd container\n");
+      system("sh /lib/rdk/iptables_container.sh");
    }
 
    ClearEstbConnection();
