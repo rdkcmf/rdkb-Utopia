@@ -171,6 +171,8 @@ service_start ()
          echo "service_forwarding : Triggering RDKB_FIREWALL_RESTART before bridge starting"
          sysevent set firewall-restart
          wait_till_state bridge starting
+	 echo "service_fowarding : Start webgui.sh"
+	 sh /etc/webgui.sh
       else
          ulog forwarding status "starting wan"
          sysevent set wan-start
