@@ -187,6 +187,7 @@ routing_rules(){
         ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
         ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
         add_ebtable_rule
+		/etc/utopia/service.d/service_dhcp_server.sh dns-restart
     else
         ip rule del from $LAN_IP lookup $BRIDGE_MODE_TABLE
         ip route flush table $BRIDGE_MODE_TABLE
