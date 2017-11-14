@@ -229,7 +229,11 @@ qtn_init(){
         $IFCONFIG $BASE_WIFI_IF $BASE_WIFI_IP up
         $QCSAPI_PCIE set_ip br0 ipaddr $QTN_BR0_IP
         $QCSAPI_PCIE set_ip br0 netmask 255.255.255.0
-        $NCPU_EXEC -e 'ifconfig ndp0 mtu 1600; ifconfig wifi0.0 mtu 1600'
+        $NCPU_EXEC -e 'ifconfig ndp0 mtu 1600'
+        # ARRISXB6-6042 workaround to re-enable MTU on wifi driver reload until
+        # real fix is available. Set mtu to 1600 on all wifi0.NN interfaces on
+        # ARM side.
+        $NCPU_EXEC -e "ifconfig | awk '/^wifi0\.[0-9]/ { printf \"ifconfig %s mtu 1600\n\",\$1 | \"sh\"}'"
         $IP link add ath12 link host0 type vlan id 2012
         $IP link add ath13 link host0 type vlan id 2013
         $IFCONFIG host0 mtu 1600
