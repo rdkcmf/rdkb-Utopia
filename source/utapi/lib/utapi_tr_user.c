@@ -234,6 +234,7 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
         Utopia_UnsetIndexed(ctx,UtopiaValue_User_Enabled,ulIndex);
         Utopia_UnsetIndexed(ctx,UtopiaValue_User_RemoteAccess,ulIndex);
         Utopia_UnsetIndexed(ctx,UtopiaValue_User_Access_Permissions,ulIndex);
+        Utopia_UnsetIndexed(ctx,UtopiaValue_HashPassword,ulIndex);
     }
 
     return SUCCESS;
@@ -299,6 +300,7 @@ int Utopia_GetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     pUserCfg_t->RemoteAccessCapable = (0 == iVal) ? FALSE : TRUE;
 
     Utopia_GetIndexedInt(ctx,UtopiaValue_User_Access_Permissions,(ulIndex + 1),&(pUserCfg_t->AccessPermissions));
+    Utopia_GetIndexed(ctx,UtopiaValue_HashPassword,(ulIndex + 1),pUserCfg_t->HashedPassword,STR_SZ);
 
     return SUCCESS;
 
@@ -334,6 +336,7 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     Utopia_SetIndexedInt(ctx,UtopiaValue_User_RemoteAccess,(ulIndex + 1),iVal);
 
     Utopia_SetIndexedInt(ctx,UtopiaValue_User_Access_Permissions,(ulIndex + 1),pUserCfg_t->AccessPermissions);
+    Utopia_SetIndexed(ctx,UtopiaValue_HashPassword,(ulIndex + 1),pUserCfg_t->HashedPassword);
 
     if((TRUE == pUserCfg_t->bEnabled) && (TRUE == pUserCfg_t->RemoteAccessCapable)) {
         /* Add the user with a home directory */

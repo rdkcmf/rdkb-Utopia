@@ -614,6 +614,7 @@ typedef enum _UtopiaValue
 	UtopiaValue_SPF_PrevRuleEnabledState,	 
 	UtopiaValue_PFR_PrevRuleEnabledState,
 	UtopiaValue_PRT_PrevRuleEnabledState,
+    UtopiaValue_HashPassword,
     UtopiaValue__LAST__
 } UtopiaValue;
 
