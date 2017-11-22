@@ -306,7 +306,7 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
 
 #mark the factory reset flag 'on'
    FACTORY_RESET_REASON=true 
-   
+   rm -f /nvram/.keys/*
    rm -f $SYSCFG_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
@@ -324,7 +324,7 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    rm -f /nvram/server-TransMgr.xml
    rm -f /nvram/server-cache.xml
    rm -f /nvram/server-duid
-
+   
    #>>zqiu
    create_wifi_default
    #<<zqiu
