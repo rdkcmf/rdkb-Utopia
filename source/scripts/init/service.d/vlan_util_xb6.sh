@@ -53,6 +53,11 @@ WIFI_PREFIX="ath"
 #Prefix for external switch ports
 SW_PREFIX="eth_"
 
+#Moca home isolation information
+MOCA_BRIDGE_IP="169.254.30.1"
+LOCAL_MOCABR_UP_FILE="/tmp/MoCABridge_up"
+HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+
 #Wifi information
 #Set this to 1 to set SSID name in this script to default
 USE_DEFAULT_SSID=1
@@ -475,6 +480,13 @@ get_expected_if_list() {
         #XFinity Private LAN
         1)
             check_port_2
+
+            #Add moca interface only if home network isolation is disbaled
+            if [ "$HOME_LAN_ISOLATION" = "1" ]; then
+                MOCA_INTERFACE=""
+            else
+                MOCA_INTERFACE=nmoca0
+            fi
             
             if [ "$BRIDGE_MODE" -gt 0 ]
             then
@@ -482,9 +494,9 @@ get_expected_if_list() {
                 if [ "$isport2enable" = "true" ]
                 then
                     #Switch port 2 connected to XFinity Private LAN
-                    IF_LIST="eth_1 eth_0 nmoca0 l${CMDIAG_IF} lbr0"
+                    IF_LIST="eth_1 eth_0 $MOCA_INTERFACE l${CMDIAG_IF} lbr0"
                 else
-                    IF_LIST="eth_1 nmoca0 l${CMDIAG_IF} lbr0"
+                    IF_LIST="eth_1 $MOCA_INTERFACE l${CMDIAG_IF} lbr0"
                     #Switch port 2 connected to XFinity Home
                 fi
             else
@@ -492,10 +504,10 @@ get_expected_if_list() {
                 if [ "$isport2enable" = "true" ]
                 then
                     #Switch port 2 connected to XFinity Private LAN
-                    IF_LIST="eth_1 eth_0 nmoca0 ath0 ath1"
+                    IF_LIST="eth_1 eth_0 $MOCA_INTERFACE ath0 ath1"
                 else
                     #Switch port 2 connected to XFinity Home
-                    IF_LIST="eth_1 nmoca0 ath0 ath1"
+                    IF_LIST="eth_1 $MOCA_INTERFACE ath0 ath1"
                 fi
             fi
 
@@ -562,6 +574,23 @@ get_expected_if_list() {
         ;;
         
         
+        #Home Network Isolation
+        9)
+            if [ "$HOME_LAN_ISOLATION" = "1" ] ; then
+                IF_LIST="nmoca0"
+                IF_NAMES=`syscfg get lan_ethernet_physical_ifnames`
+                if [[ $IF_NAMES != *"nmoca"* ]]; then
+                    IF_NAMES+=" $IF_LIST"
+                    syscfg set lan_ethernet_physical_ifnames "$IF_NAMES"
+                fi
+            fi
+
+            if [ "$MODE" = "stop" ]
+            then
+                IF_LIST=""
+            fi
+        ;;
+
     esac
     
     echo -e "Group $BRIDGE_NAME vlan $BRIDGE_VLAN should include:\t$IF_LIST"
@@ -1081,6 +1110,9 @@ then
 elif [ "$EVENT" = "multinet-start" ]
 then
     MODE="start"
+elif [ "$EVENT" = "multinet-restart" ]
+then
+    MODE="restart"
 elif [ "$EVENT" = "lnf-setup" ]
 then
     MODE="lnf-start"
@@ -1159,6 +1191,11 @@ case $INSTANCE in
         BRIDGE_NAME="br66"
         BRIDGE_VLAN=66
     ;;
+    9)
+        #Home Network Isolation
+        BRIDGE_NAME="brlan10"
+        BRIDGE_VLAN=111
+    ;;
     *)
         #Unknown / unsupported instance number
         echo_t "$0 error: Unknown instance $INSTANCE"
@@ -1185,7 +1222,25 @@ then
     then
         echo_t "DISABLE MULTICAST SNOOPING FOR $BRIDGE_NAME"
         echo 0 >  /sys/devices/virtual/net/$BRIDGE_NAME/bridge/multicast_snooping
+        #Disabling rp_filter
+        echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
+        echo 0 > /proc/sys/net/ipv4/conf/brlan0/rp_filter
     fi
+
+    #Home Network Isolation
+    if [ "$BRIDGE_NAME" = "brlan10" ] && [ "$HOME_LAN_ISOLATION" = "1" ]
+    then
+        ip link set brlan10 allmulticast on
+        ifconfig brlan10 $MOCA_BRIDGE_IP
+        ip link set brlan10 up
+        echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+        echo 0 > /proc/sys/net/ipv4/conf/brlan10/rp_filter
+        sysctl -w net.ipv4.conf.all.arp_announce=3
+        ip rule add from all iif brlan10 lookup all_lans
+        ip rule add from 169.254.0.0/16 iif brlan0 lookup moca
+        touch $LOCAL_MOCABR_UP_FILE
+    fi
+
 elif [ $MODE = "start" ]
 then
     #Sync the group interfaces and raise status events
@@ -1223,6 +1278,12 @@ then
     #Indicate LAN is stopping
     $SYSEVENT set multinet_${INSTANCE}-status stopping
     remove_all_from_group
+
+    if [ "$BRIDGE_NAME" = "brlan10" ]; then
+        ip link set brlan10 down
+        $VLAN_UTIL del_group brlan10
+    fi
+
     #Send event that LAN is stopped
     $SYSEVENT set multinet_${INSTANCE}-status stopped
 elif [ "$MODE" = "syncmembers" ]

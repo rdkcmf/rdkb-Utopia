@@ -259,6 +259,13 @@ case "$1" in
                 #sysevent set desired_moca_link_state down
             fi
         fi
+
+        HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+        if [ "$HOME_LAN_ISOLATION" = "1" ];then
+            echo "Setting up brlan10 for HOME_LAN_ISOLATION"
+            sysevent set multinet-up 9
+        fi
+
         echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
         sysevent set firewall-restart 
         uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
