@@ -82,7 +82,9 @@ do_start_igmpproxy () {
       echo "phyint $WAN_IFNAME upstream" >> $LOCAL_CONF_FILE
       #echo "altnet 0.0.0.0/0" >> $LOCAL_CONF_FILE
    else
-      echo "phyint $WAN_IFNAME disabled" >> $LOCAL_CONF_FILE
+      if [ "$NEW_SMCROUTE" != "1" ]; then
+         echo "phyint $WAN_IFNAME disabled" >> $LOCAL_CONF_FILE
+      fi
    fi
    echo "phyint $SYSCFG_lan_ifname downstream" >> $LOCAL_CONF_FILE
 
@@ -94,7 +96,9 @@ do_start_igmpproxy () {
           echo "phyint $interface downstream" >> $LOCAL_CONF_FILE
           MOCA_LAN_UP=1
          else 
-          echo "phyint $interface disabled" >> $LOCAL_CONF_FILE
+          if [ "$NEW_SMCROUTE" != "1" ]; then
+            echo "phyint $interface disabled" >> $LOCAL_CONF_FILE
+          fi
          fi
        fi
    done
@@ -113,7 +117,7 @@ fi
    cat $LOCAL_CONF_FILE > $CONF_FILE_2
    rm -f $LOCAL_CONF_FILE
    if [ "$NEW_SMCROUTE" == "1" ]; then
-       $BIN2 -f $CONF_FILE_2 -n -s &
+       $BIN2 -d 5 -f $CONF_FILE_2 -n -N -s &
    else
        $BIN2 -f $CONF_FILE_2 -d &
    fi
