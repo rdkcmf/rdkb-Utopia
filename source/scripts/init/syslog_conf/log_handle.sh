@@ -369,6 +369,8 @@ compress()
                     break;
                 fi
             done;
+        else
+            find . -mtime +90 -exec rm {} \;
         fi
 
         if [ ! -z "$OLD_FILE" ]
