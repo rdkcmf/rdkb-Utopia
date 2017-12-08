@@ -36,6 +36,10 @@
 #define PSM_NAME_WIFI_RES_MIG           "eRT.com.cisco.spvtg.ccsp.Device.WiFi.WiFiRestored_AfterMigration"
 #define IS_MIG_CHECK_NEEDED(MIG_CHECK)	(!strncmp(MIG_CHECK, "true", 4)) ? (TRUE) : (FALSE)
 
+#define isValidSubnetByte(byte) (((byte == 255) || (byte == 254) || (byte == 252) || \
+                                  (byte == 248) || (byte == 240) || (byte == 224) || \
+                                  (byte == 192) || (byte == 128)) ? 1 : 0)
+                                  
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 extern char g_cDhcp_Lease_Time[8];
@@ -45,6 +49,66 @@ extern char g_cMig_Check[8];
 extern void subnet(char *ipv4Addr, char *ipv4Subnet, char *subnet);
 extern void copy_file(char *, char *);
 extern void remove_file(char *);
+
+static unsigned int isValidSubnetMask(char *subnetMask);
+
+/*
+ * A subnet mask should only have continuous 1s starting from MSB (Most Significant Bit).
+ * Like 11111111.11111111.11100000.00000000. 
+ * Which means first 19 bits of an IP address belongs to network part and rest is host part. 
+ */
+static unsigned int isValidSubnetMask(char *subnetMask)
+{
+    int l_iIpAddrOctets[4] = {-1, -1, -1, -1};
+	char *ptr = subnetMask;
+	char dotCount = 0;
+	char idx = 0;
+
+	if (!ptr)
+		return 0;
+
+	// check the subnet mask have 3 dots or not
+	while(*ptr != '\0')
+	{
+		if (*ptr == '.')
+			dotCount++;
+
+		ptr++;
+	}
+
+	if (3 != dotCount)
+		return 0;
+
+	sscanf(subnetMask, "%d.%d.%d.%d", &l_iIpAddrOctets[0], &l_iIpAddrOctets[1],
+	    &l_iIpAddrOctets[2], &l_iIpAddrOctets[3]);
+
+	//first octets in subnet mask cannot be 0 and last octets in subnet mask cannot be 255
+	if ((0 == l_iIpAddrOctets[0]) || (255 == l_iIpAddrOctets[3])) 
+		return 0;
+
+	for (idx = 0; idx < 4; idx++)
+	{
+		if ((isValidSubnetByte(l_iIpAddrOctets[idx])) || (0 == l_iIpAddrOctets[idx]))
+		{
+			if (255 != l_iIpAddrOctets[idx])
+			{
+				idx++; //host part. From this idx all octets should be 0
+				break;
+			}
+		}
+		else 
+			return 0;
+	}
+
+	//host part. From this idx all octets should be 0
+	for ( ; idx < 4; idx++) 
+	{
+		if (0 != l_iIpAddrOctets[idx])
+			return 0;
+	}	
+	
+	return 1;
+}
 
 int prepare_hostname()
 {
@@ -131,6 +195,16 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 
     syscfg_get(NULL, "lan_ipaddr", l_cLanIPAddress, sizeof(l_cLanIPAddress));
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
+	if (0 == isValidSubnetMask(l_cLanNetMask))
+	{
+		fprintf(stderr, "DHCP Net Mask:%s is corrupted. Setting to default Net Mask\n",
+				l_cLanNetMask);
+		//copy the default netmask
+		memset(l_cLanNetMask, 0, sizeof(l_cLanNetMask));
+		sprintf(l_cLanNetMask, "%s", "255.255.255.0");
+		syscfg_set(NULL, "lan_netmask", l_cLanNetMask);
+		syscfg_commit();
+	}
 
 	subnet(l_cLanIPAddress, l_cLanNetMask, l_cLanSubnet);
 

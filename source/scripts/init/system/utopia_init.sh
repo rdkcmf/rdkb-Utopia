@@ -402,6 +402,23 @@ sleep 1
 echo_t "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
 
+#Added log to check the DHCP range corruption after system defaults applied.
+lan_ipaddr=`syscfg get lan_ipaddr`
+lan_netmask=`syscfg get lan_netmask`
+echo_t "[utopia][init] lan_ipaddr = $lan_ipaddr lan_netmask = $lan_netmask"
+
+lost_and_found_enable=`syscfg get lost_and_found_enable`
+echo_t "[utopia][init] lost_and_found_enable = $lost_and_found_enable"
+if [ "$lost_and_found_enable" == "true" ]
+then
+    iot_ifname=`syscfg get iot_ifname`
+    iot_dhcp_start=`syscfg get iot_dhcp_start`
+    iot_dhcp_end=`syscfg get iot_dhcp_end`
+    iot_netmask=`syscfg get iot_netmask`
+    echo_t "[utopia][init] DHCP server configuring for IOT iot_ifname = $iot_ifname "
+    echo_t  "iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
+fi
+
 # Get the syscfg value which indicates whether unit is activated or not.
 # This value is set from network_response.sh based on the return code received.
 activated=`syscfg get unit_activated`
