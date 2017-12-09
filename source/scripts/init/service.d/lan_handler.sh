@@ -371,7 +371,7 @@ case "$1" in
         LAN_IFNAME=`sysevent get ipv4_${LAN_INST}-ifname`
 	    LAN_RESTARTED=`sysevent get lan_restarted`
 
-        if [[ "$SYSEVT_lan_ipaddr_v6_prev" != "" ] && [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ]] || [ x"true" = x$LAN_RESTARTED ]; then
+        if [ [ "$SYSEVT_lan_ipaddr_v6_prev" != "" ] && [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] ] || [ x"true" = x$LAN_RESTARTED ]; then
             ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
         fi
