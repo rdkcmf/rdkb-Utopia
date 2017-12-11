@@ -10211,7 +10211,7 @@ static void do_ipv6_sn_filter(FILE* fp) {
         }
 	//RDKB-10248: IPv6 Entries issue in ip neigh show 2. Bring back TOS mirroring 
 
-//#if 0		//RDKB-15072 : Enabling DSCP rules for vieo clients
+#if 0
         ////Commenting out all DSCP rules : RDKB-5254
 
 	//zqiu: XCONF >>  RDKB-4519
@@ -10228,7 +10228,7 @@ static void do_ipv6_sn_filter(FILE* fp) {
 		fprintf(fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
 		fprintf(fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");	
 	//zqiu: XCONF <<
-//#endif		//RDKB-15072 : Enabling DSCP rules for vieo clients
+#endif
   
      FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
