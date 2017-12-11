@@ -8587,6 +8587,12 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
         fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", current_wan_ifname, net_resp);
         
         //fprintf(filter_fp, "-A OUTPUT -o %s -j ACCEPT\n", net_resp);
+#if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
+        if ( 0 != strncmp( lan_ifname, net_resp, strlen(lan_ifname))) { // block forwarding between bridge
+        	fprintf(filter_fp, "-A FORWARD -i %s -o %s -j DROP\n", lan_ifname, net_resp);
+        	fprintf(filter_fp, "-A FORWARD -i %s -o %s -j DROP\n", net_resp, lan_ifname);
+        }
+#endif
         
     } while ((tok = strtok(NULL, " ")) != NULL);
     
@@ -9256,6 +9262,14 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       //zqiu: R5337
       //do_lan2wan_IoT_Allow(filter_fp);
       do_wan2lan_IoT_Allow(filter_fp);
+#if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
+      // Block forwarding between bridges.
+      #define XHS_IF_NAME     "brlan1"
+      fprintf(filter_fp, "-A FORWARD -i %s -o %s -j DROP\n", lan_ifname, iot_ifName);
+      fprintf(filter_fp, "-A FORWARD -i %s -o %s -j DROP\n", XHS_IF_NAME, iot_ifName);
+      fprintf(filter_fp, "-A FORWARD -i %s -o %s -j DROP\n", iot_ifName, lan_ifname);
+      fprintf(filter_fp, "-A FORWARD -i %s -o %s -j DROP\n", iot_ifName, XHS_IF_NAME);
+#endif
    }
 
    /***********************
@@ -9331,6 +9345,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A wan2self -j wanattack\n");
    fprintf(filter_fp, "-A wan2self -j wan2self_ports\n");
    fprintf(filter_fp, "-A wan2self -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
+#ifdef INTEL_PUMA7
+   // Accept Vonage packets --  ARRISXB6-3881
+   fprintf(filter_fp, "-A wan2self -p udp -m udp --dport 10000:20000 -j ACCEPT\n");
+#endif
    //fprintf(filter_fp, "-A wan2self -j wan2self_mgmt\n");
    fprintf(filter_fp, "-A wan2self -j xlog_drop_wan2self\n");
 //   fprintf(filter_fp, "-A wan2lan -m state --state INVALID -j xlog_drop_wan2lan\n");
