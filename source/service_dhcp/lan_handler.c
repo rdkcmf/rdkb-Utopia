@@ -283,10 +283,9 @@ void ipv4_status(int l3_inst, char *status)
     		sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_prefix_v6", 
 						 l_cLan_PrefixV6, sizeof(l_cLan_PrefixV6));
 
-			if ((0 != l_cLan_IpAddrv6_prev[0]) && (strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) 
-											&& (0 != l_cLan_IpAddrv6[0]))
+			if ((strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) && (0 != l_cLan_IpAddrv6[0]))
 			{
-    	    		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+    	    	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
         	    	     "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
 						 l_cLan_IpAddrv6_prev, l_cLanIfName);
 
@@ -525,7 +524,7 @@ void lan_restart()
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_restarted", 
                  l_cLanRestarted, sizeof(l_cLanRestarted));
 
-    if ((0 != l_cLan_IpAddrv6_prev[0]) && (strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) && 
+    if ((strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) && 
 		(0 != l_cLan_IpAddrv6[0]))
     {
 		if (0 != l_cLan_IpAddrv6_prev[0])
