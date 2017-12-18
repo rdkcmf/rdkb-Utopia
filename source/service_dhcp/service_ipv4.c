@@ -592,13 +592,16 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 					 sizeof(l_cLan_PrefixV6));
 
 		if (strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64))
-		{	
-    	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-        	         "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
-					 l_cLan_IpAddrv6_prev, l_cIfName);
+	        {
+                  if (l_cLan_IpAddrv6_prev != NULL)
+                  {    
+                     snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                         "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
+                                         l_cLan_IpAddrv6_prev, l_cIfName);
+ 
+                     executeCmd(l_cSysevent_Cmd);
+                  }
 
-	        executeCmd(l_cSysevent_Cmd);
-        
 			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
             	     "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
 					 l_cLan_IpAddrv6, l_cIfName);

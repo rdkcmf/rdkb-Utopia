@@ -203,7 +203,10 @@ apply_config () {
         LAN_IFNAME=$IFNAME
 
         if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ]; then
-            ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+            if [ $SYSEVT_lan_ipaddr_v6_prev != "" ]; then
+                ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+            fi
+
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
         fi
     fi

@@ -304,11 +304,14 @@ void ipv4_status(int l3_inst, char *status)
 
 			if ((strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) && (0 != l_cLan_IpAddrv6[0]))
 			{
-    	    	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-        	    	     "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
+                           if (l_cLan_IpAddrv6_prev != NULL)
+                           {  
+    	    	             snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+        	    	      "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
 						 l_cLan_IpAddrv6_prev, l_cLanIfName);
 
-		        executeCmd(l_cSysevent_Cmd);
+		             executeCmd(l_cSysevent_Cmd);
+			   }
     	    
 				snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
             		     "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
@@ -546,14 +549,14 @@ void lan_restart()
     if ((strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) && 
 		(0 != l_cLan_IpAddrv6[0]))
     {
-		if (0 != l_cLan_IpAddrv6_prev[0])
-		{
+               if ((l_cLan_IpAddrv6_prev != NULL) && (0 != l_cLan_IpAddrv6_prev[0]))
+	       {
         	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
             	     "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
                 	 l_cLan_IpAddrv6_prev, l_cLanIfName);
 
 	        executeCmd(l_cSysevent_Cmd);
-		}
+	       }
    
         snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
                  "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
