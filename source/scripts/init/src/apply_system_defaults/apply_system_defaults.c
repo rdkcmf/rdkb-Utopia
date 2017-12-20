@@ -237,7 +237,7 @@ static int set_syscfg(char *name, char *value)
       syscfg_dirty++;
    } else {
       rc = 0;
-      printf("[utopia] [init] syscfg_get <$%s::%s> fail\n", ns, name);
+      printf("[utopia] [init] syscfg_get <$%s::%s> \n", name,get_val);
    }
    return(rc);
 }
