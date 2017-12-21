@@ -62,6 +62,8 @@ SYSLOG_DEFAULT_CONF_FILE=/etc/syslog.conf_default
 DPC3939_OLD_FWLOG_FILE_PATH=/nvram/log/firewall
 DPC3939_OLD_EVTLOG=/nvram/log/event/eventlog
 DPC3939_OLD_SYSTERMLOG=/nvram/log/system/systemlog
+MERGED_FW_LOG_FILE=/nvram/log/mergeLog.txt
+SORT_FW_LOG_FILE=/nvram/log/sortLog.txt
 
 # In R1.3, Log path is under /nvram/log
 # > R1.4 Log path is under /nvram2/log
@@ -507,6 +509,12 @@ if [ "$1" == "uncompress_fwlog" ]
 then
     uncompress "$DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2" $2
     uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" $2
+    if [ "$3" == "$DPC3939_OLD_FWLOG_FILE_PATH" ]
+    then
+       cp  $DPC3939_OLD_FWLOG_FILE_PATH/???????? $2
+       cat $2/* >> $MERGED_FW_LOG_FILE
+       grep Time $MERGED_FW_LOG_FILE | sort -r -k2,5 > $SORT_FW_LOG_FILE 
+    fi
 fi
 
 if [ -z $1 ]
