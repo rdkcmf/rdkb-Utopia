@@ -1043,3 +1043,7 @@ $HTTPSecurityHeaderEnable=true
 
 #codebig
 $codebigsupport=0
+
+#IDS Feature disabled bydefault
+$IDSENABLE=false
+$IDSSCANTASK=.FILE.
