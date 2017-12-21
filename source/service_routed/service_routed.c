@@ -470,7 +470,7 @@ static int radv_start(struct serv_routed *sr)
     }
 
     daemon_stop(ZEBRA_PID_FILE, "zebra");
-    vsystem("zebra -d -f %s -u root", ZEBRA_CONF_FILE);
+    vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
     return 0;
 }
 
