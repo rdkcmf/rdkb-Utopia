@@ -416,36 +416,6 @@ uncompress()
     fi
 }
 
-#DOCSIS_TIME_SYNC_NEEDED=yes for devices where DOCSIS and RDKB are in different processors
-#and time sync needed as the log processing requires date/time stamp
-#Will use default time if time not synchronized even after 2 min of bootup to unblock
-#other log_handle.sh functionality
-
-DOCSIS_TIME_SYNC_NEEDED=`cat /etc/device.properties | grep DOCSIS_TIME_SYNC_NEEDED | cut -f2 -d=`
-if [ "$DOCSIS_TIME_SYNC_NEEDED" == "yes" ]; then
-    loop=1
-    retry=1
-    while [ "$loop" -eq "1" ]
-    do
-        echo "Waiting for time synchronization between processors before processing logs"
-        TIME_SYNC_STATUS=`sysevent get TimeSync-status`
-        if [ "$TIME_SYNC_STATUS" == "synced" ]
-        then
-           echo "Time synced. Breaking loop"
-           break
-        elif [ "$retry" -eq "12" ]
-        then
-           echo "Time not synced even after 2 min retry. Breaking loop and using default time"
-           break
-        else
-           echo "Time not synced yet. Sleeping.. Retry:$retry"
-           retry=`expr $retry + 1`
-           sleep 10
-        fi
-    done
-fi
-
-
 V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
 if [ -z $V_FW_LOG_FILE_PATH ]
 then
