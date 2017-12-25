@@ -11,6 +11,7 @@
 #include "errno.h"
 #include "lan_handler.h"
 #include "util.h"
+#include "dhcp_server_functions.h"
 
 #define HOSTS_FILE              "/etc/hosts"
 #define HOSTNAME_FILE           "/etc/hostname"
@@ -22,6 +23,7 @@
 #define TRUE                    1
 #define FALSE                   0
 #define STATIC_URLS_FILE        "/etc/static_urls"
+#define STATIC_DNS_URLS_FILE    "/etc/static_dns_urls"
 #define NETWORK_RES_FILE      	"/var/tmp/networkresponse.txt"
 #define DHCP_CONF               "/var/dnsmasq.conf"
 #define DHCP_LEASE_FILE         "/nvram/dnsmasq.leases"
@@ -549,7 +551,7 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 	}		
 }
 
-void do_extra_pools (FILE *local_dhcpconf_file, char *prefix)
+void do_extra_pools (FILE *local_dhcpconf_file, char *prefix, unsigned char bDhcpNs_Enabled, char *pWan_Dhcp_Dns)
 {
 	char l_cDhcpEnabled[8] = {0}, l_cSysevent_Cmd[32] = {0};
 	char l_cIpv4Inst[8] = {0}, l_cIpv4InstStatus[8] = {0};
@@ -615,6 +617,16 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix)
 						fprintf(stderr, "DHCP_SERVER : [BRLAN1] %sdhcp-range=set:%d,%s,%s,%s,%s\n", 
 										prefix, l_iPool, l_cDhcp_Start_Addr, l_cDhcp_End_Addr, 
 										l_cLan_Subnet, l_cDhcp_Lease_Time);
+
+						// Needs to configure dhcp option for corresponding interface wan dns servers
+						if( ( bDhcpNs_Enabled ) && \
+							( NULL != pWan_Dhcp_Dns ) && \
+							( '\0' != pWan_Dhcp_Dns[ 0 ] ) \
+						   )
+						{
+							fprintf(local_dhcpconf_file, "%sdhcp-option=%s,6,%s\n", prefix, l_cIfName, pWan_Dhcp_Dns);
+							fprintf(stderr, "DHCP_SERVER : [%s] %sdhcp-option=%s,6,%s\n", l_cIfName, prefix, l_cIfName, pWan_Dhcp_Dns);
+						}
 					}
 				}
 				else
@@ -649,6 +661,8 @@ int prepare_dhcp_conf (char *input)
 	char l_cDhcp_Num[16] = {0}, l_cLan_Status[16] = {0};
     char l_cWan_Service_Stat[16] = {0}, l_cDns_Only_Prefix[8] = {0};
 	char *l_cpPsm_Get = NULL;
+	char l_cDhcpNs_Enabled[ 32 ] 			 = { 0 },
+		 l_cWan_Dhcp_Dns [ 256 ]             = { 0 };
 
 	int l_iMkdir_Res, l_idhcp_num, l_iRet_Val;
 	int l_iRetry_Count = 0;
@@ -658,7 +672,9 @@ int prepare_dhcp_conf (char *input)
 
     BOOL l_bCaptivePortal_Mode = FALSE;
 	BOOL l_bCaptive_Check = FALSE;
-	BOOL l_bMig_Case = TRUE;
+	BOOL l_bMig_Case = TRUE,
+		 l_bDhcpNs_Enabled = FALSE,
+		 l_bIsValidWanDHCPNs = FALSE;
 
 	if ((NULL != input) && (!strncmp(input, "dns_only", 8)))
 	{
@@ -679,6 +695,22 @@ int prepare_dhcp_conf (char *input)
     syscfg_get(NULL, "lan_ifname", l_cLan_if_name, sizeof(l_cLan_if_name));
     syscfg_get(NULL, "CaptivePortal_Enable", l_cCaptivePortalEn, sizeof(l_cCaptivePortalEn));
     syscfg_get(NULL, "redirection_flag", l_cRedirect_Flag, sizeof(l_cRedirect_Flag));
+
+    // Static LAN DNS (brlan0)
+	syscfg_get(NULL, "dhcp_nameserver_enabled", l_cDhcpNs_Enabled, sizeof(l_cDhcpNs_Enabled));
+	if( ( '\0' != l_cDhcpNs_Enabled[ 0 ] ) && \
+		( 1 == atoi( l_cDhcpNs_Enabled ) ) 
+	  )
+	{
+		l_bDhcpNs_Enabled = TRUE;
+	}
+
+	// Get proper wan dns server list and check whether wan-dns is valid or not
+	check_and_get_wan_dhcp_dns( l_cWan_Dhcp_Dns );
+	if( '\0' != l_cWan_Dhcp_Dns[ 0 ] )
+	{
+		l_bIsValidWanDHCPNs = TRUE;
+	}
 
     l_fNetRes = fopen(NETWORK_RES_FILE, "r");
     if (NULL == l_fNetRes)
@@ -820,7 +852,11 @@ int prepare_dhcp_conf (char *input)
 		{
 			remove_file(DEFAULT_RESOLV_CONF);
 		}
-	    fprintf(l_fLocal_Dhcp_ConfFile, "resolv-file=%s\n", RESOLV_CONF); 
+
+		if( FALSE == l_bDhcpNs_Enabled )
+		{
+			fprintf(l_fLocal_Dhcp_ConfFile, "resolv-file=%s\n", RESOLV_CONF); 
+		}
 	}
 
 	fprintf(l_fLocal_Dhcp_ConfFile, "expand-hosts\n");
@@ -872,7 +908,9 @@ int prepare_dhcp_conf (char *input)
 	fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-lease-max=%d\n", l_cDns_Only_Prefix, l_idhcp_num);
 	fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-hostsfile=%s\n", l_cDns_Only_Prefix, DHCP_STATIC_HOSTS_FILE);
 
-	if (FALSE == l_bCaptivePortal_Mode)
+	if ( ( FALSE == l_bCaptivePortal_Mode) &&\
+		  ( FALSE == l_bDhcpNs_Enabled ) 
+		)
 	{
 		fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-optsfile=%s\n", l_cDns_Only_Prefix, DHCP_OPTIONS_FILE);
 	}
@@ -891,6 +929,17 @@ int prepare_dhcp_conf (char *input)
 		// calculate_dhcp_range has code to write dhcp-range 
 		fprintf(l_fLocal_Dhcp_ConfFile, "interface=%s\n",l_cLan_if_name);	
 		calculate_dhcp_range(l_fLocal_Dhcp_ConfFile, l_cDns_Only_Prefix);
+
+		// Add brlan0 custom dns server configuration
+		if( l_bDhcpNs_Enabled )
+		{
+			char cDhcpNs_OptionString[ 1024 ] = { 0 }; 
+
+			get_dhcp_option_for_brlan0( cDhcpNs_OptionString );
+
+			fprintf(l_fLocal_Dhcp_ConfFile, "%s\n", cDhcpNs_OptionString);
+			fprintf(stderr, "DHCP_SERVER : [%s] %s\n", l_cLan_if_name, cDhcpNs_OptionString );
+		}
 	}
    
     // For boot time optimization, run do_extra_pools only when brlan1 interface is available
@@ -900,7 +949,7 @@ int prepare_dhcp_conf (char *input)
 	if (is_iface_present(XHS_IF_NAME))
 	{
 		fprintf(stderr, "%s interface is present creating dnsmasq\n", XHS_IF_NAME);
-        do_extra_pools(l_fLocal_Dhcp_ConfFile, l_cDns_Only_Prefix);
+        do_extra_pools(l_fLocal_Dhcp_ConfFile, l_cDns_Only_Prefix, l_bDhcpNs_Enabled, l_cWan_Dhcp_Dns);
 	}
 	else
 	{
@@ -931,21 +980,67 @@ int prepare_dhcp_conf (char *input)
 			fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-range=%s,%s,%s,%s\n", 
 					l_cDns_Only_Prefix, l_cIotStartAddr, l_cIotEndAddr, l_cIotNetMask, g_cDhcp_Lease_Time);
 		}
+
+		// Add iot custom dns server configuration
+		if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+		{
+			fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=%s,6,%s\n", l_cIotIfName, l_cWan_Dhcp_Dns);
+			fprintf(stderr, "DHCP_SERVER : [%s] dhcp-option=%s,6,%s\n",l_cIotIfName, l_cIotIfName, l_cWan_Dhcp_Dns);
+		}
 	}
 
 	fprintf(stderr, "DHCP server configuring for Mesh network\n");
 #if defined (_COSA_INTEL_XB3_ARM_)
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.112\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n"); 
+
+	// Add l2sd0.112 custom dns server configuration
+	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+	{
+		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.112,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(stderr, "DHCP_SERVER : [l2sd0.112] dhcp-option=l2sd0.112,6,%s\n", l_cWan_Dhcp_Dns);
+	}
+	
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.113\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n"); 
+
+	// Add l2sd0.113 custom dns server configuration
+	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+	{
+		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.113,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(stderr, "DHCP_SERVER : [l2sd0.113] dhcp-option=l2sd0.113,6,%s\n", l_cWan_Dhcp_Dns);
+	}
+
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.4090\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite\n"); 
+
+	// Add l2sd0.4090 custom dns server configuration
+	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+	{
+		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.4090,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(stderr, "DHCP_SERVER : [l2sd0.4090] dhcp-option=l2sd0.4090,6,%s\n", l_cWan_Dhcp_Dns);
+	}
+	
 #elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath12\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n"); 
+
+		// Add ath12 custom dns server configuration
+		if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+		{
+			fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=ath12,6,%s\n", l_cWan_Dhcp_Dns);
+			fprintf(stderr, "DHCP_SERVER : [ath12] dhcp-option=ath12,6,%s\n", l_cWan_Dhcp_Dns);
+		}
+		
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath13\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n"); 
+
+		// Add ath12 custom dns server configuration
+		if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+		{
+			fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=ath13,6,%s\n", l_cWan_Dhcp_Dns);
+			fprintf(stderr, "DHCP_SERVER : [ath13] dhcp-option=ath13,6,%s\n", l_cWan_Dhcp_Dns);
+		}
 #endif
 	if (TRUE == l_bCaptivePortal_Mode)
 	{
@@ -955,10 +1050,114 @@ int prepare_dhcp_conf (char *input)
         prepare_whitelist_urls(l_fLocal_Dhcp_ConfFile);
     	sysevent_set(g_iSyseventfd, g_tSysevent_token, "captiveportaldhcp", "completed", 0);
 	}
+
+	//Prepare static dns urls
+	if( l_bDhcpNs_Enabled )
+	{
+		prepare_static_dns_urls( l_fLocal_Dhcp_ConfFile );
+	}
+		
 	remove_file(DHCP_CONF);
 	fclose(l_fLocal_Dhcp_ConfFile);
 	copy_file(l_cLocalDhcpConf, DHCP_CONF);
 	remove_file(l_cLocalDhcpConf);
 	fprintf(stderr, "DHCP SERVER : Completed preparing DHCP configuration\n");
 	return 0;
+}
+
+void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
+{
+	char l_cDhcpNs_1[ 128 ] 	 			 = { 0 },
+		 l_cDhcpNs_2[ 128 ] 	 			 = { 0 },
+		 l_cDhcpNs_3[ 128 ] 				 = { 0 },
+		 l_cDhcpNs_OptionString[ 1024 ] 	 = { 0 };
+
+    // Static LAN DNS
+	syscfg_get(NULL, "dhcp_nameserver_1", l_cDhcpNs_1, sizeof(l_cDhcpNs_1));
+	syscfg_get(NULL, "dhcp_nameserver_2", l_cDhcpNs_2, sizeof(l_cDhcpNs_2));	
+	syscfg_get(NULL, "dhcp_nameserver_3", l_cDhcpNs_3, sizeof(l_cDhcpNs_3));		
+
+	strcpy( l_cDhcpNs_OptionString, "dhcp-option=brlan0,6");
+
+	if( ( '\0' != l_cDhcpNs_1[ 0 ] ) && \
+		( 0 != strcmp( l_cDhcpNs_1, "0.0.0.0" ) ) 
+	  )
+	{
+		sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_1 );
+	}
+
+	if( ( '\0' != l_cDhcpNs_2[ 0 ] ) && \
+		( 0 != strcmp( l_cDhcpNs_2, "0.0.0.0" ) ) 
+	  )
+	{
+		sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_2 );
+	}
+
+	
+	if( ( '\0' != l_cDhcpNs_3[ 0 ] ) && \
+		( 0 != strcmp( l_cDhcpNs_3, "0.0.0.0" ) ) 
+	  )
+	{
+		sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_3 );
+	}
+
+	// Copy custom dns servers 
+	sprintf( pDhcpNs_OptionString, "%s", l_cDhcpNs_OptionString );
+}
+
+void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns )
+{
+	char l_cWan_Dhcp_Dns[ 256 ] = { 0 };
+	int  charCounter 			= 0;
+
+	sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan_dhcp_dns", l_cWan_Dhcp_Dns, sizeof(l_cWan_Dhcp_Dns));	
+
+	fprintf( stderr, "DHCP SERVER : wan_dhcp_dns:%s\n", l_cWan_Dhcp_Dns );
+
+	// Replace " "(space) charecter as ","(comma)
+	while( l_cWan_Dhcp_Dns[ charCounter ] != '\0' )
+	{
+		if( l_cWan_Dhcp_Dns[ charCounter ] == ' ' )
+		{
+			l_cWan_Dhcp_Dns[ charCounter ] = ',';
+		}
+		charCounter++;
+	}
+
+	sprintf( pl_cWan_Dhcp_Dns, "%s", l_cWan_Dhcp_Dns );
+	
+	fprintf( stderr, "DHCP SERVER : After conversion wan_dhcp_dns:%s \n", l_cWan_Dhcp_Dns );
+}
+
+void prepare_static_dns_urls(FILE *fp_local_dhcp_conf)
+{
+	char  l_cUrl[ 128 ]   		= { 0 },
+		  l_cLine[ 128 ]  		= { 0 };
+	FILE *l_fStaticDns_Urls 	= NULL;
+	
+	fprintf( stderr, "%s\n", __FUNCTION__ );
+
+	l_fStaticDns_Urls = fopen( STATIC_DNS_URLS_FILE, "r" );
+	if (NULL != l_fStaticDns_Urls)
+	{
+		while( fgets( l_cLine, 128, l_fStaticDns_Urls ) != NULL )
+		{
+			char *pos = NULL;
+			
+			// Remove line \n charecter from string  
+			if ( ( pos = strchr( l_cLine, '\n' ) ) != NULL )
+			 *pos = '\0';
+
+			fprintf( stderr, "url=/%s/\n", l_cLine );
+			fprintf( fp_local_dhcp_conf, "server=/%s/\n", l_cLine );
+			fprintf( stderr, "server=/%s/\n", l_cLine );
+			memset( l_cLine, 0, sizeof( l_cLine ) );			
+		}
+		
+		fclose( l_fStaticDns_Urls );
+	}
+	else
+	{
+		fprintf(stderr, "opening of %s file failed with error:%d\n", STATIC_DNS_URLS_FILE, errno);
+	}
 }

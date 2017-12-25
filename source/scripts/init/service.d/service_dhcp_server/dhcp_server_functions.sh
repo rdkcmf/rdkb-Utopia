@@ -46,6 +46,7 @@ DEFAULT_RESOLV_CONF="/var/default/resolv.conf"
 DEFAULT_CONF_DIR="/var/default"
 XCONF_FILE=/etc/Xconf
 STATIC_URLS_FILE="/etc/static_urls"
+STATIC_DNS_URLS_FILE="/etc/static_dns_urls"
 XCONF_DOWNLOAD_URL="/tmp/xconfdownloadurl"
 XCONF_DEFAULT_URL="https://xconf.xcal.tv/xconf/swu/stb/"
 XFINITY_DEFAULT_URL="http://xfinity.com"
@@ -462,6 +463,42 @@ prepare_dhcp_options() {
 
 }
 
+get_dhcp_option_for_brlan0() {
+
+   DHCP_OPTION_STR=
+
+    # add Lan static DNS
+    NAMESERVER1=`syscfg get dhcp_nameserver_1`
+    NAMESERVER2=`syscfg get dhcp_nameserver_2`
+    NAMESERVER3=`syscfg get dhcp_nameserver_3`
+   
+	  if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
+	     if [ "" = "$DHCP_OPTION_STR" ] ; then
+	        DHCP_OPTION_STR="dhcp-option=brlan0,6,"$NAMESERVER1
+	     else
+	        DHCP_OPTION_STR=$DHCP_OPTION_STR","$NAMESERVER1
+	     fi
+	  fi
+
+	  if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
+	     if [ "" = "$DHCP_OPTION_STR" ] ; then
+	        DHCP_OPTION_STR="dhcp-option=brlan0,6,"$NAMESERVER2
+	     else
+	        DHCP_OPTION_STR=$DHCP_OPTION_STR","$NAMESERVER2
+	     fi
+	  fi
+
+	  if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
+	     if [ "" = "$DHCP_OPTION_STR" ] ; then
+	        DHCP_OPTION_STR="dhcp-option=brlan0,6,"$NAMESERVER3
+	     else
+	        DHCP_OPTION_STR=$DHCP_OPTION_STR","$NAMESERVER3
+	     fi
+	  fi
+
+	  echo $DHCP_OPTION_STR
+}
+
 prepare_dhcp_options_wan_dns()
 {
    echo -n > $LOCAL_DHCP_OPTIONS_FILE
@@ -567,6 +604,17 @@ prepare_whitelist_urls()
 	fi
 }
 
+prepare_static_dns_urls()
+{
+  if [ -f $STATIC_DNS_URLS_FILE ]; then
+     STATIC_DNS_URL_LIST=`cat $STATIC_DNS_URLS_FILE`
+     for static_dns_url in $STATIC_DNS_URL_LIST
+     do
+        echo "server=/$static_dns_url/" >> $1
+     done
+  fi
+}
+
 #-----------------------------------------------------------------
 # set the dhcp config file which is also the dns forwarders file
 #  Parameters:
@@ -577,6 +625,14 @@ prepare_whitelist_urls()
 prepare_dhcp_conf () {
    echo "DHCP SERVER : Prepare DHCP configuration"
    LAN_IFNAME=`syscfg get lan_ifname`
+   NAMESERVERENABLED=`syscfg get dhcp_nameserver_enabled`
+   WAN_DHCP_NS=`sysevent get wan_dhcp_dns`
+   if [ "" != "$WAN_DHCP_NS" ] ; then
+		WAN_DHCP_NS=`echo "$WAN_DHCP_NS" | sed "s/ /,/g"`
+   fi	 
+
+  echo_t "DHCP_SERVER : NAMESERVERENABLED = $NAMESERVERENABLED"
+  echo_t "DHCP_SERVER : WAN_DHCP_NS = $WAN_DHCP_NS"
 
   echo -n > $DHCP_STATIC_HOSTS_FILE
 
@@ -651,7 +707,10 @@ fi
 	then
 		rm -f $DEFAULT_RESOLV_CONF
 	fi
-	echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
+
+    if [ "0" = "$NAMESERVERENABLED" ] ; then
+		echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
+    fi
    fi
 
    #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
@@ -682,7 +741,7 @@ fi
    echo "$PREFIX""dhcp-lease-max=$DHCP_NUM" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-hostsfile=$DHCP_STATIC_HOSTS_FILE" >> $LOCAL_DHCP_CONF
 
-   if [ "$CAPTIVE_PORTAL_MODE" = "false" ]
+   if [ "$CAPTIVE_PORTAL_MODE" = "false" ] && [ "0" = "$NAMESERVERENABLED" ]
    then
 		echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
    fi
@@ -705,7 +764,13 @@ fi
 	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,infinite" >> $LOCAL_DHCP_CONF
 	  else
   	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
-	  fi	      
+	  fi
+
+	  if [ "1" = "$NAMESERVERENABLED" ]; then
+		  DHCP_OPTION_FOR_LAN=`get_dhcp_option_for_brlan0`
+		  echo "$PREFIX""$DHCP_OPTION_FOR_LAN" >> $LOCAL_DHCP_CONF
+		  echo_t "DHCP_SERVER : $PREFIX$DHCP_OPTION_FOR_LAN"
+	  fi
    fi
    
    # For boot itme optimization, run do_extra_pool only when brlan1 interface is available
@@ -713,7 +778,7 @@ fi
    if [ "$isBrlan1" != "" ]
    then
       echo_t "DHCP_SERVER : brlan1 availble, creating dnsmasq entry "
-      do_extra_pools
+      do_extra_pools $NAMESERVERENABLED $WAN_DHCP_NS
    else
        echo_t "DHCP_SERVER : brlan1 not available, cannot enter details in dnsmasq.conf"
    fi
@@ -733,6 +798,10 @@ fi
 	  else
 		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
 	  fi
+	  
+	   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+		   echo "${PREFIX}""dhcp-option="${IOT_IFNAME}",6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+	   fi
    fi
 
    #zqiu:mesh >>
@@ -747,15 +816,40 @@ fi
            #for xb3/puma6
            echo "interface=l2sd0.112" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=l2sd0.112,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
+
            echo "interface=l2sd0.113" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=l2sd0.113,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
+
            echo "interface=l2sd0.4090" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=l2sd0.4090,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
+
        elif [ "$BOX_TYPE" = "XB6" ]; then
            echo "interface=ath12" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=ath12,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
+
            echo "interface=ath13" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=ath13,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
+           
        fi
    fi
    #fi
@@ -770,6 +864,11 @@ fi
         prepare_whitelist_urls $LOCAL_DHCP_CONF
 	sysevent set captiveportaldhcp completed
    fi
+
+	if [ "1" == "$NAMESERVERENABLED" ]; then
+		prepare_static_dns_urls
+	fi
+
    cat $LOCAL_DHCP_CONF > $DHCP_CONF
    rm -f $LOCAL_DHCP_CONF
 
@@ -781,6 +880,9 @@ do_extra_pools () {
     if [ x"$POOLS" = x ]; then
         echo_t "DHCP_SERVER : dhcp_server pools not availble"
     fi
+
+	NAMESERVERENABLED=$1
+	WAN_DHCP_NS=$2
 
     #DEBUG
     # echo "Extra pools: $POOLS"
@@ -827,6 +929,10 @@ do_extra_pools () {
 		echo "${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}" >> $LOCAL_DHCP_CONF
 		echo_t "DHCP_SERVER : [BRLAN1] ${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}"
 	fi
+
+	   	if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			echo "${PREFIX}""dhcp-option="${IFNAME}",6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		fi
     done
 }
 

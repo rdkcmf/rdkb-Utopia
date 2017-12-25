@@ -286,7 +286,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
     fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
             prefix, orig_prefix, lan_addr);
 
-    if (strlen(prefix) || strlen(orig_prefix)) {
+    if (strlen(prefix) || strlen(orig_prefix)) 
+	{
+		char val_DNSServersEnabled[ 32 ];
+		int  StaticDNSServersEnabled = 0;
+
         fprintf(fp, "interface %s\n", lan_if);
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
         if (strlen(prefix))
@@ -330,8 +334,24 @@ static int gen_zebra_conf(int sefd, token_t setok)
 			inCaptivePortal = 1;        		
 		}
 	}
+		/* Static DNS for DHCPv6 
+		  *   dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers 
+		  *   dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled
+		  */
+		memset( val_DNSServersEnabled, 0, sizeof( val_DNSServersEnabled ) );
+		syscfg_get(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", val_DNSServersEnabled, sizeof(val_DNSServersEnabled));
+		
+		if( ( val_DNSServersEnabled[ 0 ] != '\0' ) && \
+			 ( 0 == strcmp( val_DNSServersEnabled, "1" ) )
+		   )
+		{
+			StaticDNSServersEnabled = 1;
+		}
+
 // Modifying rdnss value to fix the zebra config.
-	if(inCaptivePortal != 1)
+	if( ( inCaptivePortal != 1 )  && \
+		( StaticDNSServersEnabled != 1 )
+	  )
 	{
 		if (strlen(lan_addr))
             			fprintf(fp, "   ipv6 nd rdnss %s 86400\n", lan_addr);
@@ -376,11 +396,24 @@ static int gen_zebra_conf(int sefd, token_t setok)
 
 	if(inCaptivePortal != 1)
 	{
-       		/* DNS from WAN (if no static DNS) */
-       		if (strlen(name_servs) == 0) {
-       			sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
-               		sizeof(name_servs) - strlen(name_servs));
-       		}
+			/* Static DNS Enabled case */
+			if( 1 == StaticDNSServersEnabled )
+			{
+				memset( name_servs, 0, sizeof( name_servs ) );
+				syscfg_get(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers", name_servs, sizeof(name_servs));
+				fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__, 
+																			   __LINE__,
+																			   StaticDNSServersEnabled,
+																			   name_servs );
+			}
+			else
+			{
+				/* DNS from WAN (if no static DNS) */
+				if (strlen(name_servs) == 0) {
+					sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
+						sizeof(name_servs) - strlen(name_servs));
+				}
+			}
 
         		for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
 			// Modifying rdnss value to fix the zebra config.

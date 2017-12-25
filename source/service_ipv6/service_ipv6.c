@@ -109,6 +109,8 @@ typedef struct dhcpv6s_pool_cfg {
     char    prefix_range_begin[64];
     char    prefix_range_end[64];
     int     opt_num;
+    int     X_RDKCENTRAL_COM_DNSServersEnabled;	
+    char    X_RDKCENTRAL_COM_DNSServers[256];
     dhcpv6s_pool_opt_t *opts;
 } dhcpv6s_pool_cfg_t;
 
@@ -240,10 +242,12 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "IAPDEnable", cfg->iapd_enable);
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "EUI64Enable", cfg->eui64_enable);
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "LeaseTime", cfg->lease_time);
+    DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServersEnabled", cfg->X_RDKCENTRAL_COM_DNSServersEnabled);
 
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "IAInterface", cfg->interface);
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeBegin", cfg->prefix_range_begin);
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeEnd", cfg->prefix_range_end);
+	DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServers", cfg->X_RDKCENTRAL_COM_DNSServers);
 
     /*get interface prefix*/
     snprintf(buf, sizeof(buf), "ipv6_%s-prefix", cfg->interface);
@@ -983,7 +987,22 @@ OPTIONS:
             if (opt.pt_client[0]) {
                 if (opt.tag == 23) {//dns
                     char dns_str[256] = {0};
-                    sysevent_get(si6->sefd, si6->setok, "ipv6_nameserver", dns_str, sizeof(dns_str));
+
+					/* Static DNS */
+					if( 1 == dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled )	
+					{
+						memset( dns_str, 0, sizeof( dns_str ) );
+						strcpy( dns_str, dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+						fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__, 
+																						  __LINE__,
+																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled,
+																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+					}
+					else
+					{
+						sysevent_get(si6->sefd, si6->setok, "ipv6_nameserver", dns_str, sizeof(dns_str));
+					}
+					
                     if (dns_str[0] != '\0') { 
                         format_dibbler_option(dns_str);
                         fprintf(fp, "     option %s %s\n", tag_list[tag_index].opt_str, dns_str);
