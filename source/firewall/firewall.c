@@ -8926,17 +8926,17 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    char IPv4[17] = "0"; 
      
    syscfg_set(NULL, "HTTP_Server_IP", lan_ipaddr);
-   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:51515\n",lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
   
 
    //IPv4[0] = '\0';
    syscfg_set(NULL, "HTTPS_Server_IP", lan_ipaddr);
-   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination %s:51515\n",lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
 
    //IPv4[0] = '\0';
    syscfg_set(NULL, "Default_Server_IP", lan_ipaddr);
-   fprintf(nat_fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination %s:51515\n",lan_ipaddr);
-   fprintf(nat_fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination %s:51515\n",lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination %s:21515\n",lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
    
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    if(isGuestNetworkEnabled) {
@@ -9697,8 +9697,8 @@ static int do_raw_table_puma7(FILE *fp)
 static int do_block_ports(FILE *filter_fp)
 {
    /* Blocking block page ports except for brlan0 interface */
-   fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 51515 -j ACCEPT\n");
-   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 51515 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 21515 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
    /* Blocking zebra ports except for brlan0 interface */
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 2601 -j DROP\n");
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 2601 -j DROP\n");
@@ -9708,8 +9708,8 @@ static int do_block_ports(FILE *filter_fp)
 
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 49152:49153 -j DROP\n");
    fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 1900 -j DROP\n");
-   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 51515 -j DROP\n");
-   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 51515 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p tcp -m tcp --dport 21515 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT ! -i brlan0 -p udp -m udp --dport 21515 -j DROP\n");
    return 0;
 }
 
@@ -10265,12 +10265,12 @@ static void do_ipv6_nat_table(FILE* fp)
    memset(IPv6, 0, INET6_ADDRSTRLEN);
    sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", IPv6, sizeof(IPv6));
  
-   fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:51515\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:21515\n",IPv6);
  	
-   fprintf(fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination [%s]:51515\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination [%s]:21515\n",IPv6);
       
-   fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:51515\n",IPv6);
-   fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:51515\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:21515\n",IPv6);
+   fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:21515\n",IPv6);
    
     FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
 }
