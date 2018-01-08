@@ -6888,10 +6888,10 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
     }
 	char buf[8];
 	memset(buf, 0, sizeof(buf));
-        syscfg_get( NULL, "cloud_enable_flag", buf, sizeof(buf));
+        syscfg_get( NULL, "X_RDKCENTRAL-COM_AkerEnable", buf, sizeof(buf));
     	if( buf != NULL )
     		{
-    		    if (strcmp(buf,"1") == 0)
+    		    if (strcmp(buf,"true") == 0)
     		        bCloudEnable = TRUE;
     		    else
     		        bCloudEnable = FALSE;

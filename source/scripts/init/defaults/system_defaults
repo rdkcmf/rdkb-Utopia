@@ -930,7 +930,7 @@ $PasswordLockoutEnable=true
 $PasswordLockoutAttempts=3
 $PasswordLockoutTime=300000
 $HTTPSecurityHeaderEnable=true
-
+$X_RDKCENTRAL-COM_AkerEnable=false
 #codebig
 $codebigsupport=0
 
