@@ -964,3 +964,5 @@ $IDSSCANTASK=.FILE.
 #EthAgent Logging default values
 $eth_log_enabled=false
 $eth_log_period=3600
+$last_router_reboot_time=0
+$router_reboot_Interval=28800

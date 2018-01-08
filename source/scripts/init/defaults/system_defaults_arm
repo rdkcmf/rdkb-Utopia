@@ -995,7 +995,7 @@ $avg_cpu_threshold=100
 $avg_memory_threshold=100
 $selfheal_enable=true
 $max_reboot_count=3
-$max_reset_count=5
+$max_reset_count=3
 $todays_reboot_count=0
 $todays_reset_count=0
 $lastActiontakentime=0
@@ -1008,8 +1008,8 @@ $selfheal_ping_DataBlockSize=56
 $selfheal_dns_pingtest_enable=false
 $selfheal_dns_pingtest_url=
 $highloadavg_reboot_count=0
-
-
+$last_router_reboot_time=0
+$router_reboot_Interval=28800
 #IOT VLAN
 $iot_ifname=l2sd0.106
 $iot_ipaddr=192.168.106.1
