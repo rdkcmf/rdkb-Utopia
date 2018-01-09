@@ -1493,7 +1493,7 @@ static int prepare_globals_from_configuration(void)
    #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    isNatEnabled      = (isNatEnabled > NAT_STATICIP ? NAT_DISABLE : isNatEnabled);
    #else
-   isNatEnabled      = (isNatEnabled = NAT_DISABLE ? NAT_DISABLE : NAT_DHCP);
+   isNatEnabled      = (isNatEnabled == NAT_DISABLE ? NAT_DISABLE : NAT_DHCP);
    #endif
    isLogEnabled      = (log_leveli > 1) ? 1 : 0;
    isLogSecurityEnabled = (isLogEnabled && log_leveli > 1) ? 1 : 0;
