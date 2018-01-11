@@ -1018,6 +1018,9 @@ $PeriodicFWCheck_Enable=false
 $SNMPPSWDCTRLFLAG=false
 $TR069PSWDCTRLFLAG=false
 
+#TFTP config download option; disabled by default
+$TFTPConfigDownloadEnabled=false
+
 #ipv6 pd
 $lan_pd_interfaces=brlan0
 @erouter_topology-mode=1
