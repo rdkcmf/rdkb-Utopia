@@ -9330,7 +9330,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    //>>DOS
 #ifdef _COSA_INTEL_XB3_ARM_
    fprintf(filter_fp, "-I INPUT -i erouter0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j wandosattack\n");
+   fprintf(filter_fp, "-I INPUT -i erouter0 -p udp -m udp -j wandosattack\n");
    fprintf(filter_fp, "-I INPUT -i wan0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j wandosattack\n");
+   fprintf(filter_fp, "-I INPUT -i wan0 -p udp -m udp -j wandosattack\n");
    fprintf(filter_fp, "-A wandosattack -m limit --limit 10/sec --limit-burst 20 -j ACCEPT\n");
    fprintf(filter_fp, "-A wandosattack -j DROP\n");
 #endif

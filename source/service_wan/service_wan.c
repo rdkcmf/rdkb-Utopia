@@ -65,8 +65,14 @@
 #include <sys/sysinfo.h>
 #include <time.h>
 #include <sys/time.h>
+#if PUMA6_OR_NEWER_SOC_TYPE
+#include "asm-arm/arch-avalanche/generic/avalanche_pp_api.h"
+#include "netutils.h"
+#endif
 
 #define PROG_NAME       "SERVICE-WAN"
+#define ER_NETDEVNAME "erouter0"
+
 #if defined(_COSA_BCM_ARM_)
 	#define DHCPC_PID_FILE  "/tmp/udhcpc.erouter0.pid"
 #else
@@ -489,7 +495,34 @@ static int wan_restart(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "wan-restarting", "0", 0);
     return err;
 }
+#if PUMA6_OR_NEWER_SOC_TYPE
+int SendIoctlToPpDev( unsigned int cmd, void* data)
+{
+   int rc;
+   int pp_fd;
 
+   printf(" Entry %s \n", __FUNCTION__);
+
+    if ( ( pp_fd = open ( "/dev/pp" , O_RDWR ) ) < 0 )
+    {
+        printf(" Error in open PP driver %d\n", pp_fd);
+        close(pp_fd);
+        return -1;
+    }
+
+    /* Send Command to PP driver */
+    if ((rc = ioctl(pp_fd, cmd, data)) != 0)
+    {
+        printf(" Error ioctl %d return with %d\n", cmd, rc);
+        close(pp_fd);
+        return -1;
+    }
+
+    close(pp_fd);
+    return 0;
+
+}
+#endif
 static int wan_iface_up(struct serv_wan *sw)
 {
 #if 1 // XXX: MOVE these code to IPv6 scripts, why put them in IPv4 service wan ??
@@ -530,6 +563,17 @@ static int wan_iface_up(struct serv_wan *sw)
 
     sysctl_iface_set("/proc/sys/net/ipv4/conf/%s/arp_announce", sw->ifname, "1");
     vsystem("ip -4 link set %s up", sw->ifname);
+#if PUMA6_OR_NEWER_SOC_TYPE
+
+    if(0 == strncmp(sw->ifname,ER_NETDEVNAME,strlen(ER_NETDEVNAME)))
+    {
+        avalanche_pp_local_dev_addr_ioctl_params_t pp_gwErtMacAddr;
+        NETUTILS_GET_MACADDR(ER_NETDEVNAME, &pp_gwErtMacAddr.u.mac_addr);
+        pp_gwErtMacAddr.op_type = ADD_ADDR;
+        pp_gwErtMacAddr.addr_type = GW_MAC_ADDR;
+        SendIoctlToPpDev(PP_DRIVER_SET_LOCAL_DEV_ADDR,&pp_gwErtMacAddr);
+    }
+#endif
     return 0;
 }
 
@@ -538,6 +582,19 @@ static int wan_iface_down(struct serv_wan *sw)
     int err;
 
     err = vsystem("ip -4 link set %s down", sw->ifname);
+
+
+#if PUMA6_OR_NEWER_SOC_TYPE
+
+    if(0 == strncmp(sw->ifname,ER_NETDEVNAME,strlen(ER_NETDEVNAME)))
+    {
+        avalanche_pp_local_dev_addr_ioctl_params_t pp_gwErtMacAddr;
+        NETUTILS_GET_MACADDR(ER_NETDEVNAME, &pp_gwErtMacAddr.u.mac_addr);
+        pp_gwErtMacAddr.op_type = FLUSH_LIST;
+        pp_gwErtMacAddr.addr_type = GW_MAC_ADDR;
+        SendIoctlToPpDev(PP_DRIVER_SET_LOCAL_DEV_ADDR,&pp_gwErtMacAddr);
+    }
+#endif
 
     return err == 0 ? 0 : -1;
 }
