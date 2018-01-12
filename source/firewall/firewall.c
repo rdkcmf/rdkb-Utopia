@@ -604,6 +604,7 @@ static int isWanReady;
 static int isWanServiceReady;
 static int isBridgeMode;
 static int isRFC1918Blocked;
+static int allowOpenPorts;
 static int isRipEnabled;
 static int isRipWanEnabled;
 static int isNatEnabled;
@@ -1700,6 +1701,16 @@ static int prepare_globals_from_configuration(void)
       isRFC1918Blocked = 0;
    } else {
      isRFC1918Blocked = 1;
+   }
+
+   temp[0] = '\0';
+   rc = syscfg_get(NULL, "RFCAllowOpenPorts", temp, sizeof(temp));
+   if (0 != rc || '\0' == temp[0]) {
+      allowOpenPorts = 0;
+   } else if (0 == strcmp("true", temp)) {
+      allowOpenPorts = 1;
+   } else {
+     allowOpenPorts = 0;
    }
 
    temp[0] = '\0';
@@ -9251,9 +9262,17 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-I FORWARD -d 192.168.100.1/32 -i %s -j DROP\n", lan_ifname);
    fprintf(filter_fp, "-I FORWARD -d 172.31.0.0/16 -i %s -j DROP\n", lan_ifname);
 #endif
+   // In Rogers case, we will always have these ports open. On Comcast platforms where we can control
+   // the state, we'll enable/disable via RFC.
 #if defined(_ROGERS_BUILDS_)
 //TODO: temp fix for ARRISXB6-5624
+   fprintf(stderr, "TR-069 Video firewall hole open\n");
    fprintf(filter_fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
+#else
+   if (allowOpenPorts) {
+       fprintf(stderr, "TR-069 Video firewall hole open\n");
+       fprintf(filter_fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
+   }
 #endif
 
    // RDKB-4826 - IOT rules for DHCP
