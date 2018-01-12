@@ -233,6 +233,7 @@ qtn_init(){
         $IFCONFIG $BASE_WIFI_IF $BASE_WIFI_IP up
         $QCSAPI_PCIE set_ip br0 ipaddr $QTN_BR0_IP
         $QCSAPI_PCIE set_ip br0 netmask 255.255.255.0
+        $QWCFG_TEST set 0 dft_gw_run_script $BASE_WIFI_IP
         $NCPU_EXEC -e 'ifconfig ndp0 mtu 1600'
         # ARRISXB6-6042 workaround to re-enable MTU on wifi driver reload until
         # real fix is available. Set mtu to 1600 on all wifi0.NN interfaces on
