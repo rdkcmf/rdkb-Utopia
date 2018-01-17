@@ -304,8 +304,6 @@ static int dhcp_start(struct serv_wan *sw)
 	if (err != 0)
                    fprintf(stderr, "%s: fail to launch erouter plugin\n", __FUNCTION__);
 
-	err = 0; //temporary hack for ARRISXB3-3748
-
     return err == 0 ? 0 : -1;
 }
 
@@ -315,8 +313,7 @@ static int route_config(const char *ifname)
                 "ip rule add oif %s lookup erouter && "
                 "ip -6 rule add oif %s lookup erouter ",
                 ifname, ifname, ifname) != 0)
-	return 0; //temporary hack for ARRISXB3-3748
-        //hack hack hack return -1;
+	return -1;
 
     return 0;
 }
@@ -327,8 +324,7 @@ static int route_deconfig(const char *ifname)
                 "ip rule del oif %s lookup erouter && "
                 " ip -6 rule del oif %s lookup erouter ",
                 ifname, ifname, ifname) != 0)
-	return 0; //temporary hack for ARRISXB3-3748
-        //hack hack hack return -1;
+	return -1;
 
     return 0;
 }
@@ -543,7 +539,6 @@ static int wan_iface_down(struct serv_wan *sw)
 
     err = vsystem("ip -4 link set %s down", sw->ifname);
 
-	err = 0; //temporary hack for ARRISXB3-3748
     return err == 0 ? 0 : -1;
 }
 
@@ -921,22 +916,19 @@ static int wan_static_start(struct serv_wan *sw)
 
     if(vsystem("ip -4 addr add %s/%s broadcast + dev %s", wan_ipaddr, wan_netmask, sw->ifname) != 0) {
         fprintf(stderr, "%s: Add address to interface %s failed!\n", __FUNCTION__, sw->ifname);
-	return 0; //temporary hack for ARRISXB3-3748
-        //hack hack hack return -1;
+	return -1;
     }
 
     if(vsystem("ip -4 link set %s up", sw->ifname) != 0) {
         fprintf(stderr, "%s: Set interface %s up failed!\n", __FUNCTION__, sw->ifname);
-	return 0; //temporary hack for ARRISXB3-3748
-        //hack hack hack return -1;
+	return -1;
     }
 
     if(vsystem("ip -4 route add table erouter default dev %s via %s && "
                 "ip rule add from %s lookup erouter", sw->ifname, wan_default_gw, wan_ipaddr) != 0)
     {
         fprintf(stderr, "%s: router related config failed!\n", __FUNCTION__);
-	return 0; //temporary hack for ARRISXB3-3748
-        //hack hack hack return -1;
+	return -1;
     }
 
     /*set related sysevent*/
@@ -1056,6 +1048,19 @@ int main(int argc, char *argv[])
     struct serv_wan sw;
 
     fprintf(stderr, "[%s] -- IN\n", PROG_NAME);
+	
+	/* When syseventd use the system() API internally, these calls were returning -1. 
+	 * Reason: system() expects to get the SIGCHLD event when the forked process finishes, 
+	 * but syseventd disables the SIGCHLD process. This setting propagates to the event handlers, 
+	 * because they are child processes of syseventd or syseventd_fork_helper. 
+	 * Workaround: On setting SIGCHLD back to SIG_DFL, 
+	 * system() function calls returns success on successful command execution.*/
+	/* Default handling of SIGCHLD signals */
+	if (signal(SIGCHLD, SIG_DFL) == SIG_ERR)
+    {
+        fprintf(stderr, "ERROR: Couldn't set SIGCHLD handler!\n");
+		return EXIT_FAILURE;
+    }
 
     if (argc < 2) {
         usage();
