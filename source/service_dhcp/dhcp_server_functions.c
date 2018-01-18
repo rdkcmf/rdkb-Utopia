@@ -120,7 +120,7 @@ int prepare_hostname()
 	int l_iRes = 0;
     
     syscfg_get(NULL, "hostname", l_cHostName, sizeof(l_cHostName));
-    syscfg_get(NULL, "current_lan_ipaddr", l_cCurLanIP, sizeof(l_cCurLanIP));
+	sysevent_get(g_iSyseventfd, g_tSysevent_token, "current_lan_ipaddr", l_cCurLanIP, sizeof(l_cCurLanIP));
 
     // Open in Write mode each time for avoiding duplicate entries RDKB- 12295
 	l_fHosts_File = fopen(HOSTS_FILE, "w+");
