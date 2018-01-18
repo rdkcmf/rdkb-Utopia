@@ -278,7 +278,7 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
 #      mount -t jffs2 mtd:SysData $SYSCFG_MOUNT
 #      echo -n > $SYSCFG_FILE
 #   fi
-
+   rm -f /nvram/partners_defaults.json
 # Remove syscfg and PSM storage files
    rm -f $SYSCFG_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME

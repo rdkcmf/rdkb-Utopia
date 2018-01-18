@@ -324,7 +324,7 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    rm -f /nvram/server-TransMgr.xml
    rm -f /nvram/server-cache.xml
    rm -f /nvram/server-duid
-   
+   rm -f /nvram/partners_defaults.json 
    #>>zqiu
    create_wifi_default
    #<<zqiu

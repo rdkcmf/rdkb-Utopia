@@ -318,7 +318,7 @@ if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
 
 #mark the factory reset flag 'on'
    FACTORY_RESET_REASON=true 
-   
+   rm -f /nvram/partners_defaults.json 
    rm -f $SYSCFG_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
