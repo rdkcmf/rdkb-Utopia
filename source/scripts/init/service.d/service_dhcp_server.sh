@@ -78,6 +78,9 @@ PMON=/etc/utopia/service.d/pmon.sh
 PID_FILE=/var/run/dnsmasq.pid
 PID=$$
 
+LXC_PID_FILE=/run/lxc/dnsmasq.pid
+LXC_DHCP_CONF=/etc/dnsmasq.conf
+
 XCONF_FILE="/etc/Xconf"
 XCONF_DEFAULT_URL="https://xconf.xcal.tv/xconf/swu/stb/"
 
@@ -101,6 +104,21 @@ if [ -f "/usr/bin/rpcclient" ] ; then
 else
 	DHCP_SCRIPT=""
 fi
+
+#-----------------------------------------------------------------
+#  dnsserver_start_lxc
+#
+#  Start dnsmasq for the container too whenever dnsmasq is restarted
+#-----------------------------------------------------------------
+dnsserver_start_lxc ()
+{
+   if [ -f /usr/bin/lxc-ls ]; then
+        IS_CONTAINER_ACTIVE=`/usr/bin/lxc-ls --active`
+        if [ "$IS_CONTAINER_ACTIVE" = "webui" ]; then
+             $SERVER -u nobody --strict-order --bind-interfaces --pid-file=$LXC_PID_FILE --conf-file=$LXC_DHCP_CONF --listen-address 147.0.3.1 --dhcp-range 147.0.3.2,147.0.3.254 --dhcp-lease-max=253 --dhcp-no-override --except-interface=lo --interface=$LXC_BRIDGE_NAME --dhcp-leasefile=/tmp/dnsmasq.$LXC_BRIDGE_NAME.leases --dhcp-authoritative
+        fi
+   fi
+}
 
 #-----------------------------------------------------------------
 #  lan_status_change
@@ -213,6 +231,10 @@ restart_request ()
 
    killall `basename $SERVER`
    rm -f $PID_FILE
+
+   if [ "$CONTAINER_SUPPORT" = "1" ]; then
+        dnsserver_start_lxc
+   fi
 
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
      if [ "$XDNS_ENABLE" = "true" ]; then
@@ -391,6 +413,11 @@ dhcp_server_start ()
    sysevent set dns-status stopped
    killall `basename $SERVER`
    rm -f $PID_FILE
+
+   if [ "$CONTAINER_SUPPORT" = "1" ]; then
+      dnsserver_start_lxc
+   fi
+
    # we use dhcp-authoritative flag to indicate that this is
    # the only dhcp server on the local network. This allows
    # the dns server to give out a _requested_ lease even if
@@ -499,6 +526,10 @@ dhcp_server_stop ()
    killall `basename $SERVER`
    rm -f $PID_FILE
    sysevent set dhcp_server-status stopped
+
+   if [ "$CONTAINER_SUPPORT" = "1" ]; then
+        dnsserver_start_lxc
+   fi
 
    # restart the dns server
    if [ "$XDNS_ENABLE" = "true" ]; then
