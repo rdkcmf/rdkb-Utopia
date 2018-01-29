@@ -59,10 +59,36 @@ fi
 
 SERVICE_NAME="ntpd"
 SELF_NAME="`basename $0`"
-CM_INTERFACE="wan0"
 NTP_CONF=/etc/ntp.conf
 NTP_CONF_TMP=/tmp/ntp.conf
 BIN=ntpd
+
+erouter_wait () 
+{
+    EROUTER_IP=""
+    retry=0
+    MAX_RETRY=20
+    while [ ! "$EROUTER_IP" ]
+    do
+       retry=`expr $retry + 1`
+	   if [ "$1" == "IPV4" ]; then
+			EROUTER_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+		else
+       		EROUTER_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+	   fi
+       if [ ! -z "$EROUTER_IP" ]; then
+          break
+       fi
+       sleep 6
+       if [ $retry -eq $MAX_RETRY ];then
+          echo "EROUTER IP not acquired after max etries. Exiting !!!"
+          break
+       fi
+    done
+	
+	echo $EROUTER_IP
+}
+
 service_start ()
 {
 
@@ -73,11 +99,19 @@ service_start ()
       sysevent set ${SERVICE_NAME}-status "stopped"
       if [ "x`pidof $BIN`" = "x" ]
       then
-		echo "NTPD is not running, starting in Server mode"
-		cp $NTP_CONF $NTP_CONF_TMP
-		echo "interface ignore wildcard" >> $NTP_CONF_TMP
-		echo "interface listen $ARM_INTERFACE_IP" >> $NTP_CONF_TMP
-		ntpd -c $NTP_CONF_TMP 
+		if [ "x$MULTI_CORE" = "xyes" ]
+		then
+			echo "NTPD is not running, starting in Server mode"
+			cp $NTP_CONF $NTP_CONF_TMP
+			echo "interface ignore wildcard" >> $NTP_CONF_TMP
+			echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
+
+			if [ "x$BOX_TYPE" = "xXB3" ]; then
+				ntpd -c $NTP_CONF_TMP -l /rdklogs/logs/ntpLog.log
+			else
+				systemctl start ntpd.service
+			fi
+		fi
       fi
       return 0
 
@@ -116,35 +150,57 @@ service_start ()
 	else
 		MASK="255.255.255.0"
 	fi
-       CM_IP=""
-       CM_IP=`ifconfig $CM_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+	PROVISIONED_TYPE=""
+	WAN_IP=""
+	
+	PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
+	
+	if [ "$NTPD_INTERFACE" == "erouter0" ]; then
+		sleep 30
+		WAN_IP=$(erouter_wait $PROVISIONED_TYPE)
+	else
+		if [ "$PROVISIONED_TYPE" == "IPV4" ]; then
+			WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+		else
+			WAN_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+		fi
+	fi
 
-	echo "restrict $ATOM_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
+	echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
 	echo "restrict default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
 	echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
 	echo "restrict 127.0.0.1" >> $NTP_CONF_TMP
 	echo "restrict -6 ::1" >> $NTP_CONF_TMP
 	echo "interface ignore wildcard" >> $NTP_CONF_TMP
 
-   	if [ "$CM_IP" != "" ]
+   	if [ "$WAN_IP" != "" ]
         then
-		echo "interface listen $CM_IP" >> $NTP_CONF_TMP
+		echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
         fi   
 
-    kill -9 `pidof $BIN` > /dev/null 2>&1
-    if [ "x$BOX_TYPE" = "xXB3" ]
+    if [ "x$MULTI_CORE" = "xyes" ]
     then
-	   echo "interface listen $ARM_INTERFACE_IP" >> $NTP_CONF_TMP
+	   echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
     fi
 
     echo "SERVICE_NTPD : Starting NTP daemon"
-    ntpd -c $NTP_CONF_TMP -g
+	if [ "x$BOX_TYPE" = "xXB3" ]; then
+    	kill -9 `pidof $BIN` > /dev/null 2>&1
+		ntpd -c $NTP_CONF_TMP -l /rdklogs/logs/ntpLog.log -g
+	else
+		systemctl stop ntpd.service
+		systemctl start ntpd.service
+	fi		
 
     ret_val=$?
     if [ "$ret_val" -ne 0 ]
     then
-           echo "SERVICE_NTPD : NTP failed to start, retrying"
-	   ntpd -c $NTP_CONF_TMP -g
+       echo "SERVICE_NTPD : NTP failed to start, retrying"
+	   if [ "x$BOX_TYPE" = "xXB3" ]; then
+	   	ntpd -c $NTP_CONF_TMP -l /rdklogs/logs/ntpLog.log -g
+	   else
+	   	systemctl start ntpd.service
+	   fi
     fi
 
    echo "ntpd started , setting the status as started"
@@ -162,7 +218,11 @@ service_start ()
 
 service_stop ()
 {
-   kill -9 `pidof $BIN` > /dev/null 2>&1
+   if [ "x$BOX_TYPE" = "xXB3" ]; then
+   	kill -9 `pidof $BIN` > /dev/null 2>&1
+   else
+   	systemctl stop ntpd.service
+   fi
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
 
@@ -200,4 +260,3 @@ case "$1" in
       exit 3
       ;;
 esac
-
