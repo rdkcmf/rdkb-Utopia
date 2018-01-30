@@ -71,11 +71,8 @@ erouter_wait ()
     while [ ! "$EROUTER_IP" ]
     do
        retry=`expr $retry + 1`
-	   if [ "$1" == "IPV4" ]; then
-			EROUTER_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
-		else
-       		EROUTER_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
-	   fi
+	   EROUTER_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+
        if [ ! -z "$EROUTER_IP" ]; then
           break
        fi
@@ -150,15 +147,16 @@ service_start ()
 	else
 		MASK="255.255.255.0"
 	fi
-	PROVISIONED_TYPE=""
-	WAN_IP=""
 	
-	PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
+	WAN_IP=""
 	
 	if [ "$NTPD_INTERFACE" == "erouter0" ]; then
 		sleep 30
-		WAN_IP=$(erouter_wait $PROVISIONED_TYPE)
+		WAN_IP=$(erouter_wait)
 	else
+		PROVISIONED_TYPE=""
+		PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
+		
 		if [ "$PROVISIONED_TYPE" == "IPV4" ]; then
 			WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
 		else
