@@ -9186,8 +9186,20 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A INPUT -p icmp -m state --state ESTABLISHED -m limit --limit 5/sec --limit-burst 10 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -p icmp -m state --state ESTABLISHED -j DROP\n");
 #endif
+
+#if defined (INTEL_PUMA7)
+   fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp --dport=22 -j ACCEPT\n");
+#endif
+
+#if defined(_ROGERS_BUILDS_)
    fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+#else
+   if (allowOpenPorts) {
+       fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
+       fprintf(filter_fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+   }
+#endif
 
    fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
@@ -10557,8 +10569,19 @@ static void do_ipv6_filter_table(FILE *fp){
        fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
    }
 
+#if defined (INTEL_PUMA7)
+   fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=22 -j ACCEPT\n");
+#endif
+
+#if defined(_ROGERS_BUILDS_)
    fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
    fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+#else
+   if (allowOpenPorts) {
+       fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
+       fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+   }
+#endif
 
    do_block_ports(fp);	
    fprintf(fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
@@ -10865,7 +10888,13 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A INPUT -j LOG_INPUT_DROP \n");
 #if defined(_ROGERS_BUILDS_)
       //TODO: temp fix for ARRISXB6-5624
+      fprintf(stderr, "TR-069 Video firewall hole open\n");
       fprintf(fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
+#else
+      if (allowOpenPorts) {
+          fprintf(stderr, "TR-069 Video firewall hole open\n");
+          fprintf(fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
+      }
 #endif
       //Adding rule for XB6 ARRISXB6-3348 and TCXB6-2262
 #if defined(INTEL_PUMA7) || defined(_COSA_BCM_ARM_)
