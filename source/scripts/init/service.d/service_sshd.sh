@@ -59,7 +59,10 @@ SELF_NAME="`basename $0`"
 
 PID_FILE=/var/run/dropbear.pid
 PMON=/etc/utopia/service.d/pmon.sh
-
+if [ -f /etc/mount-utils/getConfigFile.sh ];then
+      mkdir -p /tmp/.dropbear
+     . /etc/mount-utils/getConfigFile.sh
+fi
 do_start() {
    #DIR_NAME=/tmp/home/admin
    #if [ ! -d $DIR_NAME ] ; then
@@ -82,8 +85,12 @@ do_start() {
    then
       #wan0 should be in v4
       CM_IP=`ifconfig wan0 | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
-   fi   
-   dropbear -E -s -b /etc/sshbanner.txt -a -p [$CM_IP]:22
+   fi
+   DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1.xyz"
+   DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2.xyz"
+   getConfigFile $DROPBEAR_PARAMS_1
+   getConfigFile $DROPBEAR_PARAMS_2
+   dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22
    sysevent set ssh_daemon_state up
 }
 
@@ -118,6 +125,7 @@ service_start() {
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status "started"
+		rm -rf /tmp/.dropbear
 
 	#fi
 
