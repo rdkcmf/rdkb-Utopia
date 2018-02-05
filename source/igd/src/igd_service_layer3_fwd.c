@@ -230,6 +230,8 @@ LOCAL INT32 _igd_check_DefaultConnectionService (IN const CHAR *connecion_servic
 
 	if(strlen(connecion_service_string)<UPNP_UUID_LEN_BY_VENDER)
 		return INVALID_DEVICE_UUID;
+	if(strlen(connecion_service_string)>PAL_UPNP_NAME_SIZE) /* Fix for RDKB-15855 */
+		return INVALID_DEVICE_UUID;	
 	
 	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"check the string:%s\n",connecion_service_string);
 	
