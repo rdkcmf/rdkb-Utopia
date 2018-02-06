@@ -188,6 +188,7 @@ service_start ()
 	else
 		systemctl stop ntpd.service
 		systemctl start ntpd.service
+		systemctl stop systemd-timesyncd
 	fi		
 
     ret_val=$?
