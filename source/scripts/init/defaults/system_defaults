@@ -696,6 +696,8 @@ $router_other_flag=1
 $router_adv_provisioning_enable=1
 $last_router_reboot_time=0
 $router_reboot_Interval=28800
+#Threshold value of reinitMac
+$rdkbReinitMacThreshold=5
 # Locale Settings
 $locale=en-us
 
