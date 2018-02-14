@@ -17,13 +17,19 @@
 # limitations under the License.
 ##########################################################################
 bin_PROGRAMS = apply_system_defaults
-
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util
-
+DEPENDS = "hal-platform"
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/../hal/include
+hardware_platform = i686-linux-gnu
 AM_LDFLAGS =  -lpthread -lz \
                 $(top_builddir)/source/services/lib/libsrvmgr.la \
                 $(top_builddir)/source/sysevent/lib/libsysevent.la \
                 $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                $(top_builddir)/source/ulog/libulog.la
+                $(top_builddir)/source/ulog/libulog.la \
+				$(top_srcdir)/source/utapi/lib/libutapi.la \
+                $(top_srcdir)/source/utctx/lib/libutctx.la
+
+if CCSP_ARCH_ARM
+AM_LDFLAGS += "-lhal_platform -lsysevent -lutctx -lutapi -lhal_wifi" 
+endif
 
 apply_system_defaults_SOURCES = apply_system_defaults.c

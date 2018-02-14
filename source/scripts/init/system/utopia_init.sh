@@ -301,6 +301,13 @@ SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
 if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
    echo_t "[utopia][init] Performing factory reset"
+
+SYSCFG_PARTNER_FR="`syscfg get PartnerID_FR`"
+if [ "1" = "$SYSCFG_PARTNER_FR" ]; then
+   echo_t "[utopia][init] Performing factory reset due to PartnerID change"
+else
+   rm -f /nvram/.partner_ID
+fi
 # Remove log file first because it need get log file path from syscfg   
    /fss/gw/usr/sbin/log_handle.sh reset
    echo -e "\n" | syscfg_destroy 
@@ -315,7 +322,6 @@ if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
 #   fi
 
 # Remove syscfg and PSM storage files
-
 #mark the factory reset flag 'on'
    FACTORY_RESET_REASON=true 
    rm -f /nvram/partners_defaults.json 
@@ -337,6 +343,7 @@ if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
    rm -f /nvram/server-cache.xml
    rm -f /nvram/server-duid
    rm -f /nvram/.keys/*
+     touch /nvram/.apply_partner_defaults   
    #>>zqiu
    create_wifi_default
    #<<zqiu
