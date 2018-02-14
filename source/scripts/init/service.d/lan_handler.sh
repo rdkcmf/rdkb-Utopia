@@ -211,7 +211,7 @@ case "$1" in
 
             #sysevent set desired_moca_link_state up
             
-            firewall_nfq_handler.sh &             
+            #firewall_nfq_handler.sh &
 
             sysevent set lan_start_time `cat /proc/uptime | cut -d'.' -f1`
 

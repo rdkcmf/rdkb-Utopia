@@ -361,7 +361,7 @@ void ipv4_status(int l3_inst, char *status)
 			fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART\n");
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
         }
-        system("firewall_nfq_handler.sh &");
+//        system("firewall_nfq_handler.sh &");
     	sysinfo(&l_sSysInfo);
 		snprintf(l_cLan_Uptime, sizeof(l_cLan_Uptime), "%ld", l_sSysInfo.uptime);
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_start_time", l_cLan_Uptime, 0);	
