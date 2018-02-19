@@ -8595,6 +8595,7 @@ static int prepare_multinet_postrouting_nat(FILE *nat_fp) {
 
 static void prepare_ipc_filter(FILE *filter_fp) {
                 FIREWALL_DEBUG("Entering prepare_ipc_filter\n"); 	  
+#if !defined (_COSA_BCM_ARM_)
     // TODO: fix this hard coding
     fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.500");
     fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.500");
@@ -8603,6 +8604,7 @@ static void prepare_ipc_filter(FILE *filter_fp) {
     fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.4093");
     fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.4093");
 //zqiu<<
+#endif
 #if defined (_COSA_BCM_ARM_)
    fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "privbr");
 #endif
@@ -9344,8 +9346,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    prepare_multinet_filter_forward(filter_fp);
    fprintf(filter_fp, "-A FORWARD -j xlog_drop_wan2lan\n");
    
+#if !defined(_COSA_BCM_ARM_)
    fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
    fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
+#endif
+
 #if defined(_COSA_BCM_ARM_)
    fprintf(filter_fp, "-I FORWARD -d 192.168.100.1/32 -i %s -j DROP\n", lan_ifname);
    fprintf(filter_fp, "-I FORWARD -d 172.31.0.0/16 -i %s -j DROP\n", lan_ifname);
@@ -11134,12 +11139,14 @@ int do_mdc2wan_enable(FILE *filter_fp,FILE *nat_fp)
     fprintf(nat_fp, "-I PREROUTING -j prerouting_frommdc\n");
     fprintf(nat_fp, "-I POSTROUTING -j postrouting_tomdc\n");
 
+#if !defined(_COSA_BCM_ARM_)
     // Allow traffic between ARM and ATOM on VLAN 4040
     fprintf(filter_fp, "-I INPUT -i l2sd0.4040 -j ACCEPT\n");
 
     // Allow forwarded NAT packets for MDC
     fprintf(filter_fp, "-I FORWARD -i l2sd0.4040 -p tcp -m tcp --sport 8080 -s 192.168.250.1 -j ACCEPT\n");
     fprintf(filter_fp, "-I FORWARD -o l2sd0.4040 -p tcp -m tcp --dport 8080 -d 192.168.250.1 -j ACCEPT\n");
+#endif
 
     numDestAddrs = atoi( count );
     if ( numDestAddrs > DESTADDRS_MAX ){
@@ -11168,7 +11175,9 @@ int do_mdc2wan_disable(FILE *filter_fp,FILE *nat_fp)
     // Allow internal VLAN 4040 traffic between ARM and ATOM for pings. Don't
     // need NAT because MDC is disabled. Stuff from LAN will not be
     // forwarded to l2sd0.4040
+#if !defined(_COSA_BCM_ARM_)
     fprintf(filter_fp, "-I INPUT -i l2sd0.4040 -j ACCEPT\n");
+#endif
 
     FIREWALL_DEBUG("Exiting %s\n" COMMA __func__);
 
