@@ -1231,6 +1231,7 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num)
    
     while(fgets(procLine, MAX_INET6_PROC_CHARS, fp))
     {
+      memset(&v6Details, 0, sizeof(ifv6Details));
       parsingResult=parseProcfileParams(procLine, &v6Details,ifname);
       if (parsingResult == 1)
       {
