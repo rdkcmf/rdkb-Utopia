@@ -441,6 +441,9 @@ static int gen_ripd_conf(int sefd, token_t setok)
 
 static int radv_start(struct serv_routed *sr)
 {
+#if defined(_COSA_FOR_BCI_)
+    char dhcpv6Enable[8]={0};
+#endif
     /* XXX: 
      * 1) even IPv4 only zebra should start (ripd need it) !
      * 2) IPv6-only do not use wan-status  */
@@ -470,7 +473,17 @@ static int radv_start(struct serv_routed *sr)
     }
 
     daemon_stop(ZEBRA_PID_FILE, "zebra");
+#if defined(_COSA_FOR_BCI_)
+    syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
+    if (!strncmp(dhcpv6Enable, "1", 1))
+    {
+        vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+        printf("DHCPv6 is Enabled. Starting zebra Process\n");
+    }
+#else
     vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+#endif
+
     return 0;
 }
 

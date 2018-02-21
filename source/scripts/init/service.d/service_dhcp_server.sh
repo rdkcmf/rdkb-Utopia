@@ -349,6 +349,9 @@ dhcp_server_start ()
 
       sysevent set dhcp_server-status error
       sysevent set dhcp_server-errinfo "dhcp server is disabled by configuration" 
+      if [ "$IS_BCI" = "yes" ]; then
+      echo_t "SERVICE DHCP : DHCPv4 Service is stopped"
+      fi
       rm -f /var/tmp/lan_not_restart
 	  return 0
    fi
@@ -503,6 +506,9 @@ dhcp_server_start ()
    sysevent set dns-status started
    sysevent set dhcp_server-status started
    sysevent set dhcp_server-progress completed
+   if [ "$IS_BCI" = "yes" ]; then
+   echo_t "DHCP SERVICE :DHCPv4 Service is started"
+   fi
    echo_t "DHCP SERVICE :dhcp_server-progress_is_set_to_completed:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
 
    echo_t "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
