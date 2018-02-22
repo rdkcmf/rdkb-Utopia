@@ -491,6 +491,12 @@ static int wan_start(struct serv_wan *sw)
     }
 #endif
 
+    /* set current_wan_ifname at wan-start, for all erouter modes */
+    if (sw->rtmod != WAN_RTMOD_UNKNOW) {
+        /* set sysevents and trigger for other modules */
+        sysevent_set(sw->sefd, sw->setok, "current_wan_ifname", sw->ifname, 0);
+    }
+
     if (sw->rtmod != WAN_RTMOD_IPV4 && sw->rtmod != WAN_RTMOD_DS)
         goto done; /* no need to config addr/route if IPv4 not enabled */
 
