@@ -1036,12 +1036,24 @@ OPTIONS:
 
 static int dhcpv6s_start(struct serv_ipv6 *si6)
 {
+    #if defined(_COSA_FOR_BCI_)
+    char dhcpv6Enable[8]={0};
+    #endif
+
     if (gen_dibbler_conf(si6) != 0) {
         fprintf(stderr, "%s: fail to generate dibbler config\n", __FUNCTION__);
         return -1;
     }
 
     daemon_stop(DHCPV6S_PID_FILE, "dibbler");
+#if defined(_COSA_FOR_BCI_)
+    syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
+    if (!strncmp(dhcpv6Enable, "0", 1))
+    {
+       fprintf(stderr, "%s: DHCPv6 Disabled. Dibbler start not required !\n", __FUNCTION__);
+       return 0;
+    }
+#endif
     vsystem("%s start", DHCPV6_SERVER);
     return 0;
 }
