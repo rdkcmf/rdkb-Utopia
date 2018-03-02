@@ -9315,6 +9315,14 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #endif
    prepare_multinet_filter_input(filter_fp);
    prepare_ipc_filter(filter_fp);
+
+   //>>DOS
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec --limit-burst 20 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j DROP\n");
+#endif
+   //<<DOS
+
    //fprintf(filter_fp, "-A OUTPUT -m state --state INVALID -j DROP\n");
 
    /*
