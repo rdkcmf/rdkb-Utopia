@@ -200,6 +200,7 @@ int Utopia_AddBlkURL(UtopiaContext *ctx, const blkurl_t *blkurl)
 
     Utopia_SetBlkURLByIndex(ctx, index, blkurl);
 
+    printf("%s-%d RDKB_PCONTROL[URL]:%lu,%s\n",__FUNCTION__,__LINE__,blkurl->ins_num,blkurl->site);
     return 0;
 }
 
@@ -247,6 +248,13 @@ int Utopia_DelBlkURL(UtopiaContext *ctx, unsigned long ins)
     g_ParentalControl_ManagedSiteBlockCount--;
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedSiteBlockedCount, g_ParentalControl_ManagedSiteBlockCount);
 
+    Utopia_GetNumberOfBlkURL(ctx, &count);
+    for (index = 0; index < count; index++)
+    {
+        blkurl_t blkurl;
+        Utopia_GetBlkURLByIndex(ctx, index, &blkurl);
+        printf("%s-%d RDKB_PCONTROL[URL]:%lu,%s\n",__FUNCTION__,__LINE__,blkurl.ins_num,blkurl.site);
+    }
     return 0;
 }
 
@@ -314,6 +322,7 @@ int Utopia_AddTrustedUser(UtopiaContext *ctx, const trusted_user_t *trusted_user
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedSiteTrustedCount, g_ParentalControl_ManagedSiteTrustCount);
 
     Utopia_SetTrustedUserByIndex(ctx, index, trusted_user);
+    printf("%s-%d RDKB_PCONTROL[TUSER]:%lu,%s\n",__FUNCTION__,__LINE__,trusted_user->ins_num,trusted_user->ipaddr);
     return 0;
 }
 
@@ -356,6 +365,13 @@ int Utopia_DelTrustedUser(UtopiaContext *ctx, unsigned long ins)
     g_ParentalControl_ManagedSiteTrustCount--;
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedSiteTrustedCount, g_ParentalControl_ManagedSiteTrustCount);
 
+    Utopia_GetNumberOfTrustedUser(ctx, &count);
+    for (index = 0; index < count; index++)
+    {
+        trusted_user_t trusted_user;
+        Utopia_GetTrustedUserByIndex(ctx, index, &trusted_user);
+        printf("%s-%d RDKB_PCONTROL[TUSER]:%lu,%s\n",__FUNCTION__,__LINE__,trusted_user.ins_num,trusted_user.ipaddr);
+    }
     return 0;
 }
 
@@ -433,6 +449,7 @@ int Utopia_AddMSServ(UtopiaContext *ctx, const ms_serv_t *ms_serv)
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedServiceBlockedCount, g_ParentalControl_ManagedServiceBlockCount);
 
     Utopia_SetMSServByIndex(ctx, index, ms_serv);
+    printf("%s-%d RDKB_PCONTROL[MSSERV]:%lu,%s\n",__FUNCTION__,__LINE__,ms_serv->ins_num,ms_serv->descp);
     return 0;
 }
 
@@ -478,6 +495,13 @@ int Utopia_DelMSServ(UtopiaContext *ctx, unsigned long ins)
 
     g_ParentalControl_ManagedServiceBlockCount--;
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedServiceBlockedCount, g_ParentalControl_ManagedServiceBlockCount);
+    Utopia_GetNumberOfMSServ(ctx, &count);
+    for (index = 0; index < count; index++)
+    {
+        ms_serv_t ms_serv;
+        Utopia_GetMSServByIndex(ctx, index, &ms_serv);
+        printf("%s-%d RDKB_PCONTROL[MSSERV]:%lu,%s\n",__FUNCTION__,__LINE__,ms_serv.ins_num,ms_serv.descp);
+    }
 
     return 0;
 }
@@ -545,6 +569,8 @@ int Utopia_AddMSTrustedUser(UtopiaContext *ctx, const ms_trusteduser_t *ms_trust
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedServiceTrustedCount, g_ParentalControl_ManagedServiceTrustCount);
 
     Utopia_SetMSTrustedUserByIndex(ctx, index, ms_trusteduser);
+
+    printf("%s-%d RDKB_PCONTROL[MSTUSER]:%lu,%s\n",__FUNCTION__,__LINE__,ms_trusteduser->ins_num,ms_trusteduser->ipaddr);
     return 0;
 }
 
@@ -587,6 +613,13 @@ int Utopia_DelMSTrustedUser(UtopiaContext *ctx, unsigned long ins)
     g_ParentalControl_ManagedServiceTrustCount--;
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedServiceTrustedCount, g_ParentalControl_ManagedServiceTrustCount);
 
+    Utopia_GetNumberOfMSTrustedUser(ctx, &count);
+    for (index=0; index < count; index++)
+    {
+        ms_trusteduser_t trusted_user;
+        Utopia_GetMSTrustedUserByIndex(ctx, index, &trusted_user);
+        printf("%s-%d RDKB_PCONTROL[MSTUSER]:%lu,%s\n",__FUNCTION__,__LINE__,trusted_user.ins_num,trusted_user.ipaddr);
+    }
     return 0;
 }
 
@@ -651,7 +684,8 @@ int Utopia_SetMDDevInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex,
 
 int Utopia_AddMDDev(UtopiaContext *ctx, const md_dev_t *md_dev)
 {
-    int index;
+    int index,i,j,size;
+    char mac_addr[12];
 
     Utopia_GetNumberOfMDDev(ctx, &index);
 
@@ -659,12 +693,24 @@ int Utopia_AddMDDev(UtopiaContext *ctx, const md_dev_t *md_dev)
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedDeviceCount, g_ParentalControl_ManagedDeviceCount);
 
     Utopia_SetMDDevByIndex(ctx, index, md_dev);
+    j = 0;
+    size = strlen(md_dev->macaddr);
+    for (i = 0; i < size; i++) {
+    	if ((md_dev->macaddr)[i] != ':'){
+            char ch1 = (md_dev->macaddr)[i];
+            mac_addr[j] = ch1;
+            j++;
+        }
+    }
+    mac_addr[j] = '\0';
+    printf("%s-%d RDKB_PCONTROL[MDDEV]:%lu,%s\n",__FUNCTION__,__LINE__,md_dev->ins_num,mac_addr);
     return 0;
 }
 
 int Utopia_DelMDDev(UtopiaContext *ctx, unsigned long ins)
 {
-    int count, index;
+    int count, index, i, j, size;
+    char mac_addr[12];
 
     Utopia_GetNumberOfMDDev(ctx, &count);
     for (index = 0; index < count; index++)
@@ -704,5 +750,22 @@ int Utopia_DelMDDev(UtopiaContext *ctx, unsigned long ins)
     g_ParentalControl_ManagedDeviceCount--;
     Utopia_SetInt(ctx, UtopiaValue_ParentalControl_ManagedDeviceCount, g_ParentalControl_ManagedDeviceCount);
 
+    Utopia_GetNumberOfMDDev(ctx, &count);
+    for (index=0; index < count; index++)
+    {
+	md_dev_t md_dev;
+	Utopia_GetMDDevByIndex(ctx, index, &md_dev);
+	j = 0;
+        size = strlen(md_dev.macaddr);
+        for (i = 0; i < size; i++) {
+            if (md_dev.macaddr[i] != ':'){
+                char ch1 = md_dev.macaddr[i];
+                mac_addr[j] = ch1;
+                j++;
+            }
+    	}
+        mac_addr[j] = '\0';
+        printf("%s-%d RDKB_PCONTROL[MDDEV]:%lu,%s\n",__FUNCTION__,__LINE__,md_dev.ins_num,mac_addr);
+    }
     return 0;
 }
