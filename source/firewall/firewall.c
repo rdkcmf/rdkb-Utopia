@@ -5199,10 +5199,10 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 
       // we still need to protect against other icmp besides ping
       fprintf(filter_fp, "-A wan2self_ports -p icmp -m limit --limit 1/second -j xlog_accept_wan2self\n");
-#ifdef _COSA_INTEL_XB3_ARM_
-      fprintf(filter_fp, "-A wan2self_ports ! -i erouter0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec --limit-burst 20 -j ACCEPT\n");
-      fprintf(filter_fp, "-A wan2self_ports ! -i erouter0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j DROP\n");
-#endif
+//#ifdef _COSA_INTEL_XB3_ARM_
+//      fprintf(filter_fp, "-A wan2self_ports ! -i erouter0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec --limit-burst 20 -j ACCEPT\n");
+//      fprintf(filter_fp, "-A wan2self_ports ! -i erouter0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j DROP\n");
+//#endif
       //rule for IGMP(protocol num is 2)
       fprintf(filter_fp, "-A wan2self_ports -p 2 -j %s\n", "xlog_accept_wan2self");
    }
@@ -9158,6 +9158,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":lan2self_plugins - [0:0]");
    fprintf(filter_fp, "%s\n", ":self2lan - [0:0]");
    fprintf(filter_fp, "%s\n", ":self2lan_plugins - [0:0]");
+   //>>DOS
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(filter_fp, "%s\n", ":wandosattack - [0:0]");
+#endif
+   //<<DOS
    fprintf(filter_fp, "%s\n", ":wan2self - [0:0]");
    fprintf(filter_fp, "%s\n", ":wan2self_mgmt - [0:0]");
    fprintf(filter_fp, "%s\n", ":wan2self_ports - [0:0]");
@@ -9318,8 +9323,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
    //>>DOS
 #ifdef _COSA_INTEL_XB3_ARM_
-   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec --limit-burst 20 -j ACCEPT\n");
-   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j DROP\n");
+   fprintf(filter_fp, "-I INPUT -i erouter0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j wandosattack\n");
+   fprintf(filter_fp, "-I INPUT -i wan0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j wandosattack\n");
+   fprintf(filter_fp, "-A wandosattack -m limit --limit 10/sec --limit-burst 20 -j ACCEPT\n");
+   fprintf(filter_fp, "-A wandosattack -j DROP\n");
 #endif
    //<<DOS
 
