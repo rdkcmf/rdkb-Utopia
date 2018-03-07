@@ -815,6 +815,8 @@ $moca_node_taboo_enabled=1
 $moca_node_taboo_mask=eaaefe00
 $moca_mixed_mode=1
 
+$moca_log_enabled=false
+$moca_log_period=3600
 $X_RDKCENTRAL-COM_ForceEnable=false
 # saMocaDevicePower settings
 $moca_pwr_apc_enable=1
