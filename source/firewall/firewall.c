@@ -9198,7 +9198,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp --dport=22 -j ACCEPT\n");
 #endif
 
-#if defined(_ROGERS_BUILDS_)
+//#if defined(_ROGERS_BUILDS_)
+#if defined(_SYNDICATION_BUILDS_)
    fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
 #else
@@ -9372,7 +9373,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #endif
    // In Rogers case, we will always have these ports open. On Comcast platforms where we can control
    // the state, we'll enable/disable via RFC.
-#if defined(_ROGERS_BUILDS_)
+//#if defined(_ROGERS_BUILDS_)
+#if defined(_SYNDICATION_BUILDS_)
 //TODO: temp fix for ARRISXB6-5624
    fprintf(stderr, "TR-069 Video firewall hole open\n");
    fprintf(filter_fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
@@ -10593,7 +10595,8 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=22 -j ACCEPT\n");
 #endif
 
-#if defined(_ROGERS_BUILDS_)
+//#if defined(_ROGERS_BUILDS_)
+#if defined(_SYNDICATION_BUILDS_)
    fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
    fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
 #else
@@ -10906,7 +10909,8 @@ v6GPFirewallRuleNext:
 
       // Logging and rejecting politely (rate limiting anyway)
       fprintf(fp, "-A INPUT -j LOG_INPUT_DROP \n");
-#if defined(_ROGERS_BUILDS_)
+//#if defined(_ROGERS_BUILDS_)
+#if defined(_SYNDICATION_BUILDS_)
       //TODO: temp fix for ARRISXB6-5624
       fprintf(stderr, "TR-069 Video firewall hole open\n");
       fprintf(fp, "-I FORWARD -p tcp -m tcp --dport 56982 -j ACCEPT\n");
