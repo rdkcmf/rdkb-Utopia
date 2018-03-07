@@ -261,7 +261,7 @@ else
    echo_t "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    #<<zqiu
-
+   touch /nvram/.apply_partner_defaults
    # Put value 204 into networkresponse.txt file so that
    # all LAN services start with a configuration which will
    # redirect everything to Gateway IP.

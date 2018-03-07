@@ -545,22 +545,6 @@ static int writeToJson(char *data)
     return 0;
 }
 
-int add_new_parmToPartners(char * key,char *value,int rowCnt_nvram,cJSON* root_nvram_json)
-{
-	int 	val;
-	for( val = 0 ; val < rowCnt_nvram ; val++)
-	{
-		if ( cJSON_GetArrayItem(root_nvram_json,val) != NULL)
-		{
-			if ( (cJSON_GetArrayItem(root_nvram_json,val)->string != NULL))
-				{
-					cJSON *subitem = cJSON_GetArrayItem(root_nvram_json,val);
-					cJSON_AddItemToObject(subitem, key, cJSON_CreateString(value));
-				}
-		}
-	}
-}
-
 int set_syscfg_partner_values(char *pValue,char *param)
 {
 	if ((syscfg_set(NULL, param, pValue) != 0)) 
@@ -578,153 +562,8 @@ int set_syscfg_partner_values(char *pValue,char *param)
 		return 0;
 	}
 }
-
-char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj)
+static int get_PartnerID( char *PartnerID)
 {
-
-	cJSON 	*subitem_nvram = NULL, 	*subitem_etc = NULL;
-	char 	*key = NULL, 	*value = NULL;
-        int 	rowCnt_etc = 0, 	rowCnt_nvram = 0, 	etc_val = 0, nvram_val = 0, 	count = 0, 	count_etc = 0, 	count_nvram = 0;
-
-	cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
-	cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);	
-
-	rowCnt_etc = cJSON_GetArraySize(root_etc_json);
-	rowCnt_nvram = cJSON_GetArraySize(root_nvram_json);
-	
-	for (etc_val = 0; etc_val < rowCnt_etc ; etc_val++)
-	{
-		subitem_etc = cJSON_GetArrayItem(root_etc_json,etc_val);
-		
-		if ( (cJSON_GetArrayItem(root_etc_json,etc_val) != NULL) && (strcmp ( cJSON_GetArrayItem(root_etc_json,etc_val)->string , "comcast" ) == 0 ))
-		{
-			int etc_paramCount = cJSON_GetArraySize(subitem_etc);
-			
-			for( nvram_val = 0 ; nvram_val < rowCnt_nvram ; nvram_val++)
-			{	
-				subitem_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val);
-				int nvram_paramCount = cJSON_GetArraySize(subitem_nvram);
-				
-				if (  (cJSON_GetArrayItem(root_etc_json,etc_val) != NULL) && (strcmp ( cJSON_GetArrayItem(root_nvram_json,nvram_val)->string , "comcast" ) == 0 ))
-				{
-
-					for( count_etc = 0 ; count_etc < etc_paramCount ; count_etc++)
-					{
-
-						if (cJSON_GetArrayItem(subitem_etc, count_etc) != NULL)
-						{
-							if (cJSON_GetArrayItem(subitem_etc, count_etc)->string != NULL)
-							{
-								count = 0;
-								for( count_nvram = 0 ;count_nvram< nvram_paramCount ; count_nvram++)
-								{
-					
-									if ( cJSON_GetArrayItem(subitem_nvram,count_nvram) != NULL)
-									{
-										if (cJSON_GetArrayItem(subitem_nvram, count_nvram)->string != NULL)
-										{
-											if( strcmp( (cJSON_GetArrayItem(subitem_etc, count_etc)->string) , (cJSON_GetArrayItem(subitem_nvram, count_nvram)->string)) != 0 )
-											{
-												count++;
-											}
-											else
-											{
-												break;
-											}
-										}
-										else
-										{
-											printf ("Nvram JSON file has empty Parameter list\n");
-													
-										}
-									}
-
-								}
-
-								if (count == nvram_paramCount )
-								{
-									printf("Adding new param to JSON file\n");
-									key = cJSON_GetArrayItem(subitem_etc, count_etc)->string;
-									value = cJSON_GetArrayItem(subitem_etc, count_etc)->valuestring;
-
-									// Add newly introduced entry from /etc/ directory to /nvram directory
-									add_new_parmToPartners(key,value, rowCnt_nvram,root_nvram_json);
-
-									//Change the syscfg.db params to corresponding partners 							
-									if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") )
-									{
-										set_syscfg_partner_values( value,"user_name_3" );
-									}
-									
-									if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword") )
-									{
-										set_syscfg_partner_values( value,"user_password_3" );
-									}
-									
-									if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP") )
-									{
-										set_syscfg_partner_values( value,"lan_ipaddr" );
-									}
-									
-									if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange") )
-									{
-										set_syscfg_partner_values( value,"lan_netmask" );
-									}
-								}
-							}
-						}
-		
-					}
-				
-				}
-				
-			}
-
-		}
-
-	}
-
-	for (etc_val = 0; etc_val < rowCnt_etc ;etc_val++)
-	{
-		int flag = 0;
-		for (nvram_val = 0; nvram_val < rowCnt_nvram;nvram_val++)
-		{
-			if ( strcmp ( cJSON_GetArrayItem(root_nvram_json,nvram_val)->string , cJSON_GetArrayItem(root_etc_json,etc_val)->string ) == 0)
-			{
-				break;
-			}
-			else
-			{
-				flag++;
-				printf("flag is %d\n",flag);
-			}
-		}
-		if ( flag == rowCnt_nvram)
-		{
-			printf("Adding New PartnerId details to nvram JSON file\n");	
-			cJSON_AddItemToArray(root_nvram_json,  cJSON_GetArrayItem(root_etc_json,etc_val));
-			break;
-		}
-				
-	}
-
-	char *out = cJSON_Print(root_nvram_json);
-	writeToJson(out);
-	out = NULL;
-
-	cJSON_Delete(root_nvram_json);
-}
-
-int apply_partnerId_default_values(char *data)
-{
-	cJSON 	*partnerObj 	= NULL;
-	cJSON 	*json 			= NULL;
-	char 	*userName 		= NULL, 
-		    *defaultAdminIP = NULL,	 
-		    *passWord 		= NULL,	 
-		    *subnetRange 	= NULL;
-	char 	PartnerID[ PARTNER_ID_LEN ]  = { 0 };
-	int	    isNeedToApplyPartnersDefault = 1;
 
 	/* 
 	  *  Check whether /nvram/.partner_ID file is available or not. 
@@ -795,6 +634,160 @@ int apply_partnerId_default_values(char *data)
 		} 
 	}
 	set_syscfg_partner_values(PartnerID,"PartnerID");
+	
+}
+
+char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,char *PartnerID)
+{
+
+	cJSON 	*subitem_nvram = NULL, 	*subitem_etc = NULL;
+	char 	*key = NULL, 	*value = NULL, *param_etc = NULL, *param_nvram = NULL;
+        int 	rowCnt_etc = 0, 	rowCnt_nvram = 0, 	etc_val = 0, nvram_val = 0, 	count = 0, 	count_etc = 0, 	count_nvram = 0;
+
+	cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
+	cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);	
+
+	rowCnt_etc = cJSON_GetArraySize(root_etc_json);
+	rowCnt_nvram = cJSON_GetArraySize(root_nvram_json);
+	
+	for (etc_val = 0; etc_val < rowCnt_etc ; etc_val++)
+	{
+		subitem_etc = cJSON_GetArrayItem(root_etc_json,etc_val);
+		
+		if ( (cJSON_GetArrayItem(root_etc_json,etc_val) != NULL) )
+		{
+			int etc_paramCount = cJSON_GetArraySize(subitem_etc);
+			param_etc = cJSON_GetArrayItem(root_etc_json,etc_val)->string;
+			for( nvram_val = 0 ; nvram_val < rowCnt_nvram ; nvram_val++)
+			{	
+				subitem_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val);
+				int nvram_paramCount = cJSON_GetArraySize(subitem_nvram);
+				
+				if (  (cJSON_GetArrayItem(root_nvram_json,nvram_val) != NULL) )
+				{
+					param_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val)->string;
+					if ( strcmp(param_etc, param_nvram) == 0 )
+					{
+					for( count_etc = 0 ; count_etc < etc_paramCount ; count_etc++)
+					{
+
+						if (cJSON_GetArrayItem(subitem_etc, count_etc) != NULL)
+						{
+							if (cJSON_GetArrayItem(subitem_etc, count_etc)->string != NULL)
+							{
+								count = 0;
+								for( count_nvram = 0 ;count_nvram< nvram_paramCount ; count_nvram++)
+								{
+					
+									if ( cJSON_GetArrayItem(subitem_nvram,count_nvram) != NULL)
+									{
+										if (cJSON_GetArrayItem(subitem_nvram, count_nvram)->string != NULL)
+										{
+											if( strcmp( (cJSON_GetArrayItem(subitem_etc, count_etc)->string) , (cJSON_GetArrayItem(subitem_nvram, count_nvram)->string)) != 0 )
+											{
+												count++;
+											}
+											else
+											{
+												break;
+											}
+										}
+										else
+										{
+											printf ("Nvram JSON file has empty Parameter list\n");
+
+										}
+									}
+
+								}
+
+								if (count == nvram_paramCount )
+								{
+									printf("Adding new param to JSON file\n");
+									key = cJSON_GetArrayItem(subitem_etc, count_etc)->string;
+									value = cJSON_GetArrayItem(subitem_etc, count_etc)->valuestring;
+
+									// Add newly introduced entry from /etc/ directory to /nvram directory
+									cJSON_AddItemToObject(subitem_nvram, key, cJSON_CreateString(value));
+									if ( strcmp(param_nvram,PartnerID) == 0 )
+									{
+									//Change the syscfg.db params to corresponding partners 							
+										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") )
+										{
+											set_syscfg_partner_values( value,"user_name_3" );
+										}
+
+										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword") )
+										{
+											set_syscfg_partner_values( value,"user_password_3" );
+										}
+
+										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP") )
+										{
+											set_syscfg_partner_values( value,"lan_ipaddr" );
+										}
+
+										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange") )
+										{
+											set_syscfg_partner_values( value,"lan_netmask" );
+										}
+									}
+								}
+							}
+						}
+		
+					}
+					}
+				
+				}
+				
+			}
+
+		}
+
+	}
+
+	for (etc_val = 0; etc_val < rowCnt_etc ;etc_val++)
+	{
+		int flag = 0;
+		for (nvram_val = 0; nvram_val < rowCnt_nvram;nvram_val++)
+		{
+			if ( strcmp ( cJSON_GetArrayItem(root_nvram_json,nvram_val)->string , cJSON_GetArrayItem(root_etc_json,etc_val)->string ) == 0)
+			{
+				break;
+			}
+			else
+			{
+				flag++;
+				printf("flag is %d\n",flag);
+			}
+		}
+		if ( flag == rowCnt_nvram)
+		{
+			printf("Adding New PartnerId details to nvram JSON file\n");	
+			cJSON_AddItemToArray(root_nvram_json,  cJSON_GetArrayItem(root_etc_json,etc_val));
+			break;
+		}
+				
+	}
+
+	char *out = cJSON_Print(root_nvram_json);
+	writeToJson(out);
+	out = NULL;
+
+	cJSON_Delete(root_nvram_json);
+}
+
+int apply_partnerId_default_values(char *data, char *PartnerID)
+{
+	cJSON 	*partnerObj 	= NULL;
+	cJSON 	*json 			= NULL;
+	char 	*userName 		= NULL, 
+		    *defaultAdminIP = NULL,	 
+		    *passWord 		= NULL,	 
+		    *subnetRange 	= NULL;
+	int	    isNeedToApplyPartnersDefault = 1;
+
 	/*
 	  * Case 1:
 	  * Check whether PartnerID is comcast of not. 
@@ -912,6 +905,7 @@ int main(int argc, char **argv)
    syscfg_dirty = 0;
    char *ptr_etc_json = NULL, *ptr_nvram_json = NULL, *db_val = NULL;
    char cmd[512] = {0};
+   char 	PartnerID[ PARTNER_ID_LEN ]  = { 0 };
    parse_command_line(argc, argv);
 
    global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
@@ -951,6 +945,8 @@ int main(int argc, char **argv)
    }
    sysevent_close(global_fd, global_id);
    
+   get_PartnerID(PartnerID);
+
    if (access(PARTNERS_INFO_FILE, F_OK) != 0)	
    {
 	snprintf(cmd, sizeof(cmd), "cp %s %s", "/etc/partners_defaults.json", PARTNERS_INFO_FILE);
@@ -964,7 +960,7 @@ int main(int argc, char **argv)
 		   ptr_nvram_json = json_file_parse(PARTNERS_INFO_FILE);
 	   	   if (ptr_nvram_json)
 	   	  {
-	   		compare_partner_json_param(ptr_nvram_json,ptr_etc_json);
+	   		compare_partner_json_param(ptr_nvram_json,ptr_etc_json,PartnerID);
 			free(ptr_nvram_json);		
 	   	  }	   	
 			free(ptr_etc_json);
@@ -972,15 +968,13 @@ int main(int argc, char **argv)
 	 
    }
 
-   #ifdef INTEL_PUMA7
-   	db_val = json_file_parse(PARTNERS_INFO_FILE);
+   db_val = json_file_parse(PARTNERS_INFO_FILE);
 
-   	if( db_val )
-   	{
-   		apply_partnerId_default_values( db_val );
-		free( db_val );
-   	}
-   #endif
+   if( db_val )
+   {
+   	apply_partnerId_default_values( db_val ,PartnerID);
+	free( db_val );
+   }
 
    return(0);
 }

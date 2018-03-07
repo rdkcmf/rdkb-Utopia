@@ -229,7 +229,7 @@ else
    if [ $? != 0 ]; then
 	  CheckAndReCreateDB
    fi
-  
+   touch /nvram/.apply_partner_defaults
    #>>zqiu
    echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
