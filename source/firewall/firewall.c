@@ -1187,6 +1187,7 @@ int parseProcfileParams(char* lineToParse,ifv6Details *detailsToParse,char* inte
                    placeholder++;
                }
            }
+           detailsToParse->address6[placeholder] = '\0';
            ulogf(ULOG_FIREWALL, UL_INFO,"%s,Interface IPv6 address calculation\n",__FUNCTION__);
            inet_pton(AF_INET6, detailsToParse->address6,(struct sockaddr *) &sAddr6.sin6_addr);
            sAddr6.sin6_family = AF_INET6;
@@ -1511,7 +1512,7 @@ static int prepare_globals_from_configuration(void)
    syscfg_get(NULL, "ecm_wan_ifname", ecm_wan_ifname, sizeof(ecm_wan_ifname));
    syscfg_get(NULL, "emta_wan_ifname", emta_wan_ifname, sizeof(emta_wan_ifname));
    get_ip6address(ecm_wan_ifname, ecm_wan_ipv6, &ecm_wan_ipv6_num);
-   //get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num);
+   get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num);
 
    if (0 == strcmp("true", container_enabled)) {
       isContainerEnabled = bIsContainerEnabled();
@@ -4083,6 +4084,10 @@ static int do_lan2self_by_wanip6(FILE *filter_fp)
     for(i = 0; i < ecm_wan_ipv6_num; i++){
         fprintf(filter_fp, "-A INPUT -i %s -d %s -p tcp --match multiport --dports 23,22,80,443,161 -j LOG_INPUT_DROP\n", lan_ifname, ecm_wan_ipv6[i]);
     }
+
+    for(i = 0; i < current_wan_ipv6_num; i++){
+        fprintf(filter_fp, "-A INPUT -i %s -d %s -p tcp --match multiport --dports 23,22,80,443,161 -j LOG_INPUT_DROP\n", lan_ifname, current_wan_ipv6[i]);
+    }
            FIREWALL_DEBUG("Exiting do_lan2self_by_wanip6\n");     
     return 0;
 }
@@ -4097,7 +4102,7 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
    httpport[0] = '\0';
    httpsport[0] = '\0';
            FIREWALL_DEBUG("Entering do_lan2self_by_wanip\n");     
-   fprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", current_wan_ipaddr); //eRouter address doesn't have any restrictions
+   //ifprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", current_wan_ipaddr); //eRouter address doesn't have any restrictions
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    if(isWanStaticIPReady){
          int i;
