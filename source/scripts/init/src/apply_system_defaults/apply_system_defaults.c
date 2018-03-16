@@ -562,6 +562,59 @@ int set_syscfg_partner_values(char *pValue,char *param)
 		return 0;
 	}
 }
+
+int GetDevicePropertiesEntry( char *pOutput, int size, char *sDevicePropContent )
+{
+    FILE 	*fp1 		 = NULL;
+    char 	 buf[ 1024 ] = { 0 },
+	  		*urlPtr 	 = NULL;
+    int 	 ret		 = -1;
+
+    // Read the device.properties file 
+    fp1 = fopen( "/etc/device.properties", "r" );
+	
+    if ( fp1 == NULL ) 
+	{
+        APPLY_PRINT("Error opening properties file! \n");
+        return -1;
+    }
+
+    while ( fgets( buf, sizeof( buf ), fp1 ) != NULL ) 
+    {
+        // Look for Device Properties Passed Content
+        if ( strstr( buf, sDevicePropContent ) != NULL ) 
+	{
+		 buf[strcspn( buf, "\r\n" )] = 0; // Strip off any carriage returns
+		 // grab content from string(entry)
+		urlPtr = strstr( buf, "=" );
+		urlPtr++;
+		strncpy( pOutput, urlPtr, size );
+		ret=0;
+		break;
+        }
+    }
+
+    fclose( fp1 );
+    return ret;
+}
+
+static int getFactoryPartnerId
+	(
+		char*                       pValue
+	)
+{
+#ifdef INTEL_PUMA7
+	if(0 == platform_hal_getFactoryPartnerId(pValue))
+	{
+		APPLY_PRINT("%s - %s\n",__FUNCTION__,pValue);
+		return 0;		 
+	}
+#endif
+
+	APPLY_PRINT("%s - Failed Get factoryPartnerId \n", __FUNCTION__);
+	return -1;
+}
+
 static int get_PartnerID( char *PartnerID)
 {
 
@@ -576,29 +629,22 @@ static int get_PartnerID( char *PartnerID)
 		FILE *fp = NULL;
 
 		APPLY_PRINT("%s - %s is not there\n", __FUNCTION__, PARTNERID_FILE );
-
-#ifdef INTEL_PUMA7
-		//Getting partner ID from HAL
-		if( 0 == platform_hal_getFactoryPartnerId( PartnerID ) )
+		if( 0 == getFactoryPartnerId( PartnerID ) )
 		{
-		  if( PartnerID[ 0 ] != '\0' )
-		  {
-			 APPLY_PRINT("%s - PartnerID from HAL: %s\n",__FUNCTION__,PartnerID );
-		  }
-		  else
-		  {
-			 strcpy( PartnerID, "comcast" );
-			 APPLY_PRINT("%s - PartnerID as Default: %s\n",__FUNCTION__,PartnerID );			 
-		  }
-		  
+			APPLY_PRINT("%s - PartnerID from HAL: %s\n",__FUNCTION__,PartnerID );
 		}
 		else
-#endif /* INTEL_PUMA7 */
 		{
-		   sprintf( PartnerID, "%s", "comcast" );
-		   APPLY_PRINT("%s - Failed Get factoryPartnerId so set it PartnerID as: %s\n", __FUNCTION__, PartnerID );
+			if ( 0 == GetDevicePropertiesEntry( PartnerID, sizeof( PartnerID ),"PARTNER_ID" ) )
+			{
+				APPLY_PRINT("%s - PartnerID from device.properties: %s\n",__FUNCTION__,PartnerID );
+			}
+			else		
+			{
+				sprintf( PartnerID, "%s", "comcast" );
+				APPLY_PRINT("%s - Failed Get factoryPartnerId so set it PartnerID as: %s\n", __FUNCTION__, PartnerID );
+			}
 		}
-
 		//Creating and Writing partner ID into /nvram/.partner_ID file
 		fp = fopen( PARTNERID_FILE, "w" );
 		
