@@ -10101,7 +10101,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
        fprintf(nat_fp, "-A PREROUTING -d %s/32 -i %s -p tcp -j DNAT --to-destination %s\n", BRIDGE_MODE_IP_ADDRESS, current_wan_ifname, lan0_ipaddr);
    }
 #endif
-   do_port_forwarding(nat_fp, NULL);
+   if (!isBridgeMode)
+   	do_port_forwarding(nat_fp, NULL);
+
    do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
    fprintf(nat_fp, "%s\n", "COMMIT");
