@@ -8879,9 +8879,9 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
    fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
 #endif
    fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
-#if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
+//#if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
    fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
-#endif
+//#endif
    /**
     * RDKB-15072 - Explicitly specify proticol instead of common rule as workaround to overcome CMTS issue.
     **/
