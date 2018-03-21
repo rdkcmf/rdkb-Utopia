@@ -858,13 +858,12 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 	}
 	else
   	{
-    		APPLY_PRINT("%s - Deleting this file :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
-		system( "rm -rf /nvram/.apply_partner_defaults" );
+   		APPLY_PRINT("%s - Deletion of %s file handled in PSM init :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+		//Delete at PSM init
+		//system( "rm -rf /nvram/.apply_partner_defaults" );
   	}
 
-	if( ( 0 != strcmp( PartnerID, "comcast" ) ) &&  \
-		( 1 == isNeedToApplyPartnersDefault )  
-	   )
+	if( 1 == isNeedToApplyPartnersDefault )  
 	{
           	APPLY_PRINT("%s - Applying  %s default configuration\n", __FUNCTION__, PartnerID );
 		json = cJSON_Parse( data );
@@ -935,6 +934,23 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 					else
 					{
 						APPLY_PRINT("%s - DefaultLocalIPv4SubnetRange Value is NULL\n", __FUNCTION__ );
+					}	
+				}
+
+				if ( cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code") != NULL )
+				{
+					char *pcWiFiRegionCode = NULL;
+					
+					pcWiFiRegionCode = cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code")->valuestring; 
+		
+					if (pcWiFiRegionCode != NULL) 
+					{
+						set_syscfg_partner_values(pcWiFiRegionCode,"WiFiRegionCode");
+						pcWiFiRegionCode = NULL;
+					}	
+					else
+					{
+						APPLY_PRINT("%s - DefaultWiFiRegionCode Value is NULL\n", __FUNCTION__ );
 					}	
 				}
 			}
