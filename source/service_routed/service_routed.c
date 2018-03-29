@@ -475,11 +475,16 @@ static int radv_start(struct serv_routed *sr)
     daemon_stop(ZEBRA_PID_FILE, "zebra");
 #if defined(_COSA_FOR_BCI_)
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
-    if (!strncmp(dhcpv6Enable, "1", 1))
+    bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
+
+    if (bEnabled)
     {
-        vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
-        printf("DHCPv6 is Enabled. Starting zebra Process\n");
+        system("sysctl -w net.ipv6.conf.brlan0.disable_ipv6=0");
+    } else {
+        system("sysctl -w net.ipv6.conf.brlan0.disable_ipv6=1");
     }
+    vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+    printf("DHCPv6 is %s. Starting zebra Process\n", (bEnabled?"Enabled":"Disabled"));
 #else
     vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
 #endif
