@@ -82,8 +82,8 @@ do_start() {
 #   /etc/init.d/dropbear start
    #dropbear -r /etc/rsa_key.priv
    #dropbear -E -s -b /etc/sshbanner.txt -s -a -p [$CM_IP]:22
-   DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1.xyz"
-   DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2.xyz"
+   DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$.xyz"
+   DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$.xyz"
    getConfigFile $DROPBEAR_PARAMS_1
    getConfigFile $DROPBEAR_PARAMS_2
    dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22
@@ -122,7 +122,7 @@ service_start() {
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status "started"
-                rm -rf /tmp/.dropbear
+                rm -rf /tmp/.dropbear/*
 
 	#fi
 
