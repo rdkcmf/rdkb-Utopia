@@ -73,9 +73,9 @@ do_start() {
    then
       #wan0 should be in v4
       CM_IP=`ifconfig wan0 | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
-   fi   
-   DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1.xyz"
-   DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2.xyz"
+   fi
+   DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$"
+   DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"
    getConfigFile $DROPBEAR_PARAMS_1
    getConfigFile $DROPBEAR_PARAMS_2
    dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
@@ -121,7 +121,7 @@ service_start() {
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status "started"
-		rm -rf /tmp/.dropbear
+		rm -rf /tmp/.dropbear/*
 
 	#fi
 
