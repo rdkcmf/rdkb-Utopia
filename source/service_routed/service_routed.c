@@ -246,6 +246,13 @@ static int gen_zebra_conf(int sefd, token_t setok)
         return -1;
     }
 
+#if defined(_COSA_FOR_BCI_)
+    char dhcpv6Enable[8]={0};
+    // Set bool to determine if dhcpv6 enabled
+    syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
+    bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
+#endif
+
     /* TODO: static route */
 
     syscfg_get(NULL, "router_adv_enable", ra_en, sizeof(ra_en));
@@ -286,7 +293,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
     fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
             prefix, orig_prefix, lan_addr);
 
+#if defined(_COSA_FOR_BCI_)
+    if ((strlen(prefix) || strlen(orig_prefix)) && bEnabled)
+#else
     if (strlen(prefix) || strlen(orig_prefix)) 
+#endif
 	{
 		char val_DNSServersEnabled[ 32 ];
 		int  StaticDNSServersEnabled = 0;
@@ -477,12 +488,6 @@ static int radv_start(struct serv_routed *sr)
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
     bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
 
-    if (bEnabled)
-    {
-        system("sysctl -w net.ipv6.conf.brlan0.disable_ipv6=0");
-    } else {
-        system("sysctl -w net.ipv6.conf.brlan0.disable_ipv6=1");
-    }
     vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
     printf("DHCPv6 is %s. Starting zebra Process\n", (bEnabled?"Enabled":"Disabled"));
 #else
