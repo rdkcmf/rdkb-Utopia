@@ -617,6 +617,8 @@ static int getFactoryPartnerId
 
 static int get_PartnerID( char *PartnerID)
 {
+	char buf[PARTNER_ID_LEN];
+	memset(buf, 0, sizeof(buf));
 
 	/* 
 	  *  Check whether /nvram/.partner_ID file is available or not. 
@@ -635,9 +637,13 @@ static int get_PartnerID( char *PartnerID)
 		}
 		else
 		{
-			if ( 0 == GetDevicePropertiesEntry( PartnerID, sizeof( PartnerID ),"PARTNER_ID" ) )
+			if ( 0 == GetDevicePropertiesEntry( buf, sizeof( buf ),"PARTNER_ID" ) )
 			{
-				APPLY_PRINT("%s - PartnerID from device.properties: %s\n",__FUNCTION__,PartnerID );
+				if( buf != NULL )
+				{
+				    strncpy(PartnerID,buf,strlen(buf));
+				    APPLY_PRINT("%s - PartnerID from device.properties: %s\n",__FUNCTION__,PartnerID );
+				}
 			}
 			else		
 			{
