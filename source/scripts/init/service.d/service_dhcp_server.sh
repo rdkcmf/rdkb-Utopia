@@ -357,7 +357,10 @@ dhcp_server_start ()
    fi
    
    #if [ "started" != "$CURRENT_LAN_STATE" ] ; then
-   if [ "started" != "`sysevent get lan_status-dhcp`" ] ; then
+   # If we are calling dhcp_server_start from a restart event, it's possible that lan_status-dhcp may have never
+   # been set if DHCP was disabled on boot.
+   DHCP_STATE=`sysevent get lan_status-dhcp`
+   if [[ "started" != "$DHCP_STATE" && ! ( -z "$DHCP_STATE" && "$1" == "dhcp_server-restart" ) ]] ; then
       rm -f /var/tmp/lan_not_restart
       exit 0
    fi
@@ -663,7 +666,7 @@ case "$1" in
    ${SERVICE_NAME}-restart)
       #dhcp_server_stop
 	  echo_t "SERVICE DHCP : Got restart with $2.. Call dhcp_server_start"
-      dhcp_server_start $2
+      dhcp_server_start $1
       ;;
    dns-start)
       dns_start
