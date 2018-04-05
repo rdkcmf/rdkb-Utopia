@@ -1051,6 +1051,7 @@ $HTTPSecurityHeaderEnable=true
 
 #codebig
 $codebigsupport=0
+$CodeBigFirstEnabled=false
 
 #EthAgent Logging default values
 $eth_log_enabled=false

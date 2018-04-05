@@ -1063,6 +1063,7 @@ $HTTPSecurityHeaderEnable=true
 $X_RDKCENTRAL-COM_AkerEnable=false
 #codebig
 $codebigsupport=0
+$CodeBigFirstEnabled=false
 
 #IDS Feature disabled bydefault
 $IDSENABLE=false
