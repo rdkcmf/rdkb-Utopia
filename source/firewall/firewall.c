@@ -3976,13 +3976,25 @@ static int do_wan_nat_lan_clients(FILE *fp)
   fprintf(fp, "%s\n",str); 
 #endif 
 #if defined(_COSA_BCM_MIPS_)
-  if(!isBridgeMode) {       
+  if (isBridgeMode) {
+    // Dont NAT network devices that are part of erouter0
+    DIR * dirp = opendir("/sys/devices/virtual/net/erouter0/brif");
+    if (dirp) {
+      struct dirent * dp = NULL;
+      while ((dp = readdir(dirp)) != NULL) {
+        if (strcmp(dp->d_name, "pon0") == 0 ||
+            strcmp(dp->d_name, "..") == 0 ||
+            strcmp(dp->d_name, ".") == 0) {
+          continue;
+        }
+        fprintf(fp, "-A postrouting_towan -m physdev --physdev-in %s -j RETURN\n", dp->d_name);
+      }
+      closedir(dirp);
+    }
+  }
 #endif
   snprintf(str, sizeof(str),
            "-A postrouting_towan  -j SNAT --to-source %s", natip4);
-#if defined(_COSA_BCM_MIPS_)
-  }
-#endif
   fprintf(fp, "%s\n", str);
   
    if (isCacheActive) {
