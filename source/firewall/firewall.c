@@ -6150,7 +6150,7 @@ InternetAccessPolicyNext3:
                }
 #if defined(_PLATFORM_RASPBERRYPI_)
                snprintf(str, sizeof(str), 
-                        "-A %s -p tcp -m tcp --dport 80 -d \"%s\" -j %s",
+                        "-A %s -p tcp -m tcp --dport 80 -m string --algo bm --string \"%s\" -j %s",
                         rules_table, url + host_name_offset, block_site);
 #else
                snprintf(str, sizeof(str), 
@@ -7634,8 +7634,8 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                 else
                 {
 #if defined(_PLATFORM_RASPBERRYPI_)
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m string --algo bm --string  \"%s\" -j %s\n", query + host_name_offset, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m string --algo bm --string  \"%s\" -j %s\n", query + host_name_offset, drop_log);
 #else
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
