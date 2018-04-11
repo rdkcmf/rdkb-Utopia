@@ -152,7 +152,35 @@ service_start ()
       echo "58 * * * * /usr/bin/GenFWLog" >> $CRONTAB_FILE 
 
 	  # Monitor syscfg DB every 15minutes 
-      echo "*/15 * * * * /usr/ccsp/tad/syscfg_recover.sh" >> $CRONTAB_FILE 
+      echo "*/15 * * * * /usr/ccsp/tad/syscfg_recover.sh" >> $CRONTAB_FILE
+
+      # Add Unique Telemetry ID if enabled
+      telemtery_enable=`syscfg get unique_telemetry_enable`
+      telemtery_time_interval=`syscfg get unique_telemetry_interval`
+      telemtery_tag=`syscfg get unique_telemetry_tag`
+
+      if [ $telemtery_enable = "true" ] && [ $telemtery_time_interval -gt 0 ] && [ ! -z "$telemtery_tag" -a "$telemtery_tag" != " " ] ; then
+        #Convert time interval(in minutes) to days, hours and minutes
+        d=$(($telemtery_time_interval / (60*24)))
+        h=$((($telemtery_time_interval % (60*24)) / 60))
+        m=$((($telemtery_time_interval % (60*24)) % 60))
+
+        if [ $d -gt 0 ] ; then
+          day="*/$d"
+          hour="$h"
+          mins="$m"
+        elif [ $h -gt 0 ] ; then
+          day="*"
+          hour="*/$h"
+          mins="$m"
+        else
+          day="*"
+          hour="*"
+          mins="*/$m"
+        fi
+
+        echo "$mins $hour $day * * /usr/ccsp/pam/unique_telemetry_id.sh" >> $CRONTAB_FILE
+      fi
 
       # add a ddns watchdog trigger to be run daily
       echo "#! /bin/sh" > /etc/cron/cron.daily/ddns_daily.sh

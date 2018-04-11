@@ -967,3 +967,8 @@ $eth_log_period=3600
 $eth_wan_enabled=false
 $last_router_reboot_time=0
 $router_reboot_Interval=28800
+
+#UniqueTelemetryId default values
+$unique_telemetry_enable=false
+$unique_telemetry_tag=
+$unique_telemetry_interval=0

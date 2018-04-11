@@ -1062,3 +1062,8 @@ $CodeBigFirstEnabled=false
 $eth_log_enabled=false
 $eth_log_period=3600
 $eth_wan_enabled=false
+
+#UniqueTelemetryId default values
+$unique_telemetry_enable=false
+$unique_telemetry_tag=
+$unique_telemetry_interval=0
