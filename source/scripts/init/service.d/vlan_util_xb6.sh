@@ -131,7 +131,11 @@ qtn_set_LnF_ssid(){
 
 qtn_set_LnF_passphrase(){
         echo "VLAN_UTIL SETTING LOST & FOUND PASSPHRASE"
-	configparamgen 5 /tmp/tmp5
+        if [ ! -f /usr/bin/GetServiceUrl ];then
+            echo "Error: GetServiceUrl Not Found"
+            exit 127
+        fi
+	GetServiceUrl 5 /tmp/tmp5
 	configparammod /tmp/tmp5
 
 	lpf=`cat /tmp/tmp5.mod`;
@@ -144,7 +148,7 @@ qtn_set_LnF_passphrase(){
 qtn_configure_LnF_radius(){
     echo "VLAN_UTIL SETTING LOST & FOUND RADIUS CONFIG"
 
-    auth_secret=$(/usr/bin/configparamgen jx /etc/lnf/edorbdvzr.uix /dev/stdout)
+    auth_secret=$(GetConfigFile radius.cfg stdout)
     erouter0_ip=$(ifconfig erouter0 | awk '/inet addr/{print substr($2,6)}')
 
     $QWCFG_TEST set $QTN_INDEX vap_emerged 1

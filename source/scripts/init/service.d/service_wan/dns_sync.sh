@@ -29,9 +29,11 @@ retries=0
 ATOM_INTERFACE_IP=`cat /etc/device.properties | grep ATOM_INTERFACE_IP | cut -f 2 -d"="`
 ATOM_RPC_IP=`cat /etc/device.properties | grep ATOM_ARPING_IP | cut -f 2 -d"="`
 LAN_IP=`syscfg get lan_ipaddr`
-PEER_COMM_DAT="/etc/dropbear/elxrretyt.swr"
-PEER_COMM_ID="/tmp/elxrretyt-$$.swr"
-CONFIGPARAMGEN="/usr/bin/configparamgen"
+PEER_COMM_ID="/tmp/elxrretyt.swr"
+if [ ! -f /usr/bin/GetConfigFile ];then
+    echo "Error: GetConfigFile Not Found"
+    exit 127
+fi
 
 while :
 do
@@ -56,7 +58,7 @@ then
 	echo "$LAN_IP" >> $TMP_RESOLV_FILE
 fi
 
-$CONFIGPARAMGEN jx $PEER_COMM_DAT $PEER_COMM_ID
+GetConfigFile $PEER_COMM_ID
 scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
