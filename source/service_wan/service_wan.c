@@ -421,6 +421,7 @@ done:
     if ( 0 == ret )
     {
 	system("touch /var/wan_started");
+	system("print_uptime \"boot_to_wan_uptime\"");
     }
     else
     {
