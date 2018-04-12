@@ -375,13 +375,11 @@ echo_t "*** HTTPS root certificate for TR69 ***"
 
 if [ ! -f /etc/cacert.pem ]; then
 	echo_t "HTTPS root certificate for TR69 is missing..."
+fi
 
-else
-	echo_t "Copying HTTPS root certificate for TR69"
-	if [ -f /nvram/cacert.pem ]; then
-		rm -f /nvram/cacert.pem
-	fi
-	cp -f /etc/cacert.pem /nvram/
+if [ -f /nvram/cacert.pem ]; then
+  echo "Removing certificate from /nvram"
+  rm -f /nvram/cacert.pem
 fi
 
 echo_t "[utopia][init] Starting system logging"
