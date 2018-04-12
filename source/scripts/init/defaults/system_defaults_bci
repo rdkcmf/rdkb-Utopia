@@ -1061,3 +1061,4 @@ $CodeBigFirstEnabled=false
 #EthAgent Logging default values
 $eth_log_enabled=false
 $eth_log_period=3600
+$eth_wan_enabled=false
