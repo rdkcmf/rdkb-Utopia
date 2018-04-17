@@ -972,3 +972,6 @@ $router_reboot_Interval=28800
 $unique_telemetry_enable=false
 $unique_telemetry_tag=
 $unique_telemetry_interval=0
+
+#Enable log and core file encryption at S3 Amazon
+$encryptcloudupload=0
