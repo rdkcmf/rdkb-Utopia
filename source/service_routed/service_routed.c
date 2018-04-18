@@ -216,6 +216,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char preferred_lft[16], valid_lft[16];
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
+    char lan_rdnss[64];
     char buf[6];
     FILE *responsefd = NULL;
     char *networkResponse = "/var/tmp/networkresponse.txt";
@@ -427,8 +428,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
 			}
 
         		for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
+			{
 			// Modifying rdnss value to fix the zebra config.
-            		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+        		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+			strcpy(lan_rdnss,tok);
+			}
 		}
 	}
     
@@ -437,6 +441,55 @@ static int gen_zebra_conf(int sefd, token_t setok)
     fprintf(fp, "   ip irdp multicast\n");
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION        
     }
+#endif
+
+#ifndef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+char cmd[100];
+char out[100];
+char *token = NULL; 
+char s[2] = ",";
+char *pt;
+memset(out,0,sizeof(out));
+syscfg_get(NULL, "IPv6subPrefix", out, sizeof(out));
+if(!strncmp(out,"true",strlen(out)))
+{
+	memset(out,0,sizeof(out));
+	memset(cmd,0,sizeof(cmd));
+	syscfg_get(NULL, "IPv6_Interface", out, sizeof(out));
+	pt = out;
+	while((token = strtok_r(pt, ",", &pt)))
+	{
+        fprintf(fp, "interface %s\n", token);
+        fprintf(fp, "   no ipv6 nd suppress-ra\n");
+		memset(cmd,0,sizeof(cmd));
+		sprintf(cmd, "%s%s",token,"_ipaddr_v6");
+		memset(prefix,0,sizeof(prefix));
+		sysevent_get(sefd, setok, cmd, prefix, sizeof(prefix));
+        if (strlen(prefix) != 0)
+            fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+
+        fprintf(fp, "   ipv6 nd ra-interval 3\n");
+        fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+
+        syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
+        if (strcmp(m_flag, "1") == 0)
+            fprintf(fp, "   ipv6 nd managed-config-flag\n");
+
+        syscfg_get(NULL, "router_other_flag", o_flag, sizeof(o_flag));
+        if (strcmp(o_flag, "1") == 0)
+            fprintf(fp, "   ipv6 nd other-config-flag\n");
+
+        syscfg_get(NULL, "dhcpv6s_enable", dh6s_en, sizeof(dh6s_en));
+        if (strcmp(dh6s_en, "1") == 0)
+            fprintf(fp, "   ipv6 nd other-config-flag\n");
+
+        fprintf(fp, "   ipv6 nd router-preference medium\n");
+		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", lan_rdnss);
+    	fprintf(fp, "interface %s\n", token);
+    	fprintf(fp, "   ip irdp multicast\n");
+	}
+	memset(out,0,sizeof(out));
+}
 #endif
     fclose(fp);
     return 0;

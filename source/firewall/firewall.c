@@ -10410,6 +10410,61 @@ static void do_ipv6_nat_table(FILE* fp)
 
 static void do_ipv6_filter_table(FILE *fp);
 
+#define MAX_NO_IPV6_INF 10
+#define MAX_LEN_IPV6_INF 32
+#define MAX_BUFF_LEN 100
+void getIpv6Interfaces(char Interface[MAX_NO_IPV6_INF][MAX_LEN_IPV6_INF],int *len)
+{
+char *token = NULL;char *pt;
+char s[2] = ",";
+char buf[MAX_BUFF_LEN];
+char str[MAX_BUFF_LEN],prefixlen[MAX_BUFF_LEN];
+int i =0, ret;
+ FIREWALL_DEBUG("Inside getIpv6Interfaces \n");
+          ret = syscfg_get(NULL, "IPv6subPrefix", buf, sizeof(buf));
+          if(ret == 0)
+		{
+			if(!strncmp(buf,"true",4))
+			{
+				 sysevent_get(sysevent_fd, sysevent_token, "lan_prefix_v6", prefixlen, sizeof(prefixlen));
+     				 if ( '\0' != prefixlen[0] ) 
+					{
+
+						if(atoi(prefixlen) < 64)
+						{
+							 syscfg_get(NULL, "IPv6_Interface", str, sizeof(str));
+						}
+						else
+						{
+							*len = 0;
+							return;
+						}
+						
+					}
+			}
+			else
+			{
+				*len = 0;
+				return;
+			}
+		}
+		else
+			{
+				*len = 0;
+				return;
+			}
+
+    pt = str;
+
+    while(token = strtok_r(pt, ",", &pt)) {
+	strcpy(Interface[i],token);
+	i++;
+	if(i > MAX_NO_IPV6_INF)
+	break;
+   }
+*len = i;
+}
+
 /*
  ****************************************************************
  *               IPv6 Firewall                                  *
@@ -10654,6 +10709,9 @@ static void do_ipv6_filter_table(FILE *fp){
    //ban telnet and ssh from lan side
    lan_telnet_ssh(fp, AF_INET6);
 
+	char Interface[MAX_NO_IPV6_INF][MAX_LEN_IPV6_INF];
+	int inf_num = 0;
+    getIpv6Interfaces(Interface,&inf_num);
    if (isFirewallEnabled) {
       // Get the current WAN IPv6 interface (which differs from the IPv4 in case of tunnels)
       char query[10],port[10],tmpQuery[10];
@@ -10737,6 +10795,15 @@ static void do_ipv6_filter_table(FILE *fp){
       }
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", lan_ifname); // Echo request
       fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", lan_ifname); // Echo reply
+      if(inf_num!= 0)
+	  {
+	    int cnt =0;
+		for(cnt = 0;cnt < inf_num;cnt++)
+		{
+			fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", Interface[cnt]); // Echo request
+      		fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", Interface[cnt]); // Echo reply
+		}
+	  }
 
       if ( (isPingBlockedV6 && strncasecmp(firewall_levelv6, "Custom", strlen("Custom")) == 0)
               || strncasecmp(firewall_levelv6, "High", strlen("High")) == 0
@@ -10780,7 +10847,16 @@ static void do_ipv6_filter_table(FILE *fp){
          fprintf(fp, "-A INPUT -s fe80::/64 -d fe80::/64 -i %s -p icmpv6 -m icmp6 --icmpv6-type 134 -m limit --limit 10/sec -j ACCEPT\n", wan6_ifname); // sollicited RA
 
       fprintf(fp, "-A INPUT -s fe80::/64 -i %s -p icmpv6 -m icmp6 --icmpv6-type 133 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname); //RS
-
+      if(inf_num!= 0)
+	  {
+		int cnt =0;
+		for(cnt = 0;cnt < inf_num;cnt++)
+		{
+		fprintf(fp, "-A INPUT -s fe80::/64 -d ff02::1/128 ! -i %s -p icmpv6 -m icmp6 --icmpv6-type 134 -m limit --limit 10/sec -j ACCEPT\n", Interface[cnt]); // periodic RA
+      		fprintf(fp, "-A INPUT -s fe80::/64 -d fe80::/64 ! -i %s -p icmpv6 -m icmp6 --icmpv6-type 134 -m limit --limit 10/sec -j ACCEPT\n", Interface[cnt]); // sollicited RA
+		fprintf(fp, "-A INPUT -s fe80::/64 -i %s -p icmpv6 -m icmp6 --icmpv6-type 133 -m limit --limit 100/sec -j ACCEPT\n", Interface[cnt]); //RS
+		}
+	  }
       // But can also come from UNSPECIFIED addresses, rate limited 100/second for NS (for DAD) and MLD
       fprintf(fp, "-A INPUT -s ::/128 -p icmpv6 -m icmp6 --icmpv6-type 135 -m limit --limit 100/sec -j ACCEPT\n"); // NS
       fprintf(fp, "-A INPUT -s ::/128 -p icmpv6 -m icmp6 --icmpv6-type 143 -m limit --limit 100/sec -j ACCEPT\n"); // MLD
@@ -10803,7 +10879,16 @@ static void do_ipv6_filter_table(FILE *fp){
       fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", lan_ifname);
       //if (port[0])
       //   fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport %s --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", wan6_ifname,port);
-
+      if(inf_num!= 0)
+	  {
+		int cnt =0;
+		for(cnt = 0;cnt < inf_num;cnt++)
+		{
+		fprintf(fp, "-A INPUT -i %s -p udp --dport 1900 -j ACCEPT\n", Interface[cnt]);
+	      	fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 80 --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", Interface[cnt]);
+	      	fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", Interface[cnt]);
+		}
+	  }
       do_remote_access_control(NULL, fp, AF_INET6);
       if(isProdImage) {
           do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
@@ -10853,7 +10938,15 @@ static void do_ipv6_filter_table(FILE *fp){
            //fprintf(fp, "-A INPUT -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", wan6_ifname);
            fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname);
       //}
-
+      if(inf_num!= 0)
+	  {
+		int cnt =0;
+		for(cnt = 0;cnt < inf_num;cnt++)
+		{
+		   fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -m limit --limit 100/sec -j ACCEPT\n", Interface[cnt]);
+		   fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", Interface[cnt]);
+		}
+	  }
 
       // NTP request from client
       // NTP server replies from Internet servers
@@ -10985,6 +11078,17 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, wan6_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, ecm_wan_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, emta_wan_ifname);
+      if(inf_num!= 0)
+	  {
+		int cnt =0;
+		for(cnt = 0;cnt < inf_num;cnt++)
+		{
+		      fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", Interface[cnt], wan6_ifname);
+		      fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", Interface[cnt], ecm_wan_ifname);
+		      fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", Interface[cnt], emta_wan_ifname);
+
+		}
+	  }
 
 
       fprintf(fp, "-A lan2wan -j lan2wan_pc_device\n");
@@ -11052,7 +11156,17 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, lan_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", ecm_wan_ifname, lan_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", emta_wan_ifname, lan_ifname);
+      if(inf_num!= 0)
+	  {
+		int cnt =0;
+		for(cnt = 0;cnt < inf_num;cnt++)
+		{
+		      fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, Interface[cnt]);
+		      fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", ecm_wan_ifname, Interface[cnt]);
+		      fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", emta_wan_ifname, Interface[cnt]);
 
+		}
+	  }
       //in IPv6, the DMZ and port forwarding just overwrite the wan2lan rule.
       if(isDmzEnabled) {
           int rc;
