@@ -3424,6 +3424,28 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
    }
       
    char dst_str[64];
+   int status_http, status_http_ert, status_https;
+   char Httpport[20],Httpsport[20], tmphttpQuery[20];
+   Httpport[0] = '\0';
+   Httpsport[0] = '\0';
+
+   status_http = syscfg_get(NULL, "mgmt_wan_httpport", Httpport, sizeof(Httpport));
+   #if defined(CONFIG_CCSP_WAN_MGMT_PORT)
+   tmphttpQuery[0] = '\0';
+   status_http_ert = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmphttpQuery, sizeof(tmphttpQuery));
+   if(status_http_ert == 0)
+       strcpy(Httpport, tmphttpQuery);
+   #endif
+
+   if (0 != status_http || '\0' == Httpport[0]) {
+            snprintf(Httpport, sizeof(Httpport), "%d", 8080);
+   }
+
+   status_https = syscfg_get(NULL, "mgmt_wan_httpsport", Httpsport, sizeof(Httpsport));
+   if (0 != status_https || '\0' == Httpsport[0]) {
+            snprintf(Httpsport, sizeof(Httpsport), "%d", 8181);
+   }
+
    //snprintf(dst_str, sizeof(dst_str), "--to-destination %s.%s ", lan_3_octets, tohost);
    /* tohost is now a full ip address */
    snprintf(dst_str, sizeof(dst_str), "--to-destination %s ", tohost);
@@ -3434,11 +3456,11 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
          if (isNatReady &&
              strcmp(tohost, "0.0.0.0") != 0) { /* 0.0.0.0 stands for disable in SA-RG-MIB */
             snprintf(str, sizeof(str),
-               "-A prerouting_fromwan_todmz --dst %s -p tcp -j DNAT %s", natip4, dst_str);
+               "-A prerouting_fromwan_todmz --dst %s -p tcp -m multiport ! --dports %s,%s -j DNAT %s", natip4, Httpport, Httpsport, dst_str);
             fprintf(nat_fp, "%s\n", str);
             
             snprintf(str, sizeof(str),
-               "-A prerouting_fromwan_todmz --dst %s -p udp -j DNAT %s", natip4, dst_str);
+               "-A prerouting_fromwan_todmz --dst %s -p udp -m multiport ! --dports %s,%s -j DNAT %s", natip4, Httpport, Httpsport, dst_str);
             fprintf(nat_fp, "%s\n", str);
          }
 
