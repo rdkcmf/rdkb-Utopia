@@ -148,7 +148,11 @@ static struct
     /* Utopia_Event_NTPClient_Restart */   { "ntpclient-restart",    0, 0, 0 },
     /* Utopia_Event_Reboot */              { "system-restart",       0, 0, 0 },
     /* Utopia_Event_WAN_Restart */         { "wan-restart",          "wan-restarting", "0", 30 },
+#if !defined(_PLATFORM_IPQ_)
     /* Utopia_Event_WLAN_Restart */        { "wlan-restart",         "wlan-restarting", "1", 5 },
+#else
+    /* Utopia_Event_WLAN_Restart */        { "wlan-restart",         "wlan-restarting", "1", 40 },
+#endif
     /* Utopia_Event_DDNS_Update */         { "ddns-start",           0, 0, 0 },
     /* Utopia_Event_StaticRoute_Restart */ { "staticroute-restart",  0, 0, 0 },
     /* Utopia_Event_SmbServer_Restart */   { "samba_server_restart", 0, 0, 0 },

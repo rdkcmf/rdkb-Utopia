@@ -48,9 +48,21 @@
 #include <stdio.h>
 #include "srvmgr.h"
 
+#if defined(_PLATFORM_IPQ_)
+#define SERV_WLAN_HANDLER "/etc/utopia/service.d/service_wlan.sh"
+#endif
+
 const char* SERVICE_NAME            = "wlan";
+#if !defined(_PLATFORM_IPQ_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_wlan.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
+#else
+const char* SERVICE_DEFAULT_HANDLER = SERV_WLAN_HANDLER;
+const char* SERVICE_CUSTOM_EVENTS[] = {
+   "wlan-reset|"SERV_WLAN_HANDLER"|NULL|"TUPLE_FLAG_EVENT,
+   NULL
+};
+#endif
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);

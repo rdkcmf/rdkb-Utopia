@@ -8065,7 +8065,9 @@ static int do_lan2wan_misc(FILE *filter_fp)
       if (isDmzEnabled) {
          fprintf(filter_fp, "-A lan2wan_misc -j lan2wan_dmz_accept\n");
       }
+#if !defined(_PLATFORM_IPQ_)
       fprintf(filter_fp, "-A lan2wan_misc -j DROP\n");
+#endif
    }
    FIREWALL_DEBUG("Exiting do_lan2wan_misc\n");
    return(0);
@@ -8205,7 +8207,13 @@ static int do_wan2lan_misc(FILE *fp)
       return(-1);
    }
    FIREWALL_DEBUG("Entering do_wan2lan_misc\n"); 
+   /*
+    * PLATFORM_IPQ: These generic rules should be populated to the do_wan2lan_misc chain
+    * after user-defined rules have been added.
+    */
+#ifndef _PLATFORM_IPQ_
    add_usgv2_wan2lan_general_rules(fp);
+#endif
    /*
     * syscfg tuple W2LFirewallRule_, where x is a digit
     * keeps track of the syscfg namespace of a user defined forwarding rule.
@@ -8359,6 +8367,13 @@ FirewallRuleNext2:
       }
    }
 
+   /*
+    * PLATFORM_IPQ: These generic rules should be populated to the do_wan2lan_misc chain
+    * after user-defined rules have been added.
+    */
+#ifdef _PLATFORM_IPQ_
+   add_usgv2_wan2lan_general_rules(fp);
+#endif
    FIREWALL_DEBUG("Exiting do_wan2lan_misc\n"); 
    return(0);
 }
@@ -10592,7 +10607,9 @@ int prepare_ipv6_firewall(const char *fw_file)
 #endif
    
 	do_ipv6_sn_filter(mangle_fp);
+#if !defined(_PLATFORM_IPQ_)
 	do_ipv6_nat_table(nat_fp);
+#endif
 	
 	do_ipv6_filter_table(filter_fp);
 	
@@ -10613,7 +10630,9 @@ int prepare_ipv6_firewall(const char *fw_file)
 
 	fprintf(raw_fp, "COMMIT\n");
 	fprintf(mangle_fp, "COMMIT\n");
+#if !defined(_PLATFORM_IPQ_)
 	fprintf(nat_fp, "COMMIT\n");
+#endif
 	fprintf(filter_fp, "COMMIT\n");
 	
 	rewind(raw_fp);
@@ -10789,9 +10808,10 @@ static void do_ipv6_filter_table(FILE *fp){
       // Accept everything from localhost
       fprintf(fp, "-A INPUT -i lo -j ACCEPT\n");
 
+#if !defined(_PLATFORM_IPQ_)
       // Block the evil routing header type 0
       fprintf(fp, "-A INPUT -m rt --rt-type 0 -j DROP\n");
-
+#endif
       fprintf(fp, "-A INPUT -m state --state INVALID -j LOG_INPUT_DROP\n");
 
       if(isComcastImage) {
@@ -11079,9 +11099,10 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A FORWARD -i brlan0 -o brlan0 -j lan2wan \n");
 #endif
 
+#if !defined(_PLATFORM_IPQ_)
       // Block the evil routing header type 0
       fprintf(fp, "-A FORWARD -m rt --rt-type 0 -j LOG_FORWARD_DROP \n");
-
+#endif
 #if defined(_COSA_BCM_MIPS_)
       fprintf(fp, "-A FORWARD -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
       fprintf(fp, "-A FORWARD -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
@@ -11293,7 +11314,7 @@ v6GPFirewallRuleNext:
       // Accept blindly ESP/AH/SCTP
       fprintf(fp, "-A FORWARD -i %s -o %s -p esp -j ACCEPT\n", wan6_ifname, lan_ifname);
 //temp changes for CBR until brcm fixauthentication Head issue on brlan0 for v6
-#ifndef _CBR_PRODUCT_REQ_
+#ifndef _CBR_PRODUCT_REQ_ && !defined (_PLATFORM_IPQ_)
       fprintf(fp, "-A FORWARD -i %s -o %s -m ah -j ACCEPT\n", wan6_ifname, lan_ifname);
 #endif
       fprintf(fp, "-A FORWARD -i %s -o %s -p 132 -j ACCEPT\n", wan6_ifname, lan_ifname);
