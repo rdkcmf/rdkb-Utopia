@@ -53,6 +53,7 @@
 #------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 SERVICE_NAME="sshd"
 SELF_NAME="`basename $0`"
@@ -86,7 +87,12 @@ do_start() {
    DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2.xyz"
    getConfigFile $DROPBEAR_PARAMS_1
    getConfigFile $DROPBEAR_PARAMS_2
-   dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22
+   dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
+   #the PID_FILE created after demonize the process. so added delay for 1 sec
+   sleep 1
+   if [ ! -f "$PID_FILE" ] ; then
+      echo_t "[utopia] $PID_FILE file is not created"
+   fi
    dropbearSec $DROPBEAR_PARAMS
    sysevent set ssh_daemon_state up
 }
