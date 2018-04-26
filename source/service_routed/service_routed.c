@@ -216,7 +216,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char preferred_lft[16], valid_lft[16];
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
-    char lan_rdnss[64];
     char buf[6];
     FILE *responsefd = NULL;
     char *networkResponse = "/var/tmp/networkresponse.txt";
@@ -236,6 +235,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     unsigned int l2_insts[4] = {0};
     unsigned int enabled_iface_num = 0;
     char evt_name[64] = {0};
+    int  StaticDNSServersEnabled = 0;
 
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
@@ -301,7 +301,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif
 	{
 		char val_DNSServersEnabled[ 32 ];
-		int  StaticDNSServersEnabled = 0;
 
         fprintf(fp, "interface %s\n", lan_if);
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
@@ -427,11 +426,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
 				}
 			}
 
-        		for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
+        for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
 			{
 			// Modifying rdnss value to fix the zebra config.
         		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
-			strcpy(lan_rdnss,tok);
 			}
 		}
 	}
@@ -449,8 +447,15 @@ char out[100];
 char *token = NULL; 
 char s[2] = ",";
 char *pt;
+char pref_rx[16];
+int pref_len = 0;
 memset(out,0,sizeof(out));
+memset(pref_rx,0,sizeof(pref_rx));
+sysevent_get(sefd, setok,"lan_prefix_v6", pref_rx, sizeof(pref_rx));
 syscfg_get(NULL, "IPv6subPrefix", out, sizeof(out));
+pref_len = atoi(pref_rx);
+if(pref_len < 64)
+{
 if(!strncmp(out,"true",strlen(out)))
 {
 	memset(out,0,sizeof(out));
@@ -484,11 +489,39 @@ if(!strncmp(out,"true",strlen(out)))
             fprintf(fp, "   ipv6 nd other-config-flag\n");
 
         fprintf(fp, "   ipv6 nd router-preference medium\n");
-		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", lan_rdnss);
-    	fprintf(fp, "interface %s\n", token);
+    	if(inCaptivePortal != 1)
+        {
+                        /* Static DNS Enabled case */
+                        if( 1 == StaticDNSServersEnabled )
+                        {
+                                memset( name_servs, 0, sizeof( name_servs ) );
+                                syscfg_get(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers", name_servs, sizeof(name_servs));
+                                fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__,
+                                                                                                                                                           __LINE__,
+                                                                                                                                                           StaticDNSServersEnabled,
+                                                                                                                                                           name_servs );
+                        }
+                        else
+                        {
+                                /* DNS from WAN (if no static DNS) */
+                                if (strlen(name_servs) == 0) {
+                                        sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs),
+                                                sizeof(name_servs) - strlen(name_servs));
+                                }
+                        }
+
+                        for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
+                        {
+                        // Modifying rdnss value to fix the zebra config.
+                        fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+                        }
+         }
+
+	fprintf(fp, "interface %s\n", token);
     	fprintf(fp, "   ip irdp multicast\n");
 	}
 	memset(out,0,sizeof(out));
+}
 }
 #endif
     fclose(fp);
