@@ -41,7 +41,26 @@
 #include <fcntl.h>
 #include "autoconf.h"
 
+#include "ccsp_psm_helper.h"
+#include <ccsp_base_api.h>
+#include "ccsp_memory.h"
+
 #define PROG_NAME       "SERVICE-IPV6"
+
+#define CCSP_SUBSYS                 "eRT."
+#define L3_DM_PREFIX                "dmsb.l3net."
+#define L3_DM_IPV6_ENABLE_PREFIX    "IPv6Enable"
+#define L3_DM_ETHLINK_PREFIX        "EthLink"
+#define ETHLINK_DM_PREFIX           "dmsb.EthLink."
+#define ETHLINK_DM_L2NET_PREFIX     "l2net"
+#define CCSP_CR_COMPONENT_ID        "eRT.com.cisco.spvtg.ccsp.CR"
+#define L3_DM_PRIMARY_INSTANCE      "dmsb.MultiLAN.PrimaryLAN_l3net"
+
+static void* bus_handle = NULL;
+const char* const service_ipv6_component_id = "ccsp.ipv6";
+
+#define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
+#define PSM_VALUE_GET_INS(name, pIns, ppInsArry) PsmGetNextLevelInstances(bus_handle, CCSP_SUBSYS, name, pIns, ppInsArry)
 
 #define PROVISIONED_V6_CONFIG_FILE  "/tmp/ipv6_provisioned.config"
 #define CLI_RECEIVED_OPTIONS_FILE   "/tmp/.dibbler-info/client_received_options"
@@ -50,7 +69,8 @@
 #define DHCPV6S_CONF_FILE           "/etc/dibbler/server.conf"
 #define DHCPV6S_NAME                "dhcpv6s"
 
-#define MAX_LAN_IF_NUM              3
+#define MAX_LAN_IF_NUM             64
+#define CMD_BUF_SIZE              255
 
 /*dhcpv6 client dm related sysevent*/
 #define COSA_DML_DHCPV6_CLIENT_IFNAME                 "erouter0"
@@ -238,6 +258,46 @@ static int daemon_stop(const char *pid_file, const char *prog)
     return 0;
 }
 
+static int mbus_get(char *path, char *val, int size)
+{
+    int                      compNum = 0;
+    int                      valNum = 0;
+    componentStruct_t        **ppComponents = NULL;
+    parameterValStruct_t     **parameterVal = NULL;
+    char                     *ppDestComponentName = NULL;
+    char                     *ppDestPath = NULL;
+    char                     *paramNames[1];
+
+    if (!path || !val || size < 0)
+        return -1;
+
+    if (!bus_handle) {
+         fprintf(stderr, "DBUS not connected\n");
+         return -1;
+    }
+
+    if (CcspBaseIf_discComponentSupportingNamespace(bus_handle, CCSP_CR_COMPONENT_ID, path, CCSP_SUBSYS, &ppComponents, &compNum) != CCSP_SUCCESS) {
+        fprintf(stderr, "failed to find component for %s \n", path);
+        return -1;
+    }
+    ppDestComponentName = ppComponents[0]->componentName;
+    ppDestPath = ppComponents[0]->dbusPath;
+    paramNames[0] = path;
+
+    if(CcspBaseIf_getParameterValues(bus_handle, ppDestComponentName, ppDestPath, paramNames, 1, &valNum, &parameterVal) != CCSP_SUCCESS) {
+        fprintf(stderr, "failed to get value for %s \n", path);
+        free_componentStruct_t(bus_handle, compNum, ppComponents);
+        return -1;
+    }
+
+    if(valNum >= 1) {
+        strncpy(val, parameterVal[0]->parameterValue, size);
+        free_parameterValStruct_t(bus_handle, valNum, parameterVal);
+        free_componentStruct_t(bus_handle, compNum, ppComponents);
+    }
+    return 0;
+}
+
 static int get_dhcpv6s_conf(dhcpv6s_cfg_t *cfg)
 {
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "", 0, "", 0, "serverenable", cfg->enable);
@@ -252,6 +312,9 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
     int i = 0;
     dhcpv6s_pool_opt_t *p_opt = NULL;
     char buf[64] = {0};
+    FILE *fp = NULL;
+    char dml_path[CMD_BUF_SIZE] = {0};
+    char iface_name[64] = {0};
 
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "bEnabled", cfg->enable);
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "RapidEnable", cfg->rapid_enable);
@@ -263,10 +326,20 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "LeaseTime", cfg->lease_time);
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServersEnabled", cfg->X_RDKCENTRAL_COM_DNSServersEnabled);
 
-    DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "IAInterface", cfg->interface);
+#if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || !defined(IPV6_MULTILAN)
+    DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "IAInterface", iface_name);
+#else
+    DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "Interface", iface_name);
+#endif
+
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeBegin", cfg->prefix_range_begin);
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeEnd", cfg->prefix_range_end);
 	DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServers", cfg->X_RDKCENTRAL_COM_DNSServers);
+
+    /* get Interface name from data model: Device.IP.Interface.%d.Name*/
+    snprintf(dml_path, sizeof(dml_path), "%sName", iface_name);
+    if (mbus_get(dml_path, cfg->interface, sizeof(cfg->interface)) != 0)
+        return -1;
 
     /*get interface prefix*/
     snprintf(buf, sizeof(buf), "ipv6_%s-prefix", cfg->interface);
@@ -430,6 +503,20 @@ static int get_active_lanif(struct serv_ipv6 *si6, unsigned int insts[], unsigne
     char if_name[16] = {0};
     char buf[64] = {0};
 
+    int l_iRet_Val = 0;
+    int idx = 0;
+    int len = 0;
+    unsigned int l3net_count = 0;
+    unsigned int *l3net_ins = NULL;
+    unsigned char psm_param[CMD_BUF_SIZE] = {0};
+    unsigned char active_if_list[CMD_BUF_SIZE] = {0};
+    char *psm_get = NULL;
+    ipv6_prefix_t mso_prefix;
+    int delta_bits = 0;
+    unsigned int max_active_if_count = 0;
+    int primary_l3_instance = 0;
+
+#if defined (CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || !defined(IPV6_MULTILAN)
     syscfg_get(NULL, "lan_pd_interfaces", lan_pd_if, sizeof(lan_pd_if));
     if (lan_pd_if[0] == '\0') {
         *num = 0;
@@ -449,8 +536,77 @@ static int get_active_lanif(struct serv_ipv6 *si6, unsigned int insts[], unsigne
 
         p = strtok(NULL, " ");
     }
+#else
+    /* Get active bridge count from PSM */
+    if (!bus_handle) {
+        fprintf(stderr, "DBUS not connected, returning \n");
+        bus_handle = NULL;
+        *num = 0;
+        return *num;
+    }
 
+    if (get_prefix_info(si6->mso_prefix, mso_prefix.value, sizeof(mso_prefix.value), &mso_prefix.len) != 0) {
+        *num = 0;
+        return *num;
+    }
+
+    /* Get max count of IPv6 enabled interfaces, from received MSO prefix*/
+    if((delta_bits = 64 - mso_prefix.len) >= 0) {
+        max_active_if_count = 1 << delta_bits;
+    }
+
+    l_iRet_Val = PSM_VALUE_GET_INS(L3_DM_PREFIX , &l3net_count, &l3net_ins);
+
+    /* Get primary L3 network instance */
+    snprintf(psm_param, sizeof(psm_param), "%s", L3_DM_PRIMARY_INSTANCE);
+    l_iRet_Val = PSM_VALUE_GET_STRING(psm_param, psm_get);
+    if((l_iRet_Val == CCSP_SUCCESS) && (psm_get != NULL)) {
+        primary_l3_instance = atoi(psm_get);
+    }
+
+    if((l_iRet_Val == CCSP_SUCCESS) && (l3net_count > 0)) {
+
+        for(idx = 0; (idx < l3net_count) && (i < max_active_if_count); idx++) {
+            snprintf(psm_param, sizeof(psm_param), "%s%d.%s", L3_DM_PREFIX , l3net_ins[idx], L3_DM_IPV6_ENABLE_PREFIX);
+            l_iRet_Val = PSM_VALUE_GET_STRING(psm_param, psm_get);
+
+            if((l_iRet_Val == CCSP_SUCCESS) && (psm_get != NULL) && (l3net_ins[idx] == primary_l3_instance || !strncmp(psm_get, "true", 4) || !strncmp(psm_get, "1", 1))) {
+                Ansc_FreeMemory_Callback(psm_get);
+                psm_get = NULL;
+
+                snprintf(psm_param, sizeof(psm_param), "%s%d.%s", L3_DM_PREFIX , l3net_ins[idx], L3_DM_ETHLINK_PREFIX);
+                l_iRet_Val = PSM_VALUE_GET_STRING(psm_param, psm_get);
+
+                if((l_iRet_Val == CCSP_SUCCESS) && (psm_get != NULL)) {
+                    snprintf(psm_param, sizeof(psm_param), "%s%s.%s", ETHLINK_DM_PREFIX, psm_get, ETHLINK_DM_L2NET_PREFIX);
+                    Ansc_FreeMemory_Callback(psm_get);
+                    psm_get = NULL;
+
+                    l_iRet_Val = PSM_VALUE_GET_STRING(psm_param, psm_get);
+
+                    if((l_iRet_Val == CCSP_SUCCESS) && (psm_get != NULL)) {
+                        insts[i++] = atoi(psm_get);
+                        Ansc_FreeMemory_Callback(psm_get);
+                        psm_get = NULL;
+                    }
+                }
+            }
+            else if (psm_get != NULL) {
+                Ansc_FreeMemory_Callback(psm_get);
+                psm_get = NULL;
+            }
+        }
+        Ansc_FreeMemory_Callback(l3net_ins);
+        l3net_ins = NULL;
+    }
     *num = i;
+
+    for(idx = 0; idx < *num; idx++) {
+        len += snprintf(active_if_list+len, sizeof(active_if_list)-len, "%d ", insts[idx]);
+    }
+    /* Set active IPv6 instances */
+    sysevent_set(si6->sefd, si6->setok, "ipv6_active_inst", active_if_list, 0);
+#endif
 
     return *num;
 }
@@ -578,9 +734,9 @@ static int divide_ipv6_prefix(struct serv_ipv6 *si6)
 #ifdef _CBR_PRODUCT_REQ_
 	tmp_prefix = helper_ntoh64(&tmp_prefix); // The memcpy is copying in reverse order due to LEndianess
 #endif
-    tmp_prefix &= ((~0) << delta_bits);
+    tmp_prefix &= htobe64((~0) << delta_bits);
     for (i = 0; i < sub_prefix_num; i ++) {
-        sub_prefix = tmp_prefix | (i << (delta_bits - bit_boundary));
+        sub_prefix = tmp_prefix | htobe64(i << (delta_bits - bit_boundary));
         memset(buf, 0, sizeof(buf));
 #ifdef _CBR_PRODUCT_REQ_	
 		sub_prefix = helper_hton64(&sub_prefix);// The memcpy is copying in reverse order due to LEndianess
@@ -622,7 +778,7 @@ static int divide_ipv6_prefix(struct serv_ipv6 *si6)
 
         fprintf(stderr, "interface-prefix %s:%s\n", iface_name, iface_prefix);
 
-        tmp_prefix++;
+        tmp_prefix += htobe64(1);
     }
 
     /*last set sub-prefix related sysevent*/
@@ -654,6 +810,7 @@ int compute_global_ip(char *prefix, char *if_name, char *ipv6_addr, unsigned int
 {
     unsigned int    length           = 0;
     char            globalIP[INET6_ADDRSTRLEN] = {0};
+    char            inet_v6Address[INET6_ADDRSTRLEN] = {0};
     unsigned int    i                = 0;
     unsigned int    j                = 0;
     unsigned int    k                = 0;
@@ -745,7 +902,8 @@ int compute_global_ip(char *prefix, char *if_name, char *ipv6_addr, unsigned int
     globalIP[i-1] = '\0';
 
     fprintf(stderr, "the global ipv6 address is:%s\n", globalIP);
-    strncpy(ipv6_addr, globalIP, addr_len);
+    inet_pton(AF_INET6, globalIP, inet_v6Address);
+    inet_ntop(AF_INET6, inet_v6Address, ipv6_addr, addr_len);
 
     return 0;
 }
@@ -761,6 +919,10 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
     int i = 0;
     char evt_name[64] = {0};
     char evt_val[64] = {0};
+    char action[64] = {0};
+    char cmd[CMD_BUF_SIZE] = {0};
+    char iapd_preftm[64] = {0};
+    char iapd_vldtm[64] = {0};
     char iface_prefix[INET6_ADDRSTRLEN] = {0};
     unsigned int prefix_len = 0;
     char ipv6_addr[INET6_ADDRSTRLEN] = {0};
@@ -786,24 +948,53 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
         /*enable ipv6 link local*/
         vsystem("ip -6 link set dev %s up", iface_name);
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", iface_name, "1");
+#if !defined(IPV6_MULTILAN)
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", iface_name, "1");
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", iface_name, "0");
+#endif
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/forwarding", iface_name, "1");
 
         sysevent_set(si6->sefd, si6->setok, "ipv6_linklocal", "up", 0);
 
         /*construct global ipv6 for lan interface*/
         compute_global_ip(iface_prefix, iface_name, ipv6_addr, sizeof(ipv6_addr));
+
+        if(ipv6_addr[0] == '\0')
+           continue;
+
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", iface_name);
         sysevent_set(si6->sefd, si6->setok, evt_name, ipv6_addr, 0);
 
         get_prefix_info(iface_prefix, NULL, 0, &prefix_len);
 
+        sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, action, sizeof(action));
+        if(action[0]!='\0') {
+            if(!strcmp(action,"'\\0'"))
+                strncpy(iapd_preftm, "forever", sizeof(iapd_preftm));
+            else
+                strncpy(iapd_preftm, strtok (action,"'"), sizeof(iapd_preftm));
+        }
+#if defined(IPV6_MULTILAN)
+        sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME, action, sizeof(action));
+        if(action[0]!='\0') {
+            if(!strcmp(action,"'\\0'"))
+                strncpy(iapd_vldtm, "forever", sizeof(iapd_vldtm));
+            else
+                strncpy(iapd_vldtm, strtok (action,"'"), sizeof(iapd_vldtm));
+        }
+
+        snprintf(cmd, CMD_BUF_SIZE, "ip -6 addr add %s/%d dev %s valid_lft %s preferred_lft %s",
+                ipv6_addr, prefix_len, iface_name, iapd_vldtm, iapd_preftm);
+
+        vsystem(cmd);
+        bzero(ipv6_addr, sizeof(ipv6_addr));
+#else
         if (vsystem("ip -6 addr add %s/%d dev %s valid_lft forever preferred_lft forever", 
                     ipv6_addr, prefix_len, iface_name) != 0) {
             fprintf(stderr, "%s set ipv6 addr error.\n", iface_name);
             return -1;
         }
+#endif
     }
 
     return 0;
@@ -832,6 +1023,9 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
 
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", if_name);
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_prefix, sizeof(iface_prefix));
+#if defined(IPV6_MULTILAN)
+        sysevent_set(si6->sefd, si6->setok, evt_name, "", 0);
+#endif
         
         /*del v6 addr*/
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", if_name);
@@ -840,8 +1034,11 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
             get_prefix_info(iface_prefix, NULL, 0, &prefix_len);
             vsystem("ip -6 addr del %s/%d dev %s", iface_addr, prefix_len, if_name);
         }
-
+#if defined(IPV6_MULTILAN)
+        sysevent_set(si6->sefd, si6->setok, evt_name, "", 0);
+#else
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", if_name, "1"); /*this seems not work*/
+#endif
         sysevent_set(si6->sefd, si6->setok, "ipv6_linklocal", "down", 0);
     }
 
@@ -898,6 +1095,9 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
 
     /*Begin write dibbler configurations*/
     fprintf(fp, "log-level 8\n");
+#if defined(IPV6_MULTILAN)
+    fprintf(fp, "reconfigure-enabled 1\n");
+#endif
 
     get_dhcpv6s_conf(&dhcpv6s_cfg);
     if (dhcpv6s_cfg.server_type != DHCPV6S_TYPE_STATEFUL)
@@ -928,6 +1128,9 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
         fprintf(fp, "   preference %d\n", 255);
 
         if (dhcpv6s_pool_cfg.iana_enable) {
+#if defined(IPV6_MULTILAN)
+            fprintf(fp, "   subnet %s\n", dhcpv6s_pool_cfg.ia_prefix);
+#endif
             fprintf(fp, "   class {\n");
 #ifdef CONFIG_CISCO_DHCP6S_REQUIREMENT_FROM_DPC3825
             if (dhcpv6s_pool_cfg.eui64_enable) fprintf(fp, "       share 1000\n");
@@ -1055,16 +1258,20 @@ OPTIONS:
 
 static int dhcpv6s_start(struct serv_ipv6 *si6)
 {
-    #if defined(_COSA_FOR_BCI_)
+#if defined(_COSA_FOR_BCI_)
     char dhcpv6Enable[8]={0};
-    #endif
+#endif
 
     if (gen_dibbler_conf(si6) != 0) {
         fprintf(stderr, "%s: fail to generate dibbler config\n", __FUNCTION__);
         return -1;
     }
 
+#if defined(IPV6_MULTILAN)
+    daemon_stop(DHCPV6S_PID_FILE, DHCPV6_SERVER);
+#else
     daemon_stop(DHCPV6S_PID_FILE, "dibbler");
+#endif
 #if defined(_COSA_FOR_BCI_)
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
     if (!strncmp(dhcpv6Enable, "0", 1))
@@ -1079,7 +1286,11 @@ static int dhcpv6s_start(struct serv_ipv6 *si6)
 
 static int dhcpv6s_stop(struct serv_ipv6 *si6)
 {
+#if defined(IPV6_MULTILAN)
+    return daemon_stop(DHCPV6S_PID_FILE, DHCPV6_SERVER);
+#else
     return daemon_stop(DHCPV6S_PID_FILE, "dibbler");
+#endif
 }
 
 static int dhcpv6s_restart(struct serv_ipv6 *si6)
@@ -1141,6 +1352,10 @@ static int serv_ipv6_start(struct serv_ipv6 *si6)
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
+#if defined(IPV6_MULTILAN)
+    /* Restart firewall to apply ip6tables rules*/
+    sysevent_set(si6->sefd, si6->setok, "firewall-restart", NULL, 0);
+#endif
 
     sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "started", 0);
     return 0;
@@ -1181,6 +1396,10 @@ static int serv_ipv6_init(struct serv_ipv6 *si6)
 {
     char wan_st[16], lan_st[16];
     char buf[16];
+#if defined(IPV6_MULTILAN)
+    int ret = 0;
+    char* pCfg = CCSP_MSG_BUS_CFG;
+#endif
 
     memset(si6, 0, sizeof(struct serv_ipv6));
 
@@ -1194,6 +1413,15 @@ static int serv_ipv6_init(struct serv_ipv6 *si6)
         fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
         return -1;
     }
+
+#if defined(IPV6_MULTILAN)
+    ret = CCSP_Message_Bus_Init(service_ipv6_component_id, pCfg, &bus_handle, Ansc_AllocateMemory_Callback, Ansc_FreeMemory_Callback);
+    if (ret == -1) {
+        fprintf(stderr, "%s: DBUS connection failed \n", __FUNCTION__);
+        bus_handle = NULL;
+        ret -1;
+    }
+#endif
 
     syscfg_get(NULL, "last_erouter_mode", buf, sizeof(buf));
     if(atoi(buf) == 1) {/*v4 only*/
@@ -1214,9 +1442,16 @@ static int serv_ipv6_init(struct serv_ipv6 *si6)
             si6->tpmod = FAVOR_WIDTH;
             break;
         default:
+#if defined(IPV6_MULTILAN)
+            fprintf(stderr, "%s: unknown erouter topology mode, settinf default mode to FAVOR_WIDTH \n", __FUNCTION__);
+            si6->tpmod = FAVOR_WIDTH;
+            break;
+#else
             fprintf(stderr, "%s: unknown erouter topology mode.\n", __FUNCTION__);
             si6->tpmod = TPMOD_UNKNOWN;
             break;
+#endif
+
     }
 
     return 0;
@@ -1225,6 +1460,13 @@ static int serv_ipv6_init(struct serv_ipv6 *si6)
 static int serv_ipv6_term(struct serv_ipv6 *si6)
 {
     sysevent_close(si6->sefd, si6->setok);
+
+#if defined(IPV6_MULTILAN)
+    if (bus_handle != NULL) {
+        fprintf(stderr, "Closing DBUS connection \n");
+        CCSP_Message_Bus_Exit(bus_handle);
+    }
+#endif
     return 0;
 }
 

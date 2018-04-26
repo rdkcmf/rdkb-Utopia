@@ -67,11 +67,20 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ipv6.sh";
  * eg. "event3|/etc/code|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_SERIAL
  */
 const char* SERVICE_CUSTOM_EVENTS[] = { 
+#if defined(IPV6_MULTILAN)
+    "ipv6_prefix|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+#else
     "ipv6_prefix|/etc/utopia/service.d/service_ipv6.sh",
+#endif
     "multinet-instances|/etc/utopia/service.d/service_ipv6.sh",
-	"multinet_1-status|/etc/utopia/service.d/service_ipv6.sh",
+    "multinet_1-status|/etc/utopia/service.d/service_ipv6.sh"
     "erouter_topology-mode|/etc/utopia/service.d/service_ipv6.sh",
     "wan-status|/etc/utopia/service.d/service_ipv6.sh",
+#if defined(IPV6_MULTILAN)
+    "dhcpv6s-start|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "dhcpv6s-stop|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "dhcpv6s-restart|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+#endif
     NULL };
 
 void srv_register(void) {

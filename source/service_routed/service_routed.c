@@ -61,6 +61,11 @@
 #define ZEBRA_CONF_FILE "/var/zebra.conf"
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
 
+#if defined(IPV6_MULTILAN)
+#define COSA_DML_DHCPV6_CLIENT_IFNAME                 "erouter0"
+#define COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME     "tr_"COSA_DML_DHCPV6_CLIENT_IFNAME"_dhcpv6_client_pref_pretm"
+#define COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME     "tr_"COSA_DML_DHCPV6_CLIENT_IFNAME"_dhcpv6_client_pref_vldtm"
+#endif
 
 struct serv_routed {
     int         sefd;
@@ -128,6 +133,8 @@ static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsign
     char if_name[16] = {0};
     char buf[64] = {0};
 
+#if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || !defined(IPV6_MULTILAN)
+
     syscfg_get(NULL, "lan_pd_interfaces", lan_pd_if, sizeof(lan_pd_if));
     if (lan_pd_if[0] == '\0') {
         *num = 0;
@@ -148,6 +155,17 @@ static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsign
         p = strtok(NULL, " ");
     }
 
+#else
+
+    /* service_ipv6 sets active IPv6 interfaces instances. */
+    sysevent_get(sefd, setok, "ipv6_active_inst", active_insts, sizeof(active_insts));
+    p = strtok(active_insts, " ");
+    while (p != NULL) {
+        insts[i++] = atoi(p);
+        p = strtok(NULL, " ");
+    }
+
+#endif
     *num = i;
 
     return *num;
@@ -216,6 +234,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char preferred_lft[16], valid_lft[16];
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
+    char lan_rdnss[64];
     char buf[6];
     FILE *responsefd = NULL;
     char *networkResponse = "/var/tmp/networkresponse.txt";
@@ -269,8 +288,13 @@ static int gen_zebra_conf(int sefd, token_t setok)
     sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
+#if defined(IPV6_MULTILAN)
+    sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, preferred_lft, sizeof(preferred_lft));
+    sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, valid_lft, sizeof(valid_lft));
+#else
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
+#endif
     syscfg_get(NULL, "lan_ifname", lan_if, sizeof(lan_if));
 #endif
     if (atoi(preferred_lft) <= 0)
@@ -281,7 +305,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     if ( atoi(preferred_lft) > atoi(valid_lft) )
         snprintf(preferred_lft, sizeof(preferred_lft), "%s",valid_lft);
 
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+#if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(IPV6_MULTILAN)
     get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
     for (i = 0; i < enabled_iface_num; i++) {
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
@@ -301,6 +325,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif
 	{
 		char val_DNSServersEnabled[ 32 ];
+		int  StaticDNSServersEnabled = 0;
 
         fprintf(fp, "interface %s\n", lan_if);
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
@@ -426,10 +451,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
 				}
 			}
 
-        for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
+        		for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
 			{
 			// Modifying rdnss value to fix the zebra config.
         		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+			strcpy(lan_rdnss,tok);
 			}
 		}
 	}
@@ -437,7 +463,8 @@ static int gen_zebra_conf(int sefd, token_t setok)
 
     fprintf(fp, "interface %s\n", lan_if);
     fprintf(fp, "   ip irdp multicast\n");
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION        
+
+#if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(IPV6_MULTILAN)
     }
 #endif
 
