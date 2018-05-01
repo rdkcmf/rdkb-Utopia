@@ -314,7 +314,9 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
     char buf[64] = {0};
     FILE *fp = NULL;
     char dml_path[CMD_BUF_SIZE] = {0};
+#if defined(IPV6_MULTILAN) && !defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
     char iface_name[64] = {0};
+#endif
 
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "bEnabled", cfg->enable);
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "RapidEnable", cfg->rapid_enable);
@@ -327,19 +329,21 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServersEnabled", cfg->X_RDKCENTRAL_COM_DNSServersEnabled);
 
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || !defined(IPV6_MULTILAN)
-    DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "IAInterface", iface_name);
+    DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "IAInterface", cfg->interface);
 #else
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "Interface", iface_name);
 #endif
 
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeBegin", cfg->prefix_range_begin);
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeEnd", cfg->prefix_range_end);
-	DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServers", cfg->X_RDKCENTRAL_COM_DNSServers);
+    DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServers", cfg->X_RDKCENTRAL_COM_DNSServers);
 
+#if defined(IPV6_MULTILAN) && !defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
     /* get Interface name from data model: Device.IP.Interface.%d.Name*/
     snprintf(dml_path, sizeof(dml_path), "%sName", iface_name);
     if (mbus_get(dml_path, cfg->interface, sizeof(cfg->interface)) != 0)
         return -1;
+#endif
 
     /*get interface prefix*/
     snprintf(buf, sizeof(buf), "ipv6_%s-prefix", cfg->interface);
@@ -536,6 +540,8 @@ static int get_active_lanif(struct serv_ipv6 *si6, unsigned int insts[], unsigne
 
         p = strtok(NULL, " ");
     }
+
+    *num = i;
 #else
     /* Get active bridge count from PSM */
     if (!bus_handle) {
