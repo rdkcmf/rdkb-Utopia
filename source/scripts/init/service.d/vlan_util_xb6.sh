@@ -67,6 +67,8 @@ WAN_MAC=`arris_rpc_client arm nvm_get cm_mac`
 DEFAULT_GRE_TUNNEL="gretap0"
 #Dummy MAC address to assign to GRE tunnels so we can add them to bridges
 DUMMY_MAC="02:03:DE:AD:BE:EF"
+#To fetch default ssid or passphrase
+source /usr/sbin/qtn_platform_utils.sh
 
 #Map athX style index X to Quantenna index
 #Takes as input parameter interface name (such as ath0)
@@ -123,10 +125,9 @@ check_qtn_ready(){
 #Generate and set a default SSID for wifi AP
 #Assumes you have already set the variables $AP_NAME and $VAP_NAME
 qtn_set_LnF_ssid(){
-
-          echo "VLAN_UTIL SETTING LOST & FOUND SSID"
-          $QWCFG_TEST set $QTN_INDEX ssid_bcast 0
-          $QWCFG_TEST set $QTN_INDEX ssid A16746DF2466410CA2ED9FB2E32FE7D9
+	echo "VLAN_UTIL SETTING LOST & FOUND SSID"
+	$QWCFG_TEST push $QTN_INDEX ssid_bcast 0
+	$QWCFG_TEST push $QTN_INDEX ssid A16746DF2466410CA2ED9FB2E32FE7D9
 }
 
 qtn_set_LnF_passphrase(){
@@ -142,7 +143,7 @@ qtn_set_LnF_passphrase(){
 
 	rm -f /tmp/tmp5
 	rm -f /tmp/tmp5.mod
-        $QWCFG_TEST set $QTN_INDEX passphrase $lpf
+	$QWCFG_TEST push $QTN_INDEX passphrase $lpf
 }
 
 qtn_configure_LnF_radius(){
@@ -151,39 +152,51 @@ qtn_configure_LnF_radius(){
     auth_secret=$(GetConfigFile radius.cfg stdout)
     erouter0_ip=$(ifconfig erouter0 | awk '/inet addr/{print substr($2,6)}')
 
-    $QWCFG_TEST set $QTN_INDEX vap_emerged 1
-
-    $QWCFG_TEST set $QTN_INDEX ssid_bcast 0
-
-    $QWCFG_TEST set $QTN_INDEX ssid D375C1D9F8B041E2A1995B784064977B
-
-    $QWCFG_TEST set $QTN_INDEX radius_conf "$BASE_WIFI_IP 1812 $auth_secret;$BASE_WIFI_IP 1812 $auth_secret"
-
-    $QWCFG_TEST set $QTN_INDEX beacon_type WPAand11i
-
-    $QWCFG_TEST set $QTN_INDEX wpa_encryption_mode TKIPandAESEncryption
-
-    $QWCFG_TEST set $QTN_INDEX authentication EAPAuthentication
-
-    $QWCFG_TEST set $QTN_INDEX wpa_rekey_interval 3600
-    $QWCFG_TEST set $QTN_INDEX iface_enable 1
+    $QWCFG_TEST push $QTN_INDEX vap_emerged 1
+    $QWCFG_TEST push $QTN_INDEX ssid_bcast 0
+    $QWCFG_TEST push $QTN_INDEX ssid D375C1D9F8B041E2A1995B784064977B
+    $QWCFG_TEST push $QTN_INDEX radius_conf "$BASE_WIFI_IP 1812 $auth_secret;$BASE_WIFI_IP 1812 $auth_secret"
+    $QWCFG_TEST push $QTN_INDEX beacon_type WPAand11i
+    $QWCFG_TEST push $QTN_INDEX wpa_encryption_mode TKIPandAESEncryption
+    $QWCFG_TEST push $QTN_INDEX authentication EAPAuthentication
+    $QWCFG_TEST push $QTN_INDEX wpa_rekey_interval 3600
+    $QWCFG_TEST push $QTN_INDEX iface_enable 1
   
     if [ "$erouter0_ip" != "" ]; then
-    $QWCFG_TEST set $QTN_INDEX nas_ip $erouter0_ip
+    $QWCFG_TEST push $QTN_INDEX nas_ip $erouter0_ip
 	echo "Configuring $erouter0_ip as NAS-IP for LnF radius interface $QTN_INDEX"
     else
-    $QWCFG_TEST set $QTN_INDEX nas_ip "0.0.0.0"
+    $QWCFG_TEST push $QTN_INDEX nas_ip "0.0.0.0"
         echo "No ip of erouter0, configuring 0.0.0.0 as NAS-IP for LnF radius interface $QTN_INDEX"
     fi
-    $QWCFG_TEST commit
 }
 
 qtn_set_mesh(){
-  $QWCFG_TEST set $QTN_INDEX ssid we.piranha.off
+  $QWCFG_TEST push $QTN_INDEX ssid we.piranha.off
   # Default passphrase will be qtn01234
-  $QWCFG_TEST set $QTN_INDEX ssid_bcast 0
-  $QWCFG_TEST set $QTN_INDEX iface_enable 0
-  $QWCFG_TEST commit
+  $QWCFG_TEST push $QTN_INDEX ssid_bcast 0
+  $QWCFG_TEST push $QTN_INDEX iface_enable 0
+}
+
+qtn_configure_XHS(){
+  echo "VLAN_UTIL SETTING XHS"
+  cm_mac=$(get_platform_param cm_mac)
+  xhs_ssid="XHS-$(echo $cm_mac | cut -d ":" -f 3-6 | sed s/://g)"
+  xhs_psk=$(get_platform_param xhs_psk)
+  $QWCFG_TEST push $QTN_INDEX ssid $xhs_ssid
+  $QWCFG_TEST push $QTN_INDEX passphrase $xhs_psk
+  if [ "$1" -eq 3 ];then  # XHS-5G should not be enabled
+    $QWCFG_TEST push $QTN_INDEX ssid_bcast 0
+    $QWCFG_TEST push $QTN_INDEX iface_enable 0
+  fi
+}
+
+qtn_configure_xfinitywifi(){
+  echo "VLAN_UTIL SETTING xfinitywifi"
+  $QWCFG_TEST push $QTN_INDEX ssid OutOfService
+  # Default passphrase will be qtn01234
+  $QWCFG_TEST push $QTN_INDEX ssid_bcast 0
+  $QWCFG_TEST push $QTN_INDEX iface_enable 0
 }
 
 #Setup QTN instance
@@ -204,10 +217,15 @@ setup_qtn(){
     then
         #Create VAP
         $QWCFG_TEST push $QTN_INDEX vap_emerged 1
+	ret=$?
 
         #If configured to do so, set a default SSID name here
         # Quantenna layer will set the default SSID, etc.
-        if [ $ATH_INDEX -eq 6 ] || [ $ATH_INDEX -eq 7 ]; then
+        if [[ $ret -eq 0 ]] && [[ $ATH_INDEX -eq 2 || $ATH_INDEX -eq 3 ]]; then
+                qtn_configure_XHS $ATH_INDEX
+        elif [[ $ret -eq 0 ]] && [[ $ATH_INDEX -eq 4 || $ATH_INDEX -eq 5 ]]; then
+                qtn_configure_xfinitywifi
+        elif [ $ATH_INDEX -eq 6 ] || [ $ATH_INDEX -eq 7 ]; then
                 qtn_set_LnF_ssid
                 qtn_set_LnF_passphrase
         elif [ $ATH_INDEX -eq 10 ] || [ $ATH_INDEX -eq 11 ]; then
