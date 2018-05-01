@@ -9349,7 +9349,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
 #if defined (INTEL_PUMA7) 
 
-   fprintf(filter_fp, "-A INPUT -i gmac5 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -i adp0.555 -j ACCEPT\n");
 
 #endif
    prepare_multinet_filter_input(filter_fp);
