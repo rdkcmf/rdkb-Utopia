@@ -83,6 +83,7 @@ LXC_DHCP_CONF=/etc/dnsmasq.conf
 
 XCONF_FILE="/etc/Xconf"
 XCONF_DEFAULT_URL="https://xconf.xcal.tv/xconf/swu/stb/"
+CALL_ARG="$1"
 
 CURRENT_LAN_STATE=`sysevent get lan-status`
 
@@ -356,10 +357,17 @@ dhcp_server_start ()
 	  return 0
    fi
    
+   DHCP_STATE=`sysevent get lan_status-dhcp`
    #if [ "started" != "$CURRENT_LAN_STATE" ] ; then
-   if [ "started" != "`sysevent get lan_status-dhcp`" ] ; then
-      rm -f /var/tmp/lan_not_restart
-      exit 0
+   if [ "started" != "$DHCP_STATE" ] ; then
+   	  if [ "$IS_BCI" = "yes" ] && [ -z "$DHCP_STATE" ] && [ "$CALL_ARG" = "dhcp_server-restart" ]; then
+   	  	# If we are calling dhcp_server_start from a restart event, it's possible that lan_status-dhcp may have never
+        # been set if DHCP was disabled on boot.
+        echo_t "SERVICE DHCP : DHCPv4 Service state is empty, allowing restart"
+   	  else
+         rm -f /var/tmp/lan_not_restart
+         exit 0
+      fi
    fi
 
    sysevent set dhcp_server-progress inprogress
@@ -483,7 +491,9 @@ dhcp_server_start ()
        print_uptime "boot_to_ETH_uptime"
 
        echo_t "LAN initization is complete notify SSID broadcast"
-       rpcclient $ATOM_ARPING_IP "touch /tmp/broadcast_ssids"
+       if [ -f "/usr/bin/rpcclient" ] ; then
+           rpcclient $ATOM_ARPING_IP "touch /tmp/broadcast_ssids"
+       fi
        print_uptime "boot_to_WIFI_uptime"
 
        touch /tmp/dhcp_server_start
