@@ -190,6 +190,7 @@ isValidLANIP () {
 #   The lan interface netmask
 #--------------------------------------------------------------
 calculate_dhcp_range () {
+	echo_t "DHCPCORRUPT_TRACE:StartIP=$1,LANSubnet=$2"
 	LAN_SUBNET=`subnet $1 $2` 
    	# Do a sanity check to make sure we got start address from DB
    	if [ "$DHCP_START" = "" ]

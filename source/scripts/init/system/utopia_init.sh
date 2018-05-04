@@ -422,8 +422,8 @@ then
     iot_dhcp_start=`syscfg get iot_dhcp_start`
     iot_dhcp_end=`syscfg get iot_dhcp_end`
     iot_netmask=`syscfg get iot_netmask`
-    echo_t "[utopia][init] DHCP server configuring for IOT iot_ifname = $iot_ifname "
-    echo_t  "iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
+    echo_t "DHCPCORRUPT_TRACE:iot_ifname=$iot_ifname"
+    echo_t "DHCPCORRUPT_TRACE:iot_dhcp_start=$iot_dhcp_start,iot_dhcp_end=$iot_dhcp_end,iot_netmask=$iot_netmask"
 fi
 
 # Get the syscfg value which indicates whether unit is activated or not.

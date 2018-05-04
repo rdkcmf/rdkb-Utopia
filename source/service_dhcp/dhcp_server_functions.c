@@ -239,8 +239,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
 	if (0 == isValidSubnetMask(l_cLanNetMask))
 	{
-		fprintf(stderr, "DHCP Net Mask:%s is corrupted. Setting to default Net Mask\n",
-				l_cLanNetMask);
+		fprintf(stderr, "DHCPCORRUPT_TRACE:DHCPNetMask=%s\n", l_cLanNetMask);
 		//copy the default netmask
 		memset(l_cLanNetMask, 0, sizeof(l_cLanNetMask));
 		sprintf(l_cLanNetMask, "%s", "255.255.255.0");
