@@ -142,4 +142,4 @@ DCMRESPONSE_TMP="/tmp/DCMresponse.txt"
 DCM_SETTINGS_PARSED="/tmp/DCMSettingsParsedForLogUpload"
 
 TMP_LOG_UPLOAD_PATH="/tmp/log_upload"
-
+DMESG_LOG_ATOM="/nvram/dmesg_atom"
