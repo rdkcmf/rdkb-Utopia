@@ -761,7 +761,9 @@ char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,ch
 
 									// Add newly introduced entry from /etc/ directory to /nvram directory
 									cJSON_AddItemToObject(subitem_nvram, key, cJSON_CreateString(value));
-									if ( strcmp(param_nvram,PartnerID) == 0 )
+									if ( ( 0 != strcmp( "comcast", PartnerID ) ) && \
+										( strcmp(param_nvram,PartnerID) == 0 ) 
+									   )
 									{
 									//Change the syscfg.db params to corresponding partners 							
 										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") )
@@ -874,67 +876,79 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 		} 
 		else
 		{
+			int isThisComcastPartner = 0;
+			
+			//Check whether this is comcast partner or not
+			if( 0 == strcmp( "comcast", PartnerID ) )
+			{
+				isThisComcastPartner = 1;
+			}
+				
 			partnerObj = cJSON_GetObjectItem( json, PartnerID );
 			if( partnerObj != NULL) 
 			{
-				if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") != NULL )
+				// Don't overwrite this value into syscfg.db for comcast partner
+				if( 0 == isThisComcastPartner )
 				{
-					userName = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername")->valuestring; 
-		
-					if (userName != NULL) 
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") != NULL )
 					{
-						set_syscfg_partner_values(userName,"user_name_3");
-						userName = NULL;
-					}	
-					else
+						userName = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername")->valuestring; 
+					
+						if (userName != NULL) 
+						{
+							set_syscfg_partner_values(userName,"user_name_3");
+							userName = NULL;
+						}	
+						else
+						{
+							APPLY_PRINT("%s - DefaultLoginUsername Value is NULL\n", __FUNCTION__ );
+						}	
+					}
+					
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword") != NULL )
 					{
-						APPLY_PRINT("%s - DefaultLoginUsername Value is NULL\n", __FUNCTION__ );
-					}	
-				}
-		
-				if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword") != NULL )
-				{
-					passWord = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword")->valuestring; 
-		
-					if (passWord != NULL) 
+						passWord = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword")->valuestring; 
+					
+						if (passWord != NULL) 
+						{
+							set_syscfg_partner_values(passWord,"user_password_3");
+							passWord = NULL;
+						}	
+						else
+						{
+							APPLY_PRINT("%s - DefaultLoginUsername Value is NULL\n", __FUNCTION__ );
+						}	
+					}
+					
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP") != NULL )
 					{
-						set_syscfg_partner_values(passWord,"user_password_3");
-						passWord = NULL;
-					}	
-					else
+						defaultAdminIP = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP")->valuestring; 
+					
+						if (defaultAdminIP != NULL) 
+						{
+							set_syscfg_partner_values(defaultAdminIP,"lan_ipaddr");
+							defaultAdminIP = NULL;
+						}	
+						else
+						{
+							APPLY_PRINT("%s - DefaultAdminIP Value is NULL\n", __FUNCTION__ );
+						}	
+					}
+					
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange") != NULL )
 					{
-						APPLY_PRINT("%s - DefaultLoginUsername Value is NULL\n", __FUNCTION__ );
-					}	
-				}
-		
-				if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP") != NULL )
-				{
-					defaultAdminIP = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP")->valuestring; 
-		
-					if (defaultAdminIP != NULL) 
-					{
-						set_syscfg_partner_values(defaultAdminIP,"lan_ipaddr");
-						defaultAdminIP = NULL;
-					}	
-					else
-					{
-						APPLY_PRINT("%s - DefaultAdminIP Value is NULL\n", __FUNCTION__ );
-					}	
-				}
-		
-				if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange") != NULL )
-				{
-					subnetRange = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange")->valuestring; 
-		
-					if (subnetRange != NULL) 
-					{
-						set_syscfg_partner_values(subnetRange,"lan_netmask");
-						subnetRange = NULL;
-					}	
-					else
-					{
-						APPLY_PRINT("%s - DefaultLocalIPv4SubnetRange Value is NULL\n", __FUNCTION__ );
-					}	
+						subnetRange = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange")->valuestring; 
+					
+						if (subnetRange != NULL) 
+						{
+							set_syscfg_partner_values(subnetRange,"lan_netmask");
+							subnetRange = NULL;
+						}	
+						else
+						{
+							APPLY_PRINT("%s - DefaultLocalIPv4SubnetRange Value is NULL\n", __FUNCTION__ );
+						}	
+					}
 				}
 
 				if ( cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code") != NULL )
