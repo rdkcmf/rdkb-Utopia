@@ -96,6 +96,8 @@ do_start() {
    sleep 1
    if [ ! -f "$PID_FILE" ] ; then
       echo_t "[utopia] $PID_FILE file is not created"
+   else
+      echo_t "[utopia] $PID_FILE file is created. PID : `cat $PID_FILE`"
    fi
    sysevent set ssh_daemon_state up
 }
@@ -111,6 +113,7 @@ do_stop() {
 
 service_start() {
 
+    echo_t "[utopia] starting ${SERVICE_NAME} service"
 	ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service"
 
 	#SSH_ENABLE=`syscfg get mgmt_wan_sshaccess`
@@ -138,6 +141,7 @@ service_start() {
 }
 
 service_stop () {
+   echo_t "[utopia] stopping ${SERVICE_NAME} service"
    ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
 
    if [ -f "$PID_FILE" ] ; then
@@ -183,6 +187,8 @@ service_bridge_status ()
 }
 
 # Entry
+
+echo_t "[utopia] ${SERVICE_NAME} $1 received"
 
 case "$1" in
   ${SERVICE_NAME}-start)
