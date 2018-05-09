@@ -176,6 +176,13 @@ qtn_configure_LnF_radius(){
     fi
 }
 
+qtn_set_secure_xfinity_hotspot(){
+    echo "VLAN_UTIL SETTING Secure Xfinity Hotspot"
+    $QWCFG_TEST push $QTN_INDEX ssid OutOfService
+    $QWCFG_TEST push $QTN_INDEX authentication EAPAuthentication
+    $QWCFG_TEST push $QTN_INDEX iface_enable 0
+}
+
 qtn_set_mesh(){
   $QWCFG_TEST push $QTN_INDEX ssid we.piranha.off
   # Default passphrase will be qtn01234
@@ -233,6 +240,8 @@ setup_qtn(){
         elif [ $ATH_INDEX -eq 6 ] || [ $ATH_INDEX -eq 7 ]; then
                 qtn_set_LnF_ssid
                 qtn_set_LnF_passphrase
+        elif [ $ATH_INDEX -eq 8 ] || [ $ATH_INDEX -eq 9 ]; then
+                qtn_set_secure_xfinity_hotspot
         elif [ $ATH_INDEX -eq 10 ] || [ $ATH_INDEX -eq 11 ]; then
                 qtn_configure_LnF_radius
         elif [ $ATH_INDEX -eq 12 ] || [ $ATH_INDEX -eq 13 ]; then
@@ -305,6 +314,8 @@ qtn_setup_all(){
     setup_qtn $1 ath5
     setup_qtn $1 ath6
     setup_qtn $1 ath7
+    setup_qtn $1 ath8
+    setup_qtn $1 ath9
 }
 
 wait_for_gre_ready(){
@@ -538,10 +549,28 @@ get_expected_if_list() {
             IF_LIST="nmoca0.${BRIDGE_VLAN} ${DEFAULT_GRE_TUNNEL}.${BRIDGE_VLAN} ath5"
 	fi
         ;;
-        
+
+        #Secure XFinity Hostspot 2.4 GHz
+        5)
+        check_xfinity_wifi
+        if [ "$isXfinityWiFiEnable" = "true" ]
+        then
+            IF_LIST="ath8"
+        fi
+        ;;
+
         #XFinity IoT network
         6)
             IF_LIST="ath6 ath7 ath10 ath11"
+        ;;
+
+        #Secure XFinity Hostspot 5 GHz
+        7)
+        check_xfinity_wifi
+        if [ "$isXfinityWiFiEnable" = "true" ]
+        then
+            IF_LIST="ath9"
+	fi
         ;;
 
         #Home Network Isolation
@@ -864,6 +893,11 @@ case $INSTANCE in
         BRIDGE_NAME="brlan3"
         BRIDGE_VLAN=103
     ;;
+    5)
+        #Secure XFinity Hotspot 2.4 GHz
+        BRIDGE_NAME="brlan4"
+        BRIDGE_VLAN=104
+    ;;
     6)
         BRIDGE_NAME="br106"
         BRIDGE_VLAN=106
@@ -875,6 +909,11 @@ case $INSTANCE in
     66)
         BRIDGE_NAME="br66"
         BRIDGE_VLAN=66
+    ;;
+    7)
+        #Secure XFinity Hotspot 5 GHz
+        BRIDGE_NAME="brlan5"
+        BRIDGE_VLAN=105
     ;;
     9)
         #Home Network Isolation
