@@ -951,6 +951,12 @@ static int wan_addr_set(struct serv_wan *sw)
     system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");	
 #endif
 
+#if defined(_COSA_BCM_ARM_)
+	/* Start dibbler-client here after WAN is up, not in P&M */
+	system("/etc/dibbler/dibbler-init.sh");
+	system("/usr/sbin/dibbler-client start");
+#endif
+
     sysctl_iface_set("/proc/sys/net/ipv4/ip_forward", NULL, "1");
     sysevent_set(sw->sefd, sw->setok, "current_wan_state", "up", 0);
     sysevent_set(sw->sefd, sw->setok, "firewall_flush_conntrack", "1", 0);
