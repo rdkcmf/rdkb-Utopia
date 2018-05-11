@@ -603,7 +603,7 @@ static int getFactoryPartnerId
 		char*                       pValue
 	)
 {
-#ifdef INTEL_PUMA7
+#if defined (_XB6_PRODUCT_REQ_)
 	if(0 == platform_hal_getFactoryPartnerId(pValue))
 	{
 		APPLY_PRINT("%s - %s\n",__FUNCTION__,pValue);
