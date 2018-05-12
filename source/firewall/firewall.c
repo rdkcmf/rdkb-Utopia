@@ -12171,6 +12171,15 @@ static int service_start ()
 {
    char *filename1 = "/tmp/.ipt";
    char *filename2 = "/tmp/.ipt_v6";
+   BOOL needs_flush = FALSE;
+   char temp[20];
+
+   /* If firewall is starting for the first time, we need to flush connection tracking */
+   temp[0] = '\0';
+   sysevent_get(sysevent_fd, sysevent_token, "firewall-status", temp, sizeof(temp));
+   if ('\0' == temp[0] || 0 == strcmp(temp, "stopped")) {
+      needs_flush = TRUE;
+   }
 
    //clear content in firewall cron file.
    char *cron_file = crontab_dir"/"crontab_filename;
@@ -12234,6 +12243,11 @@ static int service_start ()
    if(ppFlushNeeded == 1) {
        system("echo flush_all_sessions > /proc/net/ti_pp");
        sysevent_set(sysevent_fd, sysevent_token, "pp_flush", "0", 0);
+   }
+
+   /* If firewall is starting for the first time, we need to flush connection tracking */
+   if (needs_flush) {
+      system("conntrack -F");
    }
 
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "started", 0);
