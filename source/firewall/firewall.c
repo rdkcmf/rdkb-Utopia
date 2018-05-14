@@ -3997,7 +3997,7 @@ static int do_wan_nat_lan_clients(FILE *fp)
            "-A postrouting_towan -s %s -j RETURN", current_wan_ipaddr);
   fprintf(fp, "%s\n",str); 
 #endif 
-#if defined(_COSA_BCM_MIPS_)
+#if defined(_ENABLE_EPON_SUPPORT_)
   if (isBridgeMode) {
     // Dont NAT network devices that are part of erouter0
     DIR * dirp = opendir("/sys/devices/virtual/net/erouter0/brif");
@@ -4839,14 +4839,14 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     srcaddr[0] = '\0';
 
 #if defined(CONFIG_CCSP_CM_IP_WEBACCESS)
-#if defined(_COSA_BCM_MIPS_)
+#if defined(_ENABLE_EPON_SUPPORT_)
     // XF3 only has this interface available on IPv6 erouter0
     if (family == AF_INET6)
     {
 #endif
        remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
        remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
-#if defined(_COSA_BCM_MIPS_)
+#if defined(_ENABLE_EPON_SUPPORT_)
     }
 #endif
 #endif
@@ -4957,8 +4957,15 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    if (rc == 0 && atoi(query) == 1)
    {
        // allows remote GUI access on erouter0 interface
-       if(validEntry)
+       if(validEntry) {
            remote_access_set_proto(filter_fp, nat_fp, httpport, srcaddr, family, current_wan_ifname);
+#if defined(_ENABLE_EPON_SUPPORT_)
+           if (family == AF_INET6) {
+               // Remote Management on EPON products IPV6 wan management is only on brlan0, not erouter0
+               remote_access_set_proto(filter_fp, nat_fp, httpport, srcaddr, family, lan_ifname);
+           }
+#endif
+       }
 
        for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
            remote_access_set_proto(filter_fp, nat_fp, httpport, iprangeAddr[i], family, current_wan_ifname);
@@ -5007,8 +5014,15 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    if (rc == 0 && atoi(query) == 1)
    {
 
-       if(validEntry)
+       if(validEntry) {
            remote_access_set_proto(filter_fp, nat_fp, httpsport, srcaddr, family, current_wan_ifname);
+#if defined(_ENABLE_EPON_SUPPORT_)
+           if (family == AF_INET6) {
+               // Remote Management on EPON products IPV6 wan management is only on brlan0, not erouter0
+               remote_access_set_proto(filter_fp, nat_fp, httpsport, srcaddr, family, lan_ifname);
+           }
+#endif
+       }
 
        for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
            remote_access_set_proto(filter_fp, nat_fp, httpsport, iprangeAddr[i], family, current_wan_ifname);
