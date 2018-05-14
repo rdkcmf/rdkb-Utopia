@@ -56,6 +56,7 @@ COMCAST_DEFAULT_URL="www.comcast.com"
 COMCAST_ACTIVATE_URL="https://activate.comcast.com"
 COMCAST_ACTIVATE_URL_2="https://caap-pdca.sys.comcast.net"
 COMCAST_HTTP_URL="http://comcast.com"
+DEFAULT_FILE="/etc/utopia/system_defaults"
 
 # Variables needed for captive portal mode : end
 
@@ -148,6 +149,40 @@ if [ "" = "$DHCP_LEASE_TIME" ] ; then
    DHCP_LEASE_TIME=24h
 fi
 
+isValidSubnetMask () { 
+   echo $1 | grep -w -E -o '^(254|252|248|240|224|192|128)\.0\.0\.0|255\.(254|252|248|240|224|192|128|0)\.0\.0|255\.255\.(254|252|248|240|224|192|128|0)\.0|255\.255\.255\.(254|252|248|240|224|192|128|0)' > /dev/null
+   if [ $? -eq 0 ]; then
+      echo 1
+   else
+      echo 0
+   fi
+}
+
+isValidLANIP () {
+    ip="$1"
+    if expr "$ip" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+       OIFS=$IFS
+       IFS='.'
+       set -- $ip
+       ip1=$1
+       ip2=$2
+       ip3=$3
+       ip4=$4
+       IFS=$OIFS
+       if [[ $ip1 -gt 255 || $ip2 -gt 255 || $ip3 -gt 255 || $ip4 -gt 255 ]] ||
+          [[ $ip1 -ne 10 && $ip1 -ne 172 && $ip1 -ne 192 ]] ||
+          [[ $ip1 -eq 172 && $ip2 -le 16 ]] ||
+          [[ $ip1 -eq 172 && $ip2 -ge 31 ]] ||
+          [[ $ip1 -eq 192 && $ip2 -ne 168 ]] ||
+          [[ $ip1 -eq 192 && $ip3 -eq 147 ]]; then
+           echo 0
+       else
+           echo 1
+       fi
+   else
+       echo 0
+   fi
+}
 
 #--------------------------------------------------------------
 #  figure out the dhcp range to use
@@ -641,6 +676,34 @@ prepare_dhcp_conf () {
    else 
       PREFIX=
    fi
+
+   LAN_IPADDR=$1
+   LAN_NETMASK=$2
+   if [[ `isValidLANIP $LAN_IPADDR` -eq 0 || `isValidSubnetMask $LAN_NETMASK` -eq 0 ]]; then
+       echo "LAN IP Address OR LAN net mask is not in valid format, setting to default. lan_ipaddr:$LAN_IPADDR lan_netmask:$LAN_NETMASK"
+       result=$(grep '$lan_ipaddr\|$lan_netmask\|$dhcp_start\|$dhcp_end' $DEFAULT_FILE | awk '/\$lan_ipaddr/ {split($1,ip, "=");} /\$lan_netmask/ {split($1,mask, "=");} /\$dhcp_start/ {split($1,start, "=");} /\$dhcp_end/ {split($1,end, "=");} END {print ip[2], mask[2], start[2], end[2]}')
+       OIFS=$IFS
+       IFS=' '
+       set -- $result
+       lanIP="$1"
+       lanNetMask="$2"
+       dhcpStart="$3"
+       dhcpEnd="$4"
+       IFS=$OIFS
+
+       syscfg set lan_ipaddr $lanIP
+       syscfg set lan_netmask $lanNetMask
+       syscfg set dhcp_start $dhcpStart
+       syscfg set dhcp_end  $dhcpEnd
+       syscfg commit
+
+       LAN_IPADDR=$lanIP
+       LAN_NETMASK=$lanNetMask
+
+       echo "lanIP:  $lanIP lanNetMask: $lanNetMask dhcpStart: $dhcpStart dhcpEnd: $dhcpEnd"
+
+   fi
+
    #calculate_dhcp_range $1 $2
 
    echo -n > $LOCAL_DHCP_CONF
@@ -758,12 +821,12 @@ fi
    fi
    
    if [ "started" = $CURRENT_LAN_STATE ]; then
-      calculate_dhcp_range $1 $2
+      calculate_dhcp_range $LAN_IPADDR $LAN_NETMASK
       echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
 	  if [ $DHCP_LEASE_TIME == -1 ]; then
-	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,infinite" >> $LOCAL_DHCP_CONF
+	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$LAN_NETMASK,infinite" >> $LOCAL_DHCP_CONF
 	  else
-  	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+  	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$LAN_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
 	  fi
 
 	  if [ "1" = "$NAMESERVERENABLED" ]; then

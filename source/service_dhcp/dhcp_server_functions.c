@@ -48,6 +48,7 @@
 #define DHCP_LEASE_FILE         "/nvram/dnsmasq.leases"
 #define DEFAULT_RESOLV_CONF     "/var/default/resolv.conf"
 #define DEFAULT_CONF_DIR      	"/var/default"
+#define DEFAULT_FILE            "/etc/utopia/system_defaults"
 //#define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
 #define ERROR   		-1
@@ -129,6 +130,26 @@ static unsigned int isValidSubnetMask(char *subnetMask)
 	}	
 	
 	return 1;
+}
+
+static int isValidLANIP(const char* ipStr)
+{
+        int octet1,octet2,octet3,octet4;
+        struct sockaddr_in l_sSocAddr;
+        if(!inet_pton(AF_INET, ipStr, &(l_sSocAddr.sin_addr)))
+        {
+                return 0;
+        }
+
+        sscanf(ipStr, "%d.%d.%d.%d", &octet1, &octet2, &octet3, &octet4);
+
+        if( ((octet1 != 10) && (octet1 != 172) && (octet1 != 192)) ||
+                ((octet1 == 172) && ((octet2<16) || (octet2>31)))  ||
+                ((octet1== 192) && ((octet2 != 168) || (octet3== 147)) ) )
+        {
+                return 0;
+        }
+        return 1;
 }
 
 int prepare_hostname()
@@ -714,6 +735,52 @@ int prepare_dhcp_conf (char *input)
     syscfg_get(NULL, "lan_ifname", l_cLan_if_name, sizeof(l_cLan_if_name));
     syscfg_get(NULL, "CaptivePortal_Enable", l_cCaptivePortalEn, sizeof(l_cCaptivePortalEn));
     syscfg_get(NULL, "redirection_flag", l_cRedirect_Flag, sizeof(l_cRedirect_Flag));
+
+    if((0 == isValidLANIP(l_cLanIPAddress)) || (0 == isValidSubnetMask(l_cLanNetMask)))
+    {
+        FILE *fp;
+        char cmd[512];
+        char result[128];
+        char lanIP[16]={0}, lanNetMask[16]={0}, dhcpStart[16]={0}, dhcpEnd[16]={0};
+
+        fprintf(stderr, "LAN IP Address OR LAN net mask is not in valid format, setting to default lan_ipaddr:%s lan_netmask:%s\n",l_cLanIPAddress,l_cLanNetMask);
+        snprintf(cmd,sizeof(cmd),"grep '$lan_ipaddr\\|$lan_netmask\\|$dhcp_start\\|$dhcp_end' %s"
+          " | awk '/\\$lan_ipaddr/ {split($1,ip, \"=\");}"
+          " /\\$lan_netmask/ {split($1,mask, \"=\");}"
+          " /\\$dhcp_start/ {split($1,start, \"=\");}"
+          " /\\$dhcp_end/ {split($1,end, \"=\");}"
+          " END {print ip[2], mask[2], start[2], end[2]}'",DEFAULT_FILE);
+
+        fprintf(stderr,"Command = %s\n",cmd);
+
+        if ((fp = popen(cmd, "r")) == NULL)
+        {
+                fprintf(stderr,"popen ERROR\n");
+        }
+        else if (fgets(result, sizeof(result), fp) == NULL)
+        {
+                pclose(fp);
+                fprintf(stderr,"popen fgets ERROR\n");
+        }
+        else
+        {       sscanf(result, "%s %s %s %s",lanIP, lanNetMask, dhcpStart, dhcpEnd);
+
+                syscfg_set(NULL, "lan_ipaddr", lanIP);
+                syscfg_set(NULL, "lan_netmask", lanNetMask);
+                syscfg_set(NULL, "dhcp_start", dhcpStart);
+                syscfg_set(NULL, "dhcp_end", dhcpEnd);
+                syscfg_commit();
+
+                memset(l_cLanIPAddress, 0, sizeof(l_cLanIPAddress));
+                strncpy(l_cLanIPAddress,lanIP,sizeof(l_cLanIPAddress));
+
+                memset(l_cLanNetMask, 0, sizeof(l_cLanNetMask));
+                strncpy(l_cLanNetMask,lanNetMask,sizeof(l_cLanNetMask));
+
+                pclose(fp);
+        }
+    }
+
 
     // Static LAN DNS (brlan0)
 	syscfg_get(NULL, "dhcp_nameserver_enabled", l_cDhcpNs_Enabled, sizeof(l_cDhcpNs_Enabled));
