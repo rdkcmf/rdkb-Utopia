@@ -76,7 +76,8 @@ fi
 
 #This change is needed for ArrisXB6 to choose sync location dynamically.
 if [ "$model" == "TG3482G" ];then
-	if [ ! -d "/nvram2" ];then
+	isNvram2Mounted=`grep nvram2 /proc/mounts`
+	if [ "$isNvram2Mounted" == "" ];then
 		LOG_SYNC_PATH="/nvram/logs/"
 		LOG_SYNC_BACK_UP_PATH="/nvram/logs/"
 		LOG_SYNC_BACK_UP_REBOOT_PATH="/nvram/logs/"
