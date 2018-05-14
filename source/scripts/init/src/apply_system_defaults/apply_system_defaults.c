@@ -628,7 +628,6 @@ static int get_PartnerID( char *PartnerID)
 	  */
 	if ( access( PARTNERID_FILE , F_OK ) != 0 )	 
 	{
-		FILE *fp = NULL;
 
 		APPLY_PRINT("%s - %s is not there\n", __FUNCTION__, PARTNERID_FILE );
 		if( 0 == getFactoryPartnerId( PartnerID ) )
@@ -650,15 +649,6 @@ static int get_PartnerID( char *PartnerID)
 				sprintf( PartnerID, "%s", "comcast" );
 				APPLY_PRINT("%s - Failed Get factoryPartnerId so set it PartnerID as: %s\n", __FUNCTION__, PartnerID );
 			}
-		}
-		//Creating and Writing partner ID into /nvram/.partner_ID file
-		fp = fopen( PARTNERID_FILE, "w" );
-		
-		if ( fp != NULL ) 
-		{
-			fwrite( PartnerID, strlen( PartnerID ), 1, fp );
-			fclose( fp );
-			APPLY_PRINT("%s: Partner ID %s is Written into %s File\n", __FUNCTION__, PartnerID, PARTNERID_FILE );
 		}
 	}
 	else
@@ -683,7 +673,8 @@ static int get_PartnerID( char *PartnerID)
 			sprintf( PartnerID, "%s", fileContent );
 
 			APPLY_PRINT("%s - PartnerID from File: %s\n",__FUNCTION__,PartnerID );
-		} 
+		}
+		system("rm -rf /nvram/.partner_ID");
 	}
 	set_syscfg_partner_values(PartnerID,"PartnerID");
 
@@ -1041,6 +1032,7 @@ int main(int argc, char **argv)
    char *ptr_etc_json = NULL, *ptr_nvram_json = NULL, *db_val = NULL;
    char cmd[512] = {0};
    char 	PartnerID[ PARTNER_ID_LEN ]  = { 0 };
+   int	    isNeedToApplyPartnersDefault = 1;
    parse_command_line(argc, argv);
 
    global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
@@ -1079,8 +1071,31 @@ int main(int argc, char **argv)
       syscfg_commit();
    }
    sysevent_close(global_fd, global_id);
-   
-   get_PartnerID(PartnerID);
+
+  if ( access( PARTNER_DEFAULT_APPLY_FILE , F_OK ) != 0 )  
+  {
+	  isNeedToApplyPartnersDefault = 0;
+          APPLY_PRINT("%s - Device in Reboot mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+  }
+  else
+  {
+	  APPLY_PRINT("%s - Device in FR mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+  }
+  
+  if( 1 == isNeedToApplyPartnersDefault )  
+  {
+  	get_PartnerID ( PartnerID );
+  }
+  else
+  {
+  	char buf[64] = {0} ;
+  	syscfg_get( NULL, "PartnerID", buf, sizeof(buf));
+
+        if( buf != NULL )
+        {
+            strncpy(PartnerID, buf , strlen( buf ));
+        }
+  }
 
    if (access(PARTNERS_INFO_FILE, F_OK) != 0)	
    {

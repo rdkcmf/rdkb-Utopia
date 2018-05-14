@@ -300,8 +300,6 @@ if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
 SYSCFG_PARTNER_FR="`syscfg get PartnerID_FR`"
 if [ "1" = "$SYSCFG_PARTNER_FR" ]; then
    echo_t "[utopia][init] Performing factory reset due to PartnerID change"
-else
-   rm -f /nvram/.partner_ID
 fi
 # Remove log file first because it need get log file path from syscfg   
    /fss/gw/usr/sbin/log_handle.sh reset
