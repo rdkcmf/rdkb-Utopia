@@ -9013,7 +9013,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(mangle_fp, "%s\n", ":postrouting_qos - [0:0]");
    fprintf(mangle_fp, "%s\n", ":postrouting_lan2lan - [0:0]");
 
+#ifndef _PLATFORM_IPQ_
    prepare_xconf_rules(mangle_fp);
+#endif
 
 #ifdef CONFIG_BUILD_TRIGGER
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
@@ -10110,7 +10112,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(mangle_fp, "%s\n", ":postrouting_lan2lan - [0:0]");
    
    //zqiu: RDKB-5686: xconf rule should work for pseudo bridge mode
+#ifndef _PLATFORM_IPQ_
    prepare_xconf_rules(mangle_fp);
+#endif
 
 #ifdef CONFIG_BUILD_TRIGGER
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
