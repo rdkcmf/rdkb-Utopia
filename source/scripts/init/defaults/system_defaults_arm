@@ -1086,3 +1086,7 @@ $encryptcloudupload=0
 $SyndicationFlowControlEnable=false
 $DSCP_InitialForwardedMark=
 $DSCP_InitialOutputMark=
+
+#Enable DNS strict order
+$DNSStrictOrder=false
+
