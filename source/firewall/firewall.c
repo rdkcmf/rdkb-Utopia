@@ -7065,7 +7065,7 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
  *     0               : done
  */
 
-static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp);
+static int do_parcon_mgmt_device(FILE *filter_fp,FILE *nat_fp, int iptype, FILE *cron_fp);
 static int do_parcon_device_cloud_mgmt(FILE *fp, int iptype, FILE *cron_fp);
 static int do_parcon_mgmt_service(FILE *fp, int iptype, FILE *cron_fp);
 static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *cron_fp);
@@ -7098,7 +7098,7 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
 			do_parcon_device_cloud_mgmt(nat_fp, iptype, cron_fp);
 		}
 		else
-    		do_parcon_mgmt_device(nat_fp, iptype, cron_fp);
+            do_parcon_mgmt_device(fp,nat_fp, iptype, cron_fp);
 	}
 	else
 	{
@@ -7107,7 +7107,7 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
 		do_parcon_device_cloud_mgmt(nat_fp,iptype, NULL);
 		}
 		else
-		do_parcon_mgmt_device(nat_fp,iptype, NULL);
+        do_parcon_mgmt_device(fp,nat_fp,iptype, NULL);
 		
 	}
 #ifndef CONFIG_CISCO_FEATURE_CISCOCONNECT
@@ -7125,10 +7125,11 @@ static int do_parental_control(FILE *fp,FILE *nat_fp, int iptype) {
 /*
  * add parental control managed device rules
  */
-static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
+static int do_parcon_mgmt_device(FILE *filter_fp,FILE *nat_fp, int iptype, FILE *cron_fp)
 {
    int rc,flag = 0;
    char query[MAX_QUERY];
+   FILE *fp=nat_fp;
    FIREWALL_DEBUG("Entering do_parcon_mgmt_device\n"); 
    query[0] = '\0';
    rc = syscfg_get(NULL, "manageddevices_enabled", query, sizeof(query)); 
@@ -7192,6 +7193,9 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 			fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
 
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j %s\n",query,drop_log);            
+            fprintf(fp, "-A prerouting_devices -p udp ! --dport 67 -m mac --mac-source %s -j %s\n",query,drop_log);
+            /* If we don't insert ICMP rule, the icmp traffic is flowing with other FORWARD rules.*/
+            fprintf(filter_fp, "-I FORWARD 1 -p icmp -m mac --mac-source %s -j DROP\n",query);
 #endif /* 0 */
             if(cron_fp)
             {
