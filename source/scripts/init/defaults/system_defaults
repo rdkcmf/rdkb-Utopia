@@ -975,3 +975,8 @@ $unique_telemetry_interval=0
 
 #Enable log and core file encryption at S3 Amazon
 $encryptcloudupload=0
+
+#SyndicationFlowControl Defaults
+$SyndicationFlowControlEnable=false
+$DSCP_InitialForwardedMark=
+$DSCP_InitialOutputMark=

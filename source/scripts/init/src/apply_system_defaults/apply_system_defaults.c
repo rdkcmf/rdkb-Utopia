@@ -761,31 +761,41 @@ char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,ch
 
 									// Add newly introduced entry from /etc/ directory to /nvram directory
 									cJSON_AddItemToObject(subitem_nvram, key, cJSON_CreateString(value));
-									if ( ( 0 != strcmp( "comcast", PartnerID ) ) && \
-										( strcmp(param_nvram,PartnerID) == 0 ) 
-									   )
-									{
-									//Change the syscfg.db params to corresponding partners 							
-										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") )
-										{
-											set_syscfg_partner_values( value,"user_name_3" );
-										}
+                  if (( strcmp(param_nvram,PartnerID) == 0 ))
+                  {
+                    if( 0 != strcmp( "comcast", PartnerID ) )
+									  {
+                      //Change the syscfg.db params to corresponding partners
+                      if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") )
+                      {
+                        set_syscfg_partner_values( value,"user_name_3" );
+                      }
 
-										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword") )
-										{
-											set_syscfg_partner_values( value,"user_password_3" );
-										}
+                      if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword") )
+                      {
+                        set_syscfg_partner_values( value,"user_password_3" );
+                      }
 
-										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP") )
-										{
-											set_syscfg_partner_values( value,"lan_ipaddr" );
-										}
+                      if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP") )
+                      {
+                        set_syscfg_partner_values( value,"lan_ipaddr" );
+                      }
 
-										if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange") )
-										{
-											set_syscfg_partner_values( value,"lan_netmask" );
-										}
-									}
+                      if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange") )
+                      {
+                        set_syscfg_partner_values( value,"lan_netmask" );
+                      }
+									  }
+                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
+                    {
+                        set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
+                    }
+
+                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
+                    {
+                        set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
+                    }
+                  }
 								}
 							}
 						}
@@ -839,7 +849,9 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 	char 	*userName 		= NULL, 
 		    *defaultAdminIP = NULL,	 
 		    *passWord 		= NULL,	 
-		    *subnetRange 	= NULL;
+		    *subnetRange 	= NULL,
+        *initialForwardedMark = NULL,
+        *initialOutputMark = NULL;
 	int	    isNeedToApplyPartnersDefault = 1;
 
 	/*
@@ -967,6 +979,34 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 						APPLY_PRINT("%s - DefaultWiFiRegionCode Value is NULL\n", __FUNCTION__ );
 					}	
 				}
+
+        if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") != NULL )
+        {
+          initialForwardedMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark")->valuestring; 
+          if (initialForwardedMark[0] != NULL)
+          {
+            set_syscfg_partner_values(initialForwardedMark,"DSCP_InitialForwardedMark");
+            initialForwardedMark = NULL;
+          }
+        }
+        else
+        {
+          APPLY_PRINT("%s - Default Value of InitialForwardedMark is NULL\n", __FUNCTION__ );
+        }
+
+        if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") != NULL )
+        {
+          initialOutputMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark")->valuestring; 
+          if (initialOutputMark[0] != NULL)
+          {
+            set_syscfg_partner_values(initialOutputMark,"DSCP_InitialOutputMark");
+            initialOutputMark = NULL;
+          }
+        }
+        else
+        {
+          APPLY_PRINT("%s - Default Value of InitialOutputMark is NULL\n", __FUNCTION__ );
+        }
 			}
 			else
 			{

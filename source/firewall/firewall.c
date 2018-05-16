@@ -9282,39 +9282,66 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
    
    //zqiu: RDKB-4519 
    //fprintf(mangle_fp, "-A FORWARD -j DSCP --set-dscp 0x0\n");
+  char buf[64]={0}, initialforwardedmark[64], initialoutputmark[64];
+  memset(initialforwardedmark,0,sizeof(initialforwardedmark));
+  memset(initialoutputmark,0,sizeof(initialoutputmark));
+  strncpy(initialforwardedmark, "cs0", sizeof(initialforwardedmark));
+  strncpy(initialoutputmark, "af22", sizeof(initialoutputmark));
+  syscfg_get(NULL,"SyndicationFlowControlEnable",buf, sizeof(buf));
+  if( buf[0] != '\0' )
+  {
+    if (strcmp(buf, "true") == 0)
+    {
+      if (syscfg_get( NULL, "DSCP_InitialForwardedMark", buf, sizeof(buf)) == 0)
+      {
+         if (buf[0] != '\0')
+        {
+          strncpy(initialforwardedmark, buf, sizeof(initialforwardedmark));
+        }
+      }
+      memset(buf, 0, sizeof(buf));
+      if (syscfg_get( NULL, "DSCP_InitialOutputMark", buf, sizeof(buf)) == 0)
+      {
+        if (buf[0] != '\0')
+        {
+          strncpy(initialoutputmark, buf, sizeof(initialoutputmark));
+        }
+      }
+    }
+  }
 #if defined(_COSA_BCM_MIPS_)
    fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
 #endif
-   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class af22\n");
+   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class %s\n",initialoutputmark);
 //#if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
    fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
 //#endif
    /**
     * RDKB-15072 - Explicitly specify proticol instead of common rule as workaround to overcome CMTS issue.
     **/
-   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --protocol udp --set-dscp-class af22\n");
-   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --protocol tcp --set-dscp-class af22\n");
+   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --protocol udp --set-dscp-class %s\n",initialoutputmark);
+   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --protocol tcp --set-dscp-class %s\n",initialoutputmark);
 
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
    
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af32 -j CONNMARK --set-mark 0xA\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs1 -j CONNMARK --set-mark 0xB\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs5 -j CONNMARK --set-mark 0xC\n");
-   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af22 -j CONNMARK --set-mark 0xD\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class %s -j CONNMARK --set-mark 0xD\n",initialoutputmark);
    //zqiu: RDKB-11338
-   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs0 -j CONNMARK --set-mark 0x1A\n");
+   fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class %s -j CONNMARK --set-mark 0x1A\n",initialforwardedmark);
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs4 -j CONNMARK --set-mark 0x1B\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class af41 -j CONNMARK --set-mark 0x1C\n");
    fprintf(mangle_fp, "-I PREROUTING -i erouter0 -m dscp --dscp-class cs3 -j CONNMARK --set-mark 0x1D\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1D  -j DSCP --set-dscp-class cs3\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1C -j DSCP --set-dscp-class af41\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1B -j DSCP --set-dscp-class cs4\n");
-   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1A -j DSCP --set-dscp-class cs0\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0x1A -j DSCP --set-dscp-class %s\n",initialforwardedmark);
 
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xA  -j DSCP --set-dscp-class af32\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xB -j DSCP --set-dscp-class cs1\n");
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xC -j DSCP --set-dscp-class cs5\n");
-   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class af22\n");
+   fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -m connmark --mark 0xD -j DSCP --set-dscp-class %s\n",initialoutputmark);
    
    /*XCONF RULES END*/
    return 0;
