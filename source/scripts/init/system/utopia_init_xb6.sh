@@ -190,6 +190,7 @@ FACTORY_RESET_RGWIFI=y
 FACTORY_RESET_WIFI=w
 SYSCFG_MOUNT=/nvram
 SYSCFG_FILE=$SYSCFG_MOUNT/syscfg.db
+SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
@@ -244,7 +245,13 @@ if [ -f $SYSCFG_FILE ]; then
 	  CheckAndReCreateDB
 	fi
 else
-   echo -n > $SYSCFG_FILE
+
+    if [ -f $SYSCFG_BKUP_FILE ]; then 
+	 echo "utopia_init:syscfg.db is missing, copying backup file to syscfg.db"
+ 	  cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
+    else
+   	   echo -n > $SYSCFG_FILE
+    fi
    syscfg_create -f $SYSCFG_FILE
 	if [ $? != 0 ]; then
 	  CheckAndReCreateDB
@@ -316,6 +323,7 @@ fi
    rm -f /nvram/.keys/*
      touch /nvram/.apply_partner_defaults   
    rm -f $SYSCFG_FILE
+   rm -f $SYSCFG_BKUP_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME

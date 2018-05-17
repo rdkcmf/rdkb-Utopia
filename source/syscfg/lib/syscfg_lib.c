@@ -64,6 +64,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <semaphore.h>
+#include <pthread.h>
 #include <ulog/ulog.h>
 #include "syscfg_mtd.h"   // MTD IO friend sub-class
 #include "syscfg_lib.h"   // internal interface
@@ -72,7 +73,7 @@
 /*
  * Global data structures
  */
-syscfg_shm_ctx *syscfg_ctx = NULL;
+static syscfg_shm_ctx *syscfg_ctx = NULL;
 int            syscfg_initialized = 0;
 
 static char name_p[MAX_NAME_LEN+1];                      // internal temp name buffer 
@@ -617,13 +618,42 @@ static int lock_init (syscfg_shm_ctx *ctx)
 {
     shm_cb *cb = &(ctx->cb);
 
-    if (0 != sem_init(&cb->write_lock, 1, 1)) {
+    int err;
+
+    pthread_mutexattr_t mattr;
+
+    pthread_mutexattr_init(&mattr);
+
+    // set up the atributes for a robust mutex
+    err = pthread_mutexattr_setprotocol(&mattr, PTHREAD_PRIO_INHERIT);
+    if (err) {
+        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "pthread_mutexattr_setprotocol error %d: %s\n",
+            err, strerror(err));
         return ERR_SEMAPHORE_INIT;
     }
-    if (0 != sem_init(&cb->read_lock, 1, 1)) {
+    err = pthread_mutexattr_setrobust_np(&mattr, PTHREAD_MUTEX_ROBUST_NP);
+    if (err) {
+        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "pthread_mutexattr_setrobust_np error %d: %s\n",
+            err, strerror(err));
         return ERR_SEMAPHORE_INIT;
     }
-    if (0 != sem_init(&cb->commit_lock, 1, 1)) {
+
+    // Build the mutexes using the above attributes
+    err = pthread_mutex_init(&cb->write_lock, &mattr);
+    if (err) {
+        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "pthread_mutex_init in write_lock error %d: %s\n", err, strerror(err));
+        return ERR_SEMAPHORE_INIT;
+    }
+
+    err = pthread_mutex_init(&cb->read_lock, &mattr);
+    if (err) {
+        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "pthread_mutex_init in read_lock error %d: %s\n", err, strerror(err));
+        return ERR_SEMAPHORE_INIT;
+    }
+
+    err = pthread_mutex_init(&cb->commit_lock, &mattr);
+    if (err) {
+        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "pthread_mutex_init in commit_lock error %d: %s\n", err, strerror(err));
         return ERR_SEMAPHORE_INIT;
     }
 
@@ -632,22 +662,53 @@ static int lock_init (syscfg_shm_ctx *ctx)
 
 static inline int read_lock (syscfg_shm_ctx *ctx)
 {
-    return sem_wait(&ctx->cb.read_lock);
+    int err = pthread_mutex_lock(&ctx->cb.read_lock);
+
+    if (err == 0) {
+        //ulog(ULOG_SYSTEM, UL_SYSCFG, "Process %d locked read mutex\n", (int) getpid());
+    } else if (err == EOWNERDEAD) {
+        FILE *consolefp = NULL;
+        if((consolefp = fopen (LOG_FILE, "a+") )) {
+                fprintf(consolefp, "SYSCFG_ERROR:Process %d got EOWNERDEAD for read mutex\n", (int) getpid());
+                fclose(consolefp);
+        }
+       ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "Process %d got EOWNERDEAD for read mutex\n", (int) getpid());
+        err = pthread_mutex_consistent_np(&ctx->cb.read_lock);
+        //ulog(ULOG_SYSTEM, UL_SYSCFG, "Process %d locked read mutex\n", (int) getpid());
+
+    }
+
+    return err;
 }
 
 static inline int read_unlock (syscfg_shm_ctx *ctx)
 {
-    return sem_post(&ctx->cb.read_lock);
+    return pthread_mutex_unlock(&ctx->cb.read_lock);
 }
 
 static inline int write_lock (syscfg_shm_ctx *ctx)
 {
-    return sem_wait(&ctx->cb.write_lock);
+    int err = pthread_mutex_lock(&ctx->cb.write_lock);
+
+    if (err == 0) {
+        //ulog(ULOG_SYSTEM, UL_SYSCFG, "Process %d locked write mutex\n", (int) getpid());
+    } else if (err == EOWNERDEAD) {
+        FILE *consolefp = NULL;
+        if((consolefp = fopen (LOG_FILE, "a+") )) {
+                fprintf(consolefp, "SYSCFG_ERROR:Process %d got EOWNERDEAD for write mutex\n", (int) getpid());
+                fclose(consolefp);
+        }
+       ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "Process %d got EOWNERDEAD for write mutex\n", (int) getpid());
+       err = pthread_mutex_consistent_np(&ctx->cb.write_lock);
+        //ulog(ULOG_SYSTEM, UL_SYSCFG, "Process %d locked write mutex\n", (int) getpid());
+    }
+
+    return err;
 }
 
 static inline int write_unlock (syscfg_shm_ctx *ctx)
 {
-    return sem_post(&ctx->cb.write_lock);
+    return pthread_mutex_unlock(&ctx->cb.write_lock);
 }
 
 static int rw_lock (syscfg_shm_ctx *ctx)
@@ -674,19 +735,34 @@ static int rw_unlock (syscfg_shm_ctx *ctx)
 
 static inline int commit_lock (syscfg_shm_ctx *ctx)
 {
-    return sem_wait(&ctx->cb.commit_lock);
+    int err = pthread_mutex_lock(&ctx->cb.commit_lock);
+
+    if (err == 0) {
+        //ulog(ULOG_SYSTEM, UL_SYSCFG,"Process %d locked commit mutex\n", (int) getpid());
+    } else if (err == EOWNERDEAD) {
+        FILE *consolefp = NULL;
+        if((consolefp = fopen (LOG_FILE, "a+") )) {
+                fprintf(consolefp, "SYSCFG_ERROR:Process %d got EOWNERDEAD for commit mutex\n", (int) getpid());
+                fclose(consolefp);
+        }
+        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG,"Process %d got EOWNERDEAD for commit mutex\n", (int) getpid());
+        err = pthread_mutex_consistent_np(&ctx->cb.commit_lock);
+        //ulog(ULOG_SYSTEM, UL_SYSCFG,"Process %d locked commit mutex\n", (int) getpid());
+    }
+
+    return err;
 }
 
 static inline int commit_unlock (syscfg_shm_ctx *ctx)
 {
-    return sem_post(&ctx->cb.commit_lock);
+    return pthread_mutex_unlock(&ctx->cb.commit_lock);
 }
 
 static int lock_destroy (syscfg_shm_ctx *ctx)
 {
-    sem_destroy(&ctx->cb.read_lock);
-    sem_destroy(&ctx->cb.write_lock);
-    sem_destroy(&ctx->cb.commit_lock);
+    pthread_mutex_destroy(&ctx->cb.read_lock);
+    pthread_mutex_destroy(&ctx->cb.write_lock);
+    pthread_mutex_destroy(&ctx->cb.commit_lock);
 
     return 0;
 }
@@ -1584,7 +1660,7 @@ int commit_to_file (const char *fname)
     char buf[2*MAX_ITEM_SZ];
     syscfg_shm_ctx *ctx = syscfg_ctx;
 
-    fd = open(fname, O_CREAT | O_RDWR | O_TRUNC);
+    fd = open(SYSCFG_LOCAL_FILE, O_CREAT | O_RDWR | O_TRUNC);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }
@@ -1604,6 +1680,8 @@ int commit_to_file (const char *fname)
     _syscfg_file_unlock(fd);
 
     close(fd);
+    unlink(fname);
+    link (SYSCFG_LOCAL_FILE, fname);
     return 0;
 }
 

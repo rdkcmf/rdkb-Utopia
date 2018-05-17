@@ -56,6 +56,8 @@
 
 #define SYSCFG_SHM_FILE "/tmp/syscfg.shmid"
 
+#define SYSCFG_LOCAL_FILE "/nvram/syscfg_bkup.db"
+
 /*
  * Magic number within shared mem superblock for sanity check
  */
@@ -78,6 +80,11 @@
 #define SYSCFG_STORE_PATH_SZ  128
 #define DEFAULT_MAX_FILE_SZ   (50*1024)
 
+#ifdef _COSA_INTEL_XB3_ARM_
+	#define LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
+#else
+	#define LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
+#endif
 /*
  * Number of free table buckets
  */
@@ -116,9 +123,9 @@ typedef struct {
     long int     max_store_size;
     long int     used_store_size;
 #ifdef SC_POSIX_SEM
-    sem_t read_lock;
-    sem_t write_lock;
-    sem_t commit_lock;
+    pthread_mutex_t read_lock;
+    pthread_mutex_t write_lock;
+    pthread_mutex_t commit_lock;
 #elif SC_SYSV_SEM
     int semid;
 #endif

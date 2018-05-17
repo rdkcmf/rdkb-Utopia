@@ -117,10 +117,14 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
         syscfg_init_done = 1;
     }
 
+    memset(cmdBuff,0,sizeof(cmdBuff));
+
     if (!syscfg_get(NULL, BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY, cmdBuff, sizeof(cmdBuff)))
     {
         MNET_DEBUG("Got %s = %s from syscfg" COMMA BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY COMMA cmdBuff);
         mac_offset = atoi(cmdBuff);
+
+        memset(cmdBuff,0,sizeof(cmdBuff));
 
         if (!syscfg_get(NULL, BASE_MAC_SYSCFG_KEY, cmdBuff, sizeof(cmdBuff)))
         {
@@ -147,12 +151,12 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
         }
         else
         {
-            MNET_DEBUG("Couldn't get %s from syscfg" COMMA BASE_MAC_SYSCFG_KEY);
+            MNET_DEBUG("Couldn't get %s from syscfg\n" COMMA BASE_MAC_SYSCFG_KEY);
         }
     }
     else
     {
-        MNET_DEBUG("Couldn't get %s from syscfg" BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY);
+        MNET_DEBUG("Couldn't get %s from syscfg\n" COMMA BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY);
     }
 
     /* Workaround, Linux will not generate a link-local address if no switch ports connected */
