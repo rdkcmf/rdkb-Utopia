@@ -25,7 +25,7 @@ AM_CFLAGS = -fno-exceptions
 AM_CFLAGS = -Os
 AM_CFLAGS = -Wall -Wextra
 
-AM_LDFLAGS =  -lpthread -lz -lccsp_common $(DBUS_LIBS)
+AM_LDFLAGS =  -lpthread -lz -lccsp_common $(DBUS_LIBS) -lsecure_wrapper
 
 if CCSP_PLATFORM_INTEL_PUMA7
 service_multinet_exec_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/service_multinet/Puma7_plat -I$(top_srcdir)/source/include/service_multinet $(DBUS_CFLAGS)
