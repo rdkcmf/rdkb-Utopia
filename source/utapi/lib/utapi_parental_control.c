@@ -685,7 +685,7 @@ int Utopia_SetMDDevInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex,
 int Utopia_AddMDDev(UtopiaContext *ctx, const md_dev_t *md_dev)
 {
     int index,i,j,size;
-    char mac_addr[12];
+    char mac_addr[13];
 
     Utopia_GetNumberOfMDDev(ctx, &index);
 
@@ -710,7 +710,7 @@ int Utopia_AddMDDev(UtopiaContext *ctx, const md_dev_t *md_dev)
 int Utopia_DelMDDev(UtopiaContext *ctx, unsigned long ins)
 {
     int count, index, i, j, size;
-    char mac_addr[12];
+    char mac_addr[13];
 
     Utopia_GetNumberOfMDDev(ctx, &count);
     for (index = 0; index < count; index++)
