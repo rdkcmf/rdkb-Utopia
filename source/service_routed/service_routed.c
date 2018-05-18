@@ -232,7 +232,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char preferred_lft[16], valid_lft[16];
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
-    char lan_rdnss[64];
     char buf[6];
     FILE *responsefd = NULL;
     char *networkResponse = "/var/tmp/networkresponse.txt";
@@ -323,7 +322,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif
 	{
 		char val_DNSServersEnabled[ 32 ];
-		int  StaticDNSServersEnabled = 0;
 
         fprintf(fp, "interface %s\n", lan_if);
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
@@ -449,11 +447,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
 				}
 			}
 
-        		for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
+        for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
 			{
 			// Modifying rdnss value to fix the zebra config.
         		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
-			strcpy(lan_rdnss,tok);
 			}
 		}
 	}

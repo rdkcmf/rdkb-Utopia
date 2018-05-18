@@ -781,6 +781,68 @@ int greDscp = 44; // Default initialized to 44
 static int do_block_ports(FILE *filter_fp);
 static void filterPortMap(FILE *filt_fp);
 
+/*
+ * Check whether an l2 instance belongs to a MultiLAN bridge
+ */
+static inline BOOL isMultiLANL2Instance(int instance){
+  char query[MAX_QUERY];
+  char *pStr = NULL;
+  int pVal = 0;
+  int rc = 0;
+
+  /* Fetch alias from l2net instance */
+  snprintf(query, MAX_QUERY, "dmsb.l2net.%d.Alias", instance);
+  rc = PSM_VALUE_GET_STRING(query, pStr);
+  if(rc != CCSP_SUCCESS || pStr == NULL)
+    return FALSE;
+
+  /* Look for the word "multiLAN" in the alias */
+  if(NULL == strcasestr(pStr, "multiLAN"))
+    return FALSE;
+
+  /* Found l2net alias and it contained "multiLAN", return TRUE */
+  return TRUE;
+}
+
+/*
+ * Check whether an IP instance belongs to a MultiLAN bridge
+ */
+static inline BOOL isMultiLANL3Instance(int instance){
+  char query[MAX_QUERY];
+  char *pStr = NULL;
+  int pVal = 0;
+  int rc = 0;
+
+  /* Ignore invalid instance number so we don't have to validate it in the caller */
+  if(instance <= 0)
+    return FALSE;
+
+  /* Fetch EthLink from IP instance */
+  snprintf(query, MAX_QUERY, "dmsb.l3net.%d.EthLink", instance);
+  rc = PSM_VALUE_GET_STRING(query, pStr);
+  if(rc != CCSP_SUCCESS || pStr == NULL)
+    return FALSE;
+  pVal = atoi(pStr);
+  if(pVal <= 0)
+    return FALSE; 
+
+  /* Fetch l2net from EthLink instance */
+  snprintf(query, MAX_QUERY, "dmsb.EthLink.%d.l2net", pVal);
+  rc = PSM_VALUE_GET_STRING(query, pStr);
+  if(rc != CCSP_SUCCESS || pStr == NULL)
+    return FALSE;
+  pVal = atoi(pStr);
+  if(pVal <= 0)
+    return FALSE; 
+
+  /* Check if l2 instance is a MultiLAN instance */
+  if(!isMultiLANL2Instance(pVal))
+    return FALSE;
+
+  /* Found l2net alias and it contained "multiLAN", return TRUE */
+  return TRUE;
+}
+
 static int privateIpCheck(char *ip_to_check)
 {
     struct in_addr l_sIpValue, l_sDhcpStart, l_sDhcpEnd;
@@ -4307,26 +4369,26 @@ static int do_wan2self_attack(FILE *fp)
     * Log probable DoS attack
     */
    //Smurf attack, actually the below rules are to prevent us from being the middle-man host
-   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\"\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request -j xlog_drop_wanattack\n");
-   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\"\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request -j xlog_drop_wanattack\n");
 
    //ICMP Flooding. Mark traffic bit rate > 5/s as attack and limit 6 log entries per hour
    fprintf(fp, "-A wanattack -p icmp -m limit --limit 5/s --limit-burst 10 -j RETURN\n"); //stop traveling the rest of the wanattack chain
-   fprintf(fp, "-A wanattack -p icmp %s -j LOG --log-prefix \"DoS Attack - ICMP Flooding\"\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p icmp %s -j ULOG --ulog-prefix \"DoS Attack - ICMP Flooding\" --ulog-cprange 50\n", logRateLimit);
    fprintf(fp, "-A wanattack -p icmp -j xlog_drop_wanattack\n");
 
    //TCP SYN Flooding
    fprintf(fp, "-A wanattack -p tcp --syn -m limit --limit 10/s --limit-burst 20 -j RETURN\n");
-   fprintf(fp, "-A wanattack -p tcp --syn %s -j LOG --log-prefix \"DoS Attack - TCP SYN Flooding\"\n", logRateLimit);
+   fprintf(fp, "-A wanattack -p tcp --syn %s -j ULOG --ulog-prefix \"DoS Attack - TCP SYN Flooding\" --ulog-cprange 50\n", logRateLimit);
    fprintf(fp, "-A wanattack -p tcp --syn -j xlog_drop_wanattack\n");
 
    //LAND Aattack - sending a spoofed TCP SYN pkt with the target host's IP address to an open port as both source and destination
    if(isWanReady) {
        /* Allow multicast packet through */
        fprintf(fp, "-A wanattack -p udp -s %s -d 224.0.0.0/8 -j RETURN\n", current_wan_ipaddr);
-       fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\"\n", current_wan_ipaddr, logRateLimit);
+       fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", current_wan_ipaddr, logRateLimit);
        fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", current_wan_ipaddr);
    }
 
@@ -7153,7 +7215,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 		fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
 		fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
 
-        fprintf(fp, "-A prerouting_devices -p tcp -j %s\n",drop_log);        
+        fprintf(fp, "-A prerouting_devices -p tcp -j %s\n",drop_log);
 #endif /* 0 */
       }
    }
@@ -8678,6 +8740,10 @@ static int prepare_multinet_prerouting_nat(FILE *nat_fp) {
     tok = strtok(inst_resp, " ");
 
     if (tok) do {
+        // Skip if not multiLAN L3 instance
+        if (!isMultiLANL3Instance(atoi(tok)))
+          continue;
+
         // Skip primary LAN instance, it is handled elsewhere
         if (strcmp(primary_inst,tok) == 0)
             continue;
@@ -8723,6 +8789,10 @@ static int prepare_multinet_postrouting_nat(FILE *nat_fp) {
     tok = strtok(inst_resp, " ");
 
     if (tok) do {
+        // Skip if not multiLAN L3 instance
+        if (!isMultiLANL3Instance(atoi(tok)))
+          continue;
+
         // Skip primary LAN instance, it is handled elsewhere
         if (strcmp(primary_inst,tok) == 0)
             continue;
@@ -8798,6 +8868,10 @@ static int prepare_multinet_filter_output(FILE *filter_fp) {
     tok = strtok(inst_resp, " ");
 
     if (tok) do {
+        // Skip if not multiLAN L3 instance
+        if (!isMultiLANL3Instance(atoi(tok)))
+          continue;
+
         // Skip primary LAN instance, it is handled elsewhere
         if (strcmp(primary_inst,tok) == 0)
             continue;
@@ -8844,6 +8918,10 @@ static int prepare_multinet_prerouting_nat_v6(FILE *fp) {
       if(strcmp(lan_ifname, multinet_ifname) == 0)
          continue;
 
+      // Skip if not multiLAN L2 instance
+      if (!isMultiLANL2Instance(atoi(tok)))
+        continue;
+
       // Support blocked devices
       fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", multinet_ifname);
 
@@ -8879,6 +8957,10 @@ static int prepare_multinet_filter_output_v6(FILE *fp) {
       // Skip primary LAN instance, it is handled as a special case
       if(strcmp(lan_ifname, multinet_ifname) == 0)
          continue;
+
+      // Skip if not multiLAN L2 instance
+      if (!isMultiLANL2Instance(atoi(tok)))
+        continue;
 
       // Allow output towards LAN clients
       fprintf(fp, "-A OUTPUT -o %s -j ACCEPT\n", multinet_ifname);
@@ -8929,8 +9011,14 @@ static int prepare_multinet_filter_forward_v6(FILE *fp) {
       fprintf(fp, "-A INPUT -s fe80::/64 -i %s -p icmpv6 -m icmp6 --icmpv6-type 133 -m limit --limit 100/sec -j ACCEPT\n", multinet_ifname);
 
       // Allow lan2wan and wan2lan traffic
-      fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", wan6_ifname, multinet_ifname);
-      fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", multinet_ifname, wan6_ifname);
+      if (!isMultiLANL2Instance(atoi(tok))) {
+        fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", wan6_ifname, multinet_ifname);
+        fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", multinet_ifname, wan6_ifname);
+      }
+      else {
+        fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, multinet_ifname);
+        fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", multinet_ifname, wan6_ifname);
+      }
 
       // Added this rule to allow any ipv6 traffic local to the bridge
       fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", multinet_ifname, multinet_ifname);
@@ -8980,7 +9068,7 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
         
         snprintf(net_query, sizeof(net_query), "ipv4_%s-ifname", tok);
         sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
-        
+
         snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
         sysevent_get(sysevent_fd, sysevent_token, net_query, ip, sizeof(ip));
         
@@ -8990,9 +9078,16 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
 //         fprintf(filter_fp, "-I INPUT -i %s -d %s -j ACCEPT\n", net_resp, net_ip);
         fprintf(filter_fp, "-A INPUT -i %s -d %s -j ACCEPT\n", net_resp, ip);
         fprintf(filter_fp, "-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n", net_resp);
-        fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", net_resp, current_wan_ifname);
-        fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", current_wan_ifname, net_resp);
-        
+
+        if(!isMultiLANL3Instance(atoi(tok))) {
+          fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", net_resp, current_wan_ifname);
+          fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", current_wan_ifname, net_resp);
+        }
+        else {
+          fprintf(filter_fp, "-A FORWARD -i %s -o %s -j lan2wan\n", net_resp, current_wan_ifname);
+          fprintf(filter_fp, "-A FORWARD -i %s -o %s -j wan2lan\n", current_wan_ifname, net_resp);
+        }        
+
         //fprintf(filter_fp, "-A OUTPUT -o %s -j ACCEPT\n", net_resp);
 #if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
         if ( 0 != strncmp( lan_ifname, net_resp, strlen(lan_ifname))) { // block forwarding between bridge
@@ -10677,8 +10772,10 @@ static void do_ipv6_sn_filter(FILE* fp) {
         }
 	//RDKB-10248: IPv6 Entries issue in ip neigh show 2. Bring back TOS mirroring 
 
+#if !defined(_PLATFORM_IPQ_)
         prepare_xconf_rules(fp);
-  
+#endif
+
      FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
 static void do_ipv6_nat_table(FILE* fp)
@@ -10691,6 +10788,8 @@ static void do_ipv6_nat_table(FILE* fp)
 	
    fprintf(fp, "%s\n", ":prerouting_devices - [0:0]");
    fprintf(fp, "%s\n", ":prerouting_redirect - [0:0]");
+
+   prepare_multinet_prerouting_nat_v6(fp);
 
    //zqiu: RDKB-7639: block device broken for IPv6
    fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);  
@@ -11009,6 +11108,9 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "%s\n", ":PING_FLOOD - [0:0]");
    fprintf(fp, "-A PING_FLOOD -m limit --limit 10/sec -j ACCEPT\n");
    fprintf(fp, "-A PING_FLOOD -j DROP\n");
+
+   prepare_multinet_filter_forward_v6(fp);
+   prepare_multinet_filter_output_v6(fp);
 
    //ban telnet and ssh from lan side
    lan_telnet_ssh(fp, AF_INET6);
