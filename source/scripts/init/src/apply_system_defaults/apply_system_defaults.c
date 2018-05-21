@@ -686,6 +686,19 @@ static int get_PartnerID( char *PartnerID)
 		} 
 	}
 	set_syscfg_partner_values(PartnerID,"PartnerID");
+
+	//To print Facgtory PartnerID on every boot-up
+	memset(buf, 0, sizeof(buf));
+	if( 0 == getFactoryPartnerId( buf ) )
+	{
+		APPLY_PRINT("[GET-PARTNERID] Factory_PartnerID:%s\n", buf );
+	}
+   	else
+    {
+       APPLY_PRINT("[GET-PARTNERID] Factory_PartnerID:NULL\n" );
+   	}
+
+	APPLY_PRINT("[GET-PARTNERID] Current_PartnerID:%s\n", PartnerID );
 	
 }
 
