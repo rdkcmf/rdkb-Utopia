@@ -67,17 +67,30 @@ register_docsis_init_handler ()
 {
     ID=`sysevent get crond_docsis_async`
     if [ x = x"$ID" ] ; then
+       if [ -f "/nvram/ETHWAN_ENABLE" ];then
+       ID=`sysevent async ethwan-initialized /etc/utopia/service.d/service_crond.sh`
+       else
        ID=`sysevent async docsis-initialized /etc/utopia/service.d/service_crond.sh`
+       fi
        sysevent set crond_docsis_async "$ID"
     fi
 }
 
 service_start () 
 {
-   if [ "x1" != "x`sysevent get docsis-initialized`" ]; then
-     echo "SERVICE_CROND : register_docsis_init_handler"
-     register_docsis_init_handler
-      return
+  
+   if [ -f "/nvram/ETHWAN_ENABLE" ];then
+     if [ "x1" != "x`sysevent get ethwan-initialized`" ]; then
+         echo "SERVICE_CROND : register_ethwan_init_handler"
+         register_docsis_init_handler
+         return
+     fi
+     else
+     if [ "x1" != "x`sysevent get docsis-initialized`" ]; then
+         echo "SERVICE_CROND : register_docsis_init_handler"
+         register_docsis_init_handler
+         return
+     fi
    fi
    ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
 
@@ -271,6 +284,9 @@ case "$1" in
       fi
       ;;
    docsis-initialized)
+      service_start
+   ;;
+   ethwan-initialized)
       service_start
    ;;
   *)
