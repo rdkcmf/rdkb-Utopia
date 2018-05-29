@@ -211,6 +211,28 @@ qtn_configure_xfinitywifi(){
   $QWCFG_TEST push $QTN_INDEX iface_enable 0
 }
 
+#Setup QTN local instance
+#Syntax: setup_qtn [start|stop] athX
+#Parameters: [start|stop] name(as in athX),
+setup_qtn_local() {
+    local QTN_MODE="$1"
+    local AP_NAME="$2"
+
+    #First we need to map index to QTN internal indexand vlan ID
+    map_ath_to_qtn $AP_NAME
+
+    if [ "$QTN_MODE" = "start" ]
+    then
+        #Create vlan atop base wifi interface
+		$IP link add $AP_NAME link $BASE_WIFI_IF type vlan id $QTN_VLAN
+        #Base interface and vlan interface must be up
+		$IP link set $AP_NAME up
+	else
+		$IP link set $AP_NAME down
+		$IP link del $AP_NAME
+	fi
+}
+
 #Setup QTN instance
 #Syntax: setup_qtn [start|stop] athX
 #Parameters: [start|stop] name(as in athX),
@@ -229,7 +251,7 @@ setup_qtn(){
     then
         #Create VAP
         $QWCFG_TEST push $QTN_INDEX vap_emerged 1
-	ret=$?
+		ret=$?
 
         #If configured to do so, set a default SSID name here
         # Quantenna layer will set the default SSID, etc.
@@ -253,17 +275,8 @@ setup_qtn(){
         
         #Configure vlan on pcie0 interface
         $QWCFG_TEST set $QTN_INDEX trunk_vlan $QTN_VLAN
-        
-        #Create vlan atop base wifi interface
-        $IP link add $AP_NAME link $BASE_WIFI_IF type vlan id $QTN_VLAN
-        
-        #Base interface and vlan interface must be up
-        $IP link set $AP_NAME up
-        
     else
         #Remove vlan interface
-        $IP link set $AP_NAME down
-        $IP link del $AP_NAME
         
         #Configure vlan on pcie0 interface
         $QWCFG_TEST set $QTN_INDEX untrunk_vlan $QTN_VLAN
@@ -603,10 +616,12 @@ remove_from_group() {
     #Handle the case for wifi vlans
     if [ "`echo \"$IF_TO_REMOVE\"|egrep -e \"ath*\"`" != "" ]
     then
-        setup_qtn stop $IF_TO_REMOVE
+        setup_qtn_local stop $IF_TO_REMOVE
+        #setup_qtn stop $IF_TO_REMOVE &
     elif [ "`echo \"$IF_TO_REMOVE\"|egrep -e \"host*\"`" != "" ]
     then
-        setup_qtn stop $IF_TO_REMOVE
+        setup_qtn_local stop $IF_TO_REMOVE
+        #setup_qtn stop $IF_TO_REMOVE &
         #Handle the case for GRE tunnels
     elif [ "`echo \"$IF_TO_REMOVE\"|egrep -e \"${DEFAULT_GRE_TUNNEL}*\"`" != "" ]
     then
@@ -655,10 +670,12 @@ add_to_group() {
     #Handle the case for wifi vlans
     if [ "`echo \"$IF_TO_ADD\"|egrep -e \"ath*\"`" != "" ]
     then
-        setup_qtn start $IF_TO_ADD
+        setup_qtn_local start $IF_TO_ADD
+        #setup_qtn start $IF_TO_ADD &
     elif [ "`echo \"$IF_TO_ADD\"|egrep -e \"host*\"`" != "" ]
     then
-        setup_qtn start $IF_TO_ADD
+        setup_qtn_local start $IF_TO_ADD
+        #setup_qtn start $IF_TO_ADD &
         #Handle the case for GRE tunnels
     elif [ "`echo \"$IF_TO_ADD\"|egrep -e \"${DEFAULT_GRE_TUNNEL}*\"`" != "" ]
     then
