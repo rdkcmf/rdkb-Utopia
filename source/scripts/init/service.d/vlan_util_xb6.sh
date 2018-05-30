@@ -46,11 +46,6 @@ BRIDGE_MODE=0
 #SYSEVENT="echo sysevent"
 #KILLALL="echo killall"
 
-#Prefix for wifi interfaces
-WIFI_PREFIX="ath"
-#Prefix for external switch ports
-SW_PREFIX="eth_"
-
 #Moca home isolation information
 MOCA_BRIDGE_IP="169.254.30.1"
 LOCAL_MOCABR_UP_FILE="/tmp/MoCABridge_up"
@@ -654,8 +649,7 @@ add_to_group() {
 #update the multinet status.  Defaults to "true".
 sync_group_settings() {
     RAISE_EVENTS="$1"
-    NEED_SW_UPDATE="false"
-    NEED_WIFI_UPDATE="false"
+    NEED_LAN_UPDATE="false"
 
     [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-localready 1
     
@@ -699,11 +693,7 @@ sync_group_settings() {
         if [ $IF_BELONGS -eq 0 ]
         then
             remove_from_group $EXISTING_IF
-	    if [ "`echo \"$EXISTING_IF\"|grep \"$WIFI_PREFIX\"`" != "" ] ; then
-                NEED_WIFI_UPDATE="true"
-	    elif [ "`echo \"$EXISTING_IF\"|grep \"$SW_PREFIX\"`" != "" ] ; then
-                NEED_SW_UPDATE="true"
-            fi 
+            NEED_LAN_UPDATE="true"
         fi
     done
     
@@ -721,11 +711,7 @@ sync_group_settings() {
         if [ $IF_FOUND -ne 1 ]
         then
             add_to_group $NEEDED_IF
-	    if [ "`echo \"$NEEDED_IF\"|grep \"$WIFI_PREFIX\"`" != "" ] ; then
-                NEED_WIFI_UPDATE="true"
-	    elif [ "`echo \"$NEEDED_IF\"|grep \"$SW_PREFIX\"`" != "" ] ; then
-                NEED_SW_UPDATE="true"
-            fi 
+            NEED_LAN_UPDATE="true"
         fi
     done
 
@@ -735,15 +721,10 @@ sync_group_settings() {
          ncpu_exec -e "(echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt)"
      fi
 
-    if [ "$NEED_WIFI_UPDATE" = "true" ]
+    if [ "$NEED_LAN_UPDATE" = "true" ]
     then
-        echo "calling gw_lan_refresh to update wifi setting"
-        gw_lan_refresh wifi
-    fi
-    if [ "$NEED_SW_UPDATE" = "true" ]
-    then
-        echo "calling gw_lan_refresh to update external switch setting"
-        gw_lan_refresh switch
+        echo "calling gw_lan_refresh to update group setting"
+        gw_lan_refresh
     fi
 
 
