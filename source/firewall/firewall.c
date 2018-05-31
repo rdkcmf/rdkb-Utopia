@@ -9309,8 +9309,8 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
    /**
     * RDKB-15072 - Explicitly specify proticol instead of common rule as workaround to overcome CMTS issue.
     **/
-   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --protocol udp --set-dscp-class %s\n",initialoutputmark);
-   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -j DSCP --protocol tcp --set-dscp-class %s\n",initialoutputmark);
+   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -m state --state NEW -j DSCP --protocol udp --set-dscp-class %s\n",initialoutputmark);
+   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -m state --state NEW -j DSCP --protocol tcp --set-dscp-class %s\n",initialoutputmark);
 
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
    
