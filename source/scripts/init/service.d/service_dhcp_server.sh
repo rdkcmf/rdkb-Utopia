@@ -358,7 +358,6 @@ dhcp_server_start ()
    fi
    
    DHCP_STATE=`sysevent get lan_status-dhcp`
-   #if [ "started" != "$CURRENT_LAN_STATE" ] ; then
    if [ "started" != "$DHCP_STATE" ] ; then
    	  if [ "$IS_BCI" = "yes" ] && [ -z "$DHCP_STATE" ] && [ "$CALL_ARG" = "dhcp_server-restart" ]; then
    	  	# If we are calling dhcp_server_start from a restart event, it's possible that lan_status-dhcp may have never
