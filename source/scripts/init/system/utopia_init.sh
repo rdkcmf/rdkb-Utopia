@@ -560,6 +560,12 @@ else
       elif [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_HW" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+#ifdef CISCO_XB3_PLATFORM_CHANGES
+         ##Work around: RDKB3939-500: /nvram/RDKB3939-500_RebootNotByPwrOff file not created by utopia.service(atom side) in case of power off shut down
+         elif [ "$MODEL_NUM" = "DPC3939" ] && [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_ATOM" ] && [ ! -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
+         syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
+         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+#endif
       else
          RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk '{ print $7 }'`
          result=`echo "$RESET_DURATION $BUTTON_THRESHOLD"| awk '{if ($1 > 0 && $1 < $2) print $1}'`
@@ -570,6 +576,13 @@ else
       fi
    fi
 fi
+
+#ifdef CISCO_XB3_PLATFORM_CHANGES
+## Remove after setting last reboot reason
+if [ -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
+	rm /nvram/RDKB3939-500_RebootNotByPwrOff
+fi
+#endif 
 
 #echo_t "[utopia][init] started dropbear process"
 #$UTOPIA_PATH/service_sshd.sh sshd-start &
