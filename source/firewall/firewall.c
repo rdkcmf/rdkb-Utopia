@@ -541,6 +541,8 @@ static char default_wan_ifname[50]; // name of the regular wan interface
 static char current_wan_ifname[50]; // name of the ppp interface or the regular wan interface if no ppp
 static char ecm_wan_ifname[20];
 static char emta_wan_ifname[20];
+static char eth_wan_enabled[20];
+static BOOL bEthWANEnable = FALSE;
 static char wan6_ifname[20];
 static char wan_service_status[20];       // wan_service-status
 
@@ -1563,6 +1565,10 @@ static int prepare_globals_from_configuration(void)
 
    syscfg_get(NULL, "ecm_wan_ifname", ecm_wan_ifname, sizeof(ecm_wan_ifname));
    syscfg_get(NULL, "emta_wan_ifname", emta_wan_ifname, sizeof(emta_wan_ifname));
+   syscfg_get(NULL, "eth_wan_enabled", eth_wan_enabled, sizeof(eth_wan_enabled));
+   if (0 == strcmp("true", eth_wan_enabled))
+      bEthWANEnable = TRUE;
+   
    get_ip6address(ecm_wan_ifname, ecm_wan_ipv6, &ecm_wan_ipv6_num);
    get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num);
 
@@ -9646,6 +9652,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
    fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
+   if(bEthWANEnable)
+	{
+   		fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+        }
+   else
    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
 
    //SNMPv3 chains for logging and filtering
@@ -11119,7 +11130,13 @@ static void do_ipv6_filter_table(FILE *fp){
    do_block_ports(fp);	
    fprintf(fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
+   if(bEthWANEnable)
+   {
+   fprintf(fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+   }
+   else
    fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+  
    fprintf(fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
    fprintf(fp, "-A LOG_SSH_DROP -j DROP\n");
 
