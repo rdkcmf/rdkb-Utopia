@@ -693,6 +693,29 @@ static int initialize_system(void)
 		 }
 	   }
 	}
+
+	// sigpipe ignore
+	new_action.sa_handler = ignore_signal_handler;
+	new_action.sa_flags   = 0;
+	sigemptyset (&new_action.sa_mask);
+	if (-1 == sigaction (SIGPIPE, NULL, &old_action)) {
+	   SE_INC_LOG(ERROR,
+	   printf("Problem getting original signal handler for SIGPIPE. Reason (%d) %s\n",
+		errno, strerror(errno));
+	   )
+	   return(ERR_SIGNAL_DEFINE);
+	} else {
+	   if (SIG_IGN != old_action.sa_handler) {
+	      if (-1 == sigaction (SIGPIPE, &new_action, NULL)) {
+		 SE_INC_LOG(ERROR,
+		 printf("Problem setting signal handler for SIGPIPE. Reason (%d) %s\n",
+		      errno, strerror(errno));
+		 )
+		 return(ERR_SIGNAL_DEFINE);
+	      }
+	   }
+	}
+
 #endif
 
    // save our pid in the pid file
