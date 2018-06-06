@@ -78,6 +78,7 @@ const char* const service_ipv6_component_id = "ccsp.ipv6";
 #else
 #define MAX_LAN_IF_NUM             64
 #define CMD_BUF_SIZE              255
+#define MAX_ACTIVE_INSTANCE        64
 #endif
 
 #if defined(MULTILAN_FEATURE)
@@ -997,6 +998,17 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
 #if defined(MULTILAN_FEATURE)
     char bridge_mode[BRIDGE_MODE_STRLEN]={0};
 #endif
+    
+   
+    /*
+     * divide the Operator-delegated prefix to sub-prefixes
+     */
+    if (divide_ipv6_prefix(si6) != 0) {
+        fprintf(stderr, "divide the operator-delegated prefix to sub-prefix error.\n");
+        sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
+        return -1;
+    }
+ 
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-divided", evt_val, sizeof(evt_val));
     if (strcmp(evt_val, "ready")) {
         fprintf(stderr, "[%s] ipv6 prefix is not divided.\n", __FUNCTION__);
@@ -1108,12 +1120,24 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
     unsigned int if_num = 0;
     int i = 0;
     char evt_name[64] = {0};
+#if defined(MULTILAN_FEATURE)
+    char active_instances[MAX_ACTIVE_INSTANCE] = {0};
+    char *bridge_idx = NULL;
 
+    snprintf(evt_name, sizeof(evt_name), "ipv6_active_inst");
+    sysevent_get(si6->sefd, si6->setok, evt_name, active_instances, sizeof(active_instances));/*Get last active IPv6 instances*/
+    bridge_idx = strtok(active_instances, " ");
+    while(bridge_idx) {
+        l2_insts[if_num++] = atoi(bridge_idx);
+        bridge_idx = strtok(NULL, " ");
+    }
+#else
     get_active_lanif(si6, l2_insts, &if_num);
     if (if_num == 0) {
         fprintf(stderr, "no active lan interface.\n");
         return -1;
     }
+#endif
 
     for (; i < if_num; i++) {
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
@@ -1183,8 +1207,15 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-divided", evt_val, sizeof(evt_val));
     if (strcmp(evt_val, "ready")) {
-        fprintf(stderr, "[%s] ipv6 prefix is not divided.\n", __FUNCTION__);
-        return -1;
+       /*
+        * Check if delegated prefix is already divided for lan interfaces.
+        * If not, then divide the Operator-delegated prefix to sub-prefixes.
+        */
+        if (divide_ipv6_prefix(si6) != 0) {
+            fprintf(stderr, "divide the operator-delegated prefix to sub-prefix error.\n");
+            sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
+            return -1;
+        }
     }
     memset(&dhcpv6s_pool_cfg, 0, sizeof(dhcpv6s_pool_cfg_t)); /*RDKB-12965 & CID:-34146*/
 
@@ -1438,11 +1469,6 @@ static int serv_ipv6_start(struct serv_ipv6 *si6)
      *  4) the remaining sub-prefixes are delegated via DHCPv6 to directly downstream routers
      *  5) Send RA, start DHCPv6 server
      */
-    if (divide_ipv6_prefix(si6) != 0) {
-        fprintf(stderr, "divide the operator-delegated prefix to sub-prefix error.\n");
-        sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
-        return -1;
-    }
 	/* For CBR product the lan(brlan0) v6 address set is done as part of PandM process*/
 #ifndef _CBR_PRODUCT_REQ_
     if (lan_addr6_set(si6) !=0) {
