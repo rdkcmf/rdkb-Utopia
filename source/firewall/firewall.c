@@ -9652,6 +9652,12 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
 #endif
+#if defined(_COSA_BCM_ARM_)
+   fprintf(filter_fp, "-A INPUT -s 172.31.255.40/32 -p tcp -m tcp --dport 9000 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -s 172.31.255.40/32 -p udp -m udp --dport 9000 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 9000 -j REJECT\n");
+   fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 9000 -j REJECT\n");
+#endif
    // Allow local loopback traffic 
    fprintf(filter_fp, "-A INPUT -i lo -s 127.0.0.0/8 -j ACCEPT\n");
    if (isWanReady) {
