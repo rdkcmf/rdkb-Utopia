@@ -973,6 +973,9 @@ int compute_global_ip(char *prefix, char *if_name, char *ipv6_addr, unsigned int
 static int lan_addr6_set(struct serv_ipv6 *si6)
 {
     unsigned int l2_insts[MAX_LAN_IF_NUM] = {0};
+#if defined(MULTILAN_FEATURE)
+    unsigned int primary_l2_instance = 0;
+#endif
     char iface_name[16] = {0};
     unsigned int enabled_iface_num = 0;
     int i = 0;
@@ -1000,6 +1003,15 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
         return -1;
     }
 
+#if defined(MULTILAN_FEATURE)
+    /*Get the primary L2 instance number*/
+    snprintf(evt_name, sizeof(evt_name), "primary_lan_l2net");
+    sysevent_get(si6->sefd, si6->setok, evt_name, iface_name, sizeof(iface_name));
+    /*Read a bounded number of characters from the string returned by sysevent_get*/
+    snprintf(cmd, sizeof(cmd), "%%%dd", (sizeof(cmd) - 1));
+    sscanf(iface_name, cmd, &primary_l2_instance);
+#endif
+
     for (; i < enabled_iface_num; i++) {
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_name, sizeof(iface_name));/*interface name*/
@@ -1023,6 +1035,14 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
 #ifdef MULTILAN_FEATURE
         if(ipv6_addr[0] == '\0')
            continue;
+#endif
+
+#if defined(MULTILAN_FEATURE)
+        /*If this is the primary LAN instance, set sysevent key lan_ipaddr_v6 to this IPv6 address*/
+        if (l2_insts[i] == primary_l2_instance) {
+            snprintf(evt_name, sizeof(evt_name), "lan_ipaddr_v6");
+            sysevent_set(si6->sefd, si6->setok, evt_name, ipv6_addr, 0);
+        }
 #endif
 
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", iface_name);
