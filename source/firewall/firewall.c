@@ -8917,6 +8917,7 @@ static int prepare_multinet_filter_forward_v6(FILE *fp) {
    unsigned char sysevent_query[MAX_QUERY] = {0};
    unsigned char inst_resp[MAX_QUERY] = {0};
    unsigned char multinet_ifname[MAX_QUERY] = {0};
+   unsigned char lan_prefix[MAX_QUERY] = {0};
    unsigned char* tok = NULL;
 
    snprintf(sysevent_query, sizeof(sysevent_query), "ipv6_active_inst");
@@ -8931,6 +8932,10 @@ static int prepare_multinet_filter_forward_v6(FILE *fp) {
       if(strcmp(lan_ifname, multinet_ifname) == 0)
          continue;
 
+      // Query the IPv6 prefix currently allocated to this bridge from sysevent
+      snprintf(sysevent_query, sizeof(sysevent_query), "ipv6_%s-prefix", multinet_ifname);
+      sysevent_get(sysevent_fd, sysevent_token, sysevent_query, lan_prefix, sizeof(lan_prefix));
+
       // Allow DHCPv6 from LAN clients
       fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 547 -m limit --limit 100/sec -j ACCEPT\n", multinet_ifname);
 
@@ -8942,6 +8947,11 @@ static int prepare_multinet_filter_forward_v6(FILE *fp) {
       fprintf(fp, "-A INPUT -s fe80::/64 -d ff02::1/128 ! -i %s -p icmpv6 -m icmp6 --icmpv6-type 134 -m limit --limit 10/sec -j ACCEPT\n", multinet_ifname);
       fprintf(fp, "-A INPUT -s fe80::/64 -d fe80::/64 ! -i %s -p icmpv6 -m icmp6 --icmpv6-type 134 -m limit --limit 10/sec -j ACCEPT\n", multinet_ifname);
       fprintf(fp, "-A INPUT -s fe80::/64 -i %s -p icmpv6 -m icmp6 --icmpv6-type 133 -m limit --limit 100/sec -j ACCEPT\n", multinet_ifname);
+
+      // Block unicast WAN to LAN traffic from going to this bridge if the destination address is not within this bridge's allocated prefix
+      fprintf(fp, "-A FORWARD -i %s -o %s -m pkttype --pkt-type unicast ! -d %s -j LOG_FORWARD_DROP\n", wan6_ifname, multinet_ifname, lan_prefix);
+      // Block unicast LAN to WAN traffic from being sent from this bridge if the source address is not within this bridge's allocated prefix
+      fprintf(fp, "-A FORWARD -i %s -o %s -m pkttype --pkt-type unicast ! -s %s -j LOG_FORWARD_DROP\n", multinet_ifname, wan6_ifname, lan_prefix);
 
       // Allow lan2wan and wan2lan traffic
       fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, multinet_ifname);
@@ -11656,9 +11666,19 @@ v6GPFirewallRuleNext:
       if ( '\0' != prefix[0] ) {
          //fprintf(fp, "-A FORWARD ! -s %s -i %s -m limit --limit 10/sec -j LOG --log-level %d --log-prefix \"UTOPIA: FW. IPv6 FORWARD anti-spoofing\"\n", prefix, lan_ifname,syslog_level);
          //fprintf(fp, "-A FORWARD ! -s %s -i %s -m limit --limit 10/sec -j REJECT --reject-with icmp6-adm-prohibited\n", prefix, lan_ifname);
-         fprintf(fp, "-A FORWARD ! -s %s -i %s -j LOG_FORWARD_DROP\n", prefix, lan_ifname);
          fprintf(fp, "-A FORWARD -s %s -i %s -j LOG_FORWARD_DROP\n", prefix, wan6_ifname);
       }
+
+      unsigned char sysevent_query[MAX_QUERY] = {0};
+      unsigned char lan_prefix[MAX_QUERY] = {0};
+
+      snprintf(sysevent_query, sizeof(sysevent_query), "ipv6_%s-prefix", lan_ifname);
+      sysevent_get(sysevent_fd, sysevent_token, sysevent_query, lan_prefix, sizeof(lan_prefix));
+
+      // Block unicast WAN to LAN traffic from going to this bridge if the destination address is not within this bridge's allocated prefix
+      fprintf(fp, "-A FORWARD -i %s -o %s -m pkttype --pkt-type unicast ! -d %s -j LOG_FORWARD_DROP\n", wan6_ifname, lan_ifname, lan_prefix);
+      // Block unicast LAN to WAN traffic from being sent from this bridge if the source address is not within this bridge's allocated prefix
+      fprintf(fp, "-A FORWARD -i %s -o %s -m pkttype --pkt-type unicast ! -s %s -j LOG_FORWARD_DROP\n", lan_ifname, wan6_ifname, lan_prefix);
 
 
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, wan6_ifname);
