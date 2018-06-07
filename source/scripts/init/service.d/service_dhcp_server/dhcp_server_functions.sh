@@ -171,8 +171,8 @@ isValidLANIP () {
        IFS=$OIFS
        if [[ $ip1 -gt 255 || $ip2 -gt 255 || $ip3 -gt 255 || $ip4 -gt 255 ]] ||
           [[ $ip1 -ne 10 && $ip1 -ne 172 && $ip1 -ne 192 ]] ||
-          [[ $ip1 -eq 172 && $ip2 -le 16 ]] ||
-          [[ $ip1 -eq 172 && $ip2 -ge 31 ]] ||
+          [[ $ip1 -eq 172 && $ip2 -lt 16 ]] ||
+          [[ $ip1 -eq 172 && $ip2 -gt 31 ]] ||
           [[ $ip1 -eq 192 && $ip2 -ne 168 ]] ||
           [[ $ip1 -eq 192 && $ip3 -eq 147 ]]; then
            echo 0
