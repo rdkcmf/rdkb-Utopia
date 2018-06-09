@@ -52,8 +52,6 @@ const char* SERVICE_NAME            = "sshd";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_sshd.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "bridge-status|/etc/utopia/service.d/service_sshd.sh",
-                                        "lan-status|/etc/utopia/service.d/service_sshd.sh",
-                                        "wan-status|/etc/utopia/service.d/service_sshd.sh",
                                         NULL 
                                       };
 

@@ -117,7 +117,7 @@ service_start() {
 	ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service"
 
 	#SSH_ENABLE=`syscfg get mgmt_wan_sshaccess`
-	CURRENT_WAN_STATE=`sysevent get wan-status`
+#	CURRENT_WAN_STATE=`sysevent get wan-status`
 
 	#if [ "$SSH_ENABLE" = "0" ]; then
 
@@ -142,7 +142,7 @@ service_start() {
 
 service_stop () {
    echo_t "[utopia] stopping ${SERVICE_NAME} service"
-   ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
+#   ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
 
    if [ -f "$PID_FILE" ] ; then
       do_stop
@@ -201,12 +201,12 @@ case "$1" in
       service_stop
       service_start
       ;;
-  #lan-status)
+   # lan-status)
       #service_lanwan_status
       #;;
-  wan-status)
-      service_wan_status
-      ;;
+ # wan-status)
+ #     service_wan_status
+ #    ;;
   bridge-status)
       service_bridge_status
       ;;
