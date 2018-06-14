@@ -9311,6 +9311,7 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
     **/
    fprintf(mangle_fp, "-A OUTPUT -o erouter0 -m state --state NEW -j DSCP --protocol udp --set-dscp-class %s\n",initialoutputmark);
    fprintf(mangle_fp, "-A OUTPUT -o erouter0 -m state --state NEW -j DSCP --protocol tcp --set-dscp-class %s\n",initialoutputmark);
+   fprintf(mangle_fp, "-A OUTPUT -o erouter0 -m state --state NEW -j DSCP --protocol icmp --set-dscp-class %s\n",initialoutputmark);
 
    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p gre -j DSCP --set-dscp %d \n",greDscp);
    
