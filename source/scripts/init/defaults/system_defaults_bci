@@ -1080,3 +1080,6 @@ $encryptcloudupload=0
 #Enable DNS strict order
 $DNSStrictOrder=false
 
+#SNMPv3 control default values
+$V3Support=false
+
