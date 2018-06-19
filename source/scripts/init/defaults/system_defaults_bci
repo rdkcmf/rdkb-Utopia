@@ -1043,8 +1043,14 @@ $lan_pd_interfaces=brlan0
 @erouter_topology-mode=1
 $migration_cp_handler=false
 $PasswordLockoutEnable=true
-$PasswordLockoutAttempts=3
+$PasswordLockoutAttempts=10
 $PasswordLockoutTime=300000
+$PasswordLoginCounts_1=0
+$NumOfFailedAttempts_1=0
+$PasswordLoginCounts_2=0
+$NumOfFailedAttempts_2=0
+$PasswordLoginCounts_3=0
+$NumOfFailedAttempts_3=0
 $HTTPSecurityHeaderEnable=true
 
 #WiFi password Get/Set disabled by default

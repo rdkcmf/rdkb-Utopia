@@ -1047,6 +1047,12 @@ $enable_speedtest=false
 $PasswordLockoutEnable=true
 $PasswordLockoutAttempts=3
 $PasswordLockoutTime=300000
+$PasswordLoginCounts_1=0
+$NumOfFailedAttempts_1=0
+$PasswordLoginCounts_2=0
+$NumOfFailedAttempts_2=0
+$PasswordLoginCounts_3=0
+$NumOfFailedAttempts_3=0
 $HTTPSecurityHeaderEnable=true
 
 #WiFi password Get/Set disabled by default
