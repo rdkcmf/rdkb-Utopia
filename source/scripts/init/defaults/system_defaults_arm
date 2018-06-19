@@ -491,6 +491,9 @@ $TZ=
 $ntp_cityindex=0
 $auto_dst=1
 
+# 4_to_6 tunnel support
+$4_to_6_enabled=1
+
 # IGMP Proxy
 $igmpproxy_enabled=1
 
