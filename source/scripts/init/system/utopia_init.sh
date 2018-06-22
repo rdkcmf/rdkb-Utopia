@@ -563,6 +563,12 @@ else
          elif [ "$MODEL_NUM" = "DPC3939" ] && [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_ATOM" ] && [ ! -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+      elif [ -e "/proc/P-UNIT/status" ]; then
+         Punit_status=`grep -i "Last reset origin" /proc/P-UNIT/status | awk '{print $9}'`
+         if [ "$Punit_status" = "RESET_ORIGIN_ATOM_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ];then
+             syscfg set X_RDKCENTRAL-COM_LastRebootReason $Punit_status
+             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"         
+         fi
 #endif
       else
          RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk '{ print $7 }'`
