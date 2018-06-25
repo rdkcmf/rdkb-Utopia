@@ -631,10 +631,65 @@ static int getFactoryPartnerId
 		APPLY_PRINT("%s - %s\n",__FUNCTION__,pValue);
 		return 0;		 
 	}
+	else
+	{
+		int count = 0 ;
+		while ( count < 3 )
+		{
+			APPLY_PRINT(" Retrying for getting partnerID from HAL, Retry Count:%d\n", count + 1);
+			if(0 == platform_hal_getFactoryPartnerId(pValue))
+			{
+				APPLY_PRINT("%s - %s\n",__FUNCTION__,pValue);
+				return 0;
+			}
+			sleep(3);
+			count++;
+		}
+	}
 #endif
 
 	APPLY_PRINT("%s - Failed Get factoryPartnerId \n", __FUNCTION__);
 	return -1;
+}
+int validatePartnerId ( char *PartnerID )
+{
+	char *ptr_nvram_json = NULL;
+
+	ptr_nvram_json = json_file_parse ( "/etc/partners_defaults.json" ) ;
+
+	if ( ptr_nvram_json )
+	{
+		cJSON 	*subitem_nvram 	= 	NULL, 	* root_nvram_json = NULL ;
+		char 	*param_nvram 	= 	NULL;
+		int 		row_count = 0 , 	nvram_val = 0, 	flag = 0;
+
+		root_nvram_json = cJSON_Parse(ptr_nvram_json);
+		row_count = cJSON_GetArraySize(root_nvram_json);
+
+		for (nvram_val = 0; nvram_val < row_count ; nvram_val++)
+		{
+		        if ( (cJSON_GetArrayItem(root_nvram_json, nvram_val) != NULL) )
+		        {
+		                subitem_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val);
+				param_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val)->string;
+				if ( 0 == strcmp ( param_nvram, PartnerID) )
+				{
+					break;
+				}
+				else
+				{
+					flag++;
+				}
+			}
+		}
+		if ( flag == row_count )
+		{
+			APPLY_PRINT("Invalid partner ID got from HAL, So assigning as default partnerID as unknown\n");
+			sprintf(PartnerID,"%s","unknown");
+		}
+	}
+	free ( ptr_nvram_json ) ;
+
 }
 
 static int get_PartnerID( char *PartnerID)
@@ -652,9 +707,10 @@ static int get_PartnerID( char *PartnerID)
 	{
 
 		APPLY_PRINT("%s - %s is not there\n", __FUNCTION__, PARTNERID_FILE );
-		if( 0 == getFactoryPartnerId( PartnerID ) )
+		if( ( 0 == getFactoryPartnerId( PartnerID ) ) && ( PartnerID [ 0 ] != '\0' ) )
 		{
 			APPLY_PRINT("%s - PartnerID from HAL: %s\n",__FUNCTION__,PartnerID );
+			validatePartnerId ( PartnerID );
 		}
 		else
 		{
