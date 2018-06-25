@@ -989,6 +989,22 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 						APPLY_PRINT("%s - DefaultWiFiRegionCode Value is NULL\n", __FUNCTION__ );
 					}	
 				}
+                                if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation") != NULL )
+                                {
+                                        char *tr69CertLocation = NULL;
+
+                                        tr69CertLocation = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation")->valuestring;
+
+                                        if (tr69CertLocation != NULL)
+                                        {
+                                                set_syscfg_partner_values(tr69CertLocation,"TR69CertLocation");
+                                                tr69CertLocation = NULL;
+                                        }
+                                        else
+                                        {
+                                                APPLY_PRINT("%s - Default TR69CertLocation Value is NULL\n", __FUNCTION__ );
+                                        }
+                                }
 
         if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") != NULL )
         {
