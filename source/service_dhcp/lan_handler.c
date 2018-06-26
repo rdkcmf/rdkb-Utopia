@@ -83,11 +83,11 @@ void bring_lan_up()
 	    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     	if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
 	    {    
-    	    fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null, retrying\n");
+    	    fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null, retrying, ret_val: %d\n", l_iRet_Val);
 	        l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     	    if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         	{
-	            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null even after retry, no more retries\n");
+	            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null even after retry, no more retries, ret_val: %d\n", l_iRet_Val);
     	    }
         	else
 	        {
@@ -106,11 +106,11 @@ void bring_lan_up()
 		l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null, retrying\n");
+            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null, retrying ret_val: %d\n", l_iRet_Val);
             l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
             if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
             {
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null even after retry, no more retries\n");
+                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null even after retry, no more retries ret_val: %d\n", l_iRet_Val);
             }
             else
             {
@@ -129,11 +129,11 @@ void bring_lan_up()
 		l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null, retrying\n");
+            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null, retrying ret_val: %d\n", l_iRet_Val);
             l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
             if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
             {
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null even after retry, no more retries\n");
+                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null even after retry, no more retries ret_val: %d\n", l_iRet_Val);
             } 
             else
             {
@@ -152,11 +152,11 @@ void bring_lan_up()
         l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null, retrying\n");
+            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null, retrying ret_val: %d\n", l_iRet_Val);
             l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
             if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
             {
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null even after retry, no more retries\n");
+                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null even after retry, no more retries ret_val: %d\n", l_iRet_Val);
             } 
             else
             {
@@ -185,6 +185,18 @@ void bring_lan_up()
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "primary_lan_brport", l_cLan_Brport, 0);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "homesecurity_lan_l3net", l_cHomeSecurity_L3net, 0);
 		}
+		
+		//DEBUG
+                snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.MultiLAN.PrimaryLAN_l3net");
+            	l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+		if (l_cpPsm_Get == NULL)
+                {
+           		fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null, retrying, ret_val: %d\n", l_iRet_Val);
+		}
+		else {
+			fprintf(stderr, "DEBUG RDKB_SYSTEM_BOOT_UP_LOG : L3INST is: %s\n, ret_val is: %d", l_cpPsm_Get, l_iRet_Val);
+		}
+
 	}
 	else
 	{
