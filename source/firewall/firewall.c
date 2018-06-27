@@ -7093,8 +7093,8 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 #if defined(_PLATFORM_RASPBERRYPI_)
            if(MD_flag == FALSE)
            {
-           fprintf(filter_fp, "-D INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
-           fprintf(filter_fp, "-D INPUT -p udp -m udp --dport 21515 -j DROP\n");
+           fprintf(fp, "-D INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
+           fprintf(fp, "-D INPUT -p udp -m udp --dport 21515 -j DROP\n");
            MD_flag = TRUE;
            }
 #endif
@@ -7118,8 +7118,8 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 #if defined(_PLATFORM_RASPBERRYPI_)
            if(MD_flag == TRUE)
            {
-           fprintf(filter_fp, "-I INPUT -p tcp -m tcp --dport 21515 -j DROP\n",query);
-           fprintf(filter_fp, "-I INPUT -p udp -m udp --dport 21515 -j DROP\n",query);
+           fprintf(fp, "-I INPUT -p tcp -m tcp --dport 21515 -j DROP\n",query);
+           fprintf(fp, "-I INPUT -p udp -m udp --dport 21515 -j DROP\n",query);
            MD_flag = FALSE;
            }
 #endif
