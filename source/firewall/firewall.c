@@ -655,6 +655,10 @@ static int isProdImage = 0;
 static int isComcastImage = 0;
 static int isContainerEnabled = 0;
 
+#if defined(_PLATFORM_RASPBERRYPI_)
+static BOOL MD_flag = TRUE;
+#endif
+
 /*
  * For timed internet access rules we use cron 
  */
@@ -7177,6 +7181,14 @@ static int do_parcon_mgmt_device(FILE *filter_fp,FILE *nat_fp, int iptype, FILE 
          if(flag == 1)
          {
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j ACCEPT\n",query);
+#if defined(_PLATFORM_RASPBERRYPI_)
+           if(MD_flag == FALSE)
+           {
+           fprintf(filter_fp, "-D INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
+           fprintf(filter_fp, "-D INPUT -p udp -m udp --dport 21515 -j DROP\n");
+           MD_flag = TRUE;
+           }
+#endif
          }
          else
          {
@@ -7195,6 +7207,14 @@ static int do_parcon_mgmt_device(FILE *filter_fp,FILE *nat_fp, int iptype, FILE 
             fprintf(fp, "-A prerouting_devices -p udp ! --dport 67 -m mac --mac-source %s -j %s\n",query,drop_log);
             /* If we don't insert ICMP rule, the icmp traffic is flowing with other FORWARD rules.*/
             fprintf(filter_fp, "-I FORWARD 1 -p icmp -m mac --mac-source %s -j DROP\n",query);
+#if defined(_PLATFORM_RASPBERRYPI_)
+           if(MD_flag == TRUE)
+           {
+           fprintf(filter_fp, "-I INPUT -p tcp -m tcp --dport 21515 -j DROP\n",query);
+           fprintf(filter_fp, "-I INPUT -p udp -m udp --dport 21515 -j DROP\n",query);
+           MD_flag = FALSE;
+           }
+#endif
 #endif /* 0 */
             if(cron_fp)
             {
