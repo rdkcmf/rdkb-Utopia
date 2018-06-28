@@ -684,9 +684,10 @@ int validatePartnerId ( char *PartnerID )
 		}
 		if ( flag == row_count )
 		{
-			APPLY_PRINT("Invalid partner ID got from HAL, So assigning as default partnerID as unknown\n");
+			APPLY_PRINT("Invalid partner ID got, So assigning as default partnerID as unknown\n");
 			sprintf(PartnerID,"%s","unknown");
 		}
+		cJSON_Delete(root_nvram_json);
 	}
 	free ( ptr_nvram_json ) ;
 
@@ -751,6 +752,7 @@ static int get_PartnerID( char *PartnerID)
 			sprintf( PartnerID, "%s", fileContent );
 
 			APPLY_PRINT("%s - PartnerID from File: %s\n",__FUNCTION__,PartnerID );
+			validatePartnerId ( PartnerID );
 		}
 		system("rm -rf /nvram/.partner_ID");
 	}
