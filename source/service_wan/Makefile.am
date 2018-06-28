@@ -24,6 +24,8 @@ AM_LDFLAGS =  -lpthread -lz
 
 service_wan_SOURCES = service_wan.c
 
+AM_LDFLAGS += -lsecure_wrapper
+
 service_wan_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                     $(top_builddir)/source/services/lib/libsrvmgr.la \
                     $(top_builddir)/source/sysevent/lib/libsysevent.la \
