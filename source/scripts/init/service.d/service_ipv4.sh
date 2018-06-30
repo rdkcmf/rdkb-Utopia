@@ -103,6 +103,8 @@ handle_l2_status () {
             apply_config $1
             if [ 0 = $? ]; then
                 sysevent set ${SERVICE_NAME}_${1}-status $L3_UP_STATUS
+				echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART" 
+				sysevent set firewall-restart
 				if [ x4 = x$1 ]; then
                     echo "IPv4 address is set for brlan0 MOCA interface is UP"
 			
@@ -223,9 +225,7 @@ apply_config () {
     sysevent set ${SERVICE_NAME}_${1}-ipv4addr $CUR_IPV4_ADDR
     sysevent set ${SERVICE_NAME}_${1}-ipv4subnet $CUR_IPV4_SUBNET
    
-    echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART" 
-    sysevent set firewall-restart
-    
+   
     return 0
 }
 

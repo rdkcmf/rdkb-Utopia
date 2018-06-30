@@ -624,8 +624,6 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
     snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4subnet", l3_inst);
     sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cCur_Ipv4_Subnet, 0);
 
-    fprintf(stderr, "service_ipv4 : Triggering RDKB_FIREWALL_RESTART\n");
-	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
 	return TRUE;
 }
 
@@ -693,8 +691,11 @@ void load_static_l3 (int l3_inst)
         if (TRUE == l_bApplyConfig_Res)
 		{
 			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-status", l3_inst);
-	        sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "up", 0);
-			
+	     		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "up", 0);
+		
+		       fprintf(stderr, "service_ipv4 : Triggering RDKB_FIREWALL_RESTART\n");
+			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);	
+
 			if (4 == l3_inst)
 			{
             	fprintf(stderr, "IPv4 address is set for %s interface MOCA interface is UP\n",
