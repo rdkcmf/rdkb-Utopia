@@ -226,6 +226,7 @@ setup_qtn_local() {
         #Create vlan atop base wifi interface
 		$IP link add $AP_NAME link $BASE_WIFI_IF type vlan id $QTN_VLAN
         #Base interface and vlan interface must be up
+		$IP link set $BASE_WIFI_IF up
 		$IP link set $AP_NAME up
 	else
 		$IP link set $AP_NAME down
@@ -696,14 +697,14 @@ add_to_group() {
 #This function will create the group if it doesn't already exist,
 #remove interfaces that shouldn't be connected, and add any
 #interfaces that should be connected to this group.
-#Takes a parameter "true" or "false" which controls whether we should
-#update the multinet status.  Defaults to "true".
+#Takes a parameter "true" or "false" which determines whether we are
+#tearing down this group. In that case, remove all ports from the bridge.
 sync_group_settings() {
-    RAISE_EVENTS="$1"
+    TEARDOWN="$1"
     NEED_SW_UPDATE="false"
     NEED_WIFI_UPDATE="false"
 
-    [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-localready 1
+    [ "$TEARDOWN" != "true" ] && $SYSEVENT set multinet_${INSTANCE}-localready 1
     
     #Check if bridge exists and if ID is correct.  If not, delete and re-create.
     CURRENT_VLAN=`$VLAN_UTIL show_vlan $BRIDGE_NAME`
@@ -726,11 +727,15 @@ sync_group_settings() {
         fi
     fi
 
-    [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-status partial
+    [ "$TEARDOWN" != "true" ] && $SYSEVENT set multinet_${INSTANCE}-status partial
     
     #Get the list of which interfaces should be added to this group
-    get_expected_if_list
-    
+    if [ "$TEARDOWN" = "true" ] ; then
+        IF_LIST=""
+    else
+        get_expected_if_list
+    fi   
+ 
     #Remove any interfaces that don't belong in this group
     get_current_if_list
     for EXISTING_IF in $CURRENT_IF_LIST; do
@@ -792,8 +797,11 @@ sync_group_settings() {
         gw_lan_refresh switch
     fi
 
+    if [ "$TEARDOWN" != "true" ]; then
+        $SYSEVENT set multinet_${INSTANCE}-status ready
+        ifconfig $BRIDGE_NAME up        
+    fi
 
-    [ "$RAISE_EVENTS" != "false" ] && $SYSEVENT set multinet_${INSTANCE}-status ready
     #Update active instances
     update_instances start
 
@@ -801,8 +809,7 @@ sync_group_settings() {
 
 #Remove any interfaces from this group
 remove_all_from_group() {
-    IF_LIST=""
-    sync_group_settings false
+    sync_group_settings true
 }
 
 print_syntax(){
@@ -951,19 +958,8 @@ $SYSEVENT set multinet_${INSTANCE}-name $BRIDGE_NAME
 $SYSEVENT set multinet_${INSTANCE}-vid $BRIDGE_VLAN
 
 if [ "$MODE" = "up" ]
-then 
-    #n-mux bridge must exist first on ARM
-    MUXSTATUS=1
-    while [ $MUXSTATUS -ne 0 ] ; do
-        $NCPU_EXEC -e "$IFCONFIG n-mux"
-        MUXSTATUS=$?
-        if [ $MUXSTATUS -ne 0 ]
-        then
-            echo "$0 waiting for n-mux..."
-            sleep 1
-        fi
-    done
-    remove_all_from_group       
+then  
+    remove_all_from_group
     #Sync the group interfaces and raise status events
     sync_group_settings
     if [ $BRIDGE_NAME = "brlan0" ]
@@ -991,7 +987,6 @@ then
 
 elif [ $MODE = "start" ]
 then
-    remove_all_from_group       
     #Sync the group interfaces and raise status events
     sync_group_settings
     
@@ -1000,7 +995,6 @@ then
     $SYSEVENT set firewall-restart    
 elif [ $MODE = "lnf-start" ]
 then
-    remove_all_from_group
     #Sync the group interfaces and raise status events
     sync_group_settings
     
@@ -1010,7 +1004,6 @@ then
     $SYSEVENT set firewall-restart
 elif [ $MODE = "lnf-stop" ]
 then
-    remove_all_from_group
     update_instances stop
     echo "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
     $SYSEVENT set firewall-restart
