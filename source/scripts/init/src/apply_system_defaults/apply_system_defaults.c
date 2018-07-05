@@ -856,6 +856,14 @@ char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,ch
 													set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
 												}
 						                    }
+                                                                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
+                                                                    {
+                                                                                                if ( 0 == IsValuePresentinSyscfgDB( "WANsideSSH_Enable" ) )
+                                                                                                {
+                                                                                                        set_syscfg_partner_values( value,"WANsideSSH_Enable" );
+                                                                                                }
+                                                                    }
+
 
 						                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
 						                    {
@@ -1092,6 +1100,28 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
         {
           APPLY_PRINT("%s - Default Value of InitialOutputMark is NULL\n", __FUNCTION__ );
         }
+
+                                if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") != NULL )
+                                {
+                                        char *WANsideSSHEnable = NULL;
+
+                                        WANsideSSHEnable = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable")->valuestring;
+
+                                        if (WANsideSSHEnable != NULL)
+                                        {
+                                                set_syscfg_partner_values(WANsideSSHEnable,"WANsideSSH_Enable");
+                                                WANsideSSHEnable = NULL;
+                                        }
+                                        else
+                                        {
+                                                APPLY_PRINT("%s - Default WANsideSSHEnable Value is NULL\n", __FUNCTION__ );
+                                        }
+                                }
+				else
+				{
+					APPLY_PRINT("%s - Default WANsideSSHEnable object is NULL\n", __FUNCTION__ );
+				}
+
 			}
 			else
 			{
