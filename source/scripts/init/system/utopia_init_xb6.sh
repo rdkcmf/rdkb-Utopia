@@ -384,8 +384,8 @@ else
 	cp -f /etc/cacert.pem /nvram/
 fi
 
-echo "[utopia][init] Starting system logging"
-/etc/utopia/service.d/service_syslog.sh syslog-start
+#echo "[utopia][init] Starting system logging"
+#/etc/utopia/service.d/service_syslog.sh syslog-start
 
 echo "[utopia][init] Starting sysevent subsystem"
 #syseventd --threads 18
