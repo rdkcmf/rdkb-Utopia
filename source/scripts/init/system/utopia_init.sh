@@ -388,8 +388,8 @@ if [ -f /nvram/cacert.pem ]; then
   rm -f /nvram/cacert.pem
 fi
 
-echo_t "[utopia][init] Starting system logging"
-$UTOPIA_PATH/service_syslog.sh syslog-start
+#echo_t "[utopia][init] Starting system logging"
+#$UTOPIA_PATH/service_syslog.sh syslog-start
 
 echo_t "[utopia][init] Starting sysevent subsystem"
 #syseventd --threads 18

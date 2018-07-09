@@ -119,8 +119,8 @@ service_start()
       ln -sf $SOURCE $TARGET
    fi
    #rongwei added
-   echo '*.* /var/log/remote.log' > /etc/ti_syslog.conf
-   ti_syslogd -r -m 30 -f /etc/ti_syslog.conf -p /none/none
+   #echo '*.* /var/log/remote.log' > /etc/ti_syslog.conf
+   #ti_syslogd -r -m 30 -f /etc/ti_syslog.conf -p /none/none
 }
 
 service_stop ()
