@@ -913,7 +913,20 @@ fi
 		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
 			   echo "${PREFIX}""dhcp-option=ath13,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
-           
+        elif [ "$BOX_TYPE" = "XF3" ]; then
+           echo "interface=brlan112" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=brlan112,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
+
+           echo "interface=brlan113" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=brlan113,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
        fi
    fi
    #fi
