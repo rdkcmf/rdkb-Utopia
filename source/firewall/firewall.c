@@ -12274,7 +12274,7 @@ static int service_start ()
    /*  ipv4 */
    prepare_ipv4_firewall(filename1);
    system("iptables-restore -c  < /tmp/.ipt");
-
+   
    //if (!isFirewallEnabled) {
    //   unlink(filename1);
    //}
@@ -12282,6 +12282,11 @@ static int service_start ()
    /* ipv6 */
    prepare_ipv6_firewall(filename2);
    system("ip6tables-restore < /tmp/.ipt_v6");
+
+   #ifdef _PLATFORM_RASPBERRYPI_
+       /* Apply Mac Filtering rules for RPI-Device */
+       system("/bin/sh -c /tmp/mac_filter.sh");
+   #endif
 
    /* RFC REFRESH for dynamic whitelisting of IPs */
    FIREWALL_DEBUG("Before check whether RFC file for SSH present or not\n");
