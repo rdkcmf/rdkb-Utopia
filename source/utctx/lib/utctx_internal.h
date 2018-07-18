@@ -79,6 +79,9 @@
 #endif
 #include <stdio.h>
 
+//RDKB-18005 supressing logs
+#undef UTCTX_LOG
+
 /* Logging Macros */
 #ifdef UTCTX_LOG
 #ifdef UTCTX_UNITTEST
