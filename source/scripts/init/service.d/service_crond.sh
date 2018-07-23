@@ -209,6 +209,9 @@ service_start ()
       echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
       echo "nice -n 19 sh /usr/ccsp/tad/log_mem_cpu_info.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
       echo "sh /usr/ccsp/tad/uptime.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
+      if [ -f /etc/reinit_mac_check.sh ] ; then
+	echo "sh /etc/reinit_mac_check.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
+      fi
       chmod 700 /etc/cron/cron.hourly/log_hourly.sh
    
       # add starting the process-monitor every 5 minute
