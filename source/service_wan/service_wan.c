@@ -527,10 +527,12 @@ static int wan_start(struct serv_wan *sw)
 done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
 
+#if defined(_PLATFORM_IPQ_)
     /*
      * Firewall should be run, once dhcp/v6 client are started and wan_service-status
      * is set to started. */
     vsystem("firewall && execute_dir /etc/utopia/post.d/ restart");
+#endif
 
     printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
