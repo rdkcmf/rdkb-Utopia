@@ -572,7 +572,7 @@ static HDK_XML_Member* s_GetConnectedClients(HDK_MOD_MethodContext* pMethodCtx, 
                 sprintf(pszCmd, "wl -i %s assoclist", WIFI_RADIO_ETHIF(ixRadio));
 
                 /* Spawn a process with the wl command */
-                if ((fdWlAssoc = popen(pszCmd, "r")) == 0)
+                if ((fdWlAssoc = v_secure_popen(pszCmd)) == 0)
                 {
                     continue;
                 }
@@ -616,7 +616,7 @@ static HDK_XML_Member* s_GetConnectedClients(HDK_MOD_MethodContext* pMethodCtx, 
                         HDK_XML_Set_Bool(psClient, HNAP12_Element_PN_Wireless, 1);
                     }
                 }
-                pclose(fdWlAssoc);
+                v_secure_pclose(fdWlAssoc);
             }
         }
 #endif
@@ -1641,7 +1641,7 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
                                 HDK_Util_MACToStr(pszCmd + strlen(pszCmd), pMAC);
 
                                 /* Spawn a process with the wl command */
-                                if ((fdWlRssi = popen(pszCmd, "r")) == 0)
+                                if ((fdWlRssi = v_secure_popen(pszCmd)) == 0)
                                 {
                                     continue;
                                 }
@@ -1658,10 +1658,10 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
                                      */
                                     iRssi = 100 - 80 * (-40 - iRssi) / (-40 - (-85));
                                     iRssi = (iRssi < 0 ? 0 : (iRssi > 100 ? 100 : iRssi));
-                                    pclose(fdWlRssi);
+                                    v_secure_pclose(fdWlRssi);
                                     break;
                                 }
-                                pclose(fdWlRssi);
+                                v_secure_pclose(fdWlRssi);
                             }
                         }
 #endif

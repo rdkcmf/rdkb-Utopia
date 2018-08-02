@@ -12005,7 +12005,7 @@ int CleanIPConntrack(char *physAddress)
     memset(output,0,50);
     snprintf(buf, sizeof(buf), "ip nei show | grep brlan0 | grep -i %s | awk '{print $1}' ", physAddress);
     system(buf);
-      if(!(fp = popen(buf, "r")))
+      if(!(fp = v_secure_popen(buf)))
         {
             return -1;
         }
@@ -12019,7 +12019,7 @@ int CleanIPConntrack(char *physAddress)
     	else
    		 RmConntrackEntry(output);
     }
-    pclose(fp);
+    v_secure_pclose(fp);
     return 0;
 }
 int IsFileExists(const char *fname)
