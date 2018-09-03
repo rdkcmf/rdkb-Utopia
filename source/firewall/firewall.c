@@ -4607,6 +4607,7 @@ static void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, co
             }
             if ( enableFlag == 1) {
                 fprintf(filt_fp, "-A SSH_FILTER -s %s -j ACCEPT\n", string);
+				FIREWALL_DEBUG("SSH Address:%s\n" COMMA string );
             }
         }
     }
@@ -11876,6 +11877,7 @@ static int service_start ()
    char *filename2 = "/tmp/.ipt_v6";
    BOOL needs_flush = FALSE;
    char temp[20];
+   int res_rfcfile = -1, res_rfclock = -1;
 
    /* If firewall is starting for the first time, we need to flush connection tracking */
    temp[0] = '\0';
@@ -11913,10 +11915,16 @@ static int service_start ()
    system("ip6tables-restore < /tmp/.ipt_v6");
 
    /* RFC REFRESH for dynamic whitelisting of IPs */
-   if (access("/tmp/RFC/.RFC_SSHWhiteList.list", F_OK) != -1 && access("/tmp/.rfcLock", F_OK) == -1) {
+   FIREWALL_DEBUG("Before check whether RFC file for SSH present or not\n");
+   res_rfcfile = access("/tmp/RFC/.RFC_SSHWhiteList.list", F_OK);
+   res_rfclock = access("/tmp/.rfcLock", F_OK);
+   if ( ( res_rfcfile != -1 ) && ( res_rfclock == -1 ) ) 
+   {
       FIREWALL_DEBUG("RFC file for SSH present. Whitelisting IP's\n");
       system("sh /lib/rdk/rfc_refresh.sh SSH_REFRESH &");
    }
+
+   FIREWALL_DEBUG(".RFC_SSHWhiteList.list status[%d] /tmp/.rfcLock status[%d]\n" COMMA res_rfcfile COMMA res_rfclock);
 
    if (isContainerEnabled && access("/tmp/container_env.sh", F_OK) != -1 && access("/tmp/.lxcIptablesLock", F_OK) == -1) {
       FIREWALL_DEBUG("LXC Support enabled. Adding rules for lighttpd container\n");
