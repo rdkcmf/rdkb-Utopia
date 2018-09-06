@@ -757,6 +757,9 @@ then
 elif [ "$EVENT" = "lnf-down" ]
 then
     MODE="lnf-stop"
+elif [ "$EVENT" = "meshbhaul-setup" ]
+then
+    MODE="meshbhaul-start"
 elif [ "$EVENT" = "multinet-down" ]
 then
     MODE="stop"
@@ -805,6 +808,10 @@ case $INSTANCE in
     6)
         BRIDGE_NAME="br106"
         BRIDGE_VLAN=106
+    ;;
+    10)
+        BRIDGE_NAME="br403"
+        BRIDGE_VLAN=1060
     ;;
     65)
         BRIDGE_NAME="br65"
@@ -861,6 +868,15 @@ then
 elif [ $MODE = "lnf-stop" ]
 then
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
+    $SYSEVENT set firewall-restart
+elif [ $MODE = "meshbhaul-start" ]
+then
+    #Sync the group interfaces and raise status events
+    sync_group_settings
+
+    ifconfig $BRIDGE_NAME 192.168.245.254
+    #Restart the firewall after setting up LnF
+    echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=MeshBhaulstart"
     $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ]
 then

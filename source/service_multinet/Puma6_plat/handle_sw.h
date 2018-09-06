@@ -78,3 +78,4 @@ void setMulticastMac();
 void addIpcVlan();
 void addRadiusVlan();
 void createMeshVlan();
+void addMeshBhaulVlan(); // RDKB-15951

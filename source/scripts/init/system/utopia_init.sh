@@ -498,6 +498,17 @@ fi
 ifconfig l2sd0.4090 192.168.251.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.4090 lookup erouter
 
+
+# RDKB-15951 : Dedicated l2sd0 vlan for Mesh Bhaul
+vconfig add l2sd0 1060
+if [ $BOX_TYPE == "XB3" ];then
+        $UTOPIA_PATH/service_multinet_exec add_meshbhaul_vlan &
+else
+        $SWITCH_HANDLER addVlan 0 1060 sw_6
+fi
+ifconfig l2sd0.1060 192.168.245.1 netmask 255.255.255.0 up
+ip rule add from all iif l2sd0.1060 lookup erouter
+
 #--------Marvell LAN-side egress flood mitigation----------------
 echo_t "88E6172: Do not egress flood unicast with unknown DA"
 swctl -c 11 -p 5 -r 4 -b 0x007b

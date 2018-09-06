@@ -895,6 +895,13 @@ fi
 		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
 			   echo "${PREFIX}""dhcp-option=l2sd0.113,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
+           #RDKB-15951 - Mesh Bhaul vlan address pool
+           echo "interface=l2sd0.1060" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=l2sd0.1060,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
 
            echo "interface=l2sd0.4090" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=192.168.251.2,192.168.251.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
@@ -916,6 +923,13 @@ fi
 
 		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
 			   echo "${PREFIX}""dhcp-option=ath13,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   fi
+           
+	   echo "interface=br403" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+			   echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
            
        fi

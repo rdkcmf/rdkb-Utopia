@@ -31,6 +31,7 @@
 #define MOCACTL 	"/usr/sbin/mocactl"
 #define IPC_VLAN	500	
 #define RADIUS_VLAN	4090	
+#define MESHBHAUL_VLAN	1060	
 
 int hdl_sw_sysevent_fd;
 token_t hdl_sw_sysevent_token;
@@ -661,6 +662,12 @@ void addIpcVlan()
 void addRadiusVlan()
 {
 	addVlan(0, RADIUS_VLAN, "sw_6");
+}
+
+// RDKB-15951 
+void addMeshBhaulVlan()
+{
+	addVlan(0, MESHBHAUL_VLAN, "sw_6");
 }
 
 void createMeshVlan()

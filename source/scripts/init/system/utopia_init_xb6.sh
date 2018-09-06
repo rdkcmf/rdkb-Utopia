@@ -520,5 +520,9 @@ else
    fi
 fi
 
+#RDKB-15951 Bringup the Mesh Bhaul network
+echo "[utopia][init] Mesh Bhaul bridge creation"
+sysevent set meshbhaul-setup 10
+
 echo "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited

@@ -81,6 +81,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-down|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "lnf-setup|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 #elif defined (_CBR_PRODUCT_REQ_) 
 const char* SERVICE_CUSTOM_EVENTS[] = { 
@@ -96,6 +97,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-down|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     "lnf-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 
 #else

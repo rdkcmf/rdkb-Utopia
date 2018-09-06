@@ -71,7 +71,8 @@ FILE *mnetfp = NULL;
  int add_ipc_vlan(char* argv[], int argc);
  int add_radius_vlan(char* argv[], int argc);
  int create_mesh_vlan(char* argv[], int argc);
- 
+ // RDKB-15951
+ int add_meshbhaul_vlan(char* argv[], int argc);
  EntryCall calls[] = {
 	 {"multinet-up", handle_up},
 	 //{"multinet-ifStatus", handle_ifStatus},
@@ -85,6 +86,7 @@ FILE *mnetfp = NULL;
 	 {"add_ipc_vlan", add_ipc_vlan},
 	 {"add_radius_vlan", add_radius_vlan},
 	 {"create_mesh_vlan", create_mesh_vlan},
+	 {"add_meshbhaul_vlan", add_meshbhaul_vlan}
  };
 	 
  
@@ -192,5 +194,12 @@ FILE *mnetfp = NULL;
  {
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     createMeshVlan();
+#endif
+ }
+
+ int add_meshbhaul_vlan(char* argv[], int argc)
+ {
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+    addMeshBhaulVlan();
 #endif
  }

@@ -8671,6 +8671,9 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i l2sd0.113 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -d 192.168.251.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    //RDKB-15951
+    fprintf(filter_fp, "-A INPUT -i l2sd0.1060 -d 192.168.245.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i l2sd0.1060 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
     fprintf(filter_fp, "-A INPUT -i ath12 -d 169.254.0.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath12 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
@@ -8682,9 +8685,17 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i brlan112 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brlan113 -d 169.254.1.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brlan113 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #endif
 #elif defined(PARODUS_ENABLE)
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -d 192.168.251.0/24 -p tcp --dport 6666 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i l2sd0.1060 -d 192.168.245.0/24 -p tcp --dport 6666 -j ACCEPT\n");
+#endif
+  
+#if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
+    fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #endif
     //<<
 
@@ -9395,6 +9406,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if defined(_COSA_BCM_MIPS_)
    fprintf(filter_fp, "-A FORWARD -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
    fprintf(filter_fp, "-A FORWARD -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 2 -i br403 -o %s -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 3 -i %s -o br403 -j ACCEPT\n", current_wan_ifname);
 #endif
 
    fprintf(filter_fp, "-A FORWARD -j general_forward\n");
@@ -9408,6 +9421,13 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if !defined(_COSA_BCM_ARM_)
    fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
    fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.1060 -o %s -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.1060 -j ACCEPT\n", current_wan_ifname);
+#endif
+
+#if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
+   fprintf(filter_fp, "-I FORWARD 2 -i br403 -o %s -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 3 -i %s -o br403 -j ACCEPT\n", current_wan_ifname);
 #endif
 
 #if defined(_COSA_BCM_ARM_)
