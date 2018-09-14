@@ -1103,3 +1103,6 @@ $eth_log_period=3600
 
 #TR181 Telemetry Support via MessageBusSource
 $MessageBusSource=true
+
+#Account ID default Value
+$AccountID=Unknown
