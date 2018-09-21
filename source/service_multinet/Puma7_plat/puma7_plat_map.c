@@ -77,6 +77,14 @@ int greIfInit(PSWFabHALArg args, int numArgs, BOOL up) {
         return system(cmdbuf);
     }
     else
+#ifdef INTEL_GRE_HOTSPOT
+     {
+         /* Set the firewall for gre and bring up the Hotspot process if it is a hotspot bridge */
+         snprintf(cmdbuf, sizeof(cmdbuf), "sysevent set igre-bringup-gre-hs %d", args[0].hints.network->inst);
+         MNET_DEBUG("greIfInit running: %s" COMMA cmdbuf);
+         system(cmdbuf);
+     }
+#endif
         return 0;
 }
 
