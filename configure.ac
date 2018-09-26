@@ -96,16 +96,6 @@ fi
 
 AM_CONDITIONAL(CCSP_PLATFORM_BCM, test "x$CCSP_PLATFORM" = xbcm)
 
-AC_ARG_ENABLE([parodus],
-[  --enable-parodus    Turn on parodus],
-[case "${enableval}" in
-  yes) PARODUS_ENABLE=true ;;
-  no)  PARODUS_ENABLE=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-parodus]) ;;
-esac],[PARODUS_ENABLE=false])
-AM_CONDITIONAL([PARODUS_ENABLE], [test x$PARODUS_ENABLE = xtrue])
-
-
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
 
