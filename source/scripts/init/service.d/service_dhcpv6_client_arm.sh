@@ -53,14 +53,17 @@ source /etc/utopia/service.d/log_capture_path.sh
 #------------------------------------------------------------------
 SERVICE_NAME="dhcpv6_client"
 
-if [ "$BOX_TYPE" = "XB3" ] || [ "$MODEL_NUM" = "TG3482G" ] ;then
+DIBBLER_ENABLED=`syscfg get dibbler_client_enable`
+
+if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
 	DHCPV6_BINARY=/sbin/ti_dhcp6c
+        DHCPV6_PID_FILE=/var/run/erouter_dhcp6c.pid
 else
 	DHCPV6_BINARY=dibbler-client
+	DHCPV6_PID_FILE=/tmp/dibbler/client.pid
 fi
 DHCPV6_CONF_FILE=/etc/dhcp6c.conf
 
-DHCPV6_PID_FILE=/var/run/erouter_dhcp6c.pid
 DHCPV6_REGISTER_FILE=/tmp/dhcpv6_registered_events
 DHCP6C_PROGRESS_FILE=/tmp/dhcpv6c_inprogress
 
@@ -120,7 +123,7 @@ service_start()
 		then
 			touch $DHCP6C_PROGRESS_FILE
 			echo_t "SERVICE_DHCP6C : Starting DHCPv6 Client from service_dhcpv6_client"
-			if [ "$BOX_TYPE" = "XB3" ] || [ "$MODEL_NUM" = "TG3482G" ] ;then
+			if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
         			ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
 				echo_t "SERVICE_DHCP6C : dhcp6c PID is `cat $DHCPV6_PID_FILE`"
 			else
@@ -139,7 +142,7 @@ service_start()
 service_stop()
 {
    echo_t "SERVICE_DHCP6C : SERVICE STOP"
-   if [ "$BOX_TYPE" = "XB3" ] || [ "$MODEL_NUM" = "TG3482G" ] ;then
+   if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
    	if [ -f $DHCPV6_PID_FILE ]
    	then
   	   echo_t "SERVICE_DHCP6C : Killing `cat $DHCPV6_PID_FILE`"
@@ -148,6 +151,7 @@ service_stop()
  	fi
     else
 		$DHCPV6_BINARY stop
+                rm -f $DHCPV6_PID_FILE
     fi
 }
 

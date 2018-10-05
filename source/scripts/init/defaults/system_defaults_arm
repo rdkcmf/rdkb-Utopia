@@ -410,6 +410,8 @@ $dhcp_server_slow_start=1
 #default is UDHCPEnable flag false, ti_udhcp will be the dhcp client, if UDHCPEnable flag true udhcp (busybox) will be dhcp client
 $UDHCPEnable=false
 
+$dibbler_client_enable=false
+
 # static dhcp leases
 # ------------------
 #    if you want to have static addresses given to lan hosts by the dhcp server then
