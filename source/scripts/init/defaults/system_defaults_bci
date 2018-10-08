@@ -405,6 +405,10 @@ $dhcp_server_propagate_wan_domain=1
 $dhcp_server_propagate_wan_nameserver=1
 $dhcp_server_slow_start=1
 
+#dhcp client for XB3,AXB6
+#default is UDHCPEnable flag false, ti_udhcp will be the dhcp client, if UDHCPEnable flag true udhcp (busybox) will be dhcp client
+$UDHCPEnable=false
+
 # static dhcp leases
 # ------------------
 #    if you want to have static addresses given to lan hosts by the dhcp server then

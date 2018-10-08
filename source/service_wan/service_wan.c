@@ -73,11 +73,7 @@
 #define PROG_NAME       "SERVICE-WAN"
 #define ER_NETDEVNAME "erouter0"
 
-#if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_IPQ_)
-	#define DHCPC_PID_FILE  "/tmp/udhcpc.erouter0.pid"
-#else
-	#define DHCPC_PID_FILE  "/var/run/eRT_ti_udhcpc.pid"
-#endif 
+char DHCPC_PID_FILE[100]="";
 
 #define DHCPV6_PID_FILE 		"/var/run/erouter_dhcp6c.pid"
 #define DHCP6C_PROGRESS_FILE 	"/tmp/dhcpv6c_inprogress"
@@ -159,12 +155,37 @@ static struct cmd_op cmd_ops[] = {
     {"dhcp-renew",  wan_dhcp_renew, "trigger DHCP renew"},
 };
 
+static int Getdhcpcpidfile(char *pidfile,int size )
+{
+#if defined(_PLATFORM_IPQ_)
+        strncpy(pidfile,"/tmp/udhcpc.erouter0.pid",size);
+
+#elif (defined _COSA_INTEL_XB3_ARM_) || (defined INTEL_PUMA7)
+      {
+
+        char udhcpflag[10]="";
+        syscfg_get( NULL, "UDHCPEnable", udhcpflag, sizeof(udhcpflag));
+        if( 0 == strcmp(udhcpflag,"true")){
+                strncpy(pidfile,"/tmp/udhcpc.erouter0.pid",size);
+        }
+        else
+        {
+                strncpy(pidfile,"/var/run/eRT_ti_udhcpc.pid",size);
+        }
+     }
+#else
+        strncpy(pidfile,"/tmp/udhcpc.erouter0.pid",size);
+#endif
+return 0;
+}
+
 static int dhcp_stop(const char *ifname)
 {
     FILE *fp;
     char pid_str[10];
     int pid = -1;
 
+    Getdhcpcpidfile(DHCPC_PID_FILE,sizeof(DHCPC_PID_FILE));
     if ((fp = fopen(DHCPC_PID_FILE, "rb")) != NULL) {
         if (fgets(pid_str, sizeof(pid_str), fp) != NULL && atoi(pid_str) > 0)
             pid = atoi(pid_str);
@@ -173,10 +194,22 @@ static int dhcp_stop(const char *ifname)
     }
 
     if (pid <= 0)
-#if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_IPQ_)
-    	   pid = pid_of("udhcpc", ifname);
+#if defined(_PLATFORM_IPQ_)
+        pid = pid_of("udhcpc", ifname);
+#elif (defined _COSA_INTEL_XB3_ARM_) || (defined INTEL_PUMA7)
+        {
+        char udhcpflag[10]="";
+        syscfg_get( NULL, "UDHCPEnable", udhcpflag, sizeof(udhcpflag));
+        if( 0 == strcmp(udhcpflag,"true")){
+                pid = pid_of("udhcpc", ifname);
+        }
+        else
+        {
+                pid = pid_of("ti_udhcpc", ifname);
+        }
+        }
 #else
-        pid = pid_of("ti_udhcpc", ifname);
+        pid = pid_of("udhcpc", ifname);
 #endif
 
     if (pid > 0) {
@@ -198,7 +231,7 @@ static int dhcp_stop(const char *ifname)
     return 0;
 }
 
-#if defined (_COSA_BCM_ARM_) || defined(_PLATFORM_IPQ_)
+
 #define VENDOR_SPEC_FILE "/etc/udhcpc.vendor_specific"
 #define VENDOR_OPTIONS_LENGTH 100
 
@@ -267,7 +300,7 @@ static int dhcp_parse_vendor_info( char *options, const int length )
     
     return 0;
 }
-#endif
+
 
 static int dhcp_start(struct serv_wan *sw)
 {
@@ -279,6 +312,7 @@ static int dhcp_start(struct serv_wan *sw)
 
     syscfg_get(NULL, "wan_physical_ifname", l_cWan_if_name, sizeof(l_cWan_if_name));
     //if the syscfg is not giving any value hardcode it to erouter0
+    Getdhcpcpidfile(DHCPC_PID_FILE,sizeof(DHCPC_PID_FILE));
     if (0 == l_cWan_if_name[0])
     {   
        strncpy(l_cWan_if_name, "erouter0", 8); 
@@ -286,23 +320,9 @@ static int dhcp_start(struct serv_wan *sw)
     }
    if (sw->rtmod == WAN_RTMOD_IPV4 || sw->rtmod == WAN_RTMOD_DS)  
    {
+     
   /*TCHXB6 is configured to use udhcpc */
-#if defined (_COSA_BCM_ARM_)
-    char options[VENDOR_OPTIONS_LENGTH];
-
-    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
-        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
-    }
-    else {
-        /*
-           Temp fix for RPi, fallback to previous behaviour if there are problems
-           parsing VENDOR_SPEC_FILE. Not ideal, but better than not starting DHCP
-           at all? Fixme: needs more review.
-        */
-        err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE);
-    }
-
-#elif defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_)
     err = vsystem("/sbin/udhcpc -t 5 -n -i %s -p %s -s /etc/udhcpc.script",sw->ifname, DHCPC_PID_FILE);
 
     /* DHCP client didn't able to get Ipv4 configurations */
@@ -311,10 +331,33 @@ static int dhcp_start(struct serv_wan *sw)
       printf("%s: WAN service not able to get IPv4 configuration"
            " in 5 lease try\n", __func__);
     }
-#else
+#elif (defined _COSA_INTEL_XB3_ARM_) || (defined INTEL_PUMA7)
+      {
+
+    char udhcpflag[10]="";
+    syscfg_get( NULL, "UDHCPEnable", udhcpflag, sizeof(udhcpflag));
+    if( 0 == strcmp(udhcpflag,"true")){
+    char options[VENDOR_OPTIONS_LENGTH];
+
+    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+    }
+    }
+   else
+   {
+
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 1",
                  sw->ifname, DHCPC_PID_FILE);
+   }
+   }
+#else
+
+    char options[VENDOR_OPTIONS_LENGTH];
+
+    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+    }
 #endif
 
 /*
@@ -391,7 +434,6 @@ static int route_deconfig_v6(const char *ifname)
      * NOTE : Not returning error, as vsystem() always returns -1
      */
     }
->>>>>>> 44d693eb... XE15-76 : Upstream all the CCSP patches
 
     return 0;
 }
@@ -1046,11 +1088,25 @@ static int wan_dhcp_start(struct serv_wan *sw)
     int ret = -1;
 #endif
 
-#if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_IPQ_)
-    pid = pid_of("udhcpc", sw->ifname);
+# if defined(_PLATFORM_IPQ_)
+        pid = pid_of("udhcpc", sw->ifname);
+#elif (defined _COSA_INTEL_XB3_ARM_) || (defined INTEL_PUMA7)
+       {
+        char udhcpflag[10]="";
+        syscfg_get( NULL, "UDHCPEnable", udhcpflag, sizeof(udhcpflag));
+        if( 0 == strcmp(udhcpflag,"true")){
+                pid = pid_of("udhcpc", sw->ifname);
+        }
+        else
+        {
+                pid = pid_of("ti_udhcpc", sw->ifname);
+        }
+      }
 #else
-    pid = pid_of("ti_udhcpc", sw->ifname);
+        pid = pid_of("udhcpc", sw->ifname);
 #endif
+
+    Getdhcpcpidfile(DHCPC_PID_FILE,sizeof(DHCPC_PID_FILE));
     if (access(DHCPC_PID_FILE, F_OK) == 0)
         has_pid_file = 1;
 
@@ -1103,7 +1159,8 @@ static int wan_dhcp_release(struct serv_wan *sw)
 {
     FILE *fp;
     char pid[10];
-
+    
+    Getdhcpcpidfile(DHCPC_PID_FILE,sizeof(DHCPC_PID_FILE));
     if ((fp = fopen(DHCPC_PID_FILE, "rb")) == NULL)
         return -1;
 
@@ -1122,6 +1179,7 @@ static int wan_dhcp_renew(struct serv_wan *sw)
     char pid[10];
     char line[64], *cp;
 
+    Getdhcpcpidfile(DHCPC_PID_FILE,sizeof(DHCPC_PID_FILE));
     if ((fp = fopen(DHCPC_PID_FILE, "rb")) == NULL)
         return dhcp_start(sw);
 
