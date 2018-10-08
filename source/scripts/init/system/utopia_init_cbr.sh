@@ -20,13 +20,13 @@
 
 #######################################################################
 #   Copyright [2014] [Cisco Systems, Inc.]
-# 
+#
 #   Licensed under the Apache License, Version 2.0 (the \"License\");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
-# 
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 #   Unless required by applicable law or agreed to in writing, software
 #   distributed under the License is distributed on an \"AS IS\" BASIS,
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,40 +40,33 @@
 
 changeFilePermissions() {
 
-	if [ -e $1 ]; then 
-		filepermission=$(stat -c %a $1)
-	
-		if [ $filepermission -ne $2 ] 
-		then
-		
-			chmod $2 $1
-			echo "[utopia][init] Modified File Permission to $2 for file - $1"
-		fi
-	else
-		echo "[utopia][init] changeFilePermissions: file $1 doesn't exist"
-	fi
+        if [ -e $1 ]; then
+                filepermission=$(stat -c %a $1)
+
+                if [ $filepermission -ne $2 ]
+                then
+
+                        chmod $2 $1
+                        echo "[utopia][init] Modified File Permission to $2 for file - $1"
+                fi
+        else
+                echo "[utopia][init] changeFilePermissions: file $1 doesn't exist"
+        fi
 }
 
 echo "*******************************************************************"
 echo "*                                                                  "
-echo "* Copyright 2014 Cisco Systems, Inc. 				 "
+echo "* Copyright 2014 Cisco Systems, Inc.                               "
 echo "* Licensed under the Apache License, Version 2.0                   "
 echo "*                                                                  "
 echo "*******************************************************************"
 
 source /etc/utopia/service.d/log_capture_path.sh
 
-if [ -f /etc/device.properties ]
-then
-    source /etc/device.properties
-fi
-
 dmesg -n 5
 
 TR69TLVFILE="/nvram/TLVData.bin"
 REVERTFLAG="/nvram/reverted"
-MAINT_START="/nvram/.FirmwareUpgradeStartTime"
-MAINT_END="/nvram/.FirmwareUpgradeEndTime"
 # determine the distro type (GAP or GNP)
 if [ -n "$(grep TPG /etc/drg_version.txt)" ]; then
     distro=GAP
@@ -100,15 +93,8 @@ echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_time_wait
 echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close
 echo "20" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close_wait
 echo "1800" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
-if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-	echo "16384" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
-else
-	# TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
-	#echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
-	echo "[$utc_time] [utopia][init] don't override nf_conntrack_max here, value is set at /lib/rdk/brcm.networking"
-fi
-
+# TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
+#echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
 echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 
 echo 4096 > /proc/sys/net/ipv6/neigh/default/gc_thresh1
@@ -150,7 +136,7 @@ echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 #    cp /etc/utopia/service.d/nvram.dat /tmp
 #fi
 echo "Starting log module.."
-/fss/gw/usr/sbin/log_start.sh
+/usr/sbin/log_start.sh
 
 echo "[utopia][init] Starting udev.."
 
@@ -177,7 +163,7 @@ echo "[utopia][init] Starting udev.."
 #chmod 600 /tmp/etc/.root/shadow
 #chmod 600 /tmp/etc/.root/group
 
-# create the default profile. This is linked to by /etc/profile 
+# create the default profile. This is linked to by /etc/profile
 #echo "export setenv PATH=/bin:/sbin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin" > /tmp/profile
 #echo "export setenv LD_LIBRARY_PATH=/lib:/usr/lib:/opt/lib" >> /tmp/profile
 #echo "if [ \$(tty) != \"/dev/console\"  -a  \${USER} != \"root\" ]; then cd /usr/cosa; ./cli_start.sh; fi" >> /tmp/profile
@@ -208,18 +194,11 @@ FACTORY_RESET_WIFI=w
 SYSCFG_MOUNT=/nvram
 SYSCFG_FILE=$SYSCFG_MOUNT/syscfg.db
 SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
-SYSCFG_PERSISTENT_PATH=/opt/secure/data
-SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
-SYSCFG_NEW_BKUP_FILE=$SYSCFG_PERSISTENT_PATH/syscfg_bkup.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
-
-if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
-       mkdir $SYSCFG_PERSISTENT_PATH
-fi
 
 #syscfg_check -d $MTD_DEVICE
 #if [ $? = 0 ]; then
@@ -241,56 +220,45 @@ fi
 
 CheckAndReCreateDB()
 {
-	NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-	if [ "$NVRAMFullStatus" != "" ]; then
-		if [ -f "/rdklogger/rdkbLogMonitor.sh" ]
-		then
-			  #Remove Old backup files if there	
-			  sh /rdklogger/rdkbLogMonitor.sh "remove_old_logbackup"		 
+        NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
+        if [ "$NVRAMFullStatus" != "" ]; then
+                if [ -f "/rdklogger/rdkbLogMonitor.sh" ]
+                then
+                          #Remove Old backup files if there
+                          sh /rdklogger/rdkbLogMonitor.sh "remove_old_logbackup"
 
-		  	  #Re-create syscfg create again
-			  syscfg_create -f $SYSCFG_FILE
-			  syscfg_oldDB=$?
-			  syscfg_create -f $SYSCFG_NEW_FILE
-			  syscfg_newDB=$?
-			  if [ $syscfg_oldDB -ne 0 ] && [ $syscfg_newDB -ne 0 ]; then
-				  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-				  if [ "$NVRAMFullStatus" != "" ]; then
-					 echo "[utopia][init] NVRAM Full(100%) and below is the dump"
-					 du -h $SYSCFG_MOUNT 
-					 ls -al $SYSCFG_MOUNT	 
-				  fi
-			  fi 
-		fi
-	fi 
+                          #Re-create syscfg create again
+                          syscfg_create -f $SYSCFG_FILE
+                          if [ $?!= 0 ]; then
+                                  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
+                                  if [ "$NVRAMFullStatus" != "" ]; then
+                                         echo "[utopia][init] NVRAM Full(100%) and below is the dump"
+                                         du -h $SYSCFG_MOUNT
+                                         ls -al $SYSCFG_MOUNT
+                                  fi
+                          fi
+                fi
+        fi
 }
 
 echo "[utopia][init] Starting syscfg using file store ($SYSCFG_FILE)"
-if [ -f $SYSCFG_FILE ] && [ -f $SYSCFG_NEW_FILE ]; then
+if [ -f $SYSCFG_FILE ]; then
         syscfg_create -f $SYSCFG_FILE
-        syscfg_oldDB=$?
-        syscfg_create -f $SYSCFG_NEW_FILE
-        syscfg_newDB=$?
-        if [ $syscfg_oldDB -ne 0 ] && [ $syscfg_newDB -ne 0 ]; then
-	     CheckAndReCreateDB
-	fi
+        if [ $? != 0 ]; then
+             CheckAndReCreateDB
+        fi
 else
-    if [ -f $SYSCFG_BKUP_FILE ] && [ -f $SYSCFG_NEW_BKUP_FILE ]; then 
-	 echo "utopia_init:syscfg.db is missing, copying backup file to syscfg.db"
- 	  cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
-	  cp $SYSCFG_NEW_BKUP_FILE $SYSCFG_NEW_FILE
+    if [ -f $SYSCFG_BKUP_FILE ]; then
+         echo "utopia_init:syscfg.db is missing, copying backup file to syscfg.db"
+          cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
     else
-   	   echo -n > $SYSCFG_FILE
-	   echo -n > $SYSCFG_NEW_FILE
+           echo -n > $SYSCFG_FILE
     fi
     syscfg_create -f $SYSCFG_FILE
-    syscfg_oldDB=$?
-    syscfg_create -f $SYSCFG_NEW_FILE
-    syscfg_newDB=$?
-    if [ $syscfg_oldDB -ne 0 ] && [ $syscfg_newDB -ne 0 ]; then
-	 CheckAndReCreateDB
+    if [ $? != 0 ]; then
+         CheckAndReCreateDB
     fi
-   
+
    #>>zqiu
    echo "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
@@ -299,12 +267,12 @@ else
    # Put value 204 into networkresponse.txt file so that
    # all LAN services start with a configuration which will
    # redirect everything to Gateway IP.
-   # This value again will be modified from network_response.sh 
+   # This value again will be modified from network_response.sh
    echo "[utopia][init] Echoing network response during Factory reset"
    echo 204 > /var/tmp/networkresponse.txt
 fi
 
-SYSCFG_LAN_DOMAIN=`syscfg get lan_domain` 
+SYSCFG_LAN_DOMAIN=`syscfg get lan_domain`
 
 if [ "$SYSCFG_LAN_DOMAIN" == "utopia.net" ]; then
    echo "[utopia][init] Setting lan domain to NULL"
@@ -313,12 +281,25 @@ if [ "$SYSCFG_LAN_DOMAIN" == "utopia.net" ]; then
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
-if [ -s /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur ]; then
-   #Note: /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is an Arris XB6 File created by Arris and Intel by reading ARM
-   PUNIT_RESET_DURATION=`cat /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur`
+#if [ -s /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur ]; then
+#   #Note: /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is an Arris XB6 File created by Arris and Intel by reading ARM
+#   PUNIT_RESET_DURATION=`cat /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur`
+#else
+#   echo "[utopia][init] /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is empty or missing"
+#   PUNIT_RESET_DURATION=0
+#fi
+
+RESET_BUTTON_FILE="/nvram/resetdefaults.rdkb"
+
+if [ -f $RESET_BUTTON_FILE ]; then
+        echo "[utopia][init] ${RESET_BUTTON_FILE} exists, utopia needs to factory reset"
+        UNIT_RESET_DURATION=`cat ${RESET_BUTTON_FILE}`
+        echo "[utopia][init] removing ${RESET_BUTTON_FILE}"
+        rm -f ${RESET_BUTTON_FILE}
+        PUNIT_RESET_DURATION=21
 else
-   echo "[utopia][init] /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is empty or missing"
-   PUNIT_RESET_DURATION=0
+        echo "[utopia][init] No ${RESET_BUTTON_FILE}, assuming non FR init"
+        PUNIT_RESET_DURATION=0
 fi
 
 # Set the factory reset key if it was pressed for longer than our threshold
@@ -330,14 +311,14 @@ SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
 if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    echo "[utopia][init] Performing factory reset"
-   
+
 SYSCFG_PARTNER_FR="`syscfg get PartnerID_FR`"
 if [ "1" = "$SYSCFG_PARTNER_FR" ]; then
    echo_t "[utopia][init] Performing factory reset due to PartnerID change"
 fi
-# Remove log file first because it need get log file path from syscfg   
-   /fss/gw/usr/sbin/log_handle.sh reset
-   echo -e "\n" | syscfg_destroy 
+# Remove log file first because it need get log file path from syscfg
+   /usr/sbin/log_handle.sh reset
+   echo -e "\n" | syscfg_destroy
 #   umount $SYSCFG_MOUNT
 #   SYSDATA_MTD=`grep SysData /proc/mtd | awk -F: '{print $1}'`
 #   if [ -n $SYSDATA_MTD ]; then
@@ -351,21 +332,18 @@ fi
 # Remove syscfg and PSM storage files
 
 #mark the factory reset flag 'on'
-   FACTORY_RESET_REASON=true 
+   FACTORY_RESET_REASON=true
    rm -f /nvram/.keys/*
    rm -f /nvram/ble-enabled
    touch /nvram/.apply_partner_defaults
    rm -f $SYSCFG_FILE
    rm -f $SYSCFG_BKUP_FILE
-   rm -f $SYSCFG_NEW_BKUP_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
    rm -f $TR69TLVFILE
    rm -f $REVERTFLAG
    rm -f $XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME
-   rm -f $MAINT_START
-   rm -f $MAINT_END
    # Remove DHCP lease file
    rm -f /nvram/dnsmasq.leases
    rm -f /nvram/server-IfaceMgr.xml
@@ -374,7 +352,7 @@ fi
    rm -f /nvram/server-TransMgr.xml
    rm -f /nvram/server-cache.xml
    rm -f /nvram/server-duid
-   rm -f /nvram/partners_defaults.json 
+   rm -f /nvram/partners_defaults.json
    if [ -f /nvram/.CMchange_reboot_count ];then
       rm -f /nvram/.CMchange_reboot_count
    fi
@@ -383,21 +361,18 @@ fi
    #<<zqiu
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
    syscfg_create -f $SYSCFG_FILE
-   syscfg_oldDB=$?
-   syscfg_create -f $SYSCFG_NEW_FILE
-   syscfg_newDB=$?
-   if [ $syscfg_oldDB -ne 0 ] && [ $syscfg_newDB -ne 0 ]; then
-	 CheckAndReCreateDB
+   if [ $? != 0 ]; then
+         CheckAndReCreateDB
    fi
-   
+
 #>>zqiu
    # Put value 204 into networkresponse.txt file so that
    # all LAN services start with a configuration which will
    # redirect everything to Gateway IP.
-   # This value again will be modified from network_response.sh 
+   # This value again will be modified from network_response.sh
    echo "[utopia][init] Echoing network response during Factory reset"
    echo 204 > /var/tmp/networkresponse.txt
-    
+
 
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
@@ -411,18 +386,18 @@ fi
 echo "*** HTTPS root certificate for TR69 ***"
 
 if [ ! -f /etc/cacert.pem ]; then
-	echo "HTTPS root certificate for TR69 is missing..."
+        echo "HTTPS root certificate for TR69 is missing..."
 
 else
-	echo "Copying HTTPS root certificate for TR69"
-	if [ -f /nvram/cacert.pem ]; then
-		rm -f /nvram/cacert.pem
-	fi
-	cp -f /etc/cacert.pem /nvram/
+        echo "Copying HTTPS root certificate for TR69"
+        if [ -f /nvram/cacert.pem ]; then
+                rm -f /nvram/cacert.pem
+        fi
+        cp -f /etc/cacert.pem /nvram/
 fi
 
-#echo "[utopia][init] Starting system logging"
-#/etc/utopia/service.d/service_syslog.sh syslog-start
+echo "[utopia][init] Starting system logging"
+/etc/utopia/service.d/service_syslog.sh syslog-start
 
 echo "[utopia][init] Starting sysevent subsystem"
 #syseventd --threads 18
@@ -446,10 +421,10 @@ syseventd
 attemptCounter=0
 
 until [ -e "/tmp/syseventd_connection" ]; do
-    
+
     if [ $attemptCounter -lt 3 ]
     then
-       sleep 2
+       sleep 2s
        let "attemptCounter++"
     else
        break
@@ -458,10 +433,8 @@ done
 
 echo "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
-echo "[utopia][init] SEC: syscfg.db moved to /opt/secure/data"
 #ARRISXB6-2998
 changeFilePermissions $SYSCFG_FILE 400
-changeFilePermissions $SYSCFG_NEW_FILE 400
 
 # Get the syscfg value which indicates whether unit is activated or not.
 # This value is set from network_response.sh based on the return code received.
@@ -471,7 +444,7 @@ if [ "$activated" = "1" ]
 then
     echo "[utopia][init] Echoing network response during Reboot"
     echo 204 > /var/tmp/networkresponse.txt
-fi 
+fi
 
 echo "[utopia][init] Applying iptables settings"
 
@@ -495,7 +468,7 @@ ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
 ip6tables -t mangle -A PREROUTING -i $ecm_wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 
-/fss/gw/sbin/ulogd -c /fss/gw/etc/ulogd.conf -d
+#/sbin/ulogd -c /etc/ulogd.conf -d
 
 #echo "[utopia][init] Starting telnetd"
 #TELNET_ENABLE=`syscfg get mgmt_wan_telnetaccess`
@@ -538,7 +511,7 @@ execute_dir $INIT_DIR&
 #ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
 #ip rule add from all iif l2sd0.106 lookup erouter
 
-# Check and set factory-reset as reboot reason 
+# Check and set factory-reset as reboot reason
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo "[utopia][init] Detected last reboot reason as factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
@@ -558,9 +531,7 @@ else
    fi
 fi
 
-#RDKB-15951 Bringup the Mesh Bhaul network
-echo "[utopia][init] Mesh Bhaul bridge creation"
-sysevent set meshbhaul-setup 10
-
 echo "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited
+
+/bin/sh -c '(/usr/sbin/tch_traceKernelPanic.sh)'
