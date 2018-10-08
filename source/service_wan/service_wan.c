@@ -489,6 +489,15 @@ static int wan_start(struct serv_wan *sw)
     }
 #endif
 
+#if defined (INTEL_PUMA7)
+     //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    /* set current_wan_ifname at wan-start, for all erouter modes */
+    if (sw->rtmod != WAN_RTMOD_UNKNOW) {
+    	/* set sysevents and trigger for other modules */
+    	sysevent_set(sw->sefd, sw->setok, "current_wan_ifname", sw->ifname, 0);
+    }
+#endif
+	
     if (sw->rtmod != WAN_RTMOD_IPV4 && sw->rtmod != WAN_RTMOD_DS)
         goto done; /* no need to config addr/route if IPv4 not enabled */
 
@@ -837,8 +846,11 @@ static int wan_addr_set(struct serv_wan *sw)
         fprintf(stderr, "[%s] wait for protocol SUCCESS !\n", PROG_NAME);
 
 #endif
+#if !defined (INTEL_PUMA7)
+    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     /* set sysevents and trigger for other modules */
     sysevent_set(sw->sefd, sw->setok, "current_wan_ifname", sw->ifname, 0);
+#endif
 
     memset(val, 0 ,sizeof(val));
     sysevent_get(sw->sefd, sw->setok, "ipv4_wan_subnet", val, sizeof(val));
