@@ -46,6 +46,11 @@
 
 source /etc/utopia/service.d/ulog_functions.sh
 
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
+
 SERVICE_NAME="crond"
 SELF_NAME="`basename $0`"
 BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
@@ -151,8 +156,14 @@ service_start ()
       # update mso potd every midnight at 00:05
       echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE 
 
-      # Generate Firewall statistics hourly 
-      echo "58 * * * * /usr/bin/GenFWLog" >> $CRONTAB_FILE 
+      # Generate Firewall statistics hourly
+      if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+      	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+      	#Don't Zero iptable Counter
+      	echo "58 * * * * /usr/bin/GenFWLog -nz" >> $CRONTAB_FILE
+      else
+      	echo "58 * * * * /usr/bin/GenFWLog" >> $CRONTAB_FILE
+      fi
 
 	  # Monitor syscfg DB every 15minutes 
       echo "*/15 * * * * /usr/ccsp/tad/syscfg_recover.sh" >> $CRONTAB_FILE
