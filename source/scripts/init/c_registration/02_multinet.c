@@ -75,13 +75,14 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_ex
  * eg. "event3|/etc/code|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_SERIAL
  */
 #ifdef INTEL_PUMA7
+//Intel Proposed RDKB Generic Bug Fix from XB6 SDK - ACTION_FLAG_NOT_THREADSAFE
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-down|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "lnf-setup|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_xb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "lnf-setup|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
     NULL };
 #elif defined (_CBR_PRODUCT_REQ_) 
 const char* SERVICE_CUSTOM_EVENTS[] = { 
