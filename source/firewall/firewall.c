@@ -10129,6 +10129,17 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_lan2lan\n");
    add_qos_marking_statements(mangle_fp);
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(mangle_fp, "-A PREROUTING -i %s -m conntrack --ctstate INVALID -j DROP\n",current_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -m conntrack --ctstate INVALID -j DROP\n",ecm_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -m conntrack --ctstate INVALID -j DROP\n",emta_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",current_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",ecm_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",emta_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -p udp -m conntrack --ctstate NEW -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n",current_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -p udp -m conntrack --ctstate NEW -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n",ecm_wan_ifname);
+   fprintf(mangle_fp, "-A PREROUTING -i %s -p udp -m conntrack --ctstate NEW -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n",emta_wan_ifname);
+#endif
    fprintf(mangle_fp, "%s\n", "COMMIT");
 
    /*
@@ -10159,9 +10170,15 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "%s\n", ":lan2self_mgmt - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlog_drop_wan2self - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlog_drop_lan2self - [0:0]");
+   //>>DOS
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(filter_fp, "%s\n", ":wandosattack - [0:0]");
+   fprintf(filter_fp, "%s\n", ":mtadosattack - [0:0]");
+#endif
+   //<<DOS
+  
    fprintf(filter_fp, "-A xlog_drop_wan2self -j DROP\n");
    fprintf(filter_fp, "-A xlog_drop_lan2self -j DROP\n");
-
    if(isWanServiceReady || isBridgeMode) {
 #if defined(_COSA_BCM_MIPS_)
        fprintf(filter_fp, "-A INPUT -p tcp -m multiport --dports 80,443 -d %s -j ACCEPT\n",lan0_ipaddr);
@@ -10170,6 +10187,49 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
        do_remote_access_control(NULL, filter_fp, AF_INET);
    }
 
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(filter_fp, "-A INPUT -p icmp -m state --state NEW,ESTABLISHED -m limit --limit 5/sec --limit-burst 10 -j ACCEPT\n");
+   fprintf(filter_fp, "-A INPUT -p icmp -m state --state NEW,ESTABLISHED -j DROP\n");
+#endif
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(filter_fp, "-I INPUT -i wan0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j wandosattack\n");
+   fprintf(filter_fp, "-I INPUT -i wan0 -p udp -m udp -j wandosattack\n");
+   fprintf(filter_fp, "-I INPUT -i mta0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j mtadosattack\n");
+   fprintf(filter_fp, "-I INPUT -i mta0 -p udp -m udp -j mtadosattack\n");
+   fprintf(filter_fp, "-A wandosattack -m limit --limit 25/sec --limit-burst 80 -j ACCEPT\n");
+   fprintf(filter_fp, "-A wandosattack -j DROP\n");
+   fprintf(filter_fp, "-A mtadosattack -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n");
+   fprintf(filter_fp, "-A mtadosattack -j DROP\n");
+#endif
+   //<<DOS
+   /* Enabling SSH, SNMP and TR-069 firewall rules in bridge mode */
+   if(isBridgeMode) {
+   /* Filtering firewall rules for ssh and SNMP in bridgemode*/
+   fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
+   fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
+   fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   fprintf(filter_fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
+   fprintf(filter_fp, "-A LOG_SSH_DROP -j DROP\n");
+
+   //SNMPv3 chains for logging and filtering
+   fprintf(filter_fp, "%s\n", ":SNMPDROPLOG - [0:0]");
+   fprintf(filter_fp, "%s\n", ":SNMP_FILTER - [0:0]");
+   fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
+   fprintf(filter_fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
+   fprintf(filter_fp, "-A SNMPDROPLOG -j DROP\n");
+   do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
+   do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
+   }
+
+   if(isComcastImage && isBridgeMode) {
+       //tr69 chains for logging and filtering
+       fprintf(filter_fp, "%s\n", ":LOG_TR69_DROP - [0:0]");
+       fprintf(filter_fp, "%s\n", ":tr69_filter - [0:0]");
+       fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 7547 -j tr69_filter\n");
+       fprintf(filter_fp, "-A LOG_TR69_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"TR-069 ACS Server Blocked:\"\n",syslog_level);
+       fprintf(filter_fp, "-A LOG_TR69_DROP -j DROP\n");
+       do_tr69_whitelistTable(filter_fp, AF_INET);
+   }
 
    if(!isBridgeMode) //brlan0 exists
        fprintf(filter_fp, "-A INPUT -i %s -j lan2self_mgmt\n", lan_ifname);
@@ -10182,6 +10242,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    lan_http_access(filter_fp);
    #endif
 
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(filter_fp, "-A OUTPUT -p icmp -m icmp --icmp-type 3 -j DROP\n");
+#endif
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", "COMMIT");
@@ -10690,14 +10753,6 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-A FORWARD -i a-mux -j ACCEPT\n");
 #endif
 
-   if (!isFirewallEnabled || isBridgeMode || !isWanServiceReady) {
-       if(isBridgeMode || isWanServiceReady)
-           do_remote_access_control(NULL, fp, AF_INET6);
-
-       lan_telnet_ssh(fp, AF_INET6);
-       goto end_of_ipv6_firewall;
-   }
-
    fprintf(fp, "%s\n", ":LOG_INPUT_DROP - [0:0]");
    fprintf(fp, "%s\n", ":LOG_FORWARD_DROP - [0:0]");
    if(isComcastImage) {
@@ -10708,17 +10763,6 @@ static void do_ipv6_filter_table(FILE *fp){
        fprintf(fp, "-A LOG_TR69_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"TR-069 ACS Server Blocked:\"\n",syslog_level);
        fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
    }
-
-//#if defined(_ROGERS_BUILDS_)
-#if defined(_SYNDICATION_BUILDS_)
-   fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
-   fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
-#else
-   if (allowOpenPorts) {
-       fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
-       fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
-   }
-#endif
 
    do_block_ports(fp);	
    fprintf(fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
@@ -10740,7 +10784,30 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
    fprintf(fp, "-A SNMPDROPLOG -j DROP\n");
 
- 
+   if (!isFirewallEnabled || isBridgeMode || !isWanServiceReady) {
+       if(isBridgeMode || isWanServiceReady)
+           do_remote_access_control(NULL, fp, AF_INET6);
+
+       lan_telnet_ssh(fp, AF_INET6);
+       do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
+       do_snmp_IpAccessTable(fp, "10161", AF_INET6);
+       if(isComcastImage) {
+          do_tr69_whitelistTable(fp, AF_INET6);
+       }
+       goto end_of_ipv6_firewall;
+   }
+
+//#if defined(_ROGERS_BUILDS_)
+#if defined(_SYNDICATION_BUILDS_)
+   fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
+   fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+#else
+   if (allowOpenPorts) {
+       fprintf(fp, "-A INPUT -i erouter0 -p tcp --dport=7547 -j ACCEPT\n");
+       fprintf(fp, "-A INPUT ! -i erouter0 -p tcp -m tcp --dport 7547 -j DROP\n");
+   }
+#endif
+
    fprintf(fp, "-A LOG_INPUT_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 INPUT drop\"\n",syslog_level);
    fprintf(fp, "-A LOG_FORWARD_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"UTOPIA: FW.IPv6 FORWARD drop\"\n",syslog_level);
    fprintf(fp, "-A LOG_INPUT_DROP -j DROP\n"); 
