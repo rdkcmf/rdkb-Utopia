@@ -35,6 +35,10 @@ backupenable=`syscfg get logbackup_enable`
 isNvram2Supported="no"
 UPLOAD_THRESHOLD=""
 
+#dmesg sync
+DMESG_FILE="/rdklogs/logs/messages.txt"
+lastdmesgsync="/tmp/lastdmesgsynctime"
+atom_journal_log="/rdklogs/logs/atom_journal_logs.txt.0"
 if [ -f /etc/device.properties ]
 then
    isNvram2Supported=`cat /etc/device.properties | grep NVRAM2_SUPPORTED | cut -f2 -d=`
