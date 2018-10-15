@@ -1082,3 +1082,6 @@ $log_backup_threshold=0
 $eth_log_enabled=false
 $eth_log_period=3600
 $logbackup_enable=true
+
+#TR181 Telemetry Support via MessageBusSource
+$MessageBusSource=true

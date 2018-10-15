@@ -992,3 +992,6 @@ $log_backup_threshold=0
 #EthAgent Logging default values
 $eth_log_enabled=false
 $eth_log_period=3600
+
+#TR181 Telemetry Support via MessageBusSource
+$MessageBusSource=true
