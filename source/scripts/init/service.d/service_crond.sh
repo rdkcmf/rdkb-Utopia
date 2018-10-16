@@ -211,7 +211,12 @@ service_start ()
       echo "#! /bin/sh" > /etc/cron/cron.daily/ddns_daily.sh
       echo "sysevent set ddns-start " >> /etc/cron/cron.daily/ddns_daily.sh
       chmod 700 /etc/cron/cron.daily/ddns_daily.sh
-   
+
+	  # add a mta over power status script to be run daily
+      echo "#! /bin/sh" > /etc/cron/cron.daily/mta_overcurrent_status_daily.sh
+      echo "sh /usr/ccsp/mta/mta_overcurrentfault_status.sh &" >> /etc/cron/cron.daily/mta_overcurrent_status_daily.sh
+      chmod 700 /etc/cron/cron.daily/mta_overcurrent_status_daily.sh
+
       # add starting the ntp client once an hour
       echo "#! /bin/sh" > /etc/cron/cron.hourly/ntp_hourly.sh
       echo "sysevent set ntpclient-restart" >> /etc/cron/cron.hourly/ntp_hourly.sh
