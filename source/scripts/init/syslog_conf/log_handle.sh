@@ -513,6 +513,15 @@ fi
 
 if [ -z $1 ]
 then
+    if [ ! -f /nvram/cleanup_done ]; then
+        sed -i '/.*T3 time-out.*/d' /nvram/log/critlog*
+        sed -i '/.*T4 time out.*/d' /nvram/log/critlog*
+	sed -i '/.*Ranging Request Retries exhausted.*/d' /nvram/log/critlog*
+	sed -i '/.*Unicast Maintenance Ranging attempted - No response - Retries exhausted.*/d' /nvram/log/critlog*
+
+	touch /nvram/cleanup_done
+    fi
+
     evt="$V_EVT_LOG_FILE.0"
     sys="$V_SYS_LOG_FILE.0"
     if [ -e $evt ]
