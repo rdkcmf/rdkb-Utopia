@@ -1082,6 +1082,8 @@ $AllowEthernetWAN=
 $eth_wan_enabled=false
 #SNMPv2 control default values
 $V2Support=true
+#Snmp agent restart enable default values
+$SNMP_RestartMaintenanceEnable=true
 
 $DeferFWDownloadReboot=290
 
