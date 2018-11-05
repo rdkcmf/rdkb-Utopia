@@ -1,0 +1,38 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 897
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetRouterLanSettings2Response xmlns="http://purenetworks.com/HNAP1/">
+<GetRouterLanSettings2Result>OK</GetRouterLanSettings2Result>
+<RouterIPAddress>192.168.1.99</RouterIPAddress>
+<RouterSubnetMask>255.255.255.0</RouterSubnetMask>
+<DHCPServerEnabled>true</DHCPServerEnabled>
+<IPAddressFirst>192.168.1.100</IPAddressFirst>
+<IPAddressLast>192.168.1.149</IPAddressLast>
+<LeaseTime>1440</LeaseTime>
+<DHCPReservations>
+<DHCPReservation>
+<DeviceName>Device 1</DeviceName>
+<IPAddress>192.168.1.200</IPAddress>
+<MacAddress>FF:EE:DD:CC:BB:AA</MacAddress>
+</DHCPReservation>
+<DHCPReservation>
+<DeviceName>Device 2</DeviceName>
+<IPAddress>192.168.1.201</IPAddress>
+<MacAddress>11:22:33:44:55:66</MacAddress>
+</DHCPReservation>
+</DHCPReservations>
+</GetRouterLanSettings2Response>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 615 times
+malloc_interposer.c - exit: free called 615 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 35105
+malloc_interposer.c - exit: malloc max = 22423
+malloc_interposer.c - ************************************************************

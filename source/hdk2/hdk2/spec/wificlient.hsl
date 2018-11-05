@@ -1,0 +1,303 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+import "router.hsl"
+
+namespace "http://purenetworks.com/HNAP1/"
+
+
+#@@ top Top
+#@ <img class="logo" src="@images/cisco_logo.png" width="151" height="80" alt="CISCO" />
+#@@ end
+
+#@@ title Wireless Clients
+#@@ version 1.2 (Rev 7)
+#@@ date February 2010
+
+#@@ abstract Abstract
+#@ This document describes the details of the HNAP 1.2 protocol specification
+#@ targeted at devices with wireless clients (eg. Camera, Photo Frame, Gaming Adapter etc).
+#@@ end
+
+#@@ h2 Change History
+#@ <table summary="Revision History">
+#@ <tr><th>Revision<th>Date<th>Notes
+#@ <tr><td>6<td>2009-01-08<td>
+#@ Added GetWirelessClientConnectionInfo.
+#@ <tr><td>7<td>2009-02-<td>
+#@ Re-written in HSL
+#@ </table>
+#@@ end
+
+#@@ h2 Goals for Wireless Clients Specification
+#@ This document details a simple method of configuring wireless settings in a headless device.
+#@ Prior to HNAP 1.2, the wireless methods of HNAP 1.1 were focused on
+#@ configuration of WLAN settings for an Access Point, Router, or Residential Gateway.
+#@
+#@ HNAP 1.1 also introduced support for multiple radios, which increases the complexity of these methods.
+#@ As such, an attempt to re-use these methods by small headless clients (such as wireless cameras or print servers)
+#@ creates confusion and stubbed implementations for many of the non-applicable parameters.
+#@
+#@ This specification addresses that issue by providing information about a small set of wireless methods.
+#@@ end
+
+
+#
+# Enumerations
+#
+
+enum WiFiClientNetworkType
+
+    #@ communicate directly with other peers
+    "ADHOC"
+
+    #@ communicate with an Access Point
+    "INFRASTRUCTURE"
+
+
+#
+# Actions
+#
+
+#@ Use this method to obtain the wireless capabilities of a given device.
+action GetWirelessClientCapabilities
+    output
+
+        #@ Returns an array network modes supported by this device.
+        #@ The array should contain at least one entry.
+        WiFiClientNetworkType[] SupportedNetworkType
+
+        #@ Returns a list of security type/encryption combinations.
+        #@ This can be used by an HNAP client to interrogate the security modes that are supported by a given device
+        #@ to determine legal values to pass to the <tt>SetWirelessClientSettings</tt> method.
+        #@
+        #@ A device should return a single <tt>SecurityInfo</tt> structure for each security mode that is supported,
+        #@ corresponding with a list of encryptions allowed for that mode.
+        SecurityInfo[] SupportedSecurity
+
+
+#@ Use this optional method to obtain information about the current wireless network connection.
+#@
+#@ The information returned by this call pertains to the currently associated network,
+#@ if the device is not connected to a wireless network many of these values will be empty.
+#@ A client may check the Connnected state in the GetWirelessClientSettings call prior to calling this.
+action GetWirelessClientConnectionInfo
+    output
+
+        #@ SSID of the network that this device is currently connected to.
+        #@ May be blank if the device is not connected.
+        string SSID
+
+        #@ The frequency band of the wireless radio (approximately in GHz). Valid values are:
+        #@
+        #@ <table summary="frequency bands">
+        #@ <tr><td>2<td>2.4 GHz radios such as 802.11b, 802.11g, and some 802.11n
+        #@ <tr><td>5<td>5 GHz radios such as 802.11a, and some 802.11n
+        #@ </table>
+        int Frequency
+
+        #@ The 802.11 mode or band that the radio is configured for.
+        WiFiMode Mode
+
+        #@ Width of channel being used in MHz. This corresponds to the 802.11n channel width standard.
+        #@ Valid values are:
+        #@
+        #@ <table summary="channel widths">
+        #@ <tr><td>20<td>20 MHz channel width
+        #@ <tr><td>40<td>40 MHz channel width
+        #@ </table>
+        int ChannelWidth
+
+        #@ Channel number the radio is currently set to.
+        #@
+        #@ The valid range of values depends on the configuration and type of the device.
+        int Channel
+
+        #@ The Received Signal Strength Indicator as a percentage of maximum possible strength.
+        #@
+        #@ While RSSI is typically measured in dB, the boundaries of these values are vendor-specific.
+        #@ The device should map the vendor specific range into a percentage for this call.
+        #@
+        #@ If the radio is not connected this value should be set to 0.
+        #@
+        #@ Valid values are 0-100.
+        int SignalStrength
+
+        #@ The Noise as a percentage of maximum possible strength.
+        #@
+        #@ While Noise is typically measured in dB, the boundaries of these values are vendor-specific.
+        #@ The device should map the vendor specific range into a percentage for this call.
+        #@
+        #@ If the radio is not connected this value should be set to 0.
+        #@
+        #@ Valid values are 0-100.
+        #@
+        #@ HNAP clients can determine the quality of a clients connection by calculating the Signal/Noise ratio.
+        int Noise
+
+        #@ The data rate (kbps) of the inbound link to this client.
+        #@
+        #@ Note that in wired Ethernet cases, the inbound and outbound speeds are usually symmetrical.
+        #@ In the case of wireless or homeplug technologies, these rates may be different.
+        #@
+        #@ If the linkspeed is unknown, or the device is not connected the implementer should return 0.
+        int LinkSpeedIn
+
+        #@ The data rate (kbps) of the outbound link to this client.
+        #@
+        #@ If the linkspeed is unknown, or the device is not connected the implementer should return 0.
+        int LinkSpeedOut
+
+        #@ Returns True if WMM is enabled on the device, otherwise False
+        bool WmmEnabled
+
+
+#@ Use this method to obtain the current connection settings of a wireless client and the types of security it supports.
+action GetWirelessClientSettings
+
+    output
+
+        #@ The wireless network name (SSID) being used for this device.
+        string SSID
+
+        #@ The type of network.
+        WiFiClientNetworkType NetworkType
+
+        #@ Whether security is enabled.
+        bool SecurityEnabled
+
+        #@ The type of wireless security. Ignore when <tt>SecurityEnabled</tt> is <tt>false</tt>.
+        WiFiSecurity SecurityType
+
+        #@ The encryption method.  Ignore when <tt>SecurityEnabled</tt> is <tt>false</tt>.
+        #@
+        #@ Note that valid encryption methods are based on <tt>SecurityType</tt>.
+        WiFiEncryption Encryption
+
+        #@ The security key.
+        #@ This value depends on <tt>SecurityType</tt>.
+        #@
+        #@ When <tt>SecurityEnabled</tt> is <tt>true</tt>, the semantics are defined as follows:
+        #@ <table summary="security key types">
+        #@ <tr><th>Type<th>Key
+        #@ <tr><td><tt>WEP</tt>*
+        #@ <td>WEP key in hexadecimal form (any case), 64 or 128 bits depending on the Encryption field value
+        #@ <tr><td><tt>WPA</tt>*
+        #@ <td>WPA passphrase with length in standard WPA range of 8 to 63 characters
+        #@ <tr><td><tt>NONE</tt>
+        #@ <td>Blank</td>
+        #@ </table>
+        #@
+        #@ Ignore when <tt>SecurityEnabled</tt> is <tt>false</tt>.
+        string Key
+
+        #@ whether the device is connected to the wireless network as configured.
+        #@
+        #@ Note that the presence of a non-blank <tt>SSID</tt>
+        #@ does not imply that the device is successfully connected to this network.
+        #@ It simply indicates the current configuration.
+        #@ A number of factors could contribute to this being the case
+        #@ - such as the access point is out of range, incorrect password configured etc.
+        bool Connected
+
+
+#@ Use this method to configure settings in a wireless client to allow it to join a new network.
+#@ This method is recommended for devices that are wireless stations.
+#@ For access points and routers, the <tt>GetWLanRadio</tt>* family of methods is recommended.
+#@
+#@ <ul>
+#@ <li>This call should return immediately and not wait for connection to complete.
+#@ To determine if the device has connected successfully,
+#@ an HNAP client must call <tt>GetWirelessClientSettings</tt> and poll the <tt>Connected</tt> state periodically.
+#@ <li>When this method is called, devices should update their preferred wireless profile
+#@ and enter a state of attempting to connect to a network using the given settings.
+#@ If the connection attempt fails,
+#@ the device should wait a short period and continuously re-attempt connection until connection completes.
+#@ </ul>
+action SetWirelessClientSettings
+    input
+
+        #@ The wireless network name (SSID) to be used for this wireless device.
+        #@
+        #@ A blank value may be passed to indicate that the device should disconnect from any wireless network.
+        string SSID
+
+        #@ The type of network.
+        WiFiClientNetworkType NetworkType
+
+        #@ Whether security is enabled.
+        bool SecurityEnabled
+
+        #@ The type of wireless security being used. Ignored when <tt>SecurityEnabled</tt> is <tt>false</tt>.
+        WiFiSecurity SecurityType
+
+        #@ The encryption method being used.  Ignored when <tt>SecurityEnabled</tt> is <tt>false</tt>.
+        #@
+        #@ Note that valid encryption methods are based on <tt>SecurityType</tt>.
+        #@ An HNAP client should use the <tt>GetWirelessClientSettings</tt> method
+        #@ to determine the valid encryption values supported for the security
+        WiFiEncryption Encryption
+
+        #@ The security key.
+        #@ This value depends on <tt>SecurityType</tt>.
+        #@
+        #@ When <tt>SecurityEnabled</tt> is <tt>true</tt>, the semantics are defined as follows:
+        #@ <table summary="security key types">
+        #@ <tr><th>Type<th>Key
+        #@ <tr><td><tt>WEP</tt>*
+        #@ <td>WEP key in hexadecimal form (any case), 64 or 128 bits depending on the Encryption field value
+        #@ <tr><td><tt>WPA</tt>*
+        #@ <td>WPA passphrase with length in standard WPA range of 8 to 63 characters
+        #@ <tr><td><tt>NONE</tt>
+        #@ <td>Blank</td>
+        #@ </table>
+        #@
+        #@ Ignored when <tt>SecurityEnabled</tt> is <tt>false</tt>.
+        string Key
+    result
+        "REBOOT"
+
+        #@ the <tt>Encryption</tt> value requested is not supported by this device.
+        "ERROR_ENCRYPTION_NOT_SUPPORTED"
+
+        #@ the <tt>Key</tt> value requested is illegal according to the rules for this device.
+        "ERROR_ILLEGAL_KEY_VALUE"
+
+        #@ the <tt>SecurityType</tt> requested is not supported by this device.
+        "ERROR_TYPE_NOT_SUPPORTED"
+
+        #@ the <tt>NetworkType</tt> parameter contains a value not supported by this device.
+        "ERROR_NETWORK_TYPE_NOT_SUPPORTED"

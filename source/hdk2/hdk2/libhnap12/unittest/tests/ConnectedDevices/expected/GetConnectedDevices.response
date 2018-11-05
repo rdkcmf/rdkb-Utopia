@@ -1,0 +1,30 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 560
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetConnectedDevicesResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetConnectedDevicesResult>OK</GetConnectedDevicesResult>
+<ConnectedClients>
+<ConnectedClient>
+<ConnectTime>2008-11-29T12:33:55Z</ConnectTime>
+<MacAddress>00:11:22:33:44:55</MacAddress>
+<DeviceName>A Device</DeviceName>
+<PortName>LAN</PortName>
+<Wireless>false</Wireless>
+<Active>true</Active>
+</ConnectedClient>
+</ConnectedClients>
+</GetConnectedDevicesResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 599 times
+malloc_interposer.c - exit: free called 599 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34292
+malloc_interposer.c - exit: malloc max = 21726
+malloc_interposer.c - ************************************************************

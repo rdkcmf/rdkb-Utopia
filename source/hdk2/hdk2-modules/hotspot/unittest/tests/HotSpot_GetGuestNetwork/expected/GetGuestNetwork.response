@@ -1,0 +1,25 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 431
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetGuestNetworkResponse xmlns="http://cisco.com/HNAPExt/HotSpot/">
+<GetGuestNetworkResult>OK</GetGuestNetworkResult>
+<Enabled>false</Enabled>
+<SSID>My Home Network Guest</SSID>
+<Password>admin</Password>
+<MaxGuestsAllowed>10</MaxGuestsAllowed>
+<CanBeActive>true</CanBeActive>
+</GetGuestNetworkResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 769 times
+malloc_interposer.c - exit: free called 769 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 54736
+malloc_interposer.c - exit: malloc max = 21569
+malloc_interposer.c - ************************************************************

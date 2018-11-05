@@ -1,0 +1,13 @@
+SOAPAction: "http://cisco.com/HNAPExt/HotSpot/SetGuestNetwork"
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <SetGuestNetwork xmlns="http://cisco.com/HNAPExt/HotSpot/">
+      <Enabled>true</Enabled>
+      <SSID>SSID5GHz</SSID>
+      <Password>GuestPassword</Password>
+      <MaxGuestsAllowed>10</MaxGuestsAllowed>
+    </SetGuestNetwork>
+  </Body>
+</Envelope>

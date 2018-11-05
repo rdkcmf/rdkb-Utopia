@@ -1,0 +1,446 @@
+Actions:
+
+  http://cisco.com/HNAPExt/MyActionInFirstList_1
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActionInFirstList_1
+    resultMember: http://cisco.com/HNAPExt/MyActionInFirstList_1Result
+    inputMember:
+
+      http://cisco.com/HNAPExt/MyActionInFirstList_1
+
+        name: MyActionInFirstList_1
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActionInFirstList_1
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/MyActionInFirstList_1
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActionInFirstList_1
+        schemaName: MyActionInFirstList_1
+        parserOrder: 0
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/MyActionInFirstList_1Response
+
+        name: MyActionInFirstList_1Response
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActionInFirstList_1Response
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/MyActionInFirstList_1Response
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActionInFirstList_1Response
+        schemaName: MyActionInFirstList_1Response
+        parserOrder: 0
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/MyActionInFirstList_1Result
+
+            name: MyActionInFirstList_1Result
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyActionInFirstList_1Result
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+  http://cisco.com/HNAPExt/MyActionInSecondList_1
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActionInSecondList_1
+    resultMember: http://cisco.com/HNAPExt/MyActionInSecondList_1Result
+    inputMember:
+
+      http://cisco.com/HNAPExt/MyActionInSecondList_1
+
+        name: MyActionInSecondList_1
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActionInSecondList_1
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/MyActionInSecondList_1
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActionInSecondList_1
+        schemaName: MyActionInSecondList_1
+        parserOrder: 1
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/MyActionInSecondList_1Response
+
+        name: MyActionInSecondList_1Response
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActionInSecondList_1Response
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/MyActionInSecondList_1Response
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActionInSecondList_1Response
+        schemaName: MyActionInSecondList_1Response
+        parserOrder: 1
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/MyActionInSecondList_1Result
+
+            name: MyActionInSecondList_1Result
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyActionInSecondList_1Result
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+  http://cisco.com/HNAPExt/MyActioninFirstList_2
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActioninFirstList_2
+    resultMember: http://cisco.com/HNAPExt/MyActioninFirstList_2Result
+    inputMember:
+
+      http://cisco.com/HNAPExt/MyActioninFirstList_2
+
+        name: MyActioninFirstList_2
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActioninFirstList_2
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/MyActioninFirstList_2
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActioninFirstList_2
+        schemaName: MyActioninFirstList_2
+        parserOrder: 2
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/MyActioninFirstList_2Response
+
+        name: MyActioninFirstList_2Response
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActioninFirstList_2Response
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/MyActioninFirstList_2Response
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActioninFirstList_2Response
+        schemaName: MyActioninFirstList_2Response
+        parserOrder: 2
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/MyActioninFirstList_2Result
+
+            name: MyActioninFirstList_2Result
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyActioninFirstList_2Result
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+  http://cisco.com/HNAPExt/MyServiceAction
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyServiceAction
+    resultMember: http://cisco.com/HNAPExt/MyServiceActionResult
+    inputMember:
+
+      http://cisco.com/HNAPExt/MyServiceAction
+
+        name: MyServiceAction
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyServiceAction
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/MyServiceAction
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyServiceAction
+        schemaName: MyServiceAction
+        parserOrder: 3
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/MyServiceActionResponse
+
+        name: MyServiceActionResponse
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyServiceActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/MyServiceActionResponse
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyServiceActionResponse
+        schemaName: MyServiceActionResponse
+        parserOrder: 3
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/MyServiceActionResult
+
+            name: MyServiceActionResult
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyServiceActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+  http://einknirps.de/bist/du/CrossDomainNamespaceAction
+
+    namespace: http://einknirps.de/bist/du/
+    name: CrossDomainNamespaceAction
+    resultMember: http://einknirps.de/bist/du/CrossDomainNamespaceActionResult
+    inputMember:
+
+      http://einknirps.de/bist/du/CrossDomainNamespaceAction
+
+        name: CrossDomainNamespaceAction
+        namespace: http://einknirps.de/bist/du/
+        type: http://einknirps.de/bist/du/CrossDomainNamespaceAction
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://einknirps.de/bist/du/CrossDomainNamespaceAction
+
+        namespace: http://einknirps.de/bist/du/
+        name: CrossDomainNamespaceAction
+        schemaName: CrossDomainNamespaceAction
+        parserOrder: 4
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://einknirps.de/bist/du/CrossDomainNamespaceActionResponse
+
+        name: CrossDomainNamespaceActionResponse
+        namespace: http://einknirps.de/bist/du/
+        type: http://einknirps.de/bist/du/CrossDomainNamespaceActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://einknirps.de/bist/du/CrossDomainNamespaceActionResponse
+
+        namespace: http://einknirps.de/bist/du/
+        name: CrossDomainNamespaceActionResponse
+        schemaName: CrossDomainNamespaceActionResponse
+        parserOrder: 4
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://einknirps.de/bist/du/CrossDomainNamespaceActionResult
+
+            name: CrossDomainNamespaceActionResult
+            namespace: http://einknirps.de/bist/du/
+            type: http://einknirps.de/bist/du/CrossDomainNamespaceActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+Types:
+
+  http://cisco.com/HNAPExt/MyActionInFirstList_1Result (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActionInFirstList_1Result
+    schemaName: MyActionInFirstList_1Result
+    parserOrder: 0
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/MyActionInSecondList_1Result (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActionInSecondList_1Result
+    schemaName: MyActionInSecondList_1Result
+    parserOrder: 1
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/MyActioninFirstList_2Result (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActioninFirstList_2Result
+    schemaName: MyActioninFirstList_2Result
+    parserOrder: 2
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/MyServiceActionResult (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyServiceActionResult
+    schemaName: MyServiceActionResult
+    parserOrder: 3
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://einknirps.de/bist/du/CrossDomainNamespaceActionResult (all_types)
+
+    namespace: http://einknirps.de/bist/du/
+    name: CrossDomainNamespaceActionResult
+    schemaName: CrossDomainNamespaceActionResult
+    parserOrder: 4
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+Services:
+
+  http://cisco.com/HNAPExt/MyDividedServiceActions
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyDividedServiceActions
+
+    actions:
+      http://cisco.com/HNAPExt/MyActionInFirstList_1
+      http://cisco.com/HNAPExt/MyActionInSecondList_1
+      http://cisco.com/HNAPExt/MyActioninFirstList_2
+
+  http://cisco.com/HNAPExt/MyService
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyService
+
+    actions:
+      http://cisco.com/HNAPExt/MyServiceAction
+
+  http://cisco.com/HNAPExt/MyServiceWithCrossNamespaceAction
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyServiceWithCrossNamespaceAction
+
+    actions:
+      http://einknirps.de/bist/du/CrossDomainNamespaceAction
+
+  http://cisco.com/HNAPExt/MyServiceWithNoActions
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyServiceWithNoActions

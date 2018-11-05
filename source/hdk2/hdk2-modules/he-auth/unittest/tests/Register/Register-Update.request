@@ -1,0 +1,37 @@
+SOAPAction: http://cisco.com/he/registrar/Register
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<Register xmlns="http://cisco.com/he/registrar/">
+  <Device>
+    <DeviceID>2ac21b80-442f-11df-9879-0800200c9a67</DeviceID>
+    <TypeID>a78dabb0-4e3f-11df-9879-0800200c9a66</TypeID>
+    <FriendlyName>My work computer</FriendlyName>
+    <Manufacturer>Apple</Manufacturer>
+    <Model>iMac10,1</Model>
+    <NetworkObjects>
+      <NetworkObject>
+        <NetworkObjectID>61b05030-465a-11df-9879-0800200c9a66</NetworkObjectID>
+        <FriendlyName>HNAP Server</FriendlyName>
+        <ControlURL>http://192.168.1.101/HNAP1/</ControlURL>
+        <ServiceURIs>
+          <string>Core</string>
+          <string>Router</string>
+        </ServiceURIs>
+      </NetworkObject>
+      <NetworkObject>
+        <NetworkObjectID>61b05030-465a-11df-9879-0800200c9a67</NetworkObjectID>
+        <FriendlyName>Hotspot Server</FriendlyName>
+        <ControlURL>http://192.168.1.101/HNAP1/</ControlURL>
+        <ServiceURIs>
+          <string>Device List</string>
+          <string>Guest Access</string>
+          <string>Parental Controls</string>
+        </ServiceURIs>
+      </NetworkObject>
+    </NetworkObjects>
+  </Device>
+</Register>
+</soap:Body>
+</soap:Envelope>

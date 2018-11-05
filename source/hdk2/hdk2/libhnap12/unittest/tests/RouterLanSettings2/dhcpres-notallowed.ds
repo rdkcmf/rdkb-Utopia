@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+
+  <!-- RouterLanSettings2 -->
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>LanIPAddress</Name>
+    <Value>192.168.1.2</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>LanSubnetMask</Name>
+    <Value>255.255.255.0</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>DHCPServerEnabled</Name>
+    <Value>true</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>DHCPIPAddressFirst</Name>
+    <Value>192.168.1.100</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>DHCPIPAddressLast</Name>
+    <Value>192.168.1.149</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>DHCPLeaseTime</Name>
+    <Value>1440</Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>DHCPReservations</Name>
+    <Value>
+      &lt;DHCPReservations xmlns=&quot;http://purenetworks.com/HNAP1/&quot;&gt;
+        &lt;DHCPReservation&gt;
+          &lt;DeviceName&gt;Device 1&lt;/DeviceName&gt;
+          &lt;IPAddress&gt;192.168.1.200&lt;/IPAddress&gt;
+              &lt;MacAddress&gt;FF:EE:DD:CC:BB:AA&lt;/MacAddress&gt;
+        &lt;/DHCPReservation&gt;
+        &lt;DHCPReservation&gt;
+          &lt;DeviceName&gt;Device 2&lt;/DeviceName&gt;
+          &lt;IPAddress&gt;192.168.1.201&lt;/IPAddress&gt;
+          &lt;MacAddress&gt;11:22:33:44:55:66&lt;/MacAddress&gt;
+        &lt;/DHCPReservation&gt;
+      &lt;/DHCPReservations&gt;
+    </Value>
+  </State>
+  <State>
+    <Namespace>http://purenetworks.com/HNAP1/</Namespace>
+    <Name>DHCPReservationsSupported</Name>
+    <Value>false</Value>
+  </State>
+</Simulator>

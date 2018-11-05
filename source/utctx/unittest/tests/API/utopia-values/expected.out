@@ -1,0 +1,294 @@
+Testing the UTCTX UtopiaValues...
+Get: Key=, Value=GatewayWithWiFi
+Get: Key=, Value=Linksys E3000
+Get: Key=, Value=E3000
+Get: Key=, Value=1.0
+Get: Key=, Value=/
+Get: Key=, Value=Cisco
+Get: Key=auto_dst, Value=0
+Get: Key=def_hwaddr, Value=99:88:77:66:55:44
+Get: Key=hostname, Value=ut610n
+Get: Key=locale, Value=en-us
+Get: Key=log_level, Value=1
+Get: Key=log_remote, Value=0
+Get: Key=nat_enabled, Value=1
+Get: Key=samba_server_enabled, Value=1
+Get: Key=TZ, Value=PST8PDT,M3.2.0/02:00,M11.1.0/02:00
+Get: Key=ddns_enable, Value=0
+Get: Key=ddns_service, Value=dyndns
+Get: Key=ddns_update_days, Value=28
+Get: Key=ddns_last_update, Value=0
+Get: Key=ddns_hostname, Value=none
+Get: Key=ddns_username, Value=none
+Get: Key=ddns_password, Value=none
+Get: Key=ddns_mx, Value=mail.ddns.com
+Get: Key=ddns_mx_backup, Value=1
+Get: Key=ddns_wildcard, Value=0
+Get: Key=ddns_server, Value=65.65.65.65:6565
+Get: Key=dhcp_server_enabled, Value=1
+Get: Key=dhcp_start, Value=100
+Get: Key=dhcp_num, Value=50
+Get: Key=dhcp_lease_time, Value=24h
+Get: Key=dhcp_nameserver_1, Value=13.13.13.13
+Get: Key=dhcp_nameserver_2, Value=14.14.14.14
+Get: Key=dhcp_nameserver_3, Value=15.15.15.15
+Get: Key=dhcp_wins_server, Value=99.99.99.99
+Get: Key=dhcp_num_static_hosts, Value=0
+Get: Key=dmz_enabled, Value=1
+Get: Key=dmz_src_addr_range, Value=255:255:255:0
+Get: Key=dmz_dst_ip_addr, Value=47
+Get: Key=dmz_dst_mac_addr, Value=00:11:22:33:44:55
+Get: Key=http_admin_password, Value=TSLIIHauhEfGE
+Get: Key=http_admin_port, Value=80
+Get: Key=http_admin_user, Value=admin
+Get: Key=mgmt_https_enable, Value=0
+Get: Key=mgmt_wifi_access, Value=1
+Get: Key=mgmt_wan_access, Value=0
+Get: Key=mgmt_wan_httpaccess, Value=0
+Get: Key=mgmt_wan_httpsaccess, Value=0
+Get: Key=mgmt_wan_httpport, Value=8080
+Get: Key=mgmt_wan_httpsport, Value=8081
+Get: Key=mgmt_wan_fwupgrade, Value=0
+Get: Key=mgmt_wan_srcany, Value=1
+Get: Key=mgmt_wan_srcstart_ip, Value=10.1.1.10
+Get: Key=mgmt_wan_srcend_ip, Value=10.1.1.15
+Get: Key=upnp_igd_enabled, Value=1
+Get: Key=igd_allow_userconfig, Value=1
+Get: Key=igd_allow_wandisable, Value=0
+Get: Key=6to4_enable, Value=1
+Get: Key=6rd_enable, Value=0
+Get: Key=router_adv_enable, Value=1
+Get: Key=lan_domain, Value=utopia.net
+Get: Key=lan_ethernet_physical_ifnames, Value=eth0
+Get: Key=lan_ethernet_virtual_ifnums, Value=1
+Get: Key=lan_ipaddr, Value=192.168.1.1
+Get: Key=lan_ifname, Value=br0
+Get: Key=lan_netmask, Value=255.255.255.0
+Get: Key=ntp_server1, Value=0.pool.ntp.org
+Get: Key=ntp_server2, Value=1.pool.ntp.org
+Get: Key=ntp_server3, Value=2.pool.ntp.org
+Get: Key=rip_enabled, Value=1
+Get: Key=rip_no_split_horizon, Value=0
+Get: Key=rip_interface_lan, Value=1
+Get: Key=rip_interface_wan, Value=0
+Get: Key=rip_md5_passwd, Value=rip-md5-passwd
+Get: Key=rip_text_passwd, Value=rip-text-passwd
+Get: Key=StaticRouteCount, Value=1
+Get: Key=wan_proto, Value=dhcp
+Get: Key=wan_ipaddr, Value=0.0.0.0
+Get: Key=wan_netmask, Value=255.255.255.0
+Get: Key=wan_default_gateway, Value=0.0.0.0
+Get: Key=nameserver1, Value=64.65.1.13
+Get: Key=nameserver2, Value=64.65.1.7
+Get: Key=nameserver3, Value=64.65.1.99
+Get: Key=wan_proto_username, Value=wan-username
+Get: Key=wan_proto_password, Value=wan-password
+Get: Key=ppp_conn_method, Value=demand
+Get: Key=ppp_keepalive_interval, Value=180
+Get: Key=ppp_idle_time, Value=120
+Get: Key=wan_proto_remote_name, Value=wan-remote-name
+Get: Key=wan_domain, Value=wan-auth-domain
+Get: Key=pppoe_service_name, Value=PPPOE ServiceName
+Get: Key=pppoe_access_concentrator_name, Value=access-concentrator
+Get: Key=wan_proto_server_address, Value=9.9.9.9
+Get: Key=pptp_address_static, Value=0
+Get: Key=l2tp_address_static, Value=0
+Get: Key=telstra_server, Value=8.8.8.8
+Get: Key=wan_mtu, Value=1500
+Get: Key=wan_physical_ifname, Value=eth0
+Get: Key=wan_virtual_ifnum, Value=2
+Get: Key=wl_config_mode, Value=manual
+Get: Key=wl_mac_filter, Value=66:55:44:33:22:11 BC:9A:78:56:34:12
+Get: Key=wl_access_restriction, Value=disabled
+Get: Key=wl_client_list, Value=11:22:33:44:55:66 12:34:56:78:9A:BC
+Get: Key=lan_wl_physical_ifnames, Value=eth1 eth2
+Get: Key=wl_wmm_support, Value=enabled
+Get: Key=wl_no_acknowledgement, Value=disabled
+Get: Key=qos_enable, Value=1
+Get: Key=QoSDefinedPolicyCount, Value=1
+Get: Key=QoSUserDefinedPolicyCount, Value=1
+Get: Key=QoSPolicyCount, Value=1
+Get: Key=QoSMacAddrCount, Value=1
+Get: Key=QoSVoiceDeviceCount, Value=1
+Get: Key=firewall_enabled, Value=1
+Get: Key=block_ping, Value=0
+Get: Key=block_multicast, Value=1
+Get: Key=block_nat_redirection, Value=0
+Get: Key=block_ident, Value=1
+Get: Key=SinglePortForwardCount, Value=1
+Get: Key=PortRangeForwardCount, Value=1
+Get: Key=PortRangeTriggerCount, Value=1
+Get: Key=InternetAccessPolicyCount, Value=1
+Get: Key=W2LWellKnownFirewallRuleCount, Value=1
+Get: Key=SharedFolderCount, Value=1
+Get: Key=wps_device_name, Value=Utopia AP
+Get: Key=wps_device_pin, Value=40039862
+Get: Key=wps_manufacturer, Value=Linksys
+Get: Key=wps_method, Value=pbc
+Get: Key=wps_mode, Value=disabled
+Get: Key=wps_model_name, Value=Linksys
+Get: Key=wps_model_number, Value=123456
+Get: Key=wps_station_pin, Value=00000000
+Get: Key=wps_uuid, Value=000102030405060708090A0B0C0D0E0F
+GetIndexed: Key=dhcp_static_host_1, Value=00:11:22:33:44:55,225
+GetIndexed: Key=StaticRoute_1, Value=sr_1
+GetIndexed: Key=sr_1::name, Value=My Static Route
+GetIndexed: Key=sr_1::dest, Value=75.74.73.72
+GetIndexed: Key=sr_1::netmask, Value=255.255.255.128
+GetIndexed: Key=sr_1::gw, Value=75.74.73.10
+GetIndexed: Key=sr_1::interface, Value=lan
+GetIndexed: Key=firewall_rule1, Value=-A INPUT -p tcp -m tcp -d $WAN_IPADDR --dport 22 -j ACCEPT
+GetIndexed: Key=W2LWellKnownFirewallRule_1, Value=blockactivex
+GetIndexed: Key=blockactivex::name, Value=ax
+GetIndexed: Key=blockactivex::result, Value=\$REJECT
+GetIndexed: Key=InternetAccessPolicy_1, Value=iac_1
+GetIndexed: Key=iac_1::enabled, Value=1
+GetIndexed: Key=iac_1::name, Value=My internet access policy
+GetIndexed: Key=iac_1::enforcement_schedule, Value=127 10:00 13:59
+GetIndexed: Key=iac_1::access, Value=deny
+GetIndexed: Key=iac_1::BlockUrlCount, Value=2
+GetIndexed: Key=iac_1::BlockKeywordCount, Value=1
+GetIndexed: Key=iac_1::BlockApplicationCount, Value=1
+GetIndexed: Key=iac_1::BlockWellknownApplicationCount, Value=1
+GetIndexed: Key=iac_1::BlockApplicationRuleCount, Value=1
+GetIndexed: Key=iac_1::BlockPing, Value=1
+GetIndexed: Key=iac_1::local_host_list, Value=lhl_1
+GetIndexed: Key=lhl_1::InternetAccessPolicyIPHostCount, Value=1
+GetIndexed: Key=lhl_1::InternetAccessPolicyIPRangeCount, Value=1
+GetIndexed: Key=lhl_1::InternetAccessPolicyMacCount, Value=1
+GetIndexed: Key=SinglePortForward_1, Value=spf_1
+GetIndexed: Key=spf_1::enabled, Value=1
+GetIndexed: Key=spf_1::name, Value=My port forward
+GetIndexed: Key=spf_1::protocol, Value=tcp
+GetIndexed: Key=spf_1::external_port, Value=54000
+GetIndexed: Key=spf_1::internal_port, Value=8081
+GetIndexed: Key=spf_1::to_ip, Value=101
+GetIndexed: Key=PortRangeForward_1, Value=pfr_1
+GetIndexed: Key=pfr_1::enabled, Value=1
+GetIndexed: Key=pfr_1::name, Value=My port range forward
+GetIndexed: Key=pfr_1::protocol, Value=udp
+GetIndexed: Key=pfr_1::external_port_range, Value=9000 9999
+GetIndexed: Key=pfr_1::internal_port, Value=9090
+GetIndexed: Key=pfr_1::to_ip, Value=101
+GetIndexed: Key=QoSPolicy_1, Value=qosp_1
+GetIndexed: Key=QoSDefinedPolicy_1, Value=qosdp_1
+GetIndexed: Key=qosdp_1::name, Value=/etc/qos_classification_rules
+GetIndexed: Key=qosdp_1::class, Value=AF11
+GetIndexed: Key=QoSUserDefinedPolicy_1, Value=qdp_1
+GetIndexed: Key=qdp_1::name, Value=QoS User 1
+GetIndexed: Key=qdp_1::portrange_count, Value=1
+GetIndexed: Key=qdp_1::type, Value=II
+GetIndexed: Key=QoSMacAddr_1, Value=qma_1
+GetIndexed: Key=qma_1::mac, Value=00:AA:BB:CC:DD:EE
+GetIndexed: Key=qma_1::name, Value=QoS Mac 1
+GetIndexed: Key=qma_1::class, Value=EF
+GetIndexed: Key=QoSVoiceDevice_1, Value=qmd_1
+GetIndexed: Key=qmd_1::mac, Value=00:11:22:33:44:55
+GetIndexed: Key=qmd_1::name, Value=QoS Voice 1
+GetIndexed: Key=qmd_1::class, Value=AF11
+GetIndexed: Key=PortRangeTrigger_1, Value=prt_1
+GetIndexed: Key=prt_1::enabled, Value=1
+GetIndexed: Key=prt_1::name, Value=My port range trigger
+GetIndexed: Key=prt_1::trigger_id, Value=2
+GetIndexed: Key=prt_1::trigger_protocol, Value=udp
+GetIndexed: Key=prt_1::trigger_range, Value=4 7
+GetIndexed: Key=prt_1::forward_protocol, Value=both
+GetIndexed: Key=prt_1::forward_range, Value=9000 9999
+GetIndexed: Key=prt_1::lifetime, Value=5
+GetIndexed: Key=SharedFolder_1, Value=sf_1
+GetIndexed: Key=sf_1::name, Value=SharedFolder
+GetIndexed: Key=sf_1::folder, Value=shared-folder
+GetIndexed: Key=sf_1::drive, Value=/home/richard/tmp
+GetIndexed: Key=sf_1::readonly, Value=0
+GetIndexed2: Key=iac_1::BlockUrl_1, Value=www.google.com
+GetIndexed2: Key=iac_1::BlockKeyword_1, Value=google
+GetIndexed2: Key=iac_1::BlockApplication_1, Value=bap_1
+GetIndexed2: Key=iac_1::BlockWellknownApplication_1, Value=-p tcp -m tcp --dport 80
+GetIndexed2: Key=iac_1::BlockApplicationRule_1, Value=-p tcp -m tcp --dport 80
+GetIndexed2: Key=lhl_1::ip_1, Value=101
+GetIndexed2: Key=lhl_1::ip_range_1, Value=200 249
+GetIndexed2: Key=lhl_1::mac_1, Value=00:FF:11:EE:22:DD
+GetIndexed2: Key=qosp_1::qos_rule_1, Value=-A INPUT -p TCP -i $RED_DEV --dport 445 -s 0/0 -j DROP
+GetIndexed2: Key=qdp_1::protocol_1, Value=tcp
+GetIndexed2: Key=qdp_1::port_range_1, Value=4 7
+GetIndexed2: Key=qdp_1::class_1, Value=
+GetIndexed2: Key=bap_1::name, Value=My block app
+GetIndexed2: Key=bap_1::protocol, Value=tcp
+GetIndexed2: Key=bap_1::port_range, Value=4 7
+GetNamed: Key=pfx_description, Value=
+GetNamed: Key=pfx_network_mode, Value=
+GetNamed: Key=pfx_ssid, Value=
+GetNamed: Key=pfx_ssid_broadcast, Value=
+GetNamed: Key=pfx_radio_band, Value=
+GetNamed: Key=pfx_wide_channel, Value=
+GetNamed: Key=pfx_standard_channel, Value=
+GetNamed: Key=pfx_channel, Value=
+GetNamed: Key=pfx_sideband, Value=
+GetNamed: Key=pfx_state, Value=
+GetNamed: Key=pfx_security_mode, Value=
+GetNamed: Key=pfx_passphrase, Value=
+GetNamed: Key=pfx_key_0, Value=
+GetNamed: Key=pfx_key_1, Value=
+GetNamed: Key=pfx_key_2, Value=
+GetNamed: Key=pfx_key_3, Value=
+GetNamed: Key=pfx_tx_key, Value=
+GetNamed: Key=pfx_radius_server, Value=
+GetNamed: Key=pfx_radius_port, Value=
+GetNamed: Key=pfx_shared, Value=
+GetNamed: Key=pfx_encryption, Value=
+GetNamed: Key=pfx_key_renewal, Value=
+GetNamed: Key=pfx_ap_isolation, Value=
+GetNamed: Key=pfx_frame_burst, Value=
+GetNamed: Key=pfx_authentication_type, Value=
+GetNamed: Key=pfx_basic_rate, Value=
+GetNamed: Key=pfx_transmission_rate, Value=
+GetNamed: Key=pfx_n_transmission_rate, Value=
+GetNamed: Key=pfx_transmission_power, Value=
+GetNamed: Key=pfx_cts_protection_mode, Value=
+GetNamed: Key=pfx_beacon_interval, Value=
+GetNamed: Key=pfx_dtim_interval, Value=
+GetNamed: Key=pfx_fragmentation_threshold, Value=
+GetNamed: Key=pfx_rts_threshold, Value=
+GetNamed: Key=pfx_wps_mode, Value=
+Initializing sysevent...
+Get: Key=firmware_version, Value=0.6.12
+Get: Key=dhcp_ntp_server1, Value=1.2.3.4
+Get: Key=dhcp_ntp_server2, Value=0.0.0.0
+Get: Key=dhcp_ntp_server3, Value=0.0.0.0
+Get: Key=current_lan_state, Value=down
+Get: Key=usb_device_state, Value=inserted
+Get: Key=usb_device_mount_pt, Value=/tmp/sda1
+Get: Key=vlan2_mac, Value=22:33:44:55:66:77
+Get: Key=current_wan_ipaddr, Value=65.64.63.101
+Get: Key=current_wan_state, Value=up
+Get: Key=default_router, Value=65.64.63.1
+Get: Key=lan-restarting, Value=
+Get: Key=wan-restarting, Value=
+Get: Key=SN, Value=0123456789
+Get: Key=ipv6_connection_state, Value=1
+Get: Key=current_wan_ipv6address, Value=ipv6Address
+Get: Key=current_wan_ipv6address_ll, Value=ipv6Addressll
+Get: Key=current_wan_ipv6_interface, Value=en3
+Get: Key=6rd_compress_ipv4, Value=1
+Get: Key=6rd_enable, Value=0
+Get: Key=6rd_relay, Value=relay
+Get: Key=6rd_zone, Value=zone
+Get: Key=6rd_zone_length, Value=5
+Get: Key=6to4_enable, Value=1
+Get: Key=aiccu_enable, Value=1
+Get: Key=aiccu_password, Value=password
+Get: Key=aiccu_prefix, Value=prefix
+Get: Key=aiccu_tunnel, Value=tunnel
+Get: Key=aiccu_user, Value=user
+Get: Key=ipv6_bridging_enable, Value=1
+Get: Key=dhcp6_enable, Value=1
+Get: Key=dhcp6c_duid, Value=asdfghjkl
+Get: Key=dhcp6s_duid, Value=qwertyuiop
+Closing sysevent...
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1027 times
+malloc_interposer.c - exit: free called 1027 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 36768
+malloc_interposer.c - exit: malloc max = 36416
+malloc_interposer.c - ************************************************************

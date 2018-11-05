@@ -1,0 +1,1952 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+ If not stated otherwise in this file or this component's Licenses.txt file the
+ following copyright and licenses apply:
+
+ Copyright 2018 RDK Management
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<wsdl:definitions
+    xmlns:s="http://www.w3.org/2001/XMLSchema"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:t1="http://purenetworks.com/HNAP1/"
+    xmlns:tns="http://cisco.com/HNAP/"
+    xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+    targetNamespace="http://cisco.com/HNAP/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://cisco.com/HNAP/">
+      <s:import namespace="http://purenetworks.com/HNAP1/" />
+      <s:simpleType name="GetServiceInfoResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetServicesResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="ArrayOfServiceInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ServiceInfo" type="tns:ServiceInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ServiceInfo">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ServiceName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="ServiceLevel" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="GetServiceInfo">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ServiceName" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetServiceInfoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetServiceInfoResult" type="tns:GetServiceInfoResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="Info" type="tns:ServiceInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetServices">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetServicesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetServicesResult" type="tns:GetServicesResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="Services" type="tns:ArrayOfServiceInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://purenetworks.com/HNAP1/">
+      <s:import namespace="http://cisco.com/HNAP/" />
+      <s:simpleType name="AddPortMappingResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="DeletePortMappingResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="DeviceType">
+        <s:restriction base="s:string">
+          <s:enumeration value="Computer" />
+          <s:enumeration value="ComputerServer" />
+          <s:enumeration value="DigitalDVR" />
+          <s:enumeration value="DigitalJukebox" />
+          <s:enumeration value="Gateway" />
+          <s:enumeration value="GatewayWithWiFi" />
+          <s:enumeration value="LaptopComputer" />
+          <s:enumeration value="MediaAdapter" />
+          <s:enumeration value="NetworkCamera" />
+          <s:enumeration value="NetworkDevice" />
+          <s:enumeration value="NetworkDrive" />
+          <s:enumeration value="NetworkGameConsole" />
+          <s:enumeration value="NetworkPDA" />
+          <s:enumeration value="NetworkPrintServer" />
+          <s:enumeration value="NetworkPrinter" />
+          <s:enumeration value="PhotoFrame" />
+          <s:enumeration value="SetTopBox" />
+          <s:enumeration value="VOIPDevice" />
+          <s:enumeration value="WiFiAccessPoint" />
+          <s:enumeration value="WiFiBridge" />
+          <s:enumeration value="WorkstationComputer" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="DownloadSpeedTestResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="FirmwareUploadResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetClientStatsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetConfigBlobResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetConnectedDevicesResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetDeviceSettings2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetDeviceSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetFirmwareSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetMACFilters2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetNetworkStatsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetPortMappingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetRouterLanSettings2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetRouterSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetWLanRadioFrequenciesResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetWLanRadioSecurityResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_BAD_RADIOID" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetWLanRadioSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_BAD_RADIOID" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetWLanRadiosResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetWanInfoResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="GetWanSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="IPProtocol">
+        <s:restriction base="s:string">
+          <s:enumeration value="TCP" />
+          <s:enumeration value="UDP" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="IsDeviceReadyResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="LANConnection">
+        <s:restriction base="s:string">
+          <s:enumeration value="LAN" />
+          <s:enumeration value="WAN" />
+          <s:enumeration value="WLAN 802.11a" />
+          <s:enumeration value="WLAN 802.11b" />
+          <s:enumeration value="WLAN 802.11g" />
+          <s:enumeration value="WLAN 802.11n" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="RebootResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="RenewWanConnectionResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="RestoreFactoryDefaultsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetAccessPointModeResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetConfigBlobResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetDeviceSettings2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_REMOTE_SSL_NEEDS_SSL" />
+          <s:enumeration value="ERROR_TIMEZONE_NOT_SUPPORTED" />
+          <s:enumeration value="ERROR_USERNAME_NOT_SUPPORTED" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetDeviceSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetMACFilters2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetRouterLanSettings2Result">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_BAD_IP_ADDRESS" />
+          <s:enumeration value="ERROR_BAD_IP_RANGE" />
+          <s:enumeration value="ERROR_BAD_RESERVATION" />
+          <s:enumeration value="ERROR_BAD_SUBNET" />
+          <s:enumeration value="ERROR_RESERVATIONS_NOT_SUPPORTED" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetRouterSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_DOMAIN_NOT_SUPPORTED" />
+          <s:enumeration value="ERROR_QOS_NOT_SUPPORTED" />
+          <s:enumeration value="ERROR_REMOTE_MANAGE_DEFAULT_PASSWORD" />
+          <s:enumeration value="ERROR_REMOTE_MANAGE_MUST_BE_SSL" />
+          <s:enumeration value="ERROR_REMOTE_MANAGE_NOT_SUPPORTED" />
+          <s:enumeration value="ERROR_REMOTE_SSL_NEEDS_SSL" />
+          <s:enumeration value="ERROR_REMOTE_SSL_NOT_SUPPORTED" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetWLanRadioFrequencyResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_BAD_RADIOID" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetWLanRadioSecurityResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_BAD_RADIOID" />
+          <s:enumeration value="ERROR_BAD_RADIUS_VALUES" />
+          <s:enumeration value="ERROR_ENCRYPTION_NOT_SUPPORTED" />
+          <s:enumeration value="ERROR_ILLEGAL_KEY_VALUE" />
+          <s:enumeration value="ERROR_KEY_RENEWAL_BAD_VALUE" />
+          <s:enumeration value="ERROR_TYPE_NOT_SUPPORTED" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetWLanRadioSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_BAD_CHANNEL" />
+          <s:enumeration value="ERROR_BAD_CHANNEL_WIDTH" />
+          <s:enumeration value="ERROR_BAD_MODE" />
+          <s:enumeration value="ERROR_BAD_RADIOID" />
+          <s:enumeration value="ERROR_BAD_SECONDARY_CHANNEL" />
+          <s:enumeration value="ERROR_BAD_SSID" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="SetWanSettingsResult">
+        <s:restriction base="s:string">
+          <s:enumeration value="OK" />
+          <s:enumeration value="REBOOT" />
+          <s:enumeration value="ERROR" />
+          <s:enumeration value="ERROR_AUTO_MTU_NOT_SUPPORTED" />
+          <s:enumeration value="ERROR_BAD_WANTYPE" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="TaskExtType">
+        <s:restriction base="s:string">
+          <s:enumeration value="Browser" />
+          <s:enumeration value="MessageBox" />
+          <s:enumeration value="PUI" />
+          <s:enumeration value="Silent" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="UpdateMethod">
+        <s:restriction base="s:string">
+          <s:enumeration value="HNAP_UPLOAD" />
+          <s:enumeration value="TFTP_UPLOAD" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="WANStatus">
+        <s:restriction base="s:string">
+          <s:enumeration value="CONNECTED" />
+          <s:enumeration value="CONNECTING" />
+          <s:enumeration value="DISCONNECTED" />
+          <s:enumeration value="LIMITED_CONNECTION" />
+          <s:enumeration value="UNKNOWN" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="WANType">
+        <s:restriction base="s:string">
+          <s:enumeration value="BigPond" />
+          <s:enumeration value="BridgedOnly" />
+          <s:enumeration value="DETECTING" />
+          <s:enumeration value="DHCP" />
+          <s:enumeration value="DHCPPPPoE" />
+          <s:enumeration value="Dynamic1483Bridged" />
+          <s:enumeration value="DynamicL2TP" />
+          <s:enumeration value="DynamicPPPOA" />
+          <s:enumeration value="DynamicPPTP" />
+          <s:enumeration value="Static" />
+          <s:enumeration value="Static1483Bridged" />
+          <s:enumeration value="Static1483Routed" />
+          <s:enumeration value="StaticIPOA" />
+          <s:enumeration value="StaticL2TP" />
+          <s:enumeration value="StaticPPPOA" />
+          <s:enumeration value="StaticPPPoE" />
+          <s:enumeration value="StaticPPTP" />
+          <s:enumeration value="UNKNOWN" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="WiFiEncryption">
+        <s:restriction base="s:string">
+          <s:enumeration value="" />
+          <s:enumeration value="AES" />
+          <s:enumeration value="TKIP" />
+          <s:enumeration value="TKIPORAES" />
+          <s:enumeration value="WEP-128" />
+          <s:enumeration value="WEP-64" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="WiFiMode">
+        <s:restriction base="s:string">
+          <s:enumeration value="" />
+          <s:enumeration value="802.11a" />
+          <s:enumeration value="802.11an" />
+          <s:enumeration value="802.11b" />
+          <s:enumeration value="802.11bg" />
+          <s:enumeration value="802.11bgn" />
+          <s:enumeration value="802.11bn" />
+          <s:enumeration value="802.11g" />
+          <s:enumeration value="802.11gn" />
+          <s:enumeration value="802.11n" />
+        </s:restriction>
+      </s:simpleType>
+      <s:simpleType name="WiFiSecurity">
+        <s:restriction base="s:string">
+          <s:enumeration value="" />
+          <s:enumeration value="WEP" />
+          <s:enumeration value="WEP-AUTO" />
+          <s:enumeration value="WEP-OPEN" />
+          <s:enumeration value="WEP-RADIUS" />
+          <s:enumeration value="WEP-SHARED" />
+          <s:enumeration value="WPA-AUTO-PSK" />
+          <s:enumeration value="WPA-PSK" />
+          <s:enumeration value="WPA-RADIUS" />
+          <s:enumeration value="WPA2-PSK" />
+          <s:enumeration value="WPA2-RADIUS" />
+        </s:restriction>
+      </s:simpleType>
+      <s:complexType name="ArrayOfClientStat">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ClientStat" type="t1:ClientStat" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfConnectedClient">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="ConnectedClient" type="t1:ConnectedClient" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfDHCPReservation">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="DHCPReservation" type="t1:DHCPReservation" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfInt">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="int" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfMACInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="MACInfo" type="t1:MACInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfNetworkStats">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="NetworkStats" type="t1:NetworkStats" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfPortMapping">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="PortMapping" type="t1:PortMapping" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfRadioFrequencyInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="RadioFrequencyInfo" type="t1:RadioFrequencyInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfRadioInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="RadioInfo" type="t1:RadioInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfSecurityInfo">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="SecurityInfo" type="t1:SecurityInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfString">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfTaskExtension">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="TaskExtension" type="t1:TaskExtension" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfUpdateMethod">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="t1:UpdateMethod" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfWANType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="t1:WANType" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfWiFiEncryption">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="t1:WiFiEncryption" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfWiFiMode">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="string" type="t1:WiFiMode" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfWideChannel">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="WideChannel" type="t1:WideChannel" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ClientStat">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="MacAddress" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Wireless" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="LinkSpeedIn" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="LinkSpeedOut" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="SignalStrength" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ConnectedClient">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="ConnectTime" type="s:dateTime" />
+          <s:element minOccurs="1" maxOccurs="1" name="MacAddress" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="DeviceName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="PortName" type="t1:LANConnection" />
+          <s:element minOccurs="1" maxOccurs="1" name="Wireless" type="s:boolean" />
+          <s:element minOccurs="1" maxOccurs="1" name="Active" type="s:boolean" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="DHCPReservation">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="DeviceName" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="IPAddress" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="MacAddress" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="DNSSettings">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Primary" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Secondary" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Tertiary" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="MACInfo">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="MacAddress" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="DeviceName" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="NetworkStats">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="PortName" type="t1:LANConnection" />
+          <s:element minOccurs="1" maxOccurs="1" name="PacketsReceived" type="s:long" />
+          <s:element minOccurs="1" maxOccurs="1" name="PacketsSent" type="s:long" />
+          <s:element minOccurs="1" maxOccurs="1" name="BytesReceived" type="s:long" />
+          <s:element minOccurs="1" maxOccurs="1" name="BytesSent" type="s:long" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="PortMapping">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="PortMappingDescription" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="InternalClient" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="PortMappingProtocol" type="t1:IPProtocol" />
+          <s:element minOccurs="1" maxOccurs="1" name="ExternalPort" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="InternalPort" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="RadioFrequencyInfo">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="RadioID" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Frequencies" type="t1:ArrayOfInt" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="RadioInfo">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="RadioID" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Frequency" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="SupportedModes" type="t1:ArrayOfWiFiMode" />
+          <s:element minOccurs="1" maxOccurs="1" name="Channels" type="t1:ArrayOfInt" />
+          <s:element minOccurs="1" maxOccurs="1" name="WideChannels" type="t1:ArrayOfWideChannel" />
+          <s:element minOccurs="1" maxOccurs="1" name="SupportedSecurity" type="t1:ArrayOfSecurityInfo" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="SecurityInfo">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="SecurityType" type="t1:WiFiSecurity" />
+          <s:element minOccurs="1" maxOccurs="1" name="Encryptions" type="t1:ArrayOfWiFiEncryption" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="TaskExtension">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Name" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="URL" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Type" type="t1:TaskExtType" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="WideChannel">
+        <s:sequence>
+          <s:element minOccurs="1" maxOccurs="1" name="Channel" type="s:int" />
+          <s:element minOccurs="1" maxOccurs="1" name="SecondaryChannels" type="t1:ArrayOfInt" />
+        </s:sequence>
+      </s:complexType>
+      <s:element name="AddPortMapping">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="PortMappingDescription" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="InternalClient" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="PortMappingProtocol" type="t1:IPProtocol" />
+            <s:element minOccurs="1" maxOccurs="1" name="ExternalPort" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="InternalPort" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="AddPortMappingResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="AddPortMappingResult" type="t1:AddPortMappingResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DeletePortMapping">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="PortMappingProtocol" type="t1:IPProtocol" />
+            <s:element minOccurs="1" maxOccurs="1" name="ExternalPort" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DeletePortMappingResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="DeletePortMappingResult" type="t1:DeletePortMappingResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DownloadSpeedTest">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="Bytes" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="BufferSize" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="DownloadSpeedTestResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="DownloadSpeedTestResult" type="t1:DownloadSpeedTestResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="ByteStream" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="FirmwareUpload">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="Base64Image" type="s:base64Binary" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="FirmwareUploadResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="FirmwareUploadResult" type="t1:FirmwareUploadResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetClientStats">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetClientStatsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetClientStatsResult" type="t1:GetClientStatsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="ClientStats" type="t1:ArrayOfClientStat" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetConfigBlob">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetConfigBlobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetConfigBlobResult" type="t1:GetConfigBlobResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="ConfigBlob" type="s:base64Binary" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetConnectedDevices">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetConnectedDevicesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetConnectedDevicesResult" type="t1:GetConnectedDevicesResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="ConnectedClients" type="t1:ArrayOfConnectedClient" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetDeviceSettings">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetDeviceSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetDeviceSettingsResult" type="t1:GetDeviceSettingsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="Type" type="t1:DeviceType" />
+            <s:element minOccurs="1" maxOccurs="1" name="DeviceName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="VendorName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="ModelDescription" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="ModelName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="FirmwareVersion" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="PresentationURL" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SOAPActions" type="t1:ArrayOfString" />
+            <s:element minOccurs="1" maxOccurs="1" name="SubDeviceURLs" type="t1:ArrayOfString" />
+            <s:element minOccurs="1" maxOccurs="1" name="Tasks" type="t1:ArrayOfTaskExtension" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetDeviceSettings2">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetDeviceSettings2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetDeviceSettings2Result" type="t1:GetDeviceSettings2Result" />
+            <s:element minOccurs="1" maxOccurs="1" name="SerialNumber" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="TimeZone" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="AutoAdjustDST" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="Locale" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SupportedLocales" type="t1:ArrayOfString" />
+            <s:element minOccurs="1" maxOccurs="1" name="SSL" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetFirmwareSettings">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetFirmwareSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetFirmwareSettingsResult" type="t1:GetFirmwareSettingsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="VendorName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="ModelName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="ModelRevision" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="FirmwareVersion" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="FirmwareDate" type="s:dateTime" />
+            <s:element minOccurs="1" maxOccurs="1" name="UpdateMethods" type="t1:ArrayOfUpdateMethod" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetMACFilters2">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetMACFilters2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetMACFilters2Result" type="t1:GetMACFilters2Result" />
+            <s:element minOccurs="1" maxOccurs="1" name="Enabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="IsAllowList" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="MACList" type="t1:ArrayOfMACInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetNetworkStats">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetNetworkStatsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetNetworkStatsResult" type="t1:GetNetworkStatsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="Stats" type="t1:ArrayOfNetworkStats" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetPortMappings">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetPortMappingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetPortMappingsResult" type="t1:GetPortMappingsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="PortMappings" type="t1:ArrayOfPortMapping" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRouterLanSettings2">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetRouterLanSettings2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetRouterLanSettings2Result" type="t1:GetRouterLanSettings2Result" />
+            <s:element minOccurs="1" maxOccurs="1" name="RouterIPAddress" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RouterSubnetMask" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="DHCPServerEnabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="IPAddressFirst" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="IPAddressLast" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="LeaseTime" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="DHCPReservations" type="t1:ArrayOfDHCPReservation" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetRouterSettings">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetRouterSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetRouterSettingsResult" type="t1:GetRouterSettingsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="ManageRemote" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="ManageWireless" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="RemotePort" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RemoteSSL" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="DomainName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="WiredQoS" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="WPSPin" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWLanRadioFrequencies">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetWLanRadioFrequenciesResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetWLanRadioFrequenciesResult" type="t1:GetWLanRadioFrequenciesResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadioFrequencyInfos" type="t1:ArrayOfRadioFrequencyInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWLanRadioSecurity">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RadioID" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWLanRadioSecurityResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetWLanRadioSecurityResult" type="t1:GetWLanRadioSecurityResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="Enabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="Type" type="t1:WiFiSecurity" />
+            <s:element minOccurs="1" maxOccurs="1" name="Encryption" type="t1:WiFiEncryption" />
+            <s:element minOccurs="1" maxOccurs="1" name="Key" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="KeyRenewal" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusIP1" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusPort1" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusSecret1" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusIP2" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusPort2" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusSecret2" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWLanRadioSettings">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RadioID" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWLanRadioSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetWLanRadioSettingsResult" type="t1:GetWLanRadioSettingsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="Enabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="Mode" type="t1:WiFiMode" />
+            <s:element minOccurs="1" maxOccurs="1" name="MacAddress" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SSID" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SSIDBroadcast" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="ChannelWidth" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="Channel" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="SecondaryChannel" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="QoS" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWLanRadios">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetWLanRadiosResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetWLanRadiosResult" type="t1:GetWLanRadiosResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadioInfos" type="t1:ArrayOfRadioInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWanInfo">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetWanInfoResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetWanInfoResult" type="t1:GetWanInfoResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="SupportedTypes" type="t1:ArrayOfWANType" />
+            <s:element minOccurs="1" maxOccurs="1" name="AutoDetectType" type="t1:WANType" />
+            <s:element minOccurs="1" maxOccurs="1" name="Status" type="t1:WANStatus" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="GetWanSettings">
+        <s:complexType />
+      </s:element>
+      <s:element name="GetWanSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="GetWanSettingsResult" type="t1:GetWanSettingsResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="Type" type="t1:WANType" />
+            <s:element minOccurs="1" maxOccurs="1" name="Username" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="Password" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="MaxIdleTime" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="MTU" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="ServiceName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="AutoReconnect" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="IPAddress" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SubnetMask" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="Gateway" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="DNS" type="t1:DNSSettings" />
+            <s:element minOccurs="1" maxOccurs="1" name="MacAddress" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="IsDeviceReady">
+        <s:complexType />
+      </s:element>
+      <s:element name="IsDeviceReadyResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="IsDeviceReadyResult" type="t1:IsDeviceReadyResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="Reboot">
+        <s:complexType />
+      </s:element>
+      <s:element name="RebootResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RebootResult" type="t1:RebootResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RenewWanConnection">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RenewTimeout" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RenewWanConnectionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RenewWanConnectionResult" type="t1:RenewWanConnectionResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="RestoreFactoryDefaults">
+        <s:complexType />
+      </s:element>
+      <s:element name="RestoreFactoryDefaultsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RestoreFactoryDefaultsResult" type="t1:RestoreFactoryDefaultsResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetAccessPointMode">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="IsAccessPoint" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetAccessPointModeResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetAccessPointModeResult" type="t1:SetAccessPointModeResult" />
+            <s:element minOccurs="1" maxOccurs="1" name="NewIPAddress" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetConfigBlob">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ConfigBlob" type="s:base64Binary" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetConfigBlobResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetConfigBlobResult" type="t1:SetConfigBlobResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetDeviceSettings">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="DeviceName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="AdminPassword" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetDeviceSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetDeviceSettingsResult" type="t1:SetDeviceSettingsResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetDeviceSettings2">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="Username" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="TimeZone" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="AutoAdjustDST" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="Locale" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SSL" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetDeviceSettings2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetDeviceSettings2Result" type="t1:SetDeviceSettings2Result" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetMACFilters2">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="Enabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="IsAllowList" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="MACList" type="t1:ArrayOfMACInfo" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetMACFilters2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetMACFilters2Result" type="t1:SetMACFilters2Result" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetRouterLanSettings2">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RouterIPAddress" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RouterSubnetMask" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="DHCPServerEnabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="IPAddressFirst" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="IPAddressLast" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="LeaseTime" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="DHCPReservations" type="t1:ArrayOfDHCPReservation" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetRouterLanSettings2Response">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetRouterLanSettings2Result" type="t1:SetRouterLanSettings2Result" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetRouterSettings">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="ManageRemote" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="ManageWireless" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="RemotePort" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RemoteSSL" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="DomainName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="WiredQoS" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetRouterSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetRouterSettingsResult" type="t1:SetRouterSettingsResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWLanRadioFrequency">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RadioID" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="Frequency" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWLanRadioFrequencyResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetWLanRadioFrequencyResult" type="t1:SetWLanRadioFrequencyResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWLanRadioSecurity">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RadioID" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="Enabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="Type" type="t1:WiFiSecurity" />
+            <s:element minOccurs="1" maxOccurs="1" name="Encryption" type="t1:WiFiEncryption" />
+            <s:element minOccurs="1" maxOccurs="1" name="Key" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="KeyRenewal" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusIP1" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusPort1" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusSecret1" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusIP2" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusPort2" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="RadiusSecret2" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWLanRadioSecurityResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetWLanRadioSecurityResult" type="t1:SetWLanRadioSecurityResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWLanRadioSettings">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="RadioID" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="Enabled" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="Mode" type="t1:WiFiMode" />
+            <s:element minOccurs="1" maxOccurs="1" name="SSID" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SSIDBroadcast" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="ChannelWidth" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="Channel" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="SecondaryChannel" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="QoS" type="s:boolean" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWLanRadioSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetWLanRadioSettingsResult" type="t1:SetWLanRadioSettingsResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWanSettings">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="Type" type="t1:WANType" />
+            <s:element minOccurs="1" maxOccurs="1" name="Username" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="Password" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="MaxIdleTime" type="s:int" />
+            <s:element minOccurs="1" maxOccurs="1" name="ServiceName" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="AutoReconnect" type="s:boolean" />
+            <s:element minOccurs="1" maxOccurs="1" name="IPAddress" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="SubnetMask" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="Gateway" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="DNS" type="t1:DNSSettings" />
+            <s:element minOccurs="1" maxOccurs="1" name="MacAddress" type="s:string" />
+            <s:element minOccurs="1" maxOccurs="1" name="MTU" type="s:int" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SetWanSettingsResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="1" maxOccurs="1" name="SetWanSettingsResult" type="t1:SetWanSettingsResult" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="GetServiceInfo">
+    <wsdl:part name="GetServiceInfo" element="tns:GetServiceInfo" />
+  </wsdl:message>
+  <wsdl:message name="GetServiceInfoResponse">
+    <wsdl:part name="GetServiceInfoResponse" element="tns:GetServiceInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetServices">
+    <wsdl:part name="GetServices" element="tns:GetServices" />
+  </wsdl:message>
+  <wsdl:message name="GetServicesResponse">
+    <wsdl:part name="GetServicesResponse" element="tns:GetServicesResponse" />
+  </wsdl:message>
+  <wsdl:message name="AddPortMapping">
+    <wsdl:part name="AddPortMapping" element="t1:AddPortMapping" />
+  </wsdl:message>
+  <wsdl:message name="AddPortMappingResponse">
+    <wsdl:part name="AddPortMappingResponse" element="t1:AddPortMappingResponse" />
+  </wsdl:message>
+  <wsdl:message name="DeletePortMapping">
+    <wsdl:part name="DeletePortMapping" element="t1:DeletePortMapping" />
+  </wsdl:message>
+  <wsdl:message name="DeletePortMappingResponse">
+    <wsdl:part name="DeletePortMappingResponse" element="t1:DeletePortMappingResponse" />
+  </wsdl:message>
+  <wsdl:message name="DownloadSpeedTest">
+    <wsdl:part name="DownloadSpeedTest" element="t1:DownloadSpeedTest" />
+  </wsdl:message>
+  <wsdl:message name="DownloadSpeedTestResponse">
+    <wsdl:part name="DownloadSpeedTestResponse" element="t1:DownloadSpeedTestResponse" />
+  </wsdl:message>
+  <wsdl:message name="FirmwareUpload">
+    <wsdl:part name="FirmwareUpload" element="t1:FirmwareUpload" />
+  </wsdl:message>
+  <wsdl:message name="FirmwareUploadResponse">
+    <wsdl:part name="FirmwareUploadResponse" element="t1:FirmwareUploadResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetClientStats">
+    <wsdl:part name="GetClientStats" element="t1:GetClientStats" />
+  </wsdl:message>
+  <wsdl:message name="GetClientStatsResponse">
+    <wsdl:part name="GetClientStatsResponse" element="t1:GetClientStatsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetConfigBlob">
+    <wsdl:part name="GetConfigBlob" element="t1:GetConfigBlob" />
+  </wsdl:message>
+  <wsdl:message name="GetConfigBlobResponse">
+    <wsdl:part name="GetConfigBlobResponse" element="t1:GetConfigBlobResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetConnectedDevices">
+    <wsdl:part name="GetConnectedDevices" element="t1:GetConnectedDevices" />
+  </wsdl:message>
+  <wsdl:message name="GetConnectedDevicesResponse">
+    <wsdl:part name="GetConnectedDevicesResponse" element="t1:GetConnectedDevicesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetDeviceSettings">
+    <wsdl:part name="GetDeviceSettings" element="t1:GetDeviceSettings" />
+  </wsdl:message>
+  <wsdl:message name="GetDeviceSettingsResponse">
+    <wsdl:part name="GetDeviceSettingsResponse" element="t1:GetDeviceSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetDeviceSettings2">
+    <wsdl:part name="GetDeviceSettings2" element="t1:GetDeviceSettings2" />
+  </wsdl:message>
+  <wsdl:message name="GetDeviceSettings2Response">
+    <wsdl:part name="GetDeviceSettings2Response" element="t1:GetDeviceSettings2Response" />
+  </wsdl:message>
+  <wsdl:message name="GetFirmwareSettings">
+    <wsdl:part name="GetFirmwareSettings" element="t1:GetFirmwareSettings" />
+  </wsdl:message>
+  <wsdl:message name="GetFirmwareSettingsResponse">
+    <wsdl:part name="GetFirmwareSettingsResponse" element="t1:GetFirmwareSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetMACFilters2">
+    <wsdl:part name="GetMACFilters2" element="t1:GetMACFilters2" />
+  </wsdl:message>
+  <wsdl:message name="GetMACFilters2Response">
+    <wsdl:part name="GetMACFilters2Response" element="t1:GetMACFilters2Response" />
+  </wsdl:message>
+  <wsdl:message name="GetNetworkStats">
+    <wsdl:part name="GetNetworkStats" element="t1:GetNetworkStats" />
+  </wsdl:message>
+  <wsdl:message name="GetNetworkStatsResponse">
+    <wsdl:part name="GetNetworkStatsResponse" element="t1:GetNetworkStatsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetPortMappings">
+    <wsdl:part name="GetPortMappings" element="t1:GetPortMappings" />
+  </wsdl:message>
+  <wsdl:message name="GetPortMappingsResponse">
+    <wsdl:part name="GetPortMappingsResponse" element="t1:GetPortMappingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetRouterLanSettings2">
+    <wsdl:part name="GetRouterLanSettings2" element="t1:GetRouterLanSettings2" />
+  </wsdl:message>
+  <wsdl:message name="GetRouterLanSettings2Response">
+    <wsdl:part name="GetRouterLanSettings2Response" element="t1:GetRouterLanSettings2Response" />
+  </wsdl:message>
+  <wsdl:message name="GetRouterSettings">
+    <wsdl:part name="GetRouterSettings" element="t1:GetRouterSettings" />
+  </wsdl:message>
+  <wsdl:message name="GetRouterSettingsResponse">
+    <wsdl:part name="GetRouterSettingsResponse" element="t1:GetRouterSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadioFrequencies">
+    <wsdl:part name="GetWLanRadioFrequencies" element="t1:GetWLanRadioFrequencies" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadioFrequenciesResponse">
+    <wsdl:part name="GetWLanRadioFrequenciesResponse" element="t1:GetWLanRadioFrequenciesResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadioSecurity">
+    <wsdl:part name="GetWLanRadioSecurity" element="t1:GetWLanRadioSecurity" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadioSecurityResponse">
+    <wsdl:part name="GetWLanRadioSecurityResponse" element="t1:GetWLanRadioSecurityResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadioSettings">
+    <wsdl:part name="GetWLanRadioSettings" element="t1:GetWLanRadioSettings" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadioSettingsResponse">
+    <wsdl:part name="GetWLanRadioSettingsResponse" element="t1:GetWLanRadioSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadios">
+    <wsdl:part name="GetWLanRadios" element="t1:GetWLanRadios" />
+  </wsdl:message>
+  <wsdl:message name="GetWLanRadiosResponse">
+    <wsdl:part name="GetWLanRadiosResponse" element="t1:GetWLanRadiosResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetWanInfo">
+    <wsdl:part name="GetWanInfo" element="t1:GetWanInfo" />
+  </wsdl:message>
+  <wsdl:message name="GetWanInfoResponse">
+    <wsdl:part name="GetWanInfoResponse" element="t1:GetWanInfoResponse" />
+  </wsdl:message>
+  <wsdl:message name="GetWanSettings">
+    <wsdl:part name="GetWanSettings" element="t1:GetWanSettings" />
+  </wsdl:message>
+  <wsdl:message name="GetWanSettingsResponse">
+    <wsdl:part name="GetWanSettingsResponse" element="t1:GetWanSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="IsDeviceReady">
+    <wsdl:part name="IsDeviceReady" element="t1:IsDeviceReady" />
+  </wsdl:message>
+  <wsdl:message name="IsDeviceReadyResponse">
+    <wsdl:part name="IsDeviceReadyResponse" element="t1:IsDeviceReadyResponse" />
+  </wsdl:message>
+  <wsdl:message name="Reboot">
+    <wsdl:part name="Reboot" element="t1:Reboot" />
+  </wsdl:message>
+  <wsdl:message name="RebootResponse">
+    <wsdl:part name="RebootResponse" element="t1:RebootResponse" />
+  </wsdl:message>
+  <wsdl:message name="RenewWanConnection">
+    <wsdl:part name="RenewWanConnection" element="t1:RenewWanConnection" />
+  </wsdl:message>
+  <wsdl:message name="RenewWanConnectionResponse">
+    <wsdl:part name="RenewWanConnectionResponse" element="t1:RenewWanConnectionResponse" />
+  </wsdl:message>
+  <wsdl:message name="RestoreFactoryDefaults">
+    <wsdl:part name="RestoreFactoryDefaults" element="t1:RestoreFactoryDefaults" />
+  </wsdl:message>
+  <wsdl:message name="RestoreFactoryDefaultsResponse">
+    <wsdl:part name="RestoreFactoryDefaultsResponse" element="t1:RestoreFactoryDefaultsResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetAccessPointMode">
+    <wsdl:part name="SetAccessPointMode" element="t1:SetAccessPointMode" />
+  </wsdl:message>
+  <wsdl:message name="SetAccessPointModeResponse">
+    <wsdl:part name="SetAccessPointModeResponse" element="t1:SetAccessPointModeResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetConfigBlob">
+    <wsdl:part name="SetConfigBlob" element="t1:SetConfigBlob" />
+  </wsdl:message>
+  <wsdl:message name="SetConfigBlobResponse">
+    <wsdl:part name="SetConfigBlobResponse" element="t1:SetConfigBlobResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetDeviceSettings">
+    <wsdl:part name="SetDeviceSettings" element="t1:SetDeviceSettings" />
+  </wsdl:message>
+  <wsdl:message name="SetDeviceSettingsResponse">
+    <wsdl:part name="SetDeviceSettingsResponse" element="t1:SetDeviceSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetDeviceSettings2">
+    <wsdl:part name="SetDeviceSettings2" element="t1:SetDeviceSettings2" />
+  </wsdl:message>
+  <wsdl:message name="SetDeviceSettings2Response">
+    <wsdl:part name="SetDeviceSettings2Response" element="t1:SetDeviceSettings2Response" />
+  </wsdl:message>
+  <wsdl:message name="SetMACFilters2">
+    <wsdl:part name="SetMACFilters2" element="t1:SetMACFilters2" />
+  </wsdl:message>
+  <wsdl:message name="SetMACFilters2Response">
+    <wsdl:part name="SetMACFilters2Response" element="t1:SetMACFilters2Response" />
+  </wsdl:message>
+  <wsdl:message name="SetRouterLanSettings2">
+    <wsdl:part name="SetRouterLanSettings2" element="t1:SetRouterLanSettings2" />
+  </wsdl:message>
+  <wsdl:message name="SetRouterLanSettings2Response">
+    <wsdl:part name="SetRouterLanSettings2Response" element="t1:SetRouterLanSettings2Response" />
+  </wsdl:message>
+  <wsdl:message name="SetRouterSettings">
+    <wsdl:part name="SetRouterSettings" element="t1:SetRouterSettings" />
+  </wsdl:message>
+  <wsdl:message name="SetRouterSettingsResponse">
+    <wsdl:part name="SetRouterSettingsResponse" element="t1:SetRouterSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetWLanRadioFrequency">
+    <wsdl:part name="SetWLanRadioFrequency" element="t1:SetWLanRadioFrequency" />
+  </wsdl:message>
+  <wsdl:message name="SetWLanRadioFrequencyResponse">
+    <wsdl:part name="SetWLanRadioFrequencyResponse" element="t1:SetWLanRadioFrequencyResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetWLanRadioSecurity">
+    <wsdl:part name="SetWLanRadioSecurity" element="t1:SetWLanRadioSecurity" />
+  </wsdl:message>
+  <wsdl:message name="SetWLanRadioSecurityResponse">
+    <wsdl:part name="SetWLanRadioSecurityResponse" element="t1:SetWLanRadioSecurityResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetWLanRadioSettings">
+    <wsdl:part name="SetWLanRadioSettings" element="t1:SetWLanRadioSettings" />
+  </wsdl:message>
+  <wsdl:message name="SetWLanRadioSettingsResponse">
+    <wsdl:part name="SetWLanRadioSettingsResponse" element="t1:SetWLanRadioSettingsResponse" />
+  </wsdl:message>
+  <wsdl:message name="SetWanSettings">
+    <wsdl:part name="SetWanSettings" element="t1:SetWanSettings" />
+  </wsdl:message>
+  <wsdl:message name="SetWanSettingsResponse">
+    <wsdl:part name="SetWanSettingsResponse" element="t1:SetWanSettingsResponse" />
+  </wsdl:message>
+  <wsdl:portType name="HNAP">
+    <wsdl:operation name="GetServiceInfo">
+      <wsdl:input message="tns:GetServiceInfo" />
+      <wsdl:output message="tns:GetServiceInfoResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetServices">
+      <wsdl:input message="tns:GetServices" />
+      <wsdl:output message="tns:GetServicesResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="AddPortMapping">
+      <wsdl:input message="tns:AddPortMapping" />
+      <wsdl:output message="tns:AddPortMappingResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="DeletePortMapping">
+      <wsdl:input message="tns:DeletePortMapping" />
+      <wsdl:output message="tns:DeletePortMappingResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSpeedTest">
+      <wsdl:input message="tns:DownloadSpeedTest" />
+      <wsdl:output message="tns:DownloadSpeedTestResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="FirmwareUpload">
+      <wsdl:input message="tns:FirmwareUpload" />
+      <wsdl:output message="tns:FirmwareUploadResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetClientStats">
+      <wsdl:input message="tns:GetClientStats" />
+      <wsdl:output message="tns:GetClientStatsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetConfigBlob">
+      <wsdl:input message="tns:GetConfigBlob" />
+      <wsdl:output message="tns:GetConfigBlobResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetConnectedDevices">
+      <wsdl:input message="tns:GetConnectedDevices" />
+      <wsdl:output message="tns:GetConnectedDevicesResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetDeviceSettings">
+      <wsdl:input message="tns:GetDeviceSettings" />
+      <wsdl:output message="tns:GetDeviceSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetDeviceSettings2">
+      <wsdl:input message="tns:GetDeviceSettings2" />
+      <wsdl:output message="tns:GetDeviceSettings2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="GetFirmwareSettings">
+      <wsdl:input message="tns:GetFirmwareSettings" />
+      <wsdl:output message="tns:GetFirmwareSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetMACFilters2">
+      <wsdl:input message="tns:GetMACFilters2" />
+      <wsdl:output message="tns:GetMACFilters2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="GetNetworkStats">
+      <wsdl:input message="tns:GetNetworkStats" />
+      <wsdl:output message="tns:GetNetworkStatsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetPortMappings">
+      <wsdl:input message="tns:GetPortMappings" />
+      <wsdl:output message="tns:GetPortMappingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRouterLanSettings2">
+      <wsdl:input message="tns:GetRouterLanSettings2" />
+      <wsdl:output message="tns:GetRouterLanSettings2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="GetRouterSettings">
+      <wsdl:input message="tns:GetRouterSettings" />
+      <wsdl:output message="tns:GetRouterSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadioFrequencies">
+      <wsdl:input message="tns:GetWLanRadioFrequencies" />
+      <wsdl:output message="tns:GetWLanRadioFrequenciesResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadioSecurity">
+      <wsdl:input message="tns:GetWLanRadioSecurity" />
+      <wsdl:output message="tns:GetWLanRadioSecurityResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadioSettings">
+      <wsdl:input message="tns:GetWLanRadioSettings" />
+      <wsdl:output message="tns:GetWLanRadioSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadios">
+      <wsdl:input message="tns:GetWLanRadios" />
+      <wsdl:output message="tns:GetWLanRadiosResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetWanInfo">
+      <wsdl:input message="tns:GetWanInfo" />
+      <wsdl:output message="tns:GetWanInfoResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="GetWanSettings">
+      <wsdl:input message="tns:GetWanSettings" />
+      <wsdl:output message="tns:GetWanSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="IsDeviceReady">
+      <wsdl:input message="tns:IsDeviceReady" />
+      <wsdl:output message="tns:IsDeviceReadyResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="Reboot">
+      <wsdl:input message="tns:Reboot" />
+      <wsdl:output message="tns:RebootResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="RenewWanConnection">
+      <wsdl:input message="tns:RenewWanConnection" />
+      <wsdl:output message="tns:RenewWanConnectionResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="RestoreFactoryDefaults">
+      <wsdl:input message="tns:RestoreFactoryDefaults" />
+      <wsdl:output message="tns:RestoreFactoryDefaultsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetAccessPointMode">
+      <wsdl:input message="tns:SetAccessPointMode" />
+      <wsdl:output message="tns:SetAccessPointModeResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetConfigBlob">
+      <wsdl:input message="tns:SetConfigBlob" />
+      <wsdl:output message="tns:SetConfigBlobResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetDeviceSettings">
+      <wsdl:input message="tns:SetDeviceSettings" />
+      <wsdl:output message="tns:SetDeviceSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetDeviceSettings2">
+      <wsdl:input message="tns:SetDeviceSettings2" />
+      <wsdl:output message="tns:SetDeviceSettings2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="SetMACFilters2">
+      <wsdl:input message="tns:SetMACFilters2" />
+      <wsdl:output message="tns:SetMACFilters2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="SetRouterLanSettings2">
+      <wsdl:input message="tns:SetRouterLanSettings2" />
+      <wsdl:output message="tns:SetRouterLanSettings2Response" />
+    </wsdl:operation>
+    <wsdl:operation name="SetRouterSettings">
+      <wsdl:input message="tns:SetRouterSettings" />
+      <wsdl:output message="tns:SetRouterSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetWLanRadioFrequency">
+      <wsdl:input message="tns:SetWLanRadioFrequency" />
+      <wsdl:output message="tns:SetWLanRadioFrequencyResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetWLanRadioSecurity">
+      <wsdl:input message="tns:SetWLanRadioSecurity" />
+      <wsdl:output message="tns:SetWLanRadioSecurityResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetWLanRadioSettings">
+      <wsdl:input message="tns:SetWLanRadioSettings" />
+      <wsdl:output message="tns:SetWLanRadioSettingsResponse" />
+    </wsdl:operation>
+    <wsdl:operation name="SetWanSettings">
+      <wsdl:input message="tns:SetWanSettings" />
+      <wsdl:output message="tns:SetWanSettingsResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="HNAP" type="tns:HNAP">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="GetServiceInfo">
+      <soap:operation soapAction="http://cisco.com/HNAP/GetServiceInfo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetServices">
+      <soap:operation soapAction="http://cisco.com/HNAP/GetServices" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddPortMapping">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/AddPortMapping" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeletePortMapping">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/DeletePortMapping" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DownloadSpeedTest">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/DownloadSpeedTest" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="FirmwareUpload">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/FirmwareUpload" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetClientStats">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetClientStats" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetConfigBlob">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetConfigBlob" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetConnectedDevices">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetConnectedDevices" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetDeviceSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetDeviceSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetDeviceSettings2">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetDeviceSettings2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetFirmwareSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetFirmwareSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetMACFilters2">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetMACFilters2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetNetworkStats">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetNetworkStats" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetPortMappings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetPortMappings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRouterLanSettings2">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetRouterLanSettings2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetRouterSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetRouterSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadioFrequencies">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetWLanRadioFrequencies" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadioSecurity">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetWLanRadioSecurity" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadioSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetWLanRadioSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetWLanRadios">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetWLanRadios" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetWanInfo">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetWanInfo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetWanSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/GetWanSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="IsDeviceReady">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/IsDeviceReady" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Reboot">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/Reboot" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RenewWanConnection">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/RenewWanConnection" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RestoreFactoryDefaults">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/RestoreFactoryDefaults" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetAccessPointMode">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetAccessPointMode" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetConfigBlob">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetConfigBlob" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetDeviceSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetDeviceSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetDeviceSettings2">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetDeviceSettings2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetMACFilters2">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetMACFilters2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetRouterLanSettings2">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetRouterLanSettings2" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetRouterSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetRouterSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetWLanRadioFrequency">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetWLanRadioFrequency" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetWLanRadioSecurity">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetWLanRadioSecurity" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetWLanRadioSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetWLanRadioSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SetWanSettings">
+      <soap:operation soapAction="http://purenetworks.com/HNAP1/SetWanSettings" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="HNAP">
+    <wsdl:port name="HNAP" binding="tns:HNAP">
+      <soap:address location="" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

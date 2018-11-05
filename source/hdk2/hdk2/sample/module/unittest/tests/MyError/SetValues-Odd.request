@@ -1,0 +1,11 @@
+SOAPAction: "http://cisco.com/mymodule/SetValues"
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <SetValues xmlns="http://cisco.com/mymodule/">
+      <a>7</a>
+      <b>22</b>
+    </SetValues>
+  </soap:Body>
+</soap:Envelope>

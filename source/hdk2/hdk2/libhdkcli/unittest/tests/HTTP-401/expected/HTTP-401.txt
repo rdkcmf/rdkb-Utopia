@@ -1,0 +1,55 @@
++++++++ Request Headers +++++++
+HTTP/1.1 POST /HNAP1
+Connection: Close
+Content-Type: text/xml; charset="utf-8"
+Content-Length: 316
+Authorization: Basic Og==
+SOAPAction: "http://cisco.com/Unittest/SimpleUnittestMethod"
+Host: localhost:8080
+
++++++++ Request Data +++++++
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SimpleUnittestMethod xmlns="http://cisco.com/Unittest/">
+<StringArg0>a string argument &amp; 1 &lt;</StringArg0>
+<BoolArg0>true</BoolArg0>
+<IntArg0>-1000</IntArg0>
+</SimpleUnittestMethod>
+</Body>
+</Envelope>
+
+
+------- Response -------
+HTTP/1.1 401 Authorization Required
+WWW-Authenticate: Basic realm="HNAP1"
+Content-Type: text/html
+Connection: close
+
+<html>
+<head>
+<title>401 Authorization Required</title>
+</head>
+<body>
+401 Authorization Required
+</body>
+</html>
+
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/SimpleUnittestMethod
+        HTTP host: http://localhost:8080
+Network Object ID: (null)
+    HTTP username: (null)
+    HTTP password: (null)
+          timeout: 0
+       HNAP input: HTTP-401.input.xml
+
+HNAP call failed with error HttpAuth (5)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 78 times
+malloc_interposer.c - exit: free called 78 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 18642
+malloc_interposer.c - exit: malloc max = 11168
+malloc_interposer.c - ************************************************************

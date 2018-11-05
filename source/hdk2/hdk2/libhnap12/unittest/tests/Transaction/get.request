@@ -1,0 +1,36 @@
+SOAPAction: "http://cisco.com/HNAP/Transaction"
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <Transaction xmlns="http://cisco.com/HNAP/">
+      <Requests>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_2.4GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+        <TransactionRequest>
+          <Action>http://purenetworks.com/HNAP1/GetWLanRadioSettings</Action>
+          <Request>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soap:Body&gt;
+    &lt;GetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/"&gt;
+      &lt;RadioID&gt;RADIO_5GHz&lt;/RadioID&gt;
+    &lt;/GetWLanRadioSettings&gt;
+  &lt;/soap:Body&gt;
+&lt;/soap:Envelope&gt;</Request>
+        </TransactionRequest>
+
+      </Requests>
+    </Transaction>
+  </soap:Body>
+</soap:Envelope>

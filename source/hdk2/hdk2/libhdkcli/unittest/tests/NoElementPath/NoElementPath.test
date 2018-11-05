@@ -1,0 +1,7 @@
+#
+# NoElementPath.test
+#   Test the handling of schemas which don't have an element path.
+#
+
+method: http://cisco.com/Unittest/NoInputOutputPathMethod
+host: http://127.0.0.1:8080

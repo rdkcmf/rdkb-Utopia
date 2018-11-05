@@ -1,0 +1,36 @@
+stringArrayRead (size: 5, empty: false)
+[
+"This is a string",
+"in an array of strings...",
+"hooray...",
+"still more strings",
+"... last one!"
+]
+stringArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<StringArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</StringArray>
+stringArrayWrite (size: 4, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<StringArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<string>Why</string>
+<string>are manholes round?</string>
+<string>...</string>
+<string>Because manhole covers are.</string>
+</StringArray>
+stringArrayCopy (size: 5, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<StringArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<string>Why</string>
+<string>are manholes round?</string>
+<string>...</string>
+<string>Because manhole covers are.</string>
+<string>Why</string>
+</StringArray>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 57 times
+malloc_interposer.c - exit: free called 57 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10282
+malloc_interposer.c - exit: malloc max = 9854
+malloc_interposer.c - ************************************************************

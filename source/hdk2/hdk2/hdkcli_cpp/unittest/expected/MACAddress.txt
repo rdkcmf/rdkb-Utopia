@@ -1,0 +1,73 @@
+macDefaultConstructor: 
+  IsBlank: true
+macDefaultConstructor == HDK::MACAddress::Blank()
+macDefaultConstructor != macBroadcast
+macDefaultConstructor != macZero
+
+macHdkConstructor: 01:02:03:04:05:06
+  IsBlank: false
+macHdkConstructor != HDK::MACAddress::Blank()
+macHdkConstructor != macBroadcast
+macHdkConstructor != macZero
+
+macHdkNullConstructor: 
+  IsBlank: true
+macHdkNullConstructor == HDK::MACAddress::Blank()
+macHdkNullConstructor != macBroadcast
+macHdkNullConstructor != macZero
+
+macHdkRefConstructor: 01:02:03:04:05:06
+  IsBlank: false
+macHdkRefConstructor != HDK::MACAddress::Blank()
+macHdkRefConstructor != macBroadcast
+macHdkRefConstructor != macZero
+
+macCopyConstructor: 01:02:03:04:05:06
+  IsBlank: false
+macCopyConstructor != HDK::MACAddress::Blank()
+macCopyConstructor != macBroadcast
+macCopyConstructor != macZero
+macCopyConstructor == macHdkRefConstructor
+
+macBroadcast: FF:FF:FF:FF:FF:FF
+  IsBlank: false
+macBroadcast != HDK::MACAddress::Blank()
+macBroadcast != macZero
+
+HDK::MACAddress::Blank(): 
+  IsBlank: true
+
+FromString():
+  '00:00:00:00:00:00' --> valid (00:00:00:00:00:00)
+  '0:0:0:0:0:0' --> NOT valid
+  ':::::' --> NOT valid
+  '000:0000:000:000:000:000' --> NOT valid
+  '6:5:4:3:2:1' --> NOT valid
+  '00:1C:4b:35:42:E1' --> valid (00:1C:4B:35:42:E1)
+  'FF:FF:FF:FF:FF:FF' --> valid (FF:FF:FF:FF:FF:FF)
+  '00:1D:4B:G5:42:X1' --> NOT valid
+  '00:1D:4B:E5:42.21' --> NOT valid
+  '00:1D:4B:E5:42.21:09' --> NOT valid
+  '00:1D:4B:E5:42.f00' --> NOT valid
+  '00:1D:4B:E5:42:fFF' --> NOT valid
+  '00:1D::E05:42:f0' --> NOT valid
+  ' 	  00:13:FF:33:10:c0' --> valid (00:13:FF:33:10:C0)
+  '00:33:41:2B:A3:d2 	  
+ ' --> valid (00:33:41:2B:A3:D2)
+  '  	  
+ 00:1D:F4:E0:11:A3 	  
+ ' --> valid (00:1D:F4:E0:11:A3)
+  '00:1D:42:f0' --> NOT valid
+  '0022334455' --> NOT valid
+  '' --> valid (00:00:00:00:00:00)
+  'foo' --> NOT valid
+  '  0   0:1
+C:4b:	3 5:42:    E1 ' --> NOT valid
+  '(null)' --> NOT valid
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 42 times
+malloc_interposer.c - exit: free called 42 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 3108
+malloc_interposer.c - exit: malloc max = 148
+malloc_interposer.c - ************************************************************

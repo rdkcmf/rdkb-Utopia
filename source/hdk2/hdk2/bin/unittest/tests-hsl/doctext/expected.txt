@@ -1,0 +1,327 @@
+Actions:
+
+  http://purenetworks.com/HNAP1/MyAction
+
+    namespace: http://purenetworks.com/HNAP1/
+    name: MyAction
+    doctext:
+      My action definition
+    resultMember: http://purenetworks.com/HNAP1/MyActionResult
+    inputMember:
+
+      http://purenetworks.com/HNAP1/MyAction
+
+        name: MyAction
+        namespace: http://purenetworks.com/HNAP1/
+        type: http://purenetworks.com/HNAP1/MyAction
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://purenetworks.com/HNAP1/MyAction
+
+        namespace: http://purenetworks.com/HNAP1/
+        name: MyAction
+        schemaName: MyAction
+        parserOrder: 5
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://purenetworks.com/HNAP1/MyActionResponse
+
+        name: MyActionResponse
+        namespace: http://purenetworks.com/HNAP1/
+        type: http://purenetworks.com/HNAP1/MyActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://purenetworks.com/HNAP1/MyActionResponse
+
+        namespace: http://purenetworks.com/HNAP1/
+        name: MyActionResponse
+        schemaName: MyActionResponse
+        parserOrder: 5
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://purenetworks.com/HNAP1/MyActionResult
+
+            name: MyActionResult
+            namespace: http://purenetworks.com/HNAP1/
+            type: http://purenetworks.com/HNAP1/MyActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+Types:
+
+  http://purenetworks.com/HNAP1/ArrayOfMyEnum (all_types)
+
+    namespace: http://purenetworks.com/HNAP1/
+    name: ArrayOfMyEnum
+    schemaName: ArrayOfMyEnum
+    parserOrder: 3
+    isBuiltin: False
+    isArray: True
+    isStruct: True
+    isEnum: False
+    arrayType: http://purenetworks.com/HNAP1/MyEnum
+    members:
+
+      http://purenetworks.com/HNAP1/string
+
+        name: string
+        namespace: http://purenetworks.com/HNAP1/
+        type: http://purenetworks.com/HNAP1/MyEnum
+        isUnbounded: True
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://purenetworks.com/HNAP1/ArrayOfMyStruct (all_types)
+
+    namespace: http://purenetworks.com/HNAP1/
+    name: ArrayOfMyStruct
+    schemaName: ArrayOfMyStruct
+    parserOrder: 4
+    isBuiltin: False
+    isArray: True
+    isStruct: True
+    isEnum: False
+    arrayType: http://purenetworks.com/HNAP1/MyStruct
+    members:
+
+      http://purenetworks.com/HNAP1/MyStruct
+
+        name: MyStruct
+        namespace: http://purenetworks.com/HNAP1/
+        type: http://purenetworks.com/HNAP1/MyStruct
+        isUnbounded: True
+        isOptional: True
+        isCSV: False
+        isErrorOutput: False
+
+  http://purenetworks.com/HNAP1/EnumsAndStructArrays
+
+    namespace: http://purenetworks.com/HNAP1/
+    name: EnumsAndStructArrays
+    schemaName: EnumsAndStructArrays
+    parserOrder: 2
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://purenetworks.com/HNAP1/a
+
+        name: a
+        namespace: http://purenetworks.com/HNAP1/
+        doctext:
+          My "a" array member
+        type: http://purenetworks.com/HNAP1/ArrayOfMyEnum
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://purenetworks.com/HNAP1/b
+
+        name: b
+        namespace: http://purenetworks.com/HNAP1/
+        doctext:
+          My "b" array member
+        type: http://purenetworks.com/HNAP1/ArrayOfMyStruct
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://purenetworks.com/HNAP1/MyActionResult (all_types)
+
+    namespace: http://purenetworks.com/HNAP1/
+    name: MyActionResult
+    schemaName: MyActionResult
+    parserOrder: 5
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+      "ERROR_MY_BAD"
+
+    enumValuesEx:
+
+      "OK"
+      "ERROR"
+      "ERROR_MY_BAD"
+        doctext:
+          My error
+
+  http://purenetworks.com/HNAP1/MyEnum
+
+    namespace: http://purenetworks.com/HNAP1/
+    name: MyEnum
+    doctext:
+      My enumeration definition
+      
+      Another line about my enumeration
+    schemaName: MyEnum
+    parserOrder: 0
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "Value1"
+      "Value2"
+      "Value3"
+
+    enumValuesEx:
+
+      "Value1"
+        doctext:
+          My first value
+      "Value2"
+        doctext:
+          My second value
+      "Value3"
+        doctext:
+          My third value
+
+  http://purenetworks.com/HNAP1/MyStruct
+
+    namespace: http://purenetworks.com/HNAP1/
+    name: MyStruct
+    doctext:
+      My structure definition
+      
+      Another line about my structure
+      
+    schemaName: MyStruct
+    parserOrder: 1
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://purenetworks.com/HNAP1/a
+
+        name: a
+        namespace: http://purenetworks.com/HNAP1/
+        doctext:
+          My "a" member
+        type: http://www.w3.org/2001/XMLSchema/int
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://purenetworks.com/HNAP1/b
+
+        name: b
+        namespace: http://purenetworks.com/HNAP1/
+        doctext:
+          My "b" member
+          ...and some more
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://www.w3.org/2001/XMLSchema/int (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: int
+    schemaName: int
+    parserOrder: -2
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+  http://www.w3.org/2001/XMLSchema/string (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: string
+    schemaName: string
+    parserOrder: -3
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+DocSections:
+
+    type: h1
+    title: Top section
+    doctext:
+      This is some section text.
+      More section text.
+
+    type: h2
+    title: Subsection
+    doctext:
+      Subsection text
+
+    type: h3
+    title: Level 3
+    doctext:
+      Threeeee
+
+    type: h4
+    title: four
+    doctext:
+      h4 para
+
+    type: title
+    title: Title
+
+    type: version
+    title: Version
+
+    type: date
+    title: Date
+
+    type: abstract
+    title: Abstract
+    doctext:
+      In Abstract
+
+    type: copyright
+    title: Copyright Notice
+    doctext:
+      Copyright whoever
+
+    type: h1
+    title: Top section 2
+    doctext:
+      Yet more text...
+
+Errors:
+
+  doctext/test.hsl:46: Unknown documentation section type
+  doctext/test.hsl:48: Empty documentation section title
+  doctext/test.hsl:50: Unknown documentation section type

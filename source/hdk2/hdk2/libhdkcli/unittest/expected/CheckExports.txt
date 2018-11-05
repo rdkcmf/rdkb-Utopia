@@ -1,0 +1,6 @@
+HDK_CLI_Cleanup (FUNC)
+HDK_CLI_Init (FUNC)
+HDK_CLI_RegisterLoggingCallback (FUNC)
+HDK_CLI_Request (FUNC)
+_fini (FUNC)
+_init (FUNC)

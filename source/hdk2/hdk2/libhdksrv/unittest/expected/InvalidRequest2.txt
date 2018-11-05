@@ -1,0 +1,24 @@
+500 Internal Server Error
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 245
+
+<?xml version="1.0" ?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+<soap:Fault>
+<faultcode>soap:Client</faultcode>
+<faultstring>Invalid request XML</faultstring>
+</soap:Fault>
+</soap:Body>
+</soap:Envelope>
+
+Handled = 1
+Error = 1
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 26 times
+malloc_interposer.c - exit: free called 26 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 7529
+malloc_interposer.c - exit: malloc max = 7529
+malloc_interposer.c - ************************************************************

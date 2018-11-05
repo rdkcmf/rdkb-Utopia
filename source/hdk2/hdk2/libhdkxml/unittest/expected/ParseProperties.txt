@@ -1,0 +1,182 @@
+[1..1] Valid (single):
+
+Content Length (Computed)= 92
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>
+<a>3</a>
+</b>
+</a>
+
+Content Length (Actual) = 92
+Struct valid: 1
+
+========================================
+[1..1] Invalid (missing):
+
+Content Length (Computed)= 83
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>
+</b>
+</a>
+
+Content Length (Actual) = 83
+Struct valid: 0
+
+========================================
+[0..1] Valid (single):
+
+Content Length (Computed)= 92
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<c>
+<a>3</a>
+</c>
+</a>
+
+Content Length (Actual) = 92
+Struct valid: 1
+
+========================================
+[0..1] Valid (missing):
+
+Content Length (Computed)= 83
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<c>
+</c>
+</a>
+
+Content Length (Actual) = 83
+Struct valid: 1
+
+========================================
+[0..1] Invalid (multiple):
+
+Content Length (Computed)= 92
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<c>
+<a>3</a>
+</c>
+</a>
+
+Content Length (Actual) = 92
+Struct valid: 0
+
+========================================
+[1..Inf] Invalid (missing):
+
+Content Length (Computed)= 83
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<d>
+</d>
+</a>
+
+Content Length (Actual) = 83
+Struct valid: 0
+
+========================================
+[1..Inf] Valid (single):
+
+Content Length (Computed)= 92
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<d>
+<a>3</a>
+</d>
+</a>
+
+Content Length (Actual) = 92
+Struct valid: 1
+
+========================================
+[1..Inf] Valid (multiple):
+
+Content Length (Computed)= 101
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<d>
+<a>3</a>
+<a>4</a>
+</d>
+</a>
+
+Content Length (Actual) = 101
+Struct valid: 1
+
+========================================
+[0..Inf] Valid (missing):
+
+Content Length (Computed)= 83
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<e>
+</e>
+</a>
+
+Content Length (Actual) = 83
+Struct valid: 1
+
+========================================
+[0..Inf] Valid (single):
+
+Content Length (Computed)= 92
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<e>
+<a>3</a>
+</e>
+</a>
+
+Content Length (Actual) = 92
+Struct valid: 1
+
+========================================
+[0..Inf] Valid (multiple):
+
+Content Length (Computed)= 101
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<e>
+<a>3</a>
+<a>4</a>
+</e>
+</a>
+
+Content Length (Actual) = 101
+Struct valid: 1
+
+========================================
+Any element:
+
+Content Length (Computed)= 83
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<f>
+</f>
+</a>
+
+Content Length (Actual) = 83
+Struct valid: 1
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 343 times
+malloc_interposer.c - exit: free called 343 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 91893
+malloc_interposer.c - exit: malloc max = 7964
+malloc_interposer.c - ************************************************************

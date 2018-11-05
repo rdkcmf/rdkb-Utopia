@@ -1,0 +1,960 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+namespace "http://purenetworks.com/HNAP1/"
+
+
+#@@ top Top
+#@ <img class="logo" src="@images/cisco_logo.png" width="151" height="80" alt="CISCO" />
+#@@ end
+
+#@@ title Core
+#@@ version 1.2 (Rev 9)
+#@@ date February 2010
+
+#@@ abstract Abstract
+#@ This document describes the details of the HNAP 1.2 core protocol.
+#@@ end
+
+#@@ h2 Change History
+#@ <table summary="Revision History">
+#@ <tr><th>Revision<th>Date<th>Notes
+#@ <tr><td>7<td>2009-02-04<td>
+#@ Added device types "SetTopBox" and "WiFiBridge".
+#@ <tr><td>8<td>2009-06-24<td>
+#@ Added ERROR_REMOTE_SSL_NEEDS_SSL code
+#@ <tr><td>9<td>2010-02-<td>
+#@ Re-written in HSL
+#@ </table>
+#@@ end
+
+#@@ h2 Introduction
+#@ The Home Network Administration Protocol (HNAP) is an HTTP-SOAP based protocol
+#@ that can be implemented inside of network devices to allow advanced programmatic configuration and management by remote entities.
+
+#@ HNAP was designed to be a simple light weight protocol that is easy to implement
+#@ inside of small cost-constrained hardware such as network Routers, Cameras and other small devices.
+#@ As the protocol is based on top of existing HTTP-SOAP standards,
+#@ it is very flexible and easily extensible to new scenarios.
+
+#@ By implementing HNAP,
+#@ device vendors can provide added value for devices
+#@ by allowing management entities (for example, Network Magic) to discover and interact with them.
+#@@ end
+
+#@@ h2 Design Overview
+
+#@@ h3 Protocol Design
+#@ The HNAP protocol is based on the well known WC3 HTTP-SOAP 1.1 standard
+#@ defined in <a href="http://www.w3.org/TR/2000/NOTE-SOAP-20000508/">http://www.w3.org/TR/2000/NOTE-SOAP-20000508/</a>
+#@
+#@ While HNAP uses SOAP formatting for its encoding on the wire,
+#@ it does not require a full SOAP implementation in order to be implemented.
+#@ HNAP uses a small subset of the overall SOAP specification, namely:
+#@ <ul>
+#@ <li> Standard SOAP Envelope and SOAPAction HTTP header.
+#@ <li> Standard encoding for SOAP methods inside the SOAP body.
+#@ <li> XML-Namespace for standard HNAP methods and vendor extensions.
+#@ </ul>
+#@ HNAP does not use other features of SOAP - such as security, SOAP Faults, complex types etc.
+#@ This is an important distinction,
+#@ as small cost-constrained devices often do not have enough free memory etc to host a full SOAP implementation.
+#@ They only need to be able to parse XML enough to understand the semantics of HNAP using the simple SOAP encoding scheme.
+#@
+#@ When an HNAP client detects a device on the network,
+#@ it issues an HNAP discovery command to determine if the device in question supports HNAP,
+#@ and if so will continue communicating by issuing various HNAP methods against the device.
+#@
+#@ A sample request from an HNAP client to an embedded HNAP server might look something like:
+#@
+#@ <p class="http"><tt>
+#@ POST /HNAP1/ HTTP/1.1<br />
+#@ Host: 192.168.0.1<br />
+#@ Authorization: Basic YWMEHZY+<br />
+#@ Content-Type: text/xml; charset=utf-8<br />
+#@ Content-Length: 300<br />
+#@ SOAPAction: "http://purenetworks.com/HNAP1/GetDeviceSettings"<br />
+#@ <br />
+#@ &lt;?xml version="1.0" encoding="utf-8"?&gt;<br />
+#@ &lt;soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"<br />
+#@ xmlns:xsd="http://www.w3.org/2001/XMLSchema"<br />
+#@ xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;<br />
+#@ &nbsp;&nbsp;&lt;soap:Body&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;GetDeviceSettings xmlns="http://purenetworks.com/HNAP1/" /&gt;<br />
+#@ &nbsp;&nbsp;&lt;/soap:Body&gt;<br />
+#@ &lt;/soap:Envelope&gt;
+#@ </tt></p>
+#@
+#@ With the exception of the discovery command,
+#@ all requests to the HNAP server are performed as an HTTP POST to <tt>http://<var>device IP</var>/HNAP1/</tt>
+#@
+#@ The HTTP headers contain a SOAPAction field that defines the particular method being invoked.
+#@ The payload of the HTTP body is an XML data block describing the parameters for the method invocation encoded in SOAP.
+#@
+#@ You will also notice that an Authorization header is included to authenticate the caller.
+#@@ end
+
+#@@ h3 Protocol Security
+#@ HNAP 1.1 leverages the same simple security mechanism available in most consumer routers and devices today
+#@ - BASIC authentication,
+#@ defined in RFC 2617, located at <a href="http://www.ietf.org/rfc/rfc2617.txt">http://www.ietf.org/rfc/rfc2617.txt</a>.
+#@ It is recommended that an HNAP client attempt to use default credentials to negotiate with the device.
+#@ If these default credentials are invalid (for example, the user has manually set a password different from the factory default),
+#@ then the client should prompt the user for credentials so that it may manage the device.
+#@
+#@ The HNAP protocol can also run over SSL to provide enhanced transport level security.
+#@@ end
+
+
+#@@ h3 Protocol Short Hand Notation
+#@ In an effort to simplify the readability of this document, a pseudo short hand notation has been designed.
+#@ This notation is used for convenience and ease of understanding
+#@ to describe the input and output parameters required for each SOAP action.
+#@ Note that the short-hand notation is serialized as XML when used as part of the protocol.
+#@ The pseudo notation is in the following format:
+#@
+#@ <tt><var>return type</var>&nbsp;<var>method name</var>&nbsp;(<var>arguments</var>)</tt>
+#@
+#@ - where <var>arguments</var> contains
+#@ a comma separated list of parameters describing their name as serialized in XML and their type.
+#@ Each parameter also has a direction modifier prefix - either <tt>out</tt> or <tt>in</tt>.
+#@ The presence of the <tt>in</tt> modifier indicates that the parameter is to be supplied as part of the request data.
+#@ The presence of the <tt>out</tt> modifier indicates that the parameter should be returned by HNAP Server as part of a response.
+#@ If the direction modifier is omitted, it is assumed to be an <tt>in</tt> parameter.
+#@
+#@ For each method invocation, a request is formed in SOAP by the client and takes the following form:
+#@
+#@ <p class="http"><tt>
+#@ &lt;?xml version="1.0" encoding="utf-8"?&gt;<br />
+#@ &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;<br />
+#@ &nbsp;&nbsp;&lt;Body&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;<var>method name</var> xmlns="<var>namespace</var>"&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<var>inbound arguments</var><br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;/<var>method name</var>&gt;<br />
+#@ &nbsp;&nbsp;&lt;/Body&gt;<br />
+#@ &lt;/Envelope&gt;
+#@ </tt></p>
+#@
+#@ where <var>inbound arguments</var> is an XML serialized list of inbound parameters from the <var>arguments</var> list.
+#@
+#@ Once the HNAP server processes the request, it returns a response in the following form:
+#@
+#@ <p class="http"><tt>
+#@ &lt;?xml version="1.0" encoding="utf-8"?&gt;<br />
+#@ &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;<br />
+#@ &nbsp;&nbsp;&lt;Body&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;<var>method name</var>Response&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;<var>method name</var>Result&gt;OK&lt;/<var>method name</var>Result&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<var>outbound arguments</var><br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;/<var>method name</var>Response&gt;<br />
+#@ &nbsp;&nbsp;&lt;/Body&gt;<br />
+#@ &lt;/Envelope&gt;
+#@ </tt></p>
+#@
+#@ where <var>outbound arguments</var> is an XML serialized list of outbound parameters from the <var>arguments</var> list,
+#@ and the <tt>&lt;<var>method name</var>Result&gt;</tt> element
+#@ contains the result of the operation as defined by the type specified in <var>return type</var>.
+#@ For example, the short hand notation for the GetFirmwareSettings call is described as:
+#@
+#@ <p class="http"><tt>
+#@ string GetFirmwareSettings(<br />
+#@ &nbsp;&nbsp;out string VendorName,<br />
+#@ &nbsp;&nbsp;out string ModelName,<br />
+#@ &nbsp;&nbsp;out string ModelRevision,<br />
+#@ &nbsp;&nbsp;out string FirmwareVersion,<br />
+#@ &nbsp;&nbsp;out DateTime FirmwareDate,<br />
+#@ &nbsp;&nbsp;out string[] UpdateMethods)
+#@ </tt></p>
+#@
+#@ This call would be serialized in SOAP as follows:
+#@
+#@ <b>Request</b>
+#@
+#@ <p class="http"><tt>
+#@ &lt;?xml version="1.0" encoding="utf-8"?&gt;<br />
+#@ &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;<br />
+#@ &nbsp;&nbsp;&lt;Body&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;GetFirmwareSettings xmlns="http://purenetworks.com/HNAP1/" /&gt;<br />
+#@ &nbsp;&nbsp;&lt;/Body&gt;<br />
+#@ &lt;/Envelope&gt;
+#@ </tt></p>
+#@
+#@ <b>Response</b>
+#@
+#@ <p class="http"><tt>
+#@ &lt;?xml version="1.0" encoding="utf-8"?&gt;<br />
+#@ &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;<br />
+#@ &nbsp;&nbsp;&lt;Body&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;GetFirmwareSettingsResponse xmlns="http://purenetworks.com/HNAP1/"><br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;GetFirmwareSettingsResult&gt;<var><a href="#enum.GetFirmwareSettingsResult"><span class="type">GetFirmwareSettingsResult</span></a> value</var>&lt;/GetFirmwareSettingsResult&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;VendorName&gt;<var><span class="type">string</span> value</var>&lt;/VendorName&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ModelName&gt;<var><span class="type">string</span> value</var>&lt;/ModelName&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ModelRevision&gt;<var><span class="type">string</span> value</var>&lt;/ModelRevision&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;FirmwareVersion&gt;<var><span class="type">string</span> value</var>&lt;/FirmwareVersion&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;FirmwareDate&gt;<var><span class="type">DateTime</span> value</var>&lt;/FirmwareDate&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;UpdateMethods&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;string&gt;<var><a href="#enum.UpdateMethod"><span class="type">UpdateMethod</span></a> value</var>&lt;/string&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/UpdateMethods&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;/GetFirmwareSettingsResponse><br />
+#@ &nbsp;&nbsp;&lt;/Body&gt;<br />
+#@ &lt;/Envelope&gt;<br />
+#@ </tt></p>
+#@@ end
+
+#@@ h3 Implementing a secure HNAP device
+#@ For devices that wish to implement a secure HNAP server, the following guidelines for clients and servers should be observed:
+#@ <ul>
+#@ <li>An HNAP client should always attempt to perform the initial GET request on Port 80.
+#@ <li>An HNAP server may choose to return an HTTP redirect to the GET request,
+#@ sending the client to an <tt>https://</tt> URL or by specifying an alternative secure port as part of the URL,
+#@ for example, <tt>http://192.168.1.1:8080/HNAP1/</tt>
+#@ <li>An HNAP client should follow the redirect and issue the GET at the new location.
+#@ <li>An HNAP client should respect the new location for all subsequent POSTS to perform SOAP actions.
+#@ <li>If no response is obtained on Port 80 initially, the HNAP client should attempt to connect on the default SSL port (443).
+#@ <li>For performance reasons,
+#@ an HNAP client may choose to cache the redirected location for a given device and initiate the root GET request at this location.
+#@ If this request fails, it should reset its cached state and rediscover as shown above.
+#@ </ul>
+#@@ end
+
+#@@ h3 Result Codes
+#@ All HNAP methods return a result as a string value. This string can have one of the following values:
+#@ <table summary="Result Codes">
+#@ <tr><th>Result Code<th>Meaning
+#@ <tr><td><tt>OK</tt>
+#@ <td>The operation completed successfully, all the parameters were fine,
+#@ and all configuration changes were applied without requiring a reboot.
+#@ <tr><td><tt>ERROR</tt>
+#@ <td>The operation failed. No configuration changes were applied and the device is in the same state as before the call.
+#@ This is used in a generic failure case where no other information is available.
+#@ <tr><td><tt>ERROR_<var>code</var></tt>
+#@ <td>Specific error codes are prefixed with <tt>ERROR_</tt> many methods have this prefix error code throughout the document.
+#@ A client should expect any result stating with this prefix to be an error condition
+#@ and lookup on a per-method basis the meaning of that error code.
+#@ <tr><td><tt>REBOOT</tt>
+#@ <td>The operation completed successfully, all the parameters were fine.
+#@ The device will become unavailable for a while (typically to reboot) to apply the changes.
+#@ The device must not return <tt>OK</tt> to <tt>IsDeviceReady</tt>
+#@ until changes are applied and it is ready to process HNAP calls again.
+#@ The device MUST also respond the HTTP request with the reboot response prior to starting the reboot.
+#@ </table>
+#@ Reboots should be avoided whenever possible since they will result in
+#@ less responsive clients and networks that go up and down (visibly) when configuration changes are made.
+#@@ end
+
+#@@ h3 Other Considerations
+#@ HNAP calls should always overwrite current values.
+#@ More specifically, if a parameter is passed as a null or empty string,
+#@ it means <q>clear this field</q> rather than <q>leave the current contents</q>.
+#@
+#@ As an example, the <tt>SetWanSettings</tt> call for DHCP mode would be:
+#@
+#@ <p class="http"><tt>
+#@ &lt;SetWanSettings xmlns="http://purenetworks.com/HNAP1/"&gt;<br />
+#@ &nbsp;&nbsp;&lt;Type&gt;DHCP&lt;/Type&gt;<br />
+#@ &nbsp;&nbsp;&lt;Username /&gt;<br />
+#@ &nbsp;&nbsp;&lt;Password /&gt;<br />
+#@ &nbsp;&nbsp;&lt;MaxIdleTime&gt;0&lt;/MaxIdleTime&gt;<br />
+#@ &nbsp;&nbsp;&lt;ServiceName /&gt;<br />
+#@ &nbsp;&nbsp;&lt;AutoReconnect&gt;false&lt;/AutoReconnect&gt;<br />
+#@ &nbsp;&nbsp;&lt;IPAddress /&gt;<br />
+#@ &nbsp;&nbsp;&lt;SubnetMask /&gt;<br />
+#@ &nbsp;&nbsp;&lt;Gateway /&gt;<br />
+#@ &nbsp;&nbsp;&lt;DNS&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;Primary /&gt;<br />
+#@ &nbsp;&nbsp;&nbsp;&nbsp;&lt;Secondary /&gt;<br />
+#@ &nbsp;&nbsp;&lt;/DNS&gt;<br />
+#@ &nbsp;&nbsp;&lt;MacAddress&gt;00:0e:44:45:fe:de&lt;/MacAddress&gt;<br />
+#@ &nbsp;&nbsp;&lt;MTU&gt;1500&lt;/MTU&gt;<br />
+#@ &lt;/SetWanSettings&gt;
+#@ </tt></p>
+#@ As a result of this call
+#@ the <tt>DNS</tt> entries and the <tt>IPAddress</tt> and <tt>SubnetMask</tt> in the WAN side of the router will be cleared.
+#@@ end
+
+
+#@@ h2 HNAP Discovery
+#@ There are two primary phases to HNAP discovery:
+#@ <ol>
+#@ <li><b>Location Discovery</b>
+#@
+#@ Location Discovery finds the location (IP Address) of an HNAP device that is connected to the same network as the HNAP client.
+#@
+#@ <li><b>Capability Discovery</b>
+#@
+#@ Capability Discovery allows an HNAP client, given an IP Address of a device on the network,
+#@ to determine if it's an HNAP-capable device and what methods it supports.
+#@ </ol>
+#@
+#@ <img src="@images/ssdp.png" width="203" height="220" alt="SSDP transaction" />
+#@
+#@@ end
+
+#@@ h3 Location Discovery
+#@ HNAP takes advantage of the existing SSDP discovery protocol to locate HNAP devices on a network.
+#@ SSDP is an IETF draft that has been adopted by UPnP for discovery and is found in many small consumer devices today.
+#@ The draft spec for SSDP can be found at
+#@ <a href="http://tools.ietf.org/html/draft-cai-ssdp-v1-03">http://tools.ietf.org/html/draft-cai-ssdp-v1-03</a>.
+#@
+#@ For an HNAP 1.2 compliant device, it is REQUIRED that a device implement SSDP discovery according to the details below.
+#@@ end
+
+#@@ h4 Location Discovery Scenarios
+#@ There are two key scenarios for device location discovery that HNAP is concerned with:
+#@ <ol>
+#@ <li><b>Searching for a device on an existing network</b>
+#@
+#@ When an HNAP client comes online, it may need to locate one or more devices on the network.
+#@ Some HNAP clients may choose to search for all devices of a specific type, for example "Network Printers".
+#@ Other HNAP clients may discover all HNAP-capable devices on the network.
+#@
+#@ <li><b>Notifying other devices of presence</b>
+#@
+#@ When an HNAP server device joins an existing network, it should notify other HNAP devices on the network of its existence.
+#@@ end
+
+#@@ h4 Guidelines for SSDP Discovery
+#@ As per the SSDP specification, all ssdp:discover and ssdp:alive messages described below
+#@ are simple UDP packets that are sent out on the multicast address 239.255.255.250 on port 1900.
+#@@ end
+
+#@@ h4 Searching for HNAP Devices
+#@ To locate all HNAP devices on a network, an HNAP client should issue an ssdp:discover message.
+#@ The search type (<tt>ST</tt>) requested depends on what the client wants to discover.
+#@ There are four variants, these MUST be implemented by all devices:
+#@
+#@ <ul>
+#@ <li><b><tt>ssdp:all</tt></b>
+#@
+#@ This is a search for all devices.
+#@ Any device that wishes to be discovered should respond to this ssdp:discover message.
+#@ If the device implements other SSDP services (such as UPnP), it may send additional responses to this request.
+#@
+#@ Request example:
+#@
+#@ <p class="http"><tt>
+#@ M-SEARCH * HTTP/1.1<br />
+#@ Host: 239.255.255.250:1900<br />
+#@ Man: "ssdp:discover"<br />
+#@ ST: ssdp:all<br />
+#@ MX: 3
+#@ </tt></p>
+#@
+#@ <li><b><tt>hnap:all</tt></b>
+#@
+#@ This is a search for all devices that implement HNAP.
+#@ This search type is a special case used to return all devices that implement HNAP.
+#@ Any device that wishes to be discovered should respond to this <tt>ssdp:discover</tt> message.
+#@
+#@ Request example:
+#@
+#@ <p class="http"><tt>
+#@ M-SEARCH * HTTP/1.1<br />
+#@ Host: 239.255.255.250:1900<br />
+#@ Man: "ssdp:discover"<br />
+#@ ST: hnap:all<br />
+#@ MX: 3
+#@ </tt></p>
+#@
+#@ <li><b><tt>hnap:<var>DeviceType</var></tt></b>
+#@
+#@ This search type allows HNAP devices of a particular type to be discovered.
+#@ <var>DeviceType</var> can be any valid value from the <tt>Type</tt> parameter of <tt>GetDeviceSettings</tt>.
+#@ Only devices that see a query where <var>DeviceType</var> matches their type should respond to this query.
+#@
+#@ Request example (for a network camera):
+#@
+#@ <p class="http"><tt>
+#@ M-SEARCH * HTTP/1.1<br />
+#@ Host: 239.255.255.250:1900<br />
+#@ Man: "ssdp:discover"<br />
+#@ ST: hnap:NetworkCamera<br />
+#@ MX: 3
+#@ </tt></p>
+#@
+#@ <li><b><tt>uuid:<var>UUID</var></tt></b>
+#@
+#@ This is a search for a particular device, identified by its UUID.
+#@ Only the device with that UUID should respond.
+#@
+#@ Request example:
+#@
+#@ <p class="http"><tt>
+#@ M-SEARCH * HTTP/1.1<br />
+#@ Host: 239.255.255.250:1900<br />
+#@ Man: "ssdp:discover"<br />
+#@ ST: uuid:abcdefgh-1234-5678-abcd-001122334455<br />
+#@ MX: 3
+#@ </tt></p>
+#@ </ul>
+#@
+#@ Search response:
+#@
+#@ <p class="http"><tt>
+#@ HTTP/1.1 200 OK<br />
+#@ Ext:<br />
+#@ Cache-Control: no-cache="Ext", max-age = 5000<br />
+#@ ST: hnap:NetworkCamera<br />
+#@ USN: uuid:abcdefgh-1234-5678-abcd-001122334455<br />
+#@ Location: http://192.168.1.100/HNAP1/
+#@ </tt></p>
+#@
+#@ <b>Note:</b> The response should include the full type of the HNAP device in the <tt>ST</tt> header.
+#@ The device should also respond with a globally unique ID in the <tt>USN</tt> header
+#@ that can be used to refer to the device later on.
+#@@ end
+
+#@@ h4 Notification To Other HNAP Devices
+#@ When an HNAP device joins the network for the first time or changes its IP address via DHCP or a configuration change,
+#@ it should send out a notification to other devices.
+#@ A notification when a device exits the network is not required.
+#@ Typically in a home environment this is an unpredictable event -
+#@ consumers pull the power on small devices rather than shut them down in an orderly fashion.
+#@ The format of the notification is shown below.
+#@@ end
+
+#@@ h4 Notification Format
+#@ <p class="http"><tt>
+#@ NOTIFY * HTTP/1.1<br />
+#@ Host: 239.255.255.250:1900<br />
+#@ NT: hnap:NetworkPrinter<br />
+#@ NTS: ssdp:alive<br />
+#@ Location: http://192.168.1.15/HNAP1/<br />
+#@ USN: uuid:abcdefgh-1234-5678-abcd-001122334455<br />
+#@ Cache-Control: max-age = 1800
+#@ </tt></p>
+#@
+#@ The device should advertise its device type in the <tt>NT</tt> header
+#@ and a URL to its HNAP connection in the <tt>Location</tt> header.
+#@ It should also include a globally unique <tt>USN</tt> header to allow clients to keep track of the device.
+#@@ end
+
+#@@ h4 Implementation Notes &amp; Backwards Compatibility
+#@ Prior to version 1.2, HNAP did not make any recommendations for standardized location discovery of devices.
+#@ As HNAP was initially focused on primary gateway devices,
+#@ typically the gateway IP address was an indicator of device presence
+#@ and the <q>Capability Discovery</q> procedure could be used to determine if a device at a given IP address supported HNAP.
+#@ HNAP clients also used other means of device discovery (eg. subnet scan) to locate devices.
+#@
+#@ HNAP clients should be aware that legacy devices exist
+#@ and test device IP addresses discovered by other means for HNAP via the Capability Discovery procedure.
+#@@ end
+
+#@@ h4 Interoperability with other SSDP-based protocols
+#@ The UUID used for HNAP over SSDP <b>must not</b> be the same as that used by any other SSDP-based protocol (such as UPnP).
+#@@ end
+
+#@@ h3 Capability Discovery
+#@ When an HNAP client needs to determine if a device at a given IP address supports HNAP and what methods are supported,
+#@ it uses the capability discovery method detailed below.
+#@
+#@ This HNAP capability discovery method is a simple HTTP GET request against a well known directory on the device Web service.
+#@ It is assumed that the Web service is running on port 80, or port 443 (SSL).
+#@ If an alternate port is preferred,
+#@ the response to the default GET request on port 80 may redirect to an alternate location and port
+#@ for all subsequent POST requests.
+#@
+#@ An HNAP client must perform an HTTP GET against the following URL:
+#@
+#@ <tt>http://<var>device-ip</var>/HNAP1/</tt>
+#@
+#@ The response to this call should be the same response as to a call to GetDeviceSettings
+#@ (for example, a POST to <tt>/HNAP1/</tt> with <tt>SOAPAction:&nbsp;"http://purenetworks.com/HNAP1/GetDeviceSettings"</tt>)
+#@ including a <tt>200&nbsp;OK</tt> HTTP response code.
+#@
+#@ This expected response informs an HNAP client that the HNAP protocol is supported by this device.
+#@ A device may choose to implement a subset of the full HNAP protocol,
+#@ and will return all supported functions as part of the <tt>SOAPActions</tt> field.
+#@
+#@ HNAP clients should determine the methods supported by this device
+#@ by inspecting the returned SOAPActions field before invoking those methods.
+#@@ end
+
+#@@ h3 Getting the Service URL
+#@ The <q>root</q> device responds to requests on the URL <tt>/HNAP1/</tt>.
+#@@ end
+
+#@@ h3 Authentication Method
+#@ This protocol uses HTTP basic authentication for security.
+#@ Every SOAP action should be protected by authentication requirements.
+#@ However, the initial GET request on the root HNAP location must not require authentication.
+#@
+#@ When failing an authentication request, an HNAP server should return an HTTP <tt>401&nbsp;UNAUTHORIZED</tt> error,
+#@ rather than succeed the HTTP request with an HNAP-specific error code.
+#@
+#@ As described in the previous section, an implementation of HNAP may choose to enforce SSL access to the SOAP actions
+#@ to ensure transport security and prevent sniffing of credentials passed from the client.
+#@@ end
+
+#@@ h3 Core Methods Overview
+#@ This table lists the available SOAP actions and their purpose.
+#@ The detailed parameters are described in the following sections.
+#@@ end
+
+#@@ h4 Core Devices
+#@ <table summary="SOAP actions">
+#@ <tr><th>SOAP Action<th>Purpose
+#@ <tr><td><tt>GetDeviceSettings</tt>
+#@ <td>Discovery of properties and information about the device,
+#@ including custom properties and tasks and basic device capabilities.
+#@
+#@ The list of SOAPActions returned by this call describes which of the other HNAP APIs are implemented by this device.
+#@ <tr><td><tt>SetDeviceSettings</tt>
+#@ <td>Set a new name for the device and change the admin password.
+#@ <tr><td><tt>GetDeviceSettings2</tt><br /><tt>SetDeviceSettings2</tt>
+#@ <td>Allows configuration of extended information such as serial number, time zone, locale information, etc.
+#@ <tr><td><tt>IsDeviceReady</tt>
+#@ <td>Used to poll a network device during a reboot sequence to determine if the device is ready to process HNAP requests.
+#@ <tr><td><tt>Reboot</tt>
+#@ <td>Requests that a device perform a soft-restart.
+#@ <tr><td><tt>GetFirmwareSettings</tt><br /><tt>FirmwareUpload</tt>
+#@ <td>Used to manage firmware in a device.
+#@ <tr><td><tt>DownloadSpeedTest</tt>
+#@ <td>Used to perform a direct speed test against the device to measure link speed performance.
+#@ </table>
+#@@ end
+
+
+#
+# Enumerations
+#
+
+enum DeviceType
+    "Computer"
+    "ComputerServer"
+    "WorkstationComputer"
+    "LaptopComputer"
+    #@ router without WiFi
+    "Gateway"
+    #@ router with WiFi
+    "GatewayWithWiFi"
+    "DigitalDVR"
+    "DigitalJukebox"
+    "MediaAdapter"
+    "NetworkCamera"
+    "NetworkDevice"
+    "NetworkDrive"
+    "NetworkGameConsole"
+    "NetworkPDA"
+    "NetworkPrinter"
+    "NetworkPrintServer"
+    "PhotoFrame"
+    "VOIPDevice"
+    "WiFiAccessPoint"
+    "SetTopBox"
+    "WiFiBridge"
+
+
+enum TaskExtType
+    #@ A new browser window opens to the specified URL.
+    "Browser"
+    #@ A client message box opens with the text/plain results returned from the given URL.
+    "MessageBox"
+    #@ A Pure Networks User Interface (PUI) dialog is launched with the results of the given URL.
+    "PUI"
+    #@ A request is sent to the router at the given URL and no further client actions are performed.
+    "Silent"
+
+
+enum UpdateMethod
+    #@ The device supports uploading of firmware via the TFTP protocol via the WRQ operation on the standard TFTP port (69).
+    "TFTP_UPLOAD"
+    #@ The device supports firmware uploading via the FirmwareUpload HNAP method.
+    "HNAP_UPLOAD"
+
+
+#
+# Structures
+#
+
+#@ Used to represent a set of TaskExtensions provided by an HNAP device.
+#@ Task extensions allow devices to describe custom tasks to differentiate themselves from other devices.
+#@
+#@ For example, a network camera might expose a <q>View Video</q> task or <q>Configure Wireless</q>,
+#@ that takes the user directly to pages on their device.
+struct TaskExtension
+    #@ Friendly name for this task that is shown to the user.
+    string Name
+    #@ URL to be executed when this task is activated.
+    string URL
+    TaskExtType Type
+
+
+#
+# Actions
+#
+
+#@ Use this method to discover device capabilities.
+#@ To be compliant, a valid HNAP device should follow these guidelines:
+#@ <ul>
+#@ <li> It MUST implement the <tt>GetDeviceSettings</tt> method.
+#@ <li> It MUST return a list of <tt>SOAPActions</tt> to describe which of the other HNAP methods are supported by this device.
+#@ <li> It MUST perform this action in response to an HTTP <tt>GET</tt> request to <tt>/HNAP1/</tt>
+#@ as described in Capability Discovery on page 10,
+#@ in addition to a normal <tt>POST</tt> request for this action.
+#@ This <tt>GET</tt> request <strong>must not</strong> require authentication when requests are issued from the local LAN or WLAN.
+#@ For device detection requirements,
+#@ a client may not yet have credentials to determine the basic capabilities of the device.
+#@ <li> The SOAP issued GetDeviceSettings request should be protected by normal authentication rules as per all other methods.
+#@ </ul>
+action GetDeviceSettings
+
+    output
+
+        #@ The type of the device.
+        #@ Setting the correct type enables device management entities (e.g. Network Magic)
+        #@ to recognize the device and display the correct icon for it on the network map.
+        DeviceType Type
+
+        #@ The name to use for this device.
+        #@ This name is used for the following:
+        #@ <ul>
+        #@ <li>An end-user-recognizable string to associate with their device.
+        #@ For example, Network Magic uses this value to associate the device with an icon on the network map.
+        #@ <li>DHCP leases and other network identification
+        #@ </ul>
+        #@
+        #@ Notes
+        #@
+        #@ To avoid truncating, select a name that will fit the limited space in the map.
+        #@ Because the map uses proportional space fonts,
+        #@ the maximum recommended length for this name is between 18 and 22 characters.
+        #@
+        #@ Example:
+        #@
+        #@ If your device is named Acme Media Adapter Model 1500A, consider using a name that fits the available space in the map:
+        #@
+        #@ <tt>Acme Media Adapter<br/>
+        #@ Acme Media 1500A<br/>
+        #@ Acme Adapter 1500A</tt>
+        string DeviceName
+
+        #@ The name of the device's manufacturer.
+        #@ Use this in combination with <tt>ModelName</tt> (below).
+        string VendorName
+
+        #@ A brief description of the device (typically, one sentence).
+        string ModelDescription
+
+        #@ The device's model.
+        #@ Use this in combination with <tt>VendorName</tt> (above).
+        string ModelName
+
+        #@ The device's firmware version (for example, <tt>1.02</tt>).
+        #@
+        #@ While the format is specific to the manufacturer,
+        #@ you should set this up so that a string-comparison using normal, Roman sort orders
+        #@ can distinguish the difference between a newer firmware version and an older version.
+        string FirmwareVersion
+
+        #@ A URL to the Web-based user interface for administering the device.
+        #@ Use either an absolute path or a relative path.
+        string PresentationURL
+
+        #@ A list of all <tt>SOAPAction</tt>s that the device supports.
+        #@ This determines which subset of HNAP the device supports.
+        string[] SOAPActions
+
+        #@ leave empty
+        string[] SubDeviceURLs
+
+        #@ A task extension used to extend the user experience of the device management software
+        #@ (e.g. Network Magic) in a custom way for a given device.
+        #@
+        #@ A list of tasks that the device management software can expose in its user interface (UI).
+        #@
+        #@ A <b>task</b> shows up as a clickable link in the device's <b>Tasks</b> box in the Network Map.
+        #@ When the user clicks the link,
+        #@ the user's default Web browser on the computer opens and displays the page for the specified URL.
+        TaskExtension[] Tasks
+
+
+#@ Use this method to set a new name for the device. Use basic HTTP authentication with this method.
+action SetDeviceSettings
+
+    input
+
+        #@ A user-readable friendly name to use for this device. This name is used for the following:
+        #@
+        #@ <ul>
+        #@ <li>End users associate this name with devices when displayed by device management software
+        #@ (for example, the icon that displays in Network Magic's network map for this device).
+        #@ <li>You should use it for DHCP leases and other network identification.
+        #@ </ul>
+        string DeviceName
+
+        #@ The administrator password for this device.
+        string AdminPassword
+
+    result
+        "REBOOT"
+
+
+#@ Use this method to obtain extended information about a network device.
+#@ Unlike <tt>GetDeviceSettings</tt> this call should require authentication.
+action GetDeviceSettings2
+
+    output
+
+        #@ Serial number of the device.
+        #@ No specific format.
+        #@ Assumed to be human-readable in the event a user is asked for the serial number for support purposes.
+        #@ Access is read-only.
+        string SerialNumber
+
+        #@ Time zone the device is currently configured in.
+        #@
+        #@ Time zone information should be represented in the following format: <tt>UTC[(+/-)hh:mm]</tt>
+        #@
+        #@ Some valid examples are:
+        #@
+        #@ <tt>UTC</tt><br />
+        #@ <tt>UTC-08:00</tt><br />
+        #@ <tt>UTC+05:30</tt>
+        #@
+        #@ If time zone information is not supported for this device, it is recommended that UTC is returned.
+        string TimeZone
+
+        #@ <tt>true</tt>: The device should automatically adjust the time to account for daylight savings.<br />
+        #@ <tt>false</tt>: The device will not automatically adjust the time for daylight savings.
+        bool AutoAdjustDST
+
+        #@ Locale (in RFC 3066 format) that the router is currently configured for.
+        #@
+        #@ Example: <tt>en-us</tt> would be for an US English device.
+        string Locale
+
+        #@ Array containing all of the locales that a device supports changing between.
+        #@ These are the values that may be passed to <tt>SetDeviceSettings2</tt>.
+        #@ Each locale is represented in RFC 3066 format as described above.
+        #@
+        #@ Note that in some cases, changing locale of a given device can affect values returned by other settings.
+        #@ For example, in a router device,
+        #@ changing locale can affect the valid channels returned from the <tt>GetWLanRadios</tt> method.
+        string[] SupportedLocales
+
+        #@ Indicates if the secure SSL port is available.
+        #@
+        #@ <tt>true</tt>: the default SSL port (443) is open for this device and it will accept HNAP requests over SSL.<br />
+        #@ <tt>false</tt>: this device does not support SSL, or the setting is currently disabled.
+        #@ In either case, the SSL port is closed.
+        #@
+        #@ <b>Note:</b> An HNAP client should NOT use this setting to determine if a device requires management over SSL.
+        #@ If a particular device does require SSL management,
+        #@ then it should accept incoming connections on the non-SSL port and redirect requests to the SSL port.
+        bool SSL
+
+
+#@ Use this method to configure extended information for a network device, including changing a devices active language.
+#@
+#@ All devices authenticate with a username/password pair.
+#@ The username may be user-configurable, static or optional depending on the device implementation.
+action SetDeviceSettings2
+
+    input
+
+        #@ Value to be used for the administrative username of the device.
+        #@
+        #@ <b>Notes</b>
+        #@ <ul>
+        #@ <li>Many devices do not support modification of the administrative username.
+        #@ If an HNAP client is not intending to modify this value,
+        #@ it should pass the same username field as it used to authenticate the device.
+        #@ <li>In the vast majority of cases,
+        #@ the default username is either <q>admin</q>, <q>&#xFEFF;</q> (blank),
+        #@ or simply ignored for the purposes of authentication.
+        #@ <li>If a device does not support modification of this property,
+        #@ it should fail the call if the username is different from that used for authentication
+        #@ with an <tt>ERROR_USERNAME_NOT_SUPPORTED</tt> error.
+        #@ <li>If a device is using optional-username authentication this property should be ignored.
+        #@ <li>The username field cannot be obtained via <tt>GetDeviceSettings2</tt>.
+        #@ As HNAP methods are authenticated, the HNAP client must be aware of the device username to invoke an HNAP method.
+        #@ </ul>
+        string Username
+
+        #@ Used to configure the time zone a device is currently configured in.
+        #@
+        #@ Time zone information should be represented in the following format: <tt>UTC[(+/-)hh:mm]</tt>
+        #@
+        #@ Some valid examples are:
+        #@
+        #@ <tt>UTC</tt><br />
+        #@ <tt>UTC-08:00</tt><br />
+        #@ <tt>UTC+05:30</tt>
+        #@
+        #@ <b>Note:</b> if a device does not support modification of time zone information,
+        #@ and a different time zone is passed other than the one returned by <tt>GetDeviceSettings2</tt>,
+        #@ it should fail this call with <tt>ERROR_TIMEZONE_NOT_SUPPORTED</tt>.
+        string TimeZone
+
+        #@ Used to configure how the device calculates time when considering daylight savings.
+        #@
+        #@ <tt>true</tt>: The device should automatically adjust the time to account for daylight savings.<br />
+        #@ <tt>false</tt>: The device will not automatically adjust the time for daylight savings.
+        bool AutoAdjustDST
+
+        #@ Locale (in RFC 3066 format) that the router should be configured for.
+        #@ Note that the value passed must be a valid value returned by <tt>SupportedLocales</tt> in <tt>GetDeviceSettings2</tt>.
+        string Locale
+
+        #@ Used to configure if SSL port security is active for this device.
+        #@ <tt>true</tt>: the default SSL port (443) is open for this device and it will accept HNAP requests over SSL.<br />
+        #@ <tt>false</tt>: this device does not support SSL, or the setting is currently disabled.
+        #@ In either case, the SSL port is closed.
+        #@
+        #@ <b>Note</b>
+        #@
+        #@ A HNAP server may choose to implement enabling this SSL port as a decision to require SSL,
+        #@ in which case it should also force redirects from the non-SSL standard HNAP port.
+        bool SSL
+
+    result
+        "REBOOT"
+        #@ modification of <tt>Username</tt> is not supported
+        "ERROR_USERNAME_NOT_SUPPORTED"
+        #@ modification of time zone information is not supported
+        "ERROR_TIMEZONE_NOT_SUPPORTED"
+        #@ <tt>SSL</tt> cannot be switched off while <tt>RemoteSSL</tt> is switched on
+        "ERROR_REMOTE_SSL_NEEDS_SSL"
+
+
+#@ This method is used to determine if a given device is ready to process HNAP calls.
+#@ It can be used in a reboot sequence,
+#@ so that an HNAP client knows when an HNAP server has completed rebooting and is ready to begin processing commands again.
+#@ If the device returns OK,
+#@ it must be available to respond to additional requests until further state changes are made.
+action IsDeviceReady
+
+
+#@ This method can be used to cause a network device to soft reboot itself.
+#@
+#@ <b>Notes</b>
+#@
+#@ Use this method for either of the following:
+#@ <ul>
+#@ <li>As part of connection repair.
+#@ <li>To cause a device to reinitialize its network connections
+#@ (for example if the router does not know about a device's DHCP address,
+#@ you can use <tt>Reboot</tt> to make the device acquire an IP address again).
+#@ </ul>
+#@
+#@ A device MUST fully complete the http transaction prior to rebooting.
+action Reboot
+    result
+        "REBOOT"
+
+
+#@ Use this method to discover firmware updating capabilities of a given device.
+#@
+#@ <b>Note:</b> This method should only be implemented if a device supports one or more firmware update methods.
+action GetFirmwareSettings
+
+    output
+
+        #@ The name of the device's manufacturer.
+        #@ This value should be identical to the one returned in <tt>GetDeviceSettings</tt>.
+        string VendorName
+
+        #@ The device's model name.
+        #@ This value should be identical to the one returned in <tt>GetDeviceSettings</tt>.
+        string ModelName
+
+        #@ Allows hardware vendors to extend their <tt>ModelName</tt> to specify a hardware revision number.
+        #@ Can be left blank to indicate no specific hardware revision for the device.
+        string ModelRevision
+
+        #@ The device's firmware version (for example, 1.02).
+        #@ This value should be identical to the one returned in <tt>GetDeviceSettings</tt>.
+        #@ This must not be blank.
+        string FirmwareVersion
+
+        #@ Creation date of the firmware file.
+        #@
+        #@ A DateTime typed field is represented as an ASCII / ISO 8859-1 (Latin-1) entity.
+        #@
+        #@ Example: <tt>2005-05-31T17:23:18</tt>
+        #@
+        #@ Following T is the time in HH:MM:SS format.
+        #@
+        #@ This may be left blank if the information is not known,
+        #@ in this case a device should return <tt>0001-01-01T00:00:00</tt>. for the date value.
+        datetime FirmwareDate
+
+        #@ Array of supported update methods.
+        #@
+        #@ <b>Notes</b>
+        #@ <ul>
+        #@ <li>A device should return all of the methods that it supports.
+        #@ <li>A device must support at least one of the upload methods - this will be used by clients for firmware updating.
+        #@ </ul>
+        UpdateMethod[] UpdateMethods
+
+
+#@ Use this method to perform an upload of a new firmware image to the device.
+#@
+#@ If a device implements this method, as per normal HNAP rules,
+#@ it MUST include this action in the list of supported SOAP actions returned by <tt>GetDeviceSettings</tt>.
+#@ It must also return <tt>HNAP_UPLOAD</tt> as part of the supported types returned in the UpdateMethods parameter of GetFirmwareSettings.
+action FirmwareUpload
+    input
+        #@ Base64 encoded bytes of firmware image to upload.
+        blob Base64Image
+    result
+        "REBOOT"
+
+
+#@ Use this method to perform a speed test against the connecting client.
+#@ The HNAP client will request that n-bytes of data be generated at random and returned as part of a chunked HTTP response.
+#@ The client can also request the size of the chunks sent back to it, to allow variations in sample rate to be performed.
+#@ For example a client might ask for 10 Mb of data (<tt>Bytes</tt>) be sent back in 2048 byte chunks (<tt>BufferSize</tt>).
+#@
+#@ When implementing this method in a device,
+#@ the device should ensure that it flushes data onto the HTTP socket in approximately the size of <tt>BufferSize</tt> chunks.
+#@ As the client might be requesting a significant amount of data,
+#@ it is recommended that the device generate the XML on the fly and NOT use an XML DOM to construct the XML,
+#@ as this would have a significant memory overhead.
+action DownloadSpeedTest
+    input
+        #@ Number of random bytes to generate before closing the connection.
+        int Bytes
+
+        #@ Size of buffer to chunk back bytes into for test.
+        int BufferSize
+    output
+        string ByteStream
+    result
+        #@ <tt>BufferSize</tt> is larger than the device has room to allocate
+        "ERROR_BUFFER_TOO_LARGE"

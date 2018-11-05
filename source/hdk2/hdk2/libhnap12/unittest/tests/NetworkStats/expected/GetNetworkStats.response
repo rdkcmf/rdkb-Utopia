@@ -1,0 +1,36 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 671
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetNetworkStatsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetNetworkStatsResult>OK</GetNetworkStatsResult>
+<Stats>
+<NetworkStats>
+<PortName>LAN</PortName>
+<PacketsReceived>123456789</PacketsReceived>
+<PacketsSent>1</PacketsSent>
+<BytesReceived>500000</BytesReceived>
+<BytesSent>1024</BytesSent>
+</NetworkStats>
+<NetworkStats>
+<PortName>WLAN 802.11n</PortName>
+<PacketsReceived>1</PacketsReceived>
+<PacketsSent>1</PacketsSent>
+<BytesReceived>1</BytesReceived>
+<BytesSent>1</BytesSent>
+</NetworkStats>
+</Stats>
+</GetNetworkStatsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 599 times
+malloc_interposer.c - exit: free called 599 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34279
+malloc_interposer.c - exit: malloc max = 21726
+malloc_interposer.c - ************************************************************

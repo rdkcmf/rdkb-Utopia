@@ -1,0 +1,34 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 712
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWANAccessStatusesResponse xmlns="http://cisco.com/HNAPExt/HotSpot/">
+<GetWANAccessStatusesResult>OK</GetWANAccessStatusesResult>
+<WANAccessStatuses>
+<WANAccessStatus>
+<MACAddress>00:11:22:33:44:55</MACAddress>
+<IPAddress>192.168.1.100</IPAddress>
+<HasWANAccess>true</HasWANAccess>
+<OnGuestNetwork>false</OnGuestNetwork>
+</WANAccessStatus>
+<WANAccessStatus>
+<MACAddress>00:11:22:33:44:66</MACAddress>
+<IPAddress>192.168.2.100</IPAddress>
+<HasWANAccess>true</HasWANAccess>
+<OnGuestNetwork>true</OnGuestNetwork>
+</WANAccessStatus>
+</WANAccessStatuses>
+</GetWANAccessStatusesResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 144 times
+malloc_interposer.c - exit: free called 144 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 26011
+malloc_interposer.c - exit: malloc max = 9361
+malloc_interposer.c - ************************************************************

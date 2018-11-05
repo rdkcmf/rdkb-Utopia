@@ -1,0 +1,767 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+import "state.hsl"
+
+#
+# HNAP 1.2 Router
+#
+
+namespace "http://purenetworks.com/HNAP1/"
+
+#
+# Action State
+#
+
+action_state AddPortMapping
+    state
+        #@ Type: string
+        #@
+        #@ A user-friendly description of the usage of the port mapping.
+        [get] PMDescription
+        #@ Type: IPAddress
+        #@
+        #@ The IP address of the destination string InternalClient host that traffic
+        #@ assigned to this port from the WAN will be mapped to on the LAN.
+        [get] PMInternalClient
+        #@ Type: IPProcotol
+        #@
+        #@ The IP protocol type for which the port is mapped for.  Either 'TCP' or 'UDP'.
+        [get] PMProtocol
+        #@ Type: int
+        #@
+        #@ The port number that an external host will connect to on the WAN side of the
+        #@ router that will be mapped.
+        [get] PMExternalPort
+        #@ Type: int
+        #@
+        #@ The port number that will be used on the destination host.
+        [get] PMInternalPort
+        #@ Type: IPAddress
+        #@
+        #@ The LAN side IP address for the router, used in conjunction with the LAN subnet
+        #@ mask to validate the PMInternalClient IP address.
+        [get] LanIPAddress
+        #@ Type: IPAddress
+        #@
+        #@ The LAN side subnet mask for the router, used in conjunction with the LAN IP address
+        #@ to validate the PMInternalClient IP address.
+        [get] LanSubnetMask
+
+action_state DeletePortMapping
+    state
+        #@ Type: IPProtocol
+        #@
+        #@ The IP protocol type for which the port is mapped for.  Either 'TCP' or 'UDP'.
+        [set] PMProtocol
+        #@ Type: int
+        #@
+        #@ The port number that an external host will connect to on the WAN side of the
+        #@ router that will be mapped.
+        [set] PMExternalPort
+
+action_state GetClientStats
+    state
+        #@ Type: array of ClientStat
+        #@
+        #@ Array of client statistic information.
+        [get] ClientStats
+
+action_state GetConnectedDevices
+    state
+        #@ Type: array of ConnectedClient
+        #@
+        #@ Array of currently-connected clients.
+        [get] ConnectedClients
+
+action_state GetMACFilters2
+    state
+        #@ Type: bool
+        #@
+        #@ Indicates whether the MAC filtering is enabled.
+        [get] MFEnabled
+        #@ Type: bool
+        #@
+        #@ Indicates whether the list of MAC addresses are allowed (true) or black-listed (false).
+        [get] MFIsAllowList
+        #@ Type: array of MACInfo
+        #@
+        #@ A list of structures describing the MAC address table entries.
+        [get] MFMACList
+
+action_state GetNetworkStats
+    state
+        #@ Type: array of NetworkStats
+        #@
+        #@ An array of network statistics for each network interface associated with the device. Each
+        #@ NetworkStat structure describes traffic flow counters for that interface.
+        [get] DeviceNetworkStats
+
+action_state GetPortMappings
+    state
+        #@ Type: array of PortMapping
+        #@
+        #@ An array of port mapping structures which describe each port mapping.
+        [get] PortMappings
+
+action_state GetRouterLanSettings2
+    state
+        #@ Type: IPAddress
+        #@
+        #@ The IP address of the router on the LAN.
+        [get] LanIPAddress
+        #@ Type: IPAddress
+        #@
+        #@ The subnet mask of the router on the LAN.
+        [get] LanSubnetMask
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the DHCP server is enabled.
+        [get] DHCPServerEnabled
+        #@ Type: IPAddress
+        #@
+        #@ The first IP address in the range of addresses allocated by the DHCP server.
+        [get] DHCPIPAddressFirst
+        #@ Type: IPAddress
+        #@
+        #@
+        #@ The last IP address in the range of addresses allocated by the DHCP server.
+        [get] DHCPIPAddressLast
+        #@ Type: int
+        #@
+        #@ Length of time, in minutes, for which a new DHCP lease is valid. Must not be zero.
+        [get] DHCPLeaseTime
+        #@ Type: array of DHCPReservation
+        #@
+        #@ An array of the DHCP reservations this router has configured.
+        [get] DHCPReservations
+
+action_state GetRouterSettings
+    state
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the administrator and HNAP interfaces are available on the WAN.
+        [get] ManageRemote
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the administrator and HNAP interfaces are available on the WLAN.
+        [get] ManageWireless
+        #@ Type: int
+        #@
+        #@ Returns the port number that can be used to access the router management interface from the WAN side.
+        [get] RemotePort
+        #@ Type: bool
+        #@
+        #@ Indicates whether the RemotePort will only accept SSL connections.
+        [get] RemoteSSL
+        #@ Type: string
+        #@
+        #@ Returns a domain name associated with the WAN interface for this device.
+        [get] DomainName
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the QoS is enabled for wired ports.
+        [get] WiredQoS
+        #@ Type: string
+        #@
+        #@ If this device supports WPS, it should return the WPS PIN value in this field.
+        [get] WPSPin
+
+action_state GetWLanRadioFrequencies
+    state
+        #@ Type: array of RadioFrequencyInfo
+        #@
+        #@ The list of supported 802.11 frequencies supported by this device.
+        [get] WLanRadioFrequencyInfos
+
+action_state GetWLanRadioSecurity
+    state
+        #@ Type: array of WLanSecurityEnabledInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether wireless security is enabled.
+        [get] WLanSecurityEnabled
+        #@ Type: array of WLanTypeInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The type of wireless security used, eg. WEP-OPEN.
+        [get] WLanType
+        #@ Type: array of WLanEncryptionInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The method of wireless encryption used, eg. WEP-64.
+        [get] WLanEncryption
+        #@ Type: array of WLanKeyInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The WEP/WPA encryption key.
+        [get] WLanKey
+        #@ Type: array of WLanKeyRenewalInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The time in seconds of the WPA key renewal period.
+        [get] WLanKeyRenewal
+        #@ Type: array of WLanRadiusIP1Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The primary/preferred RADIUS server's IPAddress.
+        [get] WLanRadiusIP1
+        #@ Type: array of WLanRadiusPort1Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The primary/preferred RADIUS server's port.
+        [get] WLanRadiusPort1
+        #@ Type: array of WLanRadiusSecret1Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The primary/preferred RADIUS shared secret.
+        [get] WLanRadiusSecret1
+        #@ Type: array of WLanRadiusIP2Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The secondary/fallback RADIUS server's IPAddress.
+        [get] WLanRadiusIP2
+        #@ Type: array of WLanRadiusPort2Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The secondary/fallback RADIUS server's port.
+        [get] WLanRadiusPort2
+        #@ Type: array of WLanRadiusSecret2Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The secondary/fallback RADIUS shared secret.
+        [get] WLanRadiusSecret2
+        #@ Type: array of RadioInfo
+        #@
+        #@ Used to validate the RadioID passed in is valid for this device.
+        [get] WLanRadioInfos
+
+action_state GetWLanRadioSettings
+    state
+        #@ Type: array of WLanEnabledInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether the wireless radio is enabled.
+        [get] WLanEnabled
+        #@ Type: array of WLanModeInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Specifies the 802.11 mode that the wireless radio is configured for, eg. 802.11n.
+        [get] WLanMode
+        #@ Type: array of WLanMacAddressInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The MACAddress of the the wireless radio ethernet interface.
+        [get] WLanMacAddress
+        #@ Type: array of WLanSSIDInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The wireless network name for the wireless radio.
+        [get] WLanSSID
+        #@ Type: array of WLanSSIDBroadcastInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether the wireless radio is broadcasting its SSID.
+        [get] WLanSSIDBroadcast
+        #@ Type: array of WLanChannelWidthInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The width of each channel for the wireless radio.
+        [get] WLanChannelWidth
+        #@ Type: array of WLanChannelInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Channel number the wireless radio is currently set to. 0 indicates auto.
+        [get] WLanChannel
+        #@ Type: array of WLanSecondaryChannelInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Secondary channel number the wireless radio is currently set to. 0 indicates auto.
+        [get] WLanSecondaryChannel
+        #@ Type: array of WLanQoSInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether or not wireless quality of service is enabled for the radio.
+        [get] WLanQoS
+        #@ Type: array of RadioInfo
+        #@
+        #@ Used to validate the RadioID passed in is valid for this device.
+        [get] WLanRadioInfos
+
+action_state GetWLanRadios
+    state
+        #@ Type: array of RadioInfo
+        #@
+        #@ An array of structures containing information and capabilities for each radio in the device.
+        [get] WLanRadioInfos
+
+action_state GetWanInfo
+    state
+        #@ Type: array of string
+        #@
+        #@ A list of WANTypes supported by this device.
+        [get] WanSupportedTypes
+        #@ Type: WANType
+        #@
+        #@ The WANType the router is currently connected upstream of the device.
+        [get] WanAutoDetectType
+        #@ Type: WANStatus
+        #@
+        #@ Returns status information about the current WAN connection of the router.
+        [get] WanStatus
+
+action_state GetWanSettings
+    state
+        #@ Type: WANType
+        #@
+        #@ The WAN Type the device is currently configured for.
+        [get] WanType
+        #@ Type: string
+        #@
+        #@ If WANType is set to *PPPoE, *PPPOA, *L2TP, *PPTP, or BigPond, this is the login user name.
+        [get] WanUsername
+        #@ Type: string
+        #@
+        #@ If WANType is set to *PPPoE, *PPPOA, *L2TP, *PPTP, or BigPond, this is the login password.
+        [get] WanPassword
+        #@ Type: int
+        #@
+        #@ Defines the maximum time that the WAN connection should be idle before it is automatically disconnected.
+        [get] WanMaxIdleTime
+        #@ Type: int
+        #@
+        #@ The maximum packet size (maximum transmission unit (MTU)) in octets currently set for the protocol type.
+        [get] WanMTU
+        #@ Type: string
+        #@
+        #@ The IPAddress or server name of the authentication server for BigPond WANType.
+        [get] WanAuthService
+        #@ Type: string
+        #@
+        #@ The service name for *PPPoE for WANTypes.
+        [get] WanPPPoEService
+        #@ Type: string
+        #@
+        #@ The IPAddress or server name of the login server for *L2TP or *PPTP WANTypes.
+        [get] WanLoginService
+        #@ Type: bool
+        #@
+        #@ If WANType is set to BigPond, *PPPoE, *PPPOA, *L2TP, or *PPTP, this will be set to true
+        #@ if the device will automatically reconnect when the connection is dropped.
+        [get] WanAutoReconnect
+        #@ Type: IPAddress
+        #@
+        #@ The IP address for the router on the WAN.
+        [get] WanIPAddress
+        #@ Type: IPAddress
+        #@
+        #@ The subnet mask for the router on the WAN.
+        [get] WanSubnetMask
+        #@ Type: IPAddress
+        #@
+        #@ The gateway IP address for the router on the WAN.
+        [get] WanGateway
+        #@ Type: DNSSettings
+        #@
+        #@ The DNS primary, secondary and tertiary settings for the router.
+        [get] WanDNS
+        #@ Type: MACAddress
+        #@
+        #@ The MAC address of the WAN interface.
+        [get] WanMacAddress
+
+action_state RenewWanConnection
+    state
+        #@ Type: int
+        #@
+        #@ The renew timeout in seconds.
+        #@
+        #@ NOTE. This value is deprecated and should always be set to 120 by the client, and ignored by the router.
+        [set] WanRenewTimeout
+
+action_state SetAccessPointMode
+    state
+        #@ Type: bool
+        #@
+        #@ Indicates whether the router should behave like and access point (true) or router (false).
+        [set] IsAccessPoint
+        #@ Type: IPAddress
+        #@
+        #@ The IP address that the router will have on the LAN after the call and subsequent reboot completes.
+        [get] LanIPAddress
+
+action_state SetMACFilters2
+    state
+        #@ Type: bool
+        #@
+        #@ Indicates whether the MAC filtering is enabled.
+        [set] MFEnabled
+        #@ Type: bool
+        #@
+        #@ Indicates whether the list of MAC addresses are allowed (true) or black-listed (false).
+        [set] MFIsAllowList
+        #@ Type: array of MACInfo
+        #@
+        #@ A list of structures describing the MAC address table entries.
+        [set] MFMACList
+
+action_state SetRouterLanSettings2
+    state
+        #@ Type: IPAddress
+        #@
+        #@ The IP address of the router on the LAN.
+        [set] LanIPAddress
+        #@ Type: IPAddress
+        #@
+        #@ The subnet mask of the router on the LAN.
+        [set] LanSubnetMask
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the DHCP server is enabled.
+        [set] DHCPServerEnabled
+        #@ Type: IPAddress
+        #@
+        #@ The first IP address in the range of addresses allocated by the DHCP server.
+        [set] DHCPIPAddressFirst
+        #@ Type: IPAddress
+        #@
+        #@
+        #@ The last IP address in the range of addresses allocated by the DHCP server.
+        [set] DHCPIPAddressLast
+        #@ Type: int
+        #@
+        #@ Length of time, in minutes, for which a new DHCP lease is valid. Must not be zero.
+        [set] DHCPLeaseTime
+        #@ Type: array of DHCPReservation
+        #@
+        #@ An array of the DHCP reservations this router has configured.
+        [set] DHCPReservations
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not DHCP reservations are supported for this router.
+        [get] DHCPReservationsSupported
+
+action_state SetRouterSettings
+    state
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the administrator and HNAP interfaces are available on the WAN.
+        [set] ManageRemote
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the administrator and HNAP interfaces are available on the WLAN.
+        [set] ManageWireless
+        #@ Type: int
+        #@
+        #@ Returns the port number that can be used to access the router management interface from the WAN side.
+        [set] RemotePort
+        #@ Type: bool
+        #@
+        #@ Indicates whether the RemotePort will only accept SSL connections.
+        [set] RemoteSSL
+        #@ Type: string
+        #@
+        #@ Returns a domain name associated with the WAN interface for this device.
+        [set] DomainName
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not the QoS is enabled for wired ports.
+        [set] WiredQoS
+        #@ Type: string
+        #@
+        #@ Administrator password, compared to AdminPasswordDefault to determine if the password is set to default.
+        [get] AdminPassword
+        #@ Type: bool
+        #@
+        #@ The default administrator password, compared to AdminPassword to determine if the password is set to default.
+        [get] AdminPasswordDefault
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not this router supports remote management.
+        [get] RemoteManagementSupported
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not this remote SSL requires SSL to be enabled.
+        [get] RemoteSSLNeedsSSL
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not this router supports remote managment via SSL.
+        [get] ManageViaSSLSupported
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not this router only supports remote management via SSL.
+        [get] ManageOnlyViaSSL
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not this router supports changing the DomainName.
+        [get] DomainNameChangeSupported
+        #@ Type: bool
+        #@
+        #@ Indicates whether or not this router support wired QoS.
+        [get] WiredQoSSupported
+
+action_state SetWLanRadioFrequency
+    state
+        #@ Type: array of RadioFrequencyInfo
+        #@
+        #@ The list of supported 802.11 frequencies supported by this device.
+        [get] WLanRadioFrequencyInfos
+        #@ Type: int
+        #@
+        #@ The frequency of the wireless radio. 2 for 2.4GHz, 5 for 5GHz.
+        [set] WLanFrequency
+
+action_state SetWLanRadioSecurity
+    state
+        #@ Type: array of WLanSecurityEnabledInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether wireless security is enabled.
+        [set] WLanSecurityEnabled
+        #@ Type: array of WLanTypeInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The type of wireless security used, eg. WEP-OPEN.
+        [set] WLanType
+        #@ Type: array of WLanEncryptionInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The method of wireless encryption used, eg. WEP-64.
+        [set] WLanEncryption
+        #@ Type: array of WLanKeyInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The WEP/WPA encryption key.
+        [set] WLanKey
+        #@ Type: array of WLanKeyRenewalInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The time in seconds of the WPA key renewal period.
+        [set] WLanKeyRenewal
+        #@ Type: array of WLanRadiusIP1Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The primary/preferred RADIUS server's IPAddress.
+        [set] WLanRadiusIP1
+        #@ Type: array of WLanRadiusPort1Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The primary/preferred RADIUS server's port.
+        [set] WLanRadiusPort1
+        #@ Type: array of WLanRadiusSecret1Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The primary/preferred RADIUS shared secret.
+        [set] WLanRadiusSecret1
+        #@ Type: array of WLanRadiusIP2Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The secondary/fallback RADIUS server's IPAddress.
+        [set] WLanRadiusIP2
+        #@ Type: array of WLanRadiusPort2Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The secondary/fallback RADIUS server's port.
+        [set] WLanRadiusPort2
+        #@ Type: array of WLanRadiusSecret2Info
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The secondary/fallback RADIUS shared secret.
+        [set] WLanRadiusSecret2
+        #@ Type: array of RadioInfo
+        #@
+        #@ Used to validate the RadioID passed in is valid for this device.
+        [get] WLanRadioInfos
+
+action_state SetWLanRadioSettings
+    state
+        #@ Type: array of WLanEnabledInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether the wireless radio is enabled.
+        [set] WLanEnabled
+        #@ Type: array of WLanModeInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Specifies the 802.11 mode that the wireless radio is configured for, eg. 802.11n.
+        [set] WLanMode
+        #@ Type: array of WLanMacAddressInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The MACAddress of the the wireless radio ethernet interface.
+        [set] WLanMacAddress
+        #@ Type: array of WLanSSIDInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The wireless network name for the wireless radio.
+        [set] WLanSSID
+        #@ Type: array of WLanSSIDBroadcastInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether the wireless radio is broadcasting its SSID.
+        [set] WLanSSIDBroadcast
+        #@ Type: array of WLanChannelWidthInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ The width of each channel for the wireless radio.
+        [set] WLanChannelWidth
+        #@ Type: array of WLanChannelInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Channel number the wireless radio is currently set to. 0 indicates auto.
+        [set] WLanChannel
+        #@ Type: array of WLanSecondaryChannelInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Secondary channel number the wireless radio is currently set to. 0 indicates auto.
+        [set] WLanSecondaryChannel
+        #@ Type: array of WLanQoSInfo
+        #@
+        #@ Indexed by RadioID
+        #@
+        #@ Indicates whether or not wireless quality of service is enabled for the radio.
+        [set] WLanQoS
+        #@ Type: array of RadioInfo
+        #@
+        #@ Used to validate the RadioID passed in is valid for this device.
+        [get] WLanRadioInfos
+
+action_state SetWanSettings
+    state
+        #@ Type: WANType
+        #@
+        #@ The WAN Type the device is currently configured for.
+        [set] WanType
+        #@ Type: string
+        #@
+        #@ If WANType is set to *PPPoE, *PPPOA, *L2TP, *PPTP, or BigPond, this is the login user name.
+        [set] WanUsername
+        #@ Type: string
+        #@
+        #@ If WANType is set to *PPPoE, *PPPOA, *L2TP, *PPTP, or BigPond, this is the login password.
+        [set] WanPassword
+        #@ Type: int
+        #@
+        #@ Defines the maximum time that the WAN connection should be idle before it is automatically disconnected.
+        [set] WanMaxIdleTime
+        #@ Type: int
+        #@
+        #@ The maximum packet size (maximum transmission unit (MTU)) in octets currently set for the protocol type.
+        [set] WanMTU
+        #@ Type: string
+        #@
+        #@ The IPAddress or server name of the authentication server for BigPond WANType.
+        [set] WanAuthService
+        #@ Type: string
+        #@
+        #@ The service name for *PPPoE for WANTypes.
+        [set] WanPPPoEService
+        #@ Type: string
+        #@
+        #@ The IPAddress or server name of the login server for *L2TP or *PPTP WANTypes.
+        [set] WanLoginService
+        #@ Type: bool
+        #@
+        #@ If WANType is set to BigPond, *PPPoE, *PPPOA, *L2TP, or *PPTP, this will be set to true
+        #@ if the device will automatically reconnect when the connection is dropped.
+        [set] WanAutoReconnect
+        #@ Type: IPAddress
+        #@
+        #@ The IP address for the router on the WAN.
+        [set] WanIPAddress
+        #@ Type: IPAddress
+        #@
+        #@ The subnet mask for the router on the WAN.
+        [set] WanSubnetMask
+        #@ Type: IPAddress
+        #@
+        #@ The gateway IP address for the router on the WAN.
+        [set] WanGateway
+        #@ Type: DNSSettings
+        #@
+        #@ The DNS primary, secondary and tertiary settings for the router.
+        [set] WanDNS
+        #@ Type: MACAddress
+        #@
+        #@ The MAC address of the WAN interface.
+        [set] WanMacAddress
+        #@ Type: bool
+        #@
+        #@ Indicates whether of not an MTU value of 0 (auto MTU) is supported by this device.
+        [get] WanAutoMTUSupported
+        #@ Type: array of WANType
+        #@
+        #@ A list of WANTypes supported by this device.
+        [get] WanSupportedTypes

@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 305
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SetDeviceSettings2Response xmlns="http://purenetworks.com/HNAP1/">
+<SetDeviceSettings2Result>ERROR_REMOTE_SSL_NEEDS_SSL</SetDeviceSettings2Result>
+</SetDeviceSettings2Response>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 151 times
+malloc_interposer.c - exit: free called 151 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 18134
+malloc_interposer.c - exit: malloc max = 9275
+malloc_interposer.c - ************************************************************

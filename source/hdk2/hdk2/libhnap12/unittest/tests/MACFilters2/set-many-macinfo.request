@@ -1,0 +1,39 @@
+SOAPAction: "http://purenetworks.com/HNAP1/SetMACFilters2"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <SetMACFilters2 xmlns="http://purenetworks.com/HNAP1/">
+      <Enabled>true</Enabled>
+      <IsAllowList>false</IsAllowList>
+      <MACList>
+        <MACInfo>
+          <MacAddress>AA:AA:AA:AA:AA:AA</MacAddress>
+          <DeviceName>My bridge</DeviceName>
+        </MACInfo>
+        <MACInfo>
+          <MacAddress>BB:BB:BB:BB:BB:BB</MacAddress>
+          <DeviceName>XBOX 360</DeviceName>
+        </MACInfo>
+        <MACInfo>
+          <MacAddress>CC:CC:CC:CC:CC:CC</MacAddress>
+          <DeviceName>iMac</DeviceName>
+        </MACInfo>
+        <MACInfo>
+          <MacAddress>DD:DD:DD:DD:DD:DD</MacAddress>
+          <DeviceName>BlueRay</DeviceName>
+        </MACInfo>
+        <MACInfo>
+          <MacAddress>ee:ee:ee:ee:ee:ee</MacAddress>
+          <DeviceName>VoIP phone</DeviceName>
+        </MACInfo>
+        <MACInfo>
+          <MacAddress>FF:FF:FF:FF:FF:FF</MacAddress>
+          <DeviceName>light switch</DeviceName>
+        </MACInfo>
+      </MACList>
+    </SetMACFilters2>
+  </soap:Body>
+</soap:Envelope>

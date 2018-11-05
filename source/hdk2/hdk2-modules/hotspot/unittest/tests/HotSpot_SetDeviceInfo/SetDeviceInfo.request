@@ -1,0 +1,15 @@
+SOAPAction: "http://cisco.com/HNAPExt/HotSpot/SetDeviceInfo"
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <SetDeviceInfo xmlns="http://cisco.com/HNAPExt/HotSpot/">
+      <DeviceInfos>
+        <DeviceInfo>
+          <MACAddress>00:11:22:33:44:55</MACAddress>
+          <FriendlyName>FriendlyName</FriendlyName>
+        </DeviceInfo>
+      </DeviceInfos>
+    </SetDeviceInfo>
+  </Body>
+</Envelope>

@@ -1,0 +1,24 @@
+401 Authorization Required
+WWW-Authenticate: Basic realm="HNAP1"
+Content-Type: text/html
+Connection: close
+Content-Length: 114
+
+<html>
+<head>
+<title>401 Authorization Required</title>
+</head>
+<body>
+401 Authorization Required
+</body>
+</html>
+
+Handled = 1
+Error = 0
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 0 times
+malloc_interposer.c - exit: free called 0 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 0
+malloc_interposer.c - exit: malloc max = 0
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,18 @@
+Reading in 5-byte chunks:
+  result = 1, read = 5, "12345"
+  result = 1, read = 5, "6789"
+  result = 1, read = 0, ""
+  result = 1, read = 0, ""
+
+Reading in 4-byte chunks:
+  result = 1, read = 4, "1234"
+  result = 1, read = 4, "5678"
+  result = 1, read = 2, "9"
+  result = 1, read = 0, ""
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 0 times
+malloc_interposer.c - exit: free called 0 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 0
+malloc_interposer.c - exit: malloc max = 0
+malloc_interposer.c - ************************************************************

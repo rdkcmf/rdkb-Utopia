@@ -1,0 +1,15 @@
+Get before set: 0 (expect 0)
+Set result: 3 - 1, 0, 2 (expect 3 - 1, 0, 2)
+Get after set: 3 - 1, 0, 2 (expect 3 - 1, 0, 2)
+2nd set result: 4 - 2, 0, 3, 4 (expect 4 - 2, 0, 3, 4)
+Get after 2nd set: 4 - 2, 0, 3, 4 (expect 4 - 2, 0, 3, 4)
+Append result: 5 - 3, 0, 4, 5, 6 (expect 5 - 3, 0, 4, 5, 6)
+Get after append: 4 - 2, 0, 3, 4 (expect 4 - 2, 0, 3, 4)
+Get next member: 5 - 3, 0, 4, 5, 6 (expect 5 - 3, 0, 4, 5, 6)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 5 times
+malloc_interposer.c - exit: free called 5 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 52
+malloc_interposer.c - exit: malloc max = 49
+malloc_interposer.c - ************************************************************

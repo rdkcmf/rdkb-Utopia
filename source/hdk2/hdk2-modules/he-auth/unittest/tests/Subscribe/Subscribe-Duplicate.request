@@ -1,0 +1,16 @@
+SOAPAction: http://cisco.com/he/event/Subscribe
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<Subscribe xmlns="http://cisco.com/he/event/">
+  <EventURI>http://cisco.com/he/registrar/Registered</EventURI>
+  <DeviceID>2ac21b80-442f-11df-9879-0800200c9a66</DeviceID>
+  <NetworkObjectID>2ac21b80-442f-11df-9879-0800200c9a65</NetworkObjectID>
+  <Notify>
+    <DeviceID xmlns="http://cisco.com/he/registrar/">2ac21b80-442f-11df-9879-0800200c9a66</DeviceID>
+    <NetworkObjectID xmlns="http://cisco.com/he/registrar/">7e94dac0-4729-11df-9879-0800200c9b67</NetworkObjectID>
+  </Notify>
+</Subscribe>
+</soap:Body>
+</soap:Envelope>

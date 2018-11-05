@@ -1,0 +1,259 @@
+/************************************************************************************
+  If not stated otherwise in this file or this component's Licenses.txt file the
+  following copyright and licenses apply:
+
+  Copyright 2018 RDK Management
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+**************************************************************************/
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "pal_xml2s.h"
+#include "ixml.h"
+
+#ifdef PAL_DEBUG
+#define pal_debug(fmt, args...) fprintf(stdout, "Debug[%s,%3d]: "fmt, __FILE__,__LINE__, ##args)
+#else
+#define pal_debug(fmt, args...)
+#endif
+
+
+////////////////////////////////structre definition start/////////////////////////
+typedef struct{
+    PAL_XML2S_FDMSK fieldmask;
+    #define MASK_OF_LEVEL_2_INT 0x01
+    #define MASK_OF_LEVEL_2_STRING 0x10
+    
+    INT32 level_2_int;
+    CHAR* levle_2_string;
+}LEVEL2_STRUCT;
+
+typedef struct {
+    PAL_ARRAY_SIZE size;
+    INT32 *int_array;
+}LEVLE1_INT_ARRAY;
+
+typedef struct {
+    PAL_ARRAY_SIZE size;
+    CHAR **string_array;
+}LEVLE1_STRING_ARRAY;
+
+typedef struct{
+    PAL_ARRAY_SIZE size;
+    LEVEL2_STRUCT *struct_array; 
+}LEVLE1_STRUCT_ARRAY;
+
+//Level 1 Structure
+typedef struct{
+    PAL_XML2S_FDMSK fieldmask; // mandatory for all structures
+    #define MASK_OF_LEVEL_1_INT   0x0001
+    #define MASK_OF_LEVEL_1_INT_ARRAY 0x0010
+    #define MASK_OF_LEVEL_1_STRING_ARRAY 0x0100
+    #define MASK_OF_LEVEL_1_STRUCT_ARRAY 0x1000
+    #define MASK_OF_LEVEL_1_STRING  0x10000
+
+    INT32 level_1_int;
+    
+    LEVLE1_INT_ARRAY level_1_int_array;
+
+    LEVLE1_STRING_ARRAY level_1_string_array;
+
+    LEVLE1_STRUCT_ARRAY level_1_struct_array;
+    
+    CHAR* level_1_string;
+}LEVEL1_STRUCT;
+
+//root structure
+typedef struct{
+    PAL_XML2S_FDMSK fieldmask;
+    #define MASK_OF_ROOT_INT     0x0001
+    #define MASK_OF_ROOT_STRING  0x0010
+    #define MASK_OF_ROOT_STRUCT  0x0100
+
+    UINT32 root_uint;
+    CHAR *root_string;
+    LEVEL1_STRUCT root_struct;    
+}ROOT_STRUCT;
+
+////////////////////////////////structre definition end/////////////////////////
+
+
+////////////////////////////////table definition start/////////////////////////
+//table for level 2 structure
+PAL_XML2S_TABLE sample_table_l2[] = {
+   {"L2_INT",PAL_XML2S_INT32, XML2S_MSIZE(LEVEL2_STRUCT,level_2_int), NULL, MASK_OF_LEVEL_2_INT},
+   {"L2_STRING", PAL_XML2S_STRING, XML2S_MSIZE(LEVEL2_STRUCT,levle_2_string), NULL, MASK_OF_LEVEL_2_STRING},
+   XML2S_TABLE_END
+};
+
+//table for L1 arrays
+PAL_XML2S_TABLE samle_table_l1_int_array[] = {
+   {"L1_INT_ARRAY_MEMBER",PAL_XML2S_INT32|PAL_XML2S_ARRAY, XML2S_MSIZE(LEVLE1_INT_ARRAY,int_array), NULL, 0},
+   XML2S_TABLE_END
+};
+
+PAL_XML2S_TABLE samle_table_l1_string_array[] = {
+   {"L1_STRING_ARRAY_MEMBER",PAL_XML2S_STRING|PAL_XML2S_ARRAY, XML2S_MSIZE(LEVLE1_STRING_ARRAY,string_array), NULL, 0},
+   XML2S_TABLE_END
+};
+
+PAL_XML2S_TABLE samle_table_l1_struct_array[] = {
+   {"L1_STRUCT_ARRAY_MEMBER",PAL_XML2S_STRUCT|PAL_XML2S_ARRAY, XML2S_MSIZE(LEVLE1_STRUCT_ARRAY,struct_array), sample_table_l2, sizeof(LEVEL2_STRUCT)},
+   XML2S_TABLE_END
+};
+
+//table for levle 1 structure
+PAL_XML2S_TABLE sample_table_l1[] = {
+    {"L1_INT", PAL_XML2S_INT32|PAL_XML2S_OPTIONAL, XML2S_MSIZE(LEVEL1_STRUCT,level_1_int),NULL, MASK_OF_LEVEL_1_INT},
+    {"L1_INT_ARRAY", PAL_XML2S_STRUCT, XML2S_MSIZE(LEVEL1_STRUCT,level_1_int_array),samle_table_l1_int_array, MASK_OF_LEVEL_1_INT_ARRAY},
+    {"L1_STRING_ARRAY", PAL_XML2S_STRUCT, XML2S_MSIZE(LEVEL1_STRUCT,level_1_string_array),samle_table_l1_string_array, MASK_OF_LEVEL_1_STRING_ARRAY},
+    {"L1_STRUCT_ARRAY", PAL_XML2S_STRUCT|PAL_XML2S_OPTIONAL, XML2S_MSIZE(LEVEL1_STRUCT,level_1_struct_array),samle_table_l1_struct_array,MASK_OF_LEVEL_1_STRUCT_ARRAY},
+    {"L1_STRING", PAL_XML2S_STRING, XML2S_MSIZE(LEVEL1_STRUCT,level_1_string),NULL,MASK_OF_LEVEL_1_STRING},
+    XML2S_TABLE_END
+};
+
+//table for root structure
+PAL_XML2S_TABLE sample_table_root[] = {
+ {"ROOT_UINT", PAL_XML2S_UINT32|PAL_XML2S_OPTIONAL, XML2S_MSIZE(ROOT_STRUCT,root_uint),NULL, MASK_OF_ROOT_INT},
+ {"ROOT_STRING", PAL_XML2S_STRING, XML2S_MSIZE(ROOT_STRUCT,root_string),NULL, MASK_OF_ROOT_STRING},
+ {"ROOT_STRUCT", PAL_XML2S_STRUCT, XML2S_MSIZE(ROOT_STRUCT,root_struct),sample_table_l1, MASK_OF_ROOT_STRUCT},
+ XML2S_TABLE_END
+};
+
+////////////////////////////////table definition end/////////////////////////
+
+#define sample_notag "no tag"
+
+void sample_print(ROOT_STRUCT *s)
+{
+    LEVEL1_STRUCT *l1 = NULL;
+    LEVLE1_INT_ARRAY *l1_ia = NULL;
+    LEVLE1_STRING_ARRAY *l1_sa = NULL;
+    LEVLE1_STRUCT_ARRAY *l1_ss = NULL;
+    LEVEL2_STRUCT *l2 = NULL;
+    UINT32 i = 0;
+    
+    printf("===== Struct result start ===== \r\n");
+    printf("ROOT_UINT = "); //ROOT_UINT
+    if (s->fieldmask & MASK_OF_ROOT_INT)
+        printf("%u\r\n",s->root_uint);
+    else
+        printf("%s\r\n",sample_notag);
+    
+    printf("ROOT_STRING = ");//ROOT_STRING
+    if (s->fieldmask & MASK_OF_ROOT_STRING)
+        printf("%s\r\n",s->root_string);
+    else
+        printf("%s\r\n",sample_notag);
+    
+    printf("ROOT_STRUCT = ");//ROOT_STRUCT
+    if (s->fieldmask & MASK_OF_ROOT_STRUCT){
+        printf ("\r\n");
+        l1 = &(s->root_struct);
+        printf ("  L1_INT = "); //L1_INT
+        if (l1->fieldmask & MASK_OF_LEVEL_1_INT){
+            printf("%d\r\n", l1->level_1_int);
+        }else
+            printf("%s\r\n",sample_notag);
+        
+        printf ("  L1_STRING = "); //L1_STRING
+        if (l1->fieldmask & MASK_OF_LEVEL_1_STRING){
+            printf ("%s\r\n",l1->level_1_string);
+        }else
+            printf("%s\r\n",sample_notag);
+        
+        printf ("  L1_INT_ARRAY = ");//L1_INT_ARRAY
+        if (l1->fieldmask & MASK_OF_LEVEL_1_INT_ARRAY){
+            printf ("\r\n");
+            l1_ia = &(l1->level_1_int_array);
+            printf ("  The size of L1_INT_ARRAY is %u\r\n",l1_ia->size);
+            if (l1_ia->size){
+                for (i = 0; i < l1_ia->size; i ++){
+                    printf ("  L1_INT_ARRAY_MEMBER[%d] is %d\r\n", i, l1_ia->int_array[i]);
+                }
+            }
+        }else
+            printf("%s\r\n",sample_notag);
+
+        printf ("  L1_STRING_ARRAY = ");//L1_STRING_ARRAY
+        if (l1->fieldmask & MASK_OF_LEVEL_1_STRING_ARRAY){
+            printf ("\r\n");
+            l1_sa = &(l1->level_1_string_array);
+            printf ("  The size of L1_STRING_ARRAY is %u\r\n",l1_sa->size);
+            if (l1_sa->size){
+                for (i = 0; i < l1_sa->size; i ++){
+                    printf ("  L1_INT_ARRAY_MEMBER[%d] is %s\r\n", i, l1_sa->string_array[i]);
+                }
+            }
+        }else
+            printf("%s\r\n",sample_notag);
+
+        printf ("  L1_STRUCT_ARRAY = ");//L1_STRUCT_ARRAY
+        if (l1->fieldmask & MASK_OF_LEVEL_1_STRUCT_ARRAY){
+            printf ("\r\n");
+            l1_ss = &(l1->level_1_struct_array);
+            printf ("  The size of L1_STRUCT_ARRAY is %u\r\n",l1_ss->size);
+            if (l1_ss->size){
+                for (i =0; i < l1_ss->size; i++){
+                    printf("  L1_STRUCT_ARRAY_MEMBER[%d] is\r\n", i);
+                    l2 = &(l1_ss->struct_array[i]);
+                    printf ("    L2_INT = ");//L2_INT
+                    if (l2->fieldmask & MASK_OF_LEVEL_2_INT){
+                        printf ("%d\r\n", l2->level_2_int);
+                    }else
+                        printf("%s\r\n",sample_notag);
+
+                    printf ("    L2_STRING = ");//L2_STRING
+                    if (l2->fieldmask & MASK_OF_LEVEL_2_STRING){
+                        printf ("%s\r\n", l2->levle_2_string);
+                    }else
+                        printf("%s\r\n",sample_notag);
+                }
+            }
+        }else
+           printf("%s\r\n",sample_notag); 
+        
+        
+        
+    }else
+        printf("%s\r\n",sample_notag);
+    printf("===== Struct result end ===== \r\n");
+}
+
+int main()
+{
+    int ret = 0;
+    IXML_Document* doc = NULL;
+    ROOT_STRUCT sample_s = {0};
+
+    ret = ixmlLoadDocumentEx ("s.xml", &doc);
+
+    if (doc == NULL){
+        pal_debug("cannot load xml file! %d\r\n", ret);
+    }
+    
+    ret = PAL_xml2s_process((pal_xml_top *)doc,sample_table_root,&sample_s);
+    if (ret){
+        pal_debug("PAL_xml2s_process error %d!\r\n", ret);
+    }
+    
+    sample_print(&sample_s);
+    PAL_xml2s_free(&sample_s, sample_table_root);
+
+    ixmlDocument_free(doc);
+    
+    return 0;
+}
+

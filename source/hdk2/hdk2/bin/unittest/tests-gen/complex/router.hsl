@@ -1,0 +1,432 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+#
+# HNAP 1.2 Router
+#
+
+namespace "http://purenetworks.com/HNAP1/"
+
+#
+# Enumerations
+#
+
+enum IPProtocol
+    "UDP"
+    "TCP"
+
+enum LANConnection
+    "LAN"
+    "WLAN 802.11a"
+    "WLAN 802.11b"
+    "WLAN 802.11g"
+    "WLAN 802.11n"
+    "WAN"
+
+enum WANStatus
+    "DISCONNECTED"
+    "LIMITED_CONNECTION"
+    "CONNECTING"
+    "CONNECTED"
+    "UNKNOWN"
+
+enum WANType
+    "BigPond"
+    "DHCP"
+    "DHCPPPPoE"
+    "DynamicL2TP"
+    "DynamicPPTP"
+    "Static"
+    "StaticL2TP"
+    "StaticPPPoE"
+    "StaticPPTP"
+    "BridgedOnly"
+    "Static1483Bridged"
+    "Dynamic1483Bridged"
+    "Static1483Routed"
+    "StaticPPPOA"
+    "DynamicPPPOA"
+    "StaticIPOA"
+    "UNKNOWN"
+    "DETECTING"
+
+enum WiFiEncryption
+    "WEP-64"
+    "WEP-128"
+    "AES"
+    "TKIP"
+    "TKIPORAES"
+    ""
+
+enum WiFiMode
+    "802.11a"
+    "802.11b"
+    "802.11g"
+    "802.11n"
+    "802.11bg"
+    "802.11bn"
+    "802.11bgn"
+    "802.11gn"
+    "802.11an"
+    ""
+
+enum WiFiSecurity
+    "WEP-OPEN"
+    "WEP-SHARED"
+    "WEP-RADIUS"
+    "WPA-PSK"
+    "WPA-RADIUS"
+    "WPA2-PSK"
+    "WPA2-RADIUS"
+    "WPA-AUTO-PSK"
+    "WEP-AUTO"
+    "WEP"
+    ""
+
+#
+# Structures
+#
+
+struct ClientStat
+    MACAddress MacAddress
+    bool Wireless
+    int LinkSpeedIn
+    int LinkSpeedOut
+    int SignalStrength
+
+struct ConnectedClient
+    datetime ConnectTime
+    MACAddress MacAddress
+    string DeviceName
+    LANConnection PortName
+    bool Wireless
+    bool Active
+
+struct DHCPReservation
+    string DeviceName
+    IPAddress IPAddress
+    MACAddress MacAddress
+
+struct DNSSettings
+    IPAddress Primary
+    IPAddress Secondary
+    [optional] IPAddress Tertiary
+
+struct MACInfo
+    MACAddress MacAddress
+    string DeviceName
+
+struct NetworkStats
+    LANConnection PortName
+    long PacketsReceived
+    long PacketsSent
+    long BytesReceived
+    long BytesSent
+
+struct PortMapping
+    string PortMappingDescription
+    IPAddress InternalClient
+    IPProtocol PortMappingProtocol
+    int ExternalPort
+    int InternalPort
+
+struct RadioFrequencyInfo
+    string RadioID
+    int[] Frequencies
+
+struct WideChannel
+    int Channel
+    int[] SecondaryChannels
+
+struct SecurityInfo
+    WiFiSecurity SecurityType
+    WiFiEncryption[] Encryptions
+
+struct RadioInfo
+    string RadioID
+    int Frequency
+    WiFiMode[] SupportedModes
+    int[] Channels
+    WideChannel[] WideChannels
+    SecurityInfo[] SupportedSecurity
+
+#
+# Actions
+#
+
+action AddPortMapping
+    input
+        string PortMappingDescription
+        IPAddress InternalClient
+        IPProtocol PortMappingProtocol
+        int ExternalPort
+        int InternalPort
+    result
+        "REBOOT"
+
+action DeletePortMapping
+    input
+        IPProtocol PortMappingProtocol
+        int ExternalPort
+
+action GetClientStats
+    output
+        ClientStat[] ClientStats
+
+action GetConnectedDevices
+    output
+        ConnectedClient[] ConnectedClients
+
+action GetMACFilters2
+    output
+        bool Enabled
+        bool IsAllowList
+        MACInfo[] MACList
+
+action GetNetworkStats
+    output
+        NetworkStats[] Stats
+
+action GetPortMappings
+    output
+        PortMapping[] PortMappings
+
+action GetRouterLanSettings2
+    output
+        IPAddress RouterIPAddress
+        IPAddress RouterSubnetMask
+        bool DHCPServerEnabled
+        IPAddress IPAddressFirst
+        IPAddress IPAddressLast
+        int LeaseTime
+        DHCPReservation[] DHCPReservations
+
+action GetRouterSettings
+    output
+        bool ManageRemote
+        bool ManageWireless
+        int RemotePort
+        bool RemoteSSL
+        string DomainName
+        bool WiredQoS
+        string WPSPin
+
+action GetWLanRadioFrequencies
+    output
+        RadioFrequencyInfo[] RadioFrequencyInfos
+
+action GetWLanRadioSecurity
+    input
+        string RadioID
+    output
+        bool Enabled
+        WiFiSecurity Type
+        WiFiEncryption Encryption
+        string Key
+        int KeyRenewal
+        IPAddress RadiusIP1
+        int RadiusPort1
+        string RadiusSecret1
+        IPAddress RadiusIP2
+        int RadiusPort2
+        string RadiusSecret2
+    result
+        "ERROR_BAD_RADIOID"
+
+action GetWLanRadioSettings
+    input
+        string RadioID
+    output
+        bool Enabled
+        WiFiMode Mode
+        MACAddress MacAddress
+        string SSID
+        bool SSIDBroadcast
+        int ChannelWidth
+        int Channel
+        int SecondaryChannel
+        bool QoS
+    result
+        "ERROR_BAD_RADIOID"
+
+action GetWLanRadios
+    output
+        RadioInfo[] RadioInfos
+
+action GetWanInfo
+    output
+        WANType[] SupportedTypes
+        WANType AutoDetectType
+        WANStatus Status
+
+action GetWanSettings
+    output
+        WANType Type
+        string Username
+        string Password
+        int MaxIdleTime
+        int MTU
+        string ServiceName
+        bool AutoReconnect
+        IPAddress IPAddress
+        IPAddress SubnetMask
+        IPAddress Gateway
+        DNSSettings DNS
+        MACAddress MacAddress
+
+action RenewWanConnection
+    input
+        int RenewTimeout
+
+action SetAccessPointMode
+    input
+        bool IsAccessPoint
+    output
+        IPAddress NewIPAddress
+    result
+        "REBOOT"
+
+action SetMACFilters2
+    input
+        bool Enabled
+        bool IsAllowList
+        MACInfo[] MACList
+    result
+        "REBOOT"
+
+action SetRouterLanSettings2
+    input
+        IPAddress RouterIPAddress
+        IPAddress RouterSubnetMask
+        bool DHCPServerEnabled
+        IPAddress IPAddressFirst
+        IPAddress IPAddressLast
+        int LeaseTime
+        DHCPReservation[] DHCPReservations
+    result
+        "ERROR_BAD_RESERVATION"
+        "ERROR_RESERVATIONS_NOT_SUPPORTED"
+        "ERROR_BAD_SUBNET"
+        "ERROR_BAD_IP_ADDRESS"
+        "ERROR_BAD_IP_RANGE"
+
+action SetRouterSettings
+    input
+        bool ManageRemote
+        bool ManageWireless
+        int RemotePort
+        bool RemoteSSL
+        string DomainName
+        bool WiredQoS
+    result
+        "REBOOT"
+        "ERROR_REMOTE_MANAGE_NOT_SUPPORTED"
+        "ERROR_QOS_NOT_SUPPORTED"
+        "ERROR_DOMAIN_NOT_SUPPORTED"
+        "ERROR_REMOTE_SSL_NOT_SUPPORTED"
+        "ERROR_REMOTE_SSL_NEEDS_SSL"
+        "ERROR_REMOTE_MANAGE_MUST_BE_SSL"
+        "ERROR_REMOTE_MANAGE_DEFAULT_PASSWORD"
+
+action SetWLanRadioFrequency
+    input
+        string RadioID
+        int Frequency
+    result
+        "REBOOT"
+        "ERROR_BAD_RADIOID"
+
+action SetWLanRadioSecurity
+    input
+        string RadioID
+        bool Enabled
+        WiFiSecurity Type
+        WiFiEncryption Encryption
+        string Key
+        int KeyRenewal
+        IPAddress RadiusIP1
+        int RadiusPort1
+        string RadiusSecret1
+        IPAddress RadiusIP2
+        int RadiusPort2
+        string RadiusSecret2
+    result
+        "REBOOT"
+        "ERROR_ENCRYPTION_NOT_SUPPORTED"
+        "ERROR_ILLEGAL_KEY_VALUE"
+        "ERROR_BAD_RADIUS_VALUES"
+        "ERROR_KEY_RENEWAL_BAD_VALUE"
+        "ERROR_TYPE_NOT_SUPPORTED"
+        "ERROR_BAD_RADIOID"
+
+action SetWLanRadioSettings
+    input
+        string RadioID
+        bool Enabled
+        WiFiMode Mode
+        string SSID
+        bool SSIDBroadcast
+        int ChannelWidth
+        int Channel
+        int SecondaryChannel
+        bool QoS
+    result
+        "REBOOT"
+        "ERROR_BAD_CHANNEL_WIDTH"
+        "ERROR_BAD_SSID"
+        "ERROR_BAD_RADIOID"
+        "ERROR_BAD_MODE"
+        "ERROR_BAD_SECONDARY_CHANNEL"
+        "ERROR_BAD_CHANNEL"
+
+action SetWanSettings
+    input
+        WANType Type
+        string Username
+        string Password
+        int MaxIdleTime
+        string ServiceName
+        bool AutoReconnect
+        IPAddress IPAddress
+        IPAddress SubnetMask
+        IPAddress Gateway
+        DNSSettings DNS
+        MACAddress MacAddress
+        int MTU
+    result
+        "REBOOT"
+        "ERROR_BAD_WANTYPE"
+        "ERROR_AUTO_MTU_NOT_SUPPORTED"

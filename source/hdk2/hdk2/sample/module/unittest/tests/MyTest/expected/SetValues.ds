@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+<State>
+<Namespace>http://cisco.com/mymodule/</Namespace>
+<Name>a</Name>
+<Value>8</Value>
+</State>
+<State>
+<Namespace>http://cisco.com/mymodule/</Namespace>
+<Name>b</Name>
+<Value>22</Value>
+</State>
+</Simulator>

@@ -1,0 +1,24 @@
+Testing UTCTX Get API...
+Key=, Value=GatewayWithWiFi
+Key=cfg_test_two, Value=UtopiaValue_Config_TestTwo
+Initializing sysevent...
+Key=evt_test_one, Value=UtopiaValue_Event_TestOne
+Key=evt_test_two, Value=UtopiaValue_Event_TestTwo
+Key=idx_test_one_1, Value=UtopiaValue_Indexed_TestOne
+Key=UtopiaValue_Indexed_TestOne::idx_test_two, Value=UtopiaValue_Indexed_TestTwo
+Key=idx2_test_one_1_1, Value=UtopiaValue_Indexed2_TestOne
+Key=UtopiaValue_Indexed_TestOne::idx2_test_two_1, Value=UtopiaValue_Indexed2_TestTwo
+Key=UtopiaValue_Indexed2_TestOne::idx2_test_three, Value=UtopiaValue_Indexed2_TestThree
+Key=nmd_test_one_pfx, Value=UtopiaValue_Named_TestOne
+Key=UtopiaValue_Named_TestOne::nmd_test_two, Value=UtopiaValue_Named_TestTwo
+Key=nmd2_test_one_pfx_pfx, Value=UtopiaValue_Named2_TestOne
+Key=UtopiaValue_Named_TestOne::nmd2_test_two_pfx, Value=UtopiaValue_Named2_TestTwo
+Key=UtopiaValue_Named2_TestOne::nmd2_test_three, Value=UtopiaValue_Named2_TestThree
+Closing sysevent...
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 50 times
+malloc_interposer.c - exit: free called 50 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 3992
+malloc_interposer.c - exit: malloc max = 3640
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,9 @@
+SOAPAction: http://cisco.com/HNAPExt/HotSpot/GetWANAccessStatuses
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<GetWANAccessStatuses xmlns="http://cisco.com/HNAPExt/HotSpot/">
+</GetWANAccessStatuses>
+</soap:Body>
+</soap:Envelope>

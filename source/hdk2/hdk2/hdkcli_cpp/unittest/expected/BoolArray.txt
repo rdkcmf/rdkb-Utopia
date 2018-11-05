@@ -1,0 +1,42 @@
+boolArrayRead (size: 5, empty: false)
+[
+true,
+false,
+false,
+true,
+false
+]
+boolArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<BoolArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</BoolArray>
+boolArrayWrite (size: 7, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<BoolArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<bool>true</bool>
+<bool>false</bool>
+<bool>false</bool>
+<bool>true</bool>
+<bool>false</bool>
+<bool>true</bool>
+<bool>true</bool>
+</BoolArray>
+boolArrayCopy (size: 8, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<BoolArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<bool>true</bool>
+<bool>false</bool>
+<bool>false</bool>
+<bool>true</bool>
+<bool>false</bool>
+<bool>true</bool>
+<bool>true</bool>
+<bool>true</bool>
+</BoolArray>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 49 times
+malloc_interposer.c - exit: free called 49 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10118
+malloc_interposer.c - exit: malloc max = 9662
+malloc_interposer.c - ************************************************************

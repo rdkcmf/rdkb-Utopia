@@ -1,0 +1,7 @@
+#
+# HTTP-GET.test
+#   Test making a request which uses the HTTP GET method.
+#
+
+method: http://cisco.com/Unittest/HttpGetMethod
+host: http://127.0.0.1:8080

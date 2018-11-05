@@ -1,0 +1,6 @@
+
+Errors:
+
+  error-builtin/type.hsl:3: redefinition of 'string' built-in type
+  error-builtin/type.hsl:6: redefinition of 'IPAddress' built-in type
+  error-builtin/type.hsl:9: redefinition of 'long' built-in type

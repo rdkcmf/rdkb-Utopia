@@ -1,0 +1,11 @@
+#
+# Simple.test
+#   Test the basic functionality of libhdkcli.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod
+host: http://127.0.0.1:8080
+username: admin
+password: password
+timeout: 8
+network-object-id: 00000001-0020-0300-4000-908030040000

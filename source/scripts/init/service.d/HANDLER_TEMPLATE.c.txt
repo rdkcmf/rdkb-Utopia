@@ -1,0 +1,353 @@
+/**********************************************************************
+   Copyright [2014] [Cisco Systems, Inc.]
+ 
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+ 
+       http://www.apache.org/licenses/LICENSE-2.0
+ 
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+**********************************************************************/
+
+/*
+ *------------------------------------------------------------------------------
+ *                   service_template.c
+ *
+ * This is a template for implementation the operational part of a lego service.
+ *
+ * This service handler will handle default and custom events registered for this
+ * service. 
+ * For eg
+ *   1) handle <SERVICE_NAME>-start to start the GPL/FOSS process providing this service 
+ *   2) handle <SERVICE_NAME>-stop to kill the GPL/FOSS process providing this service 
+ *   3) handler SERVICE_CUSTOM_EVENTS like lan-status
+ *
+ * The SERVICE_NAME is the name of the service and it should be EXACTLY the same
+ * as used in the service registation 
+ *
+ * Also SERVICE_DEFAULT_HANDLER path and name specified in the registation 
+ * should match * with the executable of this service handler in the root
+ * filesystem, so that it can activated to receive any default events 
+ * (start, stop, restart) or custom events (like lan-status). 
+ * 
+ * The handler must not block.
+ *------------------------------------------------------------------------------
+ */
+
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <ulog/ulog.h>
+#include <utctx/utctx_api.h>
+#include <utapi/utapi.h>
+#include "syscfg/syscfg.h"
+#include "sysevent/sysevent.h"
+
+
+/*
+ * Service template declarations & definitions
+ */
+static char *service_name = "new_service";
+
+#define SERVICE_EV_COUNT 4
+
+/*
+ * Service Event List
+ *
+ * This lists all events that this service handler would receive
+ * First few are mandatory events like start, stop, restart of the service
+ * Following that events from other services / components should be listed
+ * Examples of custom events could include lan-status, wan-status, etc
+ */
+typedef enum {
+    SERVICE_EV_UNKNOWN,
+    SERVICE_EV_START,
+    SERVICE_EV_STOP,
+    SERVICE_EV_RESTART,
+    // add custom events here
+    SERVICE_EV_CUSTOM_1,
+} service_ev_t;
+
+/*
+ * Service Event Mapping Table
+ *
+ * This tables has entries to map each of the events listed in the Event List
+ * with the corresponding string representation of the event
+ * The event string is expected as the first argument to this service handler
+ * executable. Hence it should match exactly, else the event wouldn't be 
+ * recogonized by the handler
+ */
+struct {
+    service_ev_t ev;
+    char         *ev_string;
+} service_ev_map[SERVICE_EV_COUNT] =
+    {
+        { SERVICE_EV_START,   "<new_service>-start" },
+        { SERVICE_EV_STOP,    "<new_service>-stop" },
+        { SERVICE_EV_RESTART, "<new_service>-restart" },
+        // add entries for custom events here
+        { SERVICE_EV_CUSTOM_1, "custom-event-1" },
+    } ;
+
+
+/*
+ * Service Configuration Context
+ *
+ * This structure stores all the system configuration data required for 
+ * the operation of this service handler. Elements of this structure
+ * are defined in utapi/utapi.h
+ *
+ * UtopiaContext and UTAPI library methods will be used to read system
+ * configuration in transaction protected way and populated into t
+ * these structure. This is typically done right at the beginning of
+ * the service handler in service_init() method.
+ */
+struct ServiceConfigContext {
+    // sample config elements
+    // add / remove as needed for this handler's operation
+    lanSetting_t lan;
+    firewall_t    fw;
+} cfg;
+
+
+/*
+ * Sysevent client fields
+ */
+static int            sysevent_fd = -1;
+static char          *sysevent_name = "new_service";
+static token_t        sysevent_token;
+static unsigned short sysevent_port;
+static char           sysevent_ip[19];
+
+
+/*
+ * Name           :  service_init
+ * Purpose        :  Initialize resources & retrieve configurations
+ *                   required for service
+ * Parameters     :
+ *    arg         :  arguments (if needed)
+ * Return Values  :
+ *    0              : Success
+ *    < 0            : Error code
+ */
+static int service_init ()
+{
+   /*
+    * Initialize logging subsystem
+    */
+   ulog_init();
+
+   ulogf(ULOG_<SERVICE>, UL_INFO, "%s service initializing", service_name);
+
+   /*
+    * Initialize sysevent subsystem
+    */
+   snprintf(sysevent_ip, sizeof(sysevent_ip), "127.0.0.1");
+   sysevent_port = SE_SERVER_WELL_KNOWN_PORT;
+   sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
+   if (0 > sysevent_fd) {
+      ulog_errorf(ULOG_<SERVICE>, UL_INFO,
+                  "Unable to register with sysevent daemon at %s %u", sysevent_ip, sysevent_port);
+      return -1;
+   }
+
+   /*
+    * Prepare UtopiaContext subsystem
+    */
+   UtopiaContext ctx;
+   if (!Utopia_Init(&ctx)) {
+       ulog_errorf(ULOG_<SERVICE>, UL_INFO, "utopia-context initialization failed");
+       return -2;
+   }
+   if (SUCCESS != Utopia_GetLanSettings(&ctx, &cfg.lan)) {
+       ulog_errorf(ULOG_<SERVICE>, UL_INFO, "utapi GetLanSettings failed");
+   }
+   if (SUCCESS != Utopia_GetFirewallSettings(&ctx, &cfg.dmz)) {
+       ulog_errorf(ULOG_<SERVICE>, UL_INFO, "utapi GetFirewallSettings failed");
+   }
+
+   // add / remove other configuration utapi methods as needed for this handler
+
+   Utopia_Free(&ctx, 0);
+
+   // initialize any other resource required for this handler's operation
+
+   return 0;
+}
+
+/*
+ * Name           :  service_close
+ * Purpose        :  Close resources initialized for service
+ * Parameters     :  None 
+ * Return Values  :
+ *    0              : Success
+ *    < 0            : Error code
+ */
+static int service_close ()
+{
+   if (0 <= sysevent_fd)  {
+       sysevent_close(sysevent_fd, sysevent_token);
+   }
+
+   // release any other resource used for this handler's operation
+
+   ulog(ULOG_<SERVICE>, UL_INFO, "service operation completed");
+
+   return 0;
+}
+
+/*
+ * Name           :  service_start
+ * Purpose        :  Start service
+ * Parameters     :  None
+ * Return Values  :
+ *    0              : Success
+ *    < 0            : Error code
+ */
+static int service_start ()
+{
+   ulogf(ULOG_<SERVICE>, UL_INFO, "starting %s service", service_name);
+
+   /*
+    * Add code to prepare GPL / FOSS software configuration file (if needed)
+    * and start the GPL process
+    *
+    * As needed for the service, here the handler could enable features in 
+    * kernel (say ipv4_forward), insert routes to routing table, etc.
+    */
+
+   sysevent_set(sysevent_fd, sysevent_token, "<service>-status", "started");
+   ulogf(ULOG_<SERVICE>, UL_INFO, "started %s service", service_name);
+
+   return 0;
+
+}
+
+
+/*
+ * Name           :  service_stop
+ * Purpose        :  Stop service 
+ * Parameters     :  None
+ * Return Values  :
+ *    0              : Success
+ *    < 0            : Error code
+ */
+static int service_stop ()
+{
+   ulogf(ULOG_<SERVICE>, UL_INFO, "stopping %s service", service_name);
+
+   /*
+    * Add code to stop GPL / FOSS software process started earlier
+    *
+    * As needed for the service, here the handler could disable features in 
+    * kernel (say set ipv4_forward to 0), remove routes to routing table, etc.
+    */
+
+   sysevent_set(sysevent_fd, sysevent_token, "<service>-status", "stopped");
+   ulogf(ULOG_<SERVICE>, UL_INFO, "stopped %s service", service_name);
+
+   return 0;
+}
+
+/*
+ * Name           :  service_restart
+ * Purpose        :  Restart the service
+ * Parameters     :  None
+ * Return Values  :
+ *    0              : Success
+ *    < 0            : Error code
+ */
+static int service_restart ()
+{
+    (void) service_stop();
+    return service_start();
+}
+
+/*
+ * Name           :  get_service_event
+ * Purpose        :  Utility method to convert string to event id
+ * Parameters     :  
+ *     ev         :  Event string 
+ * Return Values  :
+ *    event id           :  on success
+ *    SERVICE_EV_UNKNOWN :  on error
+ */
+static service_ev_t get_service_event (const char *ev)
+{
+    int i;
+
+    if (ev) {
+        for (i = 0; i < SERVICE_EV_COUNT; i++) {
+            if (0 == strcmp(ev, service_ev_map[i].ev_string)) {
+                return service_ev_map[i].ev;
+            }
+        }
+    }
+
+    return SERVICE_EV_UNKNOWN;
+}
+
+/*
+ * Purpose        : Instantiate service
+ * Parameters     :
+ *    argc          : argument count
+ *    argv          : argument list
+ * Return Values  :
+ *    0              : Success
+ *    < 0             : Error
+ */
+int main(int argc, char **argv)
+{
+   int rc = 0;
+
+   // defualt command if first argument is missing
+   service_ev_t event = SERVICE_EV_RESTART;
+
+   if (argc > 1) {
+       event = get_service_event(argv[1]);
+       argc--;
+       argv++;
+   }
+
+   rc = service_init(argc, argv);
+   if (rc < 0) {
+       service_close();
+       return rc;
+   }
+
+   switch (event) {
+   case SERVICE_EV_START:
+       service_start();
+       break;
+   case SERVICE_EV_STOP:
+       service_stop();
+       break;
+   case SERVICE_EV_RESTART:
+       service_restart();
+       break;
+   /*
+    * Handle custom events below here
+    */
+   case SERVICE_EV_CUSTOM_1:
+      // handle custom event here
+      break;
+   default:
+       ulogf(ULOG_<SERVICE>, UL_INFO, "%s received unhandled event", service_name);
+       break;
+   }
+
+   service_close();
+
+   return(rc);
+}
+
+

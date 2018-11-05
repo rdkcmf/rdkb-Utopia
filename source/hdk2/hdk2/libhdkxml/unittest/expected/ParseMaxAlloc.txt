@@ -1,0 +1,25 @@
+Non-zero max alloc success:
+Content Length (Computed)= 128
+
+<?xml version="1.0" encoding="utf-8"?>
+<a xmlns="http://cisco.com/">
+<b>1</b>
+<b>2</b>
+<b>3</b>
+<b>4</b>
+<b>5</b>
+<b>6</b>
+</a>
+
+Content Length (Actual) = 128
+Struct valid: 1
+
+Non-zero max alloc failure:
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalid
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 81 times
+malloc_interposer.c - exit: free called 81 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 16074
+malloc_interposer.c - exit: malloc max = 8460
+malloc_interposer.c - ************************************************************

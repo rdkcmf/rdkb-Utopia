@@ -1,0 +1,9 @@
+SOAPAction: http://purenetworks.com/HNAP1/GetConfigBlob
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<GetConfigBlob xmlns="http://purenetworks.com/HNAP1/">
+</GetConfigBlob>
+</soap:Body>
+</soap:Envelope>

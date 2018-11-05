@@ -1,0 +1,111 @@
+/*
+ * If not stated otherwise in this file or this component's Licenses.txt file the
+ * following copyright and licenses apply:
+ *
+ * Copyright 2015 RDK Management
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+*/
+
+/**********************************************************************
+   Copyright [2014] [Cisco Systems, Inc.]
+ 
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+ 
+       http://www.apache.org/licenses/LICENSE-2.0
+ 
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+**********************************************************************/
+
+#include "mymodule.h"
+
+#include "hdk_srv.h"
+
+
+/* Helper method for HNAP results */
+#define SetHNAPResult(pStruct, prefix, method, result) \
+    prefix##_Set_##method##Result(pStruct, prefix##_Element_##method##Result, prefix##_Enum_##method##Result_##result)
+
+
+/*
+ * Method http://cisco.com/mymodule/GetSum
+ */
+
+#ifdef __MYMODULE_METHOD_CISCO_MYMODULE_GETSUM__
+
+void MYMODULE_Method_Cisco_mymodule_GetSum(HDK_MOD_MethodContext* pMethodCtx, HDK_XML_Struct* pInput, HDK_XML_Struct* pOutput)
+{
+    HDK_XML_Struct sTemp;
+    HDK_XML_Int* pA;
+    HDK_XML_Int* pB;
+
+    /* Unused parameters */
+    (void)pInput;
+
+    /* Initialize the temporary structure */
+    HDK_XML_Struct_Init(&sTemp);
+
+    /* Get the values */
+    pA = HDK_XML_GetMember_Int(
+        HDK_SRV_ADIGet(pMethodCtx, MYMODULE_ADI_Cisco_mymodule_a, &sTemp, MYMODULE_Element_Cisco_mymodule_a));
+    pB = HDK_XML_GetMember_Int(
+        HDK_SRV_ADIGet(pMethodCtx, MYMODULE_ADI_Cisco_mymodule_b, &sTemp, MYMODULE_Element_Cisco_mymodule_b));
+    if (!pA || !pB)
+    {
+        SetHNAPResult(pOutput, MYMODULE, Cisco_mymodule_GetSum, ERROR);
+    }
+    else
+    {
+        /* Set the result sum */
+        HDK_XML_Set_Int(pOutput, MYMODULE_Element_Cisco_mymodule_c, *pA + *pB);
+    }
+
+    /* Free the temporary structure */
+    HDK_XML_Struct_Free(&sTemp);
+}
+
+#endif /* __MYMODULE_METHOD_CISCO_MYMODULE_GETSUM__ */
+
+
+/*
+ * Method http://cisco.com/mymodule/SetValues
+ */
+
+#ifdef __MYMODULE_METHOD_CISCO_MYMODULE_SETVALUES__
+
+void MYMODULE_Method_Cisco_mymodule_SetValues(HDK_MOD_MethodContext* pMethodCtx, HDK_XML_Struct* pInput, HDK_XML_Struct* pOutput)
+{
+    /* Validate the values */
+    if ((*HDK_XML_Get_Int(pInput, MYMODULE_Element_Cisco_mymodule_a) & 1) ||
+        (*HDK_XML_Get_Int(pInput, MYMODULE_Element_Cisco_mymodule_a) & 1))
+    {
+        /* Odd value custom error */
+        SetHNAPResult(pOutput, MYMODULE, Cisco_mymodule_SetValues, ERROR_ODD_VALUE);
+        return;
+    }
+
+    /* Set the values */
+    if (!HDK_SRV_ADISet(pMethodCtx, MYMODULE_ADI_Cisco_mymodule_a, pInput, MYMODULE_Element_Cisco_mymodule_a) ||
+        !HDK_SRV_ADISet(pMethodCtx, MYMODULE_ADI_Cisco_mymodule_b, pInput, MYMODULE_Element_Cisco_mymodule_b))
+    {
+        SetHNAPResult(pOutput, MYMODULE, Cisco_mymodule_SetValues, ERROR);
+    }
+}
+
+#endif /* __MYMODULE_METHOD_CISCO_MYMODULE_SETVALUES__ */

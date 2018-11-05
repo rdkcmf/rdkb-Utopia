@@ -1,0 +1,114 @@
+Actions:
+
+  http://cisco.com/HNAPExt/MyAction
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyAction
+    resultMember: http://cisco.com/HNAPExt/MyActionResult
+    inputMember:
+
+      http://cisco.com/HNAPExt/MyAction
+
+        name: MyAction
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyAction
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/MyAction
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyAction
+        schemaName: MyAction
+        parserOrder: 1
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/MyActionResponse
+
+        name: MyActionResponse
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/MyActionResponse
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActionResponse
+        schemaName: MyActionResponse
+        parserOrder: 1
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/MyActionResult
+
+            name: MyActionResult
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+          http://cisco.com/HNAPExt/a
+
+            name: a
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyEnum
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: False
+
+Types:
+
+  http://cisco.com/HNAPExt/MyActionResult (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActionResult
+    schemaName: MyActionResult
+    parserOrder: 1
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/MyEnum
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyEnum
+    schemaName: MyEnum
+    parserOrder: 0
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "Value1"
+      "Value2"
+
+Errors:
+
+  import-errors/import-noparse.hsl:7: syntax error

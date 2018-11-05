@@ -1,0 +1,74 @@
+
+========================================
+Struct as XML:
+
+Content Length (Computed)= 103
+
+<?xml version="1.0" encoding="utf-8"?>
+<b xmlns="http://cisco.com/">
+<c>
+<e>18</e>
+</c>
+<d>17</d>
+</b>
+
+Content Length (Actual) = 103
+Struct valid: 1
+
+========================================
+Struct as non-XML, no-newlines:
+
+Content Length (Computed)= 58
+
+<b xmlns="http://cisco.com/"><c><e>18</e></c><d>17</d></b>
+Content Length (Actual) = 58
+Struct valid: 1
+
+========================================
+Struct as CSV:
+
+Content Length (Computed)= 85
+
+1,a tuple list,true,2,the second \, element in the list &amp;,false,145,yet more,true
+Content Length (Actual) = 85
+Struct valid: 1
+
+========================================
+Non-struct XML as XML (non-member):
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalid
+
+========================================
+Non-struct XML as XML member:
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+
+========================================
+Non-struct non-XML as member:
+
+Content Length (Computed)= 2
+
+17
+Content Length (Actual) = 2
+Struct valid: 1
+
+========================================
+String non-XML as member:
+
+Content Length (Computed)= 11
+
+This & That
+Content Length (Actual) = 11
+Struct valid: 1
+
+========================================
+Empty non-XML as member (invalid):
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 150 times
+malloc_interposer.c - exit: free called 150 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 30981
+malloc_interposer.c - exit: malloc max = 8267
+malloc_interposer.c - ************************************************************

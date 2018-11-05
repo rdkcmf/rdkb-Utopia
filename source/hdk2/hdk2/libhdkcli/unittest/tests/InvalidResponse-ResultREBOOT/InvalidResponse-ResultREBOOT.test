@@ -1,0 +1,7 @@
+#
+# InvalidResponse-ResultREBOOT.test
+#   Test the handling of a response with an HNAP REBOOT result, but not all required elements.
+#
+
+method: http://cisco.com/Unittest/ComplexUnittestMethod
+host: http://127.0.0.1:8080

@@ -1,0 +1,349 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#
+# hnd2.hnap
+#
+
+namespace "http://cisco.com/HNAPExt/HND/"
+
+
+#
+# Enumerations
+#
+
+#@ The access policy status.
+enum AccessPolicyStatus
+    "Enabled"                           #@ The access policy is enabled.
+    "Disabled"                          #@ The access policy is disabled.
+
+
+#@ The per access policy result for SetPolicySettings.
+enum SetPolicySettingsResults
+    "OK"                                #@ Successful.
+    "ERROR_GENERAL"                     #@ Failure.
+    "ERROR_PARAMETER"                   #@ Missing Parameters.
+    "ERROR_POLICY_OVER_MAX"             #@ Invalid policy number provided.
+
+
+#@ Locale codes.
+enum LocaleCode
+    "en_US"                             #@ USA, LCID = 1033
+    "fr_FR"                             #@ French (France), LCID = 1036
+    "es_ES"                             #@ Spanish (Spain), LCID = 1034
+    "it_IT"                             #@ Italian (Italy), LCID = 1040
+    "de_DE"                             #@ German (Germany), LCID = 1031
+
+
+#
+# Structures
+#
+
+#@ The device identifier structure.  The device identifier is exactly one of the
+#@ following: a MAC address, an IP address, or an IP address range.  If MacAddress
+#@ is provided (e.g. not "00:00:00:00:00:00") then the device identifier is a MAC
+#@ address.  If the device identifier is not a MAC address and IPAddress is
+#@ provided (e.g. not "") then the device identifier is an IP address.  Otherwise,
+#@ IPStart and IPEnd must be provided (e.g. not "") and the device identifier is
+#@ an IP address range.
+struct Device
+    MACAddress MacAddress               #@ The device MAC address.
+    IPAddress IPAddress                 #@ The device IP address.
+    IPAddress IPStart                   #@ The device IP address range start.
+    IPAddress IPEnd                     #@ The device IP address range end.
+
+
+#@ Weekly WAN access schedule structure.
+#@
+#@ Each string member represents a WAN access schedule for a day of the week.
+#@ Each character in the string models WAN access in consequetive 30 minute
+#@ intervals starting at 12:00AM.  Thus, each string member must have a length of
+#@ 48 characters.  A "0" character means that WAN access for the interval is
+#@ denied.  A "1" character means that WAN access for the interval is allowed.
+#@ Any other character in the string is considered an error.  For example, the
+#@ following schedule string blocks internet access from 9:00PM to 9:00AM:
+#@
+#@ "000000000000000000111111111111111111111111000000"
+struct AccessSchedule
+    string Sunday                         #@ Access policy is active on Sundays.
+    string Monday                         #@ Access policy is active on Mondays.
+    string Tuesday                        #@ Access policy is active on Tuesdays.
+    string Wednesday                      #@ Access policy is active on Wednesdays.
+    string Thursday                       #@ Access policy is active on Thursdays.
+    string Friday                         #@ Access policy is active on Fridays.
+    string Saturday                       #@ Access policy is active on Saturdays.
+
+
+#@ The WAN access policy structure.
+struct AccessPolicy
+
+    #@ The policy ID number.  This value must be inclusively in the range of 1
+    #@ and MaxPolicyNumber (returned from GetPolicySettingsCapabilities).
+    int AccessPolicyNumber
+
+    #@ The policy's friendly name.
+    string PolicyName
+
+    #@ "Enabled" means the access policy is enabled.  "Disabled" means the
+    #@ access policy is disabled.
+    AccessPolicyStatus Status
+
+    #@ The array of devices to which the access policy is applied.
+    Device[] AppliedDeviceList
+
+    #@ The weekly WAN access policy.
+    AccessSchedule AccessSchedule
+
+    #@ The blocked URL array.  This array must be no longer than
+    #@ MaxBlockedURLArray (returned from GetPolicySettingsCapabilities).
+    string[] BlockedURL
+
+    #@ The blocked keyword array.  This array must be no longer than
+    #@ MaxBlockedKeywordArray (returned from GetPolicySettingsCapabilities).
+    string[] BlockedKeyword
+
+    #@ The blocked category array.  Category IDs are defined by Trend Micro and
+    #@ are inclusively in the range 1 to 88.
+    int[] BlockedCategory
+
+
+#@ The access policy result structure returned by SetPolicySettings.
+struct AccessPolicyResult
+
+    #@ The access policy number.
+    int AccessPolicyNumber
+
+    #@ The result associated with the access policy number.
+    SetPolicySettingsResults Result
+
+
+#
+# Actions
+#
+
+#@ Get the router access policy.
+action GetPolicySettings
+
+    output
+
+        #@ The array of AccessPolicy structures that describes the access
+        #@ policy.
+        #@
+        #@ The following built-in policies are defined:
+        #@
+        #@ 1 - Child
+        #@
+        #@ 2 - Young Teen
+        #@
+        #@ 3 - Mature Teen
+        #@
+        #@ 4 - Adult
+        #@
+        #@ A device must return the built-in access policies up-to
+        #@ FirstAccessPolicyNumber - 1.  If FirstAccessPolicyNumber is 1 then no
+        #@ built-in policies are returned.
+        AccessPolicy[] AccessPolicyList
+
+
+#@ Set the router access policy.
+action SetPolicySettings
+
+    input
+
+        #@ The array of AccessPolicy structures that describes the access
+        #@ policy.  Policies FirstAccessPolicyNumber through MaxPolicyNumber can
+        #@ be added, removed, and edited.
+        #@
+        #@ The built-in policies (1 through FirstAccessPolicyNumber - 1) must
+        #@ all be provided.  If any of the built-in policies are not provided
+        #@ then the result is ERROR.
+        #@
+        #@ IP address and IP address range AccessPolicy Device support is
+        #@ optional.  If IP address (or IP address range) Devices are not
+        #@ supported and an IP address (or an IP address range) Device is
+        #@ provided then the result is ERROR_SET_ACCESSPOLICY.
+        AccessPolicy[] AccessPolicyList
+
+    output
+
+        #@ An array of AccessPolicyResult structures that report which policy
+        #@ structures were set successfully or not.
+        [error] AccessPolicyResult[] AccessPolicyResultList
+
+    result
+
+        #@ An invalid AccessPolicyNumber was provided.
+        "ERROR_SET_ACCESSPOLICY"
+
+        #@ An invalid Status value was provided.
+        "ERROR_SET_ACCESSPOLICY_STATUS"
+
+
+#@ Get the capabilities of the http://cisco.com/HNAPExt/HND/SetPolicySettings
+#@ action.
+action GetPolicySettingsCapabilities
+
+    output
+
+        #@ The first user-defined AccessPolicyNumber (e.g. 5).
+        #@
+        #@ Note: If the Trend Micro service is not supported then
+        #@ FirstAccessPolicyNumber must be 1.
+        int FirstAccessPolicyNumber
+
+        #@ The maximum AccessPolicyNumber (e.g. 10).
+        int MaxPolicyNumber
+
+        #@ The maximum length of a PolicyName (in UTF-8 bytes).
+        int MaxPolicyName
+
+        #@ The maximum length of the AppliedDeviceList array (per AccessPolicy).
+        int MaxAppliedDeviceList
+
+        #@ The maximum length of the BlockedURL array (per policy).
+        int MaxBlockedURLArray
+
+        #@ The maximum length of a BlockedURL string (in UTF-8 bytes).
+        int MaxBlockedURLString
+
+        #@ The maximum length of the BlockedKeyword array (per policy).
+        int MaxBlockedKeywordArray
+
+        #@ The maximum length of a BlockedKeyword string (in UTF-8 bytes).
+        int MaxBlockedKeywordString
+
+        #@ The maximum length of the BlockedCategory array (per policy)
+        #@
+        #@ Note: If the Trend Micro service is not supported then
+        #@ MaxBlockedCategoryArray must be 0.
+        int MaxBlockedCategoryArray
+
+
+#@ Get the default access policy ID.
+#@
+#@ Note: If the Trend Micro service is not supported then the result is ERROR.
+action GetDefaultPolicySetting
+
+    output
+
+        #@ The access policy ID of the default policy.
+        int AccessPolicyNumber
+
+
+#@ Set the default access policy ID.
+#@
+#@ Note: If the Trend Micro service is not supported then the result is
+#@ ERROR_SET_ACCESSPOLICY.
+action SetDefaultPolicySetting
+
+    input
+
+        #@ The access policy ID of the default policy.  Valid values are
+        #@ inclusively in the range of 1 and FirstAccessPolicyNumber - 1
+        #@ (built-in access policies).
+        int AccessPolicyNumber
+
+    result
+
+        #@ A non-built-in AccessPolicyNumber was provided.
+        "ERROR_SET_ACCESSPOLICY"
+
+
+#@ Get the Trend Micro license information.
+#@
+#@ Note: If the Trend Micro service is not supported then the result is ERROR.
+action GetTMSSSLicense
+
+    output
+
+        #@ The TAV serial number string.
+        string TAVSN
+
+        #@ The service expiration date.  The format is "yyyy-mm-dd",
+        #@ e.g. "2009-11-12".
+        string ExpiredDate
+
+
+#@ Activate the Trend Micro service.  The retrieved TAVSN is stored by the
+#@ device for retrieval by GetTMSSSLicense.  ActivateTMSSS does nothing if it is
+#@ called again after the first successful call to ActivateTMSSS (e.g. TAVSN is
+#@ set).
+action ActivateTMSSS
+
+    input
+
+        #@ The locale code.
+        LocaleCode Locale
+
+    output
+
+        #@ The TAV serial number.  The format is "LSZF-0012-4528-2124-2240".
+        #@
+        #@ Note: If the Trend Micro service is not supported then TAVSN must be
+        #@ "".
+        string TAVSN
+
+
+#@ Get the Trend Micro service settings.
+action GetTMSSSSettings
+
+    output
+
+        #@ "true" if WTP is enabled; "false" otherwise.
+        #@
+        #@ Note: If the Trend Micro service is not supported then WTPEnabled
+        #@ must be "false".
+        #@
+        bool WTPEnabled
+
+        #@ The WTP threshold value.  This value must be inclusively in the range
+        #@ of 0 and 100.
+        #@
+        #@ Note: If the Trend Micro service is not supported then WTPThreshold
+        #@ must be 0.
+        #@
+        int WTPThreshold
+
+        #@ "true" if parental controls (PC) is enabled; "false" otherwise.
+        bool PCEnabled
+
+
+#@ Set the Trend Micro service settings.
+action SetTMSSSSettings
+
+    input
+
+        #@ "true" if WTP is enabled; "false" otherwise.
+        #@
+        #@ Note: If the Trend Micro service is not supported then WTPEnabled
+        #@ must be ignored and not set.
+        #@
+        bool WTPEnabled
+
+        #@ The WTP threshold value.  This value must be inclusively in the range
+        #@ of 0 and 100.
+        #@
+        #@ Note: If the Trend Micro service is not supported then WTPThreshold
+        #@ must be ignored and not set.
+        #@
+        int WTPThreshold
+
+        #@ "true" if parental controls (PC) is enabled; "false" otherwise.
+        bool PCEnabled

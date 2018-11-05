@@ -1,0 +1,28 @@
+SOAPAction: "http://purenetworks.com/HNAP1/SetWanSettings"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+  <soap:Body>
+    <SetWanSettings xmlns="http://purenetworks.com/HNAP1/">
+      <Type>DHCPPPPoE</Type>
+      <IPAddress></IPAddress>
+      <SubnetMask></SubnetMask>
+      <Gateway></Gateway>
+      <Username></Username>
+      <Password>PPPPoEPassword</Password>
+      <ServiceName>a cool service name</ServiceName>
+      <AutoReconnect>false</AutoReconnect>
+      <MaxIdleTime>900</MaxIdleTime>
+      <MTU>1492</MTU>
+      <DNS>
+        <Primary>10.0.0.7</Primary>
+        <Secondary>10.0.1.13</Secondary>
+      </DNS>
+      <MacAddress>00:1D:7E:F4:6C:EF</MacAddress>
+    </SetWanSettings>
+  </soap:Body>
+</soap:Envelope>

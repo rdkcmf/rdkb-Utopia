@@ -1,0 +1,12 @@
+
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/SimpleUnittestMethod
+        HTTP host: ya, this is a bogus host
+Network Object ID: (null)
+    HTTP username: (null)
+    HTTP password: (null)
+          timeout: 0
+       HNAP input: InvalidHost.input.xml
+
+HNAP call failed with error Unknown (10)

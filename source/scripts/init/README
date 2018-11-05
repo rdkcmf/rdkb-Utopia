@@ -1,0 +1,76 @@
+##########################################################################
+# If not stated otherwise in this file or this component's Licenses.txt
+# file the following copyright and licenses apply:
+#
+# Copyright 2015 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##########################################################################
+This directory contains the initialization routines for a Cisco/Linksys router.
+
+1) inittab directory
+   -----------------
+This directory contains the inittab that is used for the product.
+An inittab should be named inittab-$(PRODUCT_NAME). If no product
+specific inittab is found, then the generic inittab will be used.
+
+2) system directory 
+   ----------------
+This directory contains the executables that are called by the init process
+during initialization. In other words, the inittab file referenced above
+will contain the names of "system" executables to be run during initialization.
+This directory is expected to contain files:
+   sysinit  : run during sysinit phase of initialization
+   wait     : run during serialized phase of initialization
+   once     : run during unserialized phase of initialization
+Each file should be named sysinit-$(PRODUCT_NAME) etc. If no 
+product specific file is found, then the generic file will be used.
+This is probably not desirable. Particularly not for the sysinit.
+
+3) defaults directory
+   ------------------
+During the serialized phase of initialization, the above mentioned
+wait script will initialize the syscfg configuration, and sysevent bus.
+This is done by running the utility apply_system_defaults with the 
+defaults file in runtime directory /etc/utopia/system_defaults.
+The defaults directory contains the file which will be placed in
+the runtime directory. The filename must be system_defaults-$(PRODUCT_NAME).
+If this file is not found then system_defaults will be used.
+
+4) registration directory
+   ----------------------
+During the serialized phase of initialization, the above mentioned
+wait script will run the utility "execute_dir" on the runtime registration
+directory. The runtime location of the registration directory must be 
+coordinated with the wait script. Currently it expects the runtime directory
+to be /etc/utopia/registration.d. If you change the runtime location you must
+change the wait script, and you must change the REGISTRATION_DIR in the 
+Makefile.
+
+Executables added to the registration directory will thereby be written
+to the registration directory in the root file system used at runtime, and
+then executed during system initialization. The main current purpose for
+the registration directory is to register event handlers with the sysevent
+event bus.
+
+5) init.d directory
+   ----------------
+The main current purpose of this directory is to contain the event handlers
+and utilities which react to events passed by the sysevent event bus.
+
+6) src directory
+   -------------
+The source code for the utilities:
+   execute_dir
+   apply_system_defaults
+

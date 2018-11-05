@@ -1,0 +1,6 @@
+#
+# HTTP-400.test
+#   Verify libhdkcli handles a HTTP 400 server response.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod

@@ -1,0 +1,24 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 228
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<BarResponse xmlns="http://cisco.com/HNAP1/">
+<BarResult>OK</BarResult>
+<Int>17</Int>
+</BarResponse>
+</Body>
+</Envelope>
+
+Handled = 1
+Error = 0
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 41 times
+malloc_interposer.c - exit: free called 41 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 7951
+malloc_interposer.c - exit: malloc max = 7879
+malloc_interposer.c - ************************************************************

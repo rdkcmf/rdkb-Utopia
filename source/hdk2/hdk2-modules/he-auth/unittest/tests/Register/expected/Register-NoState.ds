@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+<State>
+<Namespace>http://cisco.com/he/registrar/</Namespace>
+<Name>RegisteredDevices</Name>
+<Value>&lt;RegisteredDevices xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;&lt;Device&gt;&lt;DeviceID&gt;2AC21B80-442F-11DF-9879-0800200C9A67&lt;/DeviceID&gt;&lt;TypeID&gt;A78DABB0-4E3F-11DF-9879-0800200C9A66&lt;/TypeID&gt;&lt;FriendlyName&gt;My work computer&lt;/FriendlyName&gt;&lt;Manufacturer&gt;Apple&lt;/Manufacturer&gt;&lt;Model&gt;iMac10,1&lt;/Model&gt;&lt;NetworkObjects&gt;&lt;NetworkObject&gt;&lt;NetworkObjectID&gt;61B05030-465A-11DF-9879-0800200C9A66&lt;/NetworkObjectID&gt;&lt;FriendlyName&gt;HNAP Server&lt;/FriendlyName&gt;&lt;ControlURL&gt;http://192.168.1.101/HNAP1/&lt;/ControlURL&gt;&lt;ServiceURIs&gt;&lt;string&gt;Core&lt;/string&gt;&lt;string&gt;Router&lt;/string&gt;&lt;/ServiceURIs&gt;&lt;/NetworkObject&gt;&lt;/NetworkObjects&gt;&lt;/Device&gt;&lt;/RegisteredDevices&gt;</Value>
+</State>
+</Simulator>

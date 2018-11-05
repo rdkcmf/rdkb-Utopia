@@ -1,0 +1,118 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+namespace "http://purenetworks.com/HNAP1/"
+
+
+#@@ top Top
+#@ <img class="logo" src="@images/cisco_logo.png" width="151" height="80" alt="CISCO" />
+#@@ end
+
+#@@ title Device Configuration Backup
+#@@ version 1.2 (Rev 2)
+#@@ date February 2010
+
+#@@ abstract Abstract
+#@ This document describes the details of the HNAP 1.2 protocol specification
+#@ for device configuration backup and restore.
+#@@ end
+
+#@@ h2 Change History
+#@ <table summary="Revision History">
+#@ <tr><th>Revision<th>Date<th>Notes
+#@ <tr><td>2<td>2010-02-<td>
+#@ Re-written in HSL
+#@ </table>
+#@@ end
+
+#@@ h2 Goals
+#@ This document details a simple method of backing-up and restoring a device's configuration information.
+#@ The device reports its configuration information as a base64-encoded blob.
+#@ This blob may be set on the device to restore the original configuration.
+#@ The configuration blob is not intended to be readable by application clients
+#@ and should be stored unmodified for restoration purposes.
+#@@ end
+
+
+#
+# Actions
+#
+
+#@ Use this method to obtain the current device configuration blob.
+#@ The device configuration blob may be in any format the device implementer chooses.
+#@ The configuration blob should contain all information necessary to restore
+#@ the device to the current device configuration.
+action GetConfigBlob
+    output
+        #@ the device configuration blob
+        blob ConfigBlob
+
+
+#@ Use this method to restore a device configuration blob previously obtained through a call to GetConfigBlob.
+#@ <ul>
+#@ <li> When this method is called
+#@ the device should restore its configuration state to that specified by the configuration blob.
+#@ <li> Devices should rigorously check that the device configuration blob string is complete
+#@ and of the correct format for this device model and firmware version.
+#@ If the configuration blob string is not valid then the method result should be ERROR.
+#@ <li> It is strongly recommended that
+#@ the device forward-convert configuration blobs saved from older firmware versions.
+#@ For example,
+#@ the user configures their device and saves their configuration file to their computer using a client application.
+#@ The device firmware version is 1.0.
+#@ Some time later, the client application detects a firmware upgrade and updates the device firmware to version 1.1.
+#@ The user then experiments with their device configuration
+#@ and then wants to restore their saved backup configuration from firmware version 1.0.
+#@ The best user experience is achieved when the device accepts the 1.0 configuration blob
+#@ and converts (as necessary) to restore the configuration in firmware version 1.1.
+#@ In the event that this is not feasible, the method result should be ERROR_WRONG_VERSION.
+#@ <li> If the device allows the user to save configuration information via another mechanism such as a Web UI
+#@ then SetConfigBlob should accept that configuration information (base64 encoded).
+#@ </ul>
+action SetConfigBlob
+    input
+        #@ the device configuration blob previously obtained through a call to GetConfigBlob
+        blob ConfigBlob
+    result
+        "REBOOT"
+
+
+#@ Use this method to restore factory default configuration settings.
+#@ <li> This method should NOT be implemented without authentication as it would allow for a security violation
+#@ allowing a hacker to reset the defaults to a well known password and then make changes to the device.
+action RestoreFactoryDefaults
+    result
+        "REBOOT"

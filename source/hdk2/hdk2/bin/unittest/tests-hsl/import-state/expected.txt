@@ -1,0 +1,183 @@
+Actions:
+
+  http://cisco.com/HNAPExt/MyAction
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyAction
+    resultMember: http://cisco.com/HNAPExt/MyActionResult
+    inputMember:
+
+      http://cisco.com/HNAPExt/MyAction
+
+        name: MyAction
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyAction
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+    inputMember.type:
+
+      http://cisco.com/HNAPExt/MyAction
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyAction
+        schemaName: MyAction
+        parserOrder: 1
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/Key
+
+            name: Key
+            namespace: http://cisco.com/HNAPExt/
+            type: http://www.w3.org/2001/XMLSchema/string
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: False
+
+          http://cisco.com/HNAPExt/Value
+
+            name: Value
+            namespace: http://cisco.com/HNAPExt/
+            type: http://www.w3.org/2001/XMLSchema/bool
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: False
+
+    outputMember:
+
+      http://cisco.com/HNAPExt/MyActionResponse
+
+        name: MyActionResponse
+        namespace: http://cisco.com/HNAPExt/
+        type: http://cisco.com/HNAPExt/MyActionResponse
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: True
+
+    outputMember.type:
+
+      http://cisco.com/HNAPExt/MyActionResponse
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyActionResponse
+        schemaName: MyActionResponse
+        parserOrder: 1
+        isBuiltin: False
+        isArray: False
+        isStruct: True
+        isEnum: False
+        members:
+
+          http://cisco.com/HNAPExt/MyActionResult
+
+            name: MyActionResult
+            namespace: http://cisco.com/HNAPExt/
+            type: http://cisco.com/HNAPExt/MyActionResult
+            isUnbounded: False
+            isOptional: False
+            isCSV: False
+            isErrorOutput: True
+
+Types:
+
+  http://cisco.com/HNAPExt/MyActionResult (all_types)
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyActionResult
+    schemaName: MyActionResult
+    parserOrder: 1
+    isBuiltin: False
+    isArray: False
+    isStruct: False
+    isEnum: True
+    enumValues:
+
+      "OK"
+      "ERROR"
+
+  http://cisco.com/HNAPExt/MyStruct
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyStruct
+    schemaName: MyStruct
+    parserOrder: 0
+    isBuiltin: False
+    isArray: False
+    isStruct: True
+    isEnum: False
+    members:
+
+      http://cisco.com/HNAPExt/Key
+
+        name: Key
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/string
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+      http://cisco.com/HNAPExt/Value
+
+        name: Value
+        namespace: http://cisco.com/HNAPExt/
+        type: http://www.w3.org/2001/XMLSchema/bool
+        isUnbounded: False
+        isOptional: False
+        isCSV: False
+        isErrorOutput: False
+
+  http://www.w3.org/2001/XMLSchema/bool (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: bool
+    schemaName: boolean
+    parserOrder: -1
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+  http://www.w3.org/2001/XMLSchema/string (all_types)
+
+    namespace: http://www.w3.org/2001/XMLSchema
+    name: string
+    schemaName: string
+    parserOrder: -3
+    isBuiltin: True
+    isArray: False
+    isStruct: False
+    isEnum: False
+
+States:
+
+  http://cisco.com/HNAPExt/MyState
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyState
+    type: http://cisco.com/HNAPExt/MyStruct
+
+ActionStates:
+
+  http://cisco.com/HNAPExt/MyAction
+
+    namespace: http://cisco.com/HNAPExt/
+    name: MyAction
+    stateMembers:
+
+      http://cisco.com/HNAPExt/MyState
+
+        namespace: http://cisco.com/HNAPExt/
+        name: MyState
+        state: http://cisco.com/HNAPExt/MyState
+        isGet: False
+        isSet: True

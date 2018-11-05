@@ -1,0 +1,20 @@
+SOAPAction: "http://purenetworks.com/HNAP1/SetWLanRadioSettings"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <SetWLanRadioSettings xmlns="http://purenetworks.com/HNAP1/">
+      <RadioID>RADIO_2.4GHz</RadioID>
+      <Enabled>true</Enabled>
+      <Mode>802.11g</Mode>
+      <SSID></SSID>
+      <SSIDBroadcast>false</SSIDBroadcast>
+      <ChannelWidth>40</ChannelWidth>
+      <Channel>3</Channel>
+      <SecondaryChannel>5</SecondaryChannel>
+      <QoS>false</QoS>
+    </SetWLanRadioSettings>
+  </soap:Body>
+</soap:Envelope>

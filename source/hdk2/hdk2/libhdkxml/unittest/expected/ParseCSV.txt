@@ -1,0 +1,148 @@
+Valid (homogenous lists):
+
+Content Length (Computed)= 266
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<a xmlns="http://cisco.com/">1,2,3,4,5</a>
+<b xmlns="http://cisco.com/">This,    is a    ,&apos;\,&apos;, seperated, list  of  , strings, \\This\\is\\a\\path\\on\\Windows, /  </b>
+</Foo>
+
+Content Length (Actual) = 266
+Struct valid: 1
+Valid (empty homogenous lists):
+
+Content Length (Computed)= 154
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<a xmlns="http://cisco.com/"></a>
+<b xmlns="http://cisco.com/"></b>
+</Foo>
+
+Content Length (Actual) = 154
+Struct valid: 1
+Valid (single item homogenous lists):
+
+Content Length (Computed)= 166
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<a xmlns="http://cisco.com/">14</a>
+<b xmlns="http://cisco.com/">\, test \\</b>
+</Foo>
+
+Content Length (Actual) = 166
+Struct valid: 1
+Valid (empty string list):
+
+Content Length (Computed)= 130
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<b xmlns="http://cisco.com/">,,,,,,,,,,</b>
+</Foo>
+
+Content Length (Actual) = 130
+Struct valid: 1
+Valid (heterogenous lists):
+
+Content Length (Computed)= 294
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<c xmlns="http://cisco.com/">2,true,, my comma\,,2009-12-01T17:00:00Z</c>
+<d xmlns="http://cisco.com/">1,struct 1,2009-12-01T17:00:00Z,22,struct 2,2010-02-01T17:00:00Z,333,struct \,3,2011-03-01T17:00:00Z</d>
+</Foo>
+
+Content Length (Actual) = 294
+Struct valid: 1
+Valid (optional item):
+
+Content Length (Computed)= 130
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<c xmlns="http://cisco.com/">55,false,,</c>
+</Foo>
+
+Content Length (Actual) = 130
+Struct valid: 1
+Invalid (homogenous list type):
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+Content Length (Computed)= 121
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<a xmlns="http://cisco.com/">1</a>
+</Foo>
+
+Content Length (Actual) = 121
+Struct valid: 1
+Invalid (heterogenous list type):
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+Content Length (Computed)= 123
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<c xmlns="http://cisco.com/">234</c>
+</Foo>
+
+Content Length (Actual) = 123
+Struct valid: 0
+Invalid (tuple list type):
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+Content Length (Computed)= 156
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<d xmlns="http://cisco.com/">234,ok ,2009-12-01T17:00:00Z,15, bad</d>
+</Foo>
+
+Content Length (Actual) = 156
+Struct valid: 0
+Invalid (heterogenous missing element):
+
+Content Length (Computed)= 128
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<c xmlns="http://cisco.com/">55,false</c>
+</Foo>
+
+Content Length (Actual) = 128
+Struct valid: 0
+Invalid (heterogenous extraneous element):
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+Content Length (Computed)= 167
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<c xmlns="http://cisco.com/">55,false,foo  ,bar!! ,2009-12-01T17:00:00Z,more</c>
+</Foo>
+
+Content Length (Actual) = 167
+Struct valid: 1
+Invalid (optional item mismatch):
+
+Error: HDK_XML_Parse failed with parse error HDK_XML_ParseError_XMLInvalidValue
+Content Length (Computed)= 139
+
+<?xml version="1.0" encoding="utf-8"?>
+<Foo xmlns="http://cisco.com/HNAPExt/">
+<c xmlns="http://cisco.com/">2,true,, my comma\,</c>
+</Foo>
+
+Content Length (Actual) = 139
+Struct valid: 1
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 522 times
+malloc_interposer.c - exit: free called 522 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 94574
+malloc_interposer.c - exit: malloc max = 8612
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,40 @@
+longArrayRead (size: 5, empty: false)
+[
+0,
+12333213123123,
+-234234234,
+2,
+14
+]
+longArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<LongArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</LongArray>
+longArrayWrite (size: 6, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<LongArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<long>4</long>
+<long>8</long>
+<long>15</long>
+<long>16</long>
+<long>23</long>
+<long>42</long>
+</LongArray>
+longArrayCopy (size: 7, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<LongArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<long>4</long>
+<long>8</long>
+<long>15</long>
+<long>16</long>
+<long>23</long>
+<long>42</long>
+<long>4</long>
+</LongArray>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 47 times
+malloc_interposer.c - exit: free called 47 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10080
+malloc_interposer.c - exit: malloc max = 9672
+malloc_interposer.c - ************************************************************

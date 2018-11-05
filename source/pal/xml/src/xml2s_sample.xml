@@ -1,0 +1,47 @@
+<!--
+ If not stated otherwise in this file or this component's Licenses.txt file the
+ following copyright and licenses apply:
+
+ Copyright 2018 RDK Management
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<SAMPLE>
+  <ROOT_UINT>0</ROOT_UINT>
+  <ROOT_STRING>string0</ROOT_STRING>
+  <ROOT_STRUCT>
+    <L1_INT>1</L1_INT>
+    <L1_INT_ARRAY>
+      <L1_INT_ARRAY_MEMBER>21</L1_INT_ARRAY_MEMBER>
+      <L1_INT_ARRAY_MEMBER>22</L1_INT_ARRAY_MEMBER>
+      <L1_INT_ARRAY_MEMBER>23</L1_INT_ARRAY_MEMBER>
+    </L1_INT_ARRAY>
+      <L1_STRING_ARRAY>
+      <L1_STRING_ARRAY_MEMBER>string22</L1_STRING_ARRAY_MEMBER>
+      <L1_STRING_ARRAY_MEMBER>string23</L1_STRING_ARRAY_MEMBER>
+      <L1_STRING_ARRAY_MEMBER>string24</L1_STRING_ARRAY_MEMBER>
+    </L1_STRING_ARRAY>
+    <L1_STRUCT_ARRAY>
+      <L1_STRUCT_ARRAY_MEMBER>
+        <L2_INT>31</L2_INT>
+        <L2_STRING>string31</L2_STRING>
+      </L1_STRUCT_ARRAY_MEMBER>
+      <L1_STRUCT_ARRAY_MEMBER>
+        <L2_INT>32</L2_INT>
+        <L2_STRING>string32</L2_STRING>
+      </L1_STRUCT_ARRAY_MEMBER>
+    </L1_STRUCT_ARRAY>  
+    <L1_STRING>string11</L1_STRING>
+  </ROOT_STRUCT>
+</SAMPLE>

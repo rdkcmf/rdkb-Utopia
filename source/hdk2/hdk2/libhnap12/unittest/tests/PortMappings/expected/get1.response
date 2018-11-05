@@ -1,0 +1,29 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 553
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetPortMappingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetPortMappingsResult>OK</GetPortMappingsResult>
+<PortMappings>
+<PortMapping>
+<PortMappingDescription>Port Mapping 1</PortMappingDescription>
+<InternalClient>192.168.10.10</InternalClient>
+<PortMappingProtocol>TCP</PortMappingProtocol>
+<ExternalPort>8000</ExternalPort>
+<InternalPort>80</InternalPort>
+</PortMapping>
+</PortMappings>
+</GetPortMappingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 590 times
+malloc_interposer.c - exit: free called 590 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34720
+malloc_interposer.c - exit: malloc max = 22324
+malloc_interposer.c - ************************************************************

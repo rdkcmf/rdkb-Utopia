@@ -1,0 +1,10 @@
+Set result: 17 (expect 17)
+Append result: 17 (expect 17), is first member? 0 (expect 0)
+Get is first member? 1 (expect 1)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 3 times
+malloc_interposer.c - exit: free called 3 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 48
+malloc_interposer.c - exit: malloc max = 48
+malloc_interposer.c - ************************************************************

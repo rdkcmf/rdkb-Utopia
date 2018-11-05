@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 330
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SetWirelessClientSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<SetWirelessClientSettingsResult>ERROR_ILLEGAL_KEY_VALUE</SetWirelessClientSettingsResult>
+</SetWirelessClientSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 707 times
+malloc_interposer.c - exit: free called 707 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 37479
+malloc_interposer.c - exit: malloc max = 23915
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,12 @@
+Parsed '00:00:ac:ed:33:01' into HDK_XML_MACAddress
+Failed to parse '0x00:00:aa:dd:33:01'
+Parsed '
+' into HDK_XML_MACAddress
+Parsed '' into HDK_XML_MACAddress
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

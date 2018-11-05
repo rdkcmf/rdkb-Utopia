@@ -1,0 +1,55 @@
++++++++ Request Headers +++++++
+HTTP/1.1 POST /HNAP1
+Connection: Close
+Content-Type: text/xml; charset="utf-8"
+Content-Length: 316
+Authorization: Basic YWRtaW46cGFzc3dvcmQ=
+SOAPAction: "http://cisco.com/Unittest/SimpleUnittestMethod"
+Host: 127.0.0.1:8080
+
++++++++ Request Data +++++++
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<SimpleUnittestMethod xmlns="http://cisco.com/Unittest/">
+<StringArg0>a string argument &amp; 1 &lt;</StringArg0>
+<BoolArg0>true</BoolArg0>
+<IntArg0>-1000</IntArg0>
+</SimpleUnittestMethod>
+</Body>
+</Envelope>
+
+
+------- Response -------
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+
+<?xml version="1.0" encoding="utf-8" ?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+  <SimpleUnittestMethodResponse xmlns="http://cisco.com/Unittest/">
+      <SimpleUnittestMethodResult>OK</SimpleUnittestMethodResult>
+  </SimpleUnittestMethodResponse>
+</soap:Body>
+</soap:Envelope>
+$sleep: 5000.0
+
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/SimpleUnittestMethod
+        HTTP host: http://127.0.0.1:8080
+Network Object ID: (null)
+    HTTP username: admin
+    HTTP password: password
+          timeout: 2
+       HNAP input: DelayedClose-NoContentLength.input.xml
+
+HNAP call failed with error Connection (7)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 78 times
+malloc_interposer.c - exit: free called 78 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 18668
+malloc_interposer.c - exit: malloc max = 11168
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,20 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 281
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<RenewWanConnectionResponse xmlns="http://purenetworks.com/HNAP1/">
+<RenewWanConnectionResult>OK</RenewWanConnectionResult>
+</RenewWanConnectionResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 407 times
+malloc_interposer.c - exit: free called 407 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 28731
+malloc_interposer.c - exit: malloc max = 17402
+malloc_interposer.c - ************************************************************

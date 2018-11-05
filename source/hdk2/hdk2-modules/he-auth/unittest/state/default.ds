@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Simulator xmlns="http://cisco.com/">
+
+  <!-- registrar.hsl -->
+  <State>
+    <Namespace>http://cisco.com/he/registrar/</Namespace>
+    <Name>RegisteredDevices</Name>
+    <Value>
+      &lt;RegisteredDevices xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;
+        &lt;Device&gt;
+          &lt;DeviceID&gt;2ac21b80-442f-11df-9879-0800200c9a64&lt;/DeviceID&gt;
+          &lt;TypeID&gt;a78dabb0-4e3f-11df-9879-0800200c9a66&lt;/TypeID&gt;
+          &lt;FriendlyName&gt;Lego PC&lt;/FriendlyName&gt;
+          &lt;Manufacturer&gt;Lego Inc&lt;/Manufacturer&gt;
+          &lt;Model&gt;PC9000&lt;/Model&gt;
+          &lt;NetworkObjects&gt;
+            &lt;NetworkObject&gt;
+              &lt;NetworkObjectID&gt;7e94dac0-4729-11df-9879-0800200c9b66&lt;/NetworkObjectID&gt;
+              &lt;FriendlyName&gt;HNAP Server&lt;/FriendlyName&gt;
+              &lt;ControlURL&gt;http://192.168.1.102/HNAP1/&lt;/ControlURL&gt;
+              &lt;ServiceURIs&gt;
+                &lt;string&gt;Core&lt;/string&gt;
+                &lt;string&gt;Router&lt;/string&gt;
+              &lt;/ServiceURIs&gt;
+            &lt;/NetworkObject&gt;
+            &lt;NetworkObject&gt;
+              &lt;NetworkObjectID&gt;7e94dac0-4729-11df-9879-0800200c9b67&lt;/NetworkObjectID&gt;
+              &lt;FriendlyName&gt;Vault Device&lt;/FriendlyName&gt;
+              &lt;ControlURL&gt;http://192.168.1.102/HNAP1/&lt;/ControlURL&gt;
+              &lt;ServiceURIs&gt;
+                &lt;string&gt;Backup&lt;/string&gt;
+              &lt;/ServiceURIs&gt;
+            &lt;/NetworkObject&gt;
+          &lt;/NetworkObjects&gt;
+        &lt;/Device&gt;
+        &lt;Device&gt;
+          &lt;DeviceID&gt;2ac21b80-442f-11df-9879-0800200c9a65&lt;/DeviceID&gt;
+          &lt;TypeID&gt;b2a26ea0-4e3f-11df-9879-0800200c9a66&lt;/TypeID&gt;
+          &lt;FriendlyName&gt;Lego Router&lt;/FriendlyName&gt;
+          &lt;Manufacturer&gt;Lego Inc&lt;/Manufacturer&gt;
+          &lt;Model&gt;R9000&lt;/Model&gt;
+          &lt;NetworkObjects&gt;
+            &lt;NetworkObject&gt;
+              &lt;NetworkObjectID&gt;7e94dac0-4729-11df-9879-0800200c9b66&lt;/NetworkObjectID&gt;
+              &lt;FriendlyName&gt;HNAP Server&lt;/FriendlyName&gt;
+              &lt;ControlURL&gt;http://192.168.1.101/HNAP1/&lt;/ControlURL&gt;
+              &lt;ServiceURIs&gt;
+                &lt;string&gt;Core&lt;/string&gt;
+                &lt;string&gt;Router&lt;/string&gt;
+              &lt;/ServiceURIs&gt;
+            &lt;/NetworkObject&gt;
+            &lt;NetworkObject&gt;
+              &lt;NetworkObjectID&gt;7e94dac0-4729-11df-9879-0800200c9b65&lt;/NetworkObjectID&gt;
+              &lt;FriendlyName&gt;Hotspot Server&lt;/FriendlyName&gt;
+              &lt;ControlURL&gt;http://192.168.1.101/HNAP1/&lt;/ControlURL&gt;
+              &lt;ServiceURIs&gt;
+                &lt;string&gt;Device List&lt;/string&gt;
+                &lt;string&gt;Guest Access&lt;/string&gt;
+                &lt;string&gt;Parental Controls&lt;/string&gt;
+              &lt;/ServiceURIs&gt;
+            &lt;/NetworkObject&gt;
+          &lt;/NetworkObjects&gt;
+        &lt;/Device&gt;
+        &lt;Device&gt;
+          &lt;DeviceID&gt;2ac21b80-442f-11df-9879-0800200c9a66&lt;/DeviceID&gt;
+          &lt;TypeID&gt;beb6ee50-4e3f-11df-9879-0800200c9a66&lt;/TypeID&gt;
+          &lt;FriendlyName&gt;Lego Vault&lt;/FriendlyName&gt;
+          &lt;Manufacturer&gt;Lego Inc&lt;/Manufacturer&gt;
+          &lt;Model&gt;V9000&lt;/Model&gt;
+          &lt;NetworkObjects&gt;
+            &lt;NetworkObject&gt;
+              &lt;NetworkObjectID&gt;7e94dac0-4729-11df-9879-0800200c9b67&lt;/NetworkObjectID&gt;
+              &lt;FriendlyName&gt;Vault Device&lt;/FriendlyName&gt;
+              &lt;ControlURL&gt;http://192.168.1.103/HNAP1/&lt;/ControlURL&gt;
+              &lt;ServiceURIs&gt;
+                &lt;string&gt;Backup&lt;/string&gt;
+              &lt;/ServiceURIs&gt;
+            &lt;/NetworkObject&gt;
+          &lt;/NetworkObjects&gt;
+        &lt;/Device&gt;
+      &lt;/RegisteredDevices&gt;
+    </Value>
+  </State>
+
+  <!-- event-dispatch.hsl -->
+  <State>
+    <Namespace>http://cisco.com/he/event/</Namespace>
+    <Name>Subscriptions</Name>
+    <Value>
+      &lt;Subscriptions xmlns=&quot;http://cisco.com/he/event/&quot;&gt;
+        &lt;Subscription&gt;
+          &lt;EventURI&gt;http://cisco.com/he/registrar/Registered&lt;/EventURI&gt;
+          &lt;DeviceID&gt;2ac21b80-442f-11df-9879-0800200c9a66&lt;/DeviceID&gt;
+          &lt;NetworkObjectID&gt;2ac21b80-442f-11df-9879-0800200c9a65&lt;/NetworkObjectID&gt;
+          &lt;Notify&gt;
+            &lt;DeviceID xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;2ac21b80-442f-11df-9879-0800200c9a66&lt;/DeviceID&gt;
+            &lt;NetworkObjectID xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;7e94dac0-4729-11df-9879-0800200c9b67&lt;/NetworkObjectID&gt;
+          &lt;/Notify&gt;
+        &lt;/Subscription&gt;
+        &lt;Subscription&gt;
+          &lt;EventURI&gt;http://cisco.com/he/registrar/Registered&lt;/EventURI&gt;
+          &lt;Notify&gt;
+            &lt;DeviceID xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;2ac21b80-442f-11df-9879-0800200c9a66&lt;/DeviceID&gt;
+            &lt;NetworkObjectID xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;7e94dac0-4729-11df-9879-0800200c9b67&lt;/NetworkObjectID&gt;
+          &lt;/Notify&gt;
+        &lt;/Subscription&gt;
+        &lt;Subscription&gt;
+          &lt;EventURI&gt;http://cisco.com/he/registrar/Registered&lt;/EventURI&gt;
+          &lt;DeviceID&gt;2ac21b80-442f-11df-9879-0800200c9a66&lt;/DeviceID&gt;
+          &lt;NetworkObjectID&gt;2ac21b80-442f-11df-9879-0800200c9a65&lt;/NetworkObjectID&gt;
+          &lt;Notify&gt;
+            &lt;DeviceID xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;2ac21b80-442f-11df-9879-0800200c9a64&lt;/DeviceID&gt;
+            &lt;NetworkObjectID xmlns=&quot;http://cisco.com/he/registrar/&quot;&gt;7e94dac0-4729-11df-9879-0800200c9b66&lt;/NetworkObjectID&gt;
+          &lt;/Notify&gt;
+        &lt;/Subscription&gt;
+      &lt;/Subscriptions&gt;
+    </Value>
+  </State>
+
+</Simulator>

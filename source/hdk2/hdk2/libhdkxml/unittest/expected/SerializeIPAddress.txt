@@ -1,0 +1,22 @@
+0.0.0.0
+Serialized 7 bytes of data
+0.0.0.0
+Serialized 8 bytes of data
+
+255.255.255.255
+Serialized 15 bytes of data
+255.255.255.255
+Serialized 16 bytes of data
+
+192.168.0.1
+Serialized 11 bytes of data
+192.168.0.1
+Serialized 12 bytes of data
+
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

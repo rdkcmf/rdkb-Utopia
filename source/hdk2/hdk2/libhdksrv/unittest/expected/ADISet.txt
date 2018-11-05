@@ -1,0 +1,20 @@
+ADI_Int = 7
+ADI_Struct = <Struct xmlns="http://cisco.com/HNAP1/"><Int>5</Int></Struct>
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 106
+
+<?xml version="1.0" encoding="utf-8"?>
+<ADISetResponse xmlns="http://cisco.com/HNAP1/">
+</ADISetResponse>
+
+Handled = 1
+Error = 0
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 35 times
+malloc_interposer.c - exit: free called 35 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 7773
+malloc_interposer.c - exit: malloc max = 7657
+malloc_interposer.c - ************************************************************

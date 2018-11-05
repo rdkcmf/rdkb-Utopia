@@ -1,0 +1,24 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 482
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetGuestNetworkLANSettingsResponse xmlns="http://cisco.com/HNAPExt/HotSpot/">
+<GetGuestNetworkLANSettingsResult>OK</GetGuestNetworkLANSettingsResult>
+<IPAddress>192.168.2.1</IPAddress>
+<SubnetMask>255.255.255.0</SubnetMask>
+<IPAddressFirst>192.168.2.100</IPAddressFirst>
+<IPAddressLast>192.168.2.149</IPAddressLast>
+</GetGuestNetworkLANSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 104 times
+malloc_interposer.c - exit: free called 104 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 17918
+malloc_interposer.c - exit: malloc max = 8928
+malloc_interposer.c - ************************************************************

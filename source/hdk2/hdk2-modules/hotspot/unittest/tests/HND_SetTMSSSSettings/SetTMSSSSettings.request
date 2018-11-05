@@ -1,0 +1,12 @@
+SOAPAction: "http://cisco.com/HNAPExt/HND/SetTMSSSSettings"
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <SetTMSSSSettings xmlns="http://cisco.com/HNAPExt/HND/">
+      <WTPEnabled>false</WTPEnabled>
+      <WTPThreshold>99</WTPThreshold>
+      <PCEnabled>false</PCEnabled>
+    </SetTMSSSSettings>
+  </Body>
+</Envelope>

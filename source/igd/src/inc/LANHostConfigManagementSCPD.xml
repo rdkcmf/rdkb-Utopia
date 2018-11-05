@@ -1,0 +1,287 @@
+<?xml version="1.0"?>
+
+<!--
+ If not stated otherwise in this file or this component's Licenses.txt file the
+ following copyright and licenses apply:
+
+ Copyright 2018 RDK Management
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<!--
+   Copyright [2014] [Cisco Systems, Inc.]
+
+   Licensed under the Apache License, Version 2.0 (the \"License\");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an \"AS IS\" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<scpd xmlns="urn:schemas-upnp-org:service-1-0">
+	<specVersion>
+		<major>1</major>
+		<minor>0</minor>
+	</specVersion>
+	<actionList>
+		<action>
+			<name>SetDHCPServerConfigurable</name>
+				<argumentList>
+					<argument>
+						<name>NewDHCPServerConfigurable</name>
+						<direction>in</direction>
+						<relatedStateVariable>DHCPServerConfigurable</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetDHCPServerConfigurable</name>
+				<argumentList>
+					<argument>
+						<name>NewDHCPServerConfigurable</name>
+						<direction>out</direction>
+						<relatedStateVariable>DHCPServerConfigurable</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>SetDHCPRelay</name>
+				<argumentList>
+					<argument>
+						<name>NewDHCPRelay</name>
+						<direction>in</direction>
+						<relatedStateVariable>DHCPRelay</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetDHCPRelay</name>
+				<argumentList>
+					<argument>
+						<name>NewDHCPRelay</name>
+						<direction>out</direction>
+						<relatedStateVariable>DHCPRelay</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>SetSubnetMask</name>
+				<argumentList>
+					<argument>
+						<name>NewSubnetMask</name>
+						<direction>in</direction>
+						<relatedStateVariable>SubnetMask</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetSubnetMask</name>
+				<argumentList>
+					<argument>
+						<name>NewSubnetMask</name>
+						<direction>out</direction>
+						<relatedStateVariable>SubnetMask</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>SetIPRouter</name>
+				<argumentList>
+					<argument>
+						<name>NewIPRouters</name>
+						<direction>in</direction>
+						<relatedStateVariable>IPRouters</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>DeleteIPRouter</name>
+				<argumentList>
+					<argument>
+						<name>NewIPRouters</name>
+						<direction>in</direction>
+						<relatedStateVariable>IPRouters</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetIPRoutersList</name>
+				<argumentList>
+					<argument>
+						<name>NewIPRouters</name>
+						<direction>out</direction>
+						<relatedStateVariable>IPRouters</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>SetDomainName</name>
+				<argumentList>
+					<argument>
+						<name>NewDomainName</name>
+						<direction>in</direction>
+						<relatedStateVariable>DomainName</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetDomainName</name>
+				<argumentList>
+					<argument>
+						<name>NewDomainName</name>
+						<direction>out</direction>
+						<relatedStateVariable>DomainName</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>SetAddressRange</name>
+				<argumentList>
+					<argument>
+						<name>NewMinAddress</name>
+						<direction>in</direction>
+						<relatedStateVariable>MinAddress</relatedStateVariable>
+					</argument>
+					<argument>
+						<name>NewMaxAddress</name>
+						<direction>in</direction>
+						<relatedStateVariable>MaxAddress</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetAddressRange</name>
+				<argumentList>
+					<argument>
+						<name>NewMinAddress</name>
+						<direction>out</direction>
+						<relatedStateVariable>MinAddress</relatedStateVariable>
+					</argument>
+					<argument>
+						<name>NewMaxAddress</name>
+						<direction>out</direction>
+						<relatedStateVariable>MaxAddress</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>SetReservedAddress</name>
+				<argumentList>
+					<argument>
+						<name>NewReservedAddresses</name>
+						<direction>in</direction>
+						<relatedStateVariable>ReservedAddresses</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>DeleteReservedAddress</name>
+				<argumentList>
+					<argument>
+						<name>NewReservedAddresses</name>
+						<direction>in</direction>
+						<relatedStateVariable>ReservedAddresses</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetReservedAddresses</name>
+				<argumentList>
+					<argument>
+						<name>NewReservedAddresses</name>
+						<direction>out</direction>
+						<relatedStateVariable>ReservedAddresses</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>SetDNSServer</name>
+				<argumentList>
+					<argument>
+						<name>NewDNSServers</name>
+						<direction>in</direction>
+						<relatedStateVariable>DNSServers</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>DeleteDNSServer</name>
+				<argumentList>
+					<argument>
+						<name>NewDNSServers</name>
+						<direction>in</direction>
+						<relatedStateVariable>DNSServers</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+		<action>
+			<name>GetDNSServers</name>
+				<argumentList>
+					<argument>
+						<name>NewDNSServers</name>
+						<direction>out</direction>
+						<relatedStateVariable>DNSServers</relatedStateVariable>
+					</argument>
+				</argumentList>
+		</action>
+	</actionList>
+	<serviceStateTable>
+		<stateVariable sendEvents="no">
+			<name>DHCPServerConfigurable</name>
+			<dataType>boolean</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>DHCPRelay</name>
+			<dataType>boolean</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>SubnetMask</name>
+			<dataType>string</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>IPRouters</name>
+			<dataType>string</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>DNSServers</name>
+			<dataType>string</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>DomainName</name>
+			<dataType>string</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>MinAddress</name>
+			<dataType>string</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>MaxAddress</name>
+			<dataType>string</dataType>
+		</stateVariable>
+		<stateVariable sendEvents="no">
+			<name>ReservedAddresses</name>
+			<dataType>string</dataType>
+		</stateVariable>
+	</serviceStateTable>
+</scpd>
+
+
+
+

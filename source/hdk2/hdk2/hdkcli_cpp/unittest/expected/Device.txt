@@ -1,0 +1,61 @@
+deviceDefaultConstructor
+   Username: (null)
+   Password: (null)
+   Host: (null)
+   Port: 0
+   UseSsl: false
+deviceWithHost
+   Username: (null)
+   Password: (null)
+   Host: some_host_string
+   Port: 80
+   UseSsl: false
+deviceWithHostUsernamePassword
+   Username: This be my password
+   Password: Arr ...
+   Host: This be my host
+   Port: 80
+   UseSsl: false
+deviceWithHostPortUsernamePassword
+   Username: admin
+   Password: not password
+   Host: hostess
+   Port: 6554
+   UseSsl: false
+deviceWithHostPortUsernamePassword
+   Username: admin
+   Password: not password
+   Host: hostess
+   Port: 6554
+   UseSsl: false
+deviceWithIpPortUsernamePassword
+   Username: 
+   Password: 
+   Host: 0.0.0.0
+   Port: 445
+   UseSsl: false
+deviceWithIpv4PortUsernamePassword
+   Username: (null)
+   Password: (null)
+   Host: 
+   Port: 0
+   UseSsl: false
+deviceDefaultConstructor.Username: (null) -> "NEW_USERNAME_VALUE"
+deviceDefaultConstructor.Username(): "NEW_USERNAME_VALUE"
+deviceDefaultConstructor.Username: "NEW_USERNAME_VALUE" -> "ANOTHER_NEW_USERNAME_VALUE"
+deviceDefaultConstructor.Username(): "ANOTHER_NEW_USERNAME_VALUE"
+deviceDefaultConstructor.Password: (null) -> "NEW_PAsSWord_VALUE"
+deviceDefaultConstructor.Password(): "NEW_PAsSWord_VALUE"
+deviceDefaultConstructor.Password: "NEW_PAsSWord_VALUE" -> "ANOTHER_NEW_PasswoRDd_VALUE"
+deviceDefaultConstructor.Password(): "ANOTHER_NEW_PasswoRDd_VALUE"
+deviceDefaultConstructor.Host: (null) -> "___New_hOsTT__VALUE"
+deviceDefaultConstructor.Host(): "___New_hOsTT__VALUE"
+deviceDefaultConstructor.Host: "___New_hOsTT__VALUE" -> "ANOTH___ADASIOJD#&$#$__Host_Value.."
+deviceDefaultConstructor.Host(): "ANOTH___ADASIOJD#&$#$__Host_Value.."
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 15 times
+malloc_interposer.c - exit: free called 15 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 235
+malloc_interposer.c - exit: malloc max = 235
+malloc_interposer.c - ************************************************************

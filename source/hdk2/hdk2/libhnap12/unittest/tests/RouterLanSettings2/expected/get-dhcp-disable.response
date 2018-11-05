@@ -1,0 +1,28 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 594
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetRouterLanSettings2Response xmlns="http://purenetworks.com/HNAP1/">
+<GetRouterLanSettings2Result>OK</GetRouterLanSettings2Result>
+<RouterIPAddress>192.168.1.99</RouterIPAddress>
+<RouterSubnetMask>255.255.255.0</RouterSubnetMask>
+<DHCPServerEnabled>false</DHCPServerEnabled>
+<IPAddressFirst>192.168.1.99</IPAddressFirst>
+<IPAddressLast>192.168.1.99</IPAddressLast>
+<LeaseTime>1440</LeaseTime>
+<DHCPReservations>
+</DHCPReservations>
+</GetRouterLanSettings2Response>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 583 times
+malloc_interposer.c - exit: free called 583 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 35030
+malloc_interposer.c - exit: malloc max = 22776
+malloc_interposer.c - ************************************************************

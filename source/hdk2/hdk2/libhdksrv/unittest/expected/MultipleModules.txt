@@ -1,0 +1,19 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 126
+
+<?xml version="1.0" encoding="utf-8"?>
+<FooResponse xmlns="http://cisco.com/HNAP1/">
+<FooResult>OK</FooResult>
+</FooResponse>
+
+Handled = 1
+Error = 0
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 21 times
+malloc_interposer.c - exit: free called 21 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 7285
+malloc_interposer.c - exit: malloc max = 7269
+malloc_interposer.c - ************************************************************

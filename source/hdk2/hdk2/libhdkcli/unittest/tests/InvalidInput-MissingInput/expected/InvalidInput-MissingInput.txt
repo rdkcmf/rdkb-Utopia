@@ -1,0 +1,19 @@
+
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/SimpleUnittestMethod
+        HTTP host: http://127.0.0.1:8080
+Network Object ID: (null)
+    HTTP username: (null)
+    HTTP password: (null)
+          timeout: 0
+       HNAP input: (null)
+
+HNAP call failed with error RequestInvalid (1)
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 20 times
+malloc_interposer.c - exit: free called 20 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 1288
+malloc_interposer.c - exit: malloc max = 1288
+malloc_interposer.c - ************************************************************

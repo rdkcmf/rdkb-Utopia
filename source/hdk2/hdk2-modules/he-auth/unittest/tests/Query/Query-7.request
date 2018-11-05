@@ -1,0 +1,10 @@
+SOAPAction: http://cisco.com/he/registrar/Query
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<Query xmlns="http://cisco.com/he/registrar/">
+  <ServiceURI>Core</ServiceURI>
+</Query>
+</soap:Body>
+</soap:Envelope>

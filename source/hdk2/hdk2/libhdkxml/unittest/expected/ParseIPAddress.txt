@@ -1,0 +1,13 @@
+Parsed '0.0.3.2' into HDK_XML_IPAddress
+Failed to parse '4'
+Failed to parse '?df?.?asd\'
+Failed to parse '0x32.2.3.5'
+Parsed '	' into HDK_XML_IPAddress
+Parsed '' into HDK_XML_IPAddress
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

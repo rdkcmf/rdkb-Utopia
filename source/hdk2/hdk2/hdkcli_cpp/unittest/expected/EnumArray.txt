@@ -1,0 +1,51 @@
+enumArrayRead (size: 4, empty: false)
+[
+UnittestEnum_Value0,
+UnittestEnum_Value0,
+UnittestEnum_Value1,
+UnittestEnum_Value1
+]
+enumArrayWrite (size: 0, empty: true)
+<?xml version="1.0" encoding="utf-8"?>
+<EnumArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+</EnumArray>
+enumArrayWrite (size: 12, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<EnumArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value1</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value2</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value3</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value4</Enum>
+<Enum>UnittestEnum_Value2</Enum>
+<Enum>UnittestEnum_Value3</Enum>
+<Enum>UnittestEnum_Value1</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+</EnumArray>
+enumArrayCopy (size: 13, empty: false)
+<?xml version="1.0" encoding="utf-8"?>
+<EnumArray xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value1</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value2</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value3</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value4</Enum>
+<Enum>UnittestEnum_Value2</Enum>
+<Enum>UnittestEnum_Value3</Enum>
+<Enum>UnittestEnum_Value1</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+<Enum>UnittestEnum_Value0</Enum>
+</EnumArray>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 58 times
+malloc_interposer.c - exit: free called 58 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 10402
+malloc_interposer.c - exit: malloc max = 9706
+malloc_interposer.c - ************************************************************

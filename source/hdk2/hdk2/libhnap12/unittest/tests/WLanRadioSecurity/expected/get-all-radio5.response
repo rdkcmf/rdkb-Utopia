@@ -1,0 +1,31 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 606
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetWLanRadioSecurityResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetWLanRadioSecurityResult>OK</GetWLanRadioSecurityResult>
+<Enabled>true</Enabled>
+<Type>WPA-AUTO-PSK</Type>
+<Encryption>TKIPORAES</Encryption>
+<Key>password</Key>
+<KeyRenewal>60</KeyRenewal>
+<RadiusIP1>0.0.0.0</RadiusIP1>
+<RadiusPort1>0</RadiusPort1>
+<RadiusSecret1></RadiusSecret1>
+<RadiusIP2>0.0.0.0</RadiusIP2>
+<RadiusPort2>0</RadiusPort2>
+<RadiusSecret2></RadiusSecret2>
+</GetWLanRadioSecurityResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 2055 times
+malloc_interposer.c - exit: free called 2055 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 158171
+malloc_interposer.c - exit: malloc max = 31835
+malloc_interposer.c - ************************************************************

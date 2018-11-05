@@ -1,0 +1,36 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 688
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetClientStatsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetClientStatsResult>OK</GetClientStatsResult>
+<ClientStats>
+<ClientStat>
+<MacAddress>AA:BB:CC:DD:EE:FF</MacAddress>
+<Wireless>false</Wireless>
+<LinkSpeedIn>1000</LinkSpeedIn>
+<LinkSpeedOut>1000</LinkSpeedOut>
+<SignalStrength>0</SignalStrength>
+</ClientStat>
+<ClientStat>
+<MacAddress>11:22:33:44:55:66</MacAddress>
+<Wireless>true</Wireless>
+<LinkSpeedIn>350</LinkSpeedIn>
+<LinkSpeedOut>350</LinkSpeedOut>
+<SignalStrength>98</SignalStrength>
+</ClientStat>
+</ClientStats>
+</GetClientStatsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 607 times
+malloc_interposer.c - exit: free called 607 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 34450
+malloc_interposer.c - exit: malloc max = 21726
+malloc_interposer.c - ************************************************************

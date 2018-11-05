@@ -1,0 +1,609 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+namespace "http://purenetworks.com/HNAP/Camera/"
+
+
+#@@ top Top
+#@ <img class="logo" src="@images/cisco_logo.png" width="151" height="80" alt="CISCO" />
+#@@ end
+
+#@@ title Network Cameras
+#@@ version 1.2 (Rev 10)
+#@@ date February 2010
+
+#@@ abstract Abstract
+#@ This document describes the details of the HNAP protocol specification for use with Network Cameras.
+#@@ end
+
+#@@ h2 Change History
+#@ <table summary="Revision History">
+#@ <tr><th>Revision<th>Date<th>Notes
+#@ <tr><td>10<td>2010-02-<td>
+#@ Re-written in HSL
+#@ </table>
+#@@ end
+
+#@@ h2 Overview
+#@ This document provides information about HNAP functionality for Network Cameras.
+#@ The functionality provided allows for configuration and modification of basic cameras settings.
+#@
+#@ HNAP does not define a <q>streaming media protocol</q> by which video and audio can be streamed from the device.
+#@ It is intended that the device use common existing streaming protocols to accomplish this, however,
+#@ the device should describe which streaming protocols it supports by responding to the corresponding HNAP methods.
+#@@ end
+
+
+#@@ h2 Base HNAP Methods for Cameras
+#@ In addition to the camera-specific methods listed in this document,
+#@ an HNAP-compliant network camera should implement several base HNAP methods and functionality for simple devices.
+#@ These are:
+#@
+#@ <table summary="core methods">
+#@ <tr><th>Core HNAP Method<th>Purpose
+#@ <tr><td><tt>GetDeviceSettings</tt>
+#@ <td>A camera must fully implement this method,
+#@ including identifying its device type as a camera and listing the SOAPActions that it supports.
+#@ <tr><td><tt>SetDeviceSettings</tt>
+#@ <td>If a camera requires authenticated security,
+#@ it must implement this method to allow modification of the administration password.
+#@ <tr><td><tt>GetDeviceSettings2</tt><br />
+#@ <tt>SetDeviceSettings2</tt>
+#@ <td>Depending on the capabilities of the camera,
+#@ these methods may be implemented to provide configuration of Timezone, administration account, and SSL settings.
+#@ <tr><td><tt>IsDeviceReady</tt>
+#@ <td>Must be implemented.
+#@ <tr><td><tt>Reboot</tt>
+#@ <td>Must be implemented.
+#@ <tr><td><tt>GetFirmwareSettings</tt><br />
+#@ <tt>FirmwareUpload</tt>
+#@ <td>Implement these methods if the camera is to take advantage of firmware updates.
+#@ <tr><td><tt>DownloadSpeedTest</tt>
+#@ <td>This is an optional method that measures the camera's network performance.
+#@ It is recommended to implement this method to allow HNAP clients to test the true network throughput
+#@ in order to select the most appropriate video stream.
+#@ <tr><td><tt>GetWLanRadios</tt><br />
+#@ <tt>GetWLanRadioSecurity</tt><br />
+#@ <tt>SetWLanRadioSecurity</tt><br />
+#@ <tt>GetWLanRadioSettings</tt><br />
+#@ <tt>SetWLanRadioSettings</tt>
+#@ <td>These methods should be implemented
+#@ if the network camera has a wireless radio and can connect to a wireless network.
+#@ Wired-only cameras can ignore these.
+#@ </table>
+#@
+#@ Details about these methods are included in the Home Network Administration Protocol (HNAP) Specification.
+#@@ end
+
+
+#@@ h2 HNAP Methods Reference
+#@@ h3 Camera Methods Overview
+#@ The following section lists the methods for communicating with a network camera.
+#@
+#@ <table summary="methods">
+#@ <tr><th>Methods<th>Purpose
+#@ <tr><td><tt>GetPositionCapabilities</tt><br />
+#@ <tt>SetPositionSetting</tt><br />
+#@ <tt>GetPositionSettings</tt>
+#@ <td>Controls camera position and tilting, focusing and zooming.
+#@ <tr><td><tt>GetCapabilities</tt><br />
+#@ <tt>GetCameraSettings</tt><br />
+#@ <tt>SetCameraSettings</tt>
+#@ <td>Gets and sets basic camera settings, discovers basic capabilities including brightness, contrast etc.
+#@ <tr><td><tt>GetImageSnapshot</tt>
+#@ <td>Gets a single static image snapshot from the camera.
+#@ <tr><td><tt>GetVideoStreams</tt><br />
+#@ <tt>SetVideoStreamSettings</tt>
+#@ <td>Discovers and controls video streams.
+#@ <tr><td><tt>GetRTPSettings</tt><br />
+#@ <tt>SetRTPSettings</tt>
+#@ <td>Configures settings for the RTP streaming server inside of a camera device.
+#@@ end
+
+#@@ h3 XML Namespace
+#@ All camera-specific HNAP methods in this document are based in the HNAP Camera Namespace.
+#@ This namespace is:
+#@
+#@ <tt>http://purenetworks.com/HNAP/Camera/</tt>
+#@
+#@ Note that a given camera device implementing HNAP will implement
+#@ both methods from the Camera namespace and the core HNAP namespace.
+#@ The <tt>SOAPActions</tt> field in the <tt>GetDeviceSettings</tt> response
+#@ should ensure fully qualified methods are listed.
+#@@ end
+
+
+#
+# Enumerations
+#
+
+enum VideoFormat
+    "video/mpeg4"
+    "video/mjpeg"
+
+
+#
+# Structures
+#
+
+#@ This structure is used to describe a range of supported values for a given integer parameter.
+struct IntValueRange
+
+    #@ whether this field is supported by the device and the fields below contain valid values
+    bool Enabled
+
+    #@ this field can be automatically set by the device.
+    #@ By passing <tt>AutomaticValue</tt> to a method requiring this argument,
+    #@ the device will auto-assign a valid meaningful value.
+    bool Automatic
+
+    #@ If <tt>Automatic</tt> is <tt>true</tt>,
+    #@ this represents the special automatic value
+    #@ that can be used to inform a device to auto-select the best option for the argument.
+    #@
+    #@ For example, a camera that supports auto-focus might want to distinguish between
+    #@ a manually selected focus value
+    #@ and a value indicating that the camera should constantly adjust to the best setting.
+    int AutomaticValue
+
+    #@ Value of this range in its default or normal position.
+    #@ Sometimes this might be the center value of a range.
+    #@
+    #@ For example, a camera describing its panning capability might support
+    #@ -90 to +90 (degrees) with 0 as the default value.
+    int DefaultValue
+
+    #@ maximum value
+    int MaxValue
+
+    #@ minimum value
+    int MinValue
+
+    #@ step between allowed values
+    int Step
+
+
+#@ This represents settings associated with a given video stream.
+struct VideoStream
+
+    # $REVIEW: do we need to include codec information to make these unique?
+    #@ Specifies the video format.
+    #@
+    #@ <tt>Format</tt> should be unique for each video stream returned from the GetVideoStreams method.
+    VideoFormat Format
+
+    #@ the currently configured size of the video stream.
+    #@ Content streamed from this source will be rendered in this size.
+    #@
+    #@ The size of a video stream can be changed using the SetVideoStreamSettings method,
+    #@ but it must be a valid size as listed in
+    #@ the <tt>SupportedImageSizes</tt> field of <tt>GetCameraCapabilities</tt>.
+    string Size
+
+    #@ the image quality level.
+    #@ Different codes support varying levels of quality by varying compression techniques.
+    #@
+    #@ The quality rating is an abstract value that is interpreted by the camera.
+    #@ Valid values are between 1 and 5, where 5 is the highest quality (and usually the least compressed).
+    #@ Camera implementations must map these quality rankings into a meaningful value
+    #@ for the specific compression technique they are using.
+    int Quality
+
+    #@ a URL to the video stream.
+    #@ The protocol of the URL defines the streaming technique being used.
+    #@
+    #@ Examples are:
+    #@ <ul>
+    #@ <li><tt>rtsp://192.168.1.15/img/</tt>
+    #@ <li><tt>http://192.168.1.15/img/video.mov</tt>
+    #@ <li><tt>http://192.168.1.15/img/video.asf
+    #@ </ul>
+    string URL
+
+
+#
+# Actions
+#
+
+#@ Use this method to discover the capabilities of a network camera.
+action GetCapabilities
+    output
+        #@ whether the camera includes a microphone and can stream audio
+        bool SupportsAudio
+
+        #@ whether the camera supports configuration of the white balance setting
+        bool SupportsWhiteBalance
+
+        #@ whether the camera supports configuration of the sharpness setting
+        bool SupportsSharpness
+
+        #@ whether the camera supports configuration of the brightness setting
+        bool SupportsBrightness
+
+        #@ whether the camera supports configuration of the contrast setting
+        bool SupportsContrast
+
+        #@ whether the camera supports configuration of the saturation setting
+        bool SupportsSaturation
+
+        #@ whether the camera supports configuration of the hue setting
+        bool SupportsHue
+
+        #@ Array of possible image sizes supported by this camera.
+        #@ The image size values returned can be passed to other methods to configure still and video image data.
+        #@ Format is <tt><var>width</var>x<var>height</var></tt>, for example:<br />
+        #@ <tt>800x600</tt><br/>
+        #@ <tt>640x480</tt><br/>
+        #@ <tt>320x160</tt>
+        string[] SupportedImageSizes
+
+
+action GetCameraSettings
+    output
+        #@ whether the camera has a microphone that can record audio tracks into its video feed that is switched on
+        bool AudioEnabled
+
+        #@ the temperature of the white point in kelvins,
+        #@ or -1 if this is automatically set by the camera,
+        #@ or 0 if white balance is disabled.
+        int WhiteBalance
+
+        #@ sharpness, in the range 0-10 where 5 is considered the normal or center.
+        int Sharpness
+
+        #@ brightness, in the range 0-10 where 5 is considered the normal or center.
+        int Brightness
+
+        #@ contrast, in the range 0-10 where 5 is considered the normal or center.
+        int Contrast
+
+        #@ saturation, in the range 0-10 where 5 is considered the normal or center.
+        int Saturation
+
+        #@ hue, in the range 0-10 where 5 is considered the normal or center.
+        int Hue
+
+
+action SetCameraSettings
+    input
+        #@ switch on or off the microphone.
+        #@ This must be set to <tt>false</tt> if the camera does not have a microphone.
+        bool AudioEnabled
+
+        #@ the temperature of the white point in kelvins,
+        #@ or -1 if this is automatically set by the camera.
+        int WhiteBalance
+
+        #@ Sharpness is a measure of detail clarity in an image.
+        #@
+        #@ If sharpness is supported, the valid range is 0-10 where 5 is considered the normal or center-value.
+        #@ If it is not supported, this must be set to -1.
+        int Sharpness
+
+        #@ Brightness is a measure of perceived luminance of an image.
+        #@
+        #@ If brightness is supported, the valid range is 0-10 where 5 is considered the normal or center-value.
+        #@ If it is not supported, this must be set to -1.
+        int Brightness
+
+        #@ Contrast is a measure of the difference in brightness between the light and dark areas of a picture.
+        #@
+        #@ If contrast is supported, the valid range is 0-10 where 5 is considered the normal or center-value.
+        #@ If it is not supported, this must be set to -1.
+        int Contrast
+
+        #@ Saturation measures the degree to which a color differs from a gray of the same darkness or lightness.
+        #@
+        #@ If saturation is supported, the valid range is 0-10 where 5 is considered the normal or center-value.
+        #@ If it is not supported, this must be set to -1.
+        int Saturation
+
+        #@ Hue is the property of colors by which they can be perceived
+        #@ as ranging from red through yellow, green, and blue,
+        #@ as determined by the dominant wavelength of the light.
+        #@
+        #@ If hue is supported, the valid range is 0-10 where 5 is considered the normal or center-value.
+        #@ If it is not supported, this must be set to -1.
+        int Hue
+    result
+        #@ An invalid <tt>WhiteBalance</tt> value was passed.
+        #@ If a camera returns this error when a <tt>WhiteBalance</tt> of -1 is being set,
+        #@ then the camera does not support automatic white balance selection.
+        "ERROR_INVALID_WHITE_BALANCE"
+
+        #@ An invalid <tt>Brightness</tt> value was passed.
+        "ERROR_INVALID_BRIGHTNESS"
+
+        #@ An invalid <tt>Sharpness</tt> value was passed.
+        "ERROR_INVALID_SHARPNESS"
+
+        #@ An invalid <tt>Contrast</tt> value was passed.
+        "ERROR_INVALID_CONTRAST"
+
+        #@ An invalid <tt>Saturation</tt> value was passed.
+        "ERROR_INVALID_SATURATION"
+
+        #@ An invalid <tt>Hue</tt> value was passed.
+        "ERROR_INVALID_HUE"
+
+        #@ <tt>AudioEnabled</tt> was set to <tt>true</tt>, but the camera does not have an audio device.
+        "ERROR_NO_AUDIODEVICE"
+
+
+#@ Use this method to get information about the camera position capabilities.
+#@
+#@ Some cameras support pan and tilt motions, zoom lenses, and focusing of the lens.
+#@ As camera models vary by the physical capabilities,
+#@ some of the attributes may not be implemented by certain cameras.
+#@ Due to the variance, this method allows cameras to self describe their specific position capabilities.
+#@
+#@ If a camera does not implement any positioning, it should not implement this method or its related methods.
+action GetPositionCapabilities
+    output
+        #@ the options for panning supported by the camera
+        IntValueRange PanRange
+
+        #@ the options for tilting supported by the camera
+        IntValueRange TiltRange
+
+        #@ the options for zoom supported by the camera
+        IntValueRange ZoomRange
+
+        #@ the options for focus supported by the camera
+        IntValueRange FocusRange
+
+
+#@ Use this method to get information about the camera position.
+#@
+#@ If any of the fields are not supported,
+#@ the camera should return -1 for the field value
+#@ and ensure that the lack of support is reflected in the <tt>GetPositionCapabilities</tt> response.
+action GetPositionSettings
+    output
+        #@ If the camera supports moving around the horizontal plane,
+        #@ this returns the current setting of the Pan value.
+        int Pan
+
+        #@ If the camera supports moving around the vertical plane,
+        #@ this returns the current setting of the Tilt value.
+        int Tilt
+
+        #@ If the camera is equipped with a zoom lens,
+        #@ this returns the current zoom/magnification value.
+        int Zoom
+
+        #@ If the camera supports manual focusing,
+        #@ this returns the current value of the focus offset.
+        int Focus
+
+
+#@ Use this method to set the camera position, zoom, and focus values.
+#@
+#@ HNAP clients should use the <tt>GetPositionCapabilities</tt> method
+#@ to determine valid ranges for these values on a per-camera basis.
+action SetPositionSettings
+    input
+        #@ If the camera supports moving around the horizontal plane,
+        #@ this sets the current setting of the Pan value.
+        int Pan
+
+        #@ If the camera supports moving around the vertical plane,
+        #@ this sets the current Tilt position.
+        int Tilt
+
+        #@ If the camera is equipped with a zoom lens,
+        #@ this sets the current zoom/magnification value.
+        int Zoom
+
+        #@ If the camera supports manual focusing,
+        #@ this sets the current lens focus.
+        int Focus
+    result
+        #@ Invalid value was passed for the <tt>Pan</tt> parameter.
+        "ERROR_INVALID_PAN_VALUE"
+        #@ Invalid value was passed for the <tt>Tilt</tt> parameter.
+        "ERROR_INVALID_TILT_VALUE"
+        #@ Invalid value was passed for the <tt>Zoom</tt> parameter.
+        "ERROR_INVALID_ZOOM_VALUE"
+        #@ Invalid value was passed for the <tt>Focus</tt> parameter.
+        "ERROR_INVALID_FOCUS_VALUE"
+
+
+#@ Use this method to get a snapshot image from the camera.
+#@ This method returns a URL that can be used to subsequently obtain the image data itself.
+action GetImageSnapshot
+    input
+        #@ Desired size of the image.
+        #@ Must be a valid size returned by the <tt>GetCameraCapabilities</tt> method.
+        string Size
+
+        #@ Desired quality level of the image.
+        #@ Many image formats (for example JPEG), support varying levels of quality by varying compression techniques.
+        #@
+        #@ Valid values are between 1 and 5, where 5 is the highest quality (and usually the least compressed).
+        #@ Camera implementations must map these quality rankings into
+        #@ a meaningful value for the specific compression technique they are using.
+        int Quality
+    output
+        #@ Returns a URL to the still image on this device.
+        #@
+        #@ <ul>
+        #@ <li>The URL can be relative to the device or absolute.
+        #@ If using a relative URL the URL must be fully qualified from the root of the device,
+        #@ e.g. <tt>/img/snapshot.cgi</tt> and not <tt>img/snapshot.cgi</tt>.
+        #@ <li>The camera must respond to a simple <tt>GET</tt> request at this URL
+        #@ and return an HTTP response that contains an image.
+        #@ The MIME type of the image should be returned as part of the HTTP <tt>GET</tt>,
+        #@ as per normal HTTP server rules.
+        #@ The response should not be an HTML page containing an embedded IMG tag to another resource.
+        #@ <li>The camera may choose to require HTTP authentication for this request.
+        #@ If so, the same credentials used to authenticate the HNAP requests should be provided.
+        #@ <li>The URL returned may use a redirect to another resource.
+        #@ <li>An HNAP client should expect to be able to persist this URL across calls,
+        #@ unless significant changes are made to the settings. i.e. if the device changes IP address.
+        #@ </ul>
+        string URL
+    result
+        #@ the <tt>Size</tt> parameter passed is not supported by this camera
+        "ERROR_INVALID_SIZE"
+        #@ the <tt>Quality</tt> parameter passed is out of range
+        "ERROR_INVALID_QUALITY"
+
+
+#@ Use this method to enumerate the available video streams that this camera supports.
+#@ For each video stream, the currently-configured settings for that stream are also available.
+#@
+#@ A video stream is identified by its <tt>Format</tt> field in the <tt>VideoStream</tt> structure.
+#@ A camera must return at least one video stream, and each stream returned must have a unique <tt>Format</tt> field.
+#@
+#@ Cameras that respond with a video stream bound to an <tt>rtsp:</tt> URL
+#@ must also implement both <tt>GetRTPSettings</tt> and <tt>SetRTPSettings</tt> methods
+#@ to allow configuration of the RTP server.
+action GetVideoStreams
+    output
+        #@ an array of unique <tt>VideoStream</tt>s that are supported by the camera and their current settings
+        VideoStream[] VideoStreams
+
+
+#@ Use this method to configure settings for a particular video stream.
+#@ The stream is identified by its <tt>Format</tt> parameter.
+action SetVideoStreamSettings
+    input
+        #@ the format of the video stream to be configured.
+        #@ This must be a valid stream type
+        #@ as returned by the <tt>Format</tt> field of the <tt>GetVideoStreams</tt> method.
+        VideoFormat Format
+
+        #@ the size of the video to be used when streaming this feed.
+        #@ The available sizes that can be passed to this parameter
+        #@ are returned in the <tt>SupportedImagesSizes</tt> array of the <tt>GetCapabilities</tt> camera method.
+        string Size
+
+        #@ Sets the quality of the video.
+        #@ Video quality depends on compression level, fps, variable vs. fixed bit rate, etc.
+        #@
+        #@ HNAP does not attempt to expose direct manipulation of quality parameters as they vary greatly by camera.
+        #@ The <tt>Quality</tt> parameter is an abstract value that should be interpreted by the camera.
+        #@ Valid values are between 1 and 5, where 5 is the highest quality.
+        #@
+        #@ In general, a camera should not fail a call where quality is in the legal range,
+        #@ even if it has no concept of configurable quality.
+        #@ Failing silently is preferred.
+        int Quality
+    result
+        #@ the <tt>Size</tt> parameter passed is not supported by the camera
+        "ERROR_INVALID_SIZE"
+        #@ the <tt>Format</tt> parameter passed is not supported by the camera
+        "ERROR_INVALID_FORMAT"
+        #@ the <tt>Quality</tt> parameter passed is out of range
+        "ERROR_INVALID_QUALITY"
+
+
+#@ Use this method to get camera settings for streaming video over Real-time Transport Protocol, or RTP.
+#@ By implementing this method,
+#@ a camera informs an HNAP client that this is its preferred method of streaming video content.
+action GetRTPSettings
+    output
+
+        #@ the port to be used to connect to RTSP (Real Time Streaming Protocol).
+        #@ RTSP is a standard for connected client(s)
+        #@ to control (play, pause etc) streaming data (MPEG-4) over the World Wide Web.
+        #@
+        #@ The default RTSP Port is 554.
+        int RTSPPort
+
+        #@ the port to use with RTP.
+        #@
+        #@ RTP (Real-time Transport Protocol) is
+        #@ an Internet protocol used for transmitting a single real-time multimedia data such as video
+        #@ to a select group of connected clients.
+        #@ RTSP uses RTP to format packets of multimedia content.
+        int RTPDataPort
+
+        #@ the Max RTP Data Packet Length.
+        #@ Must be between 400 and 1400.
+        int MaxRTPData
+
+        #@ whether multicast is enabled
+        bool MulticastEnabled
+
+        #@ the multicast address used for RTP
+        IPAddress MulticastAddress
+
+        #@ the multicast port used for RTP
+        int MulticastPort
+
+        #@ the time-to-live (in hops) of multicast RTP packets.
+        #@ Must be between 1 and 255.
+        int MulticastTTL
+
+
+#@ Use this method to set camera settings for streaming video over Real-time Transport Protocol, or RTP.
+#@ By implementing this method,
+#@ a camera informs an HNAP client that this is its preferred method of streaming video content.
+action SetRTPSettings
+    input
+        #@ the port to be used to connect to RTSP (Real Time Streaming Protocol).
+        #@ RTSP is a standard for connected client(s)
+        #@ to control (play, pause etc) streaming data (MPEG-4) over the World Wide Web.
+        #@
+        #@ The default RTSP Port is 554.
+        int RTSPPort
+
+        #@ the port to use with RTP.
+        #@
+        #@ RTP (Real-time Transport Protocol) is
+        #@ an Internet protocol used for transmitting a single real-time multimedia data such as video
+        #@ to a select group of connected clients.
+        #@ RTSP uses RTP to format packets of multimedia content.
+        int RTPDataPort
+
+        #@ the Max RTP Data Packet Length.
+        #@ Must be between 400 and 1400.
+        int MaxRTPData
+
+        #@ whether multicast is enabled
+        bool MulticastEnabled
+
+        #@ the multicast address used for RTP
+        IPAddress MulticastAddress
+
+        #@ the multicast port used for RTP
+        int MulticastPort
+
+        #@ the time-to-live (in hops) of multicast RTP packets.
+        #@ Must be between 1 and 255.
+        int MulticastTTL

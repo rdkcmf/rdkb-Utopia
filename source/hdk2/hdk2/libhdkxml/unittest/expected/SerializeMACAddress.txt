@@ -1,0 +1,22 @@
+00:00:00:00:00:00
+Serialized 17 bytes of data
+00:00:00:00:00:00
+Serialized 18 bytes of data
+
+FF:FF:FF:FF:FF:FF
+Serialized 17 bytes of data
+FF:FF:FF:FF:FF:FF
+Serialized 18 bytes of data
+
+00:01:12:23:35:FA
+Serialized 17 bytes of data
+00:01:12:23:35:FA
+Serialized 18 bytes of data
+
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

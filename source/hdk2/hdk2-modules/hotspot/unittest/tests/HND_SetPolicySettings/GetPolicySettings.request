@@ -1,0 +1,8 @@
+SOAPAction: "http://cisco.com/HNAPExt/HND/GetPolicySettings"
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <GetPolicySettings xmlns="http://cisco.com/HNAPExt/HND/" />
+  </Body>
+</Envelope>

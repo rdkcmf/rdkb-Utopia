@@ -1,0 +1,28 @@
+{
+    Enum: __UNKNOWN__
+    Int: 45
+    Long: 0
+    IPAddress: 
+    MACAddress: 
+    EnumArray: [ ]
+    String: This is a string in my DOM unittest
+    SubStruct:
+    {
+        String: a substruct
+    }
+}
+<?xml version="1.0" encoding="utf-8"?>
+<Struct xmlns="http://cisco.com/HDK/Unittest/Client/cpp/">
+<int>45</int>
+<string>This is a string in my DOM unittest</string>
+<Struct>
+<string>a substruct</string>
+</Struct>
+</Struct>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 35 times
+malloc_interposer.c - exit: free called 35 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 8019
+malloc_interposer.c - exit: malloc max = 8019
+malloc_interposer.c - ************************************************************

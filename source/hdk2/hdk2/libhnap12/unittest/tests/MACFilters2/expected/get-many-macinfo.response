@@ -1,0 +1,48 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 933
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetMACFilters2Response xmlns="http://purenetworks.com/HNAP1/">
+<GetMACFilters2Result>OK</GetMACFilters2Result>
+<Enabled>true</Enabled>
+<IsAllowList>false</IsAllowList>
+<MACList>
+<MACInfo>
+<MacAddress>AA:AA:AA:AA:AA:AA</MacAddress>
+<DeviceName>My bridge</DeviceName>
+</MACInfo>
+<MACInfo>
+<MacAddress>BB:BB:BB:BB:BB:BB</MacAddress>
+<DeviceName>XBOX 360</DeviceName>
+</MACInfo>
+<MACInfo>
+<MacAddress>CC:CC:CC:CC:CC:CC</MacAddress>
+<DeviceName>iMac</DeviceName>
+</MACInfo>
+<MACInfo>
+<MacAddress>DD:DD:DD:DD:DD:DD</MacAddress>
+<DeviceName>BlueRay</DeviceName>
+</MACInfo>
+<MACInfo>
+<MacAddress>EE:EE:EE:EE:EE:EE</MacAddress>
+<DeviceName>VoIP phone</DeviceName>
+</MACInfo>
+<MACInfo>
+<MacAddress>FF:FF:FF:FF:FF:FF</MacAddress>
+<DeviceName>light switch</DeviceName>
+</MACInfo>
+</MACList>
+</GetMACFilters2Response>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 647 times
+malloc_interposer.c - exit: free called 647 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 35630
+malloc_interposer.c - exit: malloc max = 22616
+malloc_interposer.c - ************************************************************

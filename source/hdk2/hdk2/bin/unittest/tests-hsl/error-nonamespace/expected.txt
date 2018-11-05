@@ -1,0 +1,4 @@
+
+Errors:
+
+  error-nonamespace/test.hsl:1: namespace required for state definition

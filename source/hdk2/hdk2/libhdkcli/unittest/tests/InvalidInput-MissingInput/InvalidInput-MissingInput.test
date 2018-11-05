@@ -1,0 +1,7 @@
+#
+# InvalidInput-MissingInput.test
+#   Test checking that the API fails when missing a required input struct
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod
+host: http://127.0.0.1:8080

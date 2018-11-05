@@ -1,0 +1,24 @@
+SOAPAction: "http://purenetworks.com/HNAP1/SetWLanRadioSecurity"
+
+﻿<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope 
+xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <SetWLanRadioSecurity xmlns="http://purenetworks.com/HNAP1/">
+      <RadioID>RADIO_2.4GHz</RadioID>
+      <Enabled>true</Enabled>
+      <Type>WPA-PSK</Type>
+      <Encryption>TKIP</Encryption>
+      <Key>password</Key>
+      <KeyRenewal>0</KeyRenewal>
+      <RadiusIP1>44.44.44.44</RadiusIP1>
+      <RadiusPort1>12</RadiusPort1>
+      <RadiusSecret1>lkjh</RadiusSecret1>
+      <RadiusIP2 />
+      <RadiusPort2>0</RadiusPort2>
+      <RadiusSecret2 />
+    </SetWLanRadioSecurity>
+  </soap:Body>
+</soap:Envelope>

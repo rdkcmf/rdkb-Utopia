@@ -1,0 +1,111 @@
++++++++ Request Headers +++++++
+HTTP/1.1 POST /HNAP1
+Connection: Close
+Content-Type: text/xml; charset="utf-8"
+Content-Length: 1002
+Authorization: Basic Og==
+SOAPAction: "http://cisco.com/Unittest/ComplexUnittestMethod"
+Host: 127.0.0.1:8080
+
++++++++ Request Data +++++++
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<ComplexUnittestMethod xmlns="http://cisco.com/Unittest/">
+<StructInputArg>
+<StringMember>P___ C______ (feat. P___ B_____)</StringMember>
+<IntMember>0</IntMember>
+<BoolMember>false</BoolMember>
+<DateTimeMember>1985-05-27T00:00:01Z</DateTimeMember>
+<IPAddressMember>127.0.0.1</IPAddressMember>
+<MACAddressMember>04:08:15:16:23:42</MACAddressMember>
+<EnumMember>EnumValue1</EnumMember>
+<StringArrayMember>
+<string>Better forget it ....</string>
+<string>You&apos;ll never get it...</string>
+<string>Oh she&apos;ll say there&apos;s no other...</string>
+<string>.. until she finds another...</string>
+<string>...</string>
+<string>...</string>
+<string>She&apos;s an easy lover</string>
+<string>She&apos;ll get a hold on you believe it!</string>
+</StringArrayMember>
+</StructInputArg>
+<StringInputArg>????</StringInputArg>
+<BoolInputArg>true</BoolInputArg>
+</ComplexUnittestMethod>
+</Body>
+</Envelope>
+
+
+------- Response -------
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+
+<?xml version="1.0" encoding="utf-8" ?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Body>
+  <ComplexUnittestMethodResponse xmlns="http://cisco.com/Unittest/">
+      <ComplexUnittestMethodResult>REBOOT</ComplexUnittestMethodResult>
+      <IntOutputArg>223344</IntOutputArg>
+      <StringOutArg>hi there.</StringOutArg>
+      <OptionalStructOutputArg>
+        <StringMember>output string member</StringMember>
+        <IntMember>99999</IntMember>
+        <BoolMember>true</BoolMember>
+        <DateTimeMember>2007-12-06T09:20:11Z</DateTimeMember>
+        <IPAddressMember>12.12.31.1</IPAddressMember>
+        <MACAddressMember>04:08:15:16:32:43</MACAddressMember>
+        <EnumMember>EnumValue0</EnumMember>
+        <StringArrayMember>
+            <string>output string 1</string>
+            <string>output string 2</string>
+            <string>output string 3</string>
+        </StringArrayMember>
+      </OptionalStructOutputArg>
+  </ComplexUnittestMethodResponse>
+</soap:Body>
+</soap:Envelope>
+
+******* Client Result ******
+
+      SOAP action: http://cisco.com/Unittest/ComplexUnittestMethod
+        HTTP host: http://127.0.0.1:8080
+Network Object ID: (null)
+    HTTP username: (null)
+    HTTP password: (null)
+          timeout: 0
+       HNAP input: RebootResponse.input.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<ComplexUnittestMethodResponse xmlns="http://cisco.com/Unittest/">
+<ComplexUnittestMethodResult>REBOOT</ComplexUnittestMethodResult>
+<IntOutputArg>223344</IntOutputArg>
+<StringOutArg>hi there.</StringOutArg>
+<OptionalStructOutputArg>
+<StringMember>output string member</StringMember>
+<IntMember>99999</IntMember>
+<BoolMember>true</BoolMember>
+<DateTimeMember>2007-12-06T09:20:11Z</DateTimeMember>
+<IPAddressMember>12.12.31.1</IPAddressMember>
+<MACAddressMember>04:08:15:16:32:43</MACAddressMember>
+<EnumMember>EnumValue0</EnumMember>
+<StringArrayMember>
+<string>output string 1</string>
+<string>output string 2</string>
+<string>output string 3</string>
+</StringArrayMember>
+</OptionalStructOutputArg>
+</ComplexUnittestMethodResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 116 times
+malloc_interposer.c - exit: free called 116 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 21168
+malloc_interposer.c - exit: malloc max = 12398
+malloc_interposer.c - ************************************************************

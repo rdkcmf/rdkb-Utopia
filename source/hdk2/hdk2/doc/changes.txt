@@ -1,0 +1,540 @@
+=====================================================================
+Changes to HDK 1.2.3
+======================================================================
+
+Change 105677 on 2009/10/22
+
+    Guard HDK_SUCCEEDED against unkown results.
+
+Change 105193 on 2009/10/14
+
+    Only run tests on "gold" run when updating expected unit tests results.
+
+Change 105191 on 2009/10/14
+
+    Sort all action result enumerations.
+
+Change 104816 on 2009/10/08
+
+    Modify WANType enumeration to match the GetWanInfo spec.
+
+Change 104541 on 2009/10/06
+
+    Eliminate auto-200 ERROR response for IPAddress and MACAddress.  We'll
+    return a client 500 error from now on (just like we do for all other types).
+
+Change 104537 on 2009/10/06
+
+    Add code generation module dependencies to HDK makefiles.
+
+Change 104494 on 2009/10/05
+
+    Allow blank MAC addresses.
+
+Change 104411 on 2009/10/05
+
+    Add HDK_Set_StructEx and HDK_Append_StructEx.
+
+Change 104358 on 2009/10/04
+
+    Use char for the type property flags and not the enumeration type.
+
+Change 104310 on 2009/10/03
+
+    Add "error" attribute for output struct members to allow error result
+    members.
+
+Change 104146 on 2009/09/30
+
+    - Stop unit tests if specified test is not found.
+    - Sort emulated unit tests.
+
+Change 104143 on 2009/09/30
+
+    Provide better unit test description for symbol check unit tests.
+
+Change 104082 on 2009/09/29
+
+    Don't allow unknown enumeration values to be appended (they aren't allowed
+    to be set).
+
+Change 104060 on 2009/09/29
+
+    Add missing WiFiSecurityType enumeration value.
+
+Change 103791 on 2009/09/25
+
+    HDK cygwin compatibility.
+
+Change 103293 on 2009/09/16
+
+    Structure array type member namespaces should match the structure namespace.
+
+Change 103279 on 2009/09/16
+
+    Fix HDK sample build on 64-bit gcc/g++.
+
+Change 103114 on 2009/09/15
+
+    Makefile consistency between Windows and Linux/Mac.
+
+Change 103095 on 2009/09/15
+
+    Make HDK source compatible with GNU C++.  Run all unit tests against C and
+    C++.
+
+Change 102999 on 2009/09/14
+
+    - Fix generated code for GetDeviceSettings
+    - Add HNAP report builtin code generator to hnapgen.py
+
+Change 102916 on 2009/09/10
+
+    When --server-methods is used only generate hdk_methods.c and no other
+    server generated files.
+
+Change 102718 on 2009/09/08
+
+    HDK-174 - If element has no namespace expat sends no separator character and
+    HDK server will crash.
+
+Change 102707 on 2009/09/08
+
+    HDK-174 - Crash in HDK server using libxml2 when request has no XML
+    namespace defined
+
+Change 102677 on 2009/09/08
+
+    Add experimental documentation comments to HSL ("#@").
+
+Change 102650 on 2009/09/08
+
+    HDK-173 - CGI sample and hnapd samples do not return content length header
+    for 401 and 500 HTTP errors.
+
+Change 102016 on 2009/08/28
+
+    HDK-171 - Eliminate the "allow_unknown" enum attribute.  All enumerations
+    may now pass the unknown enumeration value.
+
+Change 101395 on 2009/08/19
+
+    HDK-136 - Add hnapgen.py code generator module support.  Users can add
+    custom code generation modules using the --module argument.
+
+Change 101358 on 2009/08/19
+
+    HDK-169 - Add "WEP-AUTO" enumeration value to the HNAP 1.2 Router
+    WiFiSecurity enumeration
+
+
+=====================================================================
+Changes to HDK 1.2.2
+======================================================================
+
+Change 101164 on 2009/08/14
+
+    HDK-109 - Add Mac OS X support.
+
+Change 101083 on 2009/08/13
+
+    Build each unittest build into its own directory.
+
+Change 101025 on 2009/08/12
+
+    Improve hnapgen.py global symbol generation for core HNAP sub namespaces.
+
+
+=====================================================================
+Changes to HDK 1.2.1
+======================================================================
+
+Change 100869 on 2009/08/10
+
+    HDK-168 - s_elementTree_GetChildNode and s_elementTree_GetChildNodes may
+    iterate past end of element validation tree
+
+Change 100868 on 2009/08/10
+
+    HDK-167 - HDK_HandleRequest may pass NULL result pointer to
+    HDK_Device_PrepareWrite
+
+Change 100840 on 2009/08/07
+
+    HDK-42 - Add support for libxml2 XML parser
+
+Change 100591 on 2009/08/04
+
+    HDK-165 - Fix unittest compilation error in gcc 4.2.4.
+
+Change 100389 on 2009/07/31
+
+    HDK-163 - Correct namespace for HNAP 1.2 NAS HSL.
+
+Change 99908 on 2009/07/24
+
+    HDK-158 - Add FastCGI support to CGI sample.
+
+
+=====================================================================
+Changes to HDK 1.2
+======================================================================
+
+Change 99588 on 2009/07/21
+
+    Define a (non-emulator) device context struct for the CGI and hnapd samples.
+    This will make it easier to use the samples as a starting point for
+    integration.
+
+Change 99302 on 2009/07/16
+
+    HDK-142 - Increase default HDK max value size to 16K and add a max total
+    value size with default of 64K.
+
+Change 99233 on 2009/07/15
+
+    HDK-141 - Don't allow UNKNOWN enum values to be added to structs with
+    HDK_Set_<Enum> or HDK_Append_<Enum>.
+
+Change 98950 on 2009/07/11
+
+    Add RestoreFactoryDefaults command (-d) to hnappost.py.
+
+Change 98948 on 2009/07/11
+
+    Add Reboot command (-t) to hnappost.py.
+
+Change 98913 on 2009/07/10
+
+    HDK-145 - Add GetConfigBlob command (-b) and SetConfigBlob command (-r) to
+    hnappost.py
+
+Change 98829 on 2009/07/09
+
+    HDK-138 - ADI: Added support for ERROR_REMOTE_SSL_NEEDS_SSL response in
+    SetDeviceSettings2 and SetRouterSettings.
+
+Change 98747 on 2009/07/09
+
+    HDK-131 - Add missing LANConnection enum value 'WAN' in HNAP 1.2 Router HSL.
+
+Change 98066 on 2009/06/30
+
+    Add HSL for HNAP 1.2 Camera and HNAP 1.2 Modem.
+
+Change 96922 on 2009/06/11
+
+    HDK-135 - ADI: Secondary channel needs to be validated and set regardless of
+    channel width in SetWLanRadioSettings.
+
+Change 96288 on 2009/06/01
+
+    HDK-86 - ADI: Don't validate key for WPA/WPA2-RADIUS types in
+    SetWLanRadioFrequency.
+
+Change 95938 on 2009/05/27
+
+    Add HSL for HNAP 1.2 NAS.
+
+Change 95881 on 2009/05/26
+
+    HDK-119 - Add SOAP address to generated WSDL service for Flex Builder.
+
+Change 95757 on 2009/05/22
+
+    Add stand-alone HNAP server HDK sample, hnapd.
+
+Change 95703 on 2009/05/21
+
+    Import all other schema namespaces into each schema namespace to ensure
+    valid SOAP in generated WSDL.
+
+Change 95655 on 2009/05/21
+
+    Always check the member/node type when validating an HDK structure to ensure
+    the correct type has been provided.
+
+Change 95156 on 2009/05/11
+
+    HDK-66 - Implement optimal bitfield packing for generated HDK tables (for
+    code size reduction).
+
+Change 94991 on 2009/05/07
+
+    Get HDK emulator working in CGI sample on Win32.
+
+Change 94785 on 2009/05/01
+
+    Make hdk_cgi.c sample source file usable out-of-the-box with no
+    modifications.
+
+Change 94733 on 2009/04/30
+
+    HDK-104 - Update HDK CGI sample to run on Apache, minihttpd, Lighttpd, and
+    Cherokee web servers.  CGI and FastCGI are supported.
+
+Change 94716 on 2009/04/30
+
+    HDK-110 - Break out HDK_Encode functions from hdk.c to hdk_encode.h &
+    hdk_encode.c.
+
+Change 94697 on 2009/04/30
+
+    Fix httppost.py to work with Cherokee web server.
+
+Change 94612 on 2009/04/28
+
+    HDK-102 - Rename HDK file prefix from "hnap_" to "hdk_".  Rename HDK symbol
+    prefix from "HNAP_" to "HDK_".
+
+Change 94492 on 2009/04/27
+
+    HDK-91 - Add experimental support for HNAP Services.
+
+Change 94434 on 2009/04/24
+
+    Return HNAP_Enum_Result from HNAP_HandleRequest.
+
+Change 94431 on 2009/04/24
+
+    HDK-96 - Add HSL action "noauth" attribute to specify that an HNAP method is
+    unauthenticated.  Add HNAP_RequiresAuth function to hdk.h for HDK
+    integrators.
+
+Change 94373 on 2009/04/23
+
+    HDK-100 - Add HSL action "hidden" attribute to specify C API-only actions.
+
+Change 94359 on 2009/04/23
+
+    Add HNAP_SUCCEEDED and HNAP_FAILED macros for checking HNAP method result
+    success or failure.
+
+Change 94358 on 2009/04/23
+
+    Rename hdk_device.h/c to hdk_adi.h/c.
+
+Change 94322 on 2009/04/22
+
+    HDK-99 - Add experimental support for HNAP transactions.
+
+Change 94192 on 2009/04/21
+
+    - Make "http://cisco.com/HNAP/" the primary HNAP namespace.
+    - Improve generated C symbol naming.
+    - Implicitly generated array type now in the parent struct's namespace.
+
+Change 93874 on 2009/04/15
+
+    HDK-84 - Generate C API function stubs using hnapgen.py --server-capi.
+
+Change 93861 on 2009/04/15
+
+    HDK-39 - Refactored unittest emulator.  Integrate unittest emulator with CGI
+    sample (build with HDK_EMULATOR=1).
+
+Change 93701 on 2009/04/13
+
+    HDK-17 - Generate WSDL simpleType restrictions for HSL enumerations.
+
+Change 93692 on 2009/04/13
+
+    HDK-69 - Impose reasonable limits on the maximum request XML element count
+    (HNAP_MAX_ELEMENTS) and the maximum request XML element size
+    (HNAP_MAX_VALUESIZE).
+
+Change 93666 on 2009/04/13
+
+    Require HSL named definitions to start in column 0 to prevent confusion with
+    member syntax.
+
+Change 93603 on 2009/04/10
+    .
+    HDK-35 - ADI: Add HNAP 1.2 Wireless Client HSL and ADI implementation.
+
+Change 93578 on 2009/04/10
+
+    HDK-88 - Added HSL "array_element" member name/value attribute to specify a
+    (non-standard) array member element name.
+
+Change 93561 on 2009/04/10
+
+    HDK-22 - Add HSL action "result" enumeration section.  Generate result code
+    enumeration in generated C server code.  Method callback functions no longer
+    take a method context - they now take the input struct and output struct
+    instead.  Results are now set by doing an HNAP_Set_Result on the action
+    result element.
+
+Change 93203 on 2009/04/07
+
+    Add line continuation syntax to HSL - backslash at end of line.
+
+
+======================================================================
+Changes to HDK 1.1
+======================================================================
+
+Change 93174 on 2009/04/07
+
+    Update documentation for HDK 1.1.
+
+Change 93146 on 2009/04/06
+
+    HDK-41: Implemented GetWLanRadioFrequencies and SetWLanRadioFrequency ADI
+    methods.
+
+Change 92914 on 2009/04/01
+
+    HDK-82 - Serialize output struct elements in schema order.
+
+Change 92906 on 2009/04/01
+
+    HDK-74: Remove HNAP Device API method HNAP_Finalize().  Also, remove ADI
+    implementations HNAP_Method_Reboot(), HNAP_Method_IsDeviceReady().
+
+Change 92748 on 2009/03/30
+
+    HDK-78 - Add WSDL service and port to the generated WSDL for FlexBuilder.
+
+Change 92685 on 2009/03/27
+
+    HDK-70 - Validate output struct.
+
+Change 92583 on 2009/03/26
+
+    HDK-73: Fixed 6 HNAP_Get and 1 HNAP_Set calls that were using the return
+    value without null checking.
+
+Change 92581 on 2009/03/26
+
+    HDK-72: Fix bug where SetWanSettings for BridgedOnly would fail if
+    DNS->Tertiary element does not exist.  Added test-cases for BridgedOnly dns
+    (OK and ERROR cases) and Static dns (ERROR case).
+
+Change 92533 on 2009/03/25
+
+    HDK-5 - Validate input struct.
+
+Change 92387 on 2009/03/24
+
+    Add request/response timing information to hnappost.py.
+
+Change 92331 on 2009/03/23
+
+    - Modify HNAP_Get_String to return char* instead of char** to be consistent
+      with HNAP_Get_Blob.
+    - Semantically disabmiguate HNAP_Set_* and HNAP_Append_*.
+
+Change 92232 on 2009/03/20
+
+    Generate proper WSDL types for blob (base64Binary), stream64 (base64Binary),
+    and stream (string) types.
+
+Change 92164 on 2009/03/19
+
+    HDK-64 - Add HSL "blob" data type (base64 encoded string).
+
+Change 92086 on 2009/03/18
+
+    HDK-23 - DNSSettings.Tertiary is an optional member.
+
+Change 91743 on 2009/03/13
+
+    Fix typo in SetDeviceSettings2 ADI, a couple of DeviceSettings2
+    implementation fixes.
+
+Change 91169 on 2009/03/10
+
+    HDK-50: Added subnet validate for SetRouterLanSettings and SetWanSettings.
+
+Change 91077 on 2009/03/06
+
+    Add functionality to unittest framework to specify a specific
+    HNAP_Device_ValidateValue() call to fail.
+
+Change 91047 on 2009/03/06
+
+    Added AutoMTUAllowed to emulator and created test cases for it.  Changed
+    RemoteManageViaSSLAllowed and RemoteManageOnlyViaSSL device values to be
+    Manage* so they match what is already in the emulator.
+
+Change 91025 on 2009/03/06
+
+    HDK-63: Changed the ADI API to include the function
+    HNAP_Device_ValidateValue(), which splits the validate out from the set.
+    Updated the ADI implementation to do all abstract validation and to call
+    HNAP_Device_ValidateValue() for all device values before any are set.
+
+Change 90549 on 2009/02/28
+
+    Make member order of SetWanSettings HSL match the HNAP router spec.
+
+Change 90327 on 2009/02/24
+
+    HDK-56 - Fix bad SetWanSettings error code ERROR_BAD_WANTYPE (was
+    ERROR_BAD_WAN_TYPE).
+
+Change 90314 on 2009/02/24
+
+    HDK-51 - Implement "allow_unknown" HSL enum attribute to indicate that
+    unknown enum values are allowed to be passed to the HNAP method callback.
+    This allows SetWanSettings to return ERROR_BAD_WANTYPE for unknown WANTypes
+    instead of just returning ERROR.
+
+Change 90295 on 2009/02/24
+
+    HDK-51 - Unknown enums should (usually) return a generic HNAP ERROR code.
+
+Change 90276 on 2009/02/24
+
+    HDK-62 - Catch bogus characters at the end of value strings for type
+    deserialization.
+
+Change 90172 on 2009/02/23
+
+    HDK-46: Added a few unittest cases to WLanRadioSettings.
+
+Change 90163 on 2009/02/23
+
+    HDK-31 - Implement HSL stream and stream64 types for input structures.
+
+Change 90161 on 2009/02/23
+
+    HDK-46: Fix SetWLanRadioSettings incorrect channel error, also fixed auto
+    channel, auto secondary channel bug.
+
+Change 89555 on 2009/02/10
+
+    Don't fail DownloadSpeedTest if buffer size is greater than total bytes.
+
+Change 89427 on 2009/02/07
+
+    HDK unittest runtest.py now ignores .svn directories.
+
+Change 89418 on 2009/02/06
+
+    HDK-45 - Properly handle invalid buffer sizes in DownloadSpeedTest.
+
+Change 89366 on 2009/02/05
+
+    Make HDK python tools compatible with Python 2.4.
+
+Change 89304 on 2009/02/05
+
+    Add nmake file to build CGI sample on Windows.
+
+Change 89196 on 2009/02/04
+
+    Add "SetTopBox" and "WiFiBridge" to DeviceType enumeration.
+
+Change 88789 on 2009/01/28
+
+    Add GetWLanRadioFrequencies and SetWLanRadioFrequency to HDK.
+
+Change 88755 on 2009/01/27
+
+    HDK-34: Unittest support for Windows.
+
+Change 88439 on 2009/01/21
+
+    Add firmware upload command to hnappost.py.

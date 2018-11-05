@@ -1,0 +1,12 @@
+SOAPAction: http://cisco.com/HNAPExt/HotSpot/SetParentalControlsResetQuestion
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<SetParentalControlsResetQuestion xmlns="http://cisco.com/HNAPExt/HotSpot/">
+<Password>password</Password>
+<Question>What's my name?</Question>
+<Answer>Myron</Answer>
+</SetParentalControlsResetQuestion>
+</soap:Body>
+</soap:Envelope>

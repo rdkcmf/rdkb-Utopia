@@ -1,0 +1,15 @@
+SOAPAction: "http://cisco.com/HNAPExt/HotSpot/SetDefaultWireless"
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <SetDefaultWireless xmlns="http://cisco.com/HNAPExt/HotSpot/">
+      <SSID>Wireless-SSID</SSID>
+      <Key>WirelessKey</Key>
+      <GuestEnabled>true</GuestEnabled>
+      <GuestSSID>Guest Network</GuestSSID>
+      <GuestPassword>GuestPassword</GuestPassword>
+      <MaxGuestsAllowed>5</MaxGuestsAllowed>
+    </SetDefaultWireless>
+  </Body>
+</Envelope>

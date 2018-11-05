@@ -1,0 +1,85 @@
+200 OK
+Content-Type: text/xml; charset=utf-8
+Connection: close
+Content-Length: 3530
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+<Body>
+<GetDeviceSettingsResponse xmlns="http://purenetworks.com/HNAP1/">
+<GetDeviceSettingsResult>OK</GetDeviceSettingsResult>
+<Type>GatewayWithWiFi</Type>
+<DeviceName>My Gateway</DeviceName>
+<VendorName>Cisco</VendorName>
+<ModelDescription>Cisco Lego 1000</ModelDescription>
+<ModelName>Lego 1000</ModelName>
+<FirmwareVersion>1.0.0.0</FirmwareVersion>
+<PresentationURL>http://192.168.1.1/</PresentationURL>
+<SOAPActions>
+<string>http://cisco.com/HNAP/Transaction</string>
+<string>http://purenetworks.com/HNAP1/AddPortMapping</string>
+<string>http://purenetworks.com/HNAP1/DeletePortMapping</string>
+<string>http://purenetworks.com/HNAP1/DownloadSpeedTest</string>
+<string>http://purenetworks.com/HNAP1/GetClientStats</string>
+<string>http://purenetworks.com/HNAP1/GetConfigBlob</string>
+<string>http://purenetworks.com/HNAP1/GetConnectedDevices</string>
+<string>http://purenetworks.com/HNAP1/GetDeviceSettings</string>
+<string>http://purenetworks.com/HNAP1/GetDeviceSettings2</string>
+<string>http://purenetworks.com/HNAP1/GetFirmwareSettings</string>
+<string>http://purenetworks.com/HNAP1/GetMACFilters2</string>
+<string>http://purenetworks.com/HNAP1/GetNetworkStats</string>
+<string>http://purenetworks.com/HNAP1/GetPortMappings</string>
+<string>http://purenetworks.com/HNAP1/GetRouterLanSettings2</string>
+<string>http://purenetworks.com/HNAP1/GetRouterSettings</string>
+<string>http://purenetworks.com/HNAP1/GetWLanRadioFrequencies</string>
+<string>http://purenetworks.com/HNAP1/GetWLanRadioSecurity</string>
+<string>http://purenetworks.com/HNAP1/GetWLanRadioSettings</string>
+<string>http://purenetworks.com/HNAP1/GetWLanRadios</string>
+<string>http://purenetworks.com/HNAP1/GetWanInfo</string>
+<string>http://purenetworks.com/HNAP1/GetWanSettings</string>
+<string>http://purenetworks.com/HNAP1/GetWirelessClientCapabilities</string>
+<string>http://purenetworks.com/HNAP1/GetWirelessClientConnectionInfo</string>
+<string>http://purenetworks.com/HNAP1/GetWirelessClientSettings</string>
+<string>http://purenetworks.com/HNAP1/IsDeviceReady</string>
+<string>http://purenetworks.com/HNAP1/Reboot</string>
+<string>http://purenetworks.com/HNAP1/RenewWanConnection</string>
+<string>http://purenetworks.com/HNAP1/RestoreFactoryDefaults</string>
+<string>http://purenetworks.com/HNAP1/SetAccessPointMode</string>
+<string>http://purenetworks.com/HNAP1/SetConfigBlob</string>
+<string>http://purenetworks.com/HNAP1/SetDeviceSettings</string>
+<string>http://purenetworks.com/HNAP1/SetDeviceSettings2</string>
+<string>http://purenetworks.com/HNAP1/SetMACFilters2</string>
+<string>http://purenetworks.com/HNAP1/SetRouterLanSettings2</string>
+<string>http://purenetworks.com/HNAP1/SetRouterSettings</string>
+<string>http://purenetworks.com/HNAP1/SetWLanRadioFrequency</string>
+<string>http://purenetworks.com/HNAP1/SetWLanRadioSecurity</string>
+<string>http://purenetworks.com/HNAP1/SetWLanRadioSettings</string>
+<string>http://purenetworks.com/HNAP1/SetWanSettings</string>
+<string>http://purenetworks.com/HNAP1/SetWirelessClientSettings</string>
+</SOAPActions>
+<SubDeviceURLs>
+<string>/url1</string>
+<string>/url2/</string>
+</SubDeviceURLs>
+<Tasks>
+<TaskExtension>
+<Name>Status Page</Name>
+<URL>/Status_Router.asp/</URL>
+<Type>Browser</Type>
+</TaskExtension>
+<TaskExtension>
+<Name>Basic Wireless Settings</Name>
+<URL>/Wireless_Basic.asp</URL>
+<Type>Browser</Type>
+</TaskExtension>
+</Tasks>
+</GetDeviceSettingsResponse>
+</Body>
+</Envelope>
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 2328 times
+malloc_interposer.c - exit: free called 2328 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 153644
+malloc_interposer.c - exit: malloc max = 70238
+malloc_interposer.c - ************************************************************

@@ -1,0 +1,139 @@
+####################################################################################
+# If not stated otherwise in this file or this component's Licenses.txt file the
+# following copyright and licenses apply:
+#
+#  Copyright 2018 RDK Management
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##################################################################################
+
+
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+namespace "http://cisco.com/he/registrar/"
+
+
+#
+# Structures
+#
+
+#@ Description of a network object
+struct NetworkObject
+    UUID     NetworkObjectID
+    string   FriendlyName
+    string   ControlURL
+    #@ implemented services
+    string[] ServiceURIs
+
+#@ Description of a device
+struct Device
+    UUID   DeviceID
+    UUID   TypeID
+    string FriendlyName
+    string Manufacturer
+    string Model
+    NetworkObject[] NetworkObjects
+
+#@ A reference to a network object
+struct NORef
+    UUID DeviceID
+    UUID NetworkObjectID
+
+#@ A match from the <tt>Query</tt> action
+struct QueryMatch
+    NORef  NetworkObjectRef
+    string ControlURL
+
+
+#
+# Actions
+#
+
+#@ Register the presence of a device
+action Register
+    input
+        #@ description of the device
+        Device Device
+
+#@ Unregister the presence of a device
+action Unregister
+    input
+        #@ reference to the device
+        UUID DeviceID
+    result
+        #@ the DeviceID is not registered
+        "ERROR_UNKNOWN_DEVICE_ID"
+
+#@ Get information about a device
+action GetDevice
+    input
+        #@ reference to the device
+        UUID DeviceID
+    output
+        #@ description of the device
+        Device Device
+    result
+        #@ the DeviceID is not registered
+        "ERROR_UNKNOWN_DEVICE_ID"
+
+#@ Find network objects
+action Query
+    input
+        #@ optionally, only network objects on this device
+        [optional] UUID   DeviceID
+        #@ optionally, only network objects with this NoID
+        [optional] UUID   NetworkObjectID
+        #@ optionally, only network objects implementing this service
+        [optional] string ServiceURI
+    output
+        #@ found network objects
+        QueryMatch[] QueryResults
+
+
+#
+# Events
+#
+
+#@ A device registered.
+event Registered
+    #@ reference to the device
+    UUID DeviceID
+
+
+#
+# Services
+#
+
+#@ The registrar service.
+service Registrar
+    actions
+        Register
+        Unregister
+        GetDevice
+        Query
+    events
+        Registered

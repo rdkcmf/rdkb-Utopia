@@ -1,0 +1,8 @@
+SOAPAction: "http://cisco.com/HNAPExt/HND/GetTMSSSLicense"
+
+<?xml version="1.0" encoding="utf-8"?>
+<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+  <Body>
+    <GetTMSSSLicense xmlns="http://cisco.com/HNAPExt/HND/" />
+  </Body>
+</Envelope>

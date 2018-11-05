@@ -1,0 +1,6 @@
+#
+# HTTP-401.test
+#   Verify libhdkcli handles a HTTP 401 server response.
+#
+
+method: http://cisco.com/Unittest/SimpleUnittestMethod

@@ -1,0 +1,22 @@
+1970-01-01T00:00:00Z
+Serialized 20 bytes of data
+1970-01-01T00:00:00Z
+Serialized 21 bytes of data
+
+1970-01-01T00:00:01Z
+Serialized 20 bytes of data
+1970-01-01T00:00:01Z
+Serialized 21 bytes of data
+
+1970-01-01T06:30:52Z
+Serialized 20 bytes of data
+1970-01-01T06:30:52Z
+Serialized 21 bytes of data
+
+malloc_interposer.c - ************************************************************
+malloc_interposer.c - exit: malloc called 1 times
+malloc_interposer.c - exit: free called 1 times
+malloc_interposer.c - exit: malloc current = 0
+malloc_interposer.c - exit: malloc total = 568
+malloc_interposer.c - exit: malloc max = 568
+malloc_interposer.c - ************************************************************

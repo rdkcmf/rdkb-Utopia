@@ -1,0 +1,7 @@
+#
+# NoAuth.test
+#   Test that HTTP authentication is not included for methods which do not require it.
+#
+
+method: http://cisco.com/Unittest/NoAuthMethod
+host: http://127.0.0.1:8080

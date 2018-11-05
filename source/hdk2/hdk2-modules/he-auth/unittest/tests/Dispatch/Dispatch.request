@@ -1,0 +1,15 @@
+SOAPAction: http://cisco.com/he/event/Dispatch
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<soap:Body>
+<Dispatch xmlns="http://cisco.com/he/event/">
+  <EventURI>http://cisco.com/he/registrar/Registered</EventURI>
+  <Source>
+    <DeviceID xmlns="http://cisco.com/he/registrar/">2ac21b80-442f-11df-9879-0800200c9a70</DeviceID>
+    <NetworkObjectID xmlns="http://cisco.com/he/registrar/">2ac21b80-442f-11df-9879-0800200c9a71</NetworkObjectID>
+  </Source>
+  <EventData>Hello, world!</EventData>
+</Dispatch>
+</soap:Body>
+</soap:Envelope>
