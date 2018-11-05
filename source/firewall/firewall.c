@@ -10920,6 +10920,11 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "%s\n", ":PING_FLOOD - [0:0]");
    fprintf(fp, "-A PING_FLOOD -m limit --limit 10/sec -j ACCEPT\n");
    fprintf(fp, "-A PING_FLOOD -j DROP\n");
+#if defined (INTEL_PUMA7)
+   //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+   fprintf(fp, "-A FORWARD -i brlan2 -j ACCEPT\n");
+   fprintf(fp, "-A FORWARD -i brlan3 -j ACCEPT\n");
+#endif
 
    //ban telnet and ssh from lan side
    lan_telnet_ssh(fp, AF_INET6);
