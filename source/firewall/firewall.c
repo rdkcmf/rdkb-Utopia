@@ -5371,29 +5371,53 @@ static int do_lan2wan_webfilters(FILE *filter_fp)
          FIREWALL_DEBUG("Entering do_lan2wan_webfilters\n");    
 if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
+#if defined (INTEL_PUMA7)
+         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+         snprintf(str, sizeof(str),
+                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
+#else
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-proxy -j xlogreject");
+#endif
          fprintf(filter_fp, "%s\n", str);
       }
    }
    if ( 0 == syscfg_get(NULL, "block_java", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
+#if defined (INTEL_PUMA7)
+         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+         snprintf(str, sizeof(str),
+                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
+#else
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-java -j xlogreject");
+#endif
          fprintf(filter_fp, "%s\n", str);
       }
    }
    if ( 0 == syscfg_get(NULL, "block_activex", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
+#if defined (INTEL_PUMA7)
+         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+         snprintf(str, sizeof(str),
+                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
+#else
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-activex -j xlogreject");
+#endif
          fprintf(filter_fp, "%s\n", str);
       }
    }
    if ( 0 == syscfg_get(NULL, "block_cookies", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
+#if defined (INTEL_PUMA7)
+         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+         snprintf(str, sizeof(str),
+                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --content");
+#else
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpcookie --block-cookies");
+#endif
          fprintf(filter_fp, "%s\n", str);
       }
    }
@@ -6032,10 +6056,16 @@ InternetAccessPolicyNext3:
                else if (0 == strncmp(url, "https://", STRLEN_HTTPS_URL_PREFIX)) {
                   host_name_offset = STRLEN_HTTPS_URL_PREFIX;
                }
-
+#if defined (INTEL_PUMA7)
+               //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+               snprintf(str, sizeof(str), 
+                        "-A %s -p tcp -m tcp --dport 80 -m webstr --host \"%s\" -j %s",
+                        rules_table, url + host_name_offset, block_site);
+#else
                snprintf(str, sizeof(str), 
                         "-A %s -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j %s",
                         rules_table, url + host_name_offset, block_site);
+#endif
                fprintf(fp, "%s\n", str);
 
                for(src_cnt; src_cnt <= srcNum; src_cnt++){
@@ -7472,8 +7502,12 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                         *(pch+1) = '\0';
                     else
                         *pch = '\0';
-
+#if defined (INTEL_PUMA7)
+                    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport %s -m webstr --host \"%s:%s\" -j %s\n", nstdPort, query + host_name_offset, nstdPort, drop_log);
+#else
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport %s -m httphost --host \"%s:%s\" -j %s\n", nstdPort, query + host_name_offset, nstdPort, drop_log);
+#endif
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
                     if(iptype == 4){
                         if(isHttps){
@@ -7494,8 +7528,14 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                 }
                 else
                 {
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
+#if defined (INTEL_PUMA7)
+					//Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m webstr --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
+					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m webstr --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
+#else
+					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
+#endif
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
                     if(iptype == 4)
                     {
