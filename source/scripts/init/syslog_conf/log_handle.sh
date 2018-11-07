@@ -112,30 +112,17 @@ old_sysevtlog_handle(){
         #un-compress log file
         if [ -e $ZIP ]
         then
-	     if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
-	     else
-		     $RD_LOCK $ZIP -c "$UNCOMPRESS_CMD $ZIP"
-	     fi
+            $RD_LOCK $ZIP $UNCOMPRESS_CMD $ZIP
              ZIP_SZ=$(ls -l $ZIP | awk '{print $5}')
         else
              ZIP_SZ=0;
         fi
         $COMPRESS_CMD $NEW_ZIP ./* 
-        if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-		$WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
-	else
-		$WT_LOCK $ZIP -c "mv $NEW_ZIP $ZIP"
-	fi
+        $WT_LOCK $ZIP mv $NEW_ZIP $ZIP
         for oldfile in $FILE ;
         do
-		if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-		    echo "$WT_LOCK $oldfile -c rm -r $oldfile"
-		    $WT_LOCK $oldfile -c rm -r $oldfile
-		else
-		    echo "$WT_LOCK $oldfile -c 'rm -r $oldfile'"
-		    $WT_LOCK $oldfile -c "rm -r $oldfile"
-		fi
+		echo "$WT_LOCK $oldfile rm -r $oldfile"
+		$WT_LOCK $oldfile rm -r $oldfile
         done;
 
         rm -rf $DIR     
@@ -172,11 +159,7 @@ old_fwlog_handle(){
                 if [ "$filename" != "fwlog.$POSTFIX" ]
                 then
                     cp -f $1/$filename $2
-	            if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-	                    $WT_LOCK $1/$filename -c rm -r $1/$filename
-		    else
-                  	  $WT_LOCK $1/$filename -c "rm -r $1/$filename"
-		    fi
+                    $WT_LOCK $1/$filename rm -r $1/$filename
                 fi
             done
         fi
@@ -345,11 +328,7 @@ compress()
         #un-compress log file
         if [ -e $ZIP ]
         then
-	     if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
-	    else
-		    $RD_LOCK $ZIP -c "$UNCOMPRESS_CMD $ZIP"
-	    fi
+            $RD_LOCK $ZIP $UNCOMPRESS_CMD $ZIP
              ZIP_SZ=$(ls -l $ZIP | awk '{print $5}')
         else
             ZIP_SZ=0;
@@ -385,20 +364,11 @@ compress()
         fi
 
         $COMPRESS_CMD $NEW_ZIP ./* 
-        if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-	        $WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
-	else
-	        $WT_LOCK $ZIP -c "mv $NEW_ZIP $ZIP"
-	fi
+        $WT_LOCK $ZIP mv $NEW_ZIP $ZIP
         for oldfile in $FILE ;
         do
-        if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-            echo "$WT_LOCK $oldfile -c rm -r $oldfile"
-            $WT_LOCK $oldfile -c rm -r $oldfile
-	else
-            echo "$WT_LOCK $oldfile -c 'rm -r $oldfile'"
-            $WT_LOCK $oldfile -c "rm -r $oldfile"
-	fi
+            echo "$WT_LOCK $oldfile rm -r $oldfile"
+            $WT_LOCK $oldfile rm -r $oldfile
         done;
 
         rm -rf $DIR       
@@ -413,11 +383,7 @@ uncompress()
     DIR=$2
     TAR=$1
     cd $DIR
-    if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
-	    $RD_LOCK $TAR -c $UNCOMPRESS_CMD $TAR
-    else
-	    $RD_LOCK $TAR -c "$UNCOMPRESS_CMD $TAR"
-    fi
+    $RD_LOCK $TAR $UNCOMPRESS_CMD $TAR
 }
 
 V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
