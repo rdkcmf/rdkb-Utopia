@@ -1185,6 +1185,10 @@ int main(int argc, char **argv)
    }
    sysevent_close(global_fd, global_id);
 
+#if defined(_SYNDICATION_BUILDS_)
+   system( "sh /lib/rdk/apply_partner_customization.sh" );
+#endif
+
   if ( access( PARTNER_DEFAULT_APPLY_FILE , F_OK ) != 0 )  
   {
 	  isNeedToApplyPartnersDefault = 0;
