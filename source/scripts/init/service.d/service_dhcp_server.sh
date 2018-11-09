@@ -503,7 +503,12 @@ dhcp_server_start ()
 
    # This function is called for brlan0 and brlan1
    # If XHS_INTERFACE is available then XHS service is available post all DHCP configuration   
-   isAvailableXHS=`ifconfig | grep $XHS_INTERFACE`
+   if [ -z "$XHS_INTERFACE" ]; then
+       isAvailableXHS=""
+   else
+       isAvailableXHS=`ifconfig | grep $XHS_INTERFACE`
+   fi
+
    if [ "$isAvailableXHS" != "" ]; then
        echo_t "Xfinityhome service is UP"
        if [ ! -f "/tmp/xhome_start" ]; then
@@ -513,7 +518,7 @@ dhcp_server_start ()
    else
        echo_t "Xfinityhome service is not UP yet"
    fi
-	
+       	
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dhcp_server-restart" 
    sysevent set dns-status started
    sysevent set dhcp_server-status started
