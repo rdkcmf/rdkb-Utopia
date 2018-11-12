@@ -12040,9 +12040,7 @@ int main(int argc, char **argv)
    if (flush)
 
        //ARRISXB3-1949
-        system("echo disable > /proc/net/ti_pp ; " \
-        "conntrack_flush; expect_flush;" \
-        "echo enable > /proc/net/ti_pp ; ");
+        system( "conntrack_flush; expect_flush;" );
 
         if(firewallfp)
        fclose(firewallfp);
