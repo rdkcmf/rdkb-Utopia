@@ -243,15 +243,19 @@ int removeAndGetTrunkPorts(PVlanTrunkState vidState, PPlatformPort oldPort, PLis
         initIterator(&vidState->trunkPorts, &portIter);
         while ((item = getNext(&portIter))) {
             trunkPort = (PTrunkPort) item->data;
-            if (deRefTrunkPort(trunkPort, oldPort->entity)) {
-                addToList(listToAppend, trunkPort->port);
-                changedPorts++;
-                trunkPort->port->hal->stringID(trunkPort->port->portID, portname, sizeof(portname));
-                ep_set_trunkPort_vid_paths(vidState->vid, portname, NULL, 0);
-                removeCurrent(&portIter);
-                vidState->trunksDirty = 1;
-                //disposeTrunkPort(trunkPort);
-            }
+	    if(trunkPort) {
+		if (deRefTrunkPort(trunkPort, oldPort->entity)) {
+			addToList(listToAppend, trunkPort->port);
+			changedPorts++;
+			if(trunkPort->port && trunkPort->port->hal) {
+				trunkPort->port->hal->stringID(trunkPort->port->portID, portname, sizeof(portname));
+				ep_set_trunkPort_vid_paths(vidState->vid, portname, NULL, 0);
+				removeCurrent(&portIter);
+				vidState->trunksDirty = 1;
+				//disposeTrunkPort(trunkPort);
+			}
+		}
+	    }
         }
     }
     

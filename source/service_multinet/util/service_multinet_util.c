@@ -87,6 +87,7 @@ int removeFromList(PList list, PListItem item) {
     
     list->count--;
     free(item);
+    item = NULL;
 }
 
 int clearList(PList list) {
@@ -99,6 +100,7 @@ int clearList(PList list) {
         last = item;
         item = item->next;
         free(last);
+	last = NULL;
     }
     
     list->first = list->last = NULL;
