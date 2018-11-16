@@ -207,14 +207,14 @@ restart_request ()
          if [ -z "$FOO" ] ; then
             RESTART=1
          fi
-         if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+   
          	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
          	#Check for the case where dnsmasq is running without config file
           	FOO=`cat /proc/${CURRENT_PID}/cmdline | grep "$DHCP_CONF"`
           	if [ -z "$FOO" ] ; then
             	RESTART=1
           	fi
-         fi
+         
       fi 
    fi
    rm -f $DHCP_TMP_CONF
@@ -403,14 +403,14 @@ dhcp_server_start ()
          if [ -z "$FOO" ] ; then
             RESTART=1
          fi
-         if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+         
          	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
          	#Check for the case where dnsmasq is running without config file
           	FOO=`cat /proc/${CURRENT_PID}/cmdline | grep "$DHCP_CONF"`
           	if [ -z "$FOO" ] ; then
             	RESTART=1
           	fi
-         fi
+         
       fi
    fi
 
