@@ -417,7 +417,6 @@ void prepare_dhcp_conf_static_hosts()
 
 		fprintf(l_fLocalStatHosts, "%s,%s\n", l_cHostLine, g_cDhcp_Lease_Time);
 	}
-	remove_file(DHCP_STATIC_HOSTS_FILE);
 	fclose(l_fLocalStatHosts);
 	copy_file(l_cLocalStatHosts, DHCP_STATIC_HOSTS_FILE);
 	remove_file(l_cLocalStatHosts);
