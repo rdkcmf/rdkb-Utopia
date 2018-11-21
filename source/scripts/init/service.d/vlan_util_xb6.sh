@@ -306,6 +306,8 @@ qtn_setup_all(){
     setup_qtn $1 ath5
     setup_qtn $1 ath6
     setup_qtn $1 ath7
+    setup_qtn $1 ath8
+    setup_qtn $1 ath9
 }
 
 wait_for_gre_ready(){
@@ -335,12 +337,18 @@ setup_gretap(){
     
     if [ "$GRE_MODE" = "start" ]
     then
+     isgretap=`ip link show | grep ${LAN_GRE_TUNNEL}.$LAN_VLAN`  
+     if [ "$isgretap" == "" ]; then   
+
         #Wait until gre got created
         wait_for_gre_ready
         vconfig add $LAN_GRE_TUNNEL $LAN_VLAN
         ifconfig $LAN_GRE_TUNNEL up
         ifconfig ${LAN_GRE_TUNNEL}.$LAN_VLAN up
-    else
+     else
+         echo "Tunnel already present not recreating."
+     fi
+     else
         vconfig rem ${LAN_GRE_TUNNEL}.${LAN_VLAN}
     fi
 }
@@ -492,6 +500,25 @@ get_expected_if_list() {
         6)
             IF_LIST="ath6 ath7 ath10 ath11"
         ;;
+
+        #XFinity Secured Hostspot 2.4 GHz
+        7)
+        check_xfinity_wifi
+		if [ $isXfinityWiFiEnable -eq 1 ]
+		then
+            IF_LIST="nmoca0.${BRIDGE_VLAN} ${DEFAULT_GRE_TUNNEL}.${BRIDGE_VLAN} ath8"
+         fi
+        ;;
+        
+        #XFinity Secured Hotspot 5 GHz
+        8)
+        check_xfinity_wifi
+		if [ $isXfinityWiFiEnable -eq 1 ]
+		then
+            IF_LIST="nmoca0.${BRIDGE_VLAN} ${DEFAULT_GRE_TUNNEL}.${BRIDGE_VLAN} ath9"
+        fi
+        ;;
+        
         
     esac
     
@@ -813,6 +840,14 @@ case $INSTANCE in
     10)
         BRIDGE_NAME="br403"
         BRIDGE_VLAN=1060
+    ;;
+    7)
+        BRIDGE_NAME="brlan4"
+        BRIDGE_VLAN=104
+    ;;
+    8)
+        BRIDGE_NAME="brlan5"
+        BRIDGE_VLAN=105
     ;;
     65)
         BRIDGE_NAME="br65"

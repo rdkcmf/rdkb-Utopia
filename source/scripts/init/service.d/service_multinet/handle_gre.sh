@@ -47,8 +47,18 @@ source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
-export LOG4C_RCPATH=/fss/gw/rdklogger
-BINPATH=/fss/gw/usr/ccsp
+if [ "$BOX_TYPE" = "XF3" ] ; then
+   export LOG4C_RCPATH=/etc
+   BINPATH=/usr/ccsp
+else
+
+   if [ "$BOX_TYPE" = "XB3" ] ; then
+      BINPATH=/fss/gw/usr/ccsp
+   else
+      BINPATH=/usr/bin/
+   fi
+   export LOG4C_RCPATH=/fss/gw/rdklogger
+fi
 
 MTU_VAL=1400
 MSS_VAL=1360
@@ -114,10 +124,55 @@ init_snooper_sysevents () {
     fi
 }
 
+read_greInst()
+{
+  inst=1
+  
+       XFINITY_WIFI="dmcli eRT getv Device.WiFi.SSID.5.Enable"
+       SECURE_WIFI="dmcli eRT getv Device.WiFi.SSID.9.Enable"
+
+       XFINITY_WIFI_ENABLE=`$XFINITY_WIFI`
+       SECURE_WIFI_ENABLE=`$SECURE_WIFI`
+       isXfinityWiFiEnable=`echo "$XFINITY_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
+       isSecWiFiEnable=`echo "$SECURE_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
+       
+   eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES WECB_BRIDGES dmsb.wecb.hhs_extra_bridges NAME $GRE_PSM_BASE.${inst}.$GRE_PSM_NAME`
+          
+        if [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "false" ] ; then
+            BRIDGE_INSTS="$BRIDGE_INST_1,$BRIDGE_INST_2"                                                                                                                                                         
+        elif [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "true" ] ; then
+            BRIDGE_INSTS="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
+        elif [ "$isXfinityWiFiEnable" = "false" ] && [ "$isSecWiFiEnable" = "true" ] ; then
+            BRIDGE_INSTS="$BRIDGE_INST_3,$BRIDGE_INST_4"
+        fi                                            
+        
+        start=""                                                                                                                                                                                                                                                                                                                                
+        brinst="" 
+        OLD_IFS="$IFS"
+        IFS="${AB_DELIM}${AB_SSID_DELIM}"                                                                                                                                                                                                                                                                                                                          
+        for i in $BRIDGE_INSTS; do                                                                                                                                                                                                                                                                                                                   
+           brinst=`echo $i |cut -d . -f 4`                                                                                                                                                                                                                                                                                                         
+           sysevent set multinet-start $brinst                                                                                                                                                                                                                                                                                                 
+        done
+        IFS="$OLD_IFS"             
+}
+
+
 #args: remote endpoint, gre tunnel ifname
 create_tunnel () {
     echo "Creating tunnel... remote:$1"
-    
+ if [ "$BOX_TYPE" = "XF3" ] ; then
+    echo "read_tunnel_param $2"  
+    while true 
+    do 
+       if [ -f /tmp/destroy_tunnel_lock ];then
+               sleep 3
+        else 
+               break
+         fi
+       
+    done 
+ fi  
     read_tunnel_params $2
     
     local extra=""
@@ -146,20 +201,40 @@ create_tunnel () {
         ip link set dev $GRE_IFNAME name $GRE_IFNAME_DUMMY
     fi
 
-    ip link add $2 type gretap remote $1 dev $WAN_IF $extra
+    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+    	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    	ip link add $2 type gretap remote $1 dev $WAN_IF $extra nopmtudisc
+    	ip link set $2 txqueuelen 1000 mtu 1500
+    else
+    	ip link add $2 type gretap remote $1 dev $WAN_IF $extra
+    fi
+
     sysevent set gre_current_endpoint $1
     sysevent set if_${2}-status $IF_READY
     
 }
 
 destroy_tunnel () {
+   if [ "$BOX_TYPE" = "XF3" ] ; then
+      touch "/tmp/destroy_tunnel_lock"
+   fi
     echo "Destroying tunnel... remote"
     #kill `sysevent get dhcpsnoopd_pid`
+   if [ "$BOX_TYPE" = "XF3" ] ; then
+    echo " destroying $1"
+   fi
     ip link del $1
+   if [ "$BOX_TYPE" = "XF3" ] ; then
+    echo "setting sysevent with null"
+   fi
     sysevent set gre_current_endpoint
     #sysevent set dhcpsnoopd_pid
     #sysevent set snooper-log-enable 0
     sysevent set if_${1}-status $IF_DOWN
+  if [ "$BOX_TYPE" = "XF3" ] ; then
+    sleep 5
+    rm "/tmp/destroy_tunnel_lock"
+  fi
 }
 
 gre_preproc () {
@@ -310,13 +385,22 @@ update_bridge_config () {
         fi
         br_snoop_rule="`sysevent setunique GeneralPurposeFirewallRule " -A FORWARD -o $br -p udp --dport=67:68 -j NFQUEUE --queue-bypass --queue-num $queue"`"
         sysevent set gre_${inst}_${br}_snoop_rule "$br_snoop_rule"
+  if [ "$BOX_TYPE" = "XF3" ] ; then
+       sleep 5
+  fi
         
         
         br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MTU_VAL"`
         sysevent set gre_${inst}_${br}_mss_rule "$br_mss_rule"
+       if [ "$BOX_TYPE" = "XF3" ] ; then
+       sleep 5
+       fi
     done
     
     sysevent set gre_${inst}_current_bridges "$BRIDGES"
+   if [ "$BOX_TYPE" = "XF3" ] ; then
+     sleep 10
+   fi
     
 }
 # TODO: verify indexes and proper teardown
@@ -339,7 +423,9 @@ update_bridge_frag_config () {
         if [ "$AB_SSID_DELIM" = $br ]; then
             continue
         fi
+   if [ "$BOX_TYPE" = "XB6" ] ; then
         echo add br=$br mtu=$MTU_VAL icmp=y segment=y gw=$2 > /proc/net/mtu_mod
+   fi
     done
 }
 
@@ -387,6 +473,9 @@ set_ssids_enabled() {
        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_EnableOnline bool true &
         eval eval mask=\\\${mask_\${ssid_${instance}_radio}}
         eval eval mask_\${ssid_${instance}_radio}=$(( (2 ** ($instance - 1)) + $mask )) 
+    if [ "$BOX_TYPE" = "XB6" ] ; then
+       $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.Enable bool $2 &
+    fi
     done
     for rad in $radios; do
         eval $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySettingSSID int \${mask_${rad}}
@@ -486,6 +575,24 @@ hotspot_up() {
     if [ x"1" != x$ENABLED -o x"1" != x$GRE_ENABLED ]; then
         exit 0
     fi
+   
+    if [ "$BOX_TYPE" = "XB6" ] ; then
+        XFINITY_WIFI="dmcli eRT getv Device.WiFi.SSID.5.Enable"
+        SECURE_WIFI="dmcli eRT getv Device.WiFi.SSID.9.Enable"
+
+        XFINITY_WIFI_ENABLE=`$XFINITY_WIFI`
+        SECURE_WIFI_ENABLE=`$SECURE_WIFI`
+        isXfinityWiFiEnable=`echo "$XFINITY_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
+        isSecWiFiEnable=`echo "$SECURE_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
+    
+        if [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "false" ] ; then
+            bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"                                                                                                                                                         
+        elif [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "true" ] ; then
+            bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
+        elif [ "$isXfinityWiFiEnable" = "false" ] && [ "$isSecWiFiEnable" = "true" ] ; then
+            bridgeFQDM="$BRIDGE_INST_3,$BRIDGE_INST_4"
+        fi         
+    fi
     
     #Set a delay for first SSID manipulation
     sysevent set hotspot_${inst}-delay 10
@@ -498,11 +605,17 @@ hotspot_up() {
     IFS="${AB_DELIM}${AB_SSID_DELIM}"
     for i in $bridgeFQDM; do
         brinst=`echo $i |cut -d . -f 4`
+   if [ "$BOX_TYPE" = "XF3" ] ; then
+      echo "brinst is $brinst"
+   fi
         sysevent set multinet-start $brinst
     done
     
     for i in $WECB_BRIDGES; do
-        sysevent set multinet-start $i
+   if [ "$BOX_TYPE" = "XF3" ] ; then
+    echo " setting sysevent hotspot_${inst}-status started"
+   fi    
+    sysevent set multinet-start $i
     done
     
     sysevent set hotspot_${inst}-status started
@@ -602,13 +715,39 @@ case "$1" in
             sysevent set ${inst}_keepalive_pid $! > /dev/null
             
             update_bridge_config $3 > /dev/null
-            
+            if [ "$BOX_TYPE" = "XF3" ] ; then
+            sleep 5
+            fi
             arpFWrule=`sysevent setunique GeneralPurposeFirewallRule " -I OUTPUT -o $WAN_IF -p icmp --icmp-type 3 -j NFQUEUE --queue-bypass --queue-num $ARP_NFQUEUE"`
             sysevent set ${inst}_arp_queue_rule "$arpFWrule" > /dev/null
+            if [ "$BOX_TYPE" = "XF3" ] ; then
+              sleep 5
+            fi
             $GRE_ARP_PROC -q $ARP_NFQUEUE  > /dev/null &
             echo "handle_gre : Triggering RDKB_FIREWALL_RESTART"
             sysevent set firewall-restart > /dev/null
-            
+            if [ "$BOX_TYPE" = "XF3" ] ; then
+               sleep 15
+               brctl1=`brctl show | grep wl0.2`
+               if [ "$brctl1" == "" ]; then           
+                       brctl addif brlan2 wl0.2     
+                       brctl addif brlan2 wl1.2  
+                        ifconfig wl0.2 up
+                        ifconfig wl1.2 up   
+               fi                                   
+                                                    
+               brctl2=`brctl show | grep gretap0.102` 
+               if [ "$brctl2" == "" ]; then                         
+                       vconfig add gretap0 102      
+                       ip link set gretap0.102 master brlan2
+                       vconfig add gretap0 103      
+                       ip link set gretap0.103 master brlan3
+               fi                 
+               brctl3=`ifconfig gretap0 | grep UP`         
+               if [ "$brctl3" == "" ]; then
+                       ifconfig gretap0 up
+               fi
+            fi
             #check_ssids
             
         fi
@@ -646,7 +785,32 @@ case "$1" in
         if [ x"NULL" != x${2} ]; then
             create_tunnel $2 $GRE_IFNAME
         fi
-        
+
+        if [ "$BOX_TYPE" = "XF3" ] ; then 
+               sleep 15
+               brctl1=`brctl show | grep wl0.2`
+               if [ "$brctl1" == "" ]; then           
+                       brctl addif brlan2 wl0.2     
+                       brctl addif brlan3 wl1.2  
+                        ifconfig wl0.2 up
+                        ifconfig wl1.2 up   
+               fi                                   
+                                                    
+               brctl2=`brctl show | grep gretap0.102` 
+               if [ "$brctl2" == "" ]; then                         
+                       vconfig add gretap0 102      
+                       ip link set gretap0.102 master brlan2
+                       vconfig add gretap0 103      
+                       ip link set gretap0.103 master brlan3
+               fi                 
+               brctl3=`ifconfig gretap0 | grep UP`         
+               if [ "$brctl3" == "" ]; then
+                       ifconfig gretap0 up
+               fi
+         fi
+    if [ "$BOX_TYPE" = "XB6" ] ; then
+        read_greInst $1 $2
+    fi
         check_ssids 1
     
     ;;
@@ -737,6 +901,10 @@ case "$1" in
             if [ xstarted = x$hotspot_started ]; then
                 if [ x != x$curr_tunnel ]; then
                     create_tunnel $curr_tunnel $name
+                    if [ "$BOX_TYPE" = "XB6" ] ; then                                    
+                        read_greInst                                                                    
+                        check_ssids 1                                                     
+                    fi   
                 fi
                 #if forceRestart is given, an apply settings is desired. Only set if ssids are already up.
                 if [ gre-forceRestart = $1 -a x`sysevent get hotspot_ssids_up` = xtrue ]; then
