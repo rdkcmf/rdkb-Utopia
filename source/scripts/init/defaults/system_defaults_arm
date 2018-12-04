@@ -1067,6 +1067,9 @@ $X_RDKCENTRAL-COM_AkerEnable=false
 $codebigsupport=0
 $CodeBigFirstEnabled=false
 
+#ManageNotifications
+$ManageableNotificationEnabled=true
+
 #IDS Feature disabled bydefault
 $IDSENABLE=false
 $IDSSCANTASK=.FILE.
