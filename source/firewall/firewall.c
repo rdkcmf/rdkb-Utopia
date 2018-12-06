@@ -534,6 +534,11 @@ static char ecm_wan_ifname[20];
 static char emta_wan_ifname[20];
 static char eth_wan_enabled[20];
 static BOOL bEthWANEnable = FALSE;
+#if defined (INTEL_PUMA7)
+static BOOL erouterSSHEnable = TRUE;
+#else
+static BOOL erouterSSHEnable = FALSE;
+#endif
 static char wan6_ifname[20];
 static char wan_service_status[20];       // wan_service-status
 
@@ -637,6 +642,12 @@ static int ppFlushNeeded = 0;
 static int isProdImage = 0;
 static int isComcastImage = 0;
 static int isContainerEnabled = 0;
+
+#if defined(_ENABLE_EPON_SUPPORT_)
+static BOOL isEponEnable = TRUE;
+#else
+static BOOL isEponEnable = FALSE;
+#endif
 
 /*
  * For timed internet access rules we use cron 
@@ -9236,12 +9247,23 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
    fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
+
    if(bEthWANEnable)
-	{
-   		fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
-        }
-   else
-   fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   {
+           //ETH WAN is TC XB6 exclusive feature
+           fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+   }
+   else if (erouterSSHEnable)  // Applicable only for PUMA7 platforms
+   {
+       fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+       fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   }
+   else {
+       if (isEponEnable) 
+           fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j DROP\n", ecm_wan_ifname);
+       else
+           fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   }
 
    //SNMPv3 chains for logging and filtering
    fprintf(filter_fp, "%s\n", ":SNMPDROPLOG - [0:0]");
@@ -10770,6 +10792,11 @@ static void do_ipv6_filter_table(FILE *fp){
    if(bEthWANEnable)
    {
    fprintf(fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+   }
+   else if (erouterSSHEnable)
+   {
+   fprintf(fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+   fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    }
    else
    fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
