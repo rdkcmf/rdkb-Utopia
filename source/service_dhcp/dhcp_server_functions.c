@@ -254,7 +254,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	l_iNetMask_Last_Oct = l_iLastOct;
 
 	syscfg_get(NULL, "dhcp_start", l_cDhcp_Start, sizeof(l_cDhcp_Start));
-	fprintf(stderr, "dhcp_start is:%s\n", l_cDhcp_Start);	
+	fprintf(stderr, "dhcp_start:%s\n", l_cDhcp_Start);
 
 	// inet_pton validates whether IP has 4 octets and all octets are in between 0 and 255
 	l_iStartIpValid = inet_pton(AF_INET, l_cDhcp_Start, &(l_sSocAddr.sin_addr));
@@ -299,7 +299,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	}
  	
     syscfg_get(NULL, "dhcp_end", l_cDhcp_End, sizeof(l_cDhcp_End));
-    fprintf(stderr, "dhcp_end is:%s\n", l_cDhcp_End);
+    fprintf(stderr, "dhcp_end:%s\n", l_cDhcp_End);
 
 	l_iEndIpValid = inet_pton(AF_INET, l_cDhcp_End, &(l_sSocAddr.sin_addr));
 	if (1 == l_iEndIpValid)

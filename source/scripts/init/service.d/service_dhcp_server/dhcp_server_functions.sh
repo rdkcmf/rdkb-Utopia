@@ -203,6 +203,7 @@ calculate_dhcp_range () {
  	   	DHCP_START=`syscfg get dhcp_start`
    	fi  
    	echo "DHCP_SERVER: Start IP is $DHCP_START LAN Subnet is $LAN_SUBNET"
+	echo "dhcp_start:$DHCP_START" 
 
    	# Validate DHCP start IP.
    	# Valid IP should have:
@@ -277,6 +278,7 @@ calculate_dhcp_range () {
    	# Get the ending address from syscfg DB
    	ENDING_ADDRESS=`syscfg get dhcp_end`
    	OCTET_NUM=`echo $ENDING_ADDRESS | grep -o "\." | wc -l`
+        echo "dhcp_end:$ENDING_ADDRESS"
 
    	#
    	# If total "."s are 3, then validate last octet
