@@ -1205,6 +1205,11 @@ int main(int argc, char **argv)
   }
   else
   {
+	#if defined(INTEL_PUMA7)
+	//Below validation is needed to make sure the factory_partnerid and syscfg_partnerid are in sync.
+	//This is mainly to address those units where customer_index/factory_partnerid was modified in the field through ARRISXB6-8400.
+		system( "sh /lib/rdk/validate_syscfg_partnerid.sh" );
+	#endif
   	char buf[64] = {0} ;
   	syscfg_get( NULL, "PartnerID", buf, sizeof(buf));
 
