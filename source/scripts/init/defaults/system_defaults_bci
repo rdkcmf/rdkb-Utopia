@@ -1038,6 +1038,9 @@ $process_memory_log_count=0
 
 $PeriodicFWCheck_Enable=false
 
+#Minimum memory threshold value
+$MinMemoryThreshold_Value=10
+
 #ipv6 pd
 $lan_pd_interfaces=brlan0
 @erouter_topology-mode=1
