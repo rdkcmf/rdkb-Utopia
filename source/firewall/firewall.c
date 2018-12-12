@@ -5007,9 +5007,6 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    rc |= syscfg_get(NULL, "mgmt_wan_sshport", port, sizeof(port));
    if (rc == 0 && atoi(query) == 1) {
 
-       if(validEntry)
-           remote_access_set_proto(filter_fp, nat_fp, port, srcaddr, family, ecm_wan_ifname);
-
        for(i = 0; i < count && family == AF_INET && srcany == 0; i++)
            remote_access_set_proto(filter_fp, nat_fp, port, iprangeAddr[i], family, ecm_wan_ifname);
       
@@ -10293,6 +10290,8 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   if (erouterSSHEnable)
+       fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
    fprintf(filter_fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
    fprintf(filter_fp, "-A LOG_SSH_DROP -j DROP\n");
 
