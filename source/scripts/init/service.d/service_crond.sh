@@ -245,6 +245,12 @@ service_start ()
 	  echo "#! /bin/sh" > /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 	  echo "/usr/ccsp/tad/selfheal_cosa_start_rem.sh" >> /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 	  chmod 700 /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
+          
+          if [ "$BOX_TYPE" == "XB3" ]; then
+            echo "#! /bin/sh" > /etc/cron/cron.every10minute/start_gw_heath.sh
+            echo "/usr/ccsp/tad/start_gw_heath.sh" >> /etc/cron/cron.every10minute/start_gw_heath.sh
+            chmod 700 /etc/cron/cron.every10minute/start_gw_heath.sh
+          fi
 
 	  # remove max cpu usage reached indication file once in 24 hours
 	  echo "#! /bin/sh" > /etc/cron/cron.daily/remove_max_cpu_usage_file.sh

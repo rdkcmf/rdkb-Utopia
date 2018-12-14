@@ -1113,3 +1113,6 @@ $AccountID=Unknown
 
 #Secured syscfg
 $UpdateNvram=true
+
+#GW_health default Value
+$gw_health=0
