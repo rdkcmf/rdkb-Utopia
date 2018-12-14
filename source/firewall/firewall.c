@@ -8751,7 +8751,7 @@ static int prepare_multinet_postrouting_nat(FILE *nat_fp) {
 #endif //end of MULTILAN_FEATURE
 static void prepare_ipc_filter(FILE *filter_fp) {
                 FIREWALL_DEBUG("Entering prepare_ipc_filter\n"); 	  
-#if !defined (_COSA_BCM_ARM_)
+#if !defined (_COSA_BCM_ARM_) && !defined(INTEL_PUMA7)
     // TODO: fix this hard coding
     fprintf(filter_fp, "-I OUTPUT -o %s -j ACCEPT\n", "l2sd0.500");
     fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", "l2sd0.500");
