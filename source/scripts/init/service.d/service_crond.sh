@@ -133,6 +133,10 @@ service_start ()
 #RDKB-9367, file handle monitor, needs to be run every 12 hours
       echo "1 */12 * * *   /usr/ccsp/tad/FileHandle_Monitor.sh" >> $CRONTAB_FILE
 
+      if [ ! -f "/nvram/syscfg_clean" ]; then
+        echo "0 2 * * *   /usr/ccsp/tad/syscfg_cleanup.sh" >> $CRONTAB_FILE
+      fi
+      
       num1=$RANDOM
       num2=$RANDOM
       rand1=`expr $num1 % 60`
