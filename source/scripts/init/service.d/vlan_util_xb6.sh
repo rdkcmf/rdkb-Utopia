@@ -921,6 +921,8 @@ then
     sync_group_settings
 
     ifconfig $BRIDGE_NAME 192.168.245.254
+    ifconfig ath12 mtu 1600
+    ifconfig ath13 mtu 1600
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=MeshBhaulstart"
     $SYSEVENT set firewall-restart
