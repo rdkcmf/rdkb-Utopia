@@ -914,6 +914,8 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 		    *defaultAdminIP = NULL,	 
 		    *passWord 		= NULL,	 
 		    *subnetRange 	= NULL,
+	*minAddress = NULL,
+	*maxAddress = NULL,
         *allow_ethernet_wan = NULL,
         *initialForwardedMark = NULL,
         *initialOutputMark = NULL;
@@ -1026,6 +1028,36 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							APPLY_PRINT("%s - DefaultLocalIPv4SubnetRange Value is NULL\n", __FUNCTION__ );
 						}	
 					}
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MinAddress") != NULL )
+					{
+
+						minAddress = cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MinAddress")->valuestring;
+
+						if (minAddress != NULL)
+						{
+							set_syscfg_partner_values(minAddress,"dhcp_start");
+							minAddress = NULL;
+						}
+						else
+						{
+							APPLY_PRINT("%s - Default DHCP minAddress Value is NULL\n", __FUNCTION__ );
+						}
+					}
+                                        if ( cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MaxAddress") != NULL )
+                                        {
+
+                                                maxAddress = cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MaxAddress")->valuestring;
+
+                                                if (maxAddress != NULL)
+                                                {
+                                                        set_syscfg_partner_values(maxAddress,"dhcp_end");
+                                                        maxAddress = NULL;
+                                                }
+                                                else
+                                                {
+                                                        APPLY_PRINT("%s - Default DHCP maxAddress Value is NULL\n", __FUNCTION__ );
+                                                }
+                                        }
                                           if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.AllowEthernetWAN") != NULL )
                                           {
                                             allow_ethernet_wan = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.AllowEthernetWAN")->valuestring; 
