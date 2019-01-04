@@ -1178,3 +1178,6 @@ $X_RDKCENTRAL-COM_PresenceLeaveIPv6Retries=3
 
 #Presence Detection for inactive clients background interval
 $X_RDKCENTRAL-COM_BackgroundPresenceJoinInterval=67
+
+#Xupnp default Value
+$start_upnp_service=true
