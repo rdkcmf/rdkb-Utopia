@@ -10597,6 +10597,18 @@ static void do_ipv6_nat_table(FILE* fp)
       
    fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:21515\n",IPv6);
    fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:21515\n",IPv6);
+
+   //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+   if(isDmzEnabled) {
+               int rc;
+               char ipv6host[64] = {'\0'};
+
+               rc = syscfg_get(NULL, "dmz_dst_ip_addrv6", ipv6host, sizeof(ipv6host));
+               if(rc == 0 && ipv6host[0] != '\0' && strcmp(ipv6host, "x") != 0) {
+                   fprintf(fp, "-A PREROUTING -d %s -j DNAT --to-destination %s \n", current_wan_ipv6, ipv6host);
+               }
+   }
+
    
     FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
 }
