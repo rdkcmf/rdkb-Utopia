@@ -784,7 +784,7 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_prefix, sizeof(iface_prefix));
 
         /*enable ipv6 link local*/
-        v_secure_system("ip -6 link set dev %s up", iface_name);
+        vsystem("ip -6 link set dev %s up", iface_name);
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", iface_name, "1");
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", iface_name, "1");
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", iface_name, "0");
@@ -838,7 +838,7 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_addr, sizeof(iface_addr));
         if (iface_addr[0] != '\0') {
             get_prefix_info(iface_prefix, NULL, 0, &prefix_len);
-            v_secure_system("ip -6 addr del %s/%d dev %s", iface_addr, prefix_len, if_name);
+            vsystem("ip -6 addr del %s/%d dev %s", iface_addr, prefix_len, if_name);
         }
 
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", if_name, "1"); /*this seems not work*/
@@ -1084,7 +1084,7 @@ static int dhcpv6s_start(struct serv_ipv6 *si6)
        return 0;
     }
 #endif
-    v_secure_system("%s start", DHCPV6_SERVER);
+    vsystem("%s start", DHCPV6_SERVER);
     return 0;
 }
 

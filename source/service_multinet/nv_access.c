@@ -110,7 +110,7 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
         MNET_DEBUG("nv_get_members, current lookup offset: %d, string: %s\n" COMMA offset COMMA cmdBuff)
     }
      
-    psmcliOut = v_secure_popen(cmdBuff);
+    psmcliOut = popen(cmdBuff, "r");
 
     if(psmcliOut) { /*RDKB-7137, CID-33511, null before use*/
 
@@ -134,7 +134,7 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
             }
         }
 
-        v_secure_pclose(psmcliOut); /*RDKB-7137, CID-33325, free unused resources before exit */
+        pclose(psmcliOut); /*RDKB-7137, CID-33325, free unused resources before exit */
     }
 #else
     char  cmdBuff[512];

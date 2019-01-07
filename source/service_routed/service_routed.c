@@ -168,8 +168,8 @@ static int route_set(struct serv_routed *sr)
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
         sysevent_get(sr->sefd, sr->setok, evt_name, lan_if, sizeof(lan_if));
 
-        v_secure_system("ip -6 rule add iif %s table all_lans", lan_if);
-        v_secure_system("ip -6 rule add iif %s table erouter", lan_if);
+        vsystem("ip -6 rule add iif %s table all_lans", lan_if);
+        vsystem("ip -6 rule add iif %s table erouter", lan_if);
     }
 #endif
     if (vsystem("ip -6 rule add iif brlan0 table erouter;"
@@ -195,8 +195,8 @@ static int route_unset(struct serv_routed *sr)
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
         sysevent_get(sr->sefd, sr->setok, evt_name, lan_if, sizeof(lan_if));
 
-        v_secure_system("ip -6 rule del iif %s table all_lans", lan_if);
-        v_secure_system("ip -6 rule del iif %s table erouter", lan_if);
+        vsystem("ip -6 rule del iif %s table all_lans", lan_if);
+        vsystem("ip -6 rule del iif %s table erouter", lan_if);
     }
 #else
     if (vsystem("ip -6 route del default dev erouter0 table erouter"
@@ -574,10 +574,10 @@ static int radv_start(struct serv_routed *sr)
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
     bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
 
-    v_secure_system("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+    vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
     printf("DHCPv6 is %s. Starting zebra Process\n", (bEnabled?"Enabled":"Disabled"));
 #else
-    v_secure_system("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+    vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
 #endif
 
     return 0;
@@ -622,7 +622,7 @@ static int rip_start(struct serv_routed *sr)
         return -1;
     }
 
-    if (v_secure_system("ripd -d -f %s -u root", RIPD_CONF_FILE) != 0) {
+    if (vsystem("ripd -d -f %s -u root", RIPD_CONF_FILE) != 0) {
         sysevent_set(sr->sefd, sr->setok, "rip-status", "error", 0);
         return -1;
     }

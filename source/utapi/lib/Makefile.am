@@ -20,7 +20,7 @@ AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 AM_CFLAGS += -fPIC
-AM_LDFLAGS = -L/var/tmp/pc-rdkb/lib -lsecure_wrapper
+AM_LDFLAGS = -L/var/tmp/pc-rdkb/lib
 
 AM_CPPFLAGS = -Wall -Werror -fPIC
 ACLOCAL_AMFLAGS = -I m4
@@ -34,4 +34,3 @@ libutapi_la_LIBADD = $(top_builddir)/source/ulog/libulog.la
 
 libutapi_ladir = $(top_builddir)/source/include/utapi
 libutapi_la_HEADERS = utapi_wlan.h
-libutapi_la_LDFLAGS += -lsecure_wrapper

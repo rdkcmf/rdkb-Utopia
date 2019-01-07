@@ -291,7 +291,7 @@ static int dhcp_start(struct serv_wan *sw)
     char options[VENDOR_OPTIONS_LENGTH];
 
     if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
-        err = v_secure_system("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
     }
     else {
         /*
@@ -299,7 +299,7 @@ static int dhcp_start(struct serv_wan *sw)
            parsing VENDOR_SPEC_FILE. Not ideal, but better than not starting DHCP
            at all? Fixme: needs more review.
         */
-        err = v_secure_system("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE);
+        err = vsystem("/sbin/udhcpc -i %s -p %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE);
     }
 
 #elif defined(_PLATFORM_IPQ_)
@@ -312,7 +312,7 @@ static int dhcp_start(struct serv_wan *sw)
            " in 5 lease try\n", __func__);
     }
 #else
-    err = v_secure_system("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
+    err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 1",
                  sw->ifname, DHCPC_PID_FILE);
 #endif
@@ -755,10 +755,10 @@ static int wan_iface_up(struct serv_wan *sw)
 
     syscfg_get(NULL, "wan_mtu", mtu, sizeof(mtu));
     if (atoi(mtu) < 1500 && atoi(mtu) > 0)
-        v_secure_system("ip -4 link set %s mtu %s", sw->ifname, mtu);
+        vsystem("ip -4 link set %s mtu %s", sw->ifname, mtu);
 
     sysctl_iface_set("/proc/sys/net/ipv4/conf/%s/arp_announce", sw->ifname, "1");
-    v_secure_system("ip -4 link set %s up", sw->ifname);
+    vsystem("ip -4 link set %s up", sw->ifname);
 #if PUMA6_OR_NEWER_SOC_TYPE
 
     if(0 == strncmp(sw->ifname,ER_NETDEVNAME,strlen(ER_NETDEVNAME)))
@@ -784,7 +784,7 @@ static int wan_iface_down(struct serv_wan *sw)
 {
     int err;
 
-    err = v_secure_system("ip -4 link set %s down", sw->ifname);
+    err = vsystem("ip -4 link set %s down", sw->ifname);
 
 #if PUMA6_OR_NEWER_SOC_TYPE
 
@@ -1023,7 +1023,7 @@ static int wan_addr_unset(struct serv_wan *sw)
         return -1;
     }
 
-    v_secure_system("ip -4 addr flush dev %s", sw->ifname);
+    vsystem("ip -4 addr flush dev %s", sw->ifname);
 
 	fprintf(stderr, "Disabling DHCPv6 Client now\n");
     system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");	
@@ -1112,7 +1112,7 @@ static int wan_dhcp_release(struct serv_wan *sw)
 
     fclose(fp);
 
-    v_secure_system("ip -4 addr flush dev %s", sw->ifname);
+    vsystem("ip -4 addr flush dev %s", sw->ifname);
     return 0;
 }
 
@@ -1206,19 +1206,19 @@ static int wan_static_start(struct serv_wan *sw)
     syscfg_get(NULL, "wan_netmask", wan_netmask, sizeof(wan_netmask));
     syscfg_get(NULL, "wan_default_gateway", wan_default_gw, sizeof(wan_default_gw));
 
-    if(v_secure_system("ip -4 addr add %s/%s broadcast + dev %s", wan_ipaddr, wan_netmask, sw->ifname) != 0) {
+    if(vsystem("ip -4 addr add %s/%s broadcast + dev %s", wan_ipaddr, wan_netmask, sw->ifname) != 0) {
         fprintf(stderr, "%s: Add address to interface %s failed!\n", __FUNCTION__, sw->ifname);
 	return 0; //temporary hack for ARRISXB3-3748
         //hack hack hack return -1;
     }
 
-    if(v_secure_system("ip -4 link set %s up", sw->ifname) != 0) {
+    if(vsystem("ip -4 link set %s up", sw->ifname) != 0) {
         fprintf(stderr, "%s: Set interface %s up failed!\n", __FUNCTION__, sw->ifname);
 	return 0; //temporary hack for ARRISXB3-3748
         //hack hack hack return -1;
     }
 
-    if(v_secure_system("ip -4 route add table erouter default dev %s via %s && "
+    if(vsystem("ip -4 route add table erouter default dev %s via %s && "
                 "ip rule add from %s lookup erouter", sw->ifname, wan_default_gw, wan_ipaddr) != 0)
     {
         fprintf(stderr, "%s: router related config failed!\n", __FUNCTION__);
@@ -1249,8 +1249,8 @@ static int wan_static_stop(struct serv_wan *sw)
 
     sysevent_set(sw->sefd, sw->setok, "default_router", NULL, 0);
     syscfg_get(NULL, "wan_ipaddr", wan_ipaddr, sizeof(wan_ipaddr));
-    v_secure_system("ip rule del from %s lookup erouter", wan_ipaddr);
-    v_secure_system("ip -4 route del table erouter default dev %s", sw->ifname);
+    vsystem("ip rule del from %s lookup erouter", wan_ipaddr);
+    vsystem("ip -4 route del table erouter default dev %s", sw->ifname);
 
     sysevent_set(sw->sefd, sw->setok, "current_ipv4_link_state", "down", 0);
 
