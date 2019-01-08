@@ -299,7 +299,9 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
         memset(buf,0,BUF_SZ);  
     }
     Utopia_SetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1), pUserCfg_t->Username);
-    Utopia_SetIndexed(ctx,UtopiaValue_Password,(ulIndex + 1),pUserCfg_t->Password);
+    if(strcmp(pUserCfg_t->Username, "admin") != 0){
+        Utopia_SetIndexed(ctx,UtopiaValue_Password,(ulIndex + 1),pUserCfg_t->Password);
+    }
     Utopia_SetIndexed(ctx,UtopiaValue_User_Language,(ulIndex + 1),pUserCfg_t->Language);
 
     iVal = (FALSE == pUserCfg_t->bEnabled) ? 0 : 1;
