@@ -493,34 +493,49 @@ static int parse_command_line(int argc, char **argv)
    return(0);
 }
 
-char * json_file_parse(char *path){
-	 cJSON 	*json = NULL;
-	 FILE	 *fileRead = NULL;
-	 char	*data = NULL;
-	 int 	len ;
-	 fileRead = fopen( path, "r" );
-	 if( fileRead == NULL ) 
-	 {
-		 printf("%s-%d : Error in opening JSON file\n" , __FUNCTION__, __LINE__ );
-	 }
+char * json_file_parse( char *path )
+{
+	cJSON 		*json 		= NULL;
+	FILE	 	*fileRead 	= NULL;
+	char		*data 		= NULL;
+	int 		 len 		= 0;
+
+	//File read
+	fileRead = fopen( path, "r" );
+
+	//Null Check
+	if( fileRead == NULL ) 
+	{
+	 	APPLY_PRINT( "%s-%d : Error in opening JSON file\n" , __FUNCTION__, __LINE__ );
+		return NULL;
+	}
+
+	//Calculate length for memory allocation	 
+	fseek( fileRead, 0, SEEK_END );
+	len = ftell( fileRead );
+	fseek( fileRead, 0, SEEK_SET );
+
+	APPLY_PRINT("%s-%d : Total File Length :%d \n", __FUNCTION__, __LINE__, len );
+
+	if( len > 0 )
+ 	{
+		 data = ( char* )malloc( len + 1 );
+
+		 //Check memory availability
+		 if ( data != NULL ) 
+		 {
+			fread( data, 1, len, fileRead );
+		 } 
+		 else 
+		 {
+			 APPLY_PRINT("%s-%d : Memory allocation failed Length :%d\n", __FUNCTION__, __LINE__, len );
+		 }
+ 	}
 	 
-	 fseek( fileRead, 0, SEEK_END );
-	 len = ftell( fileRead );
-	 fseek( fileRead, 0, SEEK_SET );
-	 data = ( char* )malloc( len + 1 );
-	 if (data != NULL) 
-	 {
-	 	fread( data, 1, len, fileRead );
-	 } 
-	 else 
-	 {
-		 printf("%s-%d : Memory allocation failed \n", __FUNCTION__, __LINE__);
-	 }
-	 
-	 fclose( fileRead );
+	if( fileRead )
+	fclose( fileRead );
 	
 	return data;
-
 }
 
 static int writeToJson(char *data)
@@ -1166,55 +1181,64 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 }
 
 /*
- *
+ * main()
  */
-int main(int argc, char **argv)
+int main( int argc, char **argv )
 {
-   server_port = SE_SERVER_WELL_KNOWN_PORT;
-   snprintf(server_ip, sizeof(server_ip), "%s", SE_WELL_KNOWN_IP);
-   snprintf(default_file, sizeof(default_file), "%s", DEFAULT_FILE);
-   syscfg_dirty = 0;
    char *ptr_etc_json = NULL, *ptr_nvram_json = NULL, *db_val = NULL;
-   char cmd[512] = {0};
-   char 	PartnerID[ PARTNER_ID_LEN ]  = { 0 };
-   int	    isNeedToApplyPartnersDefault = 1;
+   char  cmd[512] = {0};
+   char  PartnerID[ PARTNER_ID_LEN ]  = { 0 };
+   int   isNeedToApplyPartnersDefault = 1;
+   int   rc;
+
+   //Fill basic contents
+   server_port = SE_SERVER_WELL_KNOWN_PORT;
+
+   snprintf( server_ip, sizeof( server_ip ), "%s", SE_WELL_KNOWN_IP );
+   snprintf( default_file, sizeof( default_file ), "%s", DEFAULT_FILE );
+
+   syscfg_dirty = 0;
+
    parse_command_line(argc, argv);
 
    global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
    APPLY_PRINT("[Utopia] global_fd is %d\n",global_fd);
-   if (0 == global_fd) {
+   
+   if ( 0 == global_fd ) 
+   {
       APPLY_PRINT("[Utopia] %s unable to register with sysevent daemon.\n", argv[0]);
       printf("[Utopia] %s unable to register with sysevent daemon.\n", argv[0]);
    }
-   int rc;
+
    rc = syscfg_init();
-   if (rc) {
-      printf("[Utopia] %s unable to initialize with syscfg context. Reason (%d)\n", 
-             argv[0], rc);
+   if ( rc ) 
+   {
+      APPLY_PRINT("[Utopia] %s unable to initialize with syscfg context. Reason (%d)\n", argv[0], rc);
       sysevent_close(global_fd, global_id);
       return(-1);
    }
 
-
-
    if ( global_fd <= 0 )
    {		
-	APPLY_PRINT("[Utopia] Retrying sysevent open\n");
+		APPLY_PRINT("[Utopia] Retrying sysevent open\n");
 
-	global_fd=0;
-   	global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
-	APPLY_PRINT("[Utopia] Global fd after retry is %d\n",global_fd);	
+		global_fd=0;
+	   	global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
+		APPLY_PRINT("[Utopia] Global fd after retry is %d\n",global_fd);	
 
-	if ( global_fd <= 0)
+		if ( global_fd <= 0)
 		APPLY_PRINT("[Utopia] Retrying sysevent open also failed %d\n",global_fd);
 	
    }
 
    set_defaults();
-   if (syscfg_dirty) {
+   
+   if (syscfg_dirty) 
+   {
       printf("[utopia] [init] committing default syscfg values\n");
       syscfg_commit();
    }
+
    sysevent_close(global_fd, global_id);
 
 #if defined(_SYNDICATION_BUILDS_)
@@ -1224,7 +1248,7 @@ int main(int argc, char **argv)
   if ( access( PARTNER_DEFAULT_APPLY_FILE , F_OK ) != 0 )  
   {
 	  isNeedToApplyPartnersDefault = 0;
-          APPLY_PRINT("%s - Device in Reboot mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+      APPLY_PRINT("%s - Device in Reboot mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
   }
   else
   {
@@ -1237,47 +1261,83 @@ int main(int argc, char **argv)
   }
   else
   {
-	#if defined(INTEL_PUMA7)
+    char buf[ 64 ] = { 0 };
+
+#if defined(INTEL_PUMA7)
 	//Below validation is needed to make sure the factory_partnerid and syscfg_partnerid are in sync.
 	//This is mainly to address those units where customer_index/factory_partnerid was modified in the field through ARRISXB6-8400.
-		system( "sh /lib/rdk/validate_syscfg_partnerid.sh" );
-	#endif
-  	char buf[64] = {0} ;
-  	syscfg_get( NULL, "PartnerID", buf, sizeof(buf));
+	system( "sh /lib/rdk/validate_syscfg_partnerid.sh" );
+#endif
+	
+	//Get the partner ID
+  	syscfg_get( NULL, "PartnerID", buf, sizeof( buf ));
 
-        if( buf != NULL )
-        {
-            strncpy(PartnerID, buf , strlen( buf ));
-        }
+	//Copy is it is not NULL. 
+    if( buf[ 0 ] != '\0' )
+    {
+        strncpy( PartnerID, buf , strlen( buf ) );
+    }
+	else
+	{
+		//Partner ID is null so need to set default partner ID as "comcast"
+		memset( PartnerID, 0, sizeof( PartnerID ) );
+		sprintf( PartnerID, "%s", "comcast" );
+		set_syscfg_partner_values( PartnerID, "PartnerID" );
+		APPLY_PRINT("%s - PartnerID is NULL so set default partner :%s\n", __FUNCTION__, PartnerID );		
+	}
   }
 
-   if (access(PARTNERS_INFO_FILE, F_OK) != 0)	
+   APPLY_PRINT("%s - PartnerID :%s\n", __FUNCTION__, PartnerID );
+
+   if ( access(PARTNERS_INFO_FILE, F_OK ) != 0 )	
    {
-	snprintf(cmd, sizeof(cmd), "cp %s %s", "/etc/partners_defaults.json", PARTNERS_INFO_FILE);
-	APPLY_PRINT("%s\n",cmd);
-	system(cmd);
+		snprintf(cmd, sizeof(cmd), "cp %s %s", "/etc/partners_defaults.json", PARTNERS_INFO_FILE);
+		APPLY_PRINT("%s\n",cmd);
+		system(cmd);
    }
    else
    {
-	   ptr_etc_json = json_file_parse("/etc/partners_defaults.json");
-	   if (ptr_etc_json) {
-		   ptr_nvram_json = json_file_parse(PARTNERS_INFO_FILE);
-	   	   if (ptr_nvram_json)
+	   ptr_etc_json = json_file_parse( "/etc/partners_defaults.json" );
+
+	   if ( ptr_etc_json ) 
+	   {
+		  //Check whether file is having content or not	 
+		  ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE );
+
+		  //Fallback case when file is empty
+		  if( NULL == ptr_nvram_json )
+	  	  {
+			//Copy /etc/partners_defaults.json file to nvram
+			APPLY_PRINT("%s - %s file is empty\n", __FUNCTION__, PARTNERS_INFO_FILE );
+			snprintf( cmd, sizeof( cmd ), "rm -rf %s; cp %s %s", PARTNERS_INFO_FILE, "/etc/partners_defaults.json", PARTNERS_INFO_FILE );
+			APPLY_PRINT( "%s\n",cmd );
+			system( cmd );
+	  	  }
+		  
+		  //Check again whether file is having content or not	
+		  ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE );
+	   	  if ( NULL != ptr_nvram_json )
 	   	  {
-	   		compare_partner_json_param(ptr_nvram_json,ptr_etc_json,PartnerID);
-			free(ptr_nvram_json);		
+	   		compare_partner_json_param( ptr_nvram_json, ptr_etc_json, PartnerID );
+
+			if( NULL != ptr_nvram_json )
+			free( ptr_nvram_json );		
 	   	  }	   	
-			free(ptr_etc_json);
-	   	}
-	 
+
+			if( NULL != ptr_etc_json )
+			free( ptr_etc_json );
+	   }
    }
 
-   db_val = json_file_parse(PARTNERS_INFO_FILE);
+   //Apply partner default values during FR/partner FR case
+   db_val = json_file_parse( PARTNERS_INFO_FILE );
 
    if( db_val )
    {
-   	apply_partnerId_default_values( db_val ,PartnerID);
-	free( db_val );
+		apply_partnerId_default_values( db_val ,PartnerID );
+
+		if( NULL != db_val )
+		free( db_val );
    }
 
    return(0);
