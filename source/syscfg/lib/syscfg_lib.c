@@ -60,7 +60,7 @@
 static syscfg_shm_ctx *syscfg_ctx = NULL;
 int            syscfg_initialized = 0;
 
-static char name_p[MAX_NAME_LEN+1];                      // internal temp name buffer 
+static char name_p[MAX_NAME_LEN+1];                      // internal temp name buffer
 
 int load_from_file (const char *fname);
 int commit_to_file (const char *fname);
@@ -326,12 +326,14 @@ int syscfg_getsz (long int *used_sz, long int *max_sz)
 int syscfg_commit ()
 {
     syscfg_shm_ctx *ctx = syscfg_ctx;
-    int rc;
+    int rc, ret;
 
     if (0 == syscfg_initialized || NULL == ctx) {
         return ERR_NOT_INITIALIZED;
     }
-
+  
+    ret = access(SYSCFG_NEW_FILE, F_OK);
+      
     write_lock(ctx);
     commit_lock(ctx);
 
@@ -339,6 +341,8 @@ int syscfg_commit ()
         rc = commit_to_mtd(ctx->cb.store_path);
     } else {
         rc = commit_to_file(ctx->cb.store_path);
+        if( ! ret ) 
+            rc = commit_to_file(SYSCFG_NEW_FILE);
     }
     commit_unlock(ctx);
     write_unlock(ctx);
@@ -1642,9 +1646,15 @@ int commit_to_file (const char *fname)
     int fd;
     int i, ct;
     char buf[2*MAX_ITEM_SZ];
+    char tmpFile[32];
     syscfg_shm_ctx *ctx = syscfg_ctx;
+  
+    if (strcmp(fname,SYSCFG_FILE))
+        snprintf(tmpFile,sizeof(tmpFile),SYSCFG_NEW_BKUP_FILE);
+    else
+        snprintf(tmpFile,sizeof(tmpFile),SYSCFG_LOCAL_FILE);
 
-    fd = open(SYSCFG_LOCAL_FILE, O_CREAT | O_RDWR | O_TRUNC);
+    fd = open(tmpFile, O_CREAT | O_RDWR | O_TRUNC);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }
@@ -1665,7 +1675,6 @@ int commit_to_file (const char *fname)
 
     close(fd);
     unlink(fname);
-    link (SYSCFG_LOCAL_FILE, fname);
+    link (tmpFile, fname);
     return 0;
 }
-
