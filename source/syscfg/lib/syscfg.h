@@ -67,6 +67,10 @@
 #define ERR_IO_MTD_READ       -36
 #define ERR_IO_MTD_WRITE      -37
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /*
  * Procedure     : syscfg_create
  * Purpose       : Create syscfg shared memory and load entries from persistent storage
@@ -291,5 +295,9 @@ int syscfg_format (const char *mtd_device, const char *seed_file);
  * Notes         :
  */
 int syscfg_check (const char *mtd_device);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SYSCFG_H_ */
