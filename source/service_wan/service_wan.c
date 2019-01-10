@@ -340,7 +340,7 @@ static int dhcp_start(struct serv_wan *sw)
     char options[VENDOR_OPTIONS_LENGTH];
 
     if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
-        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /usr/bin/service_udhcpc", sw->ifname, DHCPC_PID_FILE, options);
     }
     }
    else
