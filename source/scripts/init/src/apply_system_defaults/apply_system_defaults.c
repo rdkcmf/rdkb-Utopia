@@ -55,6 +55,7 @@
 #define PARTNERS_INFO_FILE  			"/nvram/partners_defaults.json"
 #define PARTNERID_FILE  				"/nvram/.partner_ID"
 #define PARTNER_DEFAULT_APPLY_FILE  	"/nvram/.apply_partner_defaults"
+#define PARTNER_DEFAULT_MIGRATE_PSM  	"/tmp/.apply_partner_defaults_psm"
 #define PARTNER_ID_LEN 64
 static char default_file[1024];
 
@@ -935,6 +936,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
         *initialForwardedMark = NULL,
         *initialOutputMark = NULL;
 	int	    isNeedToApplyPartnersDefault = 1;
+	int	    isNeedToApplyPartnersPSMDefault = 0;	
 
 	/*
 	  * Case 1:
@@ -947,6 +949,11 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 	  * if "/nvram/.apply_partner_defaults" file available or not
 	  * if available then go ahead and apply default values corresponding partners
 	  * if not available then it would have applied before boot-up
+	  *
+	  * Case 3:
+	  * Check whether /tmp/.apply_partner_defaults_psm file has touched or not
+	  * if touched then we need to do migration for PSM members like RegionCode and CertLocation only
+	  *
 	  */
 	if ( access( PARTNER_DEFAULT_APPLY_FILE , F_OK ) != 0 )  
 	{
@@ -959,7 +966,17 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 		//system( "rm -rf /nvram/.apply_partner_defaults" );
   	}
 
-	if( 1 == isNeedToApplyPartnersDefault )  
+	if ( access( PARTNER_DEFAULT_MIGRATE_PSM , F_OK ) == 0 )  
+	{
+		isNeedToApplyPartnersPSMDefault = 1;
+
+   		APPLY_PRINT("%s - %s file available so need to do partner's PSM member migration :%s\n", __FUNCTION__, PARTNER_DEFAULT_MIGRATE_PSM );
+   		APPLY_PRINT("%s - Deletion of %s file handled in PSM init :%s\n", __FUNCTION__, PARTNER_DEFAULT_MIGRATE_PSM );
+	}
+
+	if( ( 1 == isNeedToApplyPartnersDefault ) || \
+		( 1 == isNeedToApplyPartnersPSMDefault ) 
+	  )
 	{
           	APPLY_PRINT("%s - Applying  %s default configuration\n", __FUNCTION__, PartnerID );
 		json = cJSON_Parse( data );
@@ -982,7 +999,9 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 			if( partnerObj != NULL) 
 			{
 				// Don't overwrite this value into syscfg.db for comcast partner
-				if( 0 == isThisComcastPartner )
+				if( ( 0 == isThisComcastPartner ) && \
+					( 1 == isNeedToApplyPartnersDefault )
+				  )
 				{
 					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") != NULL )
 					{
@@ -1089,88 +1108,97 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
                                           }
 				}
 
-				if ( cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code") != NULL )
+				if( ( 1 == isNeedToApplyPartnersDefault ) || \
+						( 1 == isNeedToApplyPartnersPSMDefault ) 
+					  )
 				{
-					char *pcWiFiRegionCode = NULL;
-					
-					pcWiFiRegionCode = cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code")->valuestring; 
-		
-					if (pcWiFiRegionCode != NULL) 
+					if ( cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code") != NULL )
 					{
-						set_syscfg_partner_values(pcWiFiRegionCode,"WiFiRegionCode");
-						pcWiFiRegionCode = NULL;
-					}	
+						char *pcWiFiRegionCode = NULL;
+						
+						pcWiFiRegionCode = cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code")->valuestring; 
+			
+						if (pcWiFiRegionCode != NULL) 
+						{
+							set_syscfg_partner_values(pcWiFiRegionCode,"WiFiRegionCode");
+							pcWiFiRegionCode = NULL;
+						}	
+						else
+						{
+							APPLY_PRINT("%s - DefaultWiFiRegionCode Value is NULL\n", __FUNCTION__ );
+						}	
+					}
+
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation") != NULL )
+					{
+							char *tr69CertLocation = NULL;
+					
+							tr69CertLocation = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation")->valuestring;
+					
+							if (tr69CertLocation != NULL)
+							{
+									set_syscfg_partner_values(tr69CertLocation,"TR69CertLocation");
+									tr69CertLocation = NULL;
+							}
+							else
+							{
+									APPLY_PRINT("%s - Default TR69CertLocation Value is NULL\n", __FUNCTION__ );
+							}
+					}
+				}
+
+				if( 1 == isNeedToApplyPartnersDefault )
+				{
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") != NULL )
+					{
+					  initialForwardedMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark")->valuestring; 
+					  if (initialForwardedMark[0] != NULL)
+					  {
+						set_syscfg_partner_values(initialForwardedMark,"DSCP_InitialForwardedMark");
+						initialForwardedMark = NULL;
+					  }
+					}
 					else
 					{
-						APPLY_PRINT("%s - DefaultWiFiRegionCode Value is NULL\n", __FUNCTION__ );
-					}	
+					  APPLY_PRINT("%s - Default Value of InitialForwardedMark is NULL\n", __FUNCTION__ );
+					}
+
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") != NULL )
+					{
+					  initialOutputMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark")->valuestring; 
+					  if (initialOutputMark[0] != NULL)
+					  {
+						set_syscfg_partner_values(initialOutputMark,"DSCP_InitialOutputMark");
+						initialOutputMark = NULL;
+					  }
+					}
+					else
+					{
+					  APPLY_PRINT("%s - Default Value of InitialOutputMark is NULL\n", __FUNCTION__ );
+					}
+
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") != NULL )
+					{
+							char *WANsideSSHEnable = NULL;
+
+							WANsideSSHEnable = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable")->valuestring;
+
+							if (WANsideSSHEnable != NULL)
+							{
+									set_syscfg_partner_values(WANsideSSHEnable,"WANsideSSH_Enable");
+									WANsideSSHEnable = NULL;
+							}
+							else
+							{
+									APPLY_PRINT("%s - Default WANsideSSHEnable Value is NULL\n", __FUNCTION__ );
+							}
+					}
+					else
+					{
+						APPLY_PRINT("%s - Default WANsideSSHEnable object is NULL\n", __FUNCTION__ );
+					}
+
 				}
-                                if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation") != NULL )
-                                {
-                                        char *tr69CertLocation = NULL;
-
-                                        tr69CertLocation = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation")->valuestring;
-
-                                        if (tr69CertLocation != NULL)
-                                        {
-                                                set_syscfg_partner_values(tr69CertLocation,"TR69CertLocation");
-                                                tr69CertLocation = NULL;
-                                        }
-                                        else
-                                        {
-                                                APPLY_PRINT("%s - Default TR69CertLocation Value is NULL\n", __FUNCTION__ );
-                                        }
-                                }
-
-        if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") != NULL )
-        {
-          initialForwardedMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark")->valuestring; 
-          if (initialForwardedMark[0] != NULL)
-          {
-            set_syscfg_partner_values(initialForwardedMark,"DSCP_InitialForwardedMark");
-            initialForwardedMark = NULL;
-          }
-        }
-        else
-        {
-          APPLY_PRINT("%s - Default Value of InitialForwardedMark is NULL\n", __FUNCTION__ );
-        }
-
-        if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") != NULL )
-        {
-          initialOutputMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark")->valuestring; 
-          if (initialOutputMark[0] != NULL)
-          {
-            set_syscfg_partner_values(initialOutputMark,"DSCP_InitialOutputMark");
-            initialOutputMark = NULL;
-          }
-        }
-        else
-        {
-          APPLY_PRINT("%s - Default Value of InitialOutputMark is NULL\n", __FUNCTION__ );
-        }
-
-                                if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") != NULL )
-                                {
-                                        char *WANsideSSHEnable = NULL;
-
-                                        WANsideSSHEnable = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable")->valuestring;
-
-                                        if (WANsideSSHEnable != NULL)
-                                        {
-                                                set_syscfg_partner_values(WANsideSSHEnable,"WANsideSSH_Enable");
-                                                WANsideSSHEnable = NULL;
-                                        }
-                                        else
-                                        {
-                                                APPLY_PRINT("%s - Default WANsideSSHEnable Value is NULL\n", __FUNCTION__ );
-                                        }
-                                }
-				else
-				{
-					APPLY_PRINT("%s - Default WANsideSSHEnable object is NULL\n", __FUNCTION__ );
-				}
-
 			}
 			else
 			{
@@ -1294,6 +1322,9 @@ int main( int argc, char **argv )
 		snprintf(cmd, sizeof(cmd), "cp %s %s", "/etc/partners_defaults.json", PARTNERS_INFO_FILE);
 		APPLY_PRINT("%s\n",cmd);
 		system(cmd);
+
+		//Need to touch /tmp/.apply_partner_defaults_psm for PSM migration handling
+		system("touch "PARTNER_DEFAULT_MIGRATE_PSM); // FIX: RDKB-20566 to handle migration 		
    }
    else
    {
