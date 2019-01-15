@@ -48,6 +48,7 @@ SERVICE_NAME="ntpd"
 SELF_NAME="`basename $0`"
 NTP_CONF=/etc/ntp.conf
 NTP_CONF_TMP=/tmp/ntp.conf
+NTP_CONF_QUICK_SYNC=/tmp/ntp_quick_sync.conf
 BIN=ntpd
 
 erouter_wait () 
@@ -162,6 +163,9 @@ service_start ()
 	echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
 	echo "restrict 127.0.0.1" >> $NTP_CONF_TMP
 	echo "restrict -6 ::1" >> $NTP_CONF_TMP
+	if [ -f "/nvram/ETHWAN_ENABLE" ];then
+	cp $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC
+	fi
 	echo "interface ignore wildcard" >> $NTP_CONF_TMP
 
    	if [ "$WAN_IP" != "" ]
@@ -180,6 +184,9 @@ service_start ()
 		ntpd -c $NTP_CONF_TMP -l /rdklogs/logs/ntpLog.log -g
 	else
 		systemctl stop ntpd.service
+		if [ -f "/nvram/ETHWAN_ENABLE" ];then
+		ntpd -c $NTP_CONF_QUICK_SYNC -x -gq
+		fi
 		systemctl start ntpd.service
 		systemctl stop systemd-timesyncd
 	fi		
@@ -191,6 +198,10 @@ service_start ()
 	   if [ "x$BOX_TYPE" = "xXB3" ]; then
 	   	ntpd -c $NTP_CONF_TMP -l /rdklogs/logs/ntpLog.log -g
 	   else
+		
+		if [ -f "/nvram/ETHWAN_ENABLE" ];then
+		ntpd -c $NTP_CONF_QUICK_SYNC -x -gq
+		fi
 	   	systemctl start ntpd.service
 	   fi
     fi
