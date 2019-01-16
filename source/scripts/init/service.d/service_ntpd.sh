@@ -126,8 +126,14 @@ service_start ()
 	SYSCFG_ntp_server1=`echo $SYSCFG_ntp_server1 | cut -d ":" -f 1`
 # Create a config
 	echo "SERVICE_NTPD : Creating NTP config"
+	if [ -f "/nvram/ETHWAN_ENABLE" ];then
+	echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
+	echo "server time1.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+	echo "server time2.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+	echo "server time3.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+    else
 	echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
-    
+	fi
 	if [ "x$SOURCE_PING_INTF" == "x" ]
 	then
 		MASK=ifconfig $SOURCE_PING_INTF | sed -rn '2s/ .*:(.*)$/\1/p'
