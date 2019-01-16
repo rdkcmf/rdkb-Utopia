@@ -10889,6 +10889,12 @@ static void do_ipv6_sn_filter(FILE* fp) {
         prepare_xconf_rules(fp);
 #endif
 
+#ifdef _COSA_INTEL_XB3_ARM_
+        fprintf(fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",current_wan_ifname);
+        fprintf(fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",ecm_wan_ifname);
+        fprintf(fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",emta_wan_ifname);
+#endif
+
      FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
 static void do_ipv6_nat_table(FILE* fp)
@@ -11168,6 +11174,12 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, ":lan2wan_pc_site - [0:0]\n");
    fprintf(fp, ":lan2wan_pc_service - [0:0]\n");
    fprintf(fp, ":wan2lan - [0:0]\n");
+   //>>DOS
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(fp, "%s\n", ":wandosattack - [0:0]");
+   fprintf(fp, "%s\n", ":mtadosattack - [0:0]");
+#endif
+   //<<DOS
 
 #ifdef INTEL_PUMA7
    //Avoid blocking packets at the Intel NIL layer
@@ -11185,6 +11197,16 @@ static void do_ipv6_filter_table(FILE *fp){
        fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
    }
 
+#ifdef _COSA_INTEL_XB3_ARM_
+   fprintf(fp, "-I INPUT -i wan0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j wandosattack\n");
+   fprintf(fp, "-I INPUT -i wan0 -p udp -m udp -j wandosattack\n");
+   fprintf(fp, "-I INPUT -i mta0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j mtadosattack\n");
+   fprintf(fp, "-I INPUT -i mta0 -p udp -m udp -j mtadosattack\n");
+   fprintf(fp, "-A wandosattack -m limit --limit 25/sec --limit-burst 80 -j ACCEPT\n");
+   fprintf(fp, "-A wandosattack -j DROP\n");
+   fprintf(fp, "-A mtadosattack -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n");
+   fprintf(fp, "-A mtadosattack -j DROP\n");
+#endif
    do_block_ports(fp);	
    fprintf(fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
