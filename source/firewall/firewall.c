@@ -9433,7 +9433,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    } else {
        fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
    } */   
+#if !defined(_PLATFORM_RASPBERRYPI_)
    do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
+#else
+    fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
+#endif
 
    do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
 
@@ -10296,7 +10300,11 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
    fprintf(filter_fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
    fprintf(filter_fp, "-A SNMPDROPLOG -j DROP\n");
+#if !defined(_PLATFORM_RASPBERRYPI_)
    do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
+#else
+   fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
+#endif
    do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
    }
 
