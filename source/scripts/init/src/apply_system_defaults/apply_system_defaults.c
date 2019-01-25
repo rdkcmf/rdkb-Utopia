@@ -52,10 +52,12 @@
 #include "platform_hal.h"
 #include "cJSON.h"
 #include <unistd.h>
-#define PARTNERS_INFO_FILE  			"/nvram/partners_defaults.json"
-#define PARTNERID_FILE  				"/nvram/.partner_ID"
-#define PARTNER_DEFAULT_APPLY_FILE  	"/nvram/.apply_partner_defaults"
-#define PARTNER_DEFAULT_MIGRATE_PSM  	"/tmp/.apply_partner_defaults_psm"
+#define PARTNERS_INFO_FILE  							"/nvram/partners_defaults.json"
+#define PARTNERID_FILE  								"/nvram/.partner_ID"
+#define PARTNER_DEFAULT_APPLY_FILE  					"/nvram/.apply_partner_defaults"
+#define PARTNER_DEFAULT_MIGRATE_PSM  					"/tmp/.apply_partner_defaults_psm"
+#define PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER  	"/tmp/.apply_partner_defaults_new_psm_member"
+
 #define PARTNER_ID_LEN 64
 static char default_file[1024];
 
@@ -852,6 +854,8 @@ char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,ch
 									
 					                  if ( ( strcmp( param_nvram,PartnerID ) == 0 ) )
 					                  {
+											int IsPSMMigrationNeeded = 0;
+											
 						                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
 						                    {
 												if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialForwardedMark" ) )
@@ -859,13 +863,14 @@ char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,ch
 													set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
 												}
 						                    }
-                                                                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
-                                                                    {
-                                                                                                if ( 0 == IsValuePresentinSyscfgDB( "WANsideSSH_Enable" ) )
-                                                                                                {
-                                                                                                        set_syscfg_partner_values( value,"WANsideSSH_Enable" );
-                                                                                                }
-                                                                    }
+											
+                                            if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
+                                            {
+                                                if ( 0 == IsValuePresentinSyscfgDB( "WANsideSSH_Enable" ) )
+                                                {
+                                                        set_syscfg_partner_values( value,"WANsideSSH_Enable" );
+                                                }
+                                            }
 
 
 						                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
@@ -875,6 +880,22 @@ char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,ch
 													set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
 												}
 						                    }
+
+						                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") )
+						                    {
+												set_syscfg_partner_values( value,"XHS_SSIDprefix" );
+												IsPSMMigrationNeeded = 1;
+						                    }
+
+											//Check whether migration needs to be handle or not
+											if( 1 == IsPSMMigrationNeeded )											
+											{
+												APPLY_PRINT("%s - Adding new member in %s file\n", __FUNCTION__, PARTNERS_INFO_FILE);
+												APPLY_PRINT("%s - PSM Migration needed for %s param so touching %s file\n", __FUNCTION__, key, PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER );
+												
+												//Need to touch /tmp/.apply_partner_defaults_new_psm_member for PSM migration handling
+												system("touch "PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER);			
+											}
 					                  }
 								}
 							}
@@ -1144,6 +1165,23 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							{
 									APPLY_PRINT("%s - Default TR69CertLocation Value is NULL\n", __FUNCTION__ );
 							}
+					}
+
+					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") != NULL )
+					{
+						char *pcSSIDprefix = NULL;
+						
+						pcSSIDprefix = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix")->valuestring; 
+			
+						if (pcSSIDprefix != NULL) 
+						{
+							set_syscfg_partner_values(pcSSIDprefix,"XHS_SSIDprefix");
+							pcSSIDprefix = NULL;
+						}	
+						else
+						{
+							APPLY_PRINT("%s - XHS_SSIDprefix Value is NULL\n", __FUNCTION__ );
+						}	
 					}
 				}
 
