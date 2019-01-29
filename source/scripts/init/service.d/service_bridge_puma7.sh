@@ -42,7 +42,7 @@ LAN_IP=`syscfg get lan_ipaddr`
 
 #Set max CPE bypass to 2 in order to account for mta0 and erouter0
 set_max_cpe_bypass() {
-    ncpu_exec -e "(echo 2 > /proc/arris/max_cpe_bypass)" 
+    ncpu_exec -e service_bridge.sh set_max_cpe_bypass 
 }
 
 wait_till_steady_state ()
@@ -66,7 +66,7 @@ flush_connection_info(){
     conntrack_flush
     
     #Flush CPE table
-    ncpu_exec -e "(echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt)"
+    ncpu_exec -e service_bridge.sh clear_cpe_table
 }
 
 get_wan_if_name(){
@@ -333,7 +333,7 @@ service_init
 
 BRIDGE_NAME="$SYSCFG_lan_ifname"
 CMDIAG_IF=`syscfg get cmdiag_ifname`
-CMDIAG_MAC=`ncpu_exec -ep "(cat /sys/class/net/lan0/address)"`
+CMDIAG_MAC=`ncpu_exec -ep service_bridge.sh get_cmdiag_mac`
 INSTANCE=`sysevent get primary_lan_l2net`
 LAN_NETMASK=`syscfg get lan_netmask`
 
