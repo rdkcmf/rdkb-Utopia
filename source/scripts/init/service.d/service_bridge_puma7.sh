@@ -153,10 +153,20 @@ cmdiag_if()
         cmdiag_ebtables_rules enable
         ifconfig l${CMDIAG_IF} promisc up
         ifconfig $CMDIAG_IF $LAN_IP netmask $LAN_NETMASK up
+        #add lan0 interface entry to the TOE netdevList for PP on ATOM configuration
+        if [ -d /etc/pp_on_atom ] ; then
+             echo "ADD $CMDIAG_IF" > /sys/devices/platform/toe/netif_lut
+        fi
     else
         ifconfig $CMDIAG_IF down
         ifconfig l${CMDIAG_IF} down
         ip link del $CMDIAG_IF
+        #del lan0 interface entry from the TOE netdevList for PP on ATOM configuration
+        if [ -d /etc/pp_on_atom ] ; then
+             echo 0 > /sys/devices/platform/toe/enable
+             echo "DEL $CMDIAG_IF" > /sys/devices/platform/toe/netif_lut
+             echo 1 > /sys/devices/platform/toe/enable
+        fi
         cmdiag_ebtables_rules disable
     fi
 }
