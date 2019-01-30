@@ -88,8 +88,7 @@ filter_local_traffic(){
         ebtables -F BRIDGE_OUTPUT_FILTER 2> /dev/null
         ebtables -I OUTPUT -j BRIDGE_OUTPUT_FILTER
         
-        #Don't allow a-mux or LAN bridge to send traffic to DOCSIS bridge
-        ebtables -A BRIDGE_OUTPUT_FILTER --logical-out a-mux -j DROP
+        #Don't allow LAN bridge to send traffic to DOCSIS bridge
         ebtables -A BRIDGE_OUTPUT_FILTER --logical-out $BRIDGE_NAME -j DROP
         ebtables -A BRIDGE_OUTPUT_FILTER -o lbr0 -j DROP
         
@@ -104,12 +103,12 @@ filter_local_traffic(){
 
 #Temporarily block traffic through lbr0 while reconfiguring rules
 block_bridge(){
-    ebtables -A FORWARD -i llbr0 -j DROP
+    ifconfig lbr0 down
 }
 
 #Unblock bridged traffic through lbr0
 unblock_bridge(){
-    ebtables -D FORWARD -i llbr0 -j DROP
+    ifconfig lbr0 up
 }
 
 cmdiag_ebtables_rules()
@@ -124,8 +123,6 @@ cmdiag_ebtables_rules()
         ebtables -I FORWARD -j BRIDGE_FORWARD_FILTER
         ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o lbr0 -j DROP
         ebtables -A BRIDGE_FORWARD_FILTER -s $MUX_MAC -o lbr0 -j DROP
-        ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o llbr0 -j DROP
-        ebtables -A BRIDGE_FORWARD_FILTER -s $MUX_MAC -o llbr0 -j DROP
         ebtables -A BRIDGE_FORWARD_FILTER -j RETURN
         
         #Redirect traffic destined to lan0 IP to lan0 MAC address
@@ -340,12 +337,14 @@ LAN_NETMASK=`syscfg get lan_netmask`
 case "$1" in
     ${SERVICE_NAME}-start)
         firewall firewall-stop
+        /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_bridged
         service_start
         execute_dir /etc/utopia/post.d/
         gw_lan_refresh
         sysevent set firewall-restart
     ;;
     ${SERVICE_NAME}-stop)
+        /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_routed
         service_stop
         execute_dir /etc/utopia/post.d/
         gw_lan_refresh
@@ -355,6 +354,7 @@ case "$1" in
         firewall firewall-stop
         sysevent set lan-restarting $INSTANCE
         service_stop
+        /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_bridged
         service_start
         sysevent set lan-restarting 0
         gw_lan_refresh
