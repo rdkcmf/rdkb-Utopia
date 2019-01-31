@@ -477,6 +477,10 @@ static int wan_start(struct serv_wan *sw)
 	char buffer[64] = {0};
     get_dateanduptime(buffer,&uptime);
 	printf("%s Wan_init_start:%d\n",buffer,uptime);
+#if defined (INTEL_PUMA7)
+	//Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+	int pid = 0;
+#endif
     /* state check */
     sysevent_get(sw->sefd, sw->setok, "wan_service-status", status, sizeof(status));
     if (strcmp(status, "starting") == 0 || strcmp(status, "started") == 0) {
@@ -582,6 +586,13 @@ done:
 
     printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
+	
+#if defined (INTEL_PUMA7)
+    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    pid = pid_of("sh", "network_response.sh");
+    if (pid > 0)
+        kill(pid, SIGKILL);	
+#endif
 	
     system("sh /etc/network_response.sh &");
 
