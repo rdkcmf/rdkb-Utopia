@@ -50,6 +50,7 @@ SERVICE_MULTINET_PATH="/etc/utopia/service.d/service_multinet"
 THIS=/etc/utopia/service.d/lan_handler.sh
 SERVICE_NAME="lan_handler"
 
+RPI_SPECIFIC=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
 #args: router IP, subnet mask
 ap_addr() {
     if [ "$2" ]; then
@@ -301,7 +302,12 @@ case "$1" in
                 sysevent set primary_lan_brport ${BRPORT}
                 sysevent set homesecurity_lan_l3net ${HSINST}
                 sysevent set primary_lan_l3net ${INST}
-                
+	#BRLAN0 ISSUE : Manually invoking lan-start to fix brlan0 failure during intial booting. Root cause for event has to be identified
+	   	if [ "$RPI_SPECIFIC" = "rpi" ]; then
+        		        sleep 2
+                                echo_t "Calling lan-start"
+                                eval  '$THIS lan-start NULL'
+                fi
 	elif [ "$BOX_TYPE" = "TCCBR" ]; then
 		if [ "$INST" = "" ]; then
 			echo "*****SET THE PRIMARY LAN ******" > /dev/null
