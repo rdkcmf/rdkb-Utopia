@@ -613,6 +613,8 @@ $block_activex=0
 $block_cookies=0
 $portscan_enabled=0
 
+$IPSecPassthrough=1
+$PPTPPassthrough=1
 $SinglePortForwardCount=0
 $PortRangeForwardCount=0
 $PortRangeTriggerCount=0
