@@ -493,7 +493,10 @@ case "$1" in
             cat /tmp/foo.$$ > $RESOLV_CONF
             rm -f /tmp/foo.$$
          else
-           /bin/echo -n > $RESOLV_CONF
+           # Removing IPV4 and IPV6 DNS server config to retaing XDNS config entry rather than complete empty over writing of resolv.conf file  
+	   sed -i '/domain/d' "$RESOLV_CONF"
+	   sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF"
+	   sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF"
          fi
 
          if [ -n "$domain" ] ; then
