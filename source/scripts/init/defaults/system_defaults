@@ -1012,3 +1012,6 @@ $UpdateNvram=true
 
 #GW_health default Value
 $gw_health=0
+
+#Router Advertisement Transmission Interval
+$ra_interval=3

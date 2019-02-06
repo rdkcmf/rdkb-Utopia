@@ -209,7 +209,12 @@ static int route_unset(struct serv_routed *sr)
 static int gen_zebra_conf(int sefd, token_t setok)
 {
     FILE *fp = NULL;
+#if !defined (INTEL_PUMA7)
     char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16];
+#else
+    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16], ra_interval[8] = {0};
+#endif
     char name_servs[1024] = {0};
     char dnssl[2560] = {0};
     char prefix[64], orig_prefix[64], lan_addr[64];
@@ -281,6 +286,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     if ( atoi(preferred_lft) > atoi(valid_lft) )
         snprintf(preferred_lft, sizeof(preferred_lft), "%s",valid_lft);
 
+
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
     get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
     for (i = 0; i < enabled_iface_num; i++) {
@@ -305,12 +311,30 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fprintf(fp, "interface %s\n", lan_if);
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
         if (strlen(prefix))
+        {
             fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+        }
+
         if (strlen(orig_prefix))
             fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
 
+#if defined (INTEL_PUMA7)
+        //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+        // Read ra_interval from syscfg.db
+        syscfg_get(NULL, "ra_interval", ra_interval, sizeof(ra_interval));
+        if (strlen(ra_interval) > 0)
+        {
+            fprintf(fp, "   ipv6 nd ra-interval %s\n", ra_interval);
+        } else
+        {
+            fprintf(fp, "   ipv6 nd ra-interval 30\n"); //Set ra-interval to default 30 secs as per Erouter Specs.
+        }
+#else
         fprintf(fp, "   ipv6 nd ra-interval 3\n");
+#endif
+
         fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+
 
         syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
         if (strcmp(m_flag, "1") == 0)
