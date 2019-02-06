@@ -45,9 +45,18 @@ prepare_resolv_conf () {
    WAN_DOMAIN=`syscfg get  wan_domain`
    NAMESERVER1=`syscfg get nameserver1`
    NAMESERVER2=`syscfg get nameserver2`
-   IPv6_NAMESERVERS=`cat /etc/resolv.conf  | grep nameserver | grep :`
    
-   echo -n  > $RESOLV_CONF
+   if [ "" != "$WAN_DOMAIN" ] ; then
+       sed -i '/domain/d' "$RESOLV_CONF"
+   fi
+
+       
+       if [[ ( "0.0.0.0" != "$NAMESERVER1  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
+       		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF"
+       fi
+
+   
+     
 
    WAN_DNS=
    if [ "" != "$WAN_DOMAIN" ] ; then
@@ -69,7 +78,6 @@ prepare_resolv_conf () {
    sysevent set wan_dhcp_dns "${WAN_DNS}"
    sysevent set dhcp_server-restart
 
-   echo $IPv6_NAMESERVERS >> $RESOLV_CONF
 }
 
 prepare_resolv_conf

@@ -77,11 +77,24 @@ do_start_static() {
    NAMESERVER2=`syscfg get nameserver2`
    NAMESERVER3=`syscfg get nameserver3`
    NAMESERVER_V6=`sysevent get ipv6_nameserver`
-   echo -n  > $RESOLV_CONF
+
+   if [ "" != "$WAN_DOMAIN" ] ; then
+       sed -i '/domain/d' "$RESOLV_CONF"
+   fi
+
+   if [[ ( "0.0.0.0" != "$NAMESERVER1  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) || ( "0.0.0.0" != "$NAMESERVER3"  &&  "" != "$NAMESERVER3" ) ]] ; then
+       		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF"
+   fi
+
+   if [ "0.0.0.0" != "$NAMESERVER_V6" ]  && [ "" != "$NAMESERVER_V6" ]; then
+   		sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF"
+   fi
+
    if [ "" != "$WAN_DOMAIN" ] ; then
       echo "search $WAN_DOMAIN" >> $RESOLV_CONF
       sysevent set dhcp_domain $WAN_DOMAIN
    fi
+
    if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
       echo "nameserver $NAMESERVER1" >> $RESOLV_CONF
    fi
@@ -112,7 +125,9 @@ do_start_static() {
 # do_stop_static
 #------------------------------------------------------------------
 do_stop_static() {
-   echo -n > $RESOLV_CONF
+   sed -i '/domain/d' "$RESOLV_CONF"
+   sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF"
+   sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF"
    sysevent set ipv4_wan_ipaddr 0.0.0.0
    sysevent set ipv4_wan_subnet 0.0.0.0
    sysevent set default_router
