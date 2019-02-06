@@ -969,12 +969,47 @@ int compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,cha
                                  set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
                               }
                          }
+                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode") )
+                         {
+                              if ( 0 == IsValuePresentinSyscfgDB( "StartupIPMode" ) )
+                              {
+                                  set_syscfg_partner_values( value,"StartupIPMode" );
+                              }
+                         }
+                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions") )
+                         {
+                              if ( 0 == IsValuePresentinSyscfgDB( "IPv4PrimaryDhcpServerOptions" ) )
+                              {
+                                  set_syscfg_partner_values( value,"IPv4PrimaryDhcpServerOptions" );
+                              }
+                         }
+                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions") )
+                         {
+                              if ( 0 == IsValuePresentinSyscfgDB( "IPv4SecondaryDhcpServerOptions" ) )
+                              {
+                                  set_syscfg_partner_values( value,"IPv4SecondaryDhcpServerOptions" );
+                              }
+                         }
+                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
+                         {
+                              if ( 0 == IsValuePresentinSyscfgDB( "IPv6PrimaryDhcpServerOptions" ) )
+                              {
+                                  set_syscfg_partner_values( value,"IPv6PrimaryDhcpServerOptions" );
+                              }
+                         }
+                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") )
+                         {
+                              if ( 0 == IsValuePresentinSyscfgDB( "IPv6SecondaryDhcpServerOptions" ) )
+                              {
+                                   set_syscfg_partner_values( value,"IPv6SecondaryDhcpServerOptions" );
+                              }
+                         }
                          if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") )
                          {
                               set_syscfg_partner_values( value,"XHS_SSIDprefix" );
                               IsPSMMigrationNeeded = 1;
                          }
-                         
+
                          //Check whether migration needs to be handled or not
                          if( 1 == IsPSMMigrationNeeded )											
                          {
@@ -1036,7 +1071,10 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 	*maxAddress = NULL,
         *allow_ethernet_wan = NULL,
         *initialForwardedMark = NULL,
-        *initialOutputMark = NULL;
+        *initialOutputMark = NULL,
+        *startupipmode = NULL,
+        *pridhcpoption = NULL,
+        *secdhcpoption = NULL;
 	int	    isNeedToApplyPartnersDefault = 1;
 	int	    isNeedToApplyPartnersPSMDefault = 0;	
 
@@ -1295,6 +1333,75 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 					{
 					  APPLY_PRINT("%s - Default Value of InitialOutputMark is NULL\n", __FUNCTION__ );
 					}
+if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode") != NULL )
+  {
+   startupipmode = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode")->valuestring;
+   if(startupipmode[0]!=NULL)
+       {
+            set_syscfg_partner_values(startupipmode,"StartupIPMode");
+            startupipmode = NULL;
+       }
+}
+   else
+       {
+            APPLY_PRINT("%s - Default Value of StartupIPMode is NULL\n", __FUNCTION__ );
+       }
+
+if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions") != NULL )
+  {
+   pridhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions")->valuestring;
+   if(pridhcpoption[0]!=NULL)
+       {
+            set_syscfg_partner_values(pridhcpoption,"IPv4PrimaryDhcpServerOptions");
+            pridhcpoption = NULL;
+       }
+}
+   else
+       {
+            APPLY_PRINT("%s - Default Value of primary dhcp server option is NULL\n", __FUNCTION__ );
+       }
+
+if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions") != NULL )
+  {
+   secdhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions")->valuestring;
+   if(secdhcpoption[0]!=NULL)
+       {
+            set_syscfg_partner_values(secdhcpoption,"IPv4SecondaryDhcpServerOptions");
+            secdhcpoption = NULL;
+       }
+}
+   else
+       {
+            APPLY_PRINT("%s - Default Value of Secondary dhcp server option is NULL\n", __FUNCTION__ );
+       }
+
+if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") != NULL )
+  {
+   pridhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions")->valuestring;
+   if(pridhcpoption[0]!=NULL)
+       {
+            set_syscfg_partner_values(pridhcpoption,"IPv6PrimaryDhcpServerOptions");
+            pridhcpoption = NULL;
+       }
+}
+   else
+       {
+            APPLY_PRINT("%s - Default Value of primary dhcp server option is NULL\n", __FUNCTION__ );
+       }
+
+if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") != NULL )
+  {
+   secdhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions")->valuestring;
+   if(secdhcpoption[0]!=NULL)
+       {
+            set_syscfg_partner_values(secdhcpoption,"IPv6SecondaryDhcpServerOptions");
+            secdhcpoption = NULL;
+       }
+}
+   else
+       {
+            APPLY_PRINT("%s - Default Value of Secondary dhcp server option is NULL\n", __FUNCTION__ );
+       }
 
 					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") != NULL )
 					{
@@ -1315,6 +1422,24 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 					else
 					{
 						APPLY_PRINT("%s - Default WANsideSSHEnable object is NULL\n", __FUNCTION__ );
+					}
+
+					
+					if ( cJSON_GetObjectItem( partnerObj, "Device.ManagementServer.EnableCWMP") != NULL )
+					{
+						char *pcEnableCWMP = NULL;
+						
+						pcEnableCWMP = cJSON_GetObjectItem( partnerObj, "Device.ManagementServer.EnableCWMP")->valuestring; 
+			
+						if (pcEnableCWMP != NULL) 
+						{
+							set_syscfg_partner_values( pcEnableCWMP,"Syndication_EnableCWMP" );
+							pcEnableCWMP = NULL;
+						}	
+						else
+						{
+							APPLY_PRINT("%s - Default Syndication_EnableCWMP Value is NULL\n", __FUNCTION__ );
+						}	
 					}
 
 				}
