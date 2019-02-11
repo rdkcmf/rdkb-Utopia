@@ -118,6 +118,15 @@ case "$1" in
       	fi
       ;;
 
+  dhcpv6s-start)
+      service_ipv6 dhcpv6s-start
+      ;;
+  dhcpv6s-stop)
+      service_ipv6 dhcpv6s-stop
+      ;;
+  dhcpv6s-restart)
+      service_ipv6 dhcpv6s-restart
+      ;;
    *)
       echo "Usage: $SERVICE_NAME [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" > /dev/console
       exit 3

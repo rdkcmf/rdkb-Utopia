@@ -62,6 +62,11 @@
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
 
 
+#ifdef MULTILAN_FEATURE
+#define COSA_DML_DHCPV6_CLIENT_IFNAME                 "erouter0"
+#define COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME     "tr_"COSA_DML_DHCPV6_CLIENT_IFNAME"_dhcpv6_client_pref_pretm"
+#define COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME     "tr_"COSA_DML_DHCPV6_CLIENT_IFNAME"_dhcpv6_client_pref_vldtm"
+#endif
 struct serv_routed {
     int         sefd;
     int         setok;
@@ -118,6 +123,54 @@ static int daemon_stop(const char *pid_file, const char *prog)
     return 0;
 }
 
+#ifdef MULTILAN_FEATURE
+static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
+{
+    char active_insts[32] = {0};
+    char lan_pd_if[128] = {0};
+    char *p = NULL;
+    int i = 0;
+    char if_name[16] = {0};
+    char buf[64] = {0};
+
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+
+    syscfg_get(NULL, "lan_pd_interfaces", lan_pd_if, sizeof(lan_pd_if));
+    if (lan_pd_if[0] == '\0') {
+        *num = 0;
+        return *num;
+    }
+
+    sysevent_get(sefd, setok, "multinet-instances", active_insts, sizeof(active_insts));
+    p = strtok(active_insts, " ");
+
+    while (p != NULL) {
+        snprintf(buf, sizeof(buf), "multinet_%s-name", p);
+        sysevent_get(sefd, setok, buf, if_name, sizeof(if_name));
+        if (if_name[0] != '\0' && strstr(lan_pd_if, if_name)) { /*active interface and need prefix delegation*/
+            insts[i] = atoi(p);
+            i++;
+        }
+
+        p = strtok(NULL, " ");
+    }
+
+#else
+
+    /* service_ipv6 sets active IPv6 interfaces instances. */
+    sysevent_get(sefd, setok, "ipv6_active_inst", active_insts, sizeof(active_insts));
+    p = strtok(active_insts, " ");
+    while (p != NULL) {
+        insts[i++] = atoi(p);
+        p = strtok(NULL, " ");
+    }
+
+#endif
+    *num = i;
+
+    return *num;
+}
+#else
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
 static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
 {
@@ -152,6 +205,7 @@ static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsign
 
     return *num;
 }
+#endif
 #endif
 
 static int route_set(struct serv_routed *sr)
@@ -274,8 +328,13 @@ static int gen_zebra_conf(int sefd, token_t setok)
     sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
+#ifdef MULTILAN_FEATURE
+    sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, preferred_lft, sizeof(preferred_lft));
+    sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, valid_lft, sizeof(valid_lft));
+#else
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
+#endif
     syscfg_get(NULL, "lan_ifname", lan_if, sizeof(lan_if));
 #endif
     if (atoi(preferred_lft) <= 0)
@@ -287,7 +346,18 @@ static int gen_zebra_conf(int sefd, token_t setok)
         snprintf(preferred_lft, sizeof(preferred_lft), "%s",valid_lft);
 
 
+#ifndef MULTILAN_FEATURE
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+    get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
+    for (i = 0; i < enabled_iface_num; i++) {
+        snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
+        sysevent_get(sefd, setok, evt_name, lan_if, sizeof(lan_if));
+        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", lan_if);
+        sysevent_get(sefd, setok, evt_name, prefix, sizeof(prefix));
+        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", lan_if);
+        sysevent_get(sefd, setok, evt_name, lan_addr, sizeof(lan_addr));
+#endif
+#else
     get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
     for (i = 0; i < enabled_iface_num; i++) {
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
@@ -461,8 +531,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
 
     fprintf(fp, "interface %s\n", lan_if);
     fprintf(fp, "   ip irdp multicast\n");
+#ifndef MULTILAN_FEATURE
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION        
     }
+#endif
+#else
+}
 #endif
 
 #ifndef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION

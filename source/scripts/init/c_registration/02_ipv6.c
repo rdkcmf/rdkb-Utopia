@@ -66,6 +66,18 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ipv6.sh";
  * keep the define outside of the string quotation symbols
  * eg. "event3|/etc/code|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_SERIAL
  */
+#ifdef MULTILAN_FEATURE
+const char* SERVICE_CUSTOM_EVENTS[] = { 
+    "ipv6_prefix|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-instances|/etc/utopia/service.d/service_ipv6.sh",
+    "multinet_1-status|/etc/utopia/service.d/service_ipv6.sh"
+    "erouter_topology-mode|/etc/utopia/service.d/service_ipv6.sh",
+    "wan-status|/etc/utopia/service.d/service_ipv6.sh",
+    "dhcpv6s-start|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "dhcpv6s-stop|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "dhcpv6s-restart|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
+    NULL };
+#else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "ipv6_prefix|/etc/utopia/service.d/service_ipv6.sh",
     "multinet-instances|/etc/utopia/service.d/service_ipv6.sh",
@@ -73,6 +85,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "erouter_topology-mode|/etc/utopia/service.d/service_ipv6.sh",
     "bridge-status|/etc/utopia/service.d/service_ipv6.sh|NULL|",
     NULL };
+#endif
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);

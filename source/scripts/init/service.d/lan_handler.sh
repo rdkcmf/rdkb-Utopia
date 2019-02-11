@@ -93,6 +93,24 @@ ap_addr() {
     echo $SNW
 }
 
+#Find all instances of bridges that are enabled
+find_active_brg_instances(){
+    L3NET_ACTIVE_LIST=""
+    L3NET_INST=`psmcli getallinst ${IPV4_NV_PREFIX}.`
+    for i in $L3NET_INST
+    do
+        ETH_INST=`psmcli get ${IPV4_NV_PREFIX}.$i.EthLink`
+        BRG_INST=`psmcli get ${ETH_DM_PREFIX}.$ETH_INST.l2net`
+        isEnabled=`psmcli get dmsb.l2net.$BRG_INST.Enable`
+        if [ "$isEnabled" = "TRUE" -o "$isEnabled" = "1" ];
+        then
+            L3NET_ACTIVE_LIST="${L3NET_ACTIVE_LIST} $i"
+        fi
+    done
+
+    #This sysevent is checked by ccsp-gwprovapp and it brings up the bridges
+    sysevent set l3net_instances "${L3NET_ACTIVE_LIST}"
+}
 
 #------------------------------------------------------------------
 # ENTRY
@@ -316,6 +334,13 @@ case "$1" in
 	fi
 
         fi
+    #Assuming we have a variable set in system defaults for Multilan enabled build
+    MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
+	if [ $MULTILAN_FEATURE = 1 ]; then
+    #This is to check for all the active instances of bridges that are created 
+    find_active_brg_instances
+	fi
+
    ;;
 
    iot_status)

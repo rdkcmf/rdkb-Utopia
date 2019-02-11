@@ -353,6 +353,47 @@ setup_gretap(){
     fi
 }
 
+#Update the list of active multinet instances
+update_instances(){
+    INSTANCES=`sysevent get multinet-instances`
+
+    echo "got instances $INSTANCES"
+
+    if [ "$1" = "start" ] ; then
+        #Add to list of instances
+        NEWINST="$INSTANCES"
+        FOUND=0
+        for MYINST in $INSTANCES
+        do
+            if [ "$MYINST" = "$INSTANCE" ] ; then
+                FOUND=1
+            fi
+        done
+        if [ $FOUND -eq 0 ] ; then
+            if [ "$NEWINST" = "" ] ; then
+                NEWINST="$INSTANCE"
+            else
+                NEWINST="$NEWINST $INSTANCE"
+            fi
+        fi
+    else
+        #Remove from list of instances
+        NEWINST=""
+        for MYINST in $INSTANCES
+        do
+            if [ "$MYINST" != "$INSTANCE" ] ; then
+                if [ "$NEWINST" = "" ] ; then
+                    NEWINST="$MYINST"
+                else
+                    NEWINST="$NEWINST $MYINST"
+                fi
+            fi
+        done
+    fi
+
+    sysevent set multinet-instances "$NEWINST"
+}
+
 #Gets a space-separated list of interfaces currently in a group
 #Returns the list in CURRENT_IF_LIST
 get_current_if_list() {
@@ -741,7 +782,11 @@ sync_group_settings() {
         # Verify all NEEDED_IF is part of bridge
         brctl show
     fi
-
+    MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
+    if [ $MULTILAN_FEATURE = 1 ]; then
+        #Update active instances
+        update_instances start
+    fi
     echo_t "Group sync exit" 
 }
 
@@ -756,6 +801,232 @@ print_syntax(){
 }
 
 #Script execution begins here
+MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
+if [ $MULTILAN_FEATURE = 1 ]; then
+#Use multinet event handler for PP on Atom builds
+if [ -e /etc/utopia/use_multinet_exec ] ; then
+    if [ "$1" = "multinet-up" -o "$1" = "multinet-start" ] ; then
+        STATUS=`sysevent get multinet_${2}-status`
+        case "$STATUS" in
+            "ready"|"pending"|"partial"|"restarting")
+                /etc/utopia/service.d/service_multinet_exec multinet-syncMembers $2
+            ;;
+            *)
+                /etc/utopia/service.d/service_multinet_exec $*
+            ;;
+        esac
+    else
+        /etc/utopia/service.d/service_multinet_exec $*
+    fi
+else
+
+while [ -e ${LOCKFILE} ] ; do
+    #See if process is still running
+    kill -0 `cat ${LOCKFILE}`
+    if [ $? -ne 0 ]
+    then
+        break
+    fi
+    echo_t "Waiting for parallel instance of $0 to finish..."
+    sleep 1
+done
+
+#make sure the lockfile is removed when we exit and then claim it
+trap "rm -f ${LOCKFILE}; exit" INT TERM EXIT
+echo $$ > ${LOCKFILE}
+
+#Handle input parameters
+#Temporary workaround: kill link monitor. No longer needed.
+#$KILLALL $QWCFG_TEST 2> /dev/null
+
+BRIDGE_MODE=`syscfg get bridge_mode`
+CMDIAG_IF=`syscfg get cmdiag_ifname`
+
+#Get event
+EVENT="$1"
+
+echo_t "Received Event:$EVENT BRIDGE_MODE:$BRIDGE_MODE CMDIAG_IF:$CMDIAG_IF"
+
+if [ "$EVENT" = "multinet-up" ]
+then
+    MODE="up"
+elif [ "$EVENT" = "multinet-start" ]
+then
+    MODE="start"
+elif [ "$EVENT" = "lnf-setup" ]
+then
+    MODE="lnf-start"
+elif [ "$EVENT" = "lnf-down" ]
+then
+    MODE="lnf-stop"
+elif [ "$EVENT" = "meshbhaul-setup" ]
+then
+    MODE="meshbhaul-start"
+elif [ "$EVENT" = "multinet-down" ]
+then
+    MODE="stop"
+elif [ "$EVENT" = "multinet-stop" ]
+then
+    MODE="stop"
+elif [ "$EVENT" = "multinet-syncMembers" ]
+then
+    MODE="syncmembers"
+else
+    echo_t "$0 error: Unknown event: $1"
+    print_syntax
+    rm -f ${LOCKFILE}
+    exit 1
+fi
+
+#Instance maps to brlan0, brlan1, etc.
+INSTANCE="$2"
+
+echo_t "Received INSTANCE:$INSTANCE"
+
+#Get lan bridge name from instance number
+BRIDGE_NAME=""
+BRIDGE_VLAN=0
+case $INSTANCE in
+    1)
+        #Private LAN
+        BRIDGE_NAME="brlan0"
+        BRIDGE_VLAN=100
+    ;;
+    2)
+        #Home LAN
+        BRIDGE_NAME="brlan1"
+        BRIDGE_VLAN=101
+    ;;
+    3)
+        #Public wifi 2.4GHz
+        BRIDGE_NAME="brlan2"
+        BRIDGE_VLAN=102
+    ;;
+    4)
+        #Public wifi 5GHz
+        BRIDGE_NAME="brlan3"
+        BRIDGE_VLAN=103
+    ;;
+    6)
+        BRIDGE_NAME="br106"
+        BRIDGE_VLAN=106
+    ;;
+    10)
+        BRIDGE_NAME="br403"
+        BRIDGE_VLAN=1060
+    ;;
+    7)
+        BRIDGE_NAME="brlan4"
+        BRIDGE_VLAN=104
+    ;;
+    8)
+        BRIDGE_NAME="brlan5"
+        BRIDGE_VLAN=105
+    ;;
+    65)
+        BRIDGE_NAME="br65"
+        BRIDGE_VLAN=65
+    ;;
+    66)
+        BRIDGE_NAME="br66"
+        BRIDGE_VLAN=66
+    ;;
+    *)
+        #Unknown / unsupported instance number
+        echo_t "$0 error: Unknown instance $INSTANCE"
+        print_syntax
+        rm -f ${LOCKFILE}
+        exit 1
+    ;;
+esac
+
+echo_t "BRIDGE_NAME:$BRIDGE_NAME BRIDGE_VLAN:$BRIDGE_VLAN"
+
+
+#Set the interface name
+$SYSEVENT set multinet_${INSTANCE}-name $BRIDGE_NAME
+$SYSEVENT set multinet_${INSTANCE}-vid $BRIDGE_VLAN
+
+if [ "$MODE" = "up" ]
+then  
+    remove_all_from_group
+    #Sync the group interfaces and raise status events
+    echo_t "VLAN XB6 : calling sync_group_settings"
+    sync_group_settings
+    if [ $BRIDGE_NAME = "brlan0" ]
+    then
+        echo_t "DISABLE MULTICAST SNOOPING FOR $BRIDGE_NAME"
+        echo 0 >  /sys/devices/virtual/net/$BRIDGE_NAME/bridge/multicast_snooping
+    fi
+elif [ $MODE = "start" ]
+then
+    #Sync the group interfaces and raise status events
+    sync_group_settings
+ 
+    #Restart the firewall after the network is set up
+    echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=start"
+    $SYSEVENT set firewall-restart    
+elif [ $MODE = "lnf-start" ]
+then
+    #Sync the group interfaces and raise status events
+    sync_group_settings
+
+    ifconfig $BRIDGE_NAME 192.168.106.254
+    #Restart the firewall after setting up LnF
+    echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstart"
+    $SYSEVENT set firewall-restart
+elif [ $MODE = "lnf-stop" ]
+then
+    update_instances stop
+    echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
+    $SYSEVENT set firewall-restart
+elif [ $MODE = "meshbhaul-start" ]
+then
+    #Sync the group interfaces and raise status events
+    sync_group_settings
+
+    ifconfig $BRIDGE_NAME 192.168.245.254
+    #Restart the firewall after setting up LnF
+    echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=MeshBhaulstart"
+    $SYSEVENT set firewall-restart
+elif [ "$MODE" = "stop" ]
+then
+    #Indicate LAN is stopping
+    $SYSEVENT set multinet_${INSTANCE}-status stopping
+    remove_all_from_group
+    #Send event that LAN is stopped
+    $SYSEVENT set multinet_${INSTANCE}-status stopped
+    update_instances stop
+elif [ "$MODE" = "syncmembers" ]
+then
+    #Sync the group interfaces and raise status events
+    sync_group_settings
+elif [ "$MODE" = "restart" ]
+then
+    #Indicate LAN is restarting
+    $SYSEVENT set multinet_${INSTANCE}-status restarting
+    remove_all_from_group
+    #Sync the group interfaces and raise status events
+    sync_group_settings
+    #Restart the firewall after the network is set up
+    echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=restart"
+    $SYSEVENT set firewall-restart
+else
+    echo "Syntax: $0 [start | stop | restart]"
+    rm -f ${LOCKFILE}
+    exit 1
+fi
+
+#When finished, restart the link monitor
+# No longer needed to enable/disable.
+#/etc/rc.d/qtn.rc.link_monitor up
+
+echo_t "VLAN XB6 : End of shell script"
+
+#Script finished, remove lock file
+rm -f ${LOCKFILE}
+fi
+else #Else of MULTINET_FEATURE
 while [ -e ${LOCKFILE} ] ; do
     #See if process is still running
     kill -0 `cat ${LOCKFILE}`
@@ -961,3 +1232,4 @@ echo_t "VLAN XB6 : End of shell script"
 
 #Script finished, remove lock file
 rm -f ${LOCKFILE}
+fi

@@ -39,6 +39,9 @@
 #include "service_multinet_ep.h"
 #include "service_multinet_handler.h"
 #include "service_multinet_plat.h"
+#ifdef MULTILAN_FEATURE
+#include "syscfg/syscfg.h"
+#endif
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +55,17 @@
 #define LOCAL_MOCABR_UP_FILE "/tmp/MoCABridge_up"
 #define MOCA_BRIDGE_IP "169.254.30.1"
 #endif
+
+#ifdef MULTILAN_FEATURE
+/* Syscfg keys used for calculating mac addresses of local interfaces and bridges */
+#define BASE_MAC_SYSCFG_KEY                  "base_mac_address"
+/* Offset at which LAN bridge mac addresses will start */
+#define BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY    "base_mac_bridge_offset"
+#define CMD_STRING_LEN 80
+#define MAC_ADDRESS_OCTET_MAX 0x100
+#define MAC_ADDRESS_LOCAL_MASK 0x02
+#endif
+
  /* The service_multinet library provides service fuctions for manipulating the lifecycle 
  * and live configuration of system bridges and their device specific interface members. 
  * Authoritative configuration is considered to be held in nonvol storage, so most functions
@@ -60,6 +74,9 @@
 
 unsigned char isDaemon;
 char* executableName;
+#ifdef MULTILAN_FEATURE
+static int syscfg_init_done = 0;
+#endif
 
 static int add_members(PL2Net network, PMember interfaceBuf, int numMembers);
 static int remove_members(PL2Net network, PMember live_members, int numLiveMembers);
@@ -75,7 +92,101 @@ static int nethelper_bridgeCreate(char* brname) {
     MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff)
     system(cmdBuff);
 }
+#ifdef MULTILAN_FEATURE
+/* nethelper_bridgeCreateUniqueMac
+ *
+ * Creates a bridge with a unique and consistent mac address.
+ * The mac address is calculated by starting with the base mac address taken from
+ * the syscfg key defined in BASE_MAC_SYSCFG_KEY.  Then the bridge instance number is added
+ * to the least-significant octet.  If the resulting octet is larger than MAC_ADDRESS_OCTET_MAX,
+ * the value becomes the remainder of the intermediate value divided by MAC_ADDRESS_OCTET_MAX.
+ * This is to allow roll-over in the resulting mac address octet.
+ * Finally, the Universal/Local bit (found in MAC_ADDRESS_LOCAL_MASK) is set on the
+ * resulting mac address to specify that this is NOT a globally-unique mac address.
+*/
+static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
+    char cmdBuff[CMD_STRING_LEN];
+    int result = 0;
+    int mac_offset = 0;
+    int mac[6];
+    int got_base_mac = 0;
 
+    /* Create bridge */
+    snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s", brname);
+    MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff);
+    system(cmdBuff);
+
+    if (!syscfg_init_done)
+    {
+        syscfg_init();
+        syscfg_init_done = 1;
+    }
+
+    if (!syscfg_get(NULL, BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY, cmdBuff, sizeof(cmdBuff)))
+    {
+        MNET_DEBUG("Got %s = %s from syscfg" COMMA BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY COMMA cmdBuff);
+        mac_offset = atoi(cmdBuff);
+
+        if (!syscfg_get(NULL, BASE_MAC_SYSCFG_KEY, cmdBuff, sizeof(cmdBuff)))
+        {
+            MNET_DEBUG("Got %s = %s from syscfg" COMMA BASE_MAC_SYSCFG_KEY COMMA cmdBuff);
+
+            got_base_mac = 1;
+
+            if (sscanf(cmdBuff, "%x:%x:%x:%x:%x:%x",
+                &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]
+                ) == 6)
+            {
+                /* Add offset and instance to least significant octet */
+                mac[5] += (mac_offset + id);
+                /* Handle roll-over */
+                mac[5] %= MAC_ADDRESS_OCTET_MAX;
+                /* Set as a local mac address */
+                mac[0] |= MAC_ADDRESS_LOCAL_MASK;
+                /* Set the newly-generated mac address to the bridge */
+                snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x",
+                    brname, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+                MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff);
+                system(cmdBuff);
+            }
+        }
+        else
+        {
+            MNET_DEBUG("Couldn't get %s from syscfg" COMMA BASE_MAC_SYSCFG_KEY);
+        }
+    }
+    else
+    {
+        MNET_DEBUG("Couldn't get %s from syscfg" BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY);
+    }
+
+    /* Workaround, Linux will not generate a link-local address if no switch ports connected */
+    if (got_base_mac)
+    {
+        snprintf(cmdBuff, sizeof(cmdBuff), "ip link add tmp%d type dummy", id);
+        system(cmdBuff);
+        snprintf(cmdBuff, sizeof(cmdBuff), "echo 1 > /proc/sys/net/ipv6/conf/tmp%d/disable_ipv6", id);
+        system(cmdBuff);
+        snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig tmp%d up", id);
+        system(cmdBuff);
+        snprintf(cmdBuff, sizeof(cmdBuff), "brctl addif %s tmp%d", brname, id);
+        system(cmdBuff);
+    }
+
+    /* Bring bridge up */
+    snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s up", brname);
+    MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff);
+    system(cmdBuff);
+
+    if (got_base_mac)
+    {
+        snprintf(cmdBuff, sizeof(cmdBuff), "ip link del tmp%d", id);
+        system(cmdBuff);
+    }
+
+    return result;
+}
+#endif
 static int nethelper_bridgeDestroy(char* brname) {
     
     char cmdBuff[80];
@@ -125,7 +236,11 @@ int multinet_bridgeUp(PL2Net network, int bFirewallRestart){
     MNET_DEBUG("plat_addImplicitMembers for %d complete. \n" COMMA network->inst)
     
     //create bridge
+#ifdef MULTILAN_FEATURE
+    nethelper_bridgeCreateUniqueMac(network->name, network->inst);
+#else
     nethelper_bridgeCreate(network->name);
+#endif
     
     ep_set_bridge(network);
     
@@ -309,7 +424,14 @@ int multinet_Sync(PL2Net network, PMember members, int numMembers){
     
     //numLiveMembers = ep_get_allMembers(&live_net, live_members, sizeof(live_members)/sizeof(*live_members));
     
-    for ( i =0; i < numMembers; ++i) {
+#ifdef MULTILAN_FEATURE
+    //Interfaces to keep will have status already started
+    for (i = 0; i < numKeepMembers; ++i) {
+        keep_members[i].bReady = STATUS_STARTED;
+    }
+#endif
+
+    for (i = 0; i < numMembers; ++i) {
         keep_members[numKeepMembers++] = members[i];
     }
     
