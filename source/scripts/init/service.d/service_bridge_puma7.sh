@@ -231,7 +231,13 @@ service_start(){
         routing_rules enable
         
         #Sync bridge ports
-        $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+        MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
+        if [ $MULTILAN_FEATURE = 1 ]; then
+            sysevent set multinet-down $INSTANCE
+            sysevent set multinet-up $INSTANCE
+        else
+            $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+        fi
         
         #Block traffic coming from the lbr0 connector interfaces at the MUX
         filter_local_traffic enable
@@ -262,7 +268,13 @@ service_stop(){
         block_bridge
         
         #Sync bridge members
-        $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+        MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
+        if [ $MULTILAN_FEATURE = 1 ]; then
+            sysevent set multinet-down $INSTANCE
+            sysevent set multinet-up $INSTANCE
+        else
+            $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+        fi
                 
         #Disconnect management interface
         cmdiag_if disable

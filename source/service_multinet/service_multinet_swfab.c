@@ -78,28 +78,74 @@ static int map(PL2Net net, PMemberControl members, BOOL mark) {
     return 0;
 }
 
+#ifdef MULTILAN_FEATURE
+static int swfab_configVlan_inner(PPortConfigControl portConfig, PL2Net net, BOOL add) {
+    SWFabHALArg args;
+    PSWFabHAL hal = NULL;
+    int result = 0;
+
+    if (! portConfig->handled)
+    {       
+        hal = portConfig->config.platPort->hal;
+
+		if (NULL != hal)
+        {	
+            MNET_DBG_CMD(printPlatport(portConfig->config.platPort))
+            args.portID = portConfig->config.platPort->portID;
+            args.hints.network = net;
+            args.vidParams = portConfig->config.vidParams; 
+            portConfig->handled =1;
+
+            MNET_DEBUG("swfab_configVlan, Calling configVlan on hal %d.\n" COMMA hal->id);
+
+            if ( hal->configVlan(&args, 1, add) != 0 )
+            {
+                MNET_DEBUG("swfab_configVlan failed for hal %d!\n" COMMA hal->id);
+                result = -1;
+            }
+            else
+            {
+                MNET_DEBUG("swfab_configVlan, Hal %d succeeded.\n" COMMA hal->id);
+            }
+		}
+	    else
+		{
+			MNET_DEBUG("hal is NULL!\n")
+            result = -1;
+		}
+    }
+    return result;
+}
+#endif
+
 static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
     
     int i, j;
     PNetInterface iface;
+#ifdef MULTILAN_FEATURE
+    SWFabHALArg args;
+    PortConfigControl portConfig;
+#else
     SWFabHALArg args[HAL_MAX_PORTS];
     PortConfigControl portConfigs[MAX_ADD_PORTS] = {0};
+#endif
     //int numArgs[NUM_HALS] = {0};
+#ifndef MULTILAN_FEATURE
     int numArgs =0, numConfigs=0;
+    PSWFabHAL hal = NULL;
+#endif
     PPlatformPort platPort, trunkPort;
     PVlanTrunkState vlanState;
     List trunkPorts = {0};
     ListIterator portIter, matchIter;
     PListItem item;
-    PSWFabHAL hal = NULL;
     
     MNET_DEBUG("swfab_configVlan, net %d, numMembers %d, add: %hhu\n" COMMA net->inst COMMA members->numMembers COMMA add)
     
     //Fill map to handlers
     map(net, members,0);
     
-    MNET_DEBUG("swfab_configVlan, map() returned.\n" )
-    
+    MNET_DEBUG("swfab_configVlan, map() returned.\n" );
     
     //NOTE: This is a single vlan per bridge implementation. Change logic here to 
     //take into account any additional vlans / pvids.
@@ -116,11 +162,35 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
         if (!platPort || (add && !members->member[i].bReady && members->member[i].interface->dynamic)|| members->handled[i]) continue;
         
         //Map member info to port config
+#ifdef MULTILAN_FEATURE
+        portConfig.config.platPort = platPort;
+        portConfig.config.vidParams.vid = net->vid;
+        portConfig.config.vidParams.pvid = net->vid;
+        portConfig.handled = 0;
+        portConfig.config.vidParams.tagging = members->member[i].bTagging;
+        
+        if ( swfab_configVlan_inner(&portConfig, net, add) == 0 )
+        {
+            if (add) 
+            {
+                members->member[i].bReady = STATUS_STARTED;
+            }
+        }
+        else
+        {
+            if (add)
+            {
+                members->member[i].bReady = STATUS_STOPPED;
+            }
+        }
+
+#else
         portConfigs[numConfigs].config.platPort = platPort;
         portConfigs[numConfigs].config.vidParams.vid = net->vid;
         portConfigs[numConfigs].config.vidParams.pvid = net->vid;
         portConfigs[numConfigs].handled = 0;
         portConfigs[numConfigs++].config.vidParams.tagging = members->member[i].bTagging;
+#endif
         
         MNET_DEBUG("swfab_configVlan, calling dep model for %s.\n" COMMA members->member[i].interface->name)
         
@@ -136,17 +206,27 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
         while ((item = getNext(&portIter))) {
             trunkPort = (PPlatformPort) item->data;
             MNET_DBG_CMD(printPlatport(trunkPort)) 
+#ifdef MULTILAN_FEATURE
+            portConfig.config.platPort = trunkPort;
+            portConfig.config.vidParams.vid = net->vid;
+            portConfig.config.vidParams.pvid = net->vid;
+            portConfig.handled = 0;
+            portConfig.config.vidParams.tagging = 1; //trunkPort->isShared ? 1 : members->member[i].bTagging;
+            swfab_configVlan_inner(&portConfig, net, add);
+#else
             portConfigs[numConfigs].config.platPort = trunkPort;
             portConfigs[numConfigs].config.vidParams.vid = net->vid;
             portConfigs[numConfigs].config.vidParams.pvid = net->vid;
             portConfigs[numConfigs].handled = 0;
             portConfigs[numConfigs++].config.vidParams.tagging = 1; //trunkPort->isShared ? 1 : members->member[i].bTagging;
+#endif
         }
         MNET_DEBUG("swfab_configVlan, trunk ports added.\n" )
         
         clearList(&trunkPorts);
     }
     
+#ifndef MULTILAN_FEATURE
     
     //Now iterate through the ports, and aggregate commands to each hal into a single call
     for (i = 0; i < numConfigs; ++i) 
@@ -177,6 +257,7 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
 			continue;
 		}
     }    
+#endif
     saveVlanState(vlanState);    
 }
 

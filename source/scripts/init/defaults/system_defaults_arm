@@ -823,6 +823,27 @@ $dhcpv6spool0option1::bEnabled=1
 $dhcpv6spool0option1::Tag=24
 $dhcpv6spool0option1::PassthroughClient=Device.DHCPv6.Client.1.
 
+$dhcpv6spool10::instancenumber=2
+$dhcpv6spool10::bEnabled=1
+$dhcpv6spool10::Interface=Device.IP.Interface.5.
+$dhcpv6spool10::IANAEnable=1
+$dhcpv6spool10::IANAPrefixes=Device.IP.Interface.5.IPv6Prefix.1.
+$dhcpv6spool10::LeaseTime=604800
+$dhcpv6spool10::PrefixRangeBegin=0:0:0:0001
+$dhcpv6spool10::PrefixRangeEnd=0:0:0:fffe
+$dhcpv6spool10::EUI64Enable=0
+$dhcpv6spool10::RapidEnable=1
+$dhcpv6spool10::UnicastEnable=0
+$dhcpv6spool10::IANAAmount=255
+$dhcpv6spool10::optionnumber=2
+
+$dhcpv6spool1option0::bEnabled=1
+$dhcpv6spool1option0::Tag=23
+$dhcpv6spool1option0::PassthroughClient=Device.DHCPv6.Client.1.
+$dhcpv6spool1option1::bEnabled=1
+$dhcpv6spool1option1::Tag=24
+$dhcpv6spool1option1::PassthroughClient=Device.DHCPv6.Client.1.
+
 #CCSP RECOVERY MONITOR
 $ccsp_recovery_enable=1
 

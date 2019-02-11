@@ -41,9 +41,15 @@
 #include <ccsp_base_api.h>
 #include "ccsp_memory.h"
 #endif /* _COSA_INTEL_XB3_ARM_ */
+#ifdef MULTILAN_FEATURE
+char* typeStrings[] = {
+    "SW", "Gre", "Link", "Eth", "WiFi", "Moca"
+};
+#else
 char* typeStrings[] = {
     "SW", "Gre", "Link", "Eth", "WiFi"
 };
+#endif
 
 
 const char* const multinet_component_id = "ccsp.multinet";

@@ -8650,6 +8650,96 @@ GPFirewallRuleNext:
    return (0);
 }
 
+#ifdef MULTILAN_FEATURE
+/*
+ *  Procedure     : prepare_multinet_prerouting_nat
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv4 firewall rules pertaining to traffic
+ *                  which will be evaluated by NAT table before routing
+ *  Parameters    :
+ *    nat_fp      : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_prerouting_nat(FILE *nat_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ifname", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromlan\n", net_resp);
+        fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_devices\n", net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+
+/*
+ *  Procedure     : prepare_multinet_postrouting_nat
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv4 firewall rules pertaining to traffic
+ *                  which will be evaluated by NAT table after routing
+ *  Parameters    :
+ *    nat_fp      : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_postrouting_nat(FILE *nat_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ifname", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_tolan\n", net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+#else //else of MULTILAN_FEATURE
 // TODO: ALL THESE THINGSZ
 static int prepare_multinet_prerouting_nat(FILE *nat_fp) {
     return 0;
@@ -8658,7 +8748,7 @@ static int prepare_multinet_prerouting_nat(FILE *nat_fp) {
 static int prepare_multinet_postrouting_nat(FILE *nat_fp) {
     return 0;
 }
-
+#endif //end of MULTILAN_FEATURE
 static void prepare_ipc_filter(FILE *filter_fp) {
                 FIREWALL_DEBUG("Entering prepare_ipc_filter\n"); 	  
 #if !defined (_COSA_BCM_ARM_) && !defined(INTEL_PUMA7)
@@ -8689,11 +8779,204 @@ static int prepare_multinet_filter_input(FILE *filter_fp) {
     
 }
 
+#ifdef MULTILAN_FEATURE
+/*
+ *  Procedure     : prepare_multinet_filter_output
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv4 firewall rules pertaining to traffic
+ *                  which will be sent from local host to LAN
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_filter_output(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ifname", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(filter_fp, "-A OUTPUT -o %s -j self2lan\n", net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+  
+    return 0;
+}
+#else //else of MULTILAN_FEATURE
 static int prepare_multinet_filter_output(FILE *filter_fp) {
    
     return 0;
 }
+#endif //end of MULTILAN_FEATURE
 
+#ifdef MULTILAN_FEATURE
+/*
+ *  Procedure     : prepare_multinet_prerouting_nat_v6
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv6 firewall rules pertaining to traffic
+ *                  which will be evaluated by NAT table before routing
+ *  Parameters    :
+ *    fp          : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_prerouting_nat_v6(FILE *fp) {
+   unsigned char sysevent_query[40] = {0};
+   unsigned char inst_resp[MAX_QUERY] = {0};
+   unsigned char multinet_ifname[MAX_QUERY] = {0};
+   unsigned char* tok = NULL;
+
+   snprintf(sysevent_query, sizeof(sysevent_query), "ipv6_active_inst");
+   sysevent_get(sysevent_fd, sysevent_token, sysevent_query, inst_resp, sizeof(inst_resp));
+   tok = strtok(inst_resp, " ");
+
+   if(tok) do {
+      snprintf(sysevent_query, sizeof(sysevent_query), "multinet_%s-name", tok);
+      sysevent_get(sysevent_fd, sysevent_token, sysevent_query, multinet_ifname, sizeof(multinet_ifname));
+
+      // Ignoring Primary lan interface.
+      if(strcmp(lan_ifname, multinet_ifname) == 0)
+         continue;
+
+      // Support blocked devices
+      fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", multinet_ifname);
+
+   }while ((tok = strtok(NULL, " ")) != NULL);
+
+   return 0;
+}
+
+/*
+ *  Procedure     : prepare_multinet_filter_output_v6
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv6 firewall rules pertaining to traffic
+ *                  which will be sent from local host to LAN
+ *  Parameters    :
+ *    fp          : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_filter_output_v6(FILE *fp) {
+   unsigned char sysevent_query[MAX_QUERY] = {0};
+   unsigned char inst_resp[MAX_QUERY] = {0};
+   unsigned char multinet_ifname[MAX_QUERY] = {0};
+   unsigned char* tok = NULL;
+
+   snprintf(sysevent_query, sizeof(sysevent_query), "ipv6_active_inst");
+   sysevent_get(sysevent_fd, sysevent_token, sysevent_query, inst_resp, sizeof(inst_resp));
+   tok = strtok(inst_resp, " ");
+
+   if(tok) do {
+      snprintf(sysevent_query, sizeof(sysevent_query), "multinet_%s-name", tok);
+      sysevent_get(sysevent_fd, sysevent_token, sysevent_query, multinet_ifname, sizeof(multinet_ifname));
+
+      // Skip primary LAN instance, it is handled as a special case
+      if(strcmp(lan_ifname, multinet_ifname) == 0)
+         continue;
+
+      // Allow output towards LAN clients
+      fprintf(fp, "-A OUTPUT -o %s -j ACCEPT\n", multinet_ifname);
+
+   }while ((tok = strtok(NULL, " ")) != NULL);
+
+   return 0;
+}
+
+/*
+ *  Procedure     : prepare_multinet_filter_forward_v6
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv6 firewall rules pertaining to traffic
+ *                  which will be either forwarded or received locally
+ *  Parameters    :
+ *    fp          : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_filter_forward_v6(FILE *fp) {
+   unsigned char sysevent_query[MAX_QUERY] = {0};
+   unsigned char inst_resp[MAX_QUERY] = {0};
+   unsigned char multinet_ifname[MAX_QUERY] = {0};
+   unsigned char* tok = NULL;
+
+   snprintf(sysevent_query, sizeof(sysevent_query), "ipv6_active_inst");
+   sysevent_get(sysevent_fd, sysevent_token, sysevent_query, inst_resp, sizeof(inst_resp));
+   tok = strtok(inst_resp, " ");
+
+   if(tok) do {
+      snprintf(sysevent_query, sizeof(sysevent_query), "multinet_%s-name", tok);
+      sysevent_get(sysevent_fd, sysevent_token, sysevent_query, multinet_ifname, sizeof(multinet_ifname));
+
+      // Skip primary LAN instance, it is handled as a special case
+      if(strcmp(lan_ifname, multinet_ifname) == 0)
+         continue;
+
+      // Allow DHCPv6 from LAN clients
+      fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 547 -m limit --limit 100/sec -j ACCEPT\n", multinet_ifname);
+
+      // Allow echo request and reply
+      fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", multinet_ifname);
+      fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", multinet_ifname);
+
+      // Allow router solicitation and advertisement
+      fprintf(fp, "-A INPUT -s fe80::/64 -d ff02::1/128 ! -i %s -p icmpv6 -m icmp6 --icmpv6-type 134 -m limit --limit 10/sec -j ACCEPT\n", multinet_ifname);
+      fprintf(fp, "-A INPUT -s fe80::/64 -d fe80::/64 ! -i %s -p icmpv6 -m icmp6 --icmpv6-type 134 -m limit --limit 10/sec -j ACCEPT\n", multinet_ifname);
+      fprintf(fp, "-A INPUT -s fe80::/64 -i %s -p icmpv6 -m icmp6 --icmpv6-type 133 -m limit --limit 100/sec -j ACCEPT\n", multinet_ifname);
+
+      // Allow lan2wan and wan2lan traffic
+      fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, multinet_ifname);
+      fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", multinet_ifname, wan6_ifname);
+
+      // Added this rule to allow any ipv6 traffic local to the bridge
+      fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", multinet_ifname, multinet_ifname);
+
+   }while ((tok = strtok(NULL, " ")) != NULL);
+
+   return 0;
+}
+
+#endif
+
+#ifdef MULTILAN_FEATURE
+/*
+ *  Procedure     : prepare_multinet_filter_forward
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv4 firewall rules pertaining to traffic
+ *                  which will be either forwarded or received locally
+ *  Parameters    :
+ *    filter_fp   : An open file to write wan2lan rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_filter_forward(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+    char ip[MAX_QUERY] = {0};
+
+#else
 static int prepare_multinet_filter_forward(FILE *filter_fp) {
      unsigned int instanceCnt = 0;
     unsigned int *instanceList = NULL;
@@ -8710,6 +8993,7 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     char primary_inst[MAX_QUERY];
     primary_inst[0] = '\0';
     char ip[20];
+#endif
           FIREWALL_DEBUG("Entering prepare_multinet_filter_forward\n"); 	 
     //L3 rules
     snprintf(net_query, sizeof(net_query), "ipv4-instances");
@@ -8742,8 +9026,13 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
 //         fprintf(filter_fp, "-I INPUT -i %s -d %s -j ACCEPT\n", net_resp, net_ip);
         fprintf(filter_fp, "-A INPUT -i %s -d %s -j ACCEPT\n", net_resp, ip);
         fprintf(filter_fp, "-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n", net_resp);
+#ifdef MULTILAN_FEATURE
+        fprintf(filter_fp, "-A FORWARD -i %s -o %s -j lan2wan\n", net_resp, current_wan_ifname);
+        fprintf(filter_fp, "-A FORWARD -i %s -o %s -j wan2lan\n", current_wan_ifname, net_resp);
+#else
         fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", net_resp, current_wan_ifname);
         fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", current_wan_ifname, net_resp);
+#endif
         
         //fprintf(filter_fp, "-A OUTPUT -o %s -j ACCEPT\n", net_resp);
 #if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
@@ -10612,6 +10901,10 @@ static void do_ipv6_nat_table(FILE* fp)
    fprintf(fp, "%s\n", ":prerouting_devices - [0:0]");
    fprintf(fp, "%s\n", ":prerouting_redirect - [0:0]");
 
+#ifdef MULTILAN_FEATURE
+   prepare_multinet_prerouting_nat_v6(fp);
+#endif
+
    //zqiu: RDKB-7639: block device broken for IPv6
    fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);  
 
@@ -10624,6 +10917,8 @@ static void do_ipv6_nat_table(FILE* fp)
       
    fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:21515\n",IPv6);
    fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:21515\n",IPv6);
+  
+#ifndef MULTILAN_FEATURE
 
    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
    if(isDmzEnabled) {
@@ -10636,7 +10931,7 @@ static void do_ipv6_nat_table(FILE* fp)
                }
    }
 
-   
+#endif 
     FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
 }
 
@@ -10947,10 +11242,16 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "%s\n", ":PING_FLOOD - [0:0]");
    fprintf(fp, "-A PING_FLOOD -m limit --limit 10/sec -j ACCEPT\n");
    fprintf(fp, "-A PING_FLOOD -j DROP\n");
+
+#ifdef MULTILAN_FEATURE
+   prepare_multinet_filter_forward_v6(fp);
+   prepare_multinet_filter_output_v6(fp);
+#else
 #if defined (INTEL_PUMA7)
    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
    fprintf(fp, "-A FORWARD -i brlan2 -j ACCEPT\n");
    fprintf(fp, "-A FORWARD -i brlan3 -j ACCEPT\n");
+#endif
 #endif
 
    //ban telnet and ssh from lan side
