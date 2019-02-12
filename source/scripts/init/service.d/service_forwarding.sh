@@ -43,8 +43,28 @@ source /etc/utopia/service.d/log_capture_path.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 
 SERVICE_NAME="forwarding"
+if [ -f /etc/device.properties ]; then
+    source /etc/device.properties
+fi
 
+RPI_SPECIFIC="$BOX_TYPE"
 PID="($$)"
+
+#-------------------------------------------------------------
+# router_mode  ---- only for rpi boards
+#-------------------------------------------------------------
+router_mode () 
+{ 
+        LAN_STATUS=`sysevent get lan-status` 
+        if [ $LAN_STATUS = "stopped" ] ; then 
+                sysevent set lan-start 
+        fi 
+        ps aux | grep hostapd0 | grep -v grep | awk '{print $1}' | xargs kill -9 
+        ps aux | grep hostapd1 | grep -v grep | awk '{print $1}' | xargs kill -9 
+        sleep 2 
+        /usr/sbin/hostapd -B /nvram/hostapd0.conf 
+        /usr/sbin/hostapd -B /nvram/hostapd1.conf 
+} 
 
 #--------------------------------------------------------------
 # service_init
@@ -117,7 +137,9 @@ service_start ()
             STATUS=`sysevent get wan-status`
             if [ "stopped" != "$STATUS" ] ; then
                 ulog forwarding status "stopping wan"
-                sysevent set wan-stop
+		if [ $RPI_SPECIFIC != "rpi" ] ; then
+                	sysevent set wan-stop
+		fi
                 wait_till_state wan stopped
             fi
 	    
@@ -136,6 +158,12 @@ service_start ()
    	    	done
 
             fi
+	    if [ $RPI_SPECIFIC = "rpi" ] ; then
+		    LAN_STATUS=`sysevent get lan-status`
+		    if [ $LAN_STATUS = "stopped" ] ; then
+				router_mode
+	    	    fi
+	    fi
         fi
       fi
 
@@ -165,7 +193,14 @@ service_start ()
          fi
       else
          ulog forwarding status "starting wan"
-         sysevent set wan-start
+	if [ $RPI_SPECIFIC = "rpi" ] ; then
+	 	STATUS=`sysevent get wan-status`
+		if [ "started" != "$STATUS" ] ; then
+        	    sysevent set wan-start
+		fi
+	else
+		sysevent set wan-start
+	fi
          STATUS=`sysevent get lan-status`
          if [ "started" != "$STATUS" ] || [ "true" = $LANRESTART_STATUS ] ; then
             ulog forwarding status "starting lan"
