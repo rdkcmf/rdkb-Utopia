@@ -43,6 +43,8 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_puma
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_tchcbr.sh";
 #elif defined (_COSA_BCM_ARM_)  && ! defined (_PLATFORM_IPQ_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_tchxb6.sh";
+#elif defined (_PLATFORM_RASPBERRYPI_)
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_rpi.sh";
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge.sh";
 #endif
