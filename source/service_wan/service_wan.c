@@ -352,16 +352,18 @@ static int dhcp_start(struct serv_wan *sw)
     }
    else
    {
-#if defined (INTEL_PUMA7)
+//#if defined (INTEL_PUMA7)
     //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 4",
                  sw->ifname, DHCPC_PID_FILE);
+/*
 #else
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 1",
                  sw->ifname, DHCPC_PID_FILE);   
 #endif
+*/
    }
    }
 #else
