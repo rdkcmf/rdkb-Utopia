@@ -543,6 +543,10 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo "[utopia][init] Detected last reboot reason as factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+elif [ "$PUNIT_RESET_DURATION" -gt "0" ]; then
+   echo "[utopia][init] Detected last reboot reason as pin-reset"
+   syscfg set X_RDKCENTRAL-COM_LastRebootReason "pin-reset"
+   syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 else
    rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
    echo "[utopia][init] X_RDKCENTRAL-COM_LastRebootReason ($rebootReason)"
