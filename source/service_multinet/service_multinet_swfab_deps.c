@@ -157,11 +157,21 @@ int loadVlanState(PVlanTrunkState vidState){
     
     for (i = 0; i < numEntities; ++i) {
         entity = addEntity(vidState, entities[i]);
+	if(entity == NULL)
+	{
+		MNET_DEBUG("loadVlanState entity is NULL at [%d]\n"COMMA __LINE__)
+		return 0;
+	}
         numPorts = sizeof(portMemberNameList)/sizeof(*portMemberNameList);
         ep_get_entity_vid_portMembers(vidState->vid, entities[i], portMemberNameList, &numPorts, portMemberBuff, sizeof(portMemberBuff));
 		MNET_DEBUG("loadVlanState, ep_get_entity_vid_portMembers returned %d ports for %d vlanID\n" COMMA numPorts COMMA vidState->vid)
 	
         for (j = 0; j < numPorts; ++j) {
+	    if(j >= MAX_ADD_PORTS)
+	    {
+		MNET_DEBUG("loadVlanState numPorts is exceeded [%d]\n"COMMA j)
+		break;
+	    }
             addMemberPort(entity,plat_mapFromString(portMemberNameList[j]));
         }
         entity->dirty = 0;
@@ -176,6 +186,11 @@ int loadVlanState(PVlanTrunkState vidState){
     ep_get_trunkPort_vidMembers(vidState->vid, portMemberNameList, &numPorts, portMemberBuff, sizeof(portMemberBuff));
     MNET_DEBUG("loadVlanState, ep_get_trunkPort_vidMembers returned %d ports.\n" COMMA numPorts)
     for (i = 0; i < numPorts; ++i) {
+	if(j >= MAX_ADD_PORTS)
+	{
+		MNET_DEBUG("loadVlanState numPorts is exceeded [%d]\n"COMMA j)
+		break;
+	}
         newPort = addTrunkPort(vidState, plat_mapFromString(portMemberNameList[i]));
         numEntities = sizeof(paths)/sizeof(*paths);
         ep_get_trunkPort_vid_paths(vidState->vid, portMemberNameList[i], paths, &numEntities);
@@ -263,9 +278,15 @@ int removeAndGetTrunkPorts(PVlanTrunkState vidState, PPlatformPort oldPort, PLis
 }
 
 int addMemberPort(PEntityPortList entity, PPlatformPort port) {
-    entity->dirty = 1;
-    MNET_DEBUG("addMemberPort, adding ") MNET_DBG_CMD(printPlatport(port)) MNET_DEBUG(" to entity %d\n" COMMA entity->entity)
-    return addToList(&entity->memberPorts, port);
+
+	if (!port)
+		return -1;
+	
+	entity->dirty = 1;
+
+	MNET_DEBUG("addMemberPort, adding ") MNET_DBG_CMD(printPlatport(port)) MNET_DEBUG(" to entity %d\n" COMMA entity->entity)
+
+	return addToList(&entity->memberPorts, port);
 }
 
 int remMemberPort(PEntityPortList entity, PPlatformPort port) {
