@@ -71,9 +71,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-instances|/etc/utopia/service.d/service_ipv6.sh",
 	"multinet_1-status|/etc/utopia/service.d/service_ipv6.sh",
     "erouter_topology-mode|/etc/utopia/service.d/service_ipv6.sh",
-#if defined (INTEL_PUMA7)
     "bridge-status|/etc/utopia/service.d/service_ipv6.sh|NULL|",
-#endif
     NULL };
 
 void srv_register(void) {

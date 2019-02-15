@@ -884,9 +884,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     ia_pd_t             ia_pd;
     char                evt_val[64] = {0};
     int                 ret = 0;
-#if defined (INTEL_PUMA7)
     char                bridge_mode[4] = {0};
-#endif
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-divided", evt_val, sizeof(evt_val));
     if (strcmp(evt_val, "ready")) {
@@ -914,11 +912,9 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
         get_dhcpv6s_pool_cfg(si6, &dhcpv6s_pool_cfg);
 
         if (!dhcpv6s_pool_cfg.enable || dhcpv6s_pool_cfg.ia_prefix[0] == '\0') continue;
-
-#if defined (INTEL_PUMA7)
-        syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode));
+    	syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode));
         if (strcmp(bridge_mode, "2") || strcmp(dhcpv6s_pool_cfg.interface, "brlan0")) {
-#endif
+
         fprintf(fp, "iface %s {\n", dhcpv6s_pool_cfg.interface);
         if (dhcpv6s_cfg.server_type != DHCPV6S_TYPE_STATEFUL) goto OPTIONS;
 
@@ -1048,10 +1044,7 @@ OPTIONS:
             }
         } 
         fprintf(fp, "}\n");
-
-#if defined (INTEL_PUMA7)
         } //closing bracket of if (strcmp(bridge_mode, "2") || strcmp(dhcpv6s_pool_cfg.interface, "brlan0")) {
-#endif
 
         if (dhcpv6s_pool_cfg.opts != NULL) {
             free(dhcpv6s_pool_cfg.opts);

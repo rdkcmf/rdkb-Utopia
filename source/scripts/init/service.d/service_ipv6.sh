@@ -34,11 +34,6 @@
 #   limitations under the License.
 #######################################################################
 
-if [ -f /etc/device.properties ]
-then
-    source /etc/device.properties
-fi
-
 #------------------------------------------------------------------
 # name of this service
 # This name MUST correspond to the registration of this service.
@@ -117,12 +112,10 @@ case "$1" in
      ;;
 	
    bridge-status)
-      if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-	  	CURRENT_BRIDGE_STATUS=`sysevent get bridge-status`
+  	CURRENT_BRIDGE_STATUS=`sysevent get bridge-status`
       	if [ "started" = "$CURRENT_BRIDGE_STATUS" ] ; then
          	service_ipv6 dhcpv6s-restart
       	fi
-      fi
       ;;
 
    *)
