@@ -112,7 +112,11 @@ int ep_get_entity_vid_portMembers(int vid, int entity, char* memberPortNames[], 
     char valbuf[512];
     char *token;
     int offset = 0;
-    
+
+    memset (keybuf ,0 ,sizeof(keybuf));
+    memset (valbuf ,0 ,sizeof(valbuf));
+    token = NULL;
+
     snprintf(keybuf, sizeof(keybuf), SWFAB_ENTITY_PORTMEMBER_KEY_FORMAT(vid,entity));
     
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive, keybuf, valbuf, sizeof(valbuf));
@@ -123,6 +127,12 @@ int ep_get_entity_vid_portMembers(int vid, int entity, char* memberPortNames[], 
     *numPorts = 0;
     
     while (token) {
+			
+	if(numPorts == MAX_ADD_PORTS )
+	{
+		MNET_DEBUG("ep_get_entity_vid_portMembers  numPorts is exceeded [%d]\n"COMMA numPorts)
+		break;
+	}
         memberPortNames[*numPorts] = buf + offset;
         offset += sprintf(memberPortNames[*numPorts], "%s", token) + 1;
         (*numPorts)++;
@@ -178,7 +188,11 @@ int ep_get_trunkPort_vidMembers(int vid, char* portNames[], int* numPorts, char 
     char valbuf[512];
     char *token;
     int offset = 0;
-    
+
+    memset (keybuf ,0 ,sizeof(keybuf));
+    memset (valbuf ,0 ,sizeof(valbuf));	
+    token = NULL;
+
     snprintf(keybuf, sizeof(keybuf), SWFAB_VID_TRUNKMEMBER_KEY_FORMAT(vid));
     
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive, keybuf, valbuf, sizeof(valbuf));
@@ -188,6 +202,12 @@ int ep_get_trunkPort_vidMembers(int vid, char* portNames[], int* numPorts, char 
     
     *numPorts = 0;
     while (token) {
+			
+	if(numPorts == MAX_ADD_PORTS )
+	{
+		MNET_DEBUG("ep_get_entity_vid_portMembers numPorts is exceeded[%d]\n"COMMA numPorts)
+		break;
+	}
         portNames[*numPorts] = buf + offset;
         offset += sprintf(portNames[*numPorts], "%s", token) + 1;
         (*numPorts)++;
