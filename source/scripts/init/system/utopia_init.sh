@@ -560,7 +560,7 @@ else
 #ifdef CISCO_XB3_PLATFORM_CHANGES
       	  if [ -e "/proc/P-UNIT/status" ]; then
 	         Punit_status=`grep -i "Last reset origin" /proc/P-UNIT/status | awk '{print $9}'`
-	         if [ "$Punit_status" = "RESET_ORIGIN_ATOM_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ];then
+	         if [ "$Punit_status" = "RESET_ORIGIN_ATOM_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_ATOM" ];then
 	             syscfg set X_RDKCENTRAL-COM_LastRebootReason $Punit_status
 	             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"         
 	         fi
