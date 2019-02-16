@@ -113,6 +113,7 @@ HTTP_CODE="/tmp/curl_httpcode"
 S3_URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb_snmp.cgi"
 WAITINGFORUPLOAD="$LOG_UPLOAD_FOLDER/waitingforupload"
 
+
 if [ -f /etc/os-release ] || [ -f /etc/device.properties ]; then
       MAXSIZE=1536
 else
@@ -146,4 +147,5 @@ DCMRESPONSE_TMP="/tmp/DCMresponse.txt"
 DCM_SETTINGS_PARSED="/tmp/DCMSettingsParsedForLogUpload"
 
 TMP_LOG_UPLOAD_PATH="/tmp/log_upload"
-
+RAM_OOPS_FILE_LOCATION="/sys/fs/pstore/"
+RAM_OOPS_FILE="dmesg-ramoops-*"
