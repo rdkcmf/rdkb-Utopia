@@ -21,13 +21,16 @@
 
 # This script will push the DNS from ARM to ATOM.
 #------------------------------------------------
+
+. /etc/device.properties
+
 TMP_RESOLV_FILE=/tmp/resolv.conf
 RESOLV_CONF=/etc/resolv.conf
 ATOM_USER_NAME=root
 retries=0
 
-ATOM_INTERFACE_IP=`cat /etc/device.properties | grep ATOM_INTERFACE_IP | cut -f 2 -d"="`
-ATOM_RPC_IP=`cat /etc/device.properties | grep ATOM_ARPING_IP | cut -f 2 -d"="`
+#ATOM_INTERFACE_IP=`cat /etc/device.properties | grep ATOM_INTERFACE_IP | cut -f 2 -d"="`
+#ATOM_RPC_IP=`cat /etc/device.properties | grep ATOM_ARPING_IP | cut -f 2 -d"="`
 LAN_IP=`syscfg get lan_ipaddr`
 PEER_COMM_ID="/tmp/elxrretyt.swr"
 if [ ! -f /usr/bin/GetConfigFile ];then
@@ -76,7 +79,7 @@ else
 			else
 			    echo "scp of resolv.conf failed. trying rpcclient"
 			    FILE_STR=`cat $TMP_RESOLV_FILE`
-			    rpcclient $ATOM_RPC_IP "echo \"$FILE_STR\" > $RESOLV_CONF"
+			    rpcclient $ATOM_ARPING_IP "echo \"$FILE_STR\" > $RESOLV_CONF"
 			fi 
 			break	
 		else

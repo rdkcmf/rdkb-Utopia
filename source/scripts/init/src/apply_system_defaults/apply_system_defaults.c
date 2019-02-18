@@ -54,7 +54,9 @@
 #endif
 #include "cJSON.h"
 #include <unistd.h>
+#include <stdbool.h>
 #define PARTNERS_INFO_FILE  							"/nvram/partners_defaults.json"
+#define PARTNERS_INFO_FILE_ETC                                                 "/etc/partners_defaults.json"
 #define PARTNERID_FILE  								"/nvram/.partner_ID"
 #define PARTNER_DEFAULT_APPLY_FILE  					"/nvram/.apply_partner_defaults"
 #define PARTNER_DEFAULT_MIGRATE_PSM  					"/tmp/.apply_partner_defaults_psm"
@@ -659,52 +661,36 @@ static int getFactoryPartnerId
 	APPLY_PRINT("%s - Failed Get factoryPartnerId \n", __FUNCTION__);
 	return -1;
 }
+
 int validatePartnerId ( char *PartnerID )
 {
-	char *ptr_nvram_json = NULL;
 
-	ptr_nvram_json = json_file_parse ( "/etc/partners_defaults.json" ) ;
-
-	if ( ptr_nvram_json )
-	{
-		cJSON 	*subitem_nvram 	= 	NULL, 	* root_nvram_json = NULL ;
-		char 	*param_nvram 	= 	NULL;
-		int 		row_count = 0 , 	nvram_val = 0, 	flag = 0;
-
-		root_nvram_json = cJSON_Parse(ptr_nvram_json);
-		row_count = cJSON_GetArraySize(root_nvram_json);
-
-		for (nvram_val = 0; nvram_val < row_count ; nvram_val++)
-		{
-		        if ( (cJSON_GetArrayItem(root_nvram_json, nvram_val) != NULL) )
-		        {
-		                subitem_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val);
-				param_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val)->string;
-				if ( 0 == strcmp ( param_nvram, PartnerID) )
-				{
-					break;
-				}
-				else
-				{
-					flag++;
-				}
-			}
-		}
-		if ( flag == row_count )
-		{
-			APPLY_PRINT("Invalid partner ID got, So assigning as default partnerID as unknown\n");
-			sprintf(PartnerID,"%s","unknown");
-		}
-		cJSON_Delete(root_nvram_json);
-	}
-	free ( ptr_nvram_json ) ;
-
+   char* ptr_etc_jsons = NULL;
+   cJSON * subitem_etc = NULL;
+   ptr_etc_jsons = json_file_parse( PARTNERS_INFO_FILE_ETC );
+   if(ptr_etc_jsons)
+   {
+      cJSON * root_etc_json = cJSON_Parse(ptr_etc_jsons);
+      subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
+      if(subitem_etc)
+      {
+      	printf("##############Partner ID Found\n");
+        return 1;
+      }
+      else
+      {
+      	printf("Partner ID NOT Found\n");
+      	sprintf(PartnerID,"%s","unknown");
+        return 0;
+      }
+   }  
 }
 
 static int get_PartnerID( char *PartnerID)
 {
 	char buf[PARTNER_ID_LEN];
 	memset(buf, 0, sizeof(buf));
+	int isValidPartner = 0;
 
 	/* 
 	  *  Check whether /nvram/.partner_ID file is available or not. 
@@ -719,7 +705,7 @@ static int get_PartnerID( char *PartnerID)
 		if( ( 0 == getFactoryPartnerId( PartnerID ) ) && ( PartnerID [ 0 ] != '\0' ) )
 		{
 			APPLY_PRINT("%s - PartnerID from HAL: %s\n",__FUNCTION__,PartnerID );
-			validatePartnerId ( PartnerID );
+			isValidPartner = validatePartnerId ( PartnerID );
 		}
 		else
 		{
@@ -760,7 +746,7 @@ static int get_PartnerID( char *PartnerID)
 			sprintf( PartnerID, "%s", fileContent );
 
 			APPLY_PRINT("%s - PartnerID from File: %s\n",__FUNCTION__,PartnerID );
-			validatePartnerId ( PartnerID );
+			isValidPartner = validatePartnerId ( PartnerID );
 		}
 		system("rm -rf /nvram/.partner_ID");
 	}
@@ -781,168 +767,261 @@ static int get_PartnerID( char *PartnerID)
 	
 }
 
-char compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,char *PartnerID)
+void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram_json, bool *do_compare)
+{
+    cJSON *properties_etc = NULL;
+    cJSON *properties_nvram = NULL;
+    char *version_etc = NULL;
+    char *version_nvram = NULL;
+    char *version_nvram_key = NULL;
+
+    if (!do_compare || !root_etc_json || !root_nvram_json)
+        return;
+
+    /* Check if entire parameters need to be compared based on version number
+    */ 
+    properties_etc = cJSON_GetObjectItem(root_etc_json,"properties");
+        
+    if (!properties_etc)
+        *do_compare = true;
+   
+    if (properties_etc)
+    {
+        properties_nvram = cJSON_GetObjectItem(root_nvram_json,"properties");
+        version_etc = cJSON_GetObjectItem(properties_etc,"version")->valuestring;
+        if (properties_nvram)
+        {
+            int etc_major = 0;
+            int etc_minor = 0;
+            int nvram_major = 0;
+            int nvram_minor = 0;
+            version_nvram = cJSON_GetObjectItem(properties_nvram,"version")->valuestring;
+
+            if (version_etc)
+            {        
+                sscanf(version_etc,"%d.%d",&etc_major,&etc_minor);
+                printf ("\n READ version ######## etc: major %d minor %d \n",etc_major, etc_minor);
+            }
+            /* Check if version exists inside properties object */
+            version_nvram_key = cJSON_GetObjectItem(properties_nvram,"version");
+            if(version_nvram_key)
+            {
+                version_nvram = cJSON_GetObjectItem(properties_nvram,"version")->valuestring;
+            }
+            else
+            {
+                 printf("version key is missing in properties\n");
+                 *do_compare = true;
+                 /* version is missing, so delete entire properties */
+                 cJSON_DeleteItemFromObject(root_nvram_json,"properties");
+            }
+            /* If version exists in both nvram and etc, then compare the version number */
+            if ( version_nvram && version_etc)
+            {
+                sscanf(version_nvram,"%d.%d",&nvram_major,&nvram_minor);
+                printf ("\n READ version ######## nvram: major %d minor %d\n",nvram_major, nvram_minor);
+                if (nvram_major < etc_major)
+                {
+                    *do_compare = true;
+                }
+                else if (nvram_major == etc_major)
+                {
+                    if (nvram_minor < etc_minor)
+                    {
+                        *do_compare = true;
+                    }
+                }
+
+                if (*do_compare)
+                {
+                    printf ("\n VERSION MISMATCH ######## nvram %s etc %s \n", version_nvram, version_etc);
+                }
+            }                   
+        }
+        else
+        {
+            *do_compare = true;
+        }
+    }    
+
+    if (version_etc)
+    {
+        /* If version doesn't exist in nvram file, then insert it at the 0th index 
+           else just replace the object 
+        */ 
+        if (!version_nvram)
+        {
+            printf ("\n NVRAM VERSION not found  ######## etc %s \n", version_etc);
+            cJSON_InsertItemInArray(root_nvram_json,0,cJSON_GetObjectItem(root_etc_json,"properties") );
+        }
+        else
+        {
+            printf("\n NVRAM VERSION FOUND\n");
+            cJSON_ReplaceItemInArray(root_nvram_json,0,cJSON_GetObjectItem(root_etc_json,"properties") );
+        }
+        char *out = cJSON_Print(root_nvram_json);
+        writeToJson(out);
+        out = NULL;
+    }
+}
+
+int compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,char *PartnerID)
 {
 
-	cJSON 	*subitem_nvram = NULL, 	*subitem_etc = NULL;
-	char 	*key = NULL, 	*value = NULL, *param_etc = NULL, *param_nvram = NULL;
-        int 	rowCnt_etc = 0, 	rowCnt_nvram = 0, 	etc_val = 0, nvram_val = 0, 	count = 0, 	count_etc = 0, 	count_nvram = 0;
 
-	cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
-	cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);	
+	  cJSON   *subitem_nvram = NULL,  *subitem_etc = NULL;
+	  char    *key = NULL,    *value = NULL, *nvram_key = NULL, *etc_key = NULL;
+	  int     subitem_etc_count = 0, subitem_nvram_count = 0, iCount = 0;;
+	  bool do_compare = false;
 
-	rowCnt_etc = cJSON_GetArraySize(root_etc_json);
-	rowCnt_nvram = cJSON_GetArraySize(root_nvram_json);
-	
-	for (etc_val = 0; etc_val < rowCnt_etc ; etc_val++)
-	{
-		subitem_etc = cJSON_GetArrayItem(root_etc_json,etc_val);
-		
-		if ( (cJSON_GetArrayItem(root_etc_json,etc_val) != NULL) )
-		{
-			int etc_paramCount = cJSON_GetArraySize(subitem_etc);
-			param_etc = cJSON_GetArrayItem(root_etc_json,etc_val)->string;
-			for( nvram_val = 0 ; nvram_val < rowCnt_nvram ; nvram_val++)
-			{	
-				subitem_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val);
-				int nvram_paramCount = cJSON_GetArraySize(subitem_nvram);
-				
-				if (  (cJSON_GetArrayItem(root_nvram_json,nvram_val) != NULL) )
-				{
-					param_nvram = cJSON_GetArrayItem(root_nvram_json,nvram_val)->string;
-					if ( strcmp(param_etc, param_nvram) == 0 )
-					{
-					for( count_etc = 0 ; count_etc < etc_paramCount ; count_etc++)
-					{
+	  cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
+	  cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);  
 
-						if (cJSON_GetArrayItem(subitem_etc, count_etc) != NULL)
-						{
-							if (cJSON_GetArrayItem(subitem_etc, count_etc)->string != NULL)
-							{
-								count = 0;
-								for( count_nvram = 0 ;count_nvram< nvram_paramCount ; count_nvram++)
-								{
-					
-									if ( cJSON_GetArrayItem(subitem_nvram,count_nvram) != NULL)
-									{
-										if (cJSON_GetArrayItem(subitem_nvram, count_nvram)->string != NULL)
-										{
-											if( strcmp( (cJSON_GetArrayItem(subitem_etc, count_etc)->string) , (cJSON_GetArrayItem(subitem_nvram, count_nvram)->string)) != 0 )
-											{
-												count++;
-											}
-											else
-											{
-												break;
-											}
-										}
-										else
-										{
-											printf ("Nvram JSON file has empty Parameter list\n");
+        /* Check if version exists or has changed.
+           If the function returns "true" proceed for comparison
+           else there is no change. Just return
+        */
+        ValidateAndUpdatePartnerVersionParam(root_etc_json, root_nvram_json, &do_compare);
+   	if (!do_compare)
+        		return -1;
+	  
+	  /* Get row counts from json. It will give available no. of partner blocks in both files*/      
+	  //rowCnt_etc = cJSON_GetArraySize(root_etc_json);
+	  //rowCnt_nvram = cJSON_GetArraySize(root_nvram_json);
+	  //printf("Counts == etc: %d, nvram: %d\n", rowCnt_etc,rowCnt_nvram);
 
-										}
-									}
+    /* We reached here because there is some change in partners default.
+       Update the nvram pointer.
+       Get the object array for the current partner from:
+       /nvram/partners_default.json and /etc/partners_default.json.
+    */
+          char* ptr_nvram_json = NULL;
+          ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE );
+          root_nvram_json=cJSON_Parse(ptr_nvram_json);
+          root_etc_json = cJSON_Parse(partner_etc_obj);
 
-								}
+	  subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
+	  subitem_nvram = cJSON_GetObjectItem(root_nvram_json,PartnerID);
 
-								if (count == nvram_paramCount )
-								{
-									printf("Adding new param to JSON file\n");
-									key = cJSON_GetArrayItem(subitem_etc, count_etc)->string;
-									value = cJSON_GetArrayItem(subitem_etc, count_etc)->valuestring;
+	  //Printing sub object
+	  /*char *json_string = cJSON_Print(subitem_etc);
+	  if (json_string) 
+	  {
+	    printf("%s\n", json_string);
+	  }*/
 
-									// Add newly introduced entry from /etc/ directory to /nvram directory
-									cJSON_AddItemToObject(subitem_nvram, key, cJSON_CreateString(value));
-									
-					                  if ( ( strcmp( param_nvram,PartnerID ) == 0 ) )
-					                  {
-											int IsPSMMigrationNeeded = 0;
-											
-						                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
-						                    {
-												if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialForwardedMark" ) )
-												{
-													set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
-												}
-						                    }
-											
-                                            if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
-                                            {
-                                                if ( 0 == IsValuePresentinSyscfgDB( "WANsideSSH_Enable" ) )
-                                                {
-                                                        set_syscfg_partner_values( value,"WANsideSSH_Enable" );
-                                                }
-                                            }
+	  /* Partner Exists in /etc/partners_default.json and 
+	     doesnt exist in /nvram/partners_default.json.
+	     Add partner to nvram 
+	   */
+	  if (( subitem_nvram == NULL) && (subitem_etc != NULL))
+	  {
+	      printf("Partner object is not available in nvram\n");
+	      cJSON_AddItemReferenceToObject(root_nvram_json,PartnerID,subitem_etc);
+	      char *out = cJSON_Print(root_nvram_json);
+	      writeToJson(out);
+	      out = NULL;
 
+	   }
+	   else
+	   {
+	        /* 
+	           Partner exists at both places.. Check count of partner variables.
+	           Traverse through /etc/partners_default.json and check if the element
+	           existing in /nvram/partners_default.json
+	        */
+	        subitem_etc_count = cJSON_GetArraySize(subitem_etc);
+	        subitem_nvram_count = cJSON_GetArraySize(subitem_nvram);
+	        
+	        for (iCount=0;iCount<subitem_etc_count;iCount++)
+	        {
+	              key=cJSON_GetArrayItem(subitem_etc,iCount)->string;
+	              //printf("String key is : %s\n",key);
+	              nvram_key=cJSON_GetObjectItem(subitem_nvram,key);
+	              if(nvram_key == NULL)
+	              {	                 
+	                 printf("Add parameter to /nvram/partners_default.json object array \n");
+	                 value = cJSON_GetArrayItem(subitem_etc, iCount)->valuestring; 
+	                 cJSON_AddItemToObject(subitem_nvram, key, cJSON_CreateString(value));
 
-						                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
-						                    {
-												if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialOutputMark" ) )
-												{
-													set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
-												}
-						                    }
-
-						                    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") )
-						                    {
-												set_syscfg_partner_values( value,"XHS_SSIDprefix" );
-												IsPSMMigrationNeeded = 1;
-						                    }
-
-											//Check whether migration needs to be handle or not
-											if( 1 == IsPSMMigrationNeeded )											
-											{
-												APPLY_PRINT("%s - Adding new member in %s file\n", __FUNCTION__, PARTNERS_INFO_FILE);
-												APPLY_PRINT("%s - PSM Migration needed for %s param so touching %s file\n", __FUNCTION__, key, PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER );
+	                 /* There are parameters which needs to be available in syscfg/PSM DBs
+	                    Check if all of these parameters are SET into DBs
+	                 */
+	                 int IsPSMMigrationNeeded = 0;
+	                 if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
+                         {
+                             if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialForwardedMark" ) )
+                             {
+                                 set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
+                             }
+                         }
+                         if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
+                         {
+                             if ( 0 == IsValuePresentinSyscfgDB( "WANsideSSH_Enable" ) )
+                             {
+                                set_syscfg_partner_values( value,"WANsideSSH_Enable" );
+                             }
+                         }
+                         if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
+                         {
+                              if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialOutputMark" ) )
+                              {
+                                 set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
+                              }
+                         }
+                         if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") )
+                         {
+                              set_syscfg_partner_values( value,"XHS_SSIDprefix" );
+                              IsPSMMigrationNeeded = 1;
+                         }
+                         
+                         //Check whether migration needs to be handled or not
+                         if( 1 == IsPSMMigrationNeeded )											
+                         {
+                            APPLY_PRINT("%s - Adding new member in %s file\n", __FUNCTION__, PARTNERS_INFO_FILE);
+                            APPLY_PRINT("%s - PSM Migration needed for %s param so touching %s file\n", __FUNCTION__, key, PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER );
 												
-												//Need to touch /tmp/.apply_partner_defaults_new_psm_member for PSM migration handling
-												system("touch "PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER);			
-											}
-					                  }
-								}
-							}
-						}
-		
-					}
-					}
-				
-				}
-				
-			}
+                            //Need to touch /tmp/.apply_partner_defaults_new_psm_member for PSM migration handling
+                            system("touch "PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER);			
+                         }
 
-		}
+	              }//if (nvram_key)
 
-	}
+	         }//for loop 
+	        
+	        /* Check if nvram file has same count as etc file
+	           if nvram has more entries, we may need to check what was 
+	           removed from etc in current release.
+	        */
+	        subitem_etc_count = cJSON_GetArraySize(subitem_etc);
+	        subitem_nvram_count = cJSON_GetArraySize(subitem_nvram);
+	        if ( subitem_etc_count < subitem_nvram_count)
+	        {
+	            for (iCount=0;iCount<subitem_nvram_count;iCount++)
+	            {
+	               key=cJSON_GetArrayItem(subitem_nvram,iCount)->string;
+	               //printf("String key is : %s\n",key);
+	               etc_key=cJSON_GetObjectItem(subitem_etc,key);
+	               if(etc_key == NULL)
+	               {
+	               	    printf("Delete parameter from /nvram/partners_default.json array \n");
+	                    key=cJSON_GetArrayItem(subitem_nvram,iCount);
+	                    cJSON_DeleteItemFromArray(subitem_nvram,iCount);
+	                    //Decrement the count when an element is deleted
+	                    subitem_nvram_count --;
+	                }
+	            }//for loop
+	        }
 
-	for (etc_val = 0; etc_val < rowCnt_etc ;etc_val++)
-	{
-		int flag = 0;
-		for (nvram_val = 0; nvram_val < rowCnt_nvram;nvram_val++)
-		{
-			if ( strcmp ( cJSON_GetArrayItem(root_nvram_json,nvram_val)->string , cJSON_GetArrayItem(root_etc_json,etc_val)->string ) == 0)
-			{
-				break;
-			}
-			else
-			{
-				flag++;
-				printf("flag is %d\n",flag);
-			}
-		}
-		if ( flag == rowCnt_nvram)
-		{
-			printf("Adding New PartnerId details to nvram JSON file\n");	
-			cJSON_AddItemToArray(root_nvram_json,  cJSON_GetArrayItem(root_etc_json,etc_val));
-			break;
-		}
-				
-	}
+	              char *out = cJSON_Print(root_nvram_json);
+	              writeToJson(out);
+	              out = NULL;
+	    }
 
-	char *out = cJSON_Print(root_nvram_json);
-	writeToJson(out);
-	out = NULL;
+    cJSON_Delete(root_nvram_json);
+    cJSON_Delete(root_etc_json);
 
-	cJSON_Delete(root_nvram_json);
+    return 0;
 }
 
 int apply_partnerId_default_values(char *data, char *PartnerID)

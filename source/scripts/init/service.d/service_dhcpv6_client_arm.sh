@@ -39,6 +39,7 @@ source /etc/utopia/service.d/ipv6_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 source /etc/utopia/service.d/sysevent_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
+. /etc/device.properties
 # This handler is called not only to start/stop/restart the service
 # but also when WAN or LAN status is updated as well as current_wan_ifname
 # and when DHCPv6 has received a reply or a time-out

@@ -45,6 +45,7 @@ GRE_IFNAME_DUMMY="gretap_0"
 
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
+. /etc/device.properties
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
 if [ "$BOX_TYPE" = "XF3" ] ; then
