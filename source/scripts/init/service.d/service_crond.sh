@@ -53,7 +53,7 @@ fi
 
 SERVICE_NAME="crond"
 SELF_NAME="`basename $0`"
-BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
+#BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
 
 register_docsis_init_handler () 
 {
@@ -228,8 +228,7 @@ service_start ()
 
       # log mem and cpu info once an hour
       echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
-      echo "nice -n 19 sh /usr/ccsp/tad/log_mem_cpu_info.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
-      echo "sh /usr/ccsp/tad/uptime.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
+      echo "nice -n 19 sh /usr/ccsp/tad/log_hourly.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
       chmod 700 /etc/cron/cron.hourly/log_hourly.sh
    
       # add starting the process-monitor every 5 minute
@@ -243,9 +242,9 @@ service_start ()
       chmod 700 /etc/cron/cron.everyminute/sysevent_tick.sh
 
       # monitor syslog every 5 minute
-      echo "#! /bin/sh" > /etc/cron/cron.every5minute/log_every5minute.sh
-      echo "/usr/sbin/log_handle.sh" >> /etc/cron/cron.every5minute/log_every5minute.sh
-      chmod 700 /etc/cron/cron.every5minute/log_every5minute.sh
+#      echo "#! /bin/sh" > /etc/cron/cron.every5minute/log_every5minute.sh
+#     echo "/usr/sbin/log_handle.sh" >> /etc/cron/cron.every5minute/log_every5minute.sh
+#      chmod 700 /etc/cron/cron.every5minute/log_every5minute.sh
 
 	  #monitor start-misc in case wan is not online
       echo "#! /bin/sh" > /etc/cron/cron.everyminute/misc_handler.sh
@@ -262,6 +261,11 @@ service_start ()
 	  echo "#! /bin/sh" > /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 	  echo "/usr/ccsp/tad/selfheal_cosa_start_rem.sh" >> /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
 	  chmod 700 /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
+
+      #monitor syslog every 10 minutes
+      echo "#! /bin/sh" > /etc/cron/cron.every10minute/log_every10minute.sh
+      echo "/usr/sbin/log_handle.sh" >> /etc/cron/cron.every10minute/log_every10minute.sh
+      chmod 700 /etc/cron/cron.every10minute/log_every10minute.sh
           
           if [ "$BOX_TYPE" == "XB3" ]; then
             echo "#! /bin/sh" > /etc/cron/cron.every10minute/start_gw_heath.sh

@@ -44,6 +44,7 @@
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
 
+. /etc/device.properties
 IOT_SERVICE_PATH="/etc/utopia/service.d"
 SERVICE_MULTINET_PATH="/etc/utopia/service.d/service_multinet"
 

@@ -19,6 +19,16 @@
 # limitations under the License.
 ################################################################################
 
+NVRAM2_SUPPORTED="no"
+ATOM_IP=""
+UPLOAD_THRESHOLD=""
+
+LOG_SYNC_PATH="/nvram2/logs/"
+LOG_SYNC_BACK_UP_PATH="/nvram2/logs/"
+LOG_SYNC_BACK_UP_REBOOT_PATH="/nvram2/logs/"
+
+. /etc/device.properties
+
 if [ -f /etc/os-release ] || [ -f /etc/device.properties ]; then
       LOG_FOLDER="/rdklogs"
 else
@@ -30,34 +40,33 @@ RDK_LOGGER_PATH="/rdklogger"
 LOG_PATH="$LOG_FOLDER/logs/"
 
 ATOM_LOG_PATH="/rdklogs/logs/"
-ATOM_IP=""
+
 backupenable=`syscfg get logbackup_enable`
-isNvram2Supported="no"
-UPLOAD_THRESHOLD=""
+
+
 
 #dmesg sync
 DMESG_FILE="/rdklogs/logs/messages.txt"
 lastdmesgsync="/tmp/lastdmesgsynctime"
 atom_journal_log="/rdklogs/logs/atom_journal_logs.txt.0"
-if [ -f /etc/device.properties ]
-then
-   isNvram2Supported=`cat /etc/device.properties | grep NVRAM2_SUPPORTED | cut -f2 -d=`
-   atom_sync=`cat /etc/device.properties | grep ATOM_SYNC | cut -f2 -d=`
-   UPLOAD_THRESHOLD=`cat /etc/device.properties | grep LOG_UPLOAD_THRESHOLD  | cut -f2 -d=`
-   model=`cat /etc/device.properties | grep MODEL_NUM  | cut -f2 -d=`
-   BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
-fi
 
-if [ "$atom_sync" = "yes" ]
-then
-   ATOM_IP=`cat /etc/device.properties | grep ATOM_IP | cut -f2 -d=` 
-fi	
-
-#if [ "$isNvram2Supported" = "yes" ] && [ "$backupenable" = "true" ]
+#if [ -f /etc/device.properties ]
 #then
- LOG_SYNC_PATH="/nvram2/logs/"
- LOG_SYNC_BACK_UP_PATH="/nvram2/logs/"
- LOG_SYNC_BACK_UP_REBOOT_PATH="/nvram2/logs/"
+#   isNvram2Supported=`cat /etc/device.properties | grep NVRAM2_SUPPORTED | cut -f2 -d=`
+#   atom_sync=`cat /etc/device.properties | grep ATOM_SYNC | cut -f2 -d=`
+#   UPLOAD_THRESHOLD=`cat /etc/device.properties | grep LOG_UPLOAD_THRESHOLD  | cut -f2 -d=`
+#   model=`cat /etc/device.properties | grep MODEL_NUM  | cut -f2 -d=`
+#  BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
+#fi
+
+#if [ "$atom_sync" = "yes" ]
+#then
+   #ATOM_IP=`cat /etc/device.properties | grep ATOM_IP | cut -f2 -d=` 
+#fi	
+
+#if [ "$NVRAM2_SUPPORTED" = "yes" ] && [ "$backupenable" = "true" ]
+#then
+
 #else
  LOG_BACK_UP_PATH="$LOG_UPLOAD_FOLDER/logbackup/"
  LOGTEMPPATH="$LOG_FOLDER/backuplogs/"
@@ -65,21 +74,21 @@ fi
 #fi
 
 #If device is having SYNC PATH overrides, it will get applied here.
-if [ -f /etc/device.properties ]
-then
-	LOG_SYNC_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_PATH  | cut -f2 -d=`
-	LOG_SYNC_BACK_UP_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_PATH  | cut -f2 -d=`
-	LOG_SYNC_BACK_UP_REBOOT_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_REBOOT_PATH  | cut -f2 -d=`
-	if [ "$LOG_SYNC_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_REBOOT_PATH_override" != "" ]
-	then
-		LOG_SYNC_PATH=$LOG_SYNC_PATH_override
-		LOG_SYNC_BACK_UP_PATH=$LOG_SYNC_BACK_UP_PATH_override
-		LOG_SYNC_BACK_UP_REBOOT_PATH=$LOG_SYNC_BACK_UP_REBOOT_PATH_override
-	fi
-fi
+#if [ -f /etc/device.properties ]
+#then
+#	LOG_SYNC_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_PATH  | cut -f2 -d=`
+#	LOG_SYNC_BACK_UP_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_PATH  | cut -f2 -d=`
+#	LOG_SYNC_BACK_UP_REBOOT_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_REBOOT_PATH  | cut -f2 -d=`
+#	if [ "$LOG_SYNC_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_REBOOT_PATH_override" != "" ]
+#	then
+#		LOG_SYNC_PATH=$LOG_SYNC_PATH_override
+#		LOG_SYNC_BACK_UP_PATH=$LOG_SYNC_BACK_UP_PATH_override
+#		LOG_SYNC_BACK_UP_REBOOT_PATH=$LOG_SYNC_BACK_UP_REBOOT_PATH_override
+#	fi	
+#fi
 
 #This change is needed for ArrisXB6 to choose sync location dynamically.
-if [ "$model" == "TG3482G" ];then
+if [ "$MODEL_NUM" == "TG3482G" ];then
 	isNvram2Mounted=`grep nvram2 /proc/mounts`
 	if [ "$isNvram2Mounted" == "" ];then
 		LOG_SYNC_PATH="/nvram/logs/"
@@ -122,9 +131,9 @@ fi
 MAXLINESIZE=2
 
 #Devices that have more nvram size can override default upload threshold (1.5MB) through device.properties
-if [ "$UPLOAD_THRESHOLD" != "" ]
+if [ "$LOG_UPLOAD_THRESHOLD" != "" ]
 then
-	MAXSIZE=$UPLOAD_THRESHOLD
+	MAXSIZE=$LOG_UPLOAD_THRESHOLD
 fi
 
 URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb.cgi"
