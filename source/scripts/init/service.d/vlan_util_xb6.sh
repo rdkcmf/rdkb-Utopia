@@ -728,8 +728,18 @@ sync_group_settings() {
     fi
 
     if [ "$TEARDOWN" != "true" ]; then
+        echo "Bring up the bridge $BRDIGE_NAME and slave interfaces $IF_LIST"
+
         $SYSEVENT set multinet_${INSTANCE}-status ready
         ifconfig $BRIDGE_NAME up
+
+        # Force all needed IF interfaces to be UP as well
+        for NEEDED_IF in $IF_LIST; do
+            ifconfig $NEEDED_IF up
+        done
+
+        # Verify all NEEDED_IF is part of bridge
+        brctl show
     fi
 
     echo_t "Group sync exit" 
