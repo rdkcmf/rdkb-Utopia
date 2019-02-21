@@ -897,7 +897,9 @@ fi
    then
         echo "IOT_LOG : DHCP server configuring for IOT"
         IOT_IFNAME=`syscfg get iot_ifname`
-
+        if [ $IOT_IFNAME == "l2sd0.106" ]; then
+         IOT_IFNAME=`syscfg get iot_brname`
+        fi
 	IOT_START_ADDR=`syscfg get iot_dhcp_start`
 	IOT_END_ADDR=`syscfg get iot_dhcp_end`
 	IOT_NETMASK=`syscfg get iot_netmask`

@@ -21,6 +21,9 @@
 source /etc/utopia/service.d/log_capture_path.sh
 iot_ipaddress=`syscfg get iot_ipaddr`
 iot_interface=`syscfg get iot_ifname`
+if [ $iot_interface == "l2sd0.106" ]; then
+ iot_interface=`syscfg get iot_brname`
+fi
 iot_mask=`syscfg get iot_netmask`
 VID="106"
 
