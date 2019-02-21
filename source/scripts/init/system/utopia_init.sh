@@ -518,6 +518,11 @@ echo_t "[utopia][init] lost_and_found_enable = $lost_and_found_enable"
 if [ "$lost_and_found_enable" == "true" ]
 then
     iot_ifname=`syscfg get iot_ifname`
+    if [ "$iot_ifname" == "l2sd0.106" ]; then
+     echo_t "[utopia][init] changing over to new LnF bridge: br106"
+     syscfg set iot_brname br106
+     syscfg commit
+    fi
     iot_dhcp_start=`syscfg get iot_dhcp_start`
     iot_dhcp_end=`syscfg get iot_dhcp_end`
     iot_netmask=`syscfg get iot_netmask`
@@ -626,8 +631,18 @@ if [ $BOX_TYPE == "XB3" ];then
 else
         $SWITCH_HANDLER addVlan 0 1060 sw_6
 fi
-ifconfig l2sd0.1060 192.168.245.1 netmask 255.255.255.0 up
+ifconfig l2sd0.1060 up
 ip rule add from all iif l2sd0.1060 lookup erouter
+
+# Add QinQ for pod ethernet backhaul traffic
+ip link add link l2sd0.100 l2sd0.100.1060 type vlan proto 802.1Q id 1060
+ip link set l2sd0.100.1060 up
+brctl addbr br403
+ifconfig br403 192.168.245.1 netmask 255.255.255.0 up
+brctl addif br403 l2sd0.100.1060
+brctl addif br403 l2sd0.1060
+ip rule add from all iif l2sd0.100.1060 lookup erouter
+ip rule add from all iif br403 lookup erouter
 
 #--------Marvell LAN-side egress flood mitigation----------------
 echo_t "88E6172: Do not egress flood unicast with unknown DA"
@@ -637,8 +652,15 @@ swctl -c 11 -p 5 -r 4 -b 0x007b
 swctl -c 16 -p 0 -v 106 -m 2 -q 1
 swctl -c 16 -p 7 -v 106 -m 2 -q 1
 vconfig add l2sd0 106
-ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
+brctl addbr br106
+ifconfig l2sd0.106 up
+ifconfig br106 192.168.106.1 netmask 255.255.255.0 up
+ip link add link l2sd0.100 l2sd0.100.106 type vlan proto 802.1Q id 106
+brctl addif br106 l2sd0.106
+brctl addif br106 l2sd0.100.106
 ip rule add from all iif l2sd0.106 lookup erouter
+ip rule add from all iif l2sd0.100.106 lookup erouter
+ip rule add from all iif br106 lookup erouter
 
 # Check and set factory-reset as reboot reason 
 if [ "$FACTORY_RESET_REASON" = "true" ]; then

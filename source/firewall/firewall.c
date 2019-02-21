@@ -9065,8 +9065,8 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -d 192.168.251.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     //RDKB-15951
-    fprintf(filter_fp, "-A INPUT -i l2sd0.1060 -d 192.168.245.0/24 -j ACCEPT\n");
-    fprintf(filter_fp, "-A INPUT -i l2sd0.1060 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
     fprintf(filter_fp, "-A INPUT -i ath12 -d 169.254.0.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath12 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
@@ -9090,7 +9090,7 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
 #endif
 #endif
     fprintf(filter_fp, "-A INPUT -i l2sd0.4090 -d 192.168.251.0/24 -p tcp --dport 6666 -j ACCEPT\n");
-    fprintf(filter_fp, "-A INPUT -i l2sd0.1060 -d 192.168.245.0/24 -p tcp --dport 6666 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -p tcp --dport 6666 -j ACCEPT\n");
 
 #if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
     fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
@@ -9835,8 +9835,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if !defined(_COSA_BCM_ARM_)
    fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.4090 -o %s -j ACCEPT\n", current_wan_ifname);
    fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.4090 -j ACCEPT\n", current_wan_ifname);
-   fprintf(filter_fp, "-I FORWARD 2 -i l2sd0.1060 -o %s -j ACCEPT\n", current_wan_ifname);
-   fprintf(filter_fp, "-I FORWARD 3 -i %s -o l2sd0.1060 -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 2 -i br403 -o %s -j ACCEPT\n", current_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD 3 -i %s -o br403 -j ACCEPT\n", current_wan_ifname);
 #endif
 
 #if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
@@ -9872,6 +9872,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       printf("IOT_LOG : Adding iptable rules for IOT\n");
       memset(iot_ifName, 0, sizeof(iot_ifName));
       syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
+      if( strstr( iot_ifName, "l2sd0.106")) {
+         memset(iot_ifName, 0, sizeof(iot_ifName));  
+         syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
+      }
       memset(iot_primaryAddress, 0, sizeof(iot_primaryAddress));
       syscfg_get(NULL, "iot_ipaddr", iot_primaryAddress, sizeof(iot_primaryAddress));
 

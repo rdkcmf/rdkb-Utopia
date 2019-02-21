@@ -999,7 +999,10 @@ int prepare_dhcp_conf (char *input)
 	{
 		fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-optsfile=%s\n", l_cDns_Only_Prefix, DHCP_OPTIONS_FILE);
 	}
-    
+//Ethernet Backhaul changes for plume pods   
+#if defined (_COSA_INTEL_XB3_ARM_)
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:Plume,43,tag=1060\n");
+#endif 
 	if ((NULL == input) || 
 		((NULL != input) && (strncmp(input, "dns_only", 8)))) //not dns_only case
 	{
@@ -1048,7 +1051,11 @@ int prepare_dhcp_conf (char *input)
     	fprintf(stderr, "IOT_LOG : DHCP server configuring for IOT\n");
 
 	    syscfg_get(NULL, "iot_ifname", l_cIotIfName, sizeof(l_cIotIfName));
-	    syscfg_get(NULL, "iot_dhcp_start", l_cIotStartAddr, sizeof(l_cIotStartAddr));
+            if( strstr( l_cIotIfName, "l2sd0.106")) {
+                  memset(l_cIotIfName, 0, sizeof(l_cIotIfName));
+                  syscfg_get( NULL, "iot_brname", l_cIotIfName, sizeof(l_cIotIfName));
+            }
+            syscfg_get(NULL, "iot_dhcp_start", l_cIotStartAddr, sizeof(l_cIotStartAddr));
 	    syscfg_get(NULL, "iot_dhcp_end", l_cIotEndAddr, sizeof(l_cIotEndAddr));
 	    syscfg_get(NULL, "iot_netmask", l_cIotNetMask, sizeof(l_cIotNetMask));
 		
@@ -1097,14 +1104,14 @@ int prepare_dhcp_conf (char *input)
 	}
         
         // RDKB-15951 Mesh Bhaul vlan address pool
-   	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.1060\n");
+   	fprintf(l_fLocal_Dhcp_ConfFile, "interface=br403\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite\n"); 
 
 	// Add l2sd0.1060 custom dns server configuration
 	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 	{
-		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.1060,6,%s\n", l_cWan_Dhcp_Dns);
-		fprintf(stderr, "DHCP_SERVER : [l2sd0.1060] dhcp-option=l2sd0.1060,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(stderr, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
 	}
 
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.4090\n");
