@@ -982,7 +982,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 	}
 	else
   	{
-   		APPLY_PRINT("%s - Deletion of %s file handled in PSM init :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+   		APPLY_PRINT("%s - Deletion of %s file handled in PSM init \n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
 		//Delete at PSM init
 		//system( "rm -rf /nvram/.apply_partner_defaults" );
   	}
@@ -991,8 +991,8 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 	{
 		isNeedToApplyPartnersPSMDefault = 1;
 
-   		APPLY_PRINT("%s - %s file available so need to do partner's PSM member migration :%s\n", __FUNCTION__, PARTNER_DEFAULT_MIGRATE_PSM );
-   		APPLY_PRINT("%s - Deletion of %s file handled in PSM init :%s\n", __FUNCTION__, PARTNER_DEFAULT_MIGRATE_PSM );
+		APPLY_PRINT("%s - %s file available so need to do partner's PSM member migration \n", __FUNCTION__, PARTNER_DEFAULT_MIGRATE_PSM );
+		APPLY_PRINT("%s - Deletion of %s file handled in PSM init \n", __FUNCTION__, PARTNER_DEFAULT_MIGRATE_PSM );
 	}
 
 	if( ( 1 == isNeedToApplyPartnersDefault ) || \
