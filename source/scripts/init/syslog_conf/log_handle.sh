@@ -112,7 +112,7 @@ old_sysevtlog_handle(){
         #un-compress log file
         if [ -e $ZIP ]
         then
-	     if [ "x$BOX_TYPE" == "xXB3" ]; then
+	     if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
 	     else
 		     $RD_LOCK $ZIP -c "$UNCOMPRESS_CMD $ZIP"
@@ -122,14 +122,14 @@ old_sysevtlog_handle(){
              ZIP_SZ=0;
         fi
         $COMPRESS_CMD $NEW_ZIP ./* 
-        if [ "x$BOX_TYPE" == "xXB3" ]; then
+        if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 		$WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
 	else
 		$WT_LOCK $ZIP -c "mv $NEW_ZIP $ZIP"
 	fi
         for oldfile in $FILE ;
         do
-		if [ "x$BOX_TYPE" == "xXB3" ]; then
+		if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 		    echo "$WT_LOCK $oldfile -c rm -r $oldfile"
 		    $WT_LOCK $oldfile -c rm -r $oldfile
 		else
@@ -172,7 +172,7 @@ old_fwlog_handle(){
                 if [ "$filename" != "fwlog.$POSTFIX" ]
                 then
                     cp -f $1/$filename $2
-	            if [ "x$BOX_TYPE" == "xXB3" ]; then
+	            if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 	                    $WT_LOCK $1/$filename -c rm -r $1/$filename
 		    else
                   	  $WT_LOCK $1/$filename -c "rm -r $1/$filename"
@@ -345,7 +345,7 @@ compress()
         #un-compress log file
         if [ -e $ZIP ]
         then
-	     if [ "x$BOX_TYPE" == "xXB3" ]; then
+	     if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 		     $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP
 	    else
 		    $RD_LOCK $ZIP -c "$UNCOMPRESS_CMD $ZIP"
@@ -385,14 +385,14 @@ compress()
         fi
 
         $COMPRESS_CMD $NEW_ZIP ./* 
-        if [ "x$BOX_TYPE" == "xXB3" ]; then
+        if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 	        $WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
 	else
 	        $WT_LOCK $ZIP -c "mv $NEW_ZIP $ZIP"
 	fi
         for oldfile in $FILE ;
         do
-        if [ "x$BOX_TYPE" == "xXB3" ]; then
+        if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
             echo "$WT_LOCK $oldfile -c rm -r $oldfile"
             $WT_LOCK $oldfile -c rm -r $oldfile
 	else
@@ -413,7 +413,7 @@ uncompress()
     DIR=$2
     TAR=$1
     cd $DIR
-    if [ "x$BOX_TYPE" == "xXB3" ]; then
+    if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 	    $RD_LOCK $TAR -c $UNCOMPRESS_CMD $TAR
     else
 	    $RD_LOCK $TAR -c "$UNCOMPRESS_CMD $TAR"
