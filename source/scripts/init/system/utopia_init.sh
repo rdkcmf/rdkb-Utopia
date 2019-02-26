@@ -383,6 +383,16 @@ fi
    rm -f /nvram/server-cache.xml
    rm -f /nvram/server-duid
    rm -f /nvram/.keys/*
+   if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
+    # Remove onboard files
+    rm -f /nvram/.device_onboarded
+    rm -f /nvram/DISABLE_ONBOARD_LOGGING
+    if [ "$BOX_TYPE" = "XB3" ];then
+     rpcclient $ATOM_RPC_IP "rm -f /nvram/.device_onboarded"
+     rpcclient $ATOM_RPC_IP "rm -f /nvram/DISABLE_ONBOARD_LOGGING"
+    fi
+    rm -rf /nvram2/onboardlogs
+   fi
      touch /nvram/.apply_partner_defaults   
    #>>zqiu
    create_wifi_default
@@ -599,6 +609,9 @@ ip rule add from all iif l2sd0.106 lookup erouter
 # Check and set factory-reset as reboot reason 
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo_t "[utopia][init] Detected last reboot reason as factory-reset"
+   if [ -e "/usr/bin/onboarding_log" ]; then
+       /usr/bin/onboarding_log "[utopia][init] Detected last reboot reason as factory-reset"
+   fi
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 else
@@ -611,6 +624,9 @@ else
       if [ -f /nvram/restore_reboot ];then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+	 if [ -e "/usr/bin/onboarding_log" ]; then
+	     /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as restore-reboot"
+	 fi
          rm -f /nvram/restore_reboot
          rm -f /nvram/bbhm_bak_cfg.xml.prev
          rm -f /nvram/bbhm_cur_cfg.xml.prev
@@ -618,11 +634,17 @@ else
       elif [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_HW" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+	 if [ -e "/usr/bin/onboarding_log" ]; then
+	     /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as HW or Power-On Reset"
+	 fi
 #ifdef CISCO_XB3_PLATFORM_CHANGES
          ##Work around: RDKB3939-500: /nvram/RDKB3939-500_RebootNotByPwrOff file not created by utopia.service(atom side) in case of power off shut down
       elif [ "$MODEL_NUM" = "DPC3939" ] && [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_ATOM" ] && [ ! -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+	 if [ -e "/usr/bin/onboarding_log" ]; then
+	     /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as HW or Power-On Reset"
+	 fi
 ##LastRebootReason is set as BBU-Reset if the file /nvram/reboot.txt is present
       elif [ -f "/nvram/reboot.txt" ]; then
       	if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ] ||[ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
@@ -644,6 +666,9 @@ else
          if [ "$result" != "" ]; then
             syscfg set X_RDKCENTRAL-COM_LastRebootReason "pin-reset"
             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+	    if [ -e "/usr/bin/onboarding_log" ]; then
+	        /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as pin-reset"
+	    fi
          fi
 
 #ifdef CISCO_XB3_PLATFORM_CHANGES
@@ -651,8 +676,11 @@ else
 	         Punit_status=`grep -i "Last reset origin" /proc/P-UNIT/status | awk '{print $9}'`
 	         if [ "$Punit_status" = "RESET_ORIGIN_ATOM_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_ATOM" ];then
 	             syscfg set X_RDKCENTRAL-COM_LastRebootReason $Punit_status
-	             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"         
-	         fi
+	             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+		     if [ -e "/usr/bin/onboarding_log" ]; then
+		         /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as $Punit_status"
+		     fi
+		fi
          fi
 #endif
       fi

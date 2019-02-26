@@ -270,6 +270,9 @@ case "$1" in
         sysevent set firewall-restart 
         uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
 	echo_t "Lan_init_complete:$uptime"
+	if [ -e "/usr/bin/onboarding_log" ]; then
+	    /usr/bin/onboarding_log "Lan_init_complete:$uptime"
+	fi
      ;;
    
    ipv4-resync)
@@ -289,6 +292,9 @@ case "$1" in
    pnm-status | bring-lan)
         uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
 	echo_t "Lan_init_start:$uptime"
+	if [ -e "/usr/bin/onboarding_log" ]; then
+	    /usr/bin/onboarding_log "Lan_init_start:$uptime"
+	fi
    	if [ x = x"`sysevent get lan_handler_async`" ]; then
         eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
 	if [ "$INST" = "" ]
