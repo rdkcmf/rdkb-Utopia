@@ -137,6 +137,7 @@ AC_CONFIG_FILES(
 	source/services/lib/Makefile
 	source/services/Makefile
 	source/service_wan/Makefile
+    source/service_udhcpc/Makefile
 	source/service_dhcp/Makefile
 	source/service_multinet/Makefile
 	source/service_routed/Makefile
