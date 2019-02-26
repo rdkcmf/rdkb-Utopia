@@ -317,6 +317,14 @@ fi
    rm -f /nvram/server-cache.xml
    rm -f /nvram/server-duid
    rm -f /nvram/.keys/*
+   if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
+   	# Remove onboard files
+   	rm -f /nvram/.device_onboarded
+   	ATOM_RPC_IP=`cat /etc/device.properties | grep ATOM_ARPING_IP | cut -f 2 -d"="`
+   	rpcclient $ATOM_RPC_IP "rm -f /nvram/.device_onboarded"
+	rpcclient $ATOM_RPC_IP "rm -f /nvram/DISABLE_ONBOARD_LOGGING"
+   	rm -rf /nvram2/onboardlogs
+   fi
      touch /nvram/.apply_partner_defaults   
    #>>zqiu
    create_wifi_default

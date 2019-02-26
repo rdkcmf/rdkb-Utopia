@@ -68,6 +68,13 @@
 #include <sys/socket.h>
 #include <stdbool.h>
 #include <regex.h>
+#ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
+#include "cimplog.h"
+#define LOGGING_MODULE "Utopia"
+#define OnboardLog(...)                 onboarding_log(LOGGING_MODULE, __VA_ARGS__)
+#else
+#define OnboardLog(...)
+#endif
 
 #define RESOLVE_CONF_BIN_FULL_PATH  "/sbin/resolvconf"
 #define IP_UTIL_BIN_FULL_PATH "/sbin/ip.iproute2"
@@ -352,6 +359,7 @@ int update_dns_tofile(udhcpc_script_t *pinfo)
                     {
                         printf ("\nuptime  %s tok : %s\n",uptime,tok);
                         snprintf(buf,sizeof(buf),"echo %s DNS_server_IP_changed:%s >> %s",utc_time,uptime,ARM_CONSOLE_LOG_FILE);
+			OnboardLog("DNS_server_IP_changed:%s\n",uptime);
                         system(buf);
                         snprintf(buf,sizeof(buf),"echo %s >> /tmp/.ipv4dnsserver",tok);
                         system(buf);

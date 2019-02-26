@@ -69,6 +69,13 @@
 #include "asm-arm/arch-avalanche/generic/avalanche_pp_api.h"
 #include "netutils.h"
 #endif
+#ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
+#include "cimplog.h"
+#define LOGGING_MODULE "Utopia"
+#define OnboardLog(...)                 onboarding_log(LOGGING_MODULE, __VA_ARGS__)
+#else
+#define OnboardLog(...)
+#endif
 
 #define PROG_NAME       "SERVICE-WAN"
 #define ER_NETDEVNAME "erouter0"
@@ -491,6 +498,8 @@ static int wan_start(struct serv_wan *sw)
 	char buffer[64] = {0};
     get_dateanduptime(buffer,&uptime);
 	printf("%s Wan_init_start:%d\n",buffer,uptime);
+    OnboardLog("Wan_init_start:%d\n",uptime);
+
 #if defined (INTEL_PUMA7)
 	//Intel Proposed RDKB Generic Bug Fix from XB6 SDK
 	int pid = 0;
@@ -626,6 +635,7 @@ done:
     }
     get_dateanduptime(buffer,&uptime);
 	printf("%s Wan_init_complete:%d\n",buffer,uptime);
+	OnboardLog("Wan_init_complete:%d\n",uptime);
     return 0;
 }
 
@@ -1031,6 +1041,10 @@ static int wan_addr_set(struct serv_wan *sw)
         fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
+	int uptime = 0;
+	char buffer[64] = {0};
+	get_dateanduptime(buffer,&uptime);
+	OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
     }
 #endif
     if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS)
@@ -1049,6 +1063,10 @@ static int wan_addr_set(struct serv_wan *sw)
 #if  defined(INTEL_PUMA7) || defined(_COSA_BCM_ARM_) || defined(_PLATFORM_IPQ_)
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
+	int uptime = 0;
+	char buffer[64] = {0};
+	get_dateanduptime(buffer,&uptime);
+	OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
 #endif
 
     fprintf(stderr, "[%s] Synching DNS to ATOM...\n", PROG_NAME);
@@ -1094,6 +1112,10 @@ static int wan_addr_unset(struct serv_wan *sw)
 
     printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
+    int uptime = 0;
+    char buffer[64] = {0};
+    get_dateanduptime(buffer,&uptime);
+    OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
 
 #if defined(_PLATFORM_IPQ_)
     vsystem("killall -q dns_sync.sh");

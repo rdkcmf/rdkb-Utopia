@@ -26,7 +26,13 @@
 #include "lan_handler.h"
 #include "util.h"
 #include <sys/time.h>
-
+#ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
+#include "cimplog.h"
+#define LOGGING_MODULE "Utopia"
+#define OnboardLog(...)                 onboarding_log(LOGGING_MODULE, __VA_ARGS__)
+#else
+#define OnboardLog(...)
+#endif
 #define THIS			"/usr/bin/service_dhcp"
 #define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
@@ -73,6 +79,7 @@ void bring_lan_up()
 	char buffer[64]= { 0 };
 	get_dateanduptime(buffer,&uptime);
     fprintf(stderr, "%s Lan_init_start:%d\n",buffer,uptime);
+    OnboardLog("Lan_init_start:%d\n",uptime);
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_handler_async", 
 				 l_cAsyncId, sizeof(l_cAsyncId));
 
@@ -393,6 +400,8 @@ void ipv4_status(int l3_inst, char *status)
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
 			fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART\n");
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
+			get_dateanduptime(buffer,&uptime);
+			OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
         }
 //        system("firewall_nfq_handler.sh &");
     	sysinfo(&l_sSysInfo);
@@ -449,7 +458,9 @@ void ipv4_status(int l3_inst, char *status)
     fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler\n");
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
     get_dateanduptime(buffer,&uptime);
+    OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
     fprintf(stderr, "%s Lan_init_complete:%d\n",buffer,uptime);
+    OnboardLog("Lan_init_complete:%d\n", uptime);
 }
 
 void lan_restart()
