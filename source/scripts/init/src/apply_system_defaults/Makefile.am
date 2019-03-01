@@ -27,8 +27,7 @@ AM_LDFLAGS =  -lpthread -lz -lcjson \
                 $(top_builddir)/source/ulog/libulog.la \
                 $(top_builddir)/source/utapi/lib/libutapi.la \
                 $(top_builddir)/source/utctx/lib/libutctx.la
-
-if CCSP_ARCH_ARM
+if PLATFORM_HAL_SYNDICATION
 AM_LDFLAGS += "-lhal_platform -lsysevent -lutctx -lutapi -lhal_wifi" 
 endif
 
