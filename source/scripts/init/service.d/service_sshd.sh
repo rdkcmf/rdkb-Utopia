@@ -41,7 +41,14 @@
 
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
+source /etc/device.properties
 
+if [ "$BOX_TYPE" = "HUB4" ]; then
+   CMINTERFACE="erouter0"
+else
+   CMINTERFACE="wan0"
+fi
+    
 SERVICE_NAME="sshd"
 SELF_NAME="`basename $0`"
 
@@ -62,7 +69,8 @@ do_start() {
       #chmod 755 $DIR_NAME
    #fi
     CM_IP=""
-    CM_IP=`ifconfig wan0 | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+    CM_IP=`ifconfig ${CMINTERFACE} | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+
    # start a ssh daemon
    # echo "[utopia] Starting SSH daemon" > /dev/console
 #   dropbear -d /etc/dropbear_dss_host_key  -r /etc/dropbear_rsa_host_key
@@ -72,7 +80,7 @@ do_start() {
    if [ "$CM_IP" = "" ]
    then
       #wan0 should be in v4
-      CM_IP=`ifconfig wan0 | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+      CM_IP=`ifconfig ${CMINTERFACE} | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
    fi
    DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$"
    DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"

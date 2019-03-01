@@ -145,8 +145,12 @@ service_start ()
 	WAN_IP=""
 	
 	if [ "$NTPD_INTERFACE" == "erouter0" ]; then
-		sleep 30
-		WAN_IP=$(erouter_wait)
+		if [ "x$BOX_TYPE" = "xHUB4" ]; then
+			WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+		else
+			sleep 30
+			WAN_IP=$(erouter_wait)
+		fi
 	else
 		PROVISIONED_TYPE=""
 		PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')

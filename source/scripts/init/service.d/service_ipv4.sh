@@ -89,6 +89,9 @@ handle_l2_status () {
 
 	echo_t "service_ipv4 PARTIAL_STATUS:${PARTIAL_STATUS} READY_STATUS:${READY_STATUS}"
 
+    BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE | cut -f2 -d=`
+    echo_t "Box Type is $BOX_TYPE"
+
     if [ x${PARTIAL_STATUS} = x${3} -o x${READY_STATUS} = x${3} ] && [ x1 = x`sysevent get ${L2SERVICE_NAME}_$2-${L2_LOCAL_READY_PARAM}` ]; then
     #l2 up
         OUR_STATUS=`sysevent get ${SERVICE_NAME}_$1-status`
@@ -114,6 +117,7 @@ handle_l2_status () {
                 sysevent set ${SERVICE_NAME}_${1}-status $L3_UP_STATUS
 				echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART" 
 				sysevent set firewall-restart
+                if [ "$BOX_TYPE" != "HUB4" ]; then
 				if [ x4 = x$1 ]; then
                     echo "IPv4 address is set for brlan0 MOCA interface is UP"
 			
@@ -122,6 +126,7 @@ handle_l2_status () {
                         touch /tmp/moca_start
                     fi
                 fi
+               fi
             fi
         else
             #Otherwise, announce readiness for provisioning
@@ -139,7 +144,6 @@ handle_l2_status () {
             if [ "$BOX_TYPE" = "XB3" ] && [ "$BRIDGE_MODE" = "0" ]; then
                 echo "In Router mode:brlan0 initialization is done in PSM & brlan1 initialization is done in cosa_start_rem.sh"
             else
-                echo "In bridge mode:start brlan1 initialization"
                 sysevent set ${L2SERVICE_NAME}-up $2
             fi  
         fi        

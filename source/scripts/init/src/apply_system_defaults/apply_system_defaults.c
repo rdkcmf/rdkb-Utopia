@@ -49,7 +49,7 @@
 #include <arpa/inet.h>
 #include <syscfg/syscfg.h>
 #include "sysevent/sysevent.h"
-#if defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_)
 #include "platform_hal.h"
 #endif
 #include "cJSON.h"
@@ -635,7 +635,7 @@ static int getFactoryPartnerId
 		char*                       pValue
 	)
 {
-#if defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_)
 	if(0 == platform_hal_getFactoryPartnerId(pValue))
 	{
 		APPLY_PRINT("%s - %s\n",__FUNCTION__,pValue);
