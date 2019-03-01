@@ -938,7 +938,28 @@ fi
 		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
 			   echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
-           
+
+       elif [ "$BOX_TYPE" = "HUB4" ]; then
+           echo "interface=brlan6" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+                   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+                           echo "${PREFIX}""dhcp-option=brlan6,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+                   fi
+
+           echo "interface=brlan7" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+                   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+                           echo "${PREFIX}""dhcp-option=brlan7,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+                   fi
+
+           echo "interface=br403" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+
+                   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
+                           echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+                   fi
        fi
    fi
    #fi

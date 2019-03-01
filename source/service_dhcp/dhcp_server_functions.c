@@ -1149,11 +1149,44 @@ int prepare_dhcp_conf (char *input)
         }
 #endif
 
-#if defined (_XB7_PRODUCT_REQ_)
-        fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan112\n");
+#if defined (_HUB4_PRODUCT_REQ_)
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan6\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n");
         
         
+                // Add brlan112 custom dns server configuration
+                if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+                {
+                        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan6,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(stderr, "DHCP_SERVER : [brlan6] dhcp-option=brlan6,6,%s\n", l_cWan_Dhcp_Dns);
+                }
+
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan7\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n");
+
+                // Add brlan113 custom dns server configuration
+                if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+                {
+                        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan7,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(stderr, "DHCP_SERVER : [brlan7] dhcp-option=brlan7,6,%s\n", l_cWan_Dhcp_Dns);
+                }
+
+       fprintf(l_fLocal_Dhcp_ConfFile, "interface=br403\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite\n");
+
+        // Add br403 custom dns server configuration
+        if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+        {
+                fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
+                fprintf(stderr, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
+        }
+#endif
+
+#if defined (_XB7_PRODUCT_REQ_)
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan112\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n");
+
+
                 // Add brlan112 custom dns server configuration
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
                 {
@@ -1180,7 +1213,7 @@ int prepare_dhcp_conf (char *input)
                 fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
                 fprintf(stderr, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
         }
-#endif	
+#endif
 	if (TRUE == l_bCaptivePortal_Mode)
 	{
 		//In factory default condition, prepare whitelisting and redirection IP
