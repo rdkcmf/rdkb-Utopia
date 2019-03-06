@@ -827,6 +827,11 @@ fi
 	  prepare_dhcp_options_wan_dns	
    fi
    
+   nameserver=`grep "nameserver" $RESOLV_CONF | awk '{print $2}'|grep -v ":"|tr '\n' ','| sed -e 's/,$//'`
+   if [ "" != "$nameserver" ]; then
+       echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
+   fi
+   
    if [ "started" = $CURRENT_LAN_STATE ]; then
       calculate_dhcp_range $LAN_IPADDR $LAN_NETMASK
       echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
