@@ -87,6 +87,7 @@ token_t global_id;
 	#define LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
 #endif
 
+#define RETRY_COUNT 60
 #define APPLY_PRINT(fmt ...)   {\
    FILE *logfp = fopen ( LOG_FILE , "a+");\
    if (logfp)\
@@ -1503,6 +1504,7 @@ int main( int argc, char **argv )
    int   isNeedToApplyPartnersDefault = 1;
    int   isMigrationReq = 0;
    int   rc;
+   int retryCount = RETRY_COUNT;
 
    //Fill basic contents
    server_port = SE_SERVER_WELL_KNOWN_PORT;
@@ -1513,14 +1515,21 @@ int main( int argc, char **argv )
    syscfg_dirty = 0;
 
    parse_command_line(argc, argv);
-
-   global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id);
-   APPLY_PRINT("[Utopia] global_fd is %d\n",global_fd);
-   
-   if ( 0 == global_fd ) 
+   while ( retryCount && ((global_fd = sysevent_open(server_ip, server_port, SE_VERSION, SE_NAME, &global_id)) <= 0 ))
    {
+      struct timeval t;
+
+      APPLY_PRINT("[Utopia] global_fd is %d\n",global_fd);
+
       APPLY_PRINT("[Utopia] %s unable to register with sysevent daemon.\n", argv[0]);
       printf("[Utopia] %s unable to register with sysevent daemon.\n", argv[0]);
+
+      //sleep with subsecond precision
+      t.tv_sec = 0;
+      t.tv_usec = 100000;
+      select(0, NULL, NULL, NULL, &t);
+
+      retryCount--;
    }
 
    rc = syscfg_init();
