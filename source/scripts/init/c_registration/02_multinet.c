@@ -128,10 +128,10 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     NULL };
 #elif defined (_CBR_PRODUCT_REQ_) 
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchcbr.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchcbr.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-down|/etc/utopia/service.d/vlan_util_tchcbr.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/vlan_util_tchcbr.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchcbr.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchcbr.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/vlan_util_tchcbr.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_tchcbr.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
      NULL };
 #elif defined (_HUB4_PRODUCT_REQ_)
 const char* SERVICE_CUSTOM_EVENTS[] = {
@@ -143,21 +143,21 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     NULL };
 #elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-down|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "lnf-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
-    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchxb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_tchxb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/vlan_util_tchxb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_tchxb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "lnf-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_tchxb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
     NULL };
 
 #else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "multinet-syncNets|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-syncMembers|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-down|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "multinet-up|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "sw_ext_restore|/etc/utopia/service.d/service_multinet/handle_sw.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncNets|/etc/utopia/service.d/service_multinet_exec|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/service_multinet_exec|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/service_multinet_exec|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/service_multinet_exec|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "sw_ext_restore|/etc/utopia/service.d/service_multinet/handle_sw.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
     NULL };
 #endif
 #endif
