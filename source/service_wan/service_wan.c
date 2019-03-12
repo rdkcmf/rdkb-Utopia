@@ -347,7 +347,7 @@ static int dhcp_start(struct serv_wan *sw)
    {
 
     err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
-                 "-H DocsisGateway -p %s -B -b 1",
+                 "-H DocsisGateway -p %s -B -b 4",
                  sw->ifname, DHCPC_PID_FILE);
    }
    }
