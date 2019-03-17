@@ -40,6 +40,7 @@
 #include "util.h"
 #include <fcntl.h>
 #include "autoconf.h"
+#include "secure_wrapper.h"
 
 #ifdef MULTILAN_FEATURE
 #include "ccsp_psm_helper.h"
@@ -1038,7 +1039,7 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_prefix, sizeof(iface_prefix));
 
         /*enable ipv6 link local*/
-        vsystem("ip -6 link set dev %s up", iface_name);
+        v_secure_system("ip -6 link set dev %s up", iface_name);
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", iface_name, "1");
 #ifndef MULTILAN_FEATURE
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", iface_name, "1");
@@ -1100,7 +1101,7 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
         vsystem(cmd);
         bzero(ipv6_addr, sizeof(ipv6_addr));
 #else
-        if (vsystem("ip -6 addr add %s/%d dev %s valid_lft forever preferred_lft forever", 
+        if (v_secure_system("ip -6 addr add %s/%d dev %s valid_lft forever preferred_lft forever", 
                     ipv6_addr, prefix_len, iface_name) != 0) {
             fprintf(stderr, "%s set ipv6 addr error.\n", iface_name);
             return -1;
@@ -1161,7 +1162,7 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_addr, sizeof(iface_addr));
         if (iface_addr[0] != '\0') {
             get_prefix_info(iface_prefix, NULL, 0, &prefix_len);
-            vsystem("ip -6 addr del %s/%d dev %s", iface_addr, prefix_len, if_name);
+            v_secure_system("ip -6 addr del %s/%d dev %s", iface_addr, prefix_len, if_name);
         }
 #ifdef MULTILAN_FEATURE
         sysevent_set(si6->sefd, si6->setok, evt_name, "", 0);
@@ -1425,7 +1426,7 @@ static int dhcpv6s_start(struct serv_ipv6 *si6)
        return 0;
     }
 #endif
-    vsystem("%s start", DHCPV6_SERVER);
+    v_secure_system("%s start", DHCPV6_SERVER);
     return 0;
 }
 

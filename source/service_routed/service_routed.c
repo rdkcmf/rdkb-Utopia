@@ -62,7 +62,7 @@
 #include <ccsp_base_api.h>
 #include "ccsp_memory.h"
 #endif
-
+#include "secure_wrapper.h"
 #define PROG_NAME       "SERVICE-ROUTED"
 
 #define ZEBRA_PID_FILE  "/var/zebra.pid"
@@ -379,8 +379,8 @@ static int route_set(struct serv_routed *sr)
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
         sysevent_get(sr->sefd, sr->setok, evt_name, lan_if, sizeof(lan_if));
 
-        vsystem("ip -6 rule add iif %s table all_lans", lan_if);
-        vsystem("ip -6 rule add iif %s table erouter", lan_if);
+        v_secure_system("ip -6 rule add iif %s table all_lans", lan_if);
+        v_secure_system("ip -6 rule add iif %s table erouter", lan_if);
     }
 #endif
 
@@ -411,8 +411,8 @@ static int route_unset(struct serv_routed *sr)
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
         sysevent_get(sr->sefd, sr->setok, evt_name, lan_if, sizeof(lan_if));
 
-        vsystem("ip -6 rule del iif %s table all_lans", lan_if);
-        vsystem("ip -6 rule del iif %s table erouter", lan_if);
+        v_secure_system("ip -6 rule del iif %s table all_lans", lan_if);
+        v_secure_system("ip -6 rule del iif %s table erouter", lan_if);
     }
 
 #elif _HUB4_PRODUCT_REQ_
@@ -1070,10 +1070,10 @@ static int radv_start(struct serv_routed *sr)
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
     bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
 
-    vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+    v_secure_system("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
     printf("DHCPv6 is %s. Starting zebra Process\n", (bEnabled?"Enabled":"Disabled"));
 #else
-    vsystem("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+    v_secure_system("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
 #endif
 
     return 0;
@@ -1133,7 +1133,7 @@ static int rip_start(struct serv_routed *sr)
         return -1;
     }
 
-    if (vsystem("ripd -d -f %s -u root", RIPD_CONF_FILE) != 0) {
+    if (v_secure_system("ripd -d -f %s -u root", RIPD_CONF_FILE) != 0) {
         sysevent_set(sr->sefd, sr->setok, "rip-status", "error", 0);
         return -1;
     }

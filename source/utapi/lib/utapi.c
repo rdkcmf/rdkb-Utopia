@@ -58,6 +58,7 @@
 #include "utapi_util.h"
 #include "utapi_wlan.h"
 #include "DM_TR181.h"
+#include "secure_wrapper.h"
 #define UTOPIA_TR181_PARAM_SIZE 64
 #define UTOPIA_TR181_PARAM_SIZE1        256
 #define UTOPIA_TR181_PARAM_SIZE2        1024
@@ -630,10 +631,7 @@ int Utopia_GetDHCPServerLANHosts (UtopiaContext *ctx, int *count, dhcpLANHost_t 
 
 int Utopia_DeleteDHCPServerLANHost (char *ipaddr)
 {
-    char cmd[512];
-    
-    snprintf(cmd, sizeof(cmd), "/etc/init.d/service_dhcp_server.sh delete_lease %s", ipaddr);
-    system(cmd);
+    v_secure_system("/etc/init.d/service_dhcp_server.sh delete_lease %s", ipaddr);
     
     token_t se_token;
     int se_fd = s_sysevent_connect(&se_token);
@@ -5563,27 +5561,25 @@ int Utopia_SetWebUIAdminPasswd (UtopiaContext *ctx, char *username, char *cleart
         return ERR_INVALID_ARGS;
     }
     
-    char cmd[512];
-    FILE *fp;
+    FILE *fp = NULL;
     char hashed_password[PASSWORD_SZ];
 
-    sprintf(cmd, "/etc/init.d/service_httpd/httpd_util.sh generate_passwd \"%s\" \"%s\"",
-            username, cleartext_password);
-    fp = popen(cmd, "r");
+    fp = v_secure_popen("r", "/etc/init.d/service_httpd/httpd_util.sh generate_passwd \"%s\" \"%s\"",
+                        username, cleartext_password);
     
     if (NULL == fp) {
         return ERR_FILE_NOT_FOUND;
     }
     
     if (NULL == fgets(hashed_password, PASSWORD_SZ, fp)) {
-        pclose(fp);
+        v_secure_pclose(fp);
         return ERR_INVALID_VALUE;
     }
     
     int len = strlen(hashed_password);
     
     if (len <= 0) {
-        pclose(fp);
+        v_secure_pclose(fp);
         return ERR_INVALID_VALUE;
     }
     
@@ -5592,30 +5588,29 @@ int Utopia_SetWebUIAdminPasswd (UtopiaContext *ctx, char *username, char *cleart
         hashed_password[len - 1] = 0;
     }
 
-    pclose(fp); /*RDKB-7128, CID-33462; free unused resources*/
+    v_secure_pclose(fp); /*RDKB-7128, CID-33462; free unused resources*/
+    fp = NULL;
 
     UTOPIA_SET(ctx, UtopiaValue_HTTP_AdminPassword, hashed_password);
 
     UTOPIA_SETBOOL(ctx, UtopiaValue_HTTP_AdminIsDefault, !strcmp(cleartext_password, DEFAULT_HTTP_ADMIN_PASSWORD));
 
 
-    sprintf(cmd, "/etc/init.d/password_functions.sh admin_pw \"%s\"", 
-            cleartext_password);
-    fp = popen(cmd, "r");
+    fp = v_secure_popen("r", "/etc/init.d/password_functions.sh admin_pw \"%s\"", cleartext_password);
    
     if (NULL == fp) {
         return ERR_FILE_NOT_FOUND;
     }
    
     if (NULL == fgets(hashed_password, PASSWORD_SZ, fp)) {
-        pclose(fp);
+        v_secure_pclose(fp);
         return ERR_INVALID_VALUE;
     }
    
     len = strlen(hashed_password);
    
     if (len <= 0) {
-        pclose(fp);
+        v_secure_pclose(fp);
         return ERR_INVALID_VALUE;
     }
    
@@ -5624,27 +5619,25 @@ int Utopia_SetWebUIAdminPasswd (UtopiaContext *ctx, char *username, char *cleart
         hashed_password[len - 1] = 0;
     }
 
-    pclose(fp); /*RDKB-7128, CID-33462; free unused resources*/
+    v_secure_pclose(fp); /*RDKB-7128, CID-33462; free unused resources*/
 
     UTOPIA_SET(ctx, UtopiaValue_User_AdminPassword, hashed_password);
 
-    sprintf(cmd, "/etc/init.d/password_functions.sh root_pw \"%s\"", 
-            cleartext_password);
-    fp = popen(cmd, "r");
+    fp = v_secure_popen("r", "/etc/init.d/password_functions.sh root_pw \"%s\"", cleartext_password);
   
     if (NULL == fp) {
         return ERR_FILE_NOT_FOUND;
     }
     
     if (NULL == fgets(hashed_password, PASSWORD_SZ, fp)) {
-        pclose(fp); 
+        v_secure_pclose(fp); 
         return ERR_INVALID_VALUE;
     }
   
     len = strlen(hashed_password);
   
     if (len <= 0) {
-        pclose(fp);
+        v_secure_pclose(fp);
         return ERR_INVALID_VALUE;
     }
   
@@ -5653,7 +5646,7 @@ int Utopia_SetWebUIAdminPasswd (UtopiaContext *ctx, char *username, char *cleart
         hashed_password[len - 1] = 0;
     }
 
-    pclose(fp);/*RDKB-7128, CID-33462; free unused resources*/
+    v_secure_pclose(fp);/*RDKB-7128, CID-33462; free unused resources*/
 
     UTOPIA_SET(ctx, UtopiaValue_User_RootPassword, hashed_password);
 

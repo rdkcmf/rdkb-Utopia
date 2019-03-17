@@ -20,7 +20,7 @@ bin_PROGRAMS = service_wan
 
 AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils
 
-AM_LDFLAGS =  -lpthread -lz
+AM_LDFLAGS =  -lpthread -lz -lsecure_wrapper
 
 service_wan_SOURCES = service_wan.c
 
