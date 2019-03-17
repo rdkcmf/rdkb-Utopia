@@ -22,6 +22,7 @@ AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 AM_LDFLAGS = -L/var/tmp/pc-rdkb/lib
 AM_LDFLAGS += -lpthread
 AM_LDFLAGS += -lz
+AM_LDFLAGS += -lsecure_wrapper
 AM_LDFLAGS += -lsrvmgr
 AM_LDFLAGS += -lsyscfg
 AM_LDFLAGS += -lsysevent

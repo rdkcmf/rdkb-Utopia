@@ -34,7 +34,7 @@
 **********************************************************************/
 
 #include "hdk_device.h"
-
+#include "secure_wrapper.h"
 #include "hdk_util.h"
 #include "hdk_srv.h"
 #include "hnap12.h"
@@ -542,11 +542,8 @@ static HDK_XML_Member* s_GetConnectedClients(HDK_MOD_MethodContext* pMethodCtx, 
                     continue;
                 }
 
-                /* Format the wl command */
-                sprintf(pszCmd, "wl -i %s assoclist", WIFI_RADIO_ETHIF(ixRadio));
-
                 /* Spawn a process with the wl command */
-                if ((fdWlAssoc = popen(pszCmd, "r")) == 0)
+                if ((fdWlAssoc = v_secure_popen("r", "wl -i %s assoclist", WIFI_RADIO_ETHIF(ixRadio))) == 0)
                 {
                     continue;
                 }
@@ -590,7 +587,7 @@ static HDK_XML_Member* s_GetConnectedClients(HDK_MOD_MethodContext* pMethodCtx, 
                         HDK_XML_Set_Bool(psClient, HNAP12_Element_PN_Wireless, 1);
                     }
                 }
-                pclose(fdWlAssoc);
+                v_secure_pclose(fdWlAssoc);
             }
         }
 #endif

@@ -360,6 +360,7 @@ NOT_DEF:
 #include <ccsp_base_api.h>
 #include "ccsp_memory.h"
 #include "firewall_custom.h"
+#include "secure_wrapper.h"
 
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
@@ -12499,7 +12500,7 @@ int CleanIPConntrack(char *physAddress)
     memset(buf,0,200);
     memset(output,0,50);
     snprintf(buf, sizeof(buf), "ip nei show | grep brlan0 | grep -i %s | awk '{print $1}' ", physAddress);
-    system(buf);
+    v_secure_system("ip nei show | grep brlan0 | grep -i %s | awk '{print $1}' ", physAddress);
       if(!(fp = popen(buf, "r")))
         {
             return -1;
