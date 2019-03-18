@@ -157,4 +157,4 @@ DCM_SETTINGS_PARSED="/tmp/DCMSettingsParsedForLogUpload"
 
 TMP_LOG_UPLOAD_PATH="/tmp/log_upload"
 RAM_OOPS_FILE_LOCATION="/sys/fs/pstore/"
-RAM_OOPS_FILE="dmesg-ramoops-*"
+RAM_OOPS_FILE="*-ramoops*"
