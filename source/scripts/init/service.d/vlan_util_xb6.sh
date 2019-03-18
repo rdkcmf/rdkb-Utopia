@@ -775,10 +775,23 @@ sync_group_settings() {
         ifconfig $BRIDGE_NAME up
 
         # Force all needed IF interfaces to be UP as well
+        #ARRISXB6-9443 temp fix. Need to generalize and improve.
+        MAX_WAIT_PER_INTERFACE=10 ; # 10 *2 = 20 seconds
         for NEEDED_IF in $IF_LIST; do
-            ifconfig $NEEDED_IF up
+            num_iterations=1
+            while [ $num_iterations -le $MAX_WAIT_PER_INTERFACE ]; do
+                ifFound=`grep $NEEDED_IF /proc/net/dev`
+                if [ -n "$ifFound" ]; then
+                    ifconfig $NEEDED_IF up
+                    break;
+                fi
+                sleep 2
+                num_iterations=$(($num_iterations + 1))
+            done
+            if [ $num_iterations -ge $MAX_WAIT_PER_INTERFACE ]; then
+                echo "ERROR: Interface $NEEDED_IF did not come up"
+            fi
         done
-
         # Verify all NEEDED_IF is part of bridge
         brctl show
     fi
