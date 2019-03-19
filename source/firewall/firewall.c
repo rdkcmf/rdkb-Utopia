@@ -5368,7 +5368,7 @@ static int do_lan2wan_webfilters(FILE *filter_fp)
          FIREWALL_DEBUG("Entering do_lan2wan_webfilters\n");    
 if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
-#if defined (INTEL_PUMA7)
+#if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
@@ -5381,7 +5381,7 @@ if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_
    }
    if ( 0 == syscfg_get(NULL, "block_java", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
-#if defined (INTEL_PUMA7)
+#if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
@@ -5394,7 +5394,7 @@ if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_
    }
    if ( 0 == syscfg_get(NULL, "block_activex", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
-#if defined (INTEL_PUMA7)
+#if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
@@ -5407,7 +5407,7 @@ if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_
    }
    if ( 0 == syscfg_get(NULL, "block_cookies", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
-#if defined (INTEL_PUMA7)
+#if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
          snprintf(str, sizeof(str),
                   "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --content");
