@@ -49,7 +49,9 @@
 #include <arpa/inet.h>
 #include <syscfg/syscfg.h>
 #include "sysevent/sysevent.h"
+#if defined (_XB6_PRODUCT_REQ_)
 #include "platform_hal.h"
+#endif
 #include "cJSON.h"
 #include <unistd.h>
 #define PARTNERS_INFO_FILE  							"/nvram/partners_defaults.json"
