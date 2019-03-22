@@ -173,9 +173,12 @@ apply_config () {
     RT_TABLE=`expr $1 + 10`
     
     MASKBITS=`mask2cidr $CUR_IPV4_SUBNET`
-    #If it's ipv6 only mode, doesn't config ipv4 address. For ipv6 other things, we don't take care.
-    if [ xbrlan0 = x${IFNAME} ]; then
-        if [ "1" == "$SYSCFG_last_erouter_mode" ] || [ "3" == "$SYSCFG_last_erouter_mode" ]; then
+    # dslite_enabled will be set when RDKB_DSLITE compilation flag is set
+    DSLITE_ENABLED=`sysevent get dslite_enabled`
+    #If dslite is disabled and the lan bridge is brlan0, then do not assign IPv4 on brlan0 during ipv6 only mode.
+    #For other lan bridges assign IPv4 always.
+    if [ xbrlan0 = x${IFNAME} -a x1 != x$DSLITE_ENABLED ]; then
+	if [ "1" == "$SYSCFG_last_erouter_mode" ] || [ "3" == "$SYSCFG_last_erouter_mode" ]; then
 	    ip addr add $CUR_IPV4_ADDR/$MASKBITS broadcast + dev $IFNAME
         fi
     else
