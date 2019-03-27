@@ -457,7 +457,7 @@ ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
 ip6tables -t mangle -A PREROUTING -i $ecm_wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 
-/fss/gw/sbin/ulogd -c /fss/gw/etc/ulogd.conf -d
+#/fss/gw/sbin/ulogd -c /fss/gw/etc/ulogd.conf -d
 
 #echo_t "[utopia][init] Starting telnetd"
 #TELNET_ENABLE=`syscfg get mgmt_wan_telnetaccess`
