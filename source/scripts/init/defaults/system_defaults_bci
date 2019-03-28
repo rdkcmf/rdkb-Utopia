@@ -1115,3 +1115,6 @@ $gw_health=0
 
 #Router Advertisement Transmission Interval
 $ra_interval=3
+
+# 1:1 NAT feature
+$one_to_one_nat=true
