@@ -1257,6 +1257,7 @@ int main( int argc, char **argv )
    char  cmd[512] = {0};
    char  PartnerID[ PARTNER_ID_LEN ]  = { 0 };
    int   isNeedToApplyPartnersDefault = 1;
+   int   isMigrationReq = 0;
    int   rc;
 
    //Fill basic contents
@@ -1316,14 +1317,21 @@ int main( int argc, char **argv )
   if ( access( PARTNER_DEFAULT_APPLY_FILE , F_OK ) != 0 )  
   {
 	  isNeedToApplyPartnersDefault = 0;
-      APPLY_PRINT("%s - Device in Reboot mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+        APPLY_PRINT("%s - Device in Reboot mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+	if ( access(PARTNERS_INFO_FILE, F_OK ) != 0 ) // Fix: RDKB-21731, Check if is single build migration
+	{
+		isMigrationReq = 1;
+		APPLY_PRINT("%s - Device in Reboot mode, Syndication Migration Required\n", __FUNCTION__ )
+	}
+	
   }
   else
   {
+	  isMigrationReq = 1;
 	  APPLY_PRINT("%s - Device in FR mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
   }
   
-  if( 1 == isNeedToApplyPartnersDefault )  
+  if( (1 == isNeedToApplyPartnersDefault)||(isMigrationReq == 1) )  
   {
   	get_PartnerID ( PartnerID );
   }
