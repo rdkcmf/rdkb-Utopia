@@ -526,11 +526,11 @@ char * json_file_parse( char *path )
 
 	if( len > 0 )
  	{
-		 data = ( char* )malloc( len + 1 );
-
+		 data = ( char* )malloc( sizeof(char) * (len + 1) );
 		 //Check memory availability
 		 if ( data != NULL ) 
 		 {
+			memset( data, 0, ( sizeof(char) * (len + 1) ));
 			fread( data, 1, len, fileRead );
 		 } 
 		 else 
@@ -1084,7 +1084,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 		json = cJSON_Parse( data );
 		if( !json ) 
 		{
-			APPLY_PRINT(  "%s-%d : json file parser error : [%s]\n", __FUNCTION__,__LINE__, cJSON_GetErrorPtr() );
+			APPLY_PRINT(  "%s-%d : json file parser error\n", __FUNCTION__,__LINE__ );
 			return ;
 		} 
 		else
