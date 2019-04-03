@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <utctx/utctx.h>
@@ -183,8 +184,10 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
 
     /* Delete user from Linux DB if user is added there */
     if((TRUE == userCfg.bEnabled) && (TRUE == userCfg.RemoteAccessCapable)) {
-        sprintf(buf,"deluser %s",userCfg.Username);
-        system(buf);
+	if( (access( "/usr/sbin/deluser", F_OK ) != -1) || (access( "/usr/bin/deluser", F_OK ) != -1) ) {
+		sprintf(buf,"deluser %s",userCfg.Username);
+		system(buf);
+	}
     }
 
     if(count != 0)
@@ -294,9 +297,11 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     /* First delete the old username from Linux if its already there */
     /* This is required to take care of the change in username itself */
     if(0 != Utopia_GetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1),tmpBuf,STR_SZ)) {
-        sprintf(buf,"deluser %s",tmpBuf);
-        system(buf);
-        memset(buf,0,BUF_SZ);  
+    if( (access( "/usr/sbin/deluser", F_OK ) != -1) || (access( "/usr/bin/deluser", F_OK ) != -1) ) {
+		sprintf(buf,"deluser %s",tmpBuf);
+		system(buf);
+		memset(buf,0,BUF_SZ);
+	}
     }
     Utopia_SetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1), pUserCfg_t->Username);
     if(strcmp(pUserCfg_t->Username, "admin") != 0){
