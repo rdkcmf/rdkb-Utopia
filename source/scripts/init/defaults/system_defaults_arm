@@ -1098,10 +1098,6 @@ $CodeBigFirstEnabled=false
 #ManageNotifications
 $ManageableNotificationEnabled=true
 
-#IDS Feature disabled bydefault
-$IDSENABLE=false
-$IDSSCANTASK=.FILE.
-
 #UniqueTelemetryId default values
 $unique_telemetry_enable=false
 $unique_telemetry_tag=
