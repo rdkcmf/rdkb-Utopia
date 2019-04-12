@@ -83,6 +83,7 @@ UDHCPC_PID_FILE=/var/run/eRT_$BIN.pid
 UDHCPC_SCRIPT=/etc/utopia/service.d/service_wan/dhcp_link.sh
 #UDHCPC_OPTIONS="-O vendorspecific -V GW-iRouter"
 RESOLV_CONF="/etc/resolv.conf"
+RESOLV_CONF_TMP="/tmp/resolv_tmp.conf"
 LOG_FILE="/tmp/udhcp.log"
 IPV6_LOG_FILE="/var/log/ipv6.log"
 PLUGIN="/lib/libert_dhcpv4_plugin.so"
@@ -493,10 +494,19 @@ case "$1" in
             cat /tmp/foo.$$ > $RESOLV_CONF
             rm -f /tmp/foo.$$
          else
-           # Removing IPV4 and IPV6 DNS server config to retaing XDNS config entry rather than complete empty over writing of resolv.conf file  
-	   sed -i '/domain/d' "$RESOLV_CONF"
-	   sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF"
-	   sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF"
+           # Removing IPV4 and IPV6 DNS server config to retaing XDNS config entry rather than complete empty over writing of resolv.conf file 
+	   cp $RESOLV_CONF $RESOLV_CONF_TMP 
+	   sed -i '/domain/d' "$RESOLV_CONF_TMP"
+	   sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
+	   sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF_TMP"
+
+	   N=""
+	   while read line; do
+	   N="${N}$line
+"
+	  done < $RESOLV_CONF_TMP
+	  echo -n "$N" > "$RESOLV_CONF"
+	  rm -rf $RESOLV_CONF_TMP
          fi
 
          if [ -n "$domain" ] ; then
