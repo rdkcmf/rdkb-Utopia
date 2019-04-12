@@ -35,7 +35,7 @@
 #######################################################################
 
 RESOLV_CONF=/etc/resolv.conf
-
+RESOLV_CONF_TMP="/tmp/resolv_tmp.conf"
 
 #-----------------------------------------------------------------
 # set the resolv.conf file
@@ -45,15 +45,25 @@ prepare_resolv_conf () {
    WAN_DOMAIN=`syscfg get  wan_domain`
    NAMESERVER1=`syscfg get nameserver1`
    NAMESERVER2=`syscfg get nameserver2`
-   
+  
+   cp $RESOLV_CONF $RESOLV_CONF_TMP
+ 
    if [ "" != "$WAN_DOMAIN" ] ; then
-       sed -i '/domain/d' "$RESOLV_CONF"
+       sed -i '/domain/d' "$RESOLV_CONF_TMP"
    fi
 
        
-       if [[ ( "0.0.0.0" != "$NAMESERVER1  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
-       		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF"
+       if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
+       		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
        fi
+
+   N=""
+   while read line; do
+   N="${N}$line
+"
+   done < $RESOLV_CONF_TMP
+   echo -n "$N" > "$RESOLV_CONF"
+   rm -rf $RESOLV_CONF_TMP
 
    
      

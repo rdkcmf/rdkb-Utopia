@@ -63,6 +63,7 @@ source /etc/utopia/service.d/log_capture_path.sh
 
 PID="($$)"
 RESOLV_CONF="/etc/resolv.conf"
+RESOLV_CONF_TMP="/tmp/resolv_tmp.conf"
 
 #------------------------------------------------------------------
 # do_start_static
@@ -78,17 +79,27 @@ do_start_static() {
    NAMESERVER3=`syscfg get nameserver3`
    NAMESERVER_V6=`sysevent get ipv6_nameserver`
 
+   cp $RESOLV_CONF $RESOLV_CONF_TMP
+
    if [ "" != "$WAN_DOMAIN" ] ; then
-       sed -i '/domain/d' "$RESOLV_CONF"
+       sed -i '/domain/d' "$RESOLV_CONF_TMP"
    fi
 
-   if [[ ( "0.0.0.0" != "$NAMESERVER1  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) || ( "0.0.0.0" != "$NAMESERVER3"  &&  "" != "$NAMESERVER3" ) ]] ; then
-       		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF"
+   if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) || ( "0.0.0.0" != "$NAMESERVER3"  &&  "" != "$NAMESERVER3" ) ]] ; then
+       		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
    fi
 
    if [ "0.0.0.0" != "$NAMESERVER_V6" ]  && [ "" != "$NAMESERVER_V6" ]; then
-   		sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF"
+   		sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF_TMP"
    fi
+
+   N=""
+   while read line; do
+   N="${N}$line
+"
+   done < $RESOLV_CONF_TMP
+   echo -n "$N" > "$RESOLV_CONF"
+   rm -rf $RESOLV_CONF_TMP
 
    if [ "" != "$WAN_DOMAIN" ] ; then
       echo "search $WAN_DOMAIN" >> $RESOLV_CONF
