@@ -1056,8 +1056,8 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
                     ipv6_addr, prefix_len, iface_name) != 0) {
             fprintf(stderr, "%s set ipv6 addr error.\n", iface_name);
             return -1;
-#endif
         }
+#endif
     }
 
     return 0;
