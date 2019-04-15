@@ -247,10 +247,10 @@ apply_config () {
     ip route add table all_lans $SUBNET/$MASKBITS dev $IFNAME
 
     # bind 161/162 port to brlan0 interface
-    if [ xbrlan0 = x${IFNAME} ]; then
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 161
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 162
-    fi
+    #if [ xbrlan0 = x${IFNAME} ]; then
+    #    snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 161
+    #    snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 162
+    #fi
     
     #I can't find other way to do this. Just put here temporarily.
     if [ xbrlan0 = x${IFNAME} ]; then
@@ -301,10 +301,10 @@ remove_config () {
     ip route del table all_lans $SUBNET/$MASKBITS dev $IFNAME
 
     # del 161/162 port from brlan0 interface when it is teardown
-    if [ xbrlan0 = x${IFNAME} ]; then
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 161
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 162
-    fi
+    #if [ xbrlan0 = x${IFNAME} ]; then
+    #    snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 161
+    #    snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 162
+    #fi
 
     # END ROUTING TODO
     sysevent set ${SERVICE_NAME}_${1}-ipv4addr 
