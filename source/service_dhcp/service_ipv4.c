@@ -100,7 +100,7 @@ void remove_config(int l3_inst)
 	executeCmd(l_cSysevent_Cmd);	
 
     // del 161/162 port from brlan0 interface when it is teardown
-	if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
+	/*if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
 	{
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
 				 "snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a %s -c SNMPA_DELETE_SOCKET_ENTRY -i %s -p 161", 
@@ -113,7 +113,7 @@ void remove_config(int l3_inst)
 				 l_cCur_Ipv4_Addr, l_cIfName);
 
 		executeCmd(l_cSysevent_Cmd);	
-    }
+      }*/
 
     //END ROUTING TODO
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4addr", l3_inst);    
@@ -559,7 +559,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 
     // bind 161/162 port to brlan0 interface
 	// del 161/162 port from brlan0 interface when it is teardown
-    if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
+    /*if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
     {
         snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
                  "snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a %s -c SNMPA_ADD_SOCKET_ENTRY -i %s -p 161", 
@@ -572,7 +572,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 				 l_cCur_Ipv4_Addr, l_cIfName);
 
         executeCmd(l_cSysevent_Cmd);
-    }
+    }*/
 	
 	// assign lan interface a global ipv6 address
     // I can't find other way to do this. Just put here temporarily.
