@@ -1096,6 +1096,12 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
 #endif
     }
 
+#if defined (INTEL_PUMA7)
+    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    /*start zebra*/
+    sysevent_set(si6->sefd, si6->setok, "zebra-restart", NULL, 0);
+#endif
+	
     return 0;
 }
 
@@ -1452,9 +1458,13 @@ static int serv_ipv6_start(struct serv_ipv6 *si6)
         return -1;
     }
 #endif
+	
+    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+#ifndef INTEL_PUMA7
     /*start zebra*/
     sysevent_set(si6->sefd, si6->setok, "zebra-restart", NULL, 0);
-
+#endif
+	
     if (dhcpv6s_start(si6) != 0) {
         fprintf(stderr, "start dhcpv6 server error.\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
