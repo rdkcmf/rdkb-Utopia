@@ -295,6 +295,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
     unsigned int enabled_iface_num = 0;
     char evt_name[64] = {0};
     int  StaticDNSServersEnabled = 0;
+#if defined (INTEL_PUMA7)
+    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    char wan_st[16] = {0};
+#endif
 
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
@@ -345,6 +349,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
     if ( atoi(preferred_lft) > atoi(valid_lft) )
         snprintf(preferred_lft, sizeof(preferred_lft), "%s",valid_lft);
 
+#if defined (INTEL_PUMA7)
+    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    sysevent_get(sefd, setok, "wan-status", wan_st, sizeof(wan_st));	
+#endif
 
 #ifndef MULTILAN_FEATURE
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
@@ -382,7 +390,17 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
         if (strlen(prefix))
         {
+#if defined (INTEL_PUMA7)
+            //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+            if (strcmp(wan_st, "stopped") == 0)
+            	fprintf(fp, "   ipv6 nd prefix %s %s 0\n", prefix, valid_lft);
+            else
+            {
+#endif
             fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+#if defined (INTEL_PUMA7)
+            }
+#endif
         }
 
         if (strlen(orig_prefix))
@@ -403,8 +421,17 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fprintf(fp, "   ipv6 nd ra-interval 3\n");
 #endif
 
+#if defined (INTEL_PUMA7)
+        //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+        if (strcmp(wan_st, "stopped") == 0)
+        	fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
+        else
+        {
+#endif
         fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
-
+#if defined (INTEL_PUMA7)
+        }
+#endif
 
         syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
         if (strcmp(m_flag, "1") == 0)
