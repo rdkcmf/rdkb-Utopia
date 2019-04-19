@@ -35,14 +35,17 @@
 #######################################################################
 
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
-UTOPIA_PATH="/etc/utopia/service.d"
-source $UTOPIA_PATH/log_env_var.sh
-source /etc/utopia/service.d/ut_plat.sh
 
 if [ "$UPTIME" -lt 600 ]
 then
     exit 0
 fi
+
+UTOPIA_PATH="/etc/utopia/service.d"
+source $UTOPIA_PATH/log_env_var.sh
+source /etc/utopia/service.d/ut_plat.sh
+
+
 LAN_WAN_READY=`sysevent get start-misc`
 if [ "$LAN_WAN_READY" != "ready" ]
 then
