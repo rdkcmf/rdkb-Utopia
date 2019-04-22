@@ -1043,6 +1043,10 @@ $todays_reset_count=0
 $lastActiontakentime=0
 $process_memory_log_count=0
 
+# Webpa Parameters
+$X_RDKCENTRAL-COM_LastRebootReason=unknown
+$X_RDKCENTRAL-COM_LastRebootCounter=0
+
 $PeriodicFWCheck_Enable=false
 
 #Minimum memory threshold value
