@@ -344,7 +344,7 @@ case "$1" in
         fi
     #Assuming we have a variable set in system defaults for Multilan enabled build
     MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
-	if [ $MULTILAN_FEATURE = 1 ]; then
+	if [ "$MULTILAN_FEATURE" = "1" ]; then
     #This is to check for all the active instances of bridges that are created 
     find_active_brg_instances
 	fi
