@@ -9287,7 +9287,7 @@ static int prepare_xconf_rules(FILE *mangle_fp) {
 #if defined(_COSA_BCM_MIPS_)
    fprintf(mangle_fp, "-A FORWARD -m physdev --physdev-in emta0 -j ACCEPT\n");
 #endif
-   fprintf(mangle_fp, "-A FORWARD -m state --state NEW -j DSCP --set-dscp-class %s\n",initialoutputmark);
+   fprintf(mangle_fp, "-A FORWARD -o erouter0 -m state --state NEW -j DSCP --set-dscp-class %s\n",initialoutputmark);
 //#if ! defined (INTEL_PUMA7) && ! defined (_COSA_BCM_ARM_)
    fprintf(mangle_fp, "-A FORWARD -m state ! --state NEW -j DSCP  --set-dscp 0x0\n");
 //#endif
