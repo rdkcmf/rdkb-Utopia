@@ -199,7 +199,6 @@ LOCAL INT32 _igd_check_DefaultConnectionService (IN const CHAR *connecion_servic
 	CHAR udn[UPNP_UUID_LEN_BY_VENDER];
 	CHAR *service_ID;
 	INT32 i=0;
-	BOOL  check_service=BOOL_FALSE;
 	
 	if(connecion_service_string == NULL)
 		return ACTION_FAIL;
@@ -235,7 +234,7 @@ LOCAL INT32 _igd_check_DefaultConnectionService (IN const CHAR *connecion_servic
 	service_ID=strtok(check_string,",");
 	if(NULL==service_ID) 
 		return INVALID_SERVICE_ID;
-	service_ID = (CHAR *)((INT32)connecion_service_string + strlen(service_ID)+1);
+	service_ID = (CHAR *) &connecion_service_string[ strlen(service_ID)+1 ];
 	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"service ID:%s\n",service_ID);
 	/*check the ServiceID */
 	dev = &IGD_device;
@@ -246,7 +245,6 @@ LOCAL INT32 _igd_check_DefaultConnectionService (IN const CHAR *connecion_servic
 		{
 			if (strncmp(connection_service->serviceID, service_ID, strlen(connection_service->serviceID)) == 0)
 			{
-				check_service = BOOL_TRUE;
 				goto CHECK_INVALID_CONN_SERVICE_SELECTION;
 			}
 			i++;
