@@ -155,7 +155,7 @@ typedef struct dhcpv6s_pool_cfg {
     int     iana_enable;
     int     iana_amount;
     int     eui64_enable;
-    int     lease_time;
+    signed long     lease_time;
     int     iapd_enable;
     char    ia_prefix[INET6_ADDRSTRLEN];
     char    prefix_range_begin[64];
@@ -217,7 +217,8 @@ struct dhcpv6_tag tag_list[] =
     char val[32] = {0}; \
     snprintf(ns, sizeof(ns), "%s%s%lu%s%lu", unique_name, table1_name, (unsigned long)table1_index, table2_name, (unsigned long)table2_index); \
     syscfg_get(ns, parameter, val, sizeof(val)); \
-    if (val[0]) out = atoi(val); \
+    if ( strcmp(val,"4294967295") == 0) out = -1; \
+    else if ( val[0] ) out = atoi(val); \
 } \
 
 
@@ -1294,7 +1295,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
                     t1 = t2 = pref_time = valid_time = 0xFFFFFFFF;
                 } else {
                     t1 = dhcpv6s_pool_cfg.lease_time / 2;
-                    t2 = (unsigned long)(dhcpv6s_pool_cfg.lease_time * 80 /100);
+                    t2 = (unsigned long)(dhcpv6s_pool_cfg.lease_time * 80.0 /100);
                     pref_time = valid_time = dhcpv6s_pool_cfg.lease_time; 
                 }
                 fprintf(fp, "       T1 %u\n", t1);
