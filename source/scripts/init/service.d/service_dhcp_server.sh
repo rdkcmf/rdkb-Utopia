@@ -135,9 +135,20 @@ lan_status_change ()
          prepare_hostname
          # also prepare dns part of dhcp conf cause we are the dhcp server too
          prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
-		 echo_t "SERVICE DHCP : Start dhcp-server from lan status change"
+         echo_t "SERVICE DHCP : Start dhcp-server from lan status change"
+         # Get the DNS strict order option
+         DNSSTRICT_ORDER_ENABLE=`syscfg get DNSStrictOrder`
+
+         DNS_ADDITIONAL_OPTION=""
+         # Check for RFC Enable for DNS STRICT ORDER
+         if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+              DNS_ADDITIONAL_OPTION=" -o "
+              echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
+         else
+              echo "RFC DNSTRICT ORDER is not defined or Enabled"
+         fi
 	 if [ "$XDNS_ENABLE" = "true" ]; then
-		 $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF  #--enable-dbus
+		 $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
 	 fi
@@ -231,9 +242,21 @@ restart_request ()
         dnsserver_start_lxc
    fi
 
+   # Get the DNS strict order option
+   DNSSTRICT_ORDER_ENABLE=`syscfg get DNSStrictOrder`
+
+   DNS_ADDITIONAL_OPTION=""
+   # Check for RFC Enable for DNS STRICT ORDER
+   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+         DNS_ADDITIONAL_OPTION=" -o "
+         echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
+   else
+         echo "RFC DNSTRICT ORDER is not defined or Enabled"
+   fi
+
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
      if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF  #--enable-dbus
+		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
 	 fi
@@ -243,11 +266,12 @@ restart_request ()
       # the only dhcp server on the local network. This allows 
       # the dns server to give out a _requested_ lease even if
       # that lease is not found in the dnsmasq.leases file
-      	 if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
-	 else
+      # Get the DNS strict order option
+      if [ "$XDNS_ENABLE" = "true" ]; then
+		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
+      else
 		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
-	 fi
+      fi
 
       if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ] ; then
          echo "#!/bin/sh" > $TIME_FILE
@@ -436,10 +460,21 @@ dhcp_server_start ()
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
 
+   # Get the DNS strict order option
+   DNSSTRICT_ORDER_ENABLE=`syscfg get DNSStrictOrder`
+
+   DNS_ADDITIONAL_OPTION=""
+   # Check for RFC Enable for DNS STRICT ORDER
+   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+         DNS_ADDITIONAL_OPTION=" -o "
+         echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
+   else
+         echo "RFC DNSTRICT ORDER is not defined or Enabled"
+   fi
    
    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
    if [ "$XDNS_ENABLE" = "true" ]; then
-	$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF   #--enable-dbus
+	$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION   #--enable-dbus
    else
 	$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
    fi
@@ -454,7 +489,7 @@ dhcp_server_start ()
    			echo_t "$SERVER process failed to start sleep for 5 sec and restart it"
 			sleep 5
 			if [ "$XDNS_ENABLE" = "true" ]; then
-				$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF   #--enable-dbus
+				$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
 			else
 				$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
 			fi
@@ -575,9 +610,21 @@ dhcp_server_stop ()
         dnsserver_start_lxc
    fi
 
+   # Get the DNS strict order option
+   DNSSTRICT_ORDER_ENABLE=`syscfg get DNSStrictOrder`
+
+   DNS_ADDITIONAL_OPTION=""
+   # Check for RFC Enable for DNS STRICT ORDER
+   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+         DNS_ADDITIONAL_OPTION=" -o "
+         echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
+   else
+         echo "RFC DNSTRICT ORDER is not defined or Enabled"
+   fi
+
    # restart the dns server
    if [ "$XDNS_ENABLE" = "true" ]; then
-	$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF  #--enable-dbus
+	$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION #--enable-dbus
    else
 	$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
    fi
@@ -629,19 +676,31 @@ dns_start ()
    killall `basename $SERVER`
    rm -f $PID_FILE
 
+   # Get the DNS strict order option
+   DNSSTRICT_ORDER_ENABLE=`syscfg get DNSStrictOrder`
+
+   DNS_ADDITIONAL_OPTION=""
+   # Check for RFC Enable for DNS STRICT ORDER
+   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+         DNS_ADDITIONAL_OPTION=" -o "
+         echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
+   else
+         echo "RFC DNSTRICT ORDER is not defined or Enabled"
+   fi
+
    # we use dhcp-authoritative flag to indicate that this is
    # the only dhcp server on the local network. This allows
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
    if [ "stopped" = "$DHCP_STATE" ]; then
 	 if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF  #--enable-dbus
+		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
 	 else
 		$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
 	 fi
    else
    	 if [ "$XDNS_ENABLE" = "true" ]; then
-		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
+		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION #--enable-dbus
 	 else
 		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
 	 fi
@@ -656,7 +715,7 @@ dns_start ()
    				echo_t "$SERVER process failed to start sleep for 5 sec and restart it"
 				sleep 5
 				if [ "$XDNS_ENABLE" = "true" ]; then
-					$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
+					$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION #--enable-dbus
 				else
 					$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
 				fi

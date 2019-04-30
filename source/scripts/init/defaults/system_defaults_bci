@@ -1176,3 +1176,6 @@ $XconfUrl=
 $T2Enable=false
 $T2Version=1
 $T2ConfigURL=
+
+#Enable DNS strict order
+$DNSStrictOrder=false

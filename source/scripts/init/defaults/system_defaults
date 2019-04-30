@@ -1067,3 +1067,6 @@ $T2ConfigURL=
 $CDLModuleUrl=
 #low_queue_reboot_threshold
 $low_queue_reboot_threshold=0
+
+#Enable DNS strict order
+$DNSStrictOrder=false
