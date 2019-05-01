@@ -80,6 +80,10 @@ const char* const service_ipv6_component_id = "ccsp.ipv6";
 #define CMD_BUF_SIZE              255
 #endif
 
+#if defined(MULTILAN_FEATURE)
+#define BRIDGE_MODE_STRLEN          4
+#endif
+
 /*dhcpv6 client dm related sysevent*/
 #define COSA_DML_DHCPV6_CLIENT_IFNAME                 "erouter0"
 #define COSA_DML_DHCPV6C_PREF_SYSEVENT_NAME           "tr_"COSA_DML_DHCPV6_CLIENT_IFNAME"_dhcpv6_client_v6pref"
@@ -990,7 +994,9 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
     char iface_prefix[INET6_ADDRSTRLEN] = {0};
     unsigned int prefix_len = 0;
     char ipv6_addr[INET6_ADDRSTRLEN] = {0};
-    
+#if defined(MULTILAN_FEATURE)
+    char bridge_mode[BRIDGE_MODE_STRLEN]={0};
+#endif
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-divided", evt_val, sizeof(evt_val));
     if (strcmp(evt_val, "ready")) {
         fprintf(stderr, "[%s] ipv6 prefix is not divided.\n", __FUNCTION__);
@@ -1029,6 +1035,15 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
 
         sysevent_set(si6->sefd, si6->setok, "ipv6_linklocal", "up", 0);
 
+#if defined(MULTILAN_FEATURE)
+        syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode));
+
+        /*If in bridge mode and interface is brlan0, do not assign IPv6 address to it*/
+        if((l2_insts[i] == primary_l2_instance) && !strcmp(bridge_mode, "2"))
+        {
+            continue;
+        }
+#endif
         /*construct global ipv6 for lan interface*/
         compute_global_ip(iface_prefix, iface_name, ipv6_addr, sizeof(ipv6_addr));
 
