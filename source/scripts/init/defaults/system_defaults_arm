@@ -1099,6 +1099,11 @@ $CodeBigFirstEnabled=false
 #ManageNotifications
 $ManageableNotificationEnabled=true
 
+#Enable webConfig features
+$WebConfigRfcEnabled=true
+$PeriodicSyncCheckInterval=86400
+$ConfigFileNumberOfEntries=0
+
 #UniqueTelemetryId default values
 $unique_telemetry_enable=false
 $unique_telemetry_tag=
