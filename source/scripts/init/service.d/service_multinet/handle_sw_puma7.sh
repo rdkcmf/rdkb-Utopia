@@ -157,7 +157,7 @@ configure_all_switch_ports() {
 	esac
 }
 MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
-if [ $MULTILAN_FEATURE = 1 ]; then
+if [ "$MULTILAN_FEATURE" = "1" ]; then
 	case "$1" in
 	initialize)
 		configure_all_switch_ports up
