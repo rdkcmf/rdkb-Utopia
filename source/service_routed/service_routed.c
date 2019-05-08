@@ -683,14 +683,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
             //Do not write a config line for the prefix if it's blank
             if (strlen(prefix))
             {
-#if defined (INTEL_PUMA7)
                 //If WAN has stopped, advertise the prefix with lifetime 0 so LAN clients don't use it any more
                 if (strcmp(wan_st, "stopped") == 0)
                 {
                     fprintf(fp, "   ipv6 nd prefix %s 0 0\n", prefix);
                 }
                 else
-#endif
                 {
                     fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
                 }
@@ -723,14 +721,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif //_HUB4_PRODUCT_REQ_
 #endif
 
-#if defined (INTEL_PUMA7) || defined (_COSA_INTEL_XB3_ARM_)
             /* If WAN is stopped or not in IPv6 or dual stack mode, send RA with router lifetime of zero */
             if ( (strcmp(wan_st, "stopped") == 0) || (atoi(rtmod) != 2 && atoi(rtmod) != 3) )
             {
                 fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
             }
             else
-#endif
             {
 #ifdef _HUB4_PRODUCT_REQ_
         fprintf(fp, "   ipv6 nd ra-lifetime 540\n");
