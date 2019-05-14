@@ -765,6 +765,16 @@ if [ -f /usr/bin/rpcserver ];then
     /usr/bin/rpcserver &
 fi
 
+if [ -e /nvram/rbus_on_pending ]; then
+    touch /nvram/rbus
+    rm /nvram/rbus_on_pending
+elif [ -e /nvram/rbus_off_pending ]; then
+    if [ -e /nvram/rbus ]; then
+        rm /nvram/rbus
+    fi
+    rm /nvram/rbus_off_pending
+fi
+
 $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
 
 #echo_t "[utopia][init] started dropbear process"
