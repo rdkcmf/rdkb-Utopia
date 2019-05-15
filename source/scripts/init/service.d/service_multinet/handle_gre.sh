@@ -534,10 +534,14 @@ hotspot_down() {
     #bridgeFQDM=`psmcli get $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES`	
 	BRIDGE_INST_1=`psmcli get $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES`
 	BRIDGE_INST_2=`psmcli get $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES`
-	BRIDGE_INST_3=`psmcli get $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES`
-	BRIDGE_INST_4=`psmcli get $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES`
-	
-    bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
+#TCCBR doesnot support BRIDGE_INST_3 and BRIDGE_INST_4, skip this after completing RDKB-20382
+	if [ "$BOX_TYPE" = "TCCBR" ]; then
+		bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
+	else
+		BRIDGE_INST_3=`psmcli get $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES`
+		BRIDGE_INST_4=`psmcli get $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES`
+		bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
+	fi
 	
     remove_bridge_config ${inst} "`sysevent get gre_${inst}_current_bridges`"
 
@@ -570,31 +574,34 @@ hotspot_down() {
 hotspot_up() {
     inst=$1
     #eval `psmcli get -e bridgeFQDM $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
-    eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
-    bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
-	
-    if [ x"1" != x$ENABLED -o x"1" != x$GRE_ENABLED ]; then
-        exit 0
-    fi
-   
-    if [ "$BOX_TYPE" = "XB6" ] ; then
-        XFINITY_WIFI="dmcli eRT getv Device.WiFi.SSID.5.Enable"
-        SECURE_WIFI="dmcli eRT getv Device.WiFi.SSID.9.Enable"
+#TCCBR doesnot support BRIDGE_INST_3 and BRIDGE_INST_4, skip this after completing RDKB-20382
+	if [ "$BOX_TYPE" = "TCCBR" ]; then
+		eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+    bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
+	else
+		eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+		bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
 
-        XFINITY_WIFI_ENABLE=`$XFINITY_WIFI`
-        SECURE_WIFI_ENABLE=`$SECURE_WIFI`
-        isXfinityWiFiEnable=`echo "$XFINITY_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
-        isSecWiFiEnable=`echo "$SECURE_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
-    
-        if [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "false" ] ; then
-            bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"                                                                                                                                                         
-        elif [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "true" ] ; then
-            bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
-        elif [ "$isXfinityWiFiEnable" = "false" ] && [ "$isSecWiFiEnable" = "true" ] ; then
-            bridgeFQDM="$BRIDGE_INST_3,$BRIDGE_INST_4"
-        fi         
-    fi
-    
+		if [ x"1" != x$ENABLED -o x"1" != x$GRE_ENABLED ]; then
+			exit 0;
+		fi
+
+		if [ "$BOX_TYPE" = "XB6" ] ; then
+			XFINITY_WIFI="dmcli eRT getv Device.WiFi.SSID.5.Enable"
+			SECURE_WIFI="dmcli eRT getv Device.WiFi.SSID.9.Enable"
+			XFINITY_WIFI_ENABLE=`$XFINITY_WIFI`
+			SECURE_WIFI_ENABLE=`$SECURE_WIFI`
+			isXfinityWiFiEnable=`echo "$XFINITY_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
+			isSecWiFiEnable=`echo "$SECURE_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
+			if [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "false" ] ; then
+				bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
+			elif [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "true" ] ; then
+				bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
+			elif [ "$isXfinityWiFiEnable" = "false" ] && [ "$isSecWiFiEnable" = "true" ] ; then
+				bridgeFQDM="$BRIDGE_INST_3,$BRIDGE_INST_4"
+			fi
+		fi
+	fi
     #Set a delay for first SSID manipulation
     sysevent set hotspot_${inst}-delay 10
 
