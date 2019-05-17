@@ -1013,3 +1013,6 @@ $gw_health=0
 
 #Router Advertisement Transmission Interval
 $ra_interval=3
+
+#Cpu Mem Frag Interval
+$CpuMemFrag_Interval=4
