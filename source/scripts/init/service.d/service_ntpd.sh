@@ -186,6 +186,7 @@ service_start ()
 		systemctl stop ntpd.service
 		if [ -f "/nvram/ETHWAN_ENABLE" ];then
 		ntpd -c $NTP_CONF_QUICK_SYNC -x -gq
+		sysevent set ntp_time_sync 1
 		fi
 		systemctl start ntpd.service
 		systemctl stop systemd-timesyncd
