@@ -146,7 +146,12 @@ if [ -z $PERSISTENT_PATH ]; then
 fi
 
 LOG_FILE_FLAG="$LOG_FOLDER/filescreated"
+
+if [ "$BOX_TYPE" = "XB3" ];then
 CONSOLEFILE="$LOG_FOLDER/logs/ArmConsolelog.txt.0"
+else
+CONSOLEFILE="$LOG_FOLDER/logs/Consolelog.txt.0"
+fi
 
 SELFHEALFILE="$LOG_FOLDER/logs/SelfHeal.txt.0"
 SELFHEALFILE_BOOTUP="$LOG_SYNC_PATH/SelfHealBootUp.txt.0"
