@@ -1049,6 +1049,7 @@ $todays_reboot_count=0
 $todays_reset_count=0
 $lastActiontakentime=0
 $process_memory_log_count=0
+$selfheal_ping_DataBlockSize=56
 
 # Webpa Parameters
 $X_RDKCENTRAL-COM_LastRebootReason=unknown
