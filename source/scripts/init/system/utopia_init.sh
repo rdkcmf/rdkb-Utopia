@@ -559,6 +559,13 @@ else
          rm /nvram/reboot.txt
       	fi
 #endif
+##LastRebootReason is set as DOCSIS_SNMP_REBOOT if the file /nvram/CISCO_DOCSIS_SNMP_REBOOT is present
+      elif [ -f "/nvram/CISCO_DOCSIS_SNMP_REBOOT" ]; then
+      	if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ] ||[ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+         syscfg set X_RDKCENTRAL-COM_LastRebootReason "DOCSIS_SNMP_REBOOT"
+         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+         rm /nvram/CISCO_DOCSIS_SNMP_REBOOT
+      	fi
       else
          RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk '{ print $7 }'`
          result=`echo "$RESET_DURATION $BUTTON_THRESHOLD"| awk '{if ($1 > 0 && $1 < $2) print $1}'`
