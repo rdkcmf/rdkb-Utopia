@@ -138,8 +138,10 @@ case "$1" in
    erouter_mode-updated)
       #last_erouter_mode code in ipv4-*-status) may be wrong, when erouter_mode-updated happens after ipv4_*-status event
       SYSCFG_last_erouter_mode=`syscfg get last_erouter_mode`
+      SYSCFG_bridge_mode=`syscfg get bridge_mode`
       #if below value is 1, we already used old last_erouter_mode in ipv4_4-status
       SYSEVENT_ipv4_4_status_configured=`sysevent get ipv4_4_status_configured`
+      if [ "0" == "$SYSCFG_bridge_mode" ]; then
       if [ "0" != "$SYSCFG_last_erouter_mode" ] && [ 1x = "${SYSEVENT_ipv4_4_status_configured}"x ]; then
           echo_t "lan_handler.sh: erouter_mode-updated, restart lan"
           LAN_INST=`sysevent get primary_lan_l3net`
@@ -147,6 +149,7 @@ case "$1" in
           sysevent set ipv4-down $LAN_INST
           sysevent set ipv4-up $LAN_INST
       fi
+      fi 
       ;;
    ipv4_*-status)
         if [ x"up" = x${2} ]; then
