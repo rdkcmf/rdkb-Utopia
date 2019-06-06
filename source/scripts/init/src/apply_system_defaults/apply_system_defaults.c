@@ -796,7 +796,6 @@ void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram
             int etc_minor = 0;
             int nvram_major = 0;
             int nvram_minor = 0;
-            version_nvram = cJSON_GetObjectItem(properties_nvram,"version")->valuestring;
 
             if (version_etc)
             {        
