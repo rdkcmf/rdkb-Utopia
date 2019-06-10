@@ -88,14 +88,7 @@ echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_time_wait
 echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close
 echo "20" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close_wait
 echo "1800" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
-if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-  #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-  echo "16384" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
-else
-  # TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
-  #echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
-  echo "[$utc_time] [utopia][init] don't override nf_conntrack_max here, value is set at /lib/rdk/brcm.networking"
-fi
+echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
 
 echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 
