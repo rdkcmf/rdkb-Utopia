@@ -442,7 +442,8 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	char l_cArp_Ignore_File[64] = {0};
     int l_iRT_Table, l_iCIDR;   
 	FILE *l_fArp_Ignore = NULL;
-    
+   	char cWan_prefix[64] = {0} , cWan_prefixlen[8] = {0};
+	int iprefixlen; 
 	if (NULL == staticIpv4Addr || 0 == staticIpv4Addr[0])
 	{
 		fprintf(stderr, "Static IPv4 Address is empty get it from ipv4_%d-ipv4addr\n", 
@@ -591,6 +592,13 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 					 "lan_prefix_v6", l_cLan_PrefixV6, 
 					 sizeof(l_cLan_PrefixV6));
 
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan6_prefix", 
+		 cWan_prefix, sizeof(cWan_prefix));
+
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan6_prefixlen", 
+		 cWan_prefixlen, sizeof(cWan_prefixlen));
+
+   	 iprefixlen = atoi(cWan_prefixlen);
 		if (strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64))
 	        {
                   if (l_cLan_IpAddrv6_prev != NULL)
@@ -607,6 +615,13 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 					 l_cLan_IpAddrv6, l_cIfName);
 
 	        executeCmd(l_cSysevent_Cmd);
+		if ( (cWan_prefix != NULL ) && (cWan_prefixlen != NULL) )
+		{
+	        	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                	 "ip -6 addr add %s1/%d dev %s",cWan_prefix, iprefixlen,l_cIfName);	
+	       		 executeCmd(l_cSysevent_Cmd);
+		}
+
         }
     }
 

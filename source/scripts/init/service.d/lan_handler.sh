@@ -177,6 +177,8 @@ case "$1" in
         SYSEVT_lan_ipaddr_v6_prev=`sysevent get lan_ipaddr_v6_prev`
         SYSEVT_lan_ipaddr_v6=`sysevent get lan_ipaddr_v6`
         SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
+        SYSEVENT_WAN_IPV6_PREFIX=`sysevent get wan6_prefix`
+        SYSEVENT_WAN_IPV6_PREFIXLEN=`sysevent get wan6_prefixlen`
 
         if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] && [ "$SYSEVT_lan_ipaddr_v6" != "" ]
 	 then
@@ -184,6 +186,11 @@ case "$1" in
                 ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             fi
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+           
+	    if [ "$SYSEVENT_WAN_IPV6_PREFIX" != "" ] || [ "$SYSEVENT_WAN_IPV6_PREFIXLEN" != "" ];then
+                    ip -6 addr add ${SYSEVENT_WAN_IPV6_PREFIX}1/${SYSEVENT_WAN_IPV6_PREFIXLEN} dev $LAN_IFNAME
+            fi
+
         fi
     fi
 
@@ -390,6 +397,8 @@ case "$1" in
         SYSEVT_lan_ipaddr_v6_prev=`sysevent get lan_ipaddr_v6_prev`
         SYSEVT_lan_ipaddr_v6=`sysevent get lan_ipaddr_v6`
         SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
+	SYSEVENT_WAN_IPV6_PREFIX=`sysevent get wan6_prefix`
+	SYSEVENT_WAN_IPV6_PREFIXLEN=`sysevent get wan6_prefixlen`
         LAN_IFNAME=`sysevent get ipv4_${LAN_INST}-ifname`
 	    LAN_RESTARTED=`sysevent get lan_restarted`
 
@@ -398,6 +407,9 @@ case "$1" in
                 ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             fi
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+	    if [ "$SYSEVENT_WAN_IPV6_PREFIX" != "" ] || [ "$SYSEVENT_WAN_IPV6_PREFIXLEN" != "" ];then
+		    ip -6 addr add ${SYSEVENT_WAN_IPV6_PREFIX}1/${SYSEVENT_WAN_IPV6_PREFIXLEN} dev $LAN_IFNAME
+	    fi
         fi
 
 	sysevent set lan_restarted done
