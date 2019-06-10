@@ -220,12 +220,18 @@ apply_config () {
         SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
         LAN_IFNAME=$IFNAME
 
+        SYSEVENT_WAN_IPV6_PREFIX=`sysevent get wan6_prefix`
+        SYSEVENT_WAN_IPV6_PREFIXLEN=`sysevent get wan6_prefixlen`
+
         if [ "$SYSEVT_lan_ipaddr_v6_prev" != "$SYSEVT_lan_ipaddr_v6" ]; then
             if [ "$SYSEVT_lan_ipaddr_v6_prev" != "" ]; then
                 ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             fi
 
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
+	    if [ "$SYSEVENT_WAN_IPV6_PREFIX" != "" ] || [ "$SYSEVENT_WAN_IPV6_PREFIXLEN" != "" ];then
+                    ip -6 addr add ${SYSEVENT_WAN_IPV6_PREFIX}1/${SYSEVENT_WAN_IPV6_PREFIXLEN} dev $LAN_IFNAME
+            fi
         fi
     fi
 
