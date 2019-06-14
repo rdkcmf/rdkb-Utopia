@@ -376,6 +376,8 @@ $lan_domain=
 
 $StaticRouteCount=0
 
+#TCCBR-3929
+$logbackup_interval=30
 # dhcp server
 # ----------
 # dhcp_server_enabled  - if 0 then not enabled, if 1 then enabled
