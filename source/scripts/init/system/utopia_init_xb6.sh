@@ -219,6 +219,8 @@ FACTORY_RESET_REASON=false
 
 if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
        mkdir $SYSCFG_PERSISTENT_PATH
+       touch $SYSCFG_NEW_FILE
+       touch $SYSCFG_NEW_BKUP_FILE
 fi
 
 #syscfg_check -d $MTD_DEVICE
