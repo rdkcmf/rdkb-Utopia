@@ -551,6 +551,13 @@ else
       elif [ "$MODEL_NUM" = "DPC3939" ] && [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_ATOM" ] && [ ! -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+##LastRebootReason is set as BBU-Reset if the file /nvram/reboot.txt is present
+      elif [ -f "/nvram/reboot.txt" ]; then
+      	if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ] ||[ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+         syscfg set X_RDKCENTRAL-COM_LastRebootReason "BBU-Reset"
+         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+         rm /nvram/reboot.txt
+      	fi
 #endif
       else
          RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk '{ print $7 }'`
