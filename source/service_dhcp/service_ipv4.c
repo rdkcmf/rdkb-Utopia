@@ -102,18 +102,8 @@ void remove_config(int l3_inst)
     // del 161/162 port from brlan0 interface when it is teardown
 	/*if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
 	{
-		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-				 "snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a %s -c SNMPA_DELETE_SOCKET_ENTRY -i %s -p 161", 
-				 l_cCur_Ipv4_Addr, l_cIfName);
-
-		executeCmd(l_cSysevent_Cmd);	
-
-		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-				 "snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a %s -c SNMPA_DELETE_SOCKET_ENTRY -i %s -p 162", 
-				 l_cCur_Ipv4_Addr, l_cIfName);
-
-		executeCmd(l_cSysevent_Cmd);	
-      }*/
+		sysevent_set(g_iSyseventfd, g_tSysevent_token, "snmppa_socket_entry", "delete", 0);
+    }*/
 
     //END ROUTING TODO
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4addr", l3_inst);    
@@ -560,17 +550,8 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	// del 161/162 port from brlan0 interface when it is teardown
     /*if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
     {
-        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a %s -c SNMPA_ADD_SOCKET_ENTRY -i %s -p 161", 
-				 l_cCur_Ipv4_Addr, l_cIfName);
-
-        executeCmd(l_cSysevent_Cmd);
-
-        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a %s -c SNMPA_ADD_SOCKET_ENTRY -i %s -p 162", 
-				 l_cCur_Ipv4_Addr, l_cIfName);
-
-        executeCmd(l_cSysevent_Cmd);
+		sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4_address", l_cCur_Ipv4_Addr, 0);
+		sysevent_set(g_iSyseventfd, g_tSysevent_token, "snmppa_socket_entry", "add", 0);
     }*/
 	
 	// assign lan interface a global ipv6 address
