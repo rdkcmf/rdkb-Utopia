@@ -679,6 +679,13 @@ else
 	 if [ -e "/usr/bin/onboarding_log" ]; then
 	     /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as HW or Power-On Reset"
 	 fi
+      # created by docsis module when detect low queue condition that can lead to non-ssh 
+      elif [ -f "/nvram/low_level_queue_stuck_reboot" ];then
+      	if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ] ||[ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+         syscfg set X_RDKCENTRAL-COM_LastRebootReason "queue-stuck-reboot"
+         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+         rm -f /nvram/low_level_queue_stuck_reboot
+      	fi
 ##LastRebootReason is set as BBU-Reset if the file /nvram/reboot.txt is present
       elif [ -f "/nvram/reboot.txt" ]; then
       	if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ] ||[ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
