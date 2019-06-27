@@ -719,7 +719,8 @@ static int get_PartnerID( char *PartnerID)
 			}
 			else		
 			{
-				sprintf( PartnerID, "%s", "comcast" );
+                                APPLY_PRINT("%s:ERROR.....partnerId from factory also NULL setting it to unknown\n",__FUNCTION__);
+				sprintf( PartnerID, "%s", "unknown" );
 				APPLY_PRINT("%s - Failed Get factoryPartnerId so set it PartnerID as: %s\n", __FUNCTION__, PartnerID );
 			}
 		}
@@ -1451,6 +1452,41 @@ if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.I
 		}
 	}
 }
+#define RETRY_COUNT 3
+static void getPartnerIdWithRetry(char* buf, char* PartnerID)
+{
+        int i;
+        //RDKB-23050: Chnage: Adding few retries to get the partnerId from syscfg.db and if still fails fall back to factory_partnerId
+        for(i=0; i < RETRY_COUNT;i++)
+        {
+                //Get the partner ID
+                syscfg_get( NULL, "PartnerID", buf, sizeof( buf ));
+                if(buf[0] !=  '\0')
+                {
+                        strncpy( PartnerID, buf , strlen( buf ) );
+                        APPLY_PRINT("%s:partnerId read from syscfg=%s\n",__FUNCTION__,PartnerID);
+                        return;
+                }
+                else
+                {
+                        APPLY_PRINT("%s: will retry to get partnerId after 1 sec retrynum=%d\n",__FUNCTION__,i+1);
+                        sleep(1);
+                }
+        }
+        if(i == RETRY_COUNT)
+        {
+                APPLY_PRINT("%s: Did not get the partner Id with rety=%d also and fall back to factory_partnerId\n",__FUNCTION__,RETRY_COUNT);
+                //fall back to factory_partnerId
+                get_PartnerID(buf);
+                if( buf[ 0 ] != '\0' )
+                {
+                        strncpy( PartnerID, buf , strlen( buf ) );
+                }
+                APPLY_PRINT("%s:partnerId read from factory=%s\n",__FUNCTION__,PartnerID);
+
+        }
+        return;
+}
 
 /*
  * main()
@@ -1559,11 +1595,17 @@ int main( int argc, char **argv )
     }
 	else
 	{
+
+#if 0
 		//Partner ID is null so need to set default partner ID as "comcast"
 		memset( PartnerID, 0, sizeof( PartnerID ) );
 		sprintf( PartnerID, "%s", "comcast" );
 		set_syscfg_partner_values( PartnerID, "PartnerID" );
 		APPLY_PRINT("%s - PartnerID is NULL so set default partner :%s\n", __FUNCTION__, PartnerID );		
+#endif
+ 		//RDKB-23050: Change: Adding few retries to get the partnerId from syscfg.db and if still fails fall back to factory_partnerId
+                getPartnerIdWithRetry(buf,PartnerID);
+
 	}
   }
 
