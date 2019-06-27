@@ -127,35 +127,30 @@ init_snooper_sysevents () {
 
 read_greInst()
 {
-  inst=1
-  
-       XFINITY_WIFI="dmcli eRT getv Device.WiFi.SSID.5.Enable"
-       SECURE_WIFI="dmcli eRT getv Device.WiFi.SSID.9.Enable"
 
-       XFINITY_WIFI_ENABLE=`$XFINITY_WIFI`
-       SECURE_WIFI_ENABLE=`$SECURE_WIFI`
-       isXfinityWiFiEnable=`echo "$XFINITY_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
-       isSecWiFiEnable=`echo "$SECURE_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
-       
+       inst=1
+       count=0
+
    eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES WECB_BRIDGES dmsb.wecb.hhs_extra_bridges NAME $GRE_PSM_BASE.${inst}.$GRE_PSM_NAME`
-          
-        if [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "false" ] ; then
-            BRIDGE_INSTS="$BRIDGE_INST_1,$BRIDGE_INST_2"                                                                                                                                                         
-        elif [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "true" ] ; then
-            BRIDGE_INSTS="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
-        elif [ "$isXfinityWiFiEnable" = "false" ] && [ "$isSecWiFiEnable" = "true" ] ; then
-            BRIDGE_INSTS="$BRIDGE_INST_3,$BRIDGE_INST_4"
-        fi                                            
+ 
+        set '5 6 9 10'
+
+        for i in $@; do                           
+
+            count=`expr $count + 1`
+            eval bridgeinfo=\${BRIDGE_INST_${count}}
+                            
+            if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
+                  BRIDGE_INSTS="$BRIDGE_INSTS $bridgeinfo"
+            fi                      
+        done       
+
+       echo "BRIDGE_INSTS === $BRIDGE_INSTS"       
         
-        start=""                                                                                                                                                                                                                                                                                                                                
-        brinst="" 
-        OLD_IFS="$IFS"
-        IFS="${AB_DELIM}${AB_SSID_DELIM}"                                                                                                                                                                                                                                                                                                                          
         for i in $BRIDGE_INSTS; do                                                                                                                                                                                                                                                                                                                   
            brinst=`echo $i |cut -d . -f 4`                                                                                                                                                                                                                                                                                                         
            sysevent set multinet-start $brinst                                                                                                                                                                                                                                                                                                 
         done
-        IFS="$OLD_IFS"             
 }
 
 
@@ -435,30 +430,67 @@ update_bridge_frag_config () {
 #       $radios - radio instances
 #       $ssid_${instance}_radio - radio for the specified ssid
 get_ssids() {
-    #localifs=`psmcli get $HS_PSM_BASE.${1}.$GRE_PSM_LOCALIFS`		
+    if [ "$BOX_TYPE" = "XB6" ] ; then 
+
+     
+       localif_1=`psmcli get $HS_PSM_BASE.${1}.interface.1.$GRE_PSM_LOCALIFS`		
+       localif_2=`psmcli get $HS_PSM_BASE.${1}.interface.2.$GRE_PSM_LOCALIFS`	
+       localif_3=`psmcli get $HS_PSM_BASE.${1}.interface.3.$GRE_PSM_LOCALIFS`
+       localif_4=`psmcli get $HS_PSM_BASE.${1}.interface.4.$GRE_PSM_LOCALIFS`
+      
+       count=0
+       set '5 6 9 10' 
+
+       for i in $@; do                                                   
+            count=`expr $count + 1`                                                                            
+            eval localinfo=\${localif_${count}}                                  
+            if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then                                                                                                                                                                             
+                localifs="$localifs $localinfo"                                                                                             
+            fi                                                                                                                              
+       done            
+      
+        ssids=""                                                                                                                                                              
+        for i in $localifs; do                                                                                                                                                 
+            winst=`echo $i |cut -d . -f 4`                                                                                                                                     
+            ssids="$ssids $winst"                                                                                                                                              
+            radio=`dmcli eRT getv ${i}LowerLayers  | grep string,  | awk '{print $5}' | cut -d . -f 4 `                                                                         
+            expr match "$radios" '.*\b\('$radio'\)\b.*' > /dev/null                                                                                                             
+            if [ 0 != $? ]; then                                                                                                                                                
+              #add this radio instance                                                                                                                                         
+              radios="$radios $radio"  
+              eval mask_$radio=0                                                                                                                                               
+            fi                                                                                                                                                                  
+            eval ssid_${winst}_radio=$radio                                                                                                                                     
+         done                                                                                                                                                                 
+
+    else
+        #localifs=`psmcli get $HS_PSM_BASE.${1}.$GRE_PSM_LOCALIFS`		
 	localif_1=`psmcli get $HS_PSM_BASE.${1}.interface.1.$GRE_PSM_LOCALIFS`		
 	localif_2=`psmcli get $HS_PSM_BASE.${1}.interface.2.$GRE_PSM_LOCALIFS`	
 	localif_3=Device.WiFi.SSID.9.
 	localif_4=Device.WiFi.SSID.10.
 	localifs="$localif_1,$localif_2,$localif_3,$localif_4";
-    OLD_IFS="$IFS"
-    IFS=","
-    for i in $localifs; do
-        winst=`echo $i |cut -d . -f 4`
-        ssids="$ssids $winst"
+
+        ssids=""
+        OLD_IFS="$IFS"
+        IFS=","
+        for i in $localifs; do
+            winst=`echo $i |cut -d . -f 4`
+            ssids="$ssids $winst"
         #zqiu: Radio instance number should be get from the DML, instead of real radio id in bbhm +1
 		#radio=$(( `psmcli get $WIFI_PSM_PREFIX.${winst}.${WIFI_RADIO_INDEX}` + 1 ))
-        radio=`dmcli eRT getv ${i}LowerLayers  | grep string,  | awk '{print $5}' | cut -d . -f 4 `
-        expr match "$radios" '.*\b\('$radio'\)\b.*' > /dev/null
-        if [ 0 != $? ]; then
-            #add this radio instance
-            radios="$radios $radio"
-            eval mask_$radio=0
-        fi
-        eval ssid_${winst}_radio=$radio
+           radio=`dmcli eRT getv ${i}LowerLayers  | grep string,  | awk '{print $5}' | cut -d . -f 4 `
+           expr match "$radios" '.*\b\('$radio'\)\b.*' > /dev/null
+           if [ 0 != $? ]; then
+              #add this radio instance
+              radios="$radios $radio"
+              eval mask_$radio=0
+          fi
+          eval ssid_${winst}_radio=$radio
         
-    done
-    IFS="$OLD_IFS"
+         done
+         IFS="$OLD_IFS"
+   fi
 }
 
 #args: gre instance, true | false
@@ -587,19 +619,18 @@ hotspot_up() {
 		fi
 
 		if [ "$BOX_TYPE" = "XB6" ] ; then
-			XFINITY_WIFI="dmcli eRT getv Device.WiFi.SSID.5.Enable"
-			SECURE_WIFI="dmcli eRT getv Device.WiFi.SSID.9.Enable"
-			XFINITY_WIFI_ENABLE=`$XFINITY_WIFI`
-			SECURE_WIFI_ENABLE=`$SECURE_WIFI`
-			isXfinityWiFiEnable=`echo "$XFINITY_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
-			isSecWiFiEnable=`echo "$SECURE_WIFI_ENABLE" | grep value | cut -f3 -d : | cut -f2 -d " "`
-			if [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "false" ] ; then
-				bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
-			elif [ "$isXfinityWiFiEnable" = "true" ] && [ "$isSecWiFiEnable" = "true" ] ; then
-				bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
-			elif [ "$isXfinityWiFiEnable" = "false" ] && [ "$isSecWiFiEnable" = "true" ] ; then
-				bridgeFQDM="$BRIDGE_INST_3,$BRIDGE_INST_4"
-			fi
+
+                    eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES WECB_BRIDGES dmsb.wecb.hhs_extra_bridges NAME $GRE_PSM_BASE.${inst}.$GRE_PSM_NAME`
+                    count=0
+                    set '5 6 9 10'
+                    for i in $@; do
+                        count=`expr $count + 1`                                      
+                         eval bridgeinfo=\${BRIDGE_INST_${count}}                          
+                                                                               
+                         if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
+                             bridgeFQDM="$bridgeFQDM $bridgeinfo"                                            
+                         fi                                                     
+                     done      
 		fi
 	fi
     #Set a delay for first SSID manipulation
@@ -609,8 +640,10 @@ hotspot_up() {
     set_apisolation $inst
     
     brinst=""
+   if [ "$BOX_TYPE" != "XB6" ] ; then
     OLD_IFS="$IFS"
     IFS="${AB_DELIM}${AB_SSID_DELIM}"
+   fi
     for i in $bridgeFQDM; do
         brinst=`echo $i |cut -d . -f 4`
    if [ "$BOX_TYPE" = "XF3" ] ; then
@@ -628,7 +661,9 @@ hotspot_up() {
     
     sysevent set hotspot_${inst}-status started
     
+   if [ "$BOX_TYPE" != "XB6" ] ; then
     IFS="$OLD_IFS"
+   fi
 }
 
 check_ssids () {
@@ -817,7 +852,7 @@ case "$1" in
                fi
          fi
     if [ "$BOX_TYPE" = "XB6" ] ; then
-        read_greInst $1 $2
+        read_greInst 
     fi
         check_ssids 1
     
