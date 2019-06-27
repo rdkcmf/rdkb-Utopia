@@ -720,7 +720,12 @@ static int get_PartnerID( char *PartnerID)
 			else		
 			{
                                 APPLY_PRINT("%s:ERROR.....partnerId from factory also NULL setting it to unknown\n",__FUNCTION__);
+				
+#if defined (_XB6_PRODUCT_REQ_)
 				sprintf( PartnerID, "%s", "unknown" );
+#else
+				sprintf( PartnerID, "%s", "comcast" );
+#endif
 				APPLY_PRINT("%s - Failed Get factoryPartnerId so set it PartnerID as: %s\n", __FUNCTION__, PartnerID );
 			}
 		}
@@ -1595,15 +1600,16 @@ int main( int argc, char **argv )
 	else
 	{
 
-#if 0
+#if !defined (_XB6_PRODUCT_REQ_)
 		//Partner ID is null so need to set default partner ID as "comcast"
 		memset( PartnerID, 0, sizeof( PartnerID ) );
 		sprintf( PartnerID, "%s", "comcast" );
 		set_syscfg_partner_values( PartnerID, "PartnerID" );
 		APPLY_PRINT("%s - PartnerID is NULL so set default partner :%s\n", __FUNCTION__, PartnerID );		
-#endif
+#else
  		//RDKB-23050: Change: Adding few retries to get the partnerId from syscfg.db and if still fails fall back to factory_partnerId
                 getPartnerIdWithRetry(buf,PartnerID);
+#endif
 
 	}
   }
