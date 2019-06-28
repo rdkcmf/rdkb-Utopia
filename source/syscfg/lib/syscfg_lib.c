@@ -41,6 +41,7 @@
 #include <sys/user.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/mman.h>
 #ifdef SC_SYSV_SEM
 #include <sys/sem.h>
 #endif
@@ -64,6 +65,7 @@ static char name_p[MAX_NAME_LEN+1];                      // internal temp name b
 
 int load_from_file (const char *fname);
 int commit_to_file (const char *fname);
+int backup_file (const char *bkupFile, const char *localFile);
 
 /******************************************************************************
  *                External syscfg library access apis
@@ -326,14 +328,12 @@ int syscfg_getsz (long int *used_sz, long int *max_sz)
 int syscfg_commit ()
 {
     syscfg_shm_ctx *ctx = syscfg_ctx;
-    int rc, ret;
+    int rc;
 
     if (0 == syscfg_initialized || NULL == ctx) {
         return ERR_NOT_INITIALIZED;
     }
   
-    ret = access(SYSCFG_NEW_FILE, F_OK);
-      
     write_lock(ctx);
     commit_lock(ctx);
 
@@ -341,8 +341,6 @@ int syscfg_commit ()
         rc = commit_to_mtd(ctx->cb.store_path);
     } else {
         rc = commit_to_file(ctx->cb.store_path);
-        if( ! ret ) 
-            rc = commit_to_file(SYSCFG_NEW_FILE);
     }
     commit_unlock(ctx);
     write_unlock(ctx);
@@ -948,13 +946,13 @@ static char* _syscfg_get (const char *ns, const char *name)
 {
     syscfg_shm_ctx *ctx = syscfg_ctx;
 
+    rw_lock(ctx);
+
     if (ns) {
         snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
     } else {
         strncpy(name_p, name, sizeof(name_p));
     }
-
-    rw_lock(ctx);
 
     int index = hash(name_p) % SYSCFG_HASH_TABLE_SZ;
 
@@ -1054,15 +1052,16 @@ static int _syscfg_set (const char *ns, const char *name, const char *value, int
     int index, rc = 0;
     syscfg_shm_ctx *ctx = syscfg_ctx;
 
+    if (!nolock) {
+        rw_lock(ctx);
+    }
+
     if (ns) {
         snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
     } else {
         strncpy(name_p, name, sizeof(name_p));
     }
 
-    if (!nolock) {
-        rw_lock(ctx);
-    }
 
     index = hash(name_p) % SYSCFG_HASH_TABLE_SZ;
 
@@ -1127,15 +1126,17 @@ static int _syscfg_unset (const char *ns, const char *name, int nolock)
 {
     syscfg_shm_ctx *ctx = syscfg_ctx;
 
+
+    if (!nolock) {
+        rw_lock(ctx);
+    }
+
     if (ns) {
         snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
     } else {
         strncpy(name_p, name, sizeof(name_p));
     }
 
-    if (!nolock) {
-        rw_lock(ctx);
-    }
 
     int index = hash(name_p) % SYSCFG_HASH_TABLE_SZ;
     if (0 == ctx->ht[index]) {
@@ -1637,6 +1638,61 @@ int load_from_file (const char *fname)
     return 0;
 }
 
+/* Taking backup of file */
+int backup_file (const char *bkupFile, const char *localFile)
+{
+   int fd_from = open(localFile, O_RDONLY);
+  if(fd_from < 0)
+  {
+    ulog_error(ULOG_SYSTEM, UL_SYSCFG,"opening localfile failed during db backup");
+    return -1;
+  }
+  struct stat Stat;
+  if(fstat(fd_from, &Stat)<0)
+  {
+    ulog_error(ULOG_SYSTEM, UL_SYSCFG, "fstat call failed during db backup");
+
+    close(fd_from);
+    return -1;
+  }
+  void *mem = mmap(NULL, Stat.st_size, PROT_READ, MAP_SHARED, fd_from, 0);
+  if(mem == MAP_FAILED)
+  {
+    	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "mmap failed during db backup");
+        close(fd_from);
+        return -1;
+  }
+
+  int fd_to = creat(bkupFile, 0666);
+  if(fd_to < 0)
+  {
+    	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "creat sys call failed during db backup");
+        close(fd_from);
+        return -1;
+  }
+  ssize_t nwritten = write(fd_to, mem, Stat.st_size);
+  if(nwritten < Stat.st_size)
+  {
+    	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "write system call failed during db backup");
+
+	close(fd_from);
+        close(fd_to);
+        return -1;
+  }
+
+  if(close(fd_to) < 0) {
+        fd_to = -1;
+    	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "closing file descriptor failed during db backup");
+
+  	close(fd_from);
+        return -1;
+  }
+  close(fd_from);
+
+  /* Success! */
+  return 0;
+}
+
 /*
  * Notes
  *    syscfg space is locked by the caller (for write & commit)
@@ -1647,14 +1703,11 @@ int commit_to_file (const char *fname)
     int i, ct;
     char buf[2*MAX_ITEM_SZ];
     char tmpFile[32];
+    char str[128];
+    int ret=0;
     syscfg_shm_ctx *ctx = syscfg_ctx;
-  
-    if (strcmp(fname,SYSCFG_FILE))
-        snprintf(tmpFile,sizeof(tmpFile),SYSCFG_NEW_BKUP_FILE);
-    else
-        snprintf(tmpFile,sizeof(tmpFile),SYSCFG_LOCAL_FILE);
 
-    fd = open(tmpFile, O_CREAT | O_RDWR | O_TRUNC);
+    fd = open(fname, O_CREAT | O_RDWR | O_TRUNC);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }
@@ -1674,7 +1727,35 @@ int commit_to_file (const char *fname)
     _syscfg_file_unlock(fd);
 
     close(fd);
-    unlink(fname);
-    link (tmpFile, fname);
-    return 0;
+
+   ret=backup_file(SYSCFG_BKUP_FILE,fname);
+   if (ret == -1)
+   {
+    	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Backing up of syscfg failed");
+	// retrying again to take db back up
+	ret=0;
+        ret=backup_file(SYSCFG_BKUP_FILE,fname);
+	if ( ret == -1){
+		ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Retry of backing up syscfg also failed");
+	        return ret;
+	}
+
+   }
+
+   ret = access(SYSCFG_NEW_FILE, F_OK);
+   if ( ret == 0 ) {
+ 	  ret=backup_file(SYSCFG_NEW_FILE,fname);
+	  if (ret == -1)
+   	  {
+    		ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Backing up of syscfg failed");
+		// retrying again to take db back up
+		ret=0;
+        	ret=backup_file(SYSCFG_NEW_FILE,fname);
+		if ( ret == -1){
+			ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Retry of backing up syscfg also failed");
+	        	return ret;
+	        }
+   	  }
+   }
+   return 0;
 }

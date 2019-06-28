@@ -42,8 +42,8 @@
 
 #define SYSCFG_SHM_FILE "/tmp/syscfg.shmid"
 
-#define SYSCFG_FILE       "/nvram/syscfg.db"
-#define SYSCFG_LOCAL_FILE "/nvram/syscfg_bkup.db"
+#define SYSCFG_FILE       "/tmp/syscfg.db"
+#define SYSCFG_BKUP_FILE "/nvram/syscfg.db"
 
 #define SYSCFG_NEW_FILE "/opt/secure/data/syscfg.db"
 #define SYSCFG_NEW_BKUP_FILE "/opt/secure/data/syscfg_bkup.db"

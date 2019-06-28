@@ -191,8 +191,10 @@ FACTORY_RESET_KEY=factory_reset
 FACTORY_RESET_RGWIFI=y
 FACTORY_RESET_WIFI=w
 SYSCFG_MOUNT=/nvram
-SYSCFG_FILE=$SYSCFG_MOUNT/syscfg.db
-SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
+SYSCFG_TMP_LOCATION=/tmp
+SYSCFG_FILE=$SYSCFG_TMP_LOCATION/syscfg.db
+SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg.db
+SYSCFG_OLDBKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
@@ -240,27 +242,22 @@ CheckAndReCreateDB()
 	fi 
 }
 
-echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_FILE)"
-if [ -f $SYSCFG_FILE ]; then 
+echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
+if [ -f $SYSCFG_BKUP_FILE ]; then
+   cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
    fi
 else
-
-    if [ -f $SYSCFG_BKUP_FILE ]; then 
-	 echo "utopia_init:syscfg.db file is missing, copying backup file to syscfg.db"
- 	  cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
-    else
-   	   echo -n > $SYSCFG_FILE
-    fi
+   echo -n > $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
    fi
 
    #>>zqiu
-   echo_t "[utopia][init] need to reset wifi when ($SYSCFG_FILE) is not avaliable (for 1st time boot up)"
+   echo_t "[utopia][init] need to reset wifi when ($SYSCFG_BKUP_FILE ) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    #<<zqiu
    touch /nvram/.apply_partner_defaults
@@ -278,6 +275,10 @@ if [ "$SYSCFG_LAN_DOMAIN" == "utopia.net" ]; then
    echo_t "[utopia][init] Setting lan domain to NULL"
    syscfg set lan_domain ""
    syscfg commit
+fi
+
+if [ -f $SYSCFG_OLDBKUP_FILE ];then
+	rm -rf $SYSCFG_OLDBKUP_FILE
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
@@ -325,8 +326,8 @@ fi
 #mark the factory reset flag 'on'
    FACTORY_RESET_REASON=true 
    rm -f /nvram/partners_defaults.json 
-   rm -f $SYSCFG_FILE
    rm -f $SYSCFG_BKUP_FILE
+   rm -f $SYSCFG_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
