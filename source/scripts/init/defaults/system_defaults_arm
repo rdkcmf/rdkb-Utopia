@@ -1104,7 +1104,7 @@ $ManageableNotificationEnabled=true
 
 #Enable webConfig features
 $WebConfigRfcEnabled=true
-$PeriodicSyncCheckInterval=86400
+$PeriodicSyncCheckInterval=0
 $ConfigFileNumberOfEntries=0
 
 #UniqueTelemetryId default values
