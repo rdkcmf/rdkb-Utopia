@@ -1550,6 +1550,7 @@ int main( int argc, char **argv )
    {
       printf("[utopia] [init] committing default syscfg values\n");
       syscfg_commit();
+      APPLY_PRINT("Number_Of_Entries_Commited_to_Sysconfig_Database=%d\n",syscfg_dirty);
    }
 
    sysevent_close(global_fd, global_id);
