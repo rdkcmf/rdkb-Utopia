@@ -1158,3 +1158,20 @@ $CpuMemFrag_Interval=4
 
 #Partner support for NTP FQDN
 $new_ntp_enabled=false
+
+#Enable PresenceDetect
+$PresenceDetectEnabled=false
+
+#Enable Presence notification to webpa
+$notify_presence_webpa=false
+
+#Presence Detection intervals
+$X_RDKCENTRAL-COM_PresenceLeaveIPv4CheckInterval=37
+$X_RDKCENTRAL-COM_PresenceLeaveIPv6CheckInterval=43
+
+#Presence detection retry count
+$X_RDKCENTRAL-COM_PresenceLeaveIPv4Retries=3
+$X_RDKCENTRAL-COM_PresenceLeaveIPv6Retries=3
+
+#Presence Detection for inactive clients background interval
+$X_RDKCENTRAL-COM_BackgroundPresenceJoinInterval=67
