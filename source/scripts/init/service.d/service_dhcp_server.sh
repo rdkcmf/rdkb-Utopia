@@ -530,6 +530,27 @@ dhcp_server_start ()
 
    echo_t "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------"
    cat $RESOLV_CONF
+
+   # tcxb6-6420, in eth-wan mode,
+   # if DNS 127.0.0.0 is in resolv.conf, it means wan is not up, when we 
+   # later get a valid DNS, call gw_lan_refresh to force clients to update 
+   # its DNS
+   if [ -f "/nvram/ETHWAN_ENABLE" ]
+   then
+       has_dns_127=`grep 127.0.0.1 $RESOLV_CONF`
+       had_dns_127=`sysevent get clients-have-dns-127`
+       if [ "$has_dns_127" != "" ]
+       then
+           echo_t "clients have DNS 127"
+           sysevent set clients-have-dns-127 true
+       elif [ "$had_dns_127" = "true" ]
+       then
+           echo_t "We had DNS 127, now have a valid DNS, do gw_lan_refresh"
+           gw_lan_refresh
+           sysevent set clients-have-dns-127 false
+       fi
+   fi
+
 }
 
 #-----------------------------------------------------------------
