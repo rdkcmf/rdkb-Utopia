@@ -39,6 +39,8 @@
 UTOPIA_PATH=/etc/utopia/service.d
 SWITCH_HANDLER=$UTOPIA_PATH/service_multinet/handle_sw.sh
 INIT_DIR=/etc/utopia/registration.d
+BINPATH="/usr/bin"
+CCSPPATH="/usr/ccsp"
 
 echo_t "*******************************************************************"
 echo_t "*                                                                  "
@@ -485,6 +487,11 @@ else
 fi
 ifconfig l2sd0.500 192.168.101.1
 
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
+
+if [ "$BOX_TYPE" = "XB3" ];then
+	$BINPATH/dbus-daemon --config-file=$CCSPPATH/basic.conf --fork
+fi
 #start  ntpd server on ARM
 NTP_CONF=/etc/ntp.conf
 NTP_CONF_TMP=/tmp/ntp.conf
