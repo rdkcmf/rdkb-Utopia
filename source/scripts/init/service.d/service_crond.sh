@@ -90,7 +90,7 @@ service_start ()
    
    CRONTAB_DIR="/var/spool/cron/crontabs/"
    CRONTAB_FILE=$CRONTAB_DIR"root"
-   if [ ! -e $CRONTAB_FILE ] ; then
+   if [ ! -e $CRONTAB_FILE ] || [ ! -e "/etc/cron/cron.monthly" ]  ; then
       # make a pseudo random seed from our mac address
       # we will get the same values of random over reboots
       # but there will be divergence of values accross hosts
