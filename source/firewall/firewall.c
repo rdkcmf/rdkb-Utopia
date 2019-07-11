@@ -11608,6 +11608,23 @@ static void do_ipv6_filter_table(FILE *fp){
 
 v6GPFirewallRuleNext:
 
+{};// this statement is just to keep the compiler happy. otherwise it has  a problem with the label:
+   // add rules from sysevent
+      unsigned int iterator;
+      char         name[MAX_QUERY];
+
+      iterator = SYSEVENT_NULL_ITERATOR;
+      do {
+         name[0] = rule_query[0] = '\0';
+         sysevent_get_unique(sysevent_fd, sysevent_token,
+                                     "v6GeneralPurposeFirewallRule", &iterator,
+                                     name, sizeof(name), rule_query, sizeof(rule_query));
+         if ('\0' != rule_query[0]) {
+            fprintf(fp, "%s\n", rule_query);
+         }
+
+      } while (SYSEVENT_NULL_ITERATOR != iterator);
+
       //fprintf(fp, "-A INPUT -m limit --limit 10/sec -j REJECT --reject-with icmp6-adm-prohibited\n");
 
       // Open destination port 12368 on wan0 to allow dbus communication between tpg and cns 
