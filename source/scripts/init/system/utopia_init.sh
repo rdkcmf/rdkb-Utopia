@@ -611,6 +611,9 @@ else
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
          rm -f /nvram/restore_reboot
+         rm -f /nvram/bbhm_bak_cfg.xml.prev
+         rm -f /nvram/bbhm_cur_cfg.xml.prev
+         rm -f /nvram/syscfg.db.prev
       elif [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_HW" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
