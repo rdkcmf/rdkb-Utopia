@@ -87,6 +87,10 @@ extern "C"{
  */
 int syscfg_create(const char *file, long int max_file_sz, const char *mtd_device);
 
+int syscfg_reload(const char *file);
+int syscfg_commit_lock();
+int syscfg_commit_unlock();
+
 /*
  * Procedure     : syscfg_init
  * Purpose       : Initialization to attach current process to syscfg
