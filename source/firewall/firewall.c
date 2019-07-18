@@ -454,6 +454,26 @@ NOT_DEF:
 #endif //_HUB4_PRODUCT_REQ_
 
 #define SYSCTL_NF_CONNTRACK_HELPER "/proc/sys/net/netfilter/nf_conntrack_helper"
+#define V4_BLOCKFRAGIPPKT   "v4_BlockFragIPPkts"
+#define V4_PORTSCANPROTECT  "v4_PortScanProtect"
+#define V4_IPFLOODDETECT    "v4_IPFloodDetect"
+
+#define V6_BLOCKFRAGIPPKT   "v6_BlockFragIPPkts"
+#define V6_PORTSCANPROTECT  "v6_PortScanProtect"
+#define V6_IPFLOODDETECT    "v6_IPFloodDetect"
+
+#define PORT_SCAN_CHECK_CHAIN "PORT_SCAN_CHK"
+#define PORT_SCAN_DROP_CHAIN  "PORT_SCAN_DROP"
+
+static int do_blockfragippktsv4(FILE *fp);
+static int do_ipflooddetectv4(FILE *fp);
+static int do_portscanprotectv4(FILE *fp);
+
+static int do_blockfragippktsv6(FILE *fp);
+static int do_portscanprotectv6(FILE *fp);
+static int do_ipflooddetectv6(FILE *fp);
+
+
 FILE *firewallfp = NULL;
 
 //#define CONFIG_BUILD_TRIGGER 1
@@ -11266,6 +11286,11 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
 #if defined(MOCA_HOME_ISOLATION)
    prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
 #endif
+
+   do_blockfragippktsv4(filter_fp);
+   do_portscanprotectv4(filter_fp);
+   do_ipflooddetectv4(filter_fp);
+
    fprintf(raw_fp, "%s\n", "COMMIT");
    fprintf(mangle_fp, "%s\n", "COMMIT");
    fprintf(nat_fp, "%s\n", "COMMIT");
@@ -11936,6 +11961,10 @@ int prepare_ipv6_firewall(const char *fw_file)
         if (isContainerEnabled) {
             do_container_allow(filter_fp, mangle_fp, nat_fp, AF_INET6);
         }
+
+       do_blockfragippktsv6(filter_fp);
+       do_portscanprotectv6(filter_fp);
+       do_ipflooddetectv6(filter_fp);
 	
 	/* XDNS - route dns req though dnsmasq */
 #ifdef XDNS_ENABLE
@@ -13079,6 +13108,243 @@ memset(buf,0,200);
 		}
 		  pclose(fp);
 		  system("rm /tmp/conn_mac");  
+    }
+}
+
+/*
+ * Function to add IP Table rules regarding IPv4 Fragmented Packets
+ */
+static int do_blockfragippktsv4(FILE *fp)
+{
+    int rc=0, enable=0;
+    char query[MAX_QUERY]={0};
+
+    rc = syscfg_get(NULL, V4_BLOCKFRAGIPPKT, query, sizeof(query));
+    if (query[0] != '\0')
+    {
+        enable = atoi(query);
+    }
+    if (enable)
+    {
+        fprintf(fp, "-N FRAG_DROP\n");
+        fprintf(fp, "-F FRAG_DROP\n");
+        fprintf(fp, "-I FORWARD -m mark --mark 0x0800 -j FRAG_DROP\n");
+        fprintf(fp, "-I INPUT -m mark --mark 0x0800 -j FRAG_DROP\n");
+        fprintf(fp, "-A FRAG_DROP -i %s -j DROP\n", lan_ifname);
+        fprintf(fp, "-A FRAG_DROP -i erouter0 -o %s -j DROP\n", lan_ifname);
+
+    }
+}
+
+/*
+ * Function to add IP Table rules against Ports scanning
+ */
+static int do_portscanprotectv4(FILE *fp)
+{
+    int rc=0, enable=0;
+    char query[MAX_QUERY]={0};
+    rc = syscfg_get(NULL, V4_PORTSCANPROTECT, query, sizeof(query));
+    if (query[0] != '\0')
+    {
+        enable = atoi(query);
+    }
+    if (enable)
+    {
+        fprintf(fp,"-N %s\n",PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-N %s\n",PORT_SCAN_DROP_CHAIN);
+        fprintf(fp,"-F %s\n",PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-F %s\n",PORT_SCAN_DROP_CHAIN);
+        /*Adding rules in new chain */
+        fprintf(fp,"-A INPUT -j %s\n",PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A FORWARD -j %s\n",PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A %s -i erouter0 -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A %s -i lo -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A %s -p udp -m recent --name portscan --rcheck --seconds 86400 -j %s\n", PORT_SCAN_CHECK_CHAIN, PORT_SCAN_DROP_CHAIN);
+        fprintf(fp,"-A %s -p tcp -m recent --name portscan --rcheck --seconds 86400 -j %s\n", PORT_SCAN_CHECK_CHAIN, PORT_SCAN_DROP_CHAIN);
+        fprintf(fp,"-A %s -j DROP\n", PORT_SCAN_DROP_CHAIN);
+
+    }
+}
+
+/*
+ * Function to add IP Table rules against IPV4 Flooding
+ */
+static int do_ipflooddetectv4(FILE *fp)
+{
+    int rc=0, enable=0;
+    char query[MAX_QUERY]={0};
+    rc = syscfg_get(NULL, V4_IPFLOODDETECT, query, sizeof(query));
+    if (query[0] != '\0')
+    {
+        enable = atoi(query);
+    }
+    if (enable)
+    {
+        /* Creating New Chain */
+        fprintf(fp, "-N DOS\n");
+        fprintf(fp, "-N DOS_FWD\n");
+        fprintf(fp, "-N DOS_TCP\n");
+        fprintf(fp, "-N DOS_UDP\n");
+        fprintf(fp, "-N DOS_ICMP\n");
+        fprintf(fp, "-N DOS_ICMP_REQUEST\n");
+        fprintf(fp, "-N DOS_ICMP_REPLY\n");
+        fprintf(fp, "-N DOS_ICMP_OTHER\n");
+        fprintf(fp, "-N DOS_DROP\n");
+
+        fprintf(fp, "-F DOS\n");
+        fprintf(fp, "-F DOS_FWD\n");
+        fprintf(fp, "-F DOS_TCP\n");
+        fprintf(fp, "-F DOS_UDP\n");
+        fprintf(fp, "-F DOS_ICMP\n");
+        fprintf(fp, "-F DOS_ICMP_REQUEST\n");
+        fprintf(fp, "-F DOS_ICMP_REPLY\n");
+        fprintf(fp, "-F DOS_ICMP_OTHER\n");
+        fprintf(fp, "-F DOS_DROP\n");
+        /*Adding Rules in new chain */
+        fprintf(fp, "-A DOS  -d 224.0.0.0/4 -j RETURN\n");
+        fprintf(fp, "-A DOS -i lo -j RETURN\n");
+        fprintf(fp, "-A DOS -p tcp --syn -j DOS_TCP\n");
+        fprintf(fp, "-A DOS -p udp -m state --state NEW -j DOS_UDP\n");
+        fprintf(fp, "-A DOS -p icmp -j DOS_ICMP\n");
+        fprintf(fp, "-A DOS_TCP -p tcp --syn -m limit --limit 20/s --limit-burst 40 -j RETURN\n");
+        fprintf(fp, "-A DOS_TCP -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_UDP -p udp -m limit --limit 20/s --limit-burst 40 -j RETURN\n");
+        fprintf(fp, "-A DOS_UDP -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_ICMP -j DOS_ICMP_REQUEST\n");
+        fprintf(fp, "-A DOS_ICMP -j DOS_ICMP_REPLY\n");
+        fprintf(fp, "-A DOS_ICMP -j DOS_ICMP_OTHER\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -p icmp ! --icmp-type echo-request -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -p icmp --icmp-type echo-request -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -p icmp ! --icmp-type echo-reply -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -p icmp --icmp-type echo-reply -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -p icmp --icmp-type echo-request -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -p icmp --icmp-type echo-reply -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -p icmp -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_DROP -j DROP\n");
+        fprintf(fp, "-A DOS_FWD -j DOS\n");
+        fprintf(fp, "-A FORWARD -j DOS_FWD\n");
+        fprintf(fp, "-A INPUT -j DOS\n");
+    }
+}
+
+/*
+ * Function to add IP Table rules regarding Fragmented Packets
+ */
+static int do_blockfragippktsv6(FILE *fp)
+{
+    int rc=0, enable=0;
+    char query[MAX_QUERY]={0};
+    rc = syscfg_get(NULL, V6_BLOCKFRAGIPPKT, query, sizeof(query));
+    if (query[0] != '\0')
+    {
+        enable = atoi(query);
+    }
+    if (enable)
+    {
+        /* Creating New Chain */
+        fprintf(fp, "-N FRAG_DROP\n");
+        fprintf(fp, "-F FRAG_DROP\n");
+        /*Adding rules in new chain */
+        fprintf(fp, "-I FORWARD -m frag --fragmore --fragid 0x0:0xffffffff -j FRAG_DROP\n");
+        fprintf(fp, "-I INPUT -m frag --fragmore --fragid 0x0:0xffffffff -j FRAG_DROP\n");
+        fprintf(fp, "-A FRAG_DROP -j DROP\n");
+    }
+}
+
+/*
+ * Function to add IP Table rules against Ports scanning
+ */
+static int do_portscanprotectv6(FILE *fp)
+{
+    int rc=0, enable=0;
+    char query[MAX_QUERY]={0};
+
+    rc = syscfg_get(NULL, V6_PORTSCANPROTECT, query, sizeof(query));
+    if (query[0] != '\0')
+    {
+        enable = atoi(query);
+    }
+    if (enable)
+    {
+        /* Creating New Chain */
+        fprintf(fp,"-N %s\n",PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-F %s\n",PORT_SCAN_CHECK_CHAIN);
+        /*Adding rules in new chain */
+        fprintf(fp,"-A INPUT -j %s\n", PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A FORWARD -j %s\n", PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A %s -i erouter0 -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A %s -i lo -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
+    }
+}
+
+/*
+ * Function to add IP Table rules against IPV6 Flooding
+ */
+static int do_ipflooddetectv6(FILE *fp)
+{
+    int rc=0, enable=0;
+    char query[MAX_QUERY]={0};
+
+    rc = syscfg_get(NULL, V6_IPFLOODDETECT, query, sizeof(query));
+    if (query[0] != '\0')
+    {
+        enable = atoi(query);
+    }
+    if (enable)
+    {
+        /* Creating New Chain */
+        fprintf(fp, "-N DOS\n");
+        fprintf(fp, "-N DOS_FWD\n");
+        fprintf(fp, "-N DOS_TCP\n");
+        fprintf(fp, "-N DOS_UDP\n");
+        fprintf(fp, "-N DOS_ICMP\n");
+        fprintf(fp, "-N DOS_ICMP_REQUEST\n");
+        fprintf(fp, "-N DOS_ICMP_REPLY\n");
+        fprintf(fp, "-N DOS_ICMP_OTHER\n");
+        fprintf(fp, "-N DOS_DROP\n");
+
+        fprintf(fp, "-F DOS\n");
+        fprintf(fp, "-F DOS_FWD\n");
+        fprintf(fp, "-F DOS_TCP\n");
+        fprintf(fp, "-F DOS_UDP\n");
+        fprintf(fp, "-F DOS_ICMP\n");
+        fprintf(fp, "-F DOS_ICMP_REQUEST\n");
+        fprintf(fp, "-F DOS_ICMP_REPLY\n");
+        fprintf(fp, "-F DOS_ICMP_OTHER\n");
+        fprintf(fp, "-F DOS_DROP\n");
+        /*Adding Rules in new chain */
+        fprintf(fp, "-A DOS -i lo -j RETURN\n");
+        fprintf(fp, "-A DOS -p tcp --syn -j DOS_TCP\n");
+        fprintf(fp, "-A DOS -p udp -m state --state NEW -j DOS_UDP\n");
+        fprintf(fp, "-A DOS -p ipv6-icmp -j DOS_ICMP\n");
+        fprintf(fp, "-A DOS_TCP -p tcp --syn -m limit --limit 20/s --limit-burst 40 -j RETURN\n");
+        fprintf(fp, "-A DOS_TCP -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_UDP -p udp -m limit --limit 20/s --limit-burst 40 -j RETURN\n");
+        fprintf(fp, "-A DOS_UDP -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_ICMP -j DOS_ICMP_REQUEST\n");
+        fprintf(fp, "-A DOS_ICMP -j DOS_ICMP_REPLY\n");
+        fprintf(fp, "-A DOS_ICMP -j DOS_ICMP_OTHER\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -p ipv6-icmp ! --icmpv6-type echo-request -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -p ipv6-icmp --icmpv6-type echo-request -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -m frag --fragmore --fragid 0x0:0xffffffff -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -m frag --fraglast --fragid 0x0:0xffffffff -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REQUEST -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -p ipv6-icmp ! --icmpv6-type echo-reply -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -p ipv6-icmp --icmpv6-type echo-reply -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -m frag --fragmore --fragid 0x0:0xffffffff -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -m frag --fraglast --fragid 0x0:0xffffffff -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_REPLY -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -p ipv6-icmp --icmpv6-type echo-request -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -p ipv6-icmp --icmpv6-type echo-reply -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -p ipv6-icmp -m limit --limit 5/s --limit-burst 60 -j RETURN\n");
+        fprintf(fp, "-A DOS_ICMP_OTHER -j DOS_DROP\n");
+        fprintf(fp, "-A DOS_DROP -j DROP\n");
+        fprintf(fp, "-A DOS_FWD -j DOS\n");
+        fprintf(fp, "-A FORWARD -j DOS_FWD\n");
+        fprintf(fp, "-A INPUT -j DOS\n");
     }
 }
 
