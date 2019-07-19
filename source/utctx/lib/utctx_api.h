@@ -162,6 +162,8 @@ typedef enum _UtopiaValue
     UtopiaValue_NTP_Server1,
     UtopiaValue_NTP_Server2,
     UtopiaValue_NTP_Server3,
+    UtopiaValue_NTP_Server4,
+    UtopiaValue_NTP_Server5,
     UtopiaValue_NTP_DaylightEnable,
     UtopiaValue_NTP_DaylightOffset,
     UtopiaValue_RIP_Enabled,

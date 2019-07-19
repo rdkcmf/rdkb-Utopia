@@ -1133,3 +1133,6 @@ $one_to_one_nat=true
 
 #Cpu Mem Frag Interval
 $CpuMemFrag_Interval=4
+
+#Partner support for NTP FQDN
+$new_ntp_enabled=false

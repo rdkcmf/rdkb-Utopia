@@ -6745,6 +6745,12 @@ int Utopia_Set_DeviceTime_NTPServer(UtopiaContext *ctx, char *server, int index)
   case 3:
       UTOPIA_SET(ctx, UtopiaValue_NTP_Server3, tmp_server);
       break;
+  case 4:
+      UTOPIA_SET(ctx, UtopiaValue_NTP_Server4, tmp_server);
+      break;
+  case 5:
+      UTOPIA_SET(ctx, UtopiaValue_NTP_Server5, tmp_server);
+      break;
   }
 
   return SUCCESS;
@@ -6769,6 +6775,12 @@ int Utopia_Get_DeviceTime_NTPServer(UtopiaContext *ctx, char *server,int index)
       break;
   case 3:
       rc = Utopia_Get(ctx, UtopiaValue_NTP_Server3, server, UTOPIA_TR181_PARAM_SIZE);
+      break;
+  case 4:
+      rc = Utopia_Get(ctx, UtopiaValue_NTP_Server4, server, UTOPIA_TR181_PARAM_SIZE);
+      break;
+  case 5:
+      rc = Utopia_Get(ctx, UtopiaValue_NTP_Server5, server, UTOPIA_TR181_PARAM_SIZE);
       break;
   }
   if(rc)
