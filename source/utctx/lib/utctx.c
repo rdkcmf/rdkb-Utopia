@@ -285,6 +285,8 @@ static struct
     { Utopia_Type_Config, Utopia_Event_NTPClient_Restart,  Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ntp_server1",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_NTP_Server1 */
     { Utopia_Type_Config, Utopia_Event_NTPClient_Restart,  Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ntp_server2",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_NTP_Server2 */
     { Utopia_Type_Config, Utopia_Event_NTPClient_Restart,  Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ntp_server3",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_NTP_Server3 */
+    { Utopia_Type_Config, Utopia_Event_NTPClient_Restart,  Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ntp_server4",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_NTP_Server4 */
+    { Utopia_Type_Config, Utopia_Event_NTPClient_Restart,  Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ntp_server5",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_NTP_Server5 */
     { Utopia_Type_Config, Utopia_Event_NTPClient_Restart,  Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ntp_daylightenable",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_NTP_Daylight */
     { Utopia_Type_Config, Utopia_Event_NTPClient_Restart,  Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ntp_daylightoffset",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_NTP_DayOffset */
     { Utopia_Type_Config, Utopia_Event_Firewall_Restart |

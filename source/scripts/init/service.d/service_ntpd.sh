@@ -112,29 +112,47 @@ service_start ()
        return 0
    fi
 
-   if [ "x$SYSCFG_ntp_server1" = "x" ] || [ "x$SYSCFG_ntp_server1" = x"no_ntp_address" ]; then
-	if [ "x$PARTNER_ID" = "x" ]; then
+   if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
+       rm -rf $NTP_CONF_TMP
+       echo "SERVICE_NTPD : Creating NTP config"
+       echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
+       if [ "x$SYSCFG_ntp_server2" != "x" ]; then
+           echo "server $SYSCFG_ntp_server2" >> $NTP_CONF_TMP
+       fi
+       if [ "x$SYSCFG_ntp_server3" != "x" ]; then
+           echo "server $SYSCFG_ntp_server3" >> $NTP_CONF_TMP
+       fi
+       if [ "x$SYSCFG_ntp_server4" != "x" ]; then
+           echo "server $SYSCFG_ntp_server4" >> $NTP_CONF_TMP
+       fi
+       if [ "x$SYSCFG_ntp_server5" != "x" ]; then
+           echo "server $SYSCFG_ntp_server5" >> $NTP_CONF_TMP
+       fi
+   else
+       if [ "x$SYSCFG_ntp_server1" = "x" ] || [ "x$SYSCFG_ntp_server1" = x"no_ntp_address" ]; then
+	   if [ "x$PARTNER_ID" = "x" ]; then
 		echo "SERVICE_NTPD : PARTNER_ID is null, using the default ntp server."
 		SYSCFG_ntp_server1="ntp.ccp.xcal.tv"
-	else
+	   else
 		echo "NTP SERVER not available, not starting ntpd"
 		return 0
-	fi 
+           fi
 
-   fi
+       fi
 
        rm -rf $NTP_CONF_TMP
 	SYSCFG_ntp_server1=`echo $SYSCFG_ntp_server1 | cut -d ":" -f 1`
 # Create a config
 	echo "SERVICE_NTPD : Creating NTP config"
 	if [ -f "/nvram/ETHWAN_ENABLE" ];then
-	echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
-	echo "server time1.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-	echo "server time2.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-	echo "server time3.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-    else
-	echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
+	    echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
+	    echo "server time1.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+	    echo "server time2.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+	    echo "server time3.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+        else
+	    echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
 	fi
+   fi
 	if [ "x$SOURCE_PING_INTF" == "x" ]
 	then
 		MASK=ifconfig $SOURCE_PING_INTF | sed -rn '2s/ .*:(.*)$/\1/p'
@@ -232,7 +250,7 @@ service_stop ()
 
 service_init ()
 {
-    FOO=`utctx_cmd get ntp_server1 ntp_enabled`
+    FOO=`utctx_cmd get ntp_server1 ntp_server2 ntp_server3 ntp_server4 ntp_server5 ntp_enabled new_ntp_enabled`
     eval $FOO
 }
 
