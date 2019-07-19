@@ -362,7 +362,15 @@ static int dhcp_start(struct serv_wan *sw)
     char options[VENDOR_OPTIONS_LENGTH];
 
     if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
+
+#if defined (_XB6_PRODUCT_REQ_) && defined (_COSA_BCM_ARM_) // TCXB6 only
+        // tcxb6-6655, add "-b" option, so that, udhcpc forks to
+        // background if lease cannot be immediately negotiated.
+        err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+#else
         err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+#endif
+
     }
 #endif
 
