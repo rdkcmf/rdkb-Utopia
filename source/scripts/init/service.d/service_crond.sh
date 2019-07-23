@@ -177,11 +177,16 @@ service_start ()
          echo "*/5 * * * * /usr/ccsp/tad/resource_monitor_recover.sh" >> $CRONTAB_FILE
       fi
 
-	  # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
-	  MODEL="`grep MODEL_NUM /etc/device.properties | cut -d "=" -f2`"
-	  if [ -n "$(echo $MODEL | grep 3941)" ]; then
-		echo "1 */12 * * *  rpcclient 169.254.101.2 \"/etc/ath/CurrentChainMask_Logging.sh\"" >> $CRONTAB_FILE
-	  fi
+      # RDKB-23651
+      if [ "$MODEL_NUM" = "CGM4331COM" ]; then
+         echo "*/15 * * * * /usr/ccsp/tad/check_fan.sh" >> $CRONTAB_FILE
+      fi
+
+      # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
+      MODEL="`grep MODEL_NUM /etc/device.properties | cut -d "=" -f2`"
+      if [ -n "$(echo $MODEL | grep 3941)" ]; then
+         echo "1 */12 * * *  rpcclient 169.254.101.2 \"/etc/ath/CurrentChainMask_Logging.sh\"" >> $CRONTAB_FILE
+      fi
 
       # Add Unique Telemetry ID if enabled
       telemtery_enable=`syscfg get unique_telemetry_enable`
