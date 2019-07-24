@@ -249,7 +249,11 @@ int dhcp_server_start (char *input)
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dns-status", "stopped", 0);
    	system("killall `basename dnsmasq`");
 	remove_file(PID_FILE);
-   	
+
+#if defined _BWG_NATIVE_TO_RDKB_REQ_
+	/*Run script to reolve the IP address when upgrade from native to rdkb case only */
+	system("sh /etc/utopia/service.d/migration_native_rdkb.sh ");
+#endif
 	//we use dhcp-authoritative flag to indicate that this is
    	//the only dhcp server on the local network. This allows
    	//the dns server to give out a _requested_ lease even if
