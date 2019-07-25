@@ -220,8 +220,8 @@ apply_config () {
         SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
         LAN_IFNAME=$IFNAME
 
-        if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ]; then
-            if [ $SYSEVT_lan_ipaddr_v6_prev != "" ]; then
+        if [ "$SYSEVT_lan_ipaddr_v6_prev" != "$SYSEVT_lan_ipaddr_v6" ]; then
+            if [ "$SYSEVT_lan_ipaddr_v6_prev" != "" ]; then
                 ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             fi
 
