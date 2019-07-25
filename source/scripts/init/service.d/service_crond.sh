@@ -188,7 +188,7 @@ service_start ()
       telemtery_time_interval=`syscfg get unique_telemetry_interval`
       telemtery_tag=`syscfg get unique_telemetry_tag`
 
-      if [ $telemtery_enable = "true" ] && [ $telemtery_time_interval -gt 0 ] && [ ! -z "$telemtery_tag" -a "$telemtery_tag" != " " ] ; then
+      if [ "$telemtery_enable" = "true" ] && [ 0$telemtery_time_interval -gt 0 ] && [ ! -z "$telemtery_tag" -a "$telemtery_tag" != " " ] ; then
         #Convert time interval(in minutes) to days, hours and minutes
         d=$(($telemtery_time_interval / (60*24)))
         h=$((($telemtery_time_interval % (60*24)) / 60))

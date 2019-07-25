@@ -633,7 +633,7 @@ dns_start ()
    # the only dhcp server on the local network. This allows
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
-   if [ "stopped" = $DHCP_STATE ]; then
+   if [ "stopped" = "$DHCP_STATE" ]; then
 	 if [ "$XDNS_ENABLE" = "true" ]; then
 		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF  #--enable-dbus
 	 else
