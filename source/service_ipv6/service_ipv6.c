@@ -1280,7 +1280,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
             /*pd pool*/
             if(get_pd_pool(si6, &pd_pool) == 0) {
                 fprintf(fp, "   pd-class {\n");
-#ifdef _CBR_PRODUCT_REQ_
+#if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_)
                 fprintf(fp, "       pd-pool %s /%d\n", pd_pool.start, pd_pool.prefix_length);
 #else
 				fprintf(fp, "       pd-pool %s - %s /%d\n", pd_pool.start, pd_pool.end, pd_pool.prefix_length);
