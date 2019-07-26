@@ -804,7 +804,7 @@ sync_group_settings() {
         brctl show
     fi
     MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
-    if [ $MULTILAN_FEATURE = 1 ]; then
+    if [ "$MULTILAN_FEATURE" = "1" ]; then
         #Update active instances
         update_instances start
     fi
@@ -823,7 +823,7 @@ print_syntax(){
 
 #Script execution begins here
 MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
-if [ $MULTILAN_FEATURE = 1 ]; then
+if [ "$MULTILAN_FEATURE" = "1" ]; then
 #Use multinet event handler for PP on Atom builds
 if [ -e /etc/utopia/use_multinet_exec ] ; then
     if [ "$1" = "multinet-up" -o "$1" = "multinet-start" ] ; then

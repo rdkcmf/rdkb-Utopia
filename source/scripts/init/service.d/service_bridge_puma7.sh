@@ -239,7 +239,7 @@ service_start(){
         
         #Sync bridge ports
         MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
-        if [ $MULTILAN_FEATURE = 1 ]; then
+        if [ "$MULTILAN_FEATURE" = "1" ]; then
             sysevent set multinet-down $INSTANCE
             sysevent set multinet-up $INSTANCE
         else
@@ -276,7 +276,7 @@ service_stop(){
         
         #Sync bridge members
         MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
-        if [ $MULTILAN_FEATURE = 1 ]; then
+        if [ "$MULTILAN_FEATURE" = "1" ]; then
             sysevent set multinet-down $INSTANCE
             sysevent set multinet-up $INSTANCE
         else
