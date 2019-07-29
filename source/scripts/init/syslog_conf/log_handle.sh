@@ -204,8 +204,10 @@ start_syslog(){
 
     echo "klogd -c $level"
     klogd -c $level    
-    echo "syslogd -l $level"
-    syslogd -l $level
+    if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "TG4482A" ]; then
+    	echo "syslogd -l $level"
+    	syslogd -l $level
+    fi
 }
 
 get_log_file()
