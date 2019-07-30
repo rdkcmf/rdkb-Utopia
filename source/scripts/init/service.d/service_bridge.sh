@@ -416,6 +416,13 @@ service_start ()
          prepare_hostname
 
          sysevent set ${SERVICE_NAME}-status started
+
+         if [ -f /lib/systemd/system/xupnp.service ] ; then
+             systemctl stop xupnp
+             systemctl stop xcal-device
+         else
+             /lib/rdk/start-upnp-service stop
+         fi
       fi
    fi
 }
@@ -440,6 +447,13 @@ service_stop ()
          echo "flush_all_sessions" > /proc/net/ti_pp		
          sysevent set ${SERVICE_NAME}-errinfo
          sysevent set ${SERVICE_NAME}-status stopped
+
+         if [ -f /lib/systemd/system/xupnp.service ] ; then
+             systemctl restart xcal-device
+             systemctl restart xupnp
+         else
+             /lib/rdk/start-upnp-service start
+         fi
       fi
    fi
 }
