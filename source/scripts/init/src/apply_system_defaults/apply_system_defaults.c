@@ -57,6 +57,8 @@
 #include <stdbool.h>
 #define PARTNERS_INFO_FILE  							"/nvram/partners_defaults.json"
 #define PARTNERS_INFO_FILE_ETC                                                 "/etc/partners_defaults.json"
+#define BOOTSTRAP_INFO_FILE                                                    "/nvram/bootstrap.json"
+#define VERSION_TXT_FILE							"/version.txt"
 #define PARTNERID_FILE  								"/nvram/.partner_ID"
 #define PARTNER_DEFAULT_APPLY_FILE  					"/nvram/.apply_partner_defaults"
 #define PARTNER_DEFAULT_MIGRATE_PSM  					"/tmp/.apply_partner_defaults_psm"
@@ -546,10 +548,10 @@ char * json_file_parse( char *path )
 	return data;
 }
 
-static int writeToJson(char *data)
+static int writeToJson(char *data, char *file)
 {
     FILE 	*fp;
-    fp = fopen(PARTNERS_INFO_FILE, "w");
+    fp = fopen(file, "w");
     if (fp == NULL) 
     {
         return -1;
@@ -866,203 +868,513 @@ void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram
             cJSON_ReplaceItemInArray(root_nvram_json,0,cJSON_GetObjectItem(root_etc_json,"properties") );
         }
         char *out = cJSON_Print(root_nvram_json);
-        writeToJson(out);
+        writeToJson(out, BOOTSTRAP_INFO_FILE);
         out = NULL;
     }
 }
 
-int compare_partner_json_param(char *partner_nvram_obj,char *partner_etc_obj,char *PartnerID)
+char * getBuildTime()
 {
+    static char buildTime[50] = {0};
+    if (buildTime[0] != '\0')
+        return buildTime;
+    
+    FILE *fptr;
+    if ((fptr = fopen(VERSION_TXT_FILE, "r")) == NULL)
+    {
+        printf( "%s: Trying to open a non-existent file [%s] \n", __FUNCTION__, VERSION_TXT_FILE);
+    }
+    else
+    {
+        char * line = NULL;
+        size_t len = 0;
+        int read;
 
+        while ((read = getline(&line, &len, fptr)) != -1)
+        {
+            if (strstr(line, "BUILD_TIME"))
+            {
+                char *substr = strtok(line, "\"");
+                if (substr)
+                {
+                   substr = strtok(NULL,"\"");
+                   if (substr)
+                   {
+                      strncpy(buildTime, substr, sizeof(buildTime));
+                   }
+                }
+                break;
+            }
+        }
+        if (line)
+           free(line);
 
-	  cJSON   *subitem_nvram = NULL,  *subitem_etc = NULL;
-	  char    *key = NULL,    *value = NULL, *nvram_key = NULL, *etc_key = NULL;
-	  int     subitem_etc_count = 0, subitem_nvram_count = 0, iCount = 0;;
-	  bool do_compare = false;
+        fclose(fptr);
+    }
+    return buildTime;
+}
 
-	  cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
-	  cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);  
+char * getTime()
+{
+    time_t timer;
+    static char buffer[50];
+    struct tm* tm_info;
+    time(&timer);
+    tm_info = localtime(&timer);
+    strftime(buffer, 50, "%Y-%m-%d %H:%M:%S ", tm_info);
+    return buffer;
+}
 
-        /* Check if version exists or has changed.
-           If the function returns "true" proceed for comparison
-           else there is no change. Just return
-        */
-        ValidateAndUpdatePartnerVersionParam(root_etc_json, root_nvram_json, &do_compare);
-   	if (!do_compare)
-        		return -1;
-	  
-	  /* Get row counts from json. It will give available no. of partner blocks in both files*/      
-	  //rowCnt_etc = cJSON_GetArraySize(root_etc_json);
-	  //rowCnt_nvram = cJSON_GetArraySize(root_nvram_json);
-	  //printf("Counts == etc: %d, nvram: %d\n", rowCnt_etc,rowCnt_nvram);
-
-    /* We reached here because there is some change in partners default.
-       Update the nvram pointer.
-       Get the object array for the current partner from:
-       /nvram/partners_default.json and /etc/partners_default.json.
-    */
-          char* ptr_nvram_json = NULL;
-          ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE );
-          root_nvram_json=cJSON_Parse(ptr_nvram_json);
-          root_etc_json = cJSON_Parse(partner_etc_obj);
-
-	  subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
-	  subitem_nvram = cJSON_GetObjectItem(root_nvram_json,PartnerID);
-
-	  //Printing sub object
-	  /*char *json_string = cJSON_Print(subitem_etc);
-	  if (json_string) 
+int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
+{
+	cJSON *partnerObj = NULL;
+	cJSON *json = NULL;
+	FILE *fileRead = NULL;
+	char * cJsonOut = NULL;
+	char* data = NULL;
+	 int len ;
+	 int configUpdateStatus = -1;
+	 fileRead = fopen( PARTNERS_INFO_FILE, "r" );
+	 if( fileRead == NULL ) 
+	 {
+		 APPLY_PRINT("%s-%d : Error in opening JSON file\n" , __FUNCTION__, __LINE__ );
+		 return -1;
+	 }
+	 
+	 fseek( fileRead, 0, SEEK_END );
+	 len = ftell( fileRead );
+	 fseek( fileRead, 0, SEEK_SET );
+	 data = ( char* )malloc( sizeof(char) * (len + 1) );
+	 if (data != NULL) 
+	 {
+		memset( data, 0, ( sizeof(char) * (len + 1) ));
+	 	fread( data, 1, len, fileRead );
+	 }
+	 else 
+	 {
+		 APPLY_PRINT("%s-%d : Memory allocation failed \n", __FUNCTION__, __LINE__);
+		 fclose( fileRead );
+		 return -1;
+	 }
+	 
+	 fclose( fileRead );
+	 if ( data == NULL )
+	 {
+		APPLY_PRINT("%s-%d : fileRead failed \n", __FUNCTION__, __LINE__);
+		return -1;
+	 }
+	 else if ( strlen(data) != 0)
+	 {
+		 json = cJSON_Parse( data );
+		 if( !json ) 
+		 {
+			 APPLY_PRINT(  "%s : json file parser error : [%d]\n", __FUNCTION__,__LINE__);
+			 free(data);
+			 return -1;
+		 } 
+		 else
+		 {
+			 partnerObj = cJSON_GetObjectItem( json, PartnerId );
+			 if ( NULL != partnerObj)
+			 {
+				 if (NULL == cJSON_GetObjectItem( partnerObj, pKey) )
+				 {
+					cJSON_AddItemToObject(partnerObj, pKey, cJSON_CreateString(pValue));
+				 }
+				 else
+				 {
+					 cJSON_ReplaceItemInObject(partnerObj, pKey, cJSON_CreateString(pValue));
+				 }
+				 cJsonOut = cJSON_Print(json);
+				 APPLY_PRINT( "Updated json content is %s\n", cJsonOut);
+				 configUpdateStatus = writeToJson(cJsonOut, PARTNERS_INFO_FILE);
+				 if ( !configUpdateStatus)
+				 {
+					 APPLY_PRINT( "Added/Updated Value for %s partner\n",PartnerId);
+					 APPLY_PRINT( "Param:%s - Value:%s\n",pKey,pValue);
+				 }
+				 else
+			 	 {
+					 APPLY_PRINT( "Failed to update value for %s partner\n",PartnerId);
+					 APPLY_PRINT( "Param:%s\n",pKey);
+		 			 cJSON_Delete(json);
+					 return -1;
+			 	 }
+			 }
+			 else
+			 {
+			 	APPLY_PRINT("%s - PARTNER ID OBJECT Value is NULL\n", __FUNCTION__ );
+			 	cJSON_Delete(json);
+			 	return -1;
+			 }
+			cJSON_Delete(json);
+		 }
+	  }
+	  else
 	  {
-	    printf("%s\n", json_string);
-	  }*/
+		APPLY_PRINT("PARTNERS_INFO_FILE %s is empty\n", PARTNERS_INFO_FILE);
+		return -1;
+	  }
+	 return 0;
+}
 
-	  /* Partner Exists in /etc/partners_default.json and 
-	     doesnt exist in /nvram/partners_default.json.
-	     Add partner to nvram 
-	   */
-	  if (( subitem_nvram == NULL) && (subitem_etc != NULL))
-	  {
-	      printf("Partner object is not available in nvram\n");
-	      cJSON_AddItemReferenceToObject(root_nvram_json,PartnerID,subitem_etc);
-	      char *out = cJSON_Print(root_nvram_json);
-	      writeToJson(out);
-	      out = NULL;
+// This function can be removed after a few release cycles
+int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *PartnerID)
+{
+   APPLY_PRINT("%s\n", __FUNCTION__);
 
-	   }
-	   else
-	   {
-	        /* 
-	           Partner exists at both places.. Check count of partner variables.
-	           Traverse through /etc/partners_default.json and check if the element
-	           existing in /nvram/partners_default.json
-	        */
-	        subitem_etc_count = cJSON_GetArraySize(subitem_etc);
-	        subitem_nvram_count = cJSON_GetArraySize(subitem_nvram);
-	        
-	        for (iCount=0;iCount<subitem_etc_count;iCount++)
-	        {
-	              key=cJSON_GetArrayItem(subitem_etc,iCount)->string;
-	              //printf("String key is : %s\n",key);
-	              nvram_key=cJSON_GetObjectItem(subitem_nvram,key);
-	              if(nvram_key == NULL)
-	              {	                 
-	                 printf("Add parameter to /nvram/partners_default.json object array \n");
-	                 value = cJSON_GetArrayItem(subitem_etc, iCount)->valuestring; 
-	                 cJSON_AddItemToObject(subitem_nvram, key, cJSON_CreateString(value));
+   cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
+   cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);
 
-	                 /* There are parameters which needs to be available in syscfg/PSM DBs
-	                    Check if all of these parameters are SET into DBs
-	                 */
-	                 int IsPSMMigrationNeeded = 0;
-	                 if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
-                         {
-                             if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialForwardedMark" ) )
-                             {
-                                 set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
-                             }
-                         }
-                         if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
-                         {
-                             if ( 0 == IsValuePresentinSyscfgDB( "WANsideSSH_Enable" ) )
-                             {
-                                set_syscfg_partner_values( value,"WANsideSSH_Enable" );
-                             }
-                         }
-                         if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
-                         {
-                              if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialOutputMark" ) )
-                              {
-                                 set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
-                              }
-                         }
-                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode") )
-                         {
-                              if ( 0 == IsValuePresentinSyscfgDB( "StartupIPMode" ) )
-                              {
-                                  set_syscfg_partner_values( value,"StartupIPMode" );
-                              }
-                         }
-                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions") )
-                         {
-                              if ( 0 == IsValuePresentinSyscfgDB( "IPv4PrimaryDhcpServerOptions" ) )
-                              {
-                                  set_syscfg_partner_values( value,"IPv4PrimaryDhcpServerOptions" );
-                              }
-                         }
-                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions") )
-                         {
-                              if ( 0 == IsValuePresentinSyscfgDB( "IPv4SecondaryDhcpServerOptions" ) )
-                              {
-                                  set_syscfg_partner_values( value,"IPv4SecondaryDhcpServerOptions" );
-                              }
-                         }
-                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
-                         {
-                              if ( 0 == IsValuePresentinSyscfgDB( "IPv6PrimaryDhcpServerOptions" ) )
-                              {
-                                  set_syscfg_partner_values( value,"IPv6PrimaryDhcpServerOptions" );
-                              }
-                         }
-                         if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") )
-                         {
-                              if ( 0 == IsValuePresentinSyscfgDB( "IPv6SecondaryDhcpServerOptions" ) )
-                              {
-                                   set_syscfg_partner_values( value,"IPv6SecondaryDhcpServerOptions" );
-                              }
-                         }
-                         if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") )
-                         {
-                              set_syscfg_partner_values( value,"XHS_SSIDprefix" );
-                              IsPSMMigrationNeeded = 1;
-                         }
+   cJSON *root_nvram_bs_json;
+   root_nvram_bs_json = cJSON_CreateObject();
 
-                         //Check whether migration needs to be handled or not
-                         if( 1 == IsPSMMigrationNeeded )											
-                         {
-                            APPLY_PRINT("%s - Adding new member in %s file\n", __FUNCTION__, PARTNERS_INFO_FILE);
-                            APPLY_PRINT("%s - PSM Migration needed for %s param so touching %s file\n", __FUNCTION__, key, PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER );
-												
-                            //Need to touch /tmp/.apply_partner_defaults_new_psm_member for PSM migration handling
-                            system("touch "PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER);			
-                         }
+   cJSON *prop = cJSON_GetObjectItem(root_etc_json,"properties");
+   cJSON_AddItemReferenceToObject(root_nvram_bs_json, "properties", prop);
 
-	              }//if (nvram_key)
+   cJSON * subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
+   cJSON * subitem_nvram = cJSON_GetObjectItem(root_nvram_json,PartnerID);
 
-	         }//for loop 
-	        
-	        /* Check if nvram file has same count as etc file
-	           if nvram has more entries, we may need to check what was 
-	           removed from etc in current release.
-	        */
-	        subitem_etc_count = cJSON_GetArraySize(subitem_etc);
-	        subitem_nvram_count = cJSON_GetArraySize(subitem_nvram);
-	        if ( subitem_etc_count < subitem_nvram_count)
-	        {
-	            for (iCount=0;iCount<subitem_nvram_count;iCount++)
-	            {
-	               key=cJSON_GetArrayItem(subitem_nvram,iCount)->string;
-	               //printf("String key is : %s\n",key);
-	               etc_key=cJSON_GetObjectItem(subitem_etc,key);
-	               if(etc_key == NULL)
-	               {
-	               	    printf("Delete parameter from /nvram/partners_default.json array \n");
-	                    key=cJSON_GetArrayItem(subitem_nvram,iCount);
-	                    cJSON_DeleteItemFromArray(subitem_nvram,iCount);
-	                    //Decrement the count when an element is deleted
-	                    subitem_nvram_count --;
-	                }
-	            }//for loop
-	        }
+   char *key = NULL, *value = NULL, *value_nvram = NULL;
+   if( subitem_etc )
+   {
+      cJSON *param = subitem_etc->child;
+      cJSON *newPartnerObj = cJSON_CreateObject();
+      while( param )
+      {
+         cJSON *newParamObj = cJSON_CreateObject();
+         key = param->string;
+         cJSON * value_obj = cJSON_GetObjectItem(subitem_etc, key);
+         if (value_obj)
+            value = value_obj->valuestring;
 
-	              char *out = cJSON_Print(root_nvram_json);
-	              writeToJson(out);
-	              out = NULL;
-	    }
+         if (value == NULL)
+         {
+            APPLY_PRINT("etc value is NULL for key = %s, skip it...\n", key);
+            param = param->next;
+            continue;
+         }
 
-    cJSON_Delete(root_nvram_json);
-    cJSON_Delete(root_etc_json);
+         cJSON_AddStringToObject(newParamObj, "DefaultValue", value);
+         cJSON_AddStringToObject(newParamObj, "BuildTime", getBuildTime());
 
-    return 0;
+         if ( subitem_nvram )
+         {
+            cJSON * value_nvram_obj = cJSON_GetObjectItem(subitem_nvram, key);
+            if (value_nvram_obj)
+               value_nvram = value_nvram_obj->valuestring;
+
+            if ( value_nvram && strcmp(value, value_nvram) != 0)
+            {
+               APPLY_PRINT("nvram value = %s\n", value_nvram);
+               cJSON_AddStringToObject(newParamObj, "ActiveValue", value_nvram);
+               cJSON_AddStringToObject(newParamObj, "UpdateTime", "unknown");
+               cJSON_AddStringToObject(newParamObj, "UpdateSource", "webpa"); //Assuming as webpa since we don't know who actually updated
+            }
+            else
+            {
+               cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
+               cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
+               cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
+            }
+         }
+         else
+         {
+            cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
+            cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
+            cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
+         }
+         cJSON_AddItemToObject(newPartnerObj, key, newParamObj);
+
+         param = param->next;
+      }
+      cJSON_AddItemToObject(root_nvram_bs_json, PartnerID, newPartnerObj);
+
+      char *out = cJSON_Print(root_nvram_bs_json);
+      APPLY_PRINT("out1 = %s\n", out);
+      writeToJson(out, BOOTSTRAP_INFO_FILE);
+      out = NULL;
+   }
+
+   cJSON_Delete(root_nvram_json);
+   cJSON_Delete(root_etc_json);
+
+   return 0;
+}
+
+void addInSysCfgdDB(char * key, char * value)
+{
+   /* There are parameters which needs to be available in syscfg/PSM DBs
+      Check if all of these parameters are SET into DBs
+   */
+   int IsPSMMigrationNeeded = 0;
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialForwardedMark" ) )
+      {
+         set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "WANsideSSH_Enable" ) )
+      {
+         set_syscfg_partner_values( value,"WANsideSSH_Enable" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialOutputMark" ) )
+      {
+         set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "StartupIPMode" ) )
+      {
+         set_syscfg_partner_values( value,"StartupIPMode" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "IPv4PrimaryDhcpServerOptions" ) )
+      {
+         set_syscfg_partner_values( value,"IPv4PrimaryDhcpServerOptions" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "IPv4SecondaryDhcpServerOptions" ) )
+      {
+         set_syscfg_partner_values( value,"IPv4SecondaryDhcpServerOptions" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "IPv6PrimaryDhcpServerOptions" ) )
+      {
+         set_syscfg_partner_values( value,"IPv6PrimaryDhcpServerOptions" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "IPv6SecondaryDhcpServerOptions" ) )
+      {
+         set_syscfg_partner_values( value,"IPv6SecondaryDhcpServerOptions" );
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") )
+   {
+      set_syscfg_partner_values( value,"XHS_SSIDprefix" );
+      IsPSMMigrationNeeded = 1;
+   }
+
+   //Check whether migration needs to be handled or not
+   if( 1 == IsPSMMigrationNeeded )
+   {
+      APPLY_PRINT("%s - Adding new member in %s file\n", __FUNCTION__, BOOTSTRAP_INFO_FILE);
+      APPLY_PRINT("%s - PSM Migration needed for %s param so touching %s file\n", __FUNCTION__, key, PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER );
+
+      //Need to touch /tmp/.apply_partner_defaults_new_psm_member for PSM migration handling
+      system("touch "PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER);
+   }
+}
+
+void updateSysCfgdDB(char * key, char * value)
+{
+   /* There are parameters which needs to be available in syscfg/PSM DBs
+      Check if all of these parameters are SET into DBs
+   */
+   int IsPSMMigrationNeeded = 0;
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
+   {
+         set_syscfg_partner_values( value,"DSCP_InitialForwardedMark" );
+   }
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") )
+   {
+         set_syscfg_partner_values( value,"WANsideSSH_Enable" );
+   }
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") )
+   {
+         set_syscfg_partner_values( value,"DSCP_InitialOutputMark" );
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode") )
+   {
+         set_syscfg_partner_values( value,"StartupIPMode" );
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions") )
+   {
+         set_syscfg_partner_values( value,"IPv4PrimaryDhcpServerOptions" );
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions") )
+   {
+         set_syscfg_partner_values( value,"IPv4SecondaryDhcpServerOptions" );
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
+   {
+         set_syscfg_partner_values( value,"IPv6PrimaryDhcpServerOptions" );
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") )
+   {
+         set_syscfg_partner_values( value,"IPv6SecondaryDhcpServerOptions" );
+   }
+   if ( 0 == strcmp ( key, "Device.ManagementServer.EnableCWMP") )
+   {
+         set_syscfg_partner_values( value,"Syndication_EnableCWMP" );
+   }
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") )
+   {
+      set_syscfg_partner_values( value,"XHS_SSIDprefix" );
+      IsPSMMigrationNeeded = 1;
+   }
+   if ( 0 == strcmp ( key, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code") )
+   {
+      set_syscfg_partner_values( value,"WiFiRegionCode" );
+      IsPSMMigrationNeeded = 1;
+   }
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation") )
+   {
+      set_syscfg_partner_values( value,"TR69CertLocation" );
+      IsPSMMigrationNeeded = 1;
+   }
+   //Check whether migration needs to be handled or not
+   if( 1 == IsPSMMigrationNeeded )
+   {
+      APPLY_PRINT("%s - Updating member in %s file\n", __FUNCTION__, BOOTSTRAP_INFO_FILE);
+      APPLY_PRINT("%s - PSM Migration needed for %s param so touching %s file\n", __FUNCTION__, key, PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER );
+
+      //Need to touch /tmp/.apply_partner_defaults_new_psm_member for PSM migration handling
+      system("touch "PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER);
+   }
+}
+
+int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,char *PartnerID)
+{
+   APPLY_PRINT("%s\n", __FUNCTION__);
+
+   cJSON * root_nvram_bs_json = cJSON_Parse(partner_nvram_bs_obj);
+   cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);
+
+   /* Check if version exists or has changed.
+      If the function returns "true" proceed for comparison
+      else there is no change. Just return
+   */
+   bool do_compare = false;
+   ValidateAndUpdatePartnerVersionParam(root_etc_json, root_nvram_bs_json, &do_compare);
+   if (!do_compare)
+      return -1;
+   printf("versions are different...\n");
+
+   char* ptr_nvram_bs_json = NULL;
+   ptr_nvram_bs_json = json_file_parse( BOOTSTRAP_INFO_FILE );
+   root_nvram_bs_json=cJSON_Parse(ptr_nvram_bs_json);
+   root_etc_json = cJSON_Parse(partner_etc_obj);
+
+   cJSON * subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
+   cJSON * subitem_nvram_bs = cJSON_GetObjectItem(root_nvram_bs_json,PartnerID);
+
+   char *key=NULL, *value=NULL;
+   if( subitem_etc )
+   {
+      cJSON *param = subitem_etc->child;
+      while( param )
+      {
+         cJSON *newParamObj = cJSON_CreateObject();
+         key = param->string;
+         cJSON * value_obj = cJSON_GetObjectItem(subitem_etc, key);
+         if (value_obj)
+            value = value_obj->valuestring;
+         else
+            return -1;
+
+         APPLY_PRINT("key = %s value = %s\n", key, value);
+
+         cJSON *bs_obj = cJSON_GetObjectItem(subitem_nvram_bs, key);
+         if (bs_obj == NULL)
+         {
+            APPLY_PRINT("param %s does not exist in nvram bootstrap json. Adding it...\n", key);
+            cJSON *newParamObj = cJSON_CreateObject();
+            cJSON_AddStringToObject(newParamObj, "DefaultValue", value);
+            cJSON_AddStringToObject(newParamObj, "BuildTime", getBuildTime());
+            cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
+            cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
+            cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
+            cJSON_AddItemToObject(root_nvram_bs_json, key, newParamObj);
+
+            addInSysCfgdDB(key, value);
+
+            //Also add in the /nvram/partners_defaults.json
+            addParamInPartnersFile(key, PartnerID, value);
+         }
+         else
+         {
+            cJSON * value_bs_obj = cJSON_GetObjectItem(bs_obj, "ActiveValue");
+            char * value_bs = NULL;
+            if (value_bs_obj)
+               value_bs = value_bs_obj->valuestring;
+            else
+               return -1;
+
+            cJSON * source_bs_obj = cJSON_GetObjectItem(bs_obj, "UpdateSource");
+            char * source_bs = NULL;
+            if (source_bs_obj)
+               source_bs = source_bs_obj->valuestring;
+            else
+               return -1;
+
+            //printf("value_bs = %s, source_bs = %s\n", value_bs, source_bs);
+            if (strcmp(value, value_bs))
+            {
+               APPLY_PRINT("** Param %s value changed in firmware **\n", key);
+               cJSON_ReplaceItemInObject(bs_obj,"DefaultValue", cJSON_CreateString(value));
+               cJSON_ReplaceItemInObject(bs_obj,"BuildTime", cJSON_CreateString(getBuildTime()));
+               if (!strcmp(source_bs,"-"))
+               {
+                  APPLY_PRINT(" ** Param was not overridden previously. Update the active value..\n");
+                  cJSON_ReplaceItemInObject(bs_obj,"ActiveValue", cJSON_CreateString(value));
+                  updateSysCfgdDB(key, value);
+               }
+            }
+         }
+         param = param->next;
+      }
+
+      /* Check if nvram file has same count as etc file
+         if nvram has more entries, we may need to check what was
+         removed from etc in current release.
+      */
+      int subitem_etc_count = cJSON_GetArraySize(subitem_etc);
+      int subitem_nvram_bs_count = cJSON_GetArraySize(subitem_nvram_bs);
+      int iCount = 0;
+      if ( subitem_etc_count < subitem_nvram_bs_count)
+      {
+         for (iCount=0;iCount<subitem_nvram_bs_count;iCount++)
+         {
+            key=cJSON_GetArrayItem(subitem_nvram_bs,iCount)->string;
+            //printf("String key is : %s\n",key);
+            cJSON * etc_key=cJSON_GetObjectItem(subitem_etc,key);
+            if(etc_key == NULL)
+            {
+               APPLY_PRINT("Delete parameter %s from /nvram/bootstrap.json\n", key);
+               //key=cJSON_GetArrayItem(subitem_nvram_bs,iCount);
+               cJSON_DeleteItemFromArray(subitem_nvram_bs,iCount);
+               //Decrement the count when an element is deleted
+               subitem_nvram_bs_count --;
+            }
+         }//for loop
+      }
+
+      char *out = cJSON_Print(root_nvram_bs_json);
+      //printf("compare out = %s\n", out);
+      writeToJson(out, BOOTSTRAP_INFO_FILE);
+      out = NULL;
+   }
+
+   cJSON_Delete(root_nvram_bs_json);
+   cJSON_Delete(root_etc_json);
+
+   return 0;
 }
 
 int apply_partnerId_default_values(char *data, char *PartnerID)
@@ -1134,7 +1446,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 		else
 		{
 			int isThisComcastPartner = 0;
-			
+			cJSON *paramObjVal = NULL;
 			//Check whether this is comcast partner or not
 			if( 0 == strcmp( "comcast", PartnerID ) )
 			{
@@ -1149,9 +1461,10 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 					( 1 == isNeedToApplyPartnersDefault )
 				  )
 				{
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername") != NULL )
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername"), "ActiveValue");
+					if ( paramObjVal != NULL )
 					{
-						userName = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginUsername")->valuestring; 
+						userName = paramObjVal->valuestring; 
 					
 						if (userName != NULL) 
 						{
@@ -1163,10 +1476,11 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							APPLY_PRINT("%s - DefaultLoginUsername Value is NULL\n", __FUNCTION__ );
 						}	
 					}
-					
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword") != NULL )
+
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
 					{
-						passWord = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword")->valuestring; 
+						passWord = paramObjVal->valuestring; 
 					
 						if (passWord != NULL) 
 						{
@@ -1178,10 +1492,11 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							APPLY_PRINT("%s - DefaultLoginUsername Value is NULL\n", __FUNCTION__ );
 						}	
 					}
-					
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP") != NULL )
-					{
-						defaultAdminIP = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP")->valuestring; 
+
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultAdminIP"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+						defaultAdminIP = paramObjVal->valuestring; 
 					
 						if (defaultAdminIP != NULL) 
 						{
@@ -1193,10 +1508,11 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							APPLY_PRINT("%s - DefaultAdminIP Value is NULL\n", __FUNCTION__ );
 						}	
 					}
-					
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange") != NULL )
-					{
-						subnetRange = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange")->valuestring; 
+
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.DefaultLocalIPv4SubnetRange"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+						subnetRange = paramObjVal->valuestring; 
 					
 						if (subnetRange != NULL) 
 						{
@@ -1208,10 +1524,10 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							APPLY_PRINT("%s - DefaultLocalIPv4SubnetRange Value is NULL\n", __FUNCTION__ );
 						}	
 					}
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MinAddress") != NULL )
-					{
-
-						minAddress = cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MinAddress")->valuestring;
+                                        paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MinAddress"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+						minAddress = paramObjVal->valuestring;
 
 						if (minAddress != NULL)
 						{
@@ -1223,10 +1539,10 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							APPLY_PRINT("%s - Default DHCP minAddress Value is NULL\n", __FUNCTION__ );
 						}
 					}
-                                        if ( cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MaxAddress") != NULL )
+                                        paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MaxAddress"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
                                         {
-
-                                                maxAddress = cJSON_GetObjectItem( partnerObj, "Device.DHCPv4.Server.Pool.1.MaxAddress")->valuestring;
+                                                maxAddress = paramObjVal->valuestring;
 
                                                 if (maxAddress != NULL)
                                                 {
@@ -1238,9 +1554,10 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
                                                         APPLY_PRINT("%s - Default DHCP maxAddress Value is NULL\n", __FUNCTION__ );
                                                 }
                                         }
-                                          if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.AllowEthernetWAN") != NULL )
-                                          {
-                                            allow_ethernet_wan = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.AllowEthernetWAN")->valuestring; 
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.AllowEthernetWAN"), "ActiveValue");
+					if ( paramObjVal != NULL )
+					{
+                                            allow_ethernet_wan = paramObjVal->valuestring;
 
                                             if (allow_ethernet_wan != NULL)
                                             {
@@ -1258,11 +1575,12 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 						( 1 == isNeedToApplyPartnersPSMDefault ) 
 					  )
 				{
-					if ( cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code") != NULL )
-					{
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
 						char *pcWiFiRegionCode = NULL;
 						
-						pcWiFiRegionCode = cJSON_GetObjectItem( partnerObj, "Device.WiFi.X_RDKCENTRAL-COM_Syndication.WiFiRegion.Code")->valuestring; 
+						pcWiFiRegionCode = paramObjVal->valuestring; 
 			
 						if (pcWiFiRegionCode != NULL) 
 						{
@@ -1275,11 +1593,12 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 						}	
 					}
 
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation") != NULL )
-					{
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
 							char *tr69CertLocation = NULL;
 					
-							tr69CertLocation = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.TR69CertLocation")->valuestring;
+							tr69CertLocation = paramObjVal->valuestring;
 					
 							if (tr69CertLocation != NULL)
 							{
@@ -1292,11 +1611,12 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							}
 					}
 
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix") != NULL )
-					{
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
 						char *pcSSIDprefix = NULL;
 						
-						pcSSIDprefix = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix")->valuestring; 
+						pcSSIDprefix = paramObjVal->valuestring; 
 			
 						if (pcSSIDprefix != NULL) 
 						{
@@ -1312,9 +1632,10 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 
 				if( 1 == isNeedToApplyPartnersDefault )
 				{
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") != NULL )
-					{
-					  initialForwardedMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark")->valuestring; 
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+					  initialForwardedMark = paramObjVal->valuestring; 
 					  if (initialForwardedMark[0] != NULL)
 					  {
 						set_syscfg_partner_values(initialForwardedMark,"DSCP_InitialForwardedMark");
@@ -1326,9 +1647,10 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 					  APPLY_PRINT("%s - Default Value of InitialForwardedMark is NULL\n", __FUNCTION__ );
 					}
 
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark") != NULL )
-					{
-					  initialOutputMark = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark")->valuestring; 
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+					  initialOutputMark = paramObjVal->valuestring; 
 					  if (initialOutputMark[0] != NULL)
 					  {
 						set_syscfg_partner_values(initialOutputMark,"DSCP_InitialOutputMark");
@@ -1339,23 +1661,26 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 					{
 					  APPLY_PRINT("%s - Default Value of InitialOutputMark is NULL\n", __FUNCTION__ );
 					}
-if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode") != NULL )
-  {
-   startupipmode = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode")->valuestring;
-   if(startupipmode[0]!=NULL)
-       {
-            set_syscfg_partner_values(startupipmode,"StartupIPMode");
-            startupipmode = NULL;
-       }
-}
-   else
-       {
-            APPLY_PRINT("%s - Default Value of StartupIPMode is NULL\n", __FUNCTION__ );
-       }
 
-if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions") != NULL )
-  {
-   pridhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions")->valuestring;
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.StartupIPMode"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+					   startupipmode = paramObjVal->valuestring;
+					   if(startupipmode[0]!=NULL)
+					   {
+					            set_syscfg_partner_values(startupipmode,"StartupIPMode");
+					            startupipmode = NULL;
+					   }
+					}
+					else
+				        {
+				            APPLY_PRINT("%s - Default Value of StartupIPMode is NULL\n", __FUNCTION__ );
+				        }
+
+paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4PrimaryDhcpServerOptions"), "ActiveValue");
+if ( paramObjVal != NULL )
+{
+   pridhcpoption = paramObjVal->valuestring;
    if(pridhcpoption[0]!=NULL)
        {
             set_syscfg_partner_values(pridhcpoption,"IPv4PrimaryDhcpServerOptions");
@@ -1367,9 +1692,10 @@ if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.I
             APPLY_PRINT("%s - Default Value of primary dhcp server option is NULL\n", __FUNCTION__ );
        }
 
-if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions") != NULL )
-  {
-   secdhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions")->valuestring;
+paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions"), "ActiveValue");
+if ( paramObjVal != NULL )
+{
+   secdhcpoption = paramObjVal->valuestring;
    if(secdhcpoption[0]!=NULL)
        {
             set_syscfg_partner_values(secdhcpoption,"IPv4SecondaryDhcpServerOptions");
@@ -1381,9 +1707,10 @@ if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.I
             APPLY_PRINT("%s - Default Value of Secondary dhcp server option is NULL\n", __FUNCTION__ );
        }
 
-if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") != NULL )
-  {
-   pridhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions")->valuestring;
+paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions"), "ActiveValue");
+if ( paramObjVal != NULL )
+{
+   pridhcpoption = paramObjVal->valuestring;
    if(pridhcpoption[0]!=NULL)
        {
             set_syscfg_partner_values(pridhcpoption,"IPv6PrimaryDhcpServerOptions");
@@ -1395,9 +1722,10 @@ if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.I
             APPLY_PRINT("%s - Default Value of primary dhcp server option is NULL\n", __FUNCTION__ );
        }
 
-if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") != NULL )
-  {
-   secdhcpoption = cJSON_GetObjectItem( partnerObj,"Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions")->valuestring;
+paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions"), "ActiveValue");
+if ( paramObjVal != NULL )
+{
+   secdhcpoption = paramObjVal->valuestring;
    if(secdhcpoption[0]!=NULL)
        {
             set_syscfg_partner_values(secdhcpoption,"IPv6SecondaryDhcpServerOptions");
@@ -1409,11 +1737,12 @@ if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.I
             APPLY_PRINT("%s - Default Value of Secondary dhcp server option is NULL\n", __FUNCTION__ );
        }
 
-					if ( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable") != NULL )
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable"), "ActiveValue");
+					if ( paramObjVal != NULL )
 					{
 							char *WANsideSSHEnable = NULL;
 
-							WANsideSSHEnable = cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.WANsideSSH.Enable")->valuestring;
+							WANsideSSHEnable = paramObjVal->valuestring;
 
 							if (WANsideSSHEnable != NULL)
 							{
@@ -1430,12 +1759,12 @@ if ( cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.I
 						APPLY_PRINT("%s - Default WANsideSSHEnable object is NULL\n", __FUNCTION__ );
 					}
 
-					
-					if ( cJSON_GetObjectItem( partnerObj, "Device.ManagementServer.EnableCWMP") != NULL )
-					{
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.ManagementServer.EnableCWMP"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
 						char *pcEnableCWMP = NULL;
 						
-						pcEnableCWMP = cJSON_GetObjectItem( partnerObj, "Device.ManagementServer.EnableCWMP")->valuestring; 
+						pcEnableCWMP = paramObjVal->valuestring; 
 			
 						if (pcEnableCWMP != NULL) 
 						{
@@ -1498,7 +1827,7 @@ static void getPartnerIdWithRetry(char* buf, char* PartnerID)
  */
 int main( int argc, char **argv )
 {
-   char *ptr_etc_json = NULL, *ptr_nvram_json = NULL, *db_val = NULL;
+   char *ptr_etc_json = NULL, *ptr_nvram_json = NULL, *ptr_nvram_bs_json = NULL, *db_val = NULL;
    char  cmd[512] = {0};
    char  PartnerID[ PARTNER_ID_LEN ]  = { 0 };
    int   isNeedToApplyPartnersDefault = 1;
@@ -1626,51 +1955,36 @@ int main( int argc, char **argv )
 
    APPLY_PRINT("%s - PartnerID :%s\n", __FUNCTION__, PartnerID );
 
-   if ( access(PARTNERS_INFO_FILE, F_OK ) != 0 )	
+   ptr_etc_json = json_file_parse( PARTNERS_INFO_FILE_ETC );
+   if ( ptr_etc_json )
    {
-		snprintf(cmd, sizeof(cmd), "cp %s %s", "/etc/partners_defaults.json", PARTNERS_INFO_FILE);
-		APPLY_PRINT("%s\n",cmd);
-		system(cmd);
+      ptr_nvram_bs_json = json_file_parse( BOOTSTRAP_INFO_FILE );
+      if ( ptr_nvram_bs_json == NULL )
+      {
+         ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE ); // nvram/partners_defaults.json can be removed after a few sprints.
+         init_bootstrap_json( ptr_nvram_json, ptr_etc_json, PartnerID );
+         if ( ptr_nvram_json == NULL )
+         {
+            snprintf(cmd, sizeof(cmd), "cp %s %s", PARTNERS_INFO_FILE_ETC, PARTNERS_INFO_FILE);
+            APPLY_PRINT("%s\n",cmd);
+            system(cmd);
 
-		//Need to touch /tmp/.apply_partner_defaults_psm for PSM migration handling
-		system("touch "PARTNER_DEFAULT_MIGRATE_PSM); // FIX: RDKB-20566 to handle migration 		
-   }
-   else
-   {
-	   ptr_etc_json = json_file_parse( "/etc/partners_defaults.json" );
-
-	   if ( ptr_etc_json ) 
-	   {
-		  //Check whether file is having content or not	 
-		  ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE );
-
-		  //Fallback case when file is empty
-		  if( NULL == ptr_nvram_json )
-	  	  {
-			//Copy /etc/partners_defaults.json file to nvram
-			APPLY_PRINT("%s - %s file is empty\n", __FUNCTION__, PARTNERS_INFO_FILE );
-			snprintf( cmd, sizeof( cmd ), "rm -rf %s; cp %s %s", PARTNERS_INFO_FILE, "/etc/partners_defaults.json", PARTNERS_INFO_FILE );
-			APPLY_PRINT( "%s\n",cmd );
-			system( cmd );
-	  	  }
-		  
-		  //Check again whether file is having content or not	
-		  ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE );
-	   	  if ( NULL != ptr_nvram_json )
-	   	  {
-	   		compare_partner_json_param( ptr_nvram_json, ptr_etc_json, PartnerID );
-
-			if( NULL != ptr_nvram_json )
-			free( ptr_nvram_json );		
-	   	  }	   	
-
-			if( NULL != ptr_etc_json )
-			free( ptr_etc_json );
-	   }
+            //Need to touch /tmp/.apply_partner_defaults_psm for PSM migration handling
+            system("touch "PARTNER_DEFAULT_MIGRATE_PSM); // FIX: RDKB-20566 to handle migration
+         }
+         else
+            free( ptr_nvram_json );
+      }
+      else
+      {
+         compare_partner_json_param( ptr_nvram_bs_json, ptr_etc_json, PartnerID );
+         free( ptr_nvram_bs_json );
+      }
+      free( ptr_etc_json );
    }
 
    //Apply partner default values during FR/partner FR case
-   db_val = json_file_parse( PARTNERS_INFO_FILE );
+   db_val = json_file_parse( BOOTSTRAP_INFO_FILE );
 
    if( db_val )
    {

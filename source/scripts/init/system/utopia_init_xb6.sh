@@ -382,6 +382,7 @@ fi
    rm -f /nvram/server-cache.xml
    rm -f /nvram/server-duid
    rm -f /nvram/partners_defaults.json 
+   rm -f /nvram/bootstrap.json
    if [ -f /nvram/.CMchange_reboot_count ];then
       rm -f /nvram/.CMchange_reboot_count
    fi

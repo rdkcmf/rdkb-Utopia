@@ -90,13 +90,17 @@ dhcpV4ServerPoolCfg
     unsigned char                   ChaddrExclude;
     unsigned char                   DNSServersEnabled;
     IPV4_ADDRESS                    MinAddress;
+    char                            MinAddressUpdateSource[16];
     IPV4_ADDRESS                    MaxAddress;
+    char                            MaxAddressUpdateSource[16];
     IPV4_ADDRESS                    ReservedAddresses[8];
     IPV4_ADDRESS                    SubnetMask;
     IPV4_ADDRESS                    DNSServers[4];
     char                            DomainName[64];
     IPV4_ADDRESS                    IPRouters[4];
     int                             LeaseTime;
+    int                             X_CISCO_COM_TimeOffset;
+    unsigned char                   bAllowDelete;
 }dhcpV4ServerPoolCfg_t;
 
 /* Info portion of DHCPv4 Server Pool */
