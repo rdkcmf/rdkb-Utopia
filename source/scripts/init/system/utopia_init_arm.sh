@@ -297,6 +297,7 @@ fi
 #      echo -n > $SYSCFG_FILE
 #   fi
    rm -f /nvram/partners_defaults.json
+   rm -f /nvram/bootstrap.json
 # Remove syscfg and PSM storage files
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
