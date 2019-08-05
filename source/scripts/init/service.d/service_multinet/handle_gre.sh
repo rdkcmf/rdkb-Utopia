@@ -430,7 +430,6 @@ update_bridge_frag_config () {
 #       $radios - radio instances
 #       $ssid_${instance}_radio - radio for the specified ssid
 get_ssids() {
-    if [ "$BOX_TYPE" = "XB6" ] ; then 
 
      
        localif_1=`psmcli get $HS_PSM_BASE.${1}.interface.1.$GRE_PSM_LOCALIFS`		
@@ -463,34 +462,6 @@ get_ssids() {
             eval ssid_${winst}_radio=$radio                                                                                                                                     
          done                                                                                                                                                                 
 
-    else
-        #localifs=`psmcli get $HS_PSM_BASE.${1}.$GRE_PSM_LOCALIFS`		
-	localif_1=`psmcli get $HS_PSM_BASE.${1}.interface.1.$GRE_PSM_LOCALIFS`		
-	localif_2=`psmcli get $HS_PSM_BASE.${1}.interface.2.$GRE_PSM_LOCALIFS`	
-	localif_3=Device.WiFi.SSID.9.
-	localif_4=Device.WiFi.SSID.10.
-	localifs="$localif_1,$localif_2,$localif_3,$localif_4";
-
-        ssids=""
-        OLD_IFS="$IFS"
-        IFS=","
-        for i in $localifs; do
-            winst=`echo $i |cut -d . -f 4`
-            ssids="$ssids $winst"
-        #zqiu: Radio instance number should be get from the DML, instead of real radio id in bbhm +1
-		#radio=$(( `psmcli get $WIFI_PSM_PREFIX.${winst}.${WIFI_RADIO_INDEX}` + 1 ))
-           radio=`dmcli eRT getv ${i}LowerLayers  | grep string,  | awk '{print $5}' | cut -d . -f 4 `
-           expr match "$radios" '.*\b\('$radio'\)\b.*' > /dev/null
-           if [ 0 != $? ]; then
-              #add this radio instance
-              radios="$radios $radio"
-              eval mask_$radio=0
-          fi
-          eval ssid_${winst}_radio=$radio
-        
-         done
-         IFS="$OLD_IFS"
-   fi
 }
 
 #args: gre instance, true | false
@@ -612,13 +583,11 @@ hotspot_up() {
     bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2"
 	else
 		eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
-		bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
 
 		if [ x"1" != x$ENABLED -o x"1" != x$GRE_ENABLED ]; then
 			exit 0;
 		fi
 
-		if [ "$BOX_TYPE" = "XB6" ] ; then
 
                     eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES WECB_BRIDGES dmsb.wecb.hhs_extra_bridges NAME $GRE_PSM_BASE.${inst}.$GRE_PSM_NAME`
                     count=0
@@ -631,7 +600,6 @@ hotspot_up() {
                              bridgeFQDM="$bridgeFQDM $bridgeinfo"                                            
                          fi                                                     
                      done      
-		fi
 	fi
     #Set a delay for first SSID manipulation
     sysevent set hotspot_${inst}-delay 10
@@ -640,10 +608,6 @@ hotspot_up() {
     set_apisolation $inst
     
     brinst=""
-   if [ "$BOX_TYPE" != "XB6" ] ; then
-    OLD_IFS="$IFS"
-    IFS="${AB_DELIM}${AB_SSID_DELIM}"
-   fi
     for i in $bridgeFQDM; do
         brinst=`echo $i |cut -d . -f 4`
    if [ "$BOX_TYPE" = "XF3" ] ; then
@@ -661,9 +625,6 @@ hotspot_up() {
     
     sysevent set hotspot_${inst}-status started
     
-   if [ "$BOX_TYPE" != "XB6" ] ; then
-    IFS="$OLD_IFS"
-   fi
 }
 
 check_ssids () {
@@ -820,14 +781,30 @@ case "$1" in
     hotspotfd-tunnelEP)
     
         echo "GRE EP called : $2"
-        curep=`sysevent get gre_current_endpoint`
-        if [ x != x$curep -a x$curep != x${2} ]; then
-            destroy_tunnel $GRE_IFNAME
-        fi
-        
-        if [ x"NULL" != x${2} ]; then
-            create_tunnel $2 $GRE_IFNAME
-        fi
+
+        recover="false"                
+        if [ $2 = "recover" ] ; then                                    
+             recover="true"                    
+        fi        
+ 
+        curep=`sysevent get gre_current_endpoint`                   
+        if [ x != x$curep -a x$curep != x${2} ] || [ $recover = "true" ]; then
+            destroy_tunnel $GRE_IFNAME                                        
+        fi    
+
+
+         if [ x"NULL" != x${2} ] || [ $recover = "true" ]; then                
+             echo "inside create tunnel"                             
+              if [ $recover = "true" ] ; then                                    
+                  TUNNEL_EP="dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint"
+                  TUNNEL_IP=`$TUNNEL_EP`                                                            
+                  curep=`echo "$TUNNEL_IP" | grep value | cut -f3 -d : | cut -f2 -d " "`            
+                  echo "dmcli ip : $curep"                                           
+                  create_tunnel $curep $GRE_IFNAME                                                  
+              else                                                                                   
+                  create_tunnel $2 $GRE_IFNAME                                                      
+           fi                                                                                     
+         fi           
 
         if [ "$BOX_TYPE" = "XF3" ] ; then 
                sleep 15
@@ -854,7 +831,9 @@ case "$1" in
     if [ "$BOX_TYPE" = "XB6" ] ; then
         read_greInst 
     fi
-        check_ssids 1
+    if [ $recover != "true" ] ; then                            
+        check_ssids 1                                       
+    fi    
     
     ;;
     
