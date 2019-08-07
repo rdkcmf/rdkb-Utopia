@@ -195,11 +195,23 @@ SYSCFG_TMP_LOCATION=/tmp
 SYSCFG_FILE=$SYSCFG_TMP_LOCATION/syscfg.db
 SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg.db
 SYSCFG_OLDBKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
+SYSCFG_ENCRYPTED_PATH=/opt/secure/
+SYSCFG_PERSISTENT_PATH=/opt/secure/data/
+SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
+SYSCFG_NEW_BKUP_FILE=$SYSCFG_PERSISTENT_PATH/syscfg_bkup.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false  
+
+if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
+       if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
+               echo "$SYSCFG_PERSISTENT_PATH path not available creating directory and touching $SYSCFG_NEW_FILE file"
+               mkdir $SYSCFG_PERSISTENT_PATH
+               touch $SYSCFG_NEW_FILE
+       fi
+fi
 
 #syscfg_check -d $MTD_DEVICE
 #if [ $? = 0 ]; then
@@ -218,6 +230,19 @@ FACTORY_RESET_REASON=false
 #      /sbin/syscfg_create -f $SYSCFG_FILE
 #   fi
 #fi
+
+changeFilePermissions() {
+       if [ -e $1 ]; then
+               filepermission=$(stat -c %a $1)
+               if [ $filepermission -ne $2 ]
+               then
+                       chmod $2 $1
+                       echo "[utopia][init] Modified File Permission to $2 for file - $1"
+               fi
+       else
+               echo "[utopia][init] changeFilePermissions: file $1 doesn't exist"
+       fi
+}
 
 CheckAndReCreateDB()
 {
@@ -245,12 +270,19 @@ CheckAndReCreateDB()
 echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
 if [ -f $SYSCFG_BKUP_FILE ]; then
    cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
+   if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
+        cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
+   fi
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
    fi
 else
    echo -n > $SYSCFG_FILE
+   echo -n > $SYSCFG_BKUP_FILE
+   if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
+	echo -n > $SYSCFG_NEW_FILE
+   fi
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
@@ -279,6 +311,10 @@ fi
 
 if [ -f $SYSCFG_OLDBKUP_FILE ];then
 	rm -rf $SYSCFG_OLDBKUP_FILE
+fi
+
+if [ -f $SYSCFG_NEW_BKUP_FILE ];then
+	rm -rf $SYSCFG_NEW_BKUP_FILE
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
@@ -328,6 +364,7 @@ fi
    rm -f /nvram/partners_defaults.json 
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
+   rm -f $SYSCFG_NEW_FILE
    rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
@@ -349,7 +386,10 @@ fi
    #>>zqiu
    create_wifi_default
    #<<zqiu
-   echo_t "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
+   echo_t "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
+   if [ "$MODEL_NUM" != "DPC3939" ] && [ "$MODEL_NUM" != "DPC3939B" ]; then
+         touch $SYSCFG_NEW_FILE
+   fi
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
@@ -425,6 +465,11 @@ syseventd
 sleep 1 
 echo_t "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
+if [ "$MODEL_NUM" != "DPC3939" ] && [ "$MODEL_NUM" != "DPC3939B" ]; then
+      changeFilePermissions $SYSCFG_BKUP_FILE 400
+      changeFilePermissions $SYSCFG_NEW_FILE  400
+      echo "[utopia][init] SEC: syscfg.db moved to $SYSCFG_PERSISTENT_PATH"
+fi
 
 #Added log to check the DHCP range corruption after system defaults applied.
 lan_ipaddr=`syscfg get lan_ipaddr`
