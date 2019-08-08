@@ -209,8 +209,7 @@ void ipv4_status(int l3_inst, char *status)
 	char l_cLast_Erouter_Mode[8] = {0}, l_cFileName[255] = {0};
 	char l_cDsLite_Enabled[8] = {0}, l_cDhcp_Server_Prog[16] = {0};
 	char l_cIpv6_Prefix[64] = {0}, l_cLan_Uptime[16] = {0};
-	char cWan_prefix[64] = {0} , cWan_prefixlen[8] = {0};
-	int l_iRes,iprefixlen;
+	int l_iRes;
 	struct sysinfo l_sSysInfo;
 	FILE *l_fFp = NULL;	
 	int uptime = 0;
@@ -308,12 +307,6 @@ void ipv4_status(int l3_inst, char *status)
 	
     		sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_prefix_v6", 
 						 l_cLan_PrefixV6, sizeof(l_cLan_PrefixV6));
-	        sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan6_prefix", 
-						 cWan_prefix, sizeof(cWan_prefix));
-
-                sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan6_prefixlen", 
-						 cWan_prefixlen, sizeof(cWan_prefixlen));
-  	        iprefixlen = atoi(cWan_prefixlen);
 			if ((strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64)) && (0 != l_cLan_IpAddrv6[0]))
 			{
                            if (l_cLan_IpAddrv6_prev != NULL)
@@ -328,14 +321,8 @@ void ipv4_status(int l3_inst, char *status)
 				snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
             		     "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
 						 l_cLan_IpAddrv6, l_cLanIfName);
+				executeCmd(l_cSysevent_Cmd);
 
-		  	      executeCmd(l_cSysevent_Cmd);
-				if ( (cWan_prefix != NULL ) && (cWan_prefixlen != NULL) )
-				{
-	        			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-		                 	"ip -6 addr add %s1/%d dev %s",cWan_prefix, iprefixlen,l_cLanIfName);	
-			        	executeCmd(l_cSysevent_Cmd);
-				}
 			}
 		}
         //sysevent set current_lan_ipaddr `sysevent get ipv4_${INST}-ipv4addr`
