@@ -9082,8 +9082,8 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined(_HUB4_PRODUCT_REQ_)
     fprintf(filter_fp, "-A INPUT -i brlan6 -d 169.254.0.0/24 -j ACCEPT\n");
-    fprintf(filter_fp, "-A INPUT -i brlan7 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
-    fprintf(filter_fp, "-A INPUT -i brlan6 -d 169.254.1.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brlan6 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brlan7 -d 169.254.1.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brlan7 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
