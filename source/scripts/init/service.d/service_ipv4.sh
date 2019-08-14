@@ -203,8 +203,8 @@ apply_config () {
 
     # bind 161/162 port to brlan0 interface
     if [ xbrlan0 = x${IFNAME} ]; then
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 161
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 162
+        #snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 161
+        #snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_ADD_SOCKET_ENTRY -i $IFNAME -p 162
 		
 	#XB6 Kernel chooses erouter0 as default. Need brlan0 route for XHS (ARRISXB6-5086)
         if [ "$BOX_TYPE" = "XB6" ]; then
@@ -275,8 +275,8 @@ remove_config () {
 
     # del 161/162 port from brlan0 interface when it is teardown
     if [ xbrlan0 = x${IFNAME} ]; then
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 161
-        snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 162
+        #snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 161
+        #snmpcmd -s /var/tmp/cm_snmp_ctrl -t 1 -a $CUR_IPV4_ADDR -c SNMPA_DELETE_SOCKET_ENTRY -i $IFNAME -p 162
 		
 	#XB6 Kernel chooses erouter0 as default. Need brlan0 route for XHS (ARRISXB6-5086)
         if [ "$BOX_TYPE" = "XB6" ]; then
