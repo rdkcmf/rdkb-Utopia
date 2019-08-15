@@ -41,7 +41,7 @@
 ################################################################################
 
 # Version of the database. 
-$$Version=14
+$$Version=15
 
 #-------------------------------------------------------------------
 #     sysevent namespace
@@ -884,6 +884,9 @@ $email_notification_enabled=0
 $rlog_enable=0
 $rlog_host=10.0.0.120
 $rlog_port=514
+
+# Device Fingerprint Enable
+$$Advsecurity_DeviceFingerPrint=1
 
 #Firewall log settings
 $FW_LOG_FILE_PATH=/nvram/log/firewall

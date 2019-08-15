@@ -41,7 +41,7 @@
 ################################################################################
 
 # Version of the database. 
-$$Version=11
+$$Version=12
 
 #-------------------------------------------------------------------
 #     sysevent namespace
@@ -889,6 +889,9 @@ $email_notification_fromaddr=admin@rdkb.dev
 $rlog_enable=0
 $rlog_host=192.168.0.120
 $rlog_port=514
+
+# Device Fingerprint Enable
+$$Advsecurity_DeviceFingerPrint=1
 
 #Firewall log settings
 $FW_LOG_FILE_PATH=/nvram2/log/firewall
