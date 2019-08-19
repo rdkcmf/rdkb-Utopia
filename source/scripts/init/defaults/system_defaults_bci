@@ -1172,3 +1172,8 @@ $Mem_Frag_Threshold=0
 #Xconf Entries
 $XconfSelector=prod
 $XconfUrl=
+
+#Defaults for Telemetry T2 Enable
+$T2Enable=false
+$T2Version=1
+$T2ConfigURL=
