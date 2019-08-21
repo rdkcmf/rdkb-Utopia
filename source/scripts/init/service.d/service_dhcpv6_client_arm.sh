@@ -146,9 +146,21 @@ service_stop()
    if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" || "$MODEL_NUM" = "INTEL_PUMA" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
    	if [ -f $DHCPV6_PID_FILE ]
    	then
+           # We need to make sure the erouter0 interface is UP when the DHCPv6 client process plan to send
+           # the RELEASE message. Otherwise it will wait to send the message and get messed when another
+           # DHCPv6 client process plan to start in service_start().
+           EROUTER0_STATUS=`ip -d link show erouter0 | grep state | awk '/erouter0/{print $9}'`
+           if [ "$EROUTER0_STATUS" != "UP" ]
+           then
+              ip link set erouter0 up
+              sleep 1
+           fi
   	   echo_t "SERVICE_DHCP6C : Killing `cat $DHCPV6_PID_FILE`"
     	   kill -9 `cat $DHCPV6_PID_FILE`
    	   rm -f $DHCPV6_PID_FILE
+           # After stop the DHCPv6 client, need to clear the sysevent tr_erouter0_dhcpv6_client_v6addr
+           # So that it can be triggered again once DHCPv6 client got the same IPv6 address with the old address
+           sysevent set tr_erouter0_dhcpv6_client_v6addr
  	fi
     else
 		$DHCPV6_BINARY stop

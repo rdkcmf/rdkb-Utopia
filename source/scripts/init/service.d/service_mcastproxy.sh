@@ -126,6 +126,10 @@ service_init ()
    eval `utctx_cmd get igmpproxy_enabled lan_ifname`
    WAN_IFNAME=`sysevent get current_wan_ifname`
    HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+   WAN_TUNNEL_IFNAME=`syscfg get dslite_tunnel_interface_1`
+   if [ "" != "$WAN_TUNNEL_IFNAME" ] ; then
+       WAN_IFNAME=$WAN_TUNNEL_IFNAME
+   fi
    MOCA_INTERFACE=`psmcli get dmsb.l2net.9.Name`
 
 }
