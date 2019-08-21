@@ -11350,6 +11350,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_lan2lan\n");
    add_qos_marking_statements(mangle_fp);
+#ifdef DSLITE_FEATURE_SUPPORT  
+   add_dslite_mss_clamping(mangle_fp);
+#endif
 #ifdef _COSA_INTEL_XB3_ARM_
    fprintf(mangle_fp, "-A PREROUTING -i %s -m conntrack --ctstate INVALID -j DROP\n",current_wan_ifname);
    fprintf(mangle_fp, "-A PREROUTING -i %s -m conntrack --ctstate INVALID -j DROP\n",ecm_wan_ifname);
@@ -13863,3 +13866,29 @@ int error;
 
    return(rc);
 }
+#ifdef DSLITE_FEATURE_SUPPORT
+void add_dslite_mss_clamping(FILE *fp)
+{
+    char val[64] = {0};
+    sysevent_get(sysevent_fd, sysevent_token, "dslite_service-status", val, sizeof(val));
+    if(strncmp(val, "started", strlen("started")) == 0)
+    {
+        syscfg_get(NULL, "dslite_mss_clamping_enable_1", val, sizeof(val));
+        if(strncmp(val, "1", 1) == 0)
+        {
+            syscfg_get(NULL, "dslite_tcpmss_1", val, sizeof(val));
+            if(atoi(val) <= 1460)
+            {
+                fprintf(fp, "-I FORWARD -o ipip6tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %s\n", val);
+                fprintf(fp, "-I FORWARD -i ipip6tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %s\n", val);
+            }
+            else
+            {
+                fprintf(fp, "-I FORWARD -o ipip6tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+                fprintf(fp, "-I FORWARD -i ipip6tun0 -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+            }
+        }
+    }
+    FIREWALL_DEBUG("Exiting add_dslite_mss_clamping\n");
+}
+#endif

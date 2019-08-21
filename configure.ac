@@ -114,6 +114,21 @@ AC_FUNC_MALLOC
 
 PKG_CHECK_MODULES([DBUS],[dbus-1 >= 1.6.18])
 
+# Checks for DSLite Feature Support
+AC_ARG_ENABLE([dslite_feature_support],
+[  --enable-dslite_feature_support=val Turn on DSLite Feature, val=true or false],
+[case "${enableval}" in
+  yes) dslite_feature_support=true ;;
+  no)  dslite_feature_support=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-dslite_feature_support]) ;;
+esac],[dslite_feature_support=true])
+AM_CONDITIONAL(DSLITE_FEATURE_SUPPORT, test x"$dslite_feature_support" = x"true")
+
+AM_COND_IF( [DSLITE_FEATURE_SUPPORT], [
+AC_CONFIG_FILES([
+   source/service_dslite/Makefile
+])] )
+
 AC_CONFIG_FILES(
 	source/igd/src/Makefile
 	source/igd/Makefile
