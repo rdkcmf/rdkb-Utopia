@@ -146,6 +146,9 @@ service_stop()
    if ([ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
    	if [ -f $DHCPV6_PID_FILE ]
    	then
+        DSLite_Enabled=`syscfg get dslite_enable`
+        if [ "$DSLITE_DHCP_OPTION_ENABLED" = "true" ] && [ "$DSLite_Enabled" = "1" ]
+        then
            # We need to make sure the erouter0 interface is UP when the DHCPv6 client process plan to send
            # the RELEASE message. Otherwise it will wait to send the message and get messed when another
            # DHCPv6 client process plan to start in service_start().

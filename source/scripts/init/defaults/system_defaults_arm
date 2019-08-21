@@ -1249,6 +1249,7 @@ $dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled=0
 #NonRootSupport enable
 $NonRootSupport=false
 
+
 #DSLite
 #dslite_enable - Enable/disable DS-Lite
 $dslite_enable=0

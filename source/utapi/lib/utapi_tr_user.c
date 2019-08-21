@@ -277,7 +277,7 @@ int Utopia_GetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     pUserCfg_t->RemoteAccessCapable = (0 == iVal) ? FALSE : TRUE;
 
     Utopia_GetIndexedInt(ctx,UtopiaValue_User_Access_Permissions,(ulIndex + 1),&(pUserCfg_t->AccessPermissions));
-    Utopia_GetIndexed(ctx,UtopiaValue_HashPassword,(ulIndex + 1),pUserCfg_t->HashedPassword,STR_SZ);
+    Utopia_GetIndexed(ctx,UtopiaValue_HashPassword,(ulIndex + 1),pUserCfg_t->HashedPassword,sizeof(pUserCfg_t->HashedPassword));
 
     return SUCCESS;
 

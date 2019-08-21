@@ -101,6 +101,10 @@ enum wan_prot {
     WAN_PROT_STATIC,
 };
 
+#ifdef DSLITE_FEATURE_SUPPORT
+// Dslite dhcpv6 option 64 response Maximum wait time in seconds
+#define DSLITE_DHCPREPLY_MAX_TIME 60
+#endif
 /*
  * XXX:
  * no idea why COSA_DML_DEVICE_MODE_DeviceMode is 1, and 2, 3, 4 for IPv4/IPv6/DS
@@ -527,6 +531,99 @@ void get_dateanduptime(char *buffer, int *uptime)
     *uptime= info.uptime;
 }
 
+#ifdef DSLITE_FEATURE_SUPPORT
+static int Is_Dslite_Dhcpv6option64_received(struct serv_wan *sw)
+{
+    char buf[8];
+    char status[32];
+    if (!sw)
+        return -1;
+
+    memset(buf,0,sizeof(buf));
+    syscfg_get(NULL, "dslite_enable", buf, sizeof(buf));
+
+    if (!strncmp(buf,"1",1))
+    {
+        if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS)
+        {
+            char endpointname[256];
+            memset(status,0,sizeof(status));
+            sysevent_get(sw->sefd, sw->setok, "dslite_option64-status", status, sizeof(status));
+            if (!strncmp(status,"received",strlen("received")))
+            {
+                memset(endpointname,0,sizeof(endpointname));
+                sysevent_get(sw->sefd, sw->setok, "dslite_dhcpv6_endpointname", endpointname, sizeof(endpointname));
+                fprintf(stderr, "DHCP DS-Lite Option 64 received ok value: %s\n",endpointname);
+                return 1;
+            }
+            fprintf(stderr, "DHCP DS-Lite Option 64 Error\n");
+        }
+    }
+    return 0;
+}
+
+static int start_dhcpv6_client(struct serv_wan *sw)
+{
+    char buf[8];
+    if (!sw)
+        return -1;
+
+    memset(buf,0,sizeof(buf));
+    syscfg_get(NULL, "dslite_enable", buf, sizeof(buf));
+    if (!strncmp(buf,"1",1))
+    {
+        if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS)
+        {
+            switch (sw->prot)
+            {
+                case WAN_PROT_DHCP:
+                    sleep(5);
+                    sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
+                    sysevent_set(sw->sefd, sw->setok, "dslite_option64-status", "", 0);
+                    fprintf(stderr, "Starting DHCPv6 Client now\n");
+                    system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
+                    break;
+
+            }
+        }
+    }
+    return 0;
+}
+
+static int wait_till_dhcpv6_client_reply(struct serv_wan *sw)
+{
+    char status[32];
+    char buf[8];
+    int count = 0;
+    char *ok_s = "received";
+    char *nok_s = "not received";
+     if (!sw)
+        return -1;
+
+    memset(buf,0,sizeof(buf));
+    syscfg_get(NULL, "dslite_enable", buf, sizeof(buf));
+    if (!strncmp(buf,"1",1))
+    {
+        if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS)
+        {
+            memset(status,0,sizeof(status));
+
+            for (count=0; count < DSLITE_DHCPREPLY_MAX_TIME; ++count)
+            {
+                fprintf(stderr, "Waiting for DHCP DS-Lite Option 64 reply\n");
+                sysevent_get(sw->sefd, sw->setok, "dslite_option64-status", status, sizeof(status));
+                if (!strncmp(status,ok_s,strlen(ok_s)) || !strncmp(status,nok_s,strlen(nok_s)))
+                {
+                    break;
+                }
+                sleep(1);
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
 static int wan_start(struct serv_wan *sw)
 {
     char status[16];
@@ -598,10 +695,23 @@ static int wan_start(struct serv_wan *sw)
     if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS) {
        switch (sw->prot) {
        case WAN_PROT_DHCP:
+#ifdef DSLITE_FEATURE_SUPPORT
+          memset(status,0,sizeof(status));
+           syscfg_get(NULL, "dslite_enable", status, sizeof(status));
+           if (!strncmp(status,"1",1))
+           {
+               sysevent_set(sw->sefd, sw->setok, "dslite_option64-status", "", 0);
+               sleep (5);
+           }
+#endif
                fprintf(stderr, "Starting DHCPv6 Client now\n");
                system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
                if (sw->rtmod == WAN_RTMOD_IPV6)
                        sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
+
+#ifdef DSLITE_FEATURE_SUPPORT
+               wait_till_dhcpv6_client_reply(sw);
+#endif
                break;
        case WAN_PROT_STATIC:
                if (wan_static_start_v6(sw) != 0) {
@@ -617,7 +727,13 @@ static int wan_start(struct serv_wan *sw)
                sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
                return -1;
        }
-    }
+    }   
+#else
+#ifdef DSLITE_FEATURE_SUPPORT
+    start_dhcpv6_client(sw);
+    fprintf(stderr, "Started dhcpv6 and entering into wait\n");
+    wait_till_dhcpv6_client_reply(sw);
+#endif
 #endif
 
      //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
@@ -626,7 +742,12 @@ static int wan_start(struct serv_wan *sw)
     	/* set sysevents and trigger for other modules */
     	sysevent_set(sw->sefd, sw->setok, "current_wan_ifname", sw->ifname, 0);
     }
-
+#ifdef DSLITE_FEATURE_SUPPORT
+    if (1 == Is_Dslite_Dhcpv6option64_received(sw))
+    {
+        goto done; // if dslite dhcp option64 received then dont trigger ipv4 binary.
+    }
+#endif
 	
     if (sw->rtmod != WAN_RTMOD_IPV4 && sw->rtmod != WAN_RTMOD_DS)
         goto done; /* no need to config addr/route if IPv4 not enabled */
@@ -778,6 +899,21 @@ static int wan_stop(struct serv_wan *sw)
                return -1;
         }
     }
+#else
+#ifdef DSLITE_FEATURE_SUPPORT
+    if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS) {
+       if (sw->prot == WAN_PROT_DHCP) {
+               fprintf(stderr, "Disabling DHCPv6 Client\n");
+               system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");
+       }
+    }
+#endif
+#endif
+
+#ifdef DSLITE_FEATURE_SUPPORT
+    //reset dslite sysevent during wan-stop
+    sysevent_set(sw->sefd, sw->setok, "dslite_dhcpv6_endpointname", "", 0);
+    sysevent_set(sw->sefd, sw->setok, "dslite_option64-status", "", 0);
 #endif
 
     if (sw->rtmod == WAN_RTMOD_IPV4 || sw->rtmod == WAN_RTMOD_DS) {
@@ -1118,7 +1254,7 @@ static int wan_addr_set(struct serv_wan *sw)
     }
 #endif
 
-#if !defined(_WAN_MANAGER_ENABLED_)
+#if !defined(_WAN_MANAGER_ENABLED_) && !defined(DSLITE_FEATURE_SUPPORT)
     if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS)
     {
     	fprintf(stderr, "Starting DHCPv6 Client now\n");

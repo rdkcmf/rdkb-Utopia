@@ -37,7 +37,14 @@ int Utopia_GetDsliteEnable(UtopiaContext *ctx, boolean_t *bEnabled)
 #endif
 
     Utopia_GetBool(ctx, UtopiaValue_Dslite_Enable, &flag);
-    *bEnabled = flag ? TRUE : FALSE;
+    if (TRUE == flag)
+    {
+        *bEnabled = TRUE ;
+    }
+    else
+    {
+        *bEnabled = FALSE ;
+    }
     return SUCCESS;
 }
 

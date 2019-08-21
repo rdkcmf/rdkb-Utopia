@@ -744,7 +744,6 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,	Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "prev_rule_enabled_state",			UtopiaValue_SinglePortForward },	/* UtopiaValue_SPF_PrevRuleEnabledState */	  
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "prev_rule_enabled_state",          UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_PrevRuleEnabledState */        
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "prev_rule_enabled_state",          UtopiaValue_PortRangeTrigger },     /* UtopiaValue_PRT_PrevRuleEnabledState */
-	 { Utopia_Type_Event, Utopia_Event__NONE__,           Utopia_Static__NONE__, Utopia_For__NONE__, 0, "bring-lan",    		UtopiaValue__UNKNOWN__ }, /* UtopiaValue_IPv6_Prefix */
     	{ Utopia_Type_IndexedConfig, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "hash_password_%d", UtopiaValue__UNKNOWN__ },  /* UtopiaValue_HashPassword */
 #if defined(_WAN_MANAGER_ENABLED_)
       { Utopia_Type_Config, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_mode",  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WanMode */
