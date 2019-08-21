@@ -744,12 +744,30 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,	Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "prev_rule_enabled_state",			UtopiaValue_SinglePortForward },	/* UtopiaValue_SPF_PrevRuleEnabledState */	  
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "prev_rule_enabled_state",          UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_PrevRuleEnabledState */        
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "prev_rule_enabled_state",          UtopiaValue_PortRangeTrigger },     /* UtopiaValue_PRT_PrevRuleEnabledState */
-	 { Utopia_Type_Event, Utopia_Event__NONE__,           Utopia_Static__NONE__, Utopia_For__NONE__, 0, "bring-lan",    		UtopiaValue__UNKNOWN__ }, /* UtopiaValue_IPv6_Prefix */
     	{ Utopia_Type_IndexedConfig, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "hash_password_%d", UtopiaValue__UNKNOWN__ },  /* UtopiaValue_HashPassword */
 #if defined(_WAN_MANAGER_ENABLED_)
       { Utopia_Type_Config, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_mode",  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WanMode */
       { Utopia_Type_Config, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_conn_enabled",  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WanConnEnabled */
 #endif /*_WAN_MANAGER_ENABLED_*/
+#ifdef DSLITE_FEATURE_SUPPORT
+    { Utopia_Type_Config,        Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_For__NONE__,   1, "dslite_enable",             UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Enable */
+    { Utopia_Type_Config,        Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_For__NONE__,   1, "dslite_count",              UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Count */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_InsNum_%d",          UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_InsNum */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_active_%d",          UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Active */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,              Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_status_%d",          UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Status */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,              Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_alias_%d",           UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Alias */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_mode_%d",            UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Mode */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_addr_type_%d",       UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Addr_Type */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,              Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_addr_inuse_%d",      UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Addr_Inuse */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_addr_fqdn_%d",       UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Addr_Fqdn */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_addr_ipv6_%d",       UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Addr_IPv6 */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,              Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_origin_%d",          UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Origin */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,              Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_tunnel_interface_%d",    UtopiaValue__UNKNOWN__ },      /* UtopiaValue_Dslite_Tunnel_Interface */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,              Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_tunneled_interface_%d",  UtopiaValue__UNKNOWN__ },      /* UtopiaValue_Dslite_Tunneled_Interface */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_mss_clamping_enable_%d", UtopiaValue__UNKNOWN__ },      /* UtopiaValue_Dslite_Mss_Clamping_Enable */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_tcpmss_%d",          UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Tcpmss */
+    { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_ipv6_frag_enable_%d", UtopiaValue__UNKNOWN__ },         /* UtopiaValue_Dslite_IPv6_Frag_Enable */
+#endif
     { Utopia_Type__UNKNOWN__, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_For__NONE__, 0, 0, UtopiaValue__UNKNOWN__ }, /* UtopiaValue__LAST__ */
 };
 

@@ -595,6 +595,25 @@ typedef enum _UtopiaValue
       UtopiaValue_WanMode,
       UtopiaValue_WanConnEnabled,
     #endif /*_WAN_MANAGER_ENABLED_*/
+    #if defined(DSLITE_FEATURE_SUPPORT)
+    UtopiaValue_Dslite_Enable,
+    UtopiaValue_Dslite_Count,
+    UtopiaValue_Dslite_InsNum,
+    UtopiaValue_Dslite_Active,
+    UtopiaValue_Dslite_Status,
+    UtopiaValue_Dslite_Alias,
+    UtopiaValue_Dslite_Mode,
+    UtopiaValue_Dslite_Addr_Type,
+    UtopiaValue_Dslite_Addr_Inuse,
+    UtopiaValue_Dslite_Addr_Fqdn,
+    UtopiaValue_Dslite_Addr_IPv6,
+    UtopiaValue_Dslite_Origin,
+    UtopiaValue_Dslite_Tunnel_Interface,
+    UtopiaValue_Dslite_Tunneled_Interface,
+    UtopiaValue_Dslite_Mss_Clamping_Enable,
+    UtopiaValue_Dslite_Tcpmss,
+    UtopiaValue_Dslite_IPv6_Frag_Enable,
+    #endif /* DSLITE_FEATURE_SUPPORT */
     UtopiaValue__LAST__
 } UtopiaValue;
 
@@ -946,7 +965,8 @@ typedef enum _Utopia_Event
     Utopia_Event_Syslog_Restart = 0x20000,
     Utopia_Event_QoS_Restart = 0x40000,
     Utopia_Event_MoCA_Restart = 0x80000,
-    Utopia_Event__LAST__ = 0x100000
+    Utopia_Event_DSLite_Restart = 0x100000,
+    Utopia_Event__LAST__ = 0x200000
 } Utopia_Event;
 
 /*

@@ -66,7 +66,14 @@ userCfg
     char                            Password[64];
     char                            Language[16];
     char 	                    NumOfFailedAttempts;
+    char                            X_RDKCENTRAL_COM_ComparePassword[32];
     char 			    HashedPassword[128];
+    int			     	    RemainingAttempts;
+    int			       	    LoginCounts;
+    int				    LockOutRemainingTime;
+#if defined(_COSA_FOR_BCI_)
+    int                             NumOfRestoreFailedAttempt;
+#endif
     USER_ACCESS_PERMISSIONS         AccessPermissions;
 }userCfg_t;
 
