@@ -1477,7 +1477,7 @@ static int serv_ipv6_start(struct serv_ipv6 *si6)
      *  5) Send RA, start DHCPv6 server
      */
 	/* For CBR product the lan(brlan0) v6 address set is done as part of PandM process*/
-#ifndef _CBR_PRODUCT_REQ_
+#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_)
     if (lan_addr6_set(si6) !=0) {
         fprintf(stderr, "assign IPv6 address for lan interfaces error!\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
@@ -1517,7 +1517,7 @@ static int serv_ipv6_stop(struct serv_ipv6 *si6)
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
-#ifndef _CBR_PRODUCT_REQ_
+#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_)
     if (lan_addr6_unset(si6) !=0) {
         fprintf(stderr, "unset IPv6 address for lan interfaces error!\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
