@@ -1048,3 +1048,7 @@ $Free_Mem_Threshold=0
 
 #MemFragThreshold
 $Mem_Frag_Threshold=0
+
+#Xconf Entries
+$XconfSelector=prod
+$XconfUrl=
