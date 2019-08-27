@@ -649,7 +649,7 @@ static BOOL isEponEnable = TRUE;
 static BOOL isEponEnable = FALSE;
 #endif
 
-#if defined(_PLATFORM_RASPBERRYPI_)
+#if defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
 static BOOL MD_flag = TRUE;
 #endif
 
@@ -4889,7 +4889,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    // RG-IP: erouter0
 #if defined(CONFIG_CCSP_WAN_MGMT)
    rc = syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
-#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS) && !defined(_PLATFORM_RASPBERRYPI_)
+#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS) && !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
    tmpQuery[0] = '\0';
    ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
    if(ret == 0)
@@ -6059,7 +6059,7 @@ InternetAccessPolicyNext3:
                snprintf(str, sizeof(str),
                         "-A %s -p tcp -m tcp --dport 80 -m webstr --host \"%s\" -j %s",
                         rules_table, url + host_name_offset, block_site);
-#elif defined(_PLATFORM_RASPBERRYPI_)
+#elif defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
                snprintf(str, sizeof(str), 
                         "-A %s -p tcp -m tcp --dport 80 -d \"%s\" -j %s",
                         rules_table, url + host_name_offset, block_site);
@@ -7091,7 +7091,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          if(flag == 1)
          {
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j ACCEPT\n",query);
-#if defined(_PLATFORM_RASPBERRYPI_)
+#if defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
            if(MD_flag == FALSE)
            {
            fprintf(fp, "-D INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
@@ -7116,7 +7116,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j %s\n",query,drop_log);
             fprintf(fp, "-A prerouting_devices -p udp -m mac --mac-source %s -j %s\n",query,drop_log);            
 #endif /* 0 */
-#if defined(_PLATFORM_RASPBERRYPI_)
+#if defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
            if(MD_flag == TRUE)
            {
            fprintf(fp, "-I INPUT -p tcp -m tcp --dport 21515 -j DROP\n",query);
@@ -7550,7 +7550,7 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                                         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
                                         fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m webstr --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
                                         fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m webstr --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
-#elif defined(_PLATFORM_RASPBERRYPI_)
+#elif defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
                     fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
 #else
@@ -9767,7 +9767,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    } else {
        fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
    } */   
-#if !defined(_PLATFORM_RASPBERRYPI_)
+#if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
    do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
 #else
     fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
@@ -10634,7 +10634,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
    fprintf(filter_fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
    fprintf(filter_fp, "-A SNMPDROPLOG -j DROP\n");
-#if !defined(_PLATFORM_RASPBERRYPI_)
+#if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
    do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
 #else
    fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
@@ -12313,6 +12313,10 @@ static int service_start ()
 
    #ifdef _PLATFORM_RASPBERRYPI_
        /* Apply Mac Filtering rules for RPI-Device */
+       system("/bin/sh -c /tmp/mac_filter.sh");
+   #endif
+   #ifdef _PLATFORM_TURRIS_
+       /* Apply Mac Filtering rules */
        system("/bin/sh -c /tmp/mac_filter.sh");
    #endif
 
