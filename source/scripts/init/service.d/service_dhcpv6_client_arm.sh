@@ -55,7 +55,7 @@ SERVICE_NAME="dhcpv6_client"
 
 DIBBLER_ENABLED=`syscfg get dibbler_client_enable`
 
-if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
+if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" || "$MODEL_NUM" = "INTEL_PUMA" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
 	DHCPV6_BINARY=/sbin/ti_dhcp6c
         DHCPV6_PID_FILE=/var/run/erouter_dhcp6c.pid
 else
@@ -124,7 +124,7 @@ service_start()
 		then
 			touch $DHCP6C_PROGRESS_FILE
 			echo_t "SERVICE_DHCP6C : Starting DHCPv6 Client from service_dhcpv6_client"
-			if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
+			if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" || "$MODEL_NUM" = "INTEL_PUMA" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
         			ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
 				echo_t "SERVICE_DHCP6C : dhcp6c PID is `cat $DHCPV6_PID_FILE`"
 			else
@@ -143,7 +143,7 @@ service_start()
 service_stop()
 {
    echo_t "SERVICE_DHCP6C : SERVICE STOP"
-   if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
+   if [[ "$BOX_TYPE" = "XB3" || "$MODEL_NUM" = "TG3482G" || "$MODEL_NUM" = "INTEL_PUMA" ]] && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
    	if [ -f $DHCPV6_PID_FILE ]
    	then
   	   echo_t "SERVICE_DHCP6C : Killing `cat $DHCPV6_PID_FILE`"
