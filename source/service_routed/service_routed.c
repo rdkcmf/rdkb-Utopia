@@ -368,6 +368,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char dnssl[2560] = {0};
     char prefix[64], orig_prefix[64], lan_addr[64];
     char preferred_lft[16], valid_lft[16];
+#ifdef MULTILAN_FEATURE
+    char dnssl_lft[16];
+    unsigned int dnssllft = 0;
+#endif
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
     char buf[6];
@@ -713,11 +717,29 @@ static int gen_zebra_conf(int sefd, token_t setok)
 				}
 			}
 
-        for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
+			for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
 			{
 			// Modifying rdnss value to fix the zebra config.
         		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
 			}
+#ifdef MULTILAN_FEATURE
+                        if (atoi(valid_lft) <= 3*atoi(ra_interval))
+                        {
+                             // According to RFC8106 section 5.2 dnssl lifttime must be atleast 3 time MaxRtrAdvInterval.
+                             dnssllft = 3*atoi(ra_interval);
+                             snprintf(dnssl_lft, sizeof(dnssl_lft), "%d", dnssllft);
+                        }
+                        else
+                        {
+                             snprintf(dnssl_lft, sizeof(dnssl_lft), "%s", valid_lft);
+                        }
+                        sysevent_get(sefd, setok, "ipv6_dnssl", dnssl, sizeof(dnssl));
+                        for(start = dnssl; (tok = strtok_r(start, " ", &sp)); start = NULL)
+                        {
+                              fprintf(fp, "   ipv6 nd dnssl %s %s\n", tok, dnssl_lft);
+                        }
+
+#endif
 		}
 	}
     
