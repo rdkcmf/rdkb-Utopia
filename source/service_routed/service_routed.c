@@ -295,11 +295,17 @@ static int gen_zebra_conf(int sefd, token_t setok)
     unsigned int enabled_iface_num = 0;
     char evt_name[64] = {0};
     int  StaticDNSServersEnabled = 0;
+#ifdef _HUB4_PRODUCT_REQ_
+    char lan_addr_prefix[64] = {0};
+#endif
 #if defined (INTEL_PUMA7)
     //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     char wan_st[16] = {0};
 #endif
 
+#ifdef _HUB4_PRODUCT_REQ_
+    char server_type[16] = {0};
+#endif
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
         return -1;
@@ -331,7 +337,19 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #else
     sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
+#ifndef _HUB4_PRODUCT_REQ_
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
+#else
+    if(strncmp(prefix, orig_prefix, 64) == 0) {
+        strncpy(orig_prefix, "", sizeof(orig_prefix));
+        sysevent_set(sefd, setok, "previous_ipv6_prefix", orig_prefix, 0);
+    }
+    /* As per Sky requirement, hub should advertise lan bridge's ULA address as DNS address for lan clients as part of RA.
+       In case the ULA is not available, lan bridge's LL address can be advertise as DNS address.
+    */
+    sysevent_get(sefd, setok, "ula_address", lan_addr, sizeof(lan_addr));
+    sysevent_get(sefd, setok, "ula_prefix", lan_addr_prefix, sizeof(lan_addr_prefix));
+#endif
 #ifdef MULTILAN_FEATURE
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, valid_lft, sizeof(valid_lft));
@@ -381,13 +399,44 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #if defined(_COSA_FOR_BCI_)
     if ((strlen(prefix) || strlen(orig_prefix)) && bEnabled)
 #else
-    if (strlen(prefix) || strlen(orig_prefix)) 
+#ifndef _HUB4_PRODUCT_REQ_
+    if (strlen(prefix) || strlen(orig_prefix))
+#else
+    if (strlen(prefix) || strlen(orig_prefix) || strlen(lan_addr_prefix))
+#endif
 #endif
 	{
 		char val_DNSServersEnabled[ 32 ];
 
+#ifdef _HUB4_PRODUCT_REQ_
+        syscfg_get(NULL, "dhcpv6s00::servertype", server_type, sizeof(server_type));
+        if (strncmp(server_type, "1", 1) == 0) {
+            syscfg_set(NULL, "router_managed_flag", "1");
+        }
+        else {
+            syscfg_set(NULL, "router_managed_flag", "0");
+        }
+        syscfg_set(NULL, "router_other_flag", "1");
+        syscfg_commit();
+#endif
         fprintf(fp, "interface %s\n", lan_if);
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
+#ifdef _HUB4_PRODUCT_REQ_
+        if (strlen(prefix) && (strncmp(server_type, "2", 1) == 0))
+        {
+            fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+        }
+        else if(strlen(prefix)) {
+            fprintf(fp, "   ipv6 nd prefix %s 0 0\n", prefix);
+        }
+        if (strlen(lan_addr_prefix) && (strncmp(server_type, "2", 1) == 0))
+        {
+            fprintf(fp, "   ipv6 nd prefix %s\n", lan_addr_prefix);
+        }
+        else if (strlen(lan_addr_prefix)) {
+            fprintf(fp, "   ipv6 nd prefix %s 0 0\n", lan_addr_prefix);
+        }
+#else
         if (strlen(prefix))
         {
 #if defined (INTEL_PUMA7)
@@ -402,7 +451,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
             }
 #endif
         }
-
+#endif//_HUB4_PRODUCT_REQ_
         if (strlen(orig_prefix))
             fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
 
@@ -418,7 +467,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
             fprintf(fp, "   ipv6 nd ra-interval 30\n"); //Set ra-interval to default 30 secs as per Erouter Specs.
         }
 #else
+#ifndef _HUB4_PRODUCT_REQ_
         fprintf(fp, "   ipv6 nd ra-interval 3\n");
+#else
+        fprintf(fp, "   ipv6 nd ra-interval 180\n");
+#endif //_HUB4_PRODUCT_REQ_
 #endif
 
 #if defined (INTEL_PUMA7)
@@ -727,12 +780,17 @@ static int rip_start(struct serv_routed *sr)
 
     if (!serv_can_start(sr->sefd, sr->setok, "rip"))
         return -1;
-
+#ifndef _HUB4_PRODUCT_REQ_
     if (!sr->lan_ready || !sr->wan_ready) {
         fprintf(stderr, "%s: LAN or WAN is not ready !\n", __FUNCTION__);
         return -1;
     }
-
+#else
+    if (!sr->lan_ready) {
+        fprintf(stderr, "%s: LAN is not ready !\n", __FUNCTION__);
+        return -1;
+    }
+#endif//_HUB4_PRODUCT_REQ_
     syscfg_get(NULL, "rip_enabled", enable, sizeof(enable));
     if (strcmp(enable, "1") != 0) {
         fprintf(stderr, "%s: RIP not enabled\n", __FUNCTION__);
@@ -793,7 +851,7 @@ static int serv_routed_start(struct serv_routed *sr)
         fprintf(stderr, "%s: LAN is not ready !\n", __FUNCTION__);
         return -1;
     }
-
+#ifndef _HUB4_PRODUCT_REQ_
     syscfg_get(NULL, "last_erouter_mode", rtmod, sizeof(rtmod));
     if (atoi(rtmod) != 2) { /* IPv4-only or Dual-Stack */
         if (!sr->wan_ready) {
@@ -807,7 +865,7 @@ static int serv_routed_start(struct serv_routed *sr)
             return -1;
         }
     }
-
+#endif//_HUB4_PRODUCT_REQ_
     sysevent_set(sr->sefd, sr->setok, "routed-status", "starting", 0);
 
     /* RA daemon */
