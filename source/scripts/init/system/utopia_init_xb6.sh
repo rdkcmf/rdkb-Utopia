@@ -427,6 +427,20 @@ fi
 #echo "[utopia][init] Starting system logging"
 #/etc/utopia/service.d/service_syslog.sh syslog-start
 
+# update max number of msg in queue based on system maximum queue memory.
+# This update will be used for presence detection feature.
+MSG_SIZE_MAX=`cat /proc/sys/fs/mqueue/msgsize_max`
+MSG_MAX_SYS=`ulimit -q`
+TOT_MSG_MAX=50
+if [ "x$MSG_MAX_SYS" = "x" ]; then
+echo "ulimit cmd not avail assign mq msg_max :$TOT_MSG_MAX"
+else
+TOT_MSG_MAX=$((MSG_MAX_SYS/MSG_SIZE_MAX))
+echo "mq msg_max :$TOT_MSG_MAX"
+fi
+echo $TOT_MSG_MAX > /proc/sys/fs/mqueue/msg_max
+
+
 echo "[utopia][init] Starting sysevent subsystem"
 #syseventd --threads 18
 syseventd
