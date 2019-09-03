@@ -352,6 +352,24 @@ read_init_params () {
     inst=`sysevent get gre_$1_inst`
     #eval `psmcli get -e ENDPOINTS $HS_PSM_BASE.${inst}.$GRE_PSM_ENDPOINTS BRIDGE_INSTS $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES  KA_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAINT KA_FAIL_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAFINT KA_POLICY $HS_PSM_BASE.${inst}.$GRE_PSM_KAPOLICY KA_THRESH $HS_PSM_BASE.${inst}.$GRE_PSM_KATHRESH KA_COUNT $HS_PSM_BASE.${inst}.$GRE_PSM_KACOUNT KA_RECON_PRIM $HS_PSM_BASE.${inst}.$GRE_PSM_KARECON SNOOP_CIRCUIT $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPCIRC SNOOP_REMOTE $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPREM WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
     eval `psmcli get -e PRIMARY $HS_PSM_BASE.${inst}.$GRE_PSM_PRIENDPOINTS SECONDARY $HS_PSM_BASE.${inst}.$GRE_PSM_SECENDPOINTS BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES KA_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAINT KA_FAIL_INTERVAL $HS_PSM_BASE.${inst}.$GRE_PSM_KAFINT KA_POLICY $HS_PSM_BASE.${inst}.$GRE_PSM_KAPOLICY KA_THRESH $HS_PSM_BASE.${inst}.$GRE_PSM_KATHRESH KA_COUNT $HS_PSM_BASE.${inst}.$GRE_PSM_KACOUNT KA_RECON_PRIM $HS_PSM_BASE.${inst}.$GRE_PSM_KARECON SNOOP_CIRCUIT $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPCIRC SNOOP_REMOTE $HS_PSM_BASE.${inst}.$GRE_PSM_SNOOPREM WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+
+    status=$?
+    if [ "$status" != "0" ]
+    then
+        echo "WARNING: handle_gre.sh read_init_params: psmcli return $status"
+    fi
+    echo "PRIMARY $PRIMARY SECONDARY $SECONDARY"
+    if [ "$PRIMARY" = "" ] || [ "$SECONDARY" = "" ]
+    then
+        echo "WARNING: handle_gre.sh read_init_params: PRIMARY/SECONDARY NULL"
+    fi
+    echo "KA_INTERVAL $KA_INTERVAL KA_FAIL_INTERVAL $KA_FAIL_INTERVAL KA_POLICY $KA_POLICY"
+    if [ "$KA_INTERVAL" = "" ]
+    then
+        echo "WARNING: handle_gre.sh read_init_params: KA_INTERVAL NULL"
+    fi
+    echo "KA_THRESH $KA_THRESH KA_COUNT $KA_COUNT KA_RECON_PRIM $KA_RECON_PRIM"
+
   BRIDGE_INSTS="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4"
 		
     bInst_to_bNames "$BRIDGE_INSTS" "$WECB_BRIDGES"
@@ -700,7 +718,7 @@ case "$1" in
     create)
         echo "GRE CREATE: $3" > /dev/console
         
-        read_init_params $3 > /dev/null
+        read_init_params $3
         
         #Initialize
         if [ x = x`sysevent get ${inst}_keepalive_pid` ]; then
