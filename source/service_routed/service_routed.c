@@ -53,6 +53,13 @@
 #include <net/if.h>
 #include <signal.h>
 #include "util.h"
+#ifdef _HUB4_PRODUCT_REQ_
+#include "ccsp_dm_api.h"
+#include "ccsp_custom.h"
+#include "ccsp_psm_helper.h"
+#include <ccsp_base_api.h>
+#include "ccsp_memory.h"
+#endif
 
 #define PROG_NAME       "SERVICE-ROUTED"
 
@@ -61,6 +68,16 @@
 #define ZEBRA_CONF_FILE "/var/zebra.conf"
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
 
+#ifdef _HUB4_PRODUCT_REQ_
+#define LAN_BRIDGE "brlan0"
+#define CCSP_SUBSYS  "eRT."
+#define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
+#define PSM_LANMANAGEMENTENTRY_LAN_IPV6_ENABLE "dmsb.lanmanagemententry.lanipv6enable"
+#define PSM_LANMANAGEMENTENTRY_LAN_ULA_ENABLE  "dmsb.lanmanagemententry.lanulaenable"
+
+static void* bus_handle = NULL;
+const char* const service_routed_component_id = "ccsp.routed";
+#endif
 
 #ifdef MULTILAN_FEATURE
 #define COSA_DML_DHCPV6_CLIENT_IFNAME                 "erouter0"
@@ -92,7 +109,74 @@ static int fw_restart(struct serv_routed *sr)
     sysevent_set(sr->sefd, sr->setok, "firewall-restart", NULL, 0);
     return 0;
 }
+#ifdef _HUB4_PRODUCT_REQ_
+static int dbusInit( void )
+{
+    int   ret  = -1;
+    char* pCfg = CCSP_MSG_BUS_CFG;
 
+    if(bus_handle == NULL)
+    {
+        // Dbus connection init
+        #ifdef DBUS_INIT_SYNC_MODE
+        ret = CCSP_Message_Bus_Init_Synced(service_routed_component_id,
+                                           pCfg,
+                                           &bus_handle,
+                                           Ansc_AllocateMemory_Callback,
+                                           Ansc_FreeMemory_Callback);
+        #else
+        ret = CCSP_Message_Bus_Init(service_routed_component_id,
+                                    pCfg,
+                                    &bus_handle,
+                                    Ansc_AllocateMemory_Callback,
+                                    Ansc_FreeMemory_Callback);
+        #endif /* DBUS_INIT_SYNC_MODE */
+    }
+
+    if (ret == -1)
+    {
+        // Dbus connection error
+        fprintf(stderr, " DBUS connection error\n");
+        bus_handle = NULL;
+    }
+
+    return ret;
+}
+
+static int getLanIpv6Info(int *ipv6_enable, int *ula_enable)
+{
+    char *pIpv6_enable, *pUla_enable;
+
+    if(CCSP_SUCCESS != PSM_VALUE_GET_STRING(PSM_LANMANAGEMENTENTRY_LAN_IPV6_ENABLE, pIpv6_enable)) {
+        Ansc_FreeMemory_Callback(pIpv6_enable);
+        return -1;
+    }
+
+    if(CCSP_SUCCESS != PSM_VALUE_GET_STRING(PSM_LANMANAGEMENTENTRY_LAN_ULA_ENABLE, pUla_enable)) {
+        Ansc_FreeMemory_Callback(pUla_enable);
+        return -1;
+    }
+
+    if ( strncmp(pIpv6_enable, "TRUE", 4 ) == 0) {
+        *ipv6_enable = TRUE;
+    }
+    else {
+        *ipv6_enable = FALSE;
+    }
+
+    if ( strncmp(pUla_enable, "TRUE", 4 ) == 0) {
+        *ula_enable = TRUE;
+    }
+    else {
+        *ula_enable = FALSE;
+    }
+
+    Ansc_FreeMemory_Callback(pUla_enable);
+    Ansc_FreeMemory_Callback(pIpv6_enable);
+
+    return 0;
+}
+#endif
 static int daemon_stop(const char *pid_file, const char *prog)
 {
     FILE *fp;
@@ -344,6 +428,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #ifndef _HUB4_PRODUCT_REQ_
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
 #else
+    result = getLanIpv6Info(&ipv6_enable, &ula_enable);
+    if(result != 0) {
+        fprintf(stderr, "getLanIpv6Info failed");
+        return -1;
+    }
     if(strncmp(prefix, orig_prefix, 64) == 0) {
         strncpy(orig_prefix, "", sizeof(orig_prefix));
         sysevent_set(sefd, setok, "previous_ipv6_prefix", orig_prefix, 0);
@@ -353,8 +442,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
        In case the ULA is not available, lan bridge's LL address can be advertise as DNS address.
     */
     sysevent_get(sefd, setok, "ula_address", lan_addr, sizeof(lan_addr));
-    sysevent_get(sefd, setok, "ula_prefix", lan_addr_prefix, sizeof(lan_addr_prefix));
-#endif
+    if(ula_enable == 1)
+        sysevent_get(sefd, setok, "ula_prefix", lan_addr_prefix, sizeof(lan_addr_prefix));
+#endif//_HUB4_PRODUCT_REQ_
 #ifdef MULTILAN_FEATURE
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, valid_lft, sizeof(valid_lft));
@@ -546,7 +636,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
 		( StaticDNSServersEnabled != 1 )
 	  )
 	{
+#ifndef _HUB4_PRODUCT_REQ_
 		if (strlen(lan_addr))
+#else
+                if (strlen(lan_addr) && ula_enable)
+#endif
             			fprintf(fp, "   ipv6 nd rdnss %s 86400\n", lan_addr);
 	}
         /* static IPv6 DNS */
@@ -724,6 +818,11 @@ static int gen_ripd_conf(int sefd, token_t setok)
 
 static int radv_start(struct serv_routed *sr)
 {
+#ifdef _HUB4_PRODUCT_REQ_
+    int result;
+    int ipv6_enable;
+    int ula_enable;
+#endif
 #if defined(_COSA_FOR_BCI_)
     char dhcpv6Enable[8]={0};
 #endif
@@ -749,7 +848,17 @@ static int radv_start(struct serv_routed *sr)
         return -1;
     }
 #endif
-
+#ifdef _HUB4_PRODUCT_REQ_
+    result = getLanIpv6Info(&ipv6_enable, &ula_enable);
+    if(result != 0) {
+        fprintf(stderr, "getLanIpv6Info failed");
+        return -1;
+    }
+    if(ipv6_enable == 0) {
+        daemon_stop(ZEBRA_PID_FILE, "zebra");
+        return -1;
+    }
+#endif
     if (gen_zebra_conf(sr->sefd, sr->setok) != 0) {
         fprintf(stderr, "%s: fail to save zebra config\n", __FUNCTION__);
         return -1;
@@ -1016,7 +1125,17 @@ int main(int argc, char *argv[])
         usage();
         exit(1);
     }
+#ifdef _HUB4_PRODUCT_REQ_
+    /* dbus init based on bus handle value */
+    if(bus_handle ==  NULL)
+        dbusInit();
 
+    if(bus_handle == NULL)
+    {
+        fprintf(stderr, "service_routed, DBUS init error\n");
+        return -1;
+    }
+#endif
     if (serv_routed_init(&sr) != 0)
         exit(1);
 
