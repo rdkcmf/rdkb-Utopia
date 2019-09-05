@@ -1181,3 +1181,9 @@ $X_RDKCENTRAL-COM_BackgroundPresenceJoinInterval=67
 
 #Xupnp default Value
 $start_upnp_service=true
+
+#FreeMemThreshold
+$Free_Mem_Threshold=0
+
+#MemFragThreshold
+$Mem_Frag_Threshold=0
