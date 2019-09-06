@@ -579,6 +579,12 @@ else
    fi
 fi
 
+#RDKB-24155 - TLVData.bin should not be used in EWAN mode
+eth_wan_enable=`syscfg get eth_wan_enabled`
+if [ "$eth_wan_enable" = "true" ] && [ -f $TR69TLVFILE ]; then
+  rm -f $TR69TLVFILE
+fi
+      
 #RDKB-15951 Bringup the Mesh Bhaul network
 echo "[utopia][init] Mesh Bhaul bridge creation"
 sysevent set meshbhaul-setup 10
