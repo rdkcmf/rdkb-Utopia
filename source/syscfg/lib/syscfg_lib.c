@@ -1757,18 +1757,20 @@ int commit_to_file (const char *fname)
 
     close(fd);
 
-   ret=backup_file(SYSCFG_BKUP_FILE,fname);
-   if (ret == -1)
-   {
-    	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Backing up of syscfg failed");
-	// retrying again to take db back up
-	ret=0;
-        ret=backup_file(SYSCFG_BKUP_FILE,fname);
-	if ( ret == -1){
-		ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Retry of backing up syscfg also failed");
-	        return ret;
-	}
-
+   ret = access(SYSCFG_BKUP_FILE, F_OK);
+   if ( ret == 0 ) { 
+   	ret=backup_file(SYSCFG_BKUP_FILE,fname);
+   	if (ret == -1)
+   	{
+    		ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Backing up of syscfg failed");
+		// retrying again to take db back up
+		ret=0;
+        	ret=backup_file(SYSCFG_BKUP_FILE,fname);
+		if ( ret == -1){
+			ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Retry of backing up syscfg also failed");
+	        	return ret;
+		}
+   	}
    }
 
    ret = access(SYSCFG_NEW_FILE, F_OK);
