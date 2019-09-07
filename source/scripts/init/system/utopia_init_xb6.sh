@@ -236,6 +236,7 @@ SYSCFG_TMP_LOCATION=/tmp
 SYSCFG_FILE=$SYSCFG_TMP_LOCATION/syscfg.db
 SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg.db
 SYSCFG_OLDBKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
+SYSCFG_ENCRYPTED_PATH=/opt/secure/
 SYSCFG_PERSISTENT_PATH=/opt/secure/data
 SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
 SYSCFG_NEW_BKUP_FILE=$SYSCFG_PERSISTENT_PATH/syscfg_bkup.db
@@ -244,11 +245,14 @@ PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
+FR_FILE=$SYSCFG_MOUNT/factory_reset
 
-if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
-       echo "$SYSCFG_PERSISTENT_PATH path not available creating directory and touching $SYSCFG_NEW_FILE file"
-       mkdir $SYSCFG_PERSISTENT_PATH
-       touch $SYSCFG_NEW_FILE
+if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
+       if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
+               echo "$SYSCFG_PERSISTENT_PATH path not available creating directory and touching $SYSCFG_NEW_FILE file"
+               mkdir $SYSCFG_PERSISTENT_PATH
+               touch $SYSCFG_NEW_FILE
+       fi
 fi
 
 #syscfg_check -d $MTD_DEVICE
@@ -293,27 +297,30 @@ CheckAndReCreateDB()
 	fi 
 }
 
-
 echo "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
 if [ -f $SYSCFG_BKUP_FILE ]; then
-        cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
         if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
     	        cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
         fi
+        cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
 	syscfg_create -f $SYSCFG_FILE
-        syscfg_oldDB=$?
-        if [ $syscfg_oldDB -ne 0 ]; then
+        if [ $? != 0 ]; then
 	     CheckAndReCreateDB
 	fi
 else
-    echo -n > $SYSCFG_FILE
-    echo -n > $SYSCFG_BKUP_FILE
     if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
     	      echo -n > $SYSCFG_NEW_FILE
     fi
+    SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
+    if [ "$SECURE_SYSCFG" = "false"  ] && [ ! -f $FR_FILE ]; then
+          cp $SYSCFG_NEW_FILE $SYSCFG_FILE
+    else
+	 echo -n > $SYSCFG_FILE
+	 echo -n > $SYSCFG_BKUP_FILE
+         echo -n > $SYSCFG_NEW_FILE
+    fi
     syscfg_create -f $SYSCFG_FILE
-    syscfg_oldDB=$?
-    if [ $syscfg_oldDB -ne 0 ]; then
+    if [ $? != 0 ]; then
 	 CheckAndReCreateDB
     fi
    
@@ -335,6 +342,10 @@ if [ -f $SYSCFG_OLDBKUP_FILE ];then
 fi
 if [ -f $SYSCFG_NEW_BKUP_FILE ]; then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
+fi
+if [ -f $FR_FILE ]; then
+        syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI
+	rm -rf $FR_FILE
 fi
 
 SYSCFG_LAN_DOMAIN=`syscfg get lan_domain` 
@@ -413,13 +424,15 @@ fi
       rm -f /nvram/.CMchange_reboot_count
    fi
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
-   touch $SYSCFG_NEW_FILE
    if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
    	# Remove onboard files
    	rm -f /nvram/.device_onboarded
 	rm -f /nvram/DISABLE_ONBOARD_LOGGING
    	rm -rf /nvram2/onboardlogs
    fi
+   touch $SYSCFG_NEW_FILE
+   touch $SYSCFG_BKUP_FILE
+   touch $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
    syscfg_oldDB=$?
    if [ $syscfg_oldDB -ne 0 ];then
@@ -508,10 +521,16 @@ done
 
 echo "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
-echo "[utopia][init] SEC: syscfg.db moved to /opt/secure/data"
 #ARRISXB6-2998
 changeFilePermissions $SYSCFG_BKUP_FILE 400
 changeFilePermissions $SYSCFG_NEW_FILE 400
+
+SYSCFG_DB_FILE="/nvram/syscfg.db"
+SECURE_SYSCFG=`syscfg get UpdateNvram`
+if [ "$SECURE_SYSCFG" = "false" ]; then
+      SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
+fi
+echo "[utopia][init] SEC: Syscfg stored in $SYSCFG_DB_FILE"
 
 # Get the syscfg value which indicates whether unit is activated or not.
 # This value is set from network_response.sh based on the return code received.
@@ -631,6 +650,7 @@ elif [ -f /nvram/restore_reboot ]; then
          fi
      fi
      rm -f /nvram/restore_reboot
+     rm -f /nvram/syscfg.db.prev
 else
    rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason` 
    reboot_counter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
