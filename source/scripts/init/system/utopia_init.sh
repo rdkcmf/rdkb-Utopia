@@ -387,10 +387,6 @@ fi
     # Remove onboard files
     rm -f /nvram/.device_onboarded
     rm -f /nvram/DISABLE_ONBOARD_LOGGING
-    if [ "$BOX_TYPE" = "XB3" ];then
-     rpcclient $ATOM_RPC_IP "rm -f /nvram/.device_onboarded"
-     rpcclient $ATOM_RPC_IP "rm -f /nvram/DISABLE_ONBOARD_LOGGING"
-    fi
     rm -rf /nvram2/onboardlogs
    fi
      touch /nvram/.apply_partner_defaults   
