@@ -305,6 +305,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
 
 #ifdef _HUB4_PRODUCT_REQ_
     char server_type[16] = {0};
+    char prev_valid_lft[16] = {0};
+    int result = 0;
+    int ipv6_enable = 0;
+    int ula_enable = 0;
 #endif
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
@@ -344,6 +348,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         strncpy(orig_prefix, "", sizeof(orig_prefix));
         sysevent_set(sefd, setok, "previous_ipv6_prefix", orig_prefix, 0);
     }
+    sysevent_get(sefd, setok, "previous_ipv6_prefix_vldtime", prev_valid_lft, sizeof(prev_valid_lft));
     /* As per Sky requirement, hub should advertise lan bridge's ULA address as DNS address for lan clients as part of RA.
        In case the ULA is not available, lan bridge's LL address can be advertise as DNS address.
     */
@@ -429,6 +434,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
         else if(strlen(prefix)) {
             fprintf(fp, "   ipv6 nd prefix %s 0 0\n", prefix);
         }
+        if (strlen(orig_prefix)) {
+            fprintf(fp, "   ipv6 nd prefix %s %s 0\n", orig_prefix, prev_valid_lft); //Previous prefix with '0' as the preferred time value
+        }
+
         if (strlen(lan_addr_prefix) && (strncmp(server_type, "2", 1) == 0))
         {
             fprintf(fp, "   ipv6 nd prefix %s\n", lan_addr_prefix);
@@ -451,10 +460,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
             }
 #endif
         }
-#endif//_HUB4_PRODUCT_REQ_
         if (strlen(orig_prefix))
             fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
-
+#endif//_HUB4_PRODUCT_REQ_
 #if defined (INTEL_PUMA7)
         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
         // Read ra_interval from syscfg.db
