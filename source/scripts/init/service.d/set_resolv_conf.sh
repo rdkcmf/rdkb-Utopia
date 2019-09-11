@@ -65,7 +65,20 @@ prepare_resolv_conf () {
    else
        
        if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
-       		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
+           #Removing IPV4 old DNS Config.
+           interface=`sysevent get wan_ifname`
+           get_dns_number=`sysevent get ipv4_${interface}_dns_number`
+           sed -i '/domain/d' "$RESOLV_CONF_TMP"
+           sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
+                if [ "$get_dns_number" != "" ]; then
+                        counter=0;
+                        while [ $counter -lt $get_dns_number ]; do
+                        get_old_dns_server=`sysevent get ipv4_${interface}_dns_$counter`
+                        ipv4_dns_server="nameserver $get_old_dns_server"
+                        sed -i "/$ipv4_dns_server/d" "$RESOLV_CONF_TMP"
+                        let counter=counter+1
+                        done
+                fi
        fi
    fi
    N=""
@@ -99,6 +112,7 @@ prepare_resolv_conf () {
    sysevent set wan_dhcp_dns "${WAN_DNS}"
    sysevent set dhcp_server-restart
 
+   echo $IPv6_NAMESERVERS >> $RESOLV_CONF
 }
 
 prepare_resolv_conf
