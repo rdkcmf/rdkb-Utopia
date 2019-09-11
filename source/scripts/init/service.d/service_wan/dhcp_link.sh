@@ -494,11 +494,22 @@ case "$1" in
             cat /tmp/foo.$$ > $RESOLV_CONF
             rm -f /tmp/foo.$$
          else
-           # Removing IPV4 and IPV6 DNS server config to retaing XDNS config entry rather than complete empty over writing of resolv.conf file 
+           # Removing IPV4 DNS server config to retaing XDNS config entry rather than complete empty over writing of resolv.conf file 
 	   cp $RESOLV_CONF $RESOLV_CONF_TMP 
-	   sed -i '/domain/d' "$RESOLV_CONF_TMP"
-	   sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
-	   sed -i '/nameserver [0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\:[0-9a-fA-F]\{1,4\}\::[0-9a-fA-F]\{1,4\}/d' "$RESOLV_CONF_TMP"
+	   interface=`sysevent get wan_ifname`	
+	   get_dns_number=`sysevent get ipv4_${interface}_dns_number`
+           sed -i '/domain/d' "$RESOLV_CONF_TMP"
+           sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
+           	if [ "$get_dns_number" != "" ]; then
+        		echo "Removing old DNS IPV4 SERVER configuration from resolv.conf " >> $LOG_FILE
+        		counter=0;
+        		while [ $counter -lt $get_dns_number ]; do
+                	get_old_dns_server=`sysevent get ipv4_${interface}_dns_$counter`
+                	ipv4_dns_server="nameserver $get_old_dns_server"
+                	sed -i "/$ipv4_dns_server/d" "$RESOLV_CONF_TMP"
+                	let counter=counter+1
+        		done
+        	fi
 
 	   N=""
 	   while read line; do
