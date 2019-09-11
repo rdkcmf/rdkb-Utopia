@@ -7101,9 +7101,40 @@ int Utopia_SetLanMngmLanNapt(UtopiaContext *ctx, napt_mode_t enable){
     return Utopia_SetRouteNAT (ctx, enable);
 }
 
+/*
+ * Procedure     : trim
+ * Purpose       : trims a string
+ * Parameters    :
+ *    in         : A string to trim
+ * Return Value  : The trimmed string
+ * Note          : This procedure will change the input sting in this situation
+ */
+static char *trim(char *in)
+{
+   // trim the front of the string
+   if (NULL == in) {
+      return(NULL);
+   }
+   char *start = in;
+   while(isspace(*start)) {
+      start++;
+   }
+   // trim the end of the string
+
+   char *end = start+strlen(start);
+   end--;
+   while(isspace(*end)) {
+      *end = '\0';
+      end--;
+   }
+
+   return(start);
+}
+
 #define DNS_RESOLV_FILE "/etc/resolv.conf"
 static int resolve_dns_server(char* line, char* dns_server){
     char *p;
+    char *q;
       
     if(line == NULL || dns_server == NULL)
         return -1;
@@ -7115,7 +7146,9 @@ static int resolve_dns_server(char* line, char* dns_server){
         while(*p == ' '){
             p++;
         }
-    	memcpy(dns_server, p, strlen(p)+1);
+        //Needs to remove leading and traling spce from string
+        q=trim(p);
+    	memcpy(dns_server, q, strlen(q)+1);
         return 0;
     }
 
