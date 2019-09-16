@@ -294,7 +294,8 @@ case "$1" in
 	    then
 		echo_t "THE INSTANT=$INST"
 		echo_t "THE INSTANT=$INST"
-		if [ "$BOX_TYPE" = "TCCBR" ] || [ "$MODEL_NUM" = "CGM4140COM" ] ; then
+        #(use a simpler test than this -- but Hacky, since it assumes everything we want is not XB3!!)if [ "$BOX_TYPE" = "TCCBR" ] || [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] || [ "$BOX_TYPE" = "XB7" -a "$MANUFACTURE" = "Technicolor" ] ; then
+        if [ "$BOX_TYPE" != "XB3" -a "$MANUFACTURE" = "Technicolor" ] ; then
                 	COUNTER=1
 			while [ $COUNTER -lt 10 ]; do
 				echo_t "RDKB_SYSTEM_BOOT_UP_LOG : INST returned null , retrying $COUNTER"
