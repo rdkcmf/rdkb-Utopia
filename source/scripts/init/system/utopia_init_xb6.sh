@@ -558,6 +558,10 @@ execute_dir $INIT_DIR&
 # Check and set factory-reset as reboot reason 
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo "[utopia][init] Detected last reboot reason as factory-reset"
+
+   if [ "$MODEL_NUM" = "TG3482G" ]; then
+	rm -f /nvram/mesh_enabled
+   fi
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 elif [ "$PUNIT_RESET_DURATION" -gt "0" ]; then
