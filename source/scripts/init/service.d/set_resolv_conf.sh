@@ -37,6 +37,8 @@
 RESOLV_CONF=/etc/resolv.conf
 RESOLV_CONF_TMP="/tmp/resolv_tmp.conf"
 
+source /etc/device.properties
+
 #-----------------------------------------------------------------
 # set the resolv.conf file
 #-----------------------------------------------------------------
@@ -52,11 +54,20 @@ prepare_resolv_conf () {
        sed -i '/domain/d' "$RESOLV_CONF_TMP"
    fi
 
+   if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+	if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
+       	    sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
+   	fi
+
+	if [ "0.0.0.0" != "$NAMESERVER2" ] && [ "" != "$NAMESERVER2" ]; then
+            sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
+   	fi
+   else
        
        if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
        		sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
        fi
-
+   fi
    N=""
    while read line; do
    N="${N}$line
