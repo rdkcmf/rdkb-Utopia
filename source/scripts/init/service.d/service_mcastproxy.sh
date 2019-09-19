@@ -38,6 +38,7 @@
 #------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/device.properties
 
 SERVICE_NAME="mcastproxy"
 SELF_NAME="`basename $0`"
@@ -92,8 +93,12 @@ fi
 
 else
    cat $LOCAL_CONF_FILE > $CONF_FILE
-   rm -f $LOCAL_CONF_FILE 
-   $BIN -c $CONF_FILE &
+   rm -f $LOCAL_CONF_FILE
+   if [ "$BOX_TYPE" == "HUB4" ]; then
+       $BIN $CONF_FILE &
+   else 
+       $BIN -c $CONF_FILE &
+   fi
 fi
 }
 
