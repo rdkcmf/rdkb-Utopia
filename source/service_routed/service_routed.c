@@ -328,6 +328,11 @@ static int route_set(struct serv_routed *sr)
         vsystem("ip -6 rule add iif %s table erouter", lan_if);
     }
 #endif
+
+#ifdef _HUB4_PRODUCT_REQ_
+    /*Clean 'iif brlan0 table erouter' if exist already*/
+    vsystem("ip -6 rule del iif brlan0 table erouter");
+#endif
     if (vsystem("ip -6 rule add iif brlan0 table erouter;"
             "gw=$(ip -6 route show default dev erouter0 | awk '/via/ {print $3}');"
             "if [ \"$gw\" != \"\" ]; then"
@@ -353,6 +358,12 @@ static int route_unset(struct serv_routed *sr)
 
         vsystem("ip -6 rule del iif %s table all_lans", lan_if);
         vsystem("ip -6 rule del iif %s table erouter", lan_if);
+    }
+
+#elif _HUB4_PRODUCT_REQ_
+    vsystem("ip -6 rule del iif brlan0 table erouter");
+    if (vsystem("ip -6 route del default dev erouter0 table erouter") != 0) {
+        return -1;
     }
 #else
     if (vsystem("ip -6 route del default dev erouter0 table erouter"
