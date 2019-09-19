@@ -53,7 +53,7 @@ BIN=ntpd
 
 erouter_wait () 
 {
-    EROUTER_IP=""
+    local EROUTER_IP=""
     retry=0
     MAX_RETRY=20
     while [ ! "$EROUTER_IP" ]
@@ -66,12 +66,12 @@ erouter_wait ()
        fi
        sleep 6
        if [ $retry -eq $MAX_RETRY ];then
-          echo "EROUTER IP not acquired after max etries. Exiting !!!"
+          echo "EROUTER IP not acquired after max etries. Exiting !!!" >> /rdklogs/logs/ntpLog.log
           break
        fi
     done
 	
-	echo $EROUTER_IP
+	eval $1=\$EROUTER_IP
 }
 
 service_start ()
@@ -167,7 +167,7 @@ service_start ()
 			WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
 		else
 			sleep 30
-			WAN_IP=$(erouter_wait)
+			erouter_wait WAN_IP
 		fi
 	else
 		PROVISIONED_TYPE=""
