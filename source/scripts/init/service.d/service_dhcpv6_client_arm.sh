@@ -92,6 +92,7 @@ service_init ()
 
 service_start()
 {
+   mkdir -p /var/log/dibbler
    echo_t "SERVICE_DHCP6C : SERVICE START"
    if [ "$SYSCFG_last_erouter_mode" != "2" -a "$SYSCFG_last_erouter_mode" != "3" ]
    then
