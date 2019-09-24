@@ -514,6 +514,9 @@ kill_procs () {
 # TODO: develop scheme for only killing related pids. background task var $1 doesn't work as these processes daemonize
     killall $HOTSPOT_COMP
     sysevent set ${1}_keepalive_pid
+	if [ -f /tmp/hotspot_arpd_up ]; then
+		rm -rf /tmp/hotspot_arpd_up
+	fi
     killall $GRE_ARP_PROC
     
 }
