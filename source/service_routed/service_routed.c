@@ -208,30 +208,6 @@ static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsign
 #endif
 #endif
 
-
-static  int route_enable()
-{
-    char rt_state[16];
-
-    syscfg_get(NULL, "tr_routing_enabled", rt_state, sizeof(rt_state));
-
-    /* During Modem reboot the forwarding value is reset to default so below lines
-       will retain the value of routing after the reboot */
-    if(strcmp(rt_state, "0") == 0) {
-        if ((vsystem("echo 0 > /proc/sys/net/ipv4/conf/erouter0/forwarding") == 0) ||
-                (vsystem("echo 0 > /proc/sys/net/ipv6/conf/all/forwarding") == 0)) {
-            return -1;
-        }
-    }
-    else {
-        if ((vsystem("echo 1 > /proc/sys/net/ipv4/conf/erouter0/forwarding") == 0) ||
-                (vsystem("echo 1 > /proc/sys/net/ipv6/conf/all/forwarding") == 0)) {
-            return -1;
-        }
-    }
-
-    return 0;
-}
 static int route_set(struct serv_routed *sr)
 {
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
@@ -1001,10 +977,6 @@ static int serv_routed_init(struct serv_routed *sr)
     if (syscfg_init() != 0) {
         fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
         return -1;
-    }
-
-    if (route_enable() != 0) {
-        fprintf(stderr, "%s: faild to restore Routing Enabled state\n", __FUNCTION__);
     }
 
     sysevent_get(sr->sefd, sr->setok, "wan-status", wan_st, sizeof(wan_st));
