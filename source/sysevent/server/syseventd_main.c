@@ -464,7 +464,6 @@ static int initialize_system(void)
 
    daemon_init();
 
-#ifndef INCLUDE_BREAKPAD
    /* set up signal handling
     * we want:
     *    
@@ -540,6 +539,7 @@ static int initialize_system(void)
       }
    }
 
+#ifndef INCLUDE_BREAKPAD
    if (-1 == sigaction (SIGSEGV, NULL, &old_action)) {
       SE_INC_LOG(ERROR,
          printf("Problem getting original signal handler for SIGSEGV. Reason (%d) %s\n", 
@@ -557,6 +557,7 @@ static int initialize_system(void)
         }
       }
    }
+#endif
 
    // we want sighup and sigusr1 to reinit - not supported yet
    new_action.sa_handler = reinit_signal_handler;
@@ -619,6 +620,7 @@ static int initialize_system(void)
       }
    }
 
+#ifndef INCLUDE_BREAKPAD
    // sigpipe ignore
    new_action.sa_handler = ignore_signal_handler;
    new_action.sa_flags   = 0;
@@ -657,30 +659,6 @@ static int initialize_system(void)
         }
       }
    }
-#else
-	struct sigaction new_action, old_action;
-	
-	// we want to ignore SIGCHLD so that there wont be zombies
-	new_action.sa_handler = SIG_IGN;
-	new_action.sa_flags   = 0;
-	sigemptyset (&new_action.sa_mask);
-	if (-1 == sigaction (SIGCHLD, NULL, &old_action)) {
-	   SE_INC_LOG(ERROR,
-		  printf("Problem getting original signal handler for SIGCHLD. Reason (%d) %s\n", 
-				 errno, strerror(errno));
-	   )
-	   return(ERR_SIGNAL_DEFINE);
-	} else { 
-	   if (SIG_IGN != old_action.sa_handler) {
-		 if (-1 == sigaction (SIGCHLD, &new_action, NULL)) {
-			SE_INC_LOG(ERROR,
-			   printf("Problem setting signal handler for SIGCHLD. Reason (%d) %s\n", 
-					  errno, strerror(errno));
-			)
-			return(ERR_SIGNAL_DEFINE);
-		 }
-	   }
-	}
 #endif
 
    // save our pid in the pid file
