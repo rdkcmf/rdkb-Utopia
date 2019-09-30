@@ -207,12 +207,14 @@ service_start ()
 	else
 		systemctl stop ntpd.service
 		if [ -f "/nvram/ETHWAN_ENABLE" ];then
-		ntpd -c $NTP_CONF_QUICK_SYNC -x -gq
+                killall ntpd ### This to ensure there is no instance of NTPD running because of multiple wan-start events
+                sleep 3
+                ntpd -c $NTP_CONF_QUICK_SYNC -x -gq -l /rdklogs/logs/ntpLog.log & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
+		killall ntpd
 		sysevent set ntp_time_sync 1
 		fi
-		systemctl start ntpd.service
-		systemctl stop systemd-timesyncd
-	fi		
+                systemctl start ntpd.service
+	fi
 
     ret_val=$?
     if [ "$ret_val" -ne 0 ]
@@ -221,9 +223,12 @@ service_start ()
 	   if [ "x$BOX_TYPE" = "xXB3" ]; then
 	   	ntpd -c $NTP_CONF_TMP -l /rdklogs/logs/ntpLog.log -g
 	   else
-		
+
 		if [ -f "/nvram/ETHWAN_ENABLE" ];then
-		ntpd -c $NTP_CONF_QUICK_SYNC -x -gq
+                killall ntpd ### This to ensure there is no instance of NTPD running because of multiple wan-start events
+                sleep 3
+                ntpd -c $NTP_CONF_QUICK_SYNC -x -gq  -l /rdklogs/logs/ntpLog.log & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
+		killall ntpd
 		fi
 	   	systemctl start ntpd.service
 	   fi
