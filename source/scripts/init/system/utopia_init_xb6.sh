@@ -96,20 +96,43 @@ if [ -e "/usr/bin/onboarding_log" ]; then
 fi
 
 echo "[utopia][init] Tweaking network parameters" > /dev/console
-echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
-echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_syn_sent
-echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_generic_timeout
-echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_time_wait
-echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close
-echo "20" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close_wait
-echo "1800" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
-if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-	echo "16384" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
+
+KERNEL_VERSION=`uname -r | cut -c 1`
+
+if [ $KERNEL_VERSION -lt 4 ] ; then
+	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
+	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_syn_sent
+	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_generic_timeout
+	echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_time_wait
+	echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close
+	echo "20" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close_wait
+	echo "1800" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
+	if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+		#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+		echo "16384" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
+	else
+		# TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
+		#echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
+		echo "[$utc_time] [utopia][init] don't override nf_conntrack_max here, value is set at /lib/rdk/brcm.networking"
+	fi
+
 else
-	# TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
-	#echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
-	echo "[$utc_time] [utopia][init] don't override nf_conntrack_max here, value is set at /lib/rdk/brcm.networking"
+	echo "60" > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream
+	echo "60" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_syn_sent
+	echo "60" > /proc/sys/net/netfilter/nf_conntrack_generic_timeout
+	echo "10" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait
+	echo "10" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close
+	echo "20" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close_wait
+	if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+		#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+		echo "16384" > /proc/sys/net/netfilter/nf_conntrack_max
+		echo "300" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established
+	else
+		# TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
+		#echo "8192" > /proc/sys/net/netfilter/ip_conntrack_max
+		echo "[$utc_time] [utopia][init] don't override nf_conntrack_max here, value is set at /lib/rdk/brcm.networking"
+		echo "1800" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established
+	fi
 fi
 
 echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
