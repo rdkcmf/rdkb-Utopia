@@ -101,6 +101,13 @@ typedef struct udhcpc_script_t
     bool broot_is_nfs;
 }udhcpc_script_t;
 
+void delete_old_dns();
+
+struct dns_server{
+ char data[BUFSIZE];
+
+};
+
 int sysevent_init()
 {
     snprintf(sysevent_ip, sizeof(sysevent_ip),"%s","127.0.0.1");
@@ -225,6 +232,7 @@ int save_dhcp_offer(udhcpc_script_t *pinfo)
 #if 0
     dump_dhcp_offer();
 #endif
+    delete_old_dns(); //remove old dns configuration from resolv.conf
     snprintf(eventname,sizeof(eventname),"ipv4_%s_ipaddr",getenv("interface"));
     sysevent_set(sysevent_fd, sysevent_token, eventname, getenv("ip"), 0);
 
@@ -549,14 +557,25 @@ void delete_old_dns()
   char*  buffer = NULL;
   size_t read = 0;
   size_t size = BUFSIZE;
-  regex_t regex;
-  int reti;
+  char INTERFACE[BUFSIZE]={0};
+  char dns_server_no_query[BUFSIZE]={0};
+  char dns_servers_number[BUFSIZE]={0};
+  int dns_server_no;
+  int i;
 
-  /* Compile regular expression */
-  reti = regcomp(&regex, "^nameserver ([0-9]{1,3}\\.){3}[0-9]{1,3}", REG_EXTENDED);
-  if (reti) {
-    fprintf(stderr, "Could not compile regex\n");
-    exit(1);
+  sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", INTERFACE, sizeof(INTERFACE));
+  snprintf(dns_server_no_query, sizeof(dns_server_no_query), "ipv4_%s_dns_number", INTERFACE);
+  sysevent_get(sysevent_fd, sysevent_token, dns_server_no_query , dns_servers_number, sizeof(dns_servers_number));
+  dns_server_no=atoi(dns_servers_number);
+
+  struct dns_server* dns_server_list = malloc(sizeof(struct dns_server) * dns_server_no);
+  for(i=0;i<dns_server_no;i++)
+  {
+     char nameserver_ip_query[BUFSIZE]={0};
+     char nameserver_ip[BUFSIZE]={0};
+     snprintf(nameserver_ip_query, sizeof(nameserver_ip_query), "ipv4_%s_dns_%d", INTERFACE,i);
+     sysevent_get(sysevent_fd, sysevent_token, nameserver_ip_query , nameserver_ip, sizeof(nameserver_ip));
+     snprintf(dns_server_list[i].data ,BUFSIZE,"nameserver %s",nameserver_ip);
   }
 
   fptr  =  fopen(RESOLV_CONF,"r");
@@ -576,16 +595,34 @@ void delete_old_dns()
   while((read = getline(&buffer, &size, fptr)) != -1)
   {
       char* search_domain = NULL;
-      char* search_ipv4_dns = NULL;
+      char* search_domain_altrnte = NULL;
+      int search_ipv4_dns = 0;
+      char  ipv4_dns_query[BUFSIZE] = {0};
+
+      for(i=0;i<dns_server_no;i++)
+      {
+              char* ipv4_dns_match = NULL;
+              ipv4_dns_match = strstr(buffer,dns_server_list[i].data);
+              if(ipv4_dns_match !=NULL)
+              {
+                      search_ipv4_dns=1;
+              }
+      }
+
+
+
       search_domain = strstr(buffer,"domain");
-      reti = regexec(&regex,buffer, 0, NULL, 0);          // Execute regular expression
-      if(search_domain == NULL && reti == REG_NOMATCH)
+      search_domain_altrnte = strstr(buffer,"search");
+      if(search_domain == NULL && search_domain_altrnte == NULL && !search_ipv4_dns)
       {
           fprintf(ftmp, "%s",buffer);
       }
    }
-      /* Free memory allocated to the pattern buffer by regcomp() */
-      regfree(&regex);
+   
+   if(dns_server_list != NULL)
+   { 
+      free(dns_server_list);
+   }
       fclose(fptr);
       fclose(ftmp);
       buffer = NULL;
@@ -619,7 +656,6 @@ void delete_old_dns()
 
 }
 
-
 int update_resolveconf(udhcpc_script_t *pinfo)
 {
     FILE *fp = NULL;
@@ -632,7 +668,6 @@ int update_resolveconf(udhcpc_script_t *pinfo)
     if (!pinfo->dns)
         return -1;
     snprintf(dns,sizeof(dns),"%s",pinfo->dns);
-    delete_old_dns();
     fp = fopen(RESOLV_CONF,"a");
     if (NULL == fp)
         {
