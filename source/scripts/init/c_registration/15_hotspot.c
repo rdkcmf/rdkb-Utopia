@@ -38,13 +38,29 @@
 
 const char* SERVICE_NAME            = "hotspot";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet/handle_gre.sh";
+
+#ifdef INTEL_GRE_HOTSPOT
 const char* SERVICE_CUSTOM_EVENTS[] = { 
+                                        "gre-restart|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
+                                        "gre-forceRestart|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
+                                        "snmp_subagent-status|/etc/utopia/service.d/service_multinet/handle_gre.sh",
+                                        "hotspot-update_bridges|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
+                                        "igre-start|/etc/utopia/service.d/service_multinet/service_gre.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        "igre-stop|/etc/utopia/service.d/service_multinet/service_gre.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        "ipv6_dhcp6_addr|/etc/utopia/service.d/service_multinet/service_gre.sh|NULL",
+                                        "igre-bringup-gre-hs|/etc/utopia/service.d/service_multinet/service_gre.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        "igre-hotspot-stop|/etc/utopia/service.d/service_multinet/service_gre.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        NULL
+                                      };
+#else
+const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "gre-restart|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
                                         "gre-forceRestart|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
                                         "snmp_subagent-status|/etc/utopia/service.d/service_multinet/handle_gre.sh",
                                         "hotspot-update_bridges|/etc/utopia/service.d/service_multinet/handle_gre.sh|"ACTION_FLAG_COLLAPSE_PENDING_QUEUE"|"TUPLE_FLAG_EVENT,
                                         NULL
                                       };
+#endif
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
