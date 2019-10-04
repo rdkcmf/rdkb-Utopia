@@ -568,18 +568,36 @@ elif [ "$PUNIT_RESET_DURATION" -gt "0" ]; then
    echo "[utopia][init] Detected last reboot reason as pin-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "pin-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+elif [ -f /nvram/restore_reboot ]; then
+     if [ -e "/usr/bin/onboarding_log" ]; then
+             /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as restore-reboot"
+     fi
+     syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
+     syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+     syscfg commit
+     
+     if [ "$BOX_TYPE" == "TCCBR" ];then
+         if [ -f /nvram/bbhm_cur_cfg.xml-temp ]; then
+              ##Work around: TCCBR-4087 Restored saved configuration is not restoring wan Static IP.
+              ##after untar the new bbhm current config is overrriden/corrupted at times.
+              ##Hence we are storing a backup and replacing it to current config upon such cases
+              a=`md5sum /nvram/bbhm_cur_cfg.xml-temp`
+              a=$(echo $a | cut -f 1 -d " ")
+              b=`md5sum /nvram/bbhm_cur_cfg.xml`  
+              b=$(echo $b | cut -f 1 -d " ")
+              if [[ $a != $b ]]; then
+                  cp /nvram/bbhm_cur_cfg.xml-temp /nvram/bbhm_cur_cfg.xml
+              fi
+              rm -f /nvram/bbhm_cur_cfg.xml-temp
+         fi
+     fi
+     rm -f /nvram/restore_reboot
 else
    rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
    echo "[utopia][init] X_RDKCENTRAL-COM_LastRebootReason ($rebootReason)"
    if [ "$rebootReason" = "factory-reset" ]; then
       echo "[utopia][init] Setting last reboot reason as unknown"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
-   else
-      if [ -f /nvram/restore_reboot ];then
-         syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
-         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-         rm -f /nvram/restore_reboot
-      fi
    fi
 fi
 
