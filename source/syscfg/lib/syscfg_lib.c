@@ -1101,6 +1101,8 @@ static int _syscfg_set (const char *ns, const char *name, const char *value, int
         rc = make_ht_entry(name_p, value, &ht_offset);
         if (0 == rc) {
             ctx->ht[index] = ht_offset;
+        } else {
+            incr_store_sz(ctx, name_p, value);
         }
         if (!nolock) {
             rw_unlock(ctx);
@@ -1134,6 +1136,8 @@ static int _syscfg_set (const char *ns, const char *name, const char *value, int
         rc = make_ht_entry(name_p, value, &ht_offset);
         if (0 == rc) {
             HT_ENTRY_NEXT(ctx,entryoffset) = ht_offset;
+        } else {
+            incr_store_sz(ctx, name_p, value);
         }
     }
 
