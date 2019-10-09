@@ -139,14 +139,10 @@ read_greInst()
 
             count=`expr $count + 1`
             eval bridgeinfo=\${BRIDGE_INST_${count}}
-            succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable`
-	    if [ `echo "$succeed_check" | grep succeed | cut -f 1 -d "." | cut -f2 -d "n" | cut -f2 -d " "` = "succeed" ]; then
-
-	    if [ "true" = `echo "$succeed_check" | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
-			BRIDGE_INSTS="$BRIDGE_INSTS $bridgeinfo"
-		 fi
-            fi
-
+                            
+            if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
+                  BRIDGE_INSTS="$BRIDGE_INSTS $bridgeinfo"
+            fi                      
         done       
 
        echo "BRIDGE_INSTS === $BRIDGE_INSTS"       
@@ -465,13 +461,10 @@ get_ssids() {
        for i in $@; do                                                   
             count=`expr $count + 1`                                                                            
             eval localinfo=\${localif_${count}}                                  
-            succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable`
-	    if [ `echo "$succeed_check" | grep succeed | cut -f 1 -d "." | cut -f2 -d "n" | cut -f2 -d " "` = "succeed" ]; then
-		if [ "true" = `echo "$succeed_check" | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
-			localifs="$localifs $localinfo"
-		fi
-	    fi
-       done
+            if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then                                                                                                                                                                             
+                localifs="$localifs $localinfo"                                                                                             
+            fi                                                                                                                              
+       done            
       
         ssids=""                                                                                                                                                              
         for i in $localifs; do                                                                                                                                                 
@@ -622,15 +615,13 @@ hotspot_up() {
                     set '5 6 9 10'
                     for i in $@; do
                         count=`expr $count + 1`                                      
-                         eval bridgeinfo=\${BRIDGE_INST_${count}}
-			 succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable`
-			 if [ `echo "$succeed_check" | grep succeed | cut -f 1 -d "." | cut -f2 -d "n" | cut -f2 -d " "` = "succeed" ]; then
-				if [ "true" = `echo "$succeed_check" | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
-					bridgeFQDM="$bridgeFQDM $bridgeinfo"
-				fi
-			 fi
-                     done
-		fi
+                         eval bridgeinfo=\${BRIDGE_INST_${count}}                          
+                                                                               
+                         if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
+                             bridgeFQDM="$bridgeFQDM $bridgeinfo"                                            
+                         fi                                                     
+                     done      
+	fi
     #Set a delay for first SSID manipulation
     sysevent set hotspot_${inst}-delay 10
 
