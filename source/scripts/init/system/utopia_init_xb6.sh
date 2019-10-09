@@ -565,7 +565,7 @@ execute_dir $INIT_DIR&
 #ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
 #ip rule add from all iif l2sd0.106 lookup erouter
 
-# Check and set factory-reset as reboot reason 
+# Check and set factory-reset as reboot reason
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo "[utopia][init] Detected last reboot reason as factory-reset"
    if [ -e "/usr/bin/onboarding_log" ]; then
@@ -609,9 +609,11 @@ elif [ -f /nvram/restore_reboot ]; then
      fi
      rm -f /nvram/restore_reboot
 else
-   rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
+   rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason` 
+   reboot_counter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
    echo "[utopia][init] X_RDKCENTRAL-COM_LastRebootReason ($rebootReason)"
-   if [ "$rebootReason" = "factory-reset" ]; then
+   #TCCBR-4220 To handle wrong reboot reason
+   if ( [ "$rebootReason" = "factory-reset" ] ) || ( [ "$BOX_TYPE" = "TCCBR" ] && [ "$reboot_counter" -eq "0" ] ); then
       echo "[utopia][init] Setting last reboot reason as unknown"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
       if [ -e "/usr/bin/onboarding_log" ]; then
