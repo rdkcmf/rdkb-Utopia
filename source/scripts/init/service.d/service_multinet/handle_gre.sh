@@ -139,8 +139,8 @@ read_greInst()
 
             count=`expr $count + 1`
             eval bridgeinfo=\${BRIDGE_INST_${count}}
-                            
-            if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
+            succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "`
+            if [ "true" = "$succeed_check" ]; then
                   BRIDGE_INSTS="$BRIDGE_INSTS $bridgeinfo"
             fi                      
         done       
@@ -460,8 +460,9 @@ get_ssids() {
 
        for i in $@; do                                                   
             count=`expr $count + 1`                                                                            
-            eval localinfo=\${localif_${count}}                                  
-            if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then                                                                                                                                                                             
+            eval localinfo=\${localif_${count}}
+            succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "`
+            if [ "true" = "$succeed_check" ]; then                                                                                                                                                                             
                 localifs="$localifs $localinfo"                                                                                             
             fi                                                                                                                              
        done            
@@ -615,9 +616,9 @@ hotspot_up() {
                     set '5 6 9 10'
                     for i in $@; do
                         count=`expr $count + 1`                                      
-                         eval bridgeinfo=\${BRIDGE_INST_${count}}                          
-                                                                               
-                         if [ "true" = `dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "` ]; then
+                         eval bridgeinfo=\${BRIDGE_INST_${count}}
+                         succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "`               
+                         if [ "true" = "$succeed_check" ]; then
                              bridgeFQDM="$bridgeFQDM $bridgeinfo"                                            
                          fi                                                     
                      done      
