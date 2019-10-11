@@ -91,6 +91,9 @@ fi
 firmware_name=`cat /version.txt | grep ^imagename: | cut -d ":" -f 2`
 utc_time=`date -u`
 echo "[$utc_time] [utopia][init] DEVICE_INIT:$firmware_name"
+if [ -e "/usr/bin/onboarding_log" ]; then
+    /usr/bin/onboarding_log "[utopia][init] DEVICE_INIT:$firmware_name"
+fi
 
 echo "[utopia][init] Tweaking network parameters" > /dev/console
 echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
@@ -388,6 +391,12 @@ fi
    fi
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
    touch $SYSCFG_NEW_FILE
+   if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
+   	# Remove onboard files
+   	rm -f /nvram/.device_onboarded
+	rm -f /nvram/DISABLE_ONBOARD_LOGGING
+   	rm -rf /nvram2/onboardlogs
+   fi
    syscfg_create -f $SYSCFG_FILE
    syscfg_oldDB=$?
    if [ $syscfg_oldDB -ne 0 ];then
@@ -559,6 +568,9 @@ execute_dir $INIT_DIR&
 # Check and set factory-reset as reboot reason 
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo "[utopia][init] Detected last reboot reason as factory-reset"
+   if [ -e "/usr/bin/onboarding_log" ]; then
+       /usr/bin/onboarding_log "[utopia][init] Detected last reboot reason as factory-reset"
+   fi
 
    if [ "$MODEL_NUM" = "TG3482G" ]; then
 	rm -f /nvram/mesh_enabled
@@ -567,6 +579,9 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 elif [ "$PUNIT_RESET_DURATION" -gt "0" ]; then
    echo "[utopia][init] Detected last reboot reason as pin-reset"
+   if [ -e "/usr/bin/onboarding_log" ]; then
+       /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as pin-reset"
+   fi
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "pin-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 elif [ -f /nvram/restore_reboot ]; then
@@ -599,6 +614,9 @@ else
    if [ "$rebootReason" = "factory-reset" ]; then
       echo "[utopia][init] Setting last reboot reason as unknown"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
+      if [ -e "/usr/bin/onboarding_log" ]; then
+          /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as unknown"
+      fi
    fi
 fi
 
