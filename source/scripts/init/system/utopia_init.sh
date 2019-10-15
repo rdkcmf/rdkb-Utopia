@@ -705,17 +705,7 @@ else
       echo_t "[utopia][init] Setting last reboot reason as unknown"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
    else
-      if [ -f /nvram/restore_reboot ];then
-         syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
-         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-	 if [ -e "/usr/bin/onboarding_log" ]; then
-	     /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as restore-reboot"
-	 fi
-         rm -f /nvram/restore_reboot
-         rm -f /nvram/bbhm_bak_cfg.xml.prev
-         rm -f /nvram/bbhm_cur_cfg.xml.prev
-         rm -f /nvram/syscfg.db.prev
-      elif [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_HW" ]; then
+      if [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_HW" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 	 if [ -e "/usr/bin/onboarding_log" ]; then
@@ -787,6 +777,30 @@ else
 #endif
       fi
    fi
+fi
+
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+    if [ -f /nvram/restore_reboot ];then
+	syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
+	syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+
+        if [ -f /nvram/bbhm_cur_cfg.xml-temp ]; then
+            ##Work around: TCCBR-4087 Restored saved configuration is not restoring wan Static IP.
+            ##after untar the new bbhm current config is overrriden/corrupted at times.
+            ##Hence we are storing a backup and replacing it to current config upon such cases
+            a=`md5sum /nvram/bbhm_cur_cfg.xml-temp`
+            a=$(echo $a | cut -f 1 -d " ")
+            b=`md5sum $PSM_CUR_XML_CONFIG_FILE_NAME`
+            b=$(echo $b | cut -f 1 -d " ")
+            if [[ $a != $b ]]; then
+               cp /nvram/bbhm_cur_cfg.xml-temp $PSM_CUR_XML_CONFIG_FILE_NAME
+            fi
+            rm -f /nvram/bbhm_cur_cfg.xml-temp
+        fi
+    fi
+    rm -f /nvram/restore_reboot
+    rm -f /nvram/bbhm_bak_cfg.xml.prev
+    rm -f /nvram/syscfg.db.prev
 fi
 
 CBF_Defaulted=`syscfg get CodeBigFirstDefaulted`
