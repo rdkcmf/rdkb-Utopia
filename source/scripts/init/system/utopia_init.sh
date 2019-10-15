@@ -525,6 +525,14 @@ then
     echo_t "[utopia][init] [DHCPCORRUPT_TRACE] iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
 fi
 
+ForwardSSH=`syscfg get ForwardSSH`
+Log_file="/rdklogs/logs/FirewallDebug.txt"
+if $ForwardSSH;then
+   echo "SSH: Forward SSH changed to enabled" >> $Log_file
+else
+   echo "SSH: Forward SSH changed to disabled" >> $Log_file
+fi
+
 # Get the syscfg value which indicates whether unit is activated or not.
 # This value is set from network_response.sh based on the return code received.
 activated=`syscfg get unit_activated`

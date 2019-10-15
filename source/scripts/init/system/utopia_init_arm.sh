@@ -284,6 +284,15 @@ else
    echo "[utopia][init] Cannot read the reset duration value from /proc/P-UNIT/status"
 fi
 
+#ForwardSSH debug print
+ForwardSSH=`syscfg get ForwardSSH`
+Log_file="/rdklogs/logs/FirewallDebug.txt"
+if $ForwardSSH;then
+   echo "SSH: Forward SSH changed to enabled" >> $Log_file
+else
+   echo "SSH: Forward SSH changed to disabled" >> $Log_file
+fi
+
 # Set the factory reset key if it was pressed for longer than our threshold
 if test "$BUTTON_THRESHOLD" -le "$PUNIT_RESET_DURATION"; then
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI && BUTTON_FR="1"
