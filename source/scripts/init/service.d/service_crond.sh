@@ -126,6 +126,10 @@ service_start ()
       if [ "$BOX_TYPE" != "XB3" ]; then
        echo "1 */12 * * *  /usr/ccsp/wifi/mesh_status.sh" >> $CRONTAB_FILE
       fi
+
+      if [ "$BOX_TYPE" == "XB3" ]; then
+       echo "*/10 * * * * /rdklogger/log_ps_cpu_mem_host.sh" >> $CRONTAB_FILE
+      fi
       #zqiu: monitor lan client traffic
       echo "* * * * *   /usr/ccsp/tad/rxtx_lan.sh" >> $CRONTAB_FILE
 
