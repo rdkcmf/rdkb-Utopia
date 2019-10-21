@@ -40,7 +40,7 @@ done
 # delete cron entries
 CRON_DIR="/var/spool/cron/crontabs"
 ROOT_CRON="root"
-TMP_FILE="tmp.root"
+TMP_FILE="tmp$$.root"
 
 awk '!/parcon_aging/' /var/spool/cron/crontabs/root > $CRON_DIR/$TMP_FILE
 awk -FT -v expire=$PARCON_EXPIRE_TIME '/parcon_aging/ && mktime($2)+expire>systime()' /var/spool/cron/crontabs/root >> $CRON_DIR/$TMP_FILE
