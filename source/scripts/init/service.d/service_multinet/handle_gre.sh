@@ -143,13 +143,24 @@ read_greInst()
             succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "`
             if [ "true" = "$succeed_check" ]; then
                   BRIDGE_INSTS="$BRIDGE_INSTS $bridgeinfo"
-            fi       
-        done
+            fi                      
+        done       
 
-       echo "BRIDGE_INSTS === $BRIDGE_INSTS"
+       echo "BRIDGE_INSTS === $BRIDGE_INSTS"       
+
+      if [ "$BRIDGE_INSTS" == "" ]
+      then
+          touch "/tmp/tunnel_destroy_flag"
+      else
+          if [ -f /tmp/tunnel_destroy_flag ]
+          then
+               rm /tmp/tunnel_destroy_flag
+          fi
+      fi
+      
        for i in $BRIDGE_INSTS; do
           brinst=`echo $i |cut -d . -f 4`
-          sysevent set multinet-start $brinst                                                                                                                                                                                                                                                                                                 
+          sysevent set multinet-start $brinst
        done
  }
 
@@ -230,6 +241,7 @@ destroy_tunnel () {
     sleep 5
     rm "/tmp/destroy_tunnel_lock"
   fi
+ 
 }
 
 gre_preproc () {
@@ -623,6 +635,16 @@ hotspot_up() {
                          fi                                                     
                      done      
 	fi
+        
+        if [ "$bridgeFQDM" == "" ]
+        then
+          touch "/tmp/tunnel_destroy_flag"
+        else
+           if [ -f /tmp/tunnel_destroy_flag ]
+           then
+               rm /tmp/tunnel_destroy_flag
+           fi
+        fi
     #Set a delay for first SSID manipulation
     sysevent set hotspot_${inst}-delay 10
 
