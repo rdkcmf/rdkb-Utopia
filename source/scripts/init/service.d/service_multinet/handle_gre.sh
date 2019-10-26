@@ -612,6 +612,7 @@ hotspot_up() {
 
                     eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES WECB_BRIDGES dmsb.wecb.hhs_extra_bridges NAME $GRE_PSM_BASE.${inst}.$GRE_PSM_NAME`
                     count=0
+                    bridgeFQDM=""
                     set '5 6 9 10'
                     for i in $@; do
                         count=`expr $count + 1`                                      
@@ -876,7 +877,9 @@ case "$1" in
             ifconfig ${GRE_IFNAME} down
             sysevent set if_${GRE_IFNAME}-status $IF_DOWN
         fi
-        check_ssids
+        if [ "$BOX_TYPE" != "XB6" ] ; then
+           check_ssids
+        fi
     ;;
     
     snmp_subagent-status)
