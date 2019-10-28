@@ -39,10 +39,6 @@
 # $1 is the calling event (current_wan_state  current_lan_state  ipv6_prefix)
 #------------------------------------------------------------------
 
-if [ -f /etc/device.properties ]
-then
-    source /etc/device.properties
-fi
 
 SERVICE_NAME="routed"
 
@@ -64,12 +60,7 @@ case "$1" in
        if [ "$status" == "started" ]; then
            service_routed start
        elif [ "$status" == "stopped" ]; then
-           if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-           	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-            	service_routed radv-restart
-           else
            	service_routed stop
-           fi
        fi
        ;;
    lan-status)
