@@ -561,12 +561,23 @@ static int gen_zebra_conf(int sefd, token_t setok)
             fprintf(fp, "   ipv6 nd prefix %s 0 0\n", lan_addr_prefix);
         }
 #else
+#if defined (INTEL_PUMA7)
+	//Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+	if (strcmp(wan_st, "stopped") == 0)
+		fprintf(fp, "   ipv6 nd prefix %s %s 0\n", prefix, valid_lft);
+	else
+	{
+		fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+	}
+#else
         if (strlen(prefix))
         {
             fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
         }
+
         if (strlen(orig_prefix))
             fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
+#endif //#if defined (INTEL_PUMA7)
 #endif//_HUB4_PRODUCT_REQ_
 #if defined (INTEL_PUMA7)
         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
