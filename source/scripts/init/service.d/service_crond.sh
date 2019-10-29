@@ -182,6 +182,11 @@ service_start ()
          echo "*/15 * * * * /usr/ccsp/tad/check_fan.sh" >> $CRONTAB_FILE
       fi
 
+      # add syncing the timeoffset everyday at 01:00 AM
+      if [ "$BOX_TYPE" == "HUB4" ]; then
+          echo "0 1 * * * /etc/sky/sync_timeoffset.sh" >> $CRONTAB_FILE
+      fi
+
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
       MODEL="`grep MODEL_NUM /etc/device.properties | cut -d "=" -f2`"
       if [ -n "$(echo $MODEL | grep 3941)" ]; then
