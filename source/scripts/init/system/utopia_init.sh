@@ -746,11 +746,19 @@ else
 		         /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as $Punit_status"
 		     fi
 		fi
+	         if [ "$BOX_TYPE" = "XB3" ];then
+	             Punit_Reset_Reason=`grep -i "Last reset reason" /proc/P-UNIT/status | awk '{print $9}'`
+	             if [ "$Punit_Reset_Reason" = "RESET_WARM" ] && [ "$Punit_status" = "RESET_ORIGIN_DOCSIS" ];then
+	                   syscfg set X_RDKCENTRAL-COM_LastRebootReason "HOST-OOPS-REBOOT"
+	                   syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+	             fi
+	         fi
          fi
 #endif
       fi
    fi
 fi
+syscfg commit
 
 #ifdef CISCO_XB3_PLATFORM_CHANGES
 ## Remove after setting last reboot reason
