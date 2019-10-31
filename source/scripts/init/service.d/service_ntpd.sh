@@ -53,15 +53,22 @@ BIN=ntpd
 
 erouter_wait () 
 {
-    local EROUTER_IP=""
+    local EROUTER_UP=""
+    local EROUTER_IPv4=""
+    local EROUTER_IPv6=""
     retry=0
     MAX_RETRY=20
-    while [ ! "$EROUTER_IP" ]
+
+    while [ ! "$EROUTER_UP" ]
     do
        retry=`expr $retry + 1`
-	   EROUTER_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
 
-       if [ ! -z "$EROUTER_IP" ]; then
+       #Make sure erouter0 has an IPv4 or IPv6 address before telling NTP to listen on Interface
+       EROUTER_IPv4=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+       EROUTER_IPv6=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+
+       if [ ! -z "$EROUTER_IPv4" ] || [ ! -z "$EROUTER_IPv6" ]; then
+          EROUTER_UP="erouter0"
           break
        fi
        sleep 6
@@ -71,7 +78,7 @@ erouter_wait ()
        fi
     done
 	
-	eval $1=\$EROUTER_IP
+	eval $1=\$EROUTER_UP
 }
 
 service_start ()
