@@ -1182,3 +1182,10 @@ $DNSStrictOrder=false
 
 #LNF network internet enable for lnf clients
 $BlockLostandFoundInternet=false
+#SecureWebUI is disabled by default
+$SecureWebUI_Enable=false
+$SecureWebUI_LocalFqdn=myrouter.io
+
+#Static IPV6 DNS enabled
+$dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled=0
+

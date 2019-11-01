@@ -154,13 +154,15 @@ static int isValidLANIP(const char* ipStr)
 
 int prepare_hostname()
 {
-    char l_cHostName[16] = {0}, l_cCurLanIP[16] = {0};
+    char l_cHostName[16] = {0}, l_cCurLanIP[16] = {0}, l_clocFqdn[16] = {0}, l_cSecWebUI_Enabled[8] = {0};
 	FILE *l_fHosts_File = NULL;
 	FILE *l_fHosts_Name_File = NULL;
 	int l_iRes = 0;
     
     syscfg_get(NULL, "hostname", l_cHostName, sizeof(l_cHostName));
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "current_lan_ipaddr", l_cCurLanIP, sizeof(l_cCurLanIP));
+        syscfg_get(NULL, "SecureWebUI_LocalFqdn", l_clocFqdn, sizeof(l_clocFqdn));
+        syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
 
     // Open in Write mode each time for avoiding duplicate entries RDKB- 12295
 	l_fHosts_File = fopen(HOSTS_FILE, "w+");
@@ -184,7 +186,10 @@ int prepare_hostname()
 			l_fHosts_Name_File = NULL;
 			if (NULL != l_fHosts_File)
 			{
-				fprintf(l_fHosts_File, "%s		%s\n", l_cCurLanIP, l_cHostName);
+                                if (strncmp(l_cSecWebUI_Enabled, "true", 4))
+                                {
+				    fprintf(l_fHosts_File, "%s		%s\n", l_cCurLanIP, l_cHostName);
+                                } 
 			}
 			else
             {
@@ -202,6 +207,13 @@ int prepare_hostname()
 	{
    		fprintf(l_fHosts_File, "127.0.0.1       localhost\n");
 		fprintf(l_fHosts_File, "::1             localhost\n");
+                if (NULL != l_clocFqdn)
+                {
+                        if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
+                        {
+                            fprintf(l_fHosts_File, "%s              %s\n", l_cCurLanIP, l_clocFqdn);
+                        }
+                }
 
 		//The following lines are desirable for IPv6 capable hosts
    		fprintf(l_fHosts_File, "::1             ip6-localhost ip6-loopback\n");
@@ -703,6 +715,8 @@ int prepare_dhcp_conf (char *input)
 	char *l_cpPsm_Get = NULL;
 	char l_cDhcpNs_Enabled[ 32 ] 			 = { 0 },
 		 l_cWan_Dhcp_Dns [ 256 ]             = { 0 };
+        char l_cSecWebUI_Enabled[8] = {0};
+        char l_cWan_Check[16] = {0};
 
 
 	int l_iMkdir_Res, l_iRet_Val;
@@ -731,7 +745,29 @@ int prepare_dhcp_conf (char *input)
         fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalDhcpConf, errno);
 		return 0;
     }   
-   	
+    syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "phylink_wan_state", l_cWan_Check, sizeof(l_cWan_Check));
+    if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
+    {
+        if(!strncmp(l_cWan_Check, "up", 2))
+        {
+            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
+            syscfg_set(NULL, "dhcp_nameserver_enabled", "1");
+            syscfg_commit();
+        }
+        else
+        {
+            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
+            syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
+            syscfg_commit();
+        }
+    }
+    else
+    {
+        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
+        syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
+        syscfg_commit();
+    }
     syscfg_get(NULL, "lan_ipaddr", l_cLanIPAddress, sizeof(l_cLanIPAddress));
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
     syscfg_get(NULL, "lan_ifname", l_cLan_if_name, sizeof(l_cLan_if_name));
@@ -1068,13 +1104,12 @@ int prepare_dhcp_conf (char *input)
 		fprintf(l_fLocal_Dhcp_ConfFile, "interface=%s\n",l_cLan_if_name);	
 		calculate_dhcp_range(l_fLocal_Dhcp_ConfFile, l_cDns_Only_Prefix);
 
+
 		// Add brlan0 custom dns server configuration
 		if( l_bDhcpNs_Enabled )
 		{
 			char cDhcpNs_OptionString[ 1024 ] = { 0 }; 
-
 			get_dhcp_option_for_brlan0( cDhcpNs_OptionString );
-
 			fprintf(l_fLocal_Dhcp_ConfFile, "%s\n", cDhcpNs_OptionString);
 			fprintf(stderr, "DHCP_SERVER : [%s] %s\n", l_cLan_if_name, cDhcpNs_OptionString );
 		}
@@ -1303,12 +1338,15 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 	char l_cDhcpNs_1[ 128 ] 	 			 = { 0 },
 		 l_cDhcpNs_2[ 128 ] 	 			 = { 0 },
 		 l_cDhcpNs_3[ 128 ] 				 = { 0 },
+                 l_cLocalNs[ 128 ]                               = { 0 },
+                 l_cWan_Dhcp_Dns[ 256 ]                          = { 0 },
 		 l_cDhcpNs_OptionString[ 1024 ] 	 = { 0 };
 
     // Static LAN DNS
 	syscfg_get(NULL, "dhcp_nameserver_1", l_cDhcpNs_1, sizeof(l_cDhcpNs_1));
 	syscfg_get(NULL, "dhcp_nameserver_2", l_cDhcpNs_2, sizeof(l_cDhcpNs_2));	
-	syscfg_get(NULL, "dhcp_nameserver_3", l_cDhcpNs_3, sizeof(l_cDhcpNs_3));		
+	syscfg_get(NULL, "dhcp_nameserver_3", l_cDhcpNs_3, sizeof(l_cDhcpNs_3));
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "current_lan_ipaddr", l_cLocalNs, sizeof(l_cLocalNs));		
 
 	strcpy( l_cDhcpNs_OptionString, "dhcp-option=brlan0,6");
 
@@ -1334,7 +1372,17 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 		sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_3 );
 	}
 
-	// Copy custom dns servers 
+        char l_cSecWebUI_Enabled[8] = {0};
+        syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
+        if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
+        {
+                check_and_get_wan_dhcp_dns( l_cWan_Dhcp_Dns );
+                if ( '\0' != l_cWan_Dhcp_Dns[ 0 ] )
+                    sprintf( l_cDhcpNs_OptionString, "%s,%s,%s", l_cDhcpNs_OptionString, l_cLocalNs, l_cWan_Dhcp_Dns );
+                else
+                    sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cLocalNs );
+        }
+        // Copy custom dns servers
 	sprintf( pDhcpNs_OptionString, "%s", l_cDhcpNs_OptionString );
 }
 
