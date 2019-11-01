@@ -32,11 +32,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #######################################################################
+    
 
 if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
 fi
+        
 
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
@@ -519,6 +521,8 @@ get_dhcp_option_for_brlan0() {
     NAMESERVER1=`syscfg get dhcp_nameserver_1`
     NAMESERVER2=`syscfg get dhcp_nameserver_2`
     NAMESERVER3=`syscfg get dhcp_nameserver_3`
+    CURR_LAN_IP=`sysevent get current_lan_ipaddr`
+    SECUREWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
    
 	  if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
 	     if [ "" = "$DHCP_OPTION_STR" ] ; then
@@ -543,6 +547,26 @@ get_dhcp_option_for_brlan0() {
 	        DHCP_OPTION_STR=$DHCP_OPTION_STR","$NAMESERVER3
 	     fi
 	  fi
+          
+          if [ "$SECUREWEBUI_ENABLED" = "true" ]; then
+              NS=`sysevent get wan_dhcp_dns`
+              if [ "" != "$NS" ] ; then
+                  NS=`echo "$NS" | sed "s/ /,/g"`
+              fi    
+              if [ "" = "$DHCP_OPTION_STR" ] ; then
+                 if [ "" != "$NS" ] ; then
+                     DHCP_OPTION_STR="dhcp-option=brlan0,6,"$CURR_LAN_IP","$NS
+                 else
+                     DHCP_OPTION_STR="dhcp-option=brlan0,6,"$CURR_LAN_IP
+                 fi
+              else
+                 if [ "" != "$NS" ] ; then
+                     DHCP_OPTION_STR=$DHCP_OPTION_STR","$CURR_LAN_IP","$NS
+                 else
+                     DHCP_OPTION_STR=$DHCP_OPTION_STR","$CURR_LAN_IP
+                 fi    
+              fi
+          fi
 
 	  echo $DHCP_OPTION_STR
 }
@@ -673,6 +697,16 @@ prepare_static_dns_urls()
 prepare_dhcp_conf () {
    echo "DHCP SERVER : Prepare DHCP configuration"
    RF_CAPTIVE_PORTAL="false"
+   SECWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
+   if [ "$SECWEBUI_ENABLED" = "true" ]; then
+       syscfg set dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled 1
+       syscfg set dhcp_nameserver_enabled 1
+       syscfg commit
+   else
+       syscfg set dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled 0
+       syscfg set dhcp_nameserver_enabled 0
+       syscfg commit
+   fi
    LAN_IFNAME=`syscfg get lan_ifname`
    NAMESERVERENABLED=`syscfg get dhcp_nameserver_enabled`
    WAN_DHCP_NS=`sysevent get wan_dhcp_dns`
@@ -899,12 +933,12 @@ fi
 	  else
   	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$LAN_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
 	  fi
-
 	  if [ "1" = "$NAMESERVERENABLED" ]; then
 		  DHCP_OPTION_FOR_LAN=`get_dhcp_option_for_brlan0`
 		  echo "$PREFIX""$DHCP_OPTION_FOR_LAN" >> $LOCAL_DHCP_CONF
-		  echo_t "DHCP_SERVER : $PREFIX$DHCP_OPTION_FOR_LAN"
-	  fi
+		  echo_t "DHCP_SERVER : $PREFIX$DHCP_OPTION_FOR_LAN" 
+          fi
+               
    fi
    
    # For boot itme optimization, run do_extra_pool only when brlan1 interface is available
