@@ -1671,6 +1671,7 @@ int load_from_file (const char *fname)
 int backup_file (const char *bkupFile, const char *localFile)
 {
    int fd_from = open(localFile, O_RDONLY);
+   int rc=0;
   if(fd_from < 0)
   {
     ulog_error(ULOG_SYSTEM, UL_SYSCFG,"opening localfile failed during db backup");
@@ -1696,6 +1697,11 @@ int backup_file (const char *bkupFile, const char *localFile)
   if(fd_to < 0)
   {
     	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "creat sys call failed during db backup");
+	rc = munmap(mem,Stat.st_size);
+	if ( rc != 0 ){
+		
+    		ulog_error(ULOG_SYSTEM, UL_SYSCFG, "munmap failed");
+	}
         close(fd_from);
         return -1;
   }
@@ -1704,9 +1710,20 @@ int backup_file (const char *bkupFile, const char *localFile)
   {
     	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "write system call failed during db backup");
 
+	rc = munmap(mem,Stat.st_size);
+        if ( rc != 0 ){
+
+                ulog_error(ULOG_SYSTEM, UL_SYSCFG, "munmap failed");
+        }
+
 	close(fd_from);
         close(fd_to);
         return -1;
+  }
+
+  rc = munmap(mem,Stat.st_size);
+  if ( rc != 0 ){
+       ulog_error(ULOG_SYSTEM, UL_SYSCFG, "munmap failed");
   }
 
   if(close(fd_to) < 0) {
