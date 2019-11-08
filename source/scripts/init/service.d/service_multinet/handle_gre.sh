@@ -42,6 +42,7 @@ TYPE=Gre
 
 GRE_IFNAME="gretap0"
 GRE_IFNAME_DUMMY="gretap_0"
+recover="false"
 
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
@@ -142,16 +143,15 @@ read_greInst()
             succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "`
             if [ "true" = "$succeed_check" ]; then
                   BRIDGE_INSTS="$BRIDGE_INSTS $bridgeinfo"
-            fi                      
-        done       
-
-       echo "BRIDGE_INSTS === $BRIDGE_INSTS"       
-        
-        for i in $BRIDGE_INSTS; do                                                                                                                                                                                                                                                                                                                   
-           brinst=`echo $i |cut -d . -f 4`                                                                                                                                                                                                                                                                                                         
-           sysevent set multinet-start $brinst                                                                                                                                                                                                                                                                                                 
+            fi       
         done
-}
+
+       echo "BRIDGE_INSTS === $BRIDGE_INSTS"
+       for i in $BRIDGE_INSTS; do
+          brinst=`echo $i |cut -d . -f 4`
+          sysevent set multinet-start $brinst                                                                                                                                                                                                                                                                                                 
+       done
+ }
 
 
 #args: remote endpoint, gre tunnel ifname
@@ -207,7 +207,6 @@ create_tunnel () {
 
     sysevent set gre_current_endpoint $1
     sysevent set if_${2}-status $IF_READY
-    
 }
 
 destroy_tunnel () {
@@ -804,7 +803,6 @@ case "$1" in
     
         echo "GRE EP called : $2"
 
-        recover="false"                
         if [ $2 = "recover" ] ; then                                    
              recover="true"                    
         fi        
@@ -815,17 +813,20 @@ case "$1" in
         fi    
 
 
-         if [ x"NULL" != x${2} ] || [ $recover = "true" ]; then                
-             echo "inside create tunnel"                             
+         if [ x"NULL" != x${2} ] || [ $recover = "true" ]; then
+              echo "inside create tunnel"                             
               if [ $recover = "true" ] ; then                                    
                   TUNNEL_EP="dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint"
                   TUNNEL_IP=`$TUNNEL_EP`                                                            
                   curep=`echo "$TUNNEL_IP" | grep value | cut -f3 -d : | cut -f2 -d " "`            
-                  echo "dmcli ip : $curep"                                           
-                  create_tunnel $curep $GRE_IFNAME                                                  
-              else                                                                                   
-                  create_tunnel $2 $GRE_IFNAME                                                      
-           fi                                                                                     
+                  echo "dmcli ip : $curep"                                   
+                  create_tunnel $curep $GRE_IFNAME
+                  if [ "$BOX_TYPE" = "XB3" ] ; then
+                      read_greInst
+                  fi
+              else
+                  create_tunnel $2 $GRE_IFNAME
+              fi                                                                                     
          fi           
 
         if [ "$BOX_TYPE" = "XF3" ] ; then 
