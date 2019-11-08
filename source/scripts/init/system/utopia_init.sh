@@ -217,7 +217,8 @@ PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
-FACTORY_RESET_REASON=false  
+FACTORY_RESET_REASON=false
+FR_FILE=$SYSCFG_MOUNT/factory_reset
 
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
        if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
@@ -283,23 +284,29 @@ CheckAndReCreateDB()
 
 echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
 if [ -f $SYSCFG_BKUP_FILE ]; then
-   cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
    if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
         cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
    fi
+   cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
-   fi
+   fi   
 else
-   echo -n > $SYSCFG_FILE
-   echo -n > $SYSCFG_BKUP_FILE
    if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
 	echo -n > $SYSCFG_NEW_FILE
    fi
+   SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
+   if [ "$SECURE_SYSCFG" = "false"  ] && [ ! -f $FR_FILE ]; then
+         cp $SYSCFG_NEW_FILE $SYSCFG_FILE
+   else
+         echo -n > $SYSCFG_FILE
+         echo -n > $SYSCFG_BKUP_FILE
+         echo -n > $SYSCFG_NEW_FILE
+   fi
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
-	   CheckAndReCreateDB
+        CheckAndReCreateDB
    fi
 
    #>>zqiu
@@ -329,6 +336,11 @@ fi
 
 if [ -f $SYSCFG_NEW_BKUP_FILE ];then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
+fi
+
+if [ -f $FR_FILE ]; then
+        syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI
+        rm -rf $FR_FILE
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
@@ -408,9 +420,9 @@ fi
    create_wifi_default
    #<<zqiu
    echo_t "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
-   if [ "$MODEL_NUM" != "DPC3939" ] && [ "$MODEL_NUM" != "DPC3939B" ]; then
-         touch $SYSCFG_NEW_FILE
-   fi
+   touch $SYSCFG_FILE
+   touch $SYSCFG_BKUP_FILE
+   touch $SYSCFG_NEW_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
@@ -486,11 +498,15 @@ syseventd
 sleep 1 
 echo_t "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
-if [ "$MODEL_NUM" != "DPC3939" ] && [ "$MODEL_NUM" != "DPC3939B" ]; then
-      changeFilePermissions $SYSCFG_BKUP_FILE 400
-      changeFilePermissions $SYSCFG_NEW_FILE  400
-      echo "[utopia][init] SEC: syscfg.db moved to $SYSCFG_PERSISTENT_PATH"
+changeFilePermissions $SYSCFG_BKUP_FILE 400
+changeFilePermissions $SYSCFG_NEW_FILE  400
+
+SYSCFG_DB_FILE="/nvram/syscfg.db"
+SECURE_SYSCFG=`syscfg get UpdateNvram`
+if [ "$SECURE_SYSCFG" = "false" ]; then
+      SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
 fi
+echo "[utopia][init] SEC: Syscfg stored in $SYSCFG_DB_FILE"
 
 #Added log to check the DHCP range corruption after system defaults applied.
 lan_ipaddr=`syscfg get lan_ipaddr`
