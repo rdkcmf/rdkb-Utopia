@@ -404,7 +404,7 @@ echo "" > /proc/skyrbd
 
 #Check last reboot reasons
 case "$LastRebootReason" in
-    PCIEReset | OOPS | BAD | ABORT | POOM | BUG | BADS | BABORT | PANIC | POOM | OOM | SWReset)
+    PCIEReset | OOPS | BAD | ABORT | POOM | BUG | BADS | BABORT | PANIC | POOM | OOM )
       echo "[utopia][init] Setting last reboot reason as $LastRebootReason"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason $LastRebootReason
       syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
@@ -428,28 +428,36 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
 
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-   else
-        if [ "$LastRebootReason" = "Reboot" ]; then
-            #extra handling for reason
+else
+   if [ "$LastRebootReason" = "Reboot" ] || [ "$LastRebootReason" = "SWReset" ] ; then
+      #extra handling for reason
       if [ -f /nvram/restore_reboot ];then
-               echo "[utopia][init] Setting last reboot reason as restore-reboot"
+         echo "[utopia][init] Setting last reboot reason as restore-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
          rm -f /nvram/restore_reboot
-            else
-               rebootCounter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
-               echo "[utopia][init] Previous rebootCounter:$rebootCounter"
-               if [ "$rebootCounter" != "1" ] ; then
-                  echo "[utopia][init] Detected last reboot reason as reboot-cmd"
-                  syscfg set X_RDKCENTRAL-COM_LastRebootReason "reboot-cmd"
-                  syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+      else
+         rebootCounter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
+         echo "[utopia][init] Previous rebootCounter:$rebootCounter"
+         if [ "$rebootCounter" != "1" ] ; then
+             if [ "$LastRebootReason" = "Reboot" ] ; then
+                echo "[utopia][init] Detected last reboot reason as reboot-cmd"
+                syscfg set X_RDKCENTRAL-COM_LastRebootReason "reboot-cmd"
+                syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+             fi
+              
+             if [ "$LastRebootReason" = "SWReset" ] ; then
+                echo "[utopia][init] Detected last reboot reason as SWReset"
+                syscfg set X_RDKCENTRAL-COM_LastRebootReason "SWReset"
+                syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+             fi
+         fi
       fi
+   else
+      echo "[utopia][init] Setting last reboot reason as unknown"
+           syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
    fi
-        else
-            echo "[utopia][init] Setting last reboot reason as unknown"
-            syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
-        fi
-     fi
+fi
    ;;
 esac
 
