@@ -41,9 +41,15 @@ fi
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
 DHCP_OPTIONS_FILE=/var/dhcp_options
+if [ "$BOX_TYPE" = "HUB4" ]; then
+LOCAL_DHCP_CONF=/tmp/dnsmasq.conf
+LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts
+LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options
+else
 LOCAL_DHCP_CONF=/tmp/dnsmasq.conf$$
 LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts$$
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options$$
+fi
 RESOLV_CONF=/etc/resolv.conf
 
 # Variables needed for captive portal mode : start
@@ -786,17 +792,43 @@ fi
    #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
    echo "expand-hosts" >> $LOCAL_DHCP_CONF
 
+   if [ "$BOX_TYPE" = "HUB4" ]; then
+      # dnsmasq is not taking the data from resolv-file hence populating the data on to LOCAL_DHCP_CONF
+      domain=`grep 'domain' /etc/resolv.conf | grep -v '#' | awk '{print $2}'`
+      if [ "" != "$domain" ]; then
+         echo "domain=$domain" >> $LOCAL_DHCP_CONF
+      fi
+   fi
+
    # if we are provisioned to use the wan domain name, the we do so
    # otherwise we use the lan domain name
-   if [ "1" = "$PROPAGATE_DOM" ] ; then
-      LAN_DOMAIN=`sysevent get dhcp_domain`
+   if [ "$BOX_TYPE" = "HUB4" ]; then
+      if grep "domain=" $LOCAL_DHCP_CONF >/dev/null
+      then
+         echo "domain name is set "
+      else
+         if [ "1" = "$PROPAGATE_DOM" ] ; then
+            LAN_DOMAIN=`sysevent get dhcp_domain`
+         fi
+         if [ "" = "$LAN_DOMAIN" ] ; then
+            LAN_DOMAIN=`syscfg get lan_domain`
+         fi
+         if [ "" != "$LAN_DOMAIN" ] ; then
+            echo "domain=$LAN_DOMAIN" >> $LOCAL_DHCP_CONF
+         fi
+       fi
+   else
+      if [ "1" = "$PROPAGATE_DOM" ] ; then
+         LAN_DOMAIN=`sysevent get dhcp_domain`
+      fi
+      if [ "" = "$LAN_DOMAIN" ] ; then
+         LAN_DOMAIN=`syscfg get lan_domain`
+      fi
+      if [ "" != "$LAN_DOMAIN" ] ; then
+         echo "domain=$LAN_DOMAIN" >> $LOCAL_DHCP_CONF
+      fi
    fi
-   if [ "" = "$LAN_DOMAIN" ] ; then
-      LAN_DOMAIN=`syscfg get lan_domain`
-   fi
-   if [ "" != "$LAN_DOMAIN" ] ; then
-      echo "domain=$LAN_DOMAIN" >> $LOCAL_DHCP_CONF
-   fi
+
    LOG_LEVEL=`syscfg get log_level`
    if [ "" = "$LOG_LEVEL" ] ; then
        LOG_LEVEL=1
@@ -827,9 +859,11 @@ fi
 	  prepare_dhcp_options_wan_dns	
    fi
    
-   nameserver=`grep "nameserver" $RESOLV_CONF | awk '{print $2}'|grep -v ":"|tr '\n' ','| sed -e 's/,$//'`
-   if [ "" != "$nameserver" ]; then
-       echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
+   if [ "x$BOX_TYPE" != "xHUB4" ]; then
+      nameserver=`grep "nameserver" $RESOLV_CONF | awk '{print $2}'|grep -v ":"|tr '\n' ','| sed -e 's/,$//'`
+      if [ "" != "$nameserver" ]; then
+         echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
+      fi
    fi
    
    if [ "started" = $CURRENT_LAN_STATE ]; then
@@ -982,6 +1016,26 @@ fi
                    if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
                            echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
                    fi
+
+           if [ "$BOX_TYPE" = "HUB4" ]; then
+
+               #SKYH4-952: Sky selfheal support.
+               #For Sky selfheal mode, prepare redirection IP for DSN redirection.
+               #Here given a static IP returned in selfheal mode in the absense of WAN.
+               #So instead of DNS refused, all the DNS queires resolved and returned this static IP.
+               #Define static IPv4 and IPv6 address to resolve IPv4 and IPv6 hosts.
+               #Also check /etc/resolv.conf contains either 127.0.0.1 or empty, then we add static ip configuration.
+               resolv_conf_entry_cnt=`cat /etc/resolv.conf  | wc -l`
+               isItLocalHost=`cat /etc/resolv.conf | grep "127.0.0.1" | cut -d " " -f2`
+               if [ "$resolv_conf_entry_cnt" == "1" ] && [ "$isItLocalHost" == "127.0.0.1" ]
+               then
+                   echo "Adding static entries for selfheal"
+                   echo "address=/#/10.10.10.10" >> $LOCAL_DHCP_CONF
+                   echo "address=/#/a000::1" >> $LOCAL_DHCP_CONF
+                   echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
+               fi
+           fi
+
        fi
    fi
    #fi

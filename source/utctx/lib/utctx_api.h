@@ -591,6 +591,10 @@ typedef enum _UtopiaValue
 	UtopiaValue_PFR_PrevRuleEnabledState,
 	UtopiaValue_PRT_PrevRuleEnabledState,
     UtopiaValue_HashPassword,
+    #if defined(_WAN_MANAGER_ENABLED_)
+      UtopiaValue_WanMode,
+      UtopiaValue_WanConnEnabled,
+    #endif /*_WAN_MANAGER_ENABLED_*/
     UtopiaValue__LAST__
 } UtopiaValue;
 

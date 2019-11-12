@@ -156,6 +156,9 @@ service_start ()
 	    echo "server time1.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
 	    echo "server time2.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
 	    echo "server time3.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+	    if [ "$BOX_TYPE" = "HUB4" ]; then
+	        echo "server ntp1.isp.sky.com" >> $NTP_CONF_TMP # adding SKY NTP server for fallback case.
+	    fi
         else
 	    echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
 	fi
@@ -171,6 +174,7 @@ service_start ()
 	
 	if [ "$NTPD_INTERFACE" == "erouter0" ]; then
 		if [ "x$BOX_TYPE" = "xHUB4" ]; then
+			sleep 30
 			WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
 		else
 			sleep 30
@@ -187,7 +191,9 @@ service_start ()
 		fi
 	fi
 
-	echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
+	if [ "x$BOX_TYPE" != "xHUB4" ]; then
+		echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
+	fi
 	echo "restrict default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
 	echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
 	echo "restrict 127.0.0.1" >> $NTP_CONF_TMP

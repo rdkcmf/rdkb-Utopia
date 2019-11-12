@@ -1480,9 +1480,35 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.LocalUI.DefaultLoginPassword"), "ActiveValue");
                                         if ( paramObjVal != NULL )
 					{
-						passWord = paramObjVal->valuestring; 
+						passWord = paramObjVal->valuestring;
+
+                                                if (strstr( PartnerID, "sky-" ) != NULL)
+                                                {
+                                                    APPLY_PRINT("%s - Fetching %s password from serial data \n",__FUNCTION__, PartnerID);
+                                                    // For Sky, we need to pull the default login from the /tmp/serial.txt file.
+                                                    FILE *fp = NULL;
+                                                    char DefaultPassword[25] = {0};
+
+                                                    fp = popen("grep 'WIFIPASSWORD' /tmp/serial.txt | cut -d '=' -f 2 | tr -d [:space:]", "r");
+                                                    if (fp == NULL)
+                                                    {
+                                                        APPLY_PRINT("%s - ERROR Grabbing the default password\n",__FUNCTION__);
+                                                    } else {
+                                                                fgets(DefaultPassword, sizeof(DefaultPassword), fp);
+                                                                pclose(fp);
+                                                    }
+ 
+                                                    if (DefaultPassword[0] != NULL)
+                                                        {
+                                                                set_syscfg_partner_values(DefaultPassword,"user_password_3");
+                                                        }
+                                                        else
+                                                        {
+                                                                APPLY_PRINT("%s - DefaultLoginPassword Value is NULL\n", __FUNCTION__ );
+                                                        }
+                                                }
 					
-						if (passWord != NULL) 
+						else if (passWord != NULL) 
 						{
 							set_syscfg_partner_values(passWord,"user_password_3");
 							passWord = NULL;
