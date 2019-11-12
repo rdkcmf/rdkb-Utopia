@@ -114,7 +114,8 @@ SYSCFG_TMP_LOCATION=/tmp
 SYSCFG_FILE=$SYSCFG_TMP_LOCATION/syscfg.db
 SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg.db
 SYSCFG_OLDBKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
-SYSCFG_PERSISTENT_PATH=/opt/secure/data
+SYSCFG_ENCRYPTED_PATH=/opt/secure/
+SYSCFG_PERSISTENT_PATH=/opt/secure/data/
 SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
 SYSCFG_NEW_BKUP_FILE=$SYSCFG_PERSISTENT_PATH/syscfg_bkup.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
@@ -122,11 +123,14 @@ PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
+FR_FILE=$SYSCFG_MOUNT/factory_reset
 
-if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
-       echo "$SYSCFG_PERSISTENT_PATH path not available creating directory and touching $SYSCFG_NEW_FILE file"
-       mkdir $SYSCFG_PERSISTENT_PATH
-       touch $SYSCFG_NEW_FILE
+if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
+    if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
+           echo "$SYSCFG_PERSISTENT_PATH path not available creating directory and touching $SYSCFG_NEW_FILE file"
+           mkdir $SYSCFG_PERSISTENT_PATH
+           touch $SYSCFG_NEW_FILE
+    fi
 fi
 
 CheckAndReCreateDB()
@@ -156,24 +160,22 @@ CheckAndReCreateDB()
 
 echo "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
 if [ -f $SYSCFG_BKUP_FILE ]; then
-        cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
-        if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
-    	        cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
-        fi
-	syscfg_create -f $SYSCFG_FILE
-        syscfg_oldDB=$?
-        if [ $syscfg_oldDB -ne 0 ]; then
-	     CheckAndReCreateDB
-	fi
+    if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
+    	cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
+    fi
+    cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
+    syscfg_create -f $SYSCFG_FILE
+    if [ $? != 0 ]; then
+	 CheckAndReCreateDB
+    fi
 else
-    echo -n > $SYSCFG_FILE
-    echo -n > $SYSCFG_BKUP_FILE
     if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
     	      echo -n > $SYSCFG_NEW_FILE
     fi
+    echo -n > $SYSCFG_FILE
+    echo -n > $SYSCFG_BKUP_FILE
     syscfg_create -f $SYSCFG_FILE
-    syscfg_oldDB=$?
-    if [ $syscfg_oldDB -ne 0 ]; then
+    if [ $? != 0 ]; then
 	 CheckAndReCreateDB
     fi
    
@@ -196,6 +198,11 @@ fi
 if [ -f $SYSCFG_NEW_BKUP_FILE ]; then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
 fi
+
+#if [ -f $FR_FILE ]; then
+#    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI
+#    rm -rf $FR_FILE
+#fi
 
 SYSCFG_LAN_DOMAIN=`syscfg get lan_domain` 
 
@@ -255,8 +262,6 @@ fi
    if [ -f /nvram/.CMchange_reboot_count ];then
       rm -f /nvram/.CMchange_reboot_count
    fi
-   echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
-   touch $SYSCFG_NEW_FILE
    if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
    	# Remove onboard files
    	rm -f /nvram/.device_onboarded
@@ -266,7 +271,10 @@ fi
    #>>zqiu
    create_wifi_default
    #<<zqiu
-   echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_FILE)"
+   echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
+   touch $SYSCFG_NEW_FILE
+   touch $SYSCFG_BKUP_FILE
+   touch $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
    syscfg_oldDB=$?
    if [ $syscfg_oldDB -ne 0 ];then
@@ -357,6 +365,7 @@ echo "[utopia][init] SEC: syscfg.db moved to /opt/secure/data"
 changeFilePermissions $SYSCFG_BKUP_FILE 400
 changeFilePermissions $SYSCFG_NEW_FILE 400
 
+
 # Get the syscfg value which indicates whether unit is activated or not.
 # This value is set from network_response.sh based on the return code received.
 activated=`syscfg get unit_activated`
@@ -436,6 +445,7 @@ else
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
          rm -f /nvram/restore_reboot
+         rm -f /nvram/syscfg.db.prev
       else
          rebootCounter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
          echo "[utopia][init] Previous rebootCounter:$rebootCounter"
