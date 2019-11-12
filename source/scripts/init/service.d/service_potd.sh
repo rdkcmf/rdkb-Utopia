@@ -39,6 +39,7 @@
 #------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/device.properties
 
 SERVICE_NAME="potd"
 SELF_NAME="`basename $0`"
@@ -57,8 +58,11 @@ service_start() {
 		sleep 60
 	fi
 #done
-    killall sa_potd
-    $POTD &
+    if [ "$BOX_TYPE" != "HUB4" ]; then
+        killall sa_potd
+        $POTD &
+    fi
+
     #MSO_PASSWD=`$POTD`
     #if [ "$MSO_PASSWD" != "" ]; then
     #  syscfg set user_password_1 $MSO_PASSWD

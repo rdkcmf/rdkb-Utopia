@@ -45,6 +45,11 @@
 #include "utapi_tr_dhcp.h"
 #include "DM_TR181.h"
 
+#ifdef SKY_RDKB
+#define DNSMASQ_LEASE_CONFIG_FILE "/nvram/dnsmasq.leases"
+#define BUF_LEN 200
+#endif
+
 static int g_IndexMapServerPool[MAX_NUM_INSTANCES+1] = {-1};
 static int g_IndexMapStaticAddr[MAX_NUM_INSTANCES+1] = {-1};
 
@@ -572,6 +577,46 @@ int is_mac_addr_in_sa_list(UtopiaContext *ctx, unsigned char *pMac)
 	return(0);
 }
 
+#ifdef SKY_RDKB
+/*
+ * RM15984: Check the given string is available in dnsmasq configuration file. (/nvram/dnsmasq.leases).
+ * This is required to add the reserve static IP configuration. Before update reservation details
+ * check the IP is already leased/provided from device.
+ */
+int is_addr_in_dnsmasq_lease_list (const char *addr, const unsigned char *pMac)
+{
+    FILE *fp = NULL;
+    char buf[BUF_LEN] = {0};
+    int ret = FALSE;
+    char macStr[MACADDR_SZ] = {0};
+
+    if ((fp=fopen(DNSMASQ_LEASE_CONFIG_FILE, "r")) == NULL )
+    {
+        return ret;
+    }
+
+    while (fgets(buf, sizeof(buf), fp)!= NULL)
+    {
+        if(strstr(buf,addr))
+        {
+            ret = TRUE;
+            /* This is required to reserve leased IP for the same device */
+            sprintf(macStr,"%02x:%02x:%02x:%02x:%02x:%02x",
+                pMac[0],pMac[1],pMac[2],pMac[3],pMac[4],pMac[5]);
+            if(strstr(buf,macStr))
+            {
+                ret = FALSE;
+            }
+            break;
+        }
+    }
+
+    fclose(fp);
+
+    return ret;
+}
+#endif //END SKY_RDKB
+
 int Utopia_AddDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInstanceNumber, void *pSAddr)
 {
     char strVal[STR_SZ] = {'\0'}; 
@@ -593,15 +638,26 @@ int Utopia_AddDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
     if((0 == pSAddr_t->InstanceNumber)||is_mac_addr_invalid(pSAddr_t->Chaddr)||is_ipv4_addr_invalid(pSAddr_t->Yiaddr.Value))
         return ERR_INVALID_ARGS;
 
+     strcpy(strVal,inet_ntoa(pSAddr_t->Yiaddr.Value));
+
+#ifdef SKY_RDKB
+     /* RM15984: "Add Device with Reserved IP" functionality is not working as expected.
+     * In this case we can add already leased IP for a connected client as reserved IP for another device from GUI.
+     * To resolve this we need to check the configured IP address is in dnsmasq lease table before update the
+     * reservation configuration.*/
+    if(is_ipv4_addr_in_sa_list(ctx, pSAddr_t->Yiaddr.Value) || is_mac_addr_in_sa_list(ctx,pSAddr_t->Chaddr)
+            || is_addr_in_dnsmasq_lease_list(strVal,pSAddr_t->Chaddr))
+           return(ERR_INVALID_ARGS);
+#else
+
     if(is_ipv4_addr_in_sa_list(ctx, pSAddr_t->Yiaddr.Value) || is_mac_addr_in_sa_list(ctx,pSAddr_t->Chaddr))
 	return(ERR_INVALID_ARGS);
+#endif //END SKY_RDKB
 
     Utopia_GetDHCPServerStaticHostsCount(ctx,&count);
     ulIndex = count; 
     g_IndexMapStaticAddr[pSAddr_t->InstanceNumber] = ulIndex;
 
-
-    strcpy(strVal,inet_ntoa(pSAddr_t->Yiaddr.Value));
     /*sscanf(strVal,"%d.%d.%d.%d", ip,ip+1,ip+2,ip+3);*/
     /* Retrieve MAC address properly */
     sprintf(macAddress,"%02x:%02x:%02x:%02x:%02x:%02x",pSAddr_t->Chaddr[0],pSAddr_t->Chaddr[1],pSAddr_t->Chaddr[2],pSAddr_t->Chaddr[3],pSAddr_t->Chaddr[4],pSAddr_t->Chaddr[5]);

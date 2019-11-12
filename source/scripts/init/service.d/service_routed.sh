@@ -77,7 +77,10 @@ case "$1" in
        if [ "$status" == "started" ]; then
            service_routed start
        elif [ "$status" == "stopped" ]; then
-           service_routed stop
+           # As per Sky requirement, radvd should run with ULA prefix though the wan-status is down
+           if [ "x$BOX_TYPE" != "xHUB4" ]; then
+               service_routed stop
+           fi
        fi
        ;;
    ripd-restart)

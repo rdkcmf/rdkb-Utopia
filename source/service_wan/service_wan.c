@@ -529,11 +529,13 @@ static int wan_start(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "last_erouter_mode", buf, 0);
 #endif
 
+#if !defined(_WAN_MANAGER_ENABLED_)
     if (wan_iface_up(sw) != 0) {
         fprintf(stderr, "%s: wan_iface_up error\n", __FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
         return -1;
     }
+#endif /*_WAN_MANAGER_ENABLED_*/
 
 #if defined(_PLATFORM_IPQ_)
     /*
@@ -575,11 +577,13 @@ static int wan_start(struct serv_wan *sw)
     if (sw->rtmod != WAN_RTMOD_IPV4 && sw->rtmod != WAN_RTMOD_DS)
         goto done; /* no need to config addr/route if IPv4 not enabled */
 
+#if !defined(_WAN_MANAGER_ENABLED_)
     if (wan_addr_set(sw) != 0) {
         fprintf(stderr, "%s: wan_addr_set error\n", __FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
         return -1;
     }
+#endif /*_WAN_MANAGER_ENABLED_*/
 
     if (route_config(sw->ifname) != 0) {
         fprintf(stderr, "%s: route_config error\n", __FUNCTION__);
@@ -602,7 +606,7 @@ static int wan_start(struct serv_wan *sw)
 done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_WAN_MANAGER_ENABLED_)
     /*
      * Firewall should be run, once dhcp/v6 client are started and wan_service-status
      * is set to started. */
@@ -736,13 +740,13 @@ static int wan_stop(struct serv_wan *sw)
         }
     }
 
-#if !defined(_PLATFORM_IPQ_)
+#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_)
     if (wan_iface_down(sw) != 0) {
         fprintf(stderr, "%s: wan_iface_down error\n", __FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
         return -1;
     }
-#endif
+#endif  /*_PLATFORM_IPQ_ && _WAN_MANAGER_ENABLED_*/
 
     printf("%s wan_service-status is stopped, take log back up\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopped", 0);
@@ -890,6 +894,7 @@ static int wan_addr_set(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
     sysevent_set(sw->sefd, sw->setok, "wan-errinfo", NULL, 0);
 
+#if !defined(_WAN_MANAGER_ENABLED_)
     switch (sw->prot) {
     case WAN_PROT_DHCP:
         if (wan_dhcp_start(sw) != 0) {
@@ -909,8 +914,9 @@ static int wan_addr_set(struct serv_wan *sw)
         fprintf(stderr, "%s: unknow wan protocol\n", __FUNCTION__);
         return -1;
     }
+#endif /*_WAN_MANAGER_ENABLED_*/
 
-#if !defined(_PLATFORM_IPQ_)
+#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_)
     /*
      * The trigger of 'current_ipv4_link_state' to 'up' is moved to WAN service
      * from Gateway provisioning App. This is done to save the delay in getting
@@ -928,7 +934,7 @@ static int wan_addr_set(struct serv_wan *sw)
     else
         fprintf(stderr, "[%s] wait for protocol SUCCESS !\n", PROG_NAME);
 
-#endif
+#endif /*_PLATFORM_IPQ_ && _WAN_MANAGER_ENABLED_*/
 
     memset(val, 0 ,sizeof(val));
     sysevent_get(sw->sefd, sw->setok, "ipv4_wan_subnet", val, sizeof(val));
@@ -1051,11 +1057,14 @@ static int wan_addr_set(struct serv_wan *sw)
 	OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
     }
 #endif
+
+#if !defined(_WAN_MANAGER_ENABLED_)
     if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS)
     {
     	fprintf(stderr, "Starting DHCPv6 Client now\n");
     	system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");	
     }
+#endif
 
     sysctl_iface_set("/proc/sys/net/ipv4/ip_forward", NULL, "1");
     sysevent_set(sw->sefd, sw->setok, "current_wan_state", "up", 0);
@@ -1073,8 +1082,10 @@ static int wan_addr_set(struct serv_wan *sw)
 	OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
 #endif
 
+#if !defined(_WAN_MANAGER_ENABLED_)
     fprintf(stderr, "[%s] Synching DNS to ATOM...\n", PROG_NAME);
     vsystem("/etc/utopia/service.d/service_wan/dns_sync.sh &");
+#endif /*_WAN_MANAGER_ENABLED_*/
 
     return 0;
 }
@@ -1089,6 +1100,7 @@ static int wan_addr_unset(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", "0.0.0.0", 0);
     sysevent_set(sw->sefd, sw->setok, "current_wan_state", "down", 0);
 
+#if !defined(_WAN_MANAGER_ENABLED_)
     switch (sw->prot) {
     case WAN_PROT_DHCP:
         if (wan_dhcp_stop(sw) != 0) {
@@ -1113,6 +1125,8 @@ static int wan_addr_unset(struct serv_wan *sw)
 
 	fprintf(stderr, "Disabling DHCPv6 Client now\n");
     system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");	
+
+#endif /*_WAN_MANAGER_ENABLED_*/
 
     printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
