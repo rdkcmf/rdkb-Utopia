@@ -638,6 +638,8 @@ done:
     get_dateanduptime(buffer,&uptime);
 	printf("%s Wan_init_complete:%d\n",buffer,uptime);
 	OnboardLog("Wan_init_complete:%d\n",uptime);
+    /* RDKB-24991 to handle snmpv3 based on wan-status event */
+    system("sh /lib/rdk/postwanstatusevent.sh &");
     return 0;
 }
 
