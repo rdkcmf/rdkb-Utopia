@@ -207,6 +207,37 @@ static int daemon_stop(const char *pid_file, const char *prog)
     return 0;
 }
 
+#ifdef _HUB4_PRODUCT_REQ_
+/* SKYH4-1765: checks the daemon running status */
+static int is_daemon_running(const char *pid_file, const char *prog)
+{
+    FILE *fp;
+    char pid_str[10];
+    int pid = -1;
+
+    if (!pid_file && !prog)
+        return -1;
+
+    if (pid_file) {
+        if ((fp = fopen(pid_file, "rb")) != NULL) {
+            if (fgets(pid_str, sizeof(pid_str), fp) != NULL && atoi(pid_str) > 0)
+                pid = atoi(pid_str);
+
+            fclose(fp);
+        }
+    }
+
+    if (pid <= 0 && prog)
+        pid = pid_of(prog, NULL);
+
+    if (pid > 0) {
+	return pid;
+    }
+
+    return 0;
+}
+#endif
+
 #ifdef MULTILAN_FEATURE
 static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
 {
@@ -539,7 +570,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         else if(strlen(prefix)) {
             fprintf(fp, "   ipv6 nd prefix %s 0 0\n", prefix);
         }
-        if (strlen(orig_prefix)) {
+        else if(strlen(orig_prefix)) { //SKYH4-1765: we add only the latest prefix data to zebra.conf.
             fprintf(fp, "   ipv6 nd prefix %s %s 0\n", orig_prefix, prev_valid_lft); //Previous prefix with '0' as the preferred time value
         }
 
@@ -908,7 +939,21 @@ static int radv_start(struct serv_routed *sr)
         return -1;
     }
 
+#ifdef _HUB4_PRODUCT_REQ_
+    /*
+     * SKYH4-1765: we do not want to restart the zebra if it is already running,
+     * since restarting zebra will leads clear the current zebra counter.
+     * So we send SIGUSR1 to zebra to notify 'read the updated zebra.conf'
+     */
+    int pid = is_daemon_running(ZEBRA_PID_FILE, "zebra");
+    if(pid)
+    {
+        kill(pid, SIGUSR1);
+        return 0;
+    }
+#endif
     daemon_stop(ZEBRA_PID_FILE, "zebra");
+
 #if defined(_COSA_FOR_BCI_)
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
     bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
@@ -924,6 +969,16 @@ static int radv_start(struct serv_routed *sr)
 
 static int radv_stop(struct serv_routed *sr)
 {
+#ifdef _HUB4_PRODUCT_REQ_
+    /*
+     * SKYH4-1765: we do not want to restart the zebra if it is already running,
+     * since restarting zebra will clear the current zebra counter.
+     */
+    if(is_daemon_running(ZEBRA_PID_FILE, "zebra"))
+    {
+        return 0;
+    }
+#endif
     return daemon_stop(ZEBRA_PID_FILE, "zebra");
 }
 
