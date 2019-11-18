@@ -44,7 +44,15 @@ SERVICE_NAME="mcastproxy"
 SELF_NAME="`basename $0`"
 
 BIN=igmpproxy
-BIN2=smcroute
+
+if [ -f /usr/sbin/smcrouted ]; then
+    NEW_SMCROUTE=1
+    BIN2=smcrouted
+else
+    NEW_SMCROUTE=0
+    BIN2=smcroute
+fi
+
 CONF_FILE=/tmp/igmpproxy.conf
 CONF_FILE_2=/tmp/smcroute.conf
 
@@ -53,6 +61,7 @@ do_start_igmpproxy () {
    INTERFACE_LIST=`ip link show up | cut -d' ' -f2 | sed -e 's/:$//' | sed -e 's/@[_a-zA-Z0-9]*//'`
 
    killall $BIN
+   killall $BIN2
 
    rm -rf $LOCAL_CONF_FILE
 
@@ -61,7 +70,9 @@ do_start_igmpproxy () {
       echo "phyint $WAN_IFNAME upstream" >> $LOCAL_CONF_FILE
       #echo "altnet 0.0.0.0/0" >> $LOCAL_CONF_FILE
    else
-      echo "phyint $WAN_IFNAME disabled" >> $LOCAL_CONF_FILE
+      if [ "$NEW_SMCROUTE" != "1" ]; then
+         echo "phyint $WAN_IFNAME disabled" >> $LOCAL_CONF_FILE
+      fi
    fi
    echo "phyint $SYSCFG_lan_ifname downstream" >> $LOCAL_CONF_FILE
 
@@ -73,7 +84,9 @@ do_start_igmpproxy () {
           echo "phyint $interface downstream" >> $LOCAL_CONF_FILE
           MOCA_LAN_UP=1
          else 
-          echo "phyint $interface disabled" >> $LOCAL_CONF_FILE
+          if [ "$NEW_SMCROUTE" != "1" ]; then
+            echo "phyint $interface disabled" >> $LOCAL_CONF_FILE
+          fi
          fi
        fi
    done
@@ -82,14 +95,20 @@ if [ "$HOME_LAN_ISOLATION" == "1" ]; then
 if [ "$MOCA_LAN_UP" == "1" ]; then
    echo "phyint $SYSCFG_lan_ifname enable ttl-threshold 11" >> $LOCAL_CONF_FILE
    echo "phyint $MOCA_INTERFACE enable ttl-threshold 3" >> $LOCAL_CONF_FILE
-   echo "mgroup from $SYSCFG_lan_ifname group 239.255.255.250" >> $LOCAL_CONF_FILE
-   echo "mgroup from $MOCA_INTERFACE group 239.255.255.250" >> $LOCAL_CONF_FILE
+   if [ "$NEW_SMCROUTE" != "1" ]; then
+       echo "mgroup from $SYSCFG_lan_ifname group 239.255.255.250" >> $LOCAL_CONF_FILE
+       echo "mgroup from $MOCA_INTERFACE group 239.255.255.250" >> $LOCAL_CONF_FILE
+   fi
    echo "mroute from $SYSCFG_lan_ifname group 239.255.255.250 to brlan10" >> $LOCAL_CONF_FILE
    echo "mroute from $MOCA_INTERFACE group 239.255.255.250 to brlan0" >> $LOCAL_CONF_FILE
 fi
    cat $LOCAL_CONF_FILE > $CONF_FILE_2
    rm -f $LOCAL_CONF_FILE
-   $BIN2 -f $CONF_FILE_2 -d &
+   if [ "$NEW_SMCROUTE" == "1" ]; then
+       $BIN2 -d 5 -f $CONF_FILE_2 -n -N -s &
+   else
+       $BIN2 -f $CONF_FILE_2 -d &
+   fi
 
 else
    cat $LOCAL_CONF_FILE > $CONF_FILE
