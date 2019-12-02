@@ -247,7 +247,19 @@ apply_config () {
     sysevent set ${SERVICE_NAME}_${1}-ipv4addr $CUR_IPV4_ADDR
     sysevent set ${SERVICE_NAME}_${1}-ipv4subnet $CUR_IPV4_SUBNET
    
-   
+    if [ xbrlan0 == x${IFNAME} ]; then
+        if [ "true" == `syscfg get start_upnp_service` ] ;
+        then
+            if [ -f /lib/rdk/start-upnp-service ] ;
+            then
+                /lib/rdk/start-upnp-service start
+            else
+                systemctl restart xcal-device
+                systemctl restart xupnp
+            fi
+        fi
+    fi
+
     return 0
 }
 
@@ -288,6 +300,20 @@ remove_config () {
         if [ "$BOX_TYPE" = "XB6" ]; then
 		ip route delete 239.255.255.250/32 dev brlan0
 	fi
+
+        if [ "true" == `syscfg get start_upnp_service` ] ;
+        then
+            if [ -f /lib/rdk/start-upnp-service ] ;
+            then
+                /lib/rdk/start-upnp-service stop
+                killall xcal-device
+                killall xdiscovery
+            else
+                systemctl stop xcal-device
+                systemctl stop xupnp
+            fi
+            ifconfig brlan0:0 down
+        fi
     fi
 
     # END ROUTING TODO
