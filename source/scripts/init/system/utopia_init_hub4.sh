@@ -172,8 +172,16 @@ else
     if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
     	      echo -n > $SYSCFG_NEW_FILE
     fi
-    echo -n > $SYSCFG_FILE
-    echo -n > $SYSCFG_BKUP_FILE
+
+    SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
+    if [ "$SECURE_SYSCFG" = "false"  ] && [ ! -f $FR_FILE ]; then
+          cp $SYSCFG_NEW_FILE $SYSCFG_FILE
+    else
+         echo -n > $SYSCFG_FILE
+         echo -n > $SYSCFG_BKUP_FILE
+         echo -n > $SYSCFG_NEW_FILE
+    fi
+
     syscfg_create -f $SYSCFG_FILE
     if [ $? != 0 ]; then
 	 CheckAndReCreateDB
@@ -365,6 +373,12 @@ echo "[utopia][init] SEC: syscfg.db moved to /opt/secure/data"
 changeFilePermissions $SYSCFG_BKUP_FILE 400
 changeFilePermissions $SYSCFG_NEW_FILE 400
 
+SYSCFG_DB_FILE="/nvram/syscfg.db"
+SECURE_SYSCFG=`syscfg get UpdateNvram`
+if [ "$SECURE_SYSCFG" = "false" ]; then
+      SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
+fi
+echo "[utopia][init] SEC: Syscfg stored in $SYSCFG_DB_FILE"
 
 # Get the syscfg value which indicates whether unit is activated or not.
 # This value is set from network_response.sh based on the return code received.
