@@ -41,8 +41,15 @@ const char* SERVICE_NAME            = "ntpd";
 
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ntpd.sh";
 
+#ifdef _HUB4_PRODUCT_REQ_
+/* SKYH4-2006 */
+const char* SERVICE_CUSTOM_EVENTS[] = { "wan-status|/etc/utopia/service.d/service_ntpd.sh",
+                                        "ipv6_prefix|/etc/utopia/service.d/service_ntpd.sh",
+                                        NULL };
+#else
 const char* SERVICE_CUSTOM_EVENTS[] = { "wan-status|/etc/utopia/service.d/service_ntpd.sh", NULL };
 
+#endif
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
 }
