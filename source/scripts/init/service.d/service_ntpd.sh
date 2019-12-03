@@ -208,6 +208,14 @@ service_start ()
 		echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
         fi   
 
+        if [ "x$BOX_TYPE" = "xHUB4" ]; then
+        # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
+            CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
+            if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
+                echo "interface listen  $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
+            fi
+        fi
+
     if [ "x$MULTI_CORE" = "xyes" ]
     then
 	   echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
@@ -292,6 +300,14 @@ case "$1" in
   wan-status)
       if [ "started" = "$CURRENT_WAN_STATUS" ] ; then
          service_start
+      fi
+      ;;
+  ipv6_prefix)
+      if [ "x$BOX_TYPE" = "xHUB4" ]; then
+         CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
+         if [ "$CURRENT_WAN_V6_PREFIX" != "x" ] ; then
+            service_start
+         fi
       fi
       ;;
   *)
