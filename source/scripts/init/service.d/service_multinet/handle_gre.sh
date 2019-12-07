@@ -971,7 +971,7 @@ case "$1" in
             if [ xstarted = x$hotspot_started ]; then
                 if [ x != x$curr_tunnel ]; then
                     create_tunnel $curr_tunnel $name
-                    if [ "$BOX_TYPE" = "XB6" ] ; then                                    
+                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "TCCBR" ] ; then                                    
                         read_greInst                                                                    
                         check_ssids 1                                                     
                     fi   
