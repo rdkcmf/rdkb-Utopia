@@ -633,6 +633,10 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
    fi
    syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+   if [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ]; then
+   # Enable AUTOWAN by default for XB7, change is made here so that it will take effect only after FR
+      syscfg set selected_wan_mode "0"
+   fi
 elif [ "$PUNIT_RESET_DURATION" -gt "0" ]; then
    echo "[utopia][init] Detected last reboot reason as pin-reset"
    if [ -e "/usr/bin/onboarding_log" ]; then
