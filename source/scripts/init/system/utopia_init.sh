@@ -312,6 +312,7 @@ else
    #>>zqiu
    echo_t "[utopia][init] need to reset wifi when ($SYSCFG_BKUP_FILE ) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
+   syscfg commit
    #<<zqiu
    touch /nvram/.apply_partner_defaults
    # Put value 204 into networkresponse.txt file so that
@@ -340,6 +341,7 @@ fi
 
 if [ -f $FR_FILE ]; then
         syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI
+	syscfg commit
         rm -rf $FR_FILE
 fi
 
@@ -360,6 +362,7 @@ fi
 # Set the factory reset key if it was pressed for longer than our threshold
 if test "$BUTTON_THRESHOLD" -le "$PUNIT_RESET_DURATION"; then
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI && BUTTON_FR="1"
+   syscfg commit
 fi
 
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
