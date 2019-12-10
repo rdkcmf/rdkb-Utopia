@@ -329,6 +329,7 @@ else
    #>>zqiu
    echo "[utopia][init] need to reset wifi when ($SYSCFG_BKUP_FILE) is not avaliable (for 1st time boot up)"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
+   syscfg commit
    #<<zqiu
    touch /nvram/.apply_partner_defaults
    # Put value 204 into networkresponse.txt file so that
@@ -380,6 +381,7 @@ fi
 # Set the factory reset key if it was pressed for longer than our threshold
 if test "$BUTTON_THRESHOLD" -le "$PUNIT_RESET_DURATION"; then
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI && BUTTON_FR="1"
+   syscfg commit
 fi
 
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
@@ -643,7 +645,6 @@ elif [ -f /nvram/restore_reboot ]; then
      fi
      syscfg set X_RDKCENTRAL-COM_LastRebootReason "restore-reboot"
      syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-     syscfg commit
      
      if [ "$BOX_TYPE" == "TCCBR" ];then
          if [ -f /nvram/bbhm_cur_cfg.xml-temp ]; then
@@ -675,6 +676,7 @@ else
       fi
    fi
 fi
+syscfg commit
 
 #RDKB-24155 - TLVData.bin should not be used in EWAN mode
 eth_wan_enable=`syscfg get eth_wan_enabled`
