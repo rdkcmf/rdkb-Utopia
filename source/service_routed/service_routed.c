@@ -406,11 +406,13 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
     char buf[6];
+    char rfCpEnable[6] = {0};
+    char rfCpMode[6] = {0};
     FILE *responsefd = NULL;
     char *networkResponse = "/var/tmp/networkresponse.txt";
     int iresCode = 0;
     char responseCode[10];
-    int inCaptivePortal = 0;
+    int inCaptivePortal = 0,inRfCaptivePortal=0,inWifiCp=0;
     int nopt, i = 0, j = 0; /*RDKB-12965 & CID:-34147*/
     char lan_if[IFNAMSIZ];
     char *start, *tok, *sp;
@@ -521,6 +523,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
         sysevent_get(sefd, setok, evt_name, lan_if, sizeof(lan_if));
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", lan_if);
         sysevent_get(sefd, setok, evt_name, prefix, sizeof(prefix));
+#if defined (_COSA_BCM_MIPS_)
+       if (strlen(prefix) == 0)
+         {
+           sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
+         }
+#endif
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", lan_if);
         sysevent_get(sefd, setok, evt_name, lan_addr, sizeof(lan_addr));
 #endif
@@ -671,9 +679,42 @@ static int gen_zebra_conf(int sefd, token_t setok)
     	{
 		if ((strncmp(buf,"true",4) == 0) && iresCode == 204)
 		{
-			inCaptivePortal = 1;        		
+#if defined (_COSA_BCM_MIPS_)
+#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+                 // For CBR platform, the captive portal redirection feature was removed
+                 // inWifiCp = 1;
+#else
+			inWifiCp = 1;
+#endif
+#else
+            inWifiCp = 1;
+#endif
 		}
 	}
+#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PROD_REQ_)
+        syscfg_get(NULL, "enableRFCaptivePortal", rfCpEnable, sizeof(rfCpEnable));
+        if(rfCpEnable != NULL)
+        {
+          if (strncmp(rfCpEnable,"true",4) == 0)
+          {
+              syscfg_get(NULL, "rf_captive_portal", rfCpMode,sizeof(rfCpMode));
+              if(rfCpMode != NULL)
+              {
+                 if (strncmp(rfCpMode,"true",4) == 0)
+                 {
+                    inRfCaptivePortal = 1;
+                 }
+              }
+          } 
+        }
+        if((inWifiCp == 1) || (inRfCaptivePortal == 1))
+        {
+            inCaptivePortal = 1;
+        }
+#else
+        if(inWifiCp == 1)
+           inCaptivePortal = 1;
+#endif
 		/* Static DNS for DHCPv6 
 		  *   dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers 
 		  *   dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled
