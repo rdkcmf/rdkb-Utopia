@@ -748,6 +748,8 @@ static int wan_stop(struct serv_wan *sw)
     }
 #endif  /*_PLATFORM_IPQ_ && _WAN_MANAGER_ENABLED_*/
 
+    system("rm -rf /tmp/ipv4_renew_dnsserver_restart");
+    system("rm -rf /tmp/ipv6_renew_dnsserver_restart");
     printf("%s wan_service-status is stopped, take log back up\n",__FUNCTION__);
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopped", 0);
 	char  str[100] = {0};
