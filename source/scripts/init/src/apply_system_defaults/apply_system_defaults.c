@@ -726,6 +726,8 @@ static int get_PartnerID( char *PartnerID)
 				
 #if defined (_XB6_PRODUCT_REQ_)
 				sprintf( PartnerID, "%s", "unknown" );
+#elif defined (_RDK_REF_PLATFORM_)
+                                sprintf( PartnerID, "%s", "RDKM");
 #else
 				sprintf( PartnerID, "%s", "comcast" );
 #endif
@@ -1968,7 +1970,11 @@ int main( int argc, char **argv )
 #if !defined (_XB6_PRODUCT_REQ_)
 		//Partner ID is null so need to set default partner ID as "comcast"
 		memset( PartnerID, 0, sizeof( PartnerID ) );
+#if defined (_RDK_REF_PLATFORM_)
+                sprintf( PartnerID, "%s", "RDKM");
+#else
 		sprintf( PartnerID, "%s", "comcast" );
+#endif
 		set_syscfg_partner_values( PartnerID, "PartnerID" );
 		APPLY_PRINT("%s - PartnerID is NULL so set default partner :%s\n", __FUNCTION__, PartnerID );		
 #else
