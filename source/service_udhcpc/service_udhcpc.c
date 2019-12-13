@@ -88,6 +88,7 @@ static char          *sysevent_name = "udhcpc";
 static token_t        sysevent_token;
 static unsigned short sysevent_port;
 static char           sysevent_ip[19];
+bool dns_changed = false;
 
 typedef struct udhcpc_script_t
 {
@@ -101,7 +102,7 @@ typedef struct udhcpc_script_t
     bool broot_is_nfs;
 }udhcpc_script_t;
 
-void delete_old_dns();
+void compare_and_delete_old_dns(udhcpc_script_t *pinfo);
 
 struct dns_server{
  char data[BUFSIZE];
@@ -232,7 +233,7 @@ int save_dhcp_offer(udhcpc_script_t *pinfo)
 #if 0
     dump_dhcp_offer();
 #endif
-    delete_old_dns(); //remove old dns configuration from resolv.conf
+    compare_and_delete_old_dns(pinfo); //compare and remove old dns configuration from resolv.conf
     snprintf(eventname,sizeof(eventname),"ipv4_%s_ipaddr",getenv("interface"));
     sysevent_set(sysevent_fd, sysevent_token, eventname, getenv("ip"), 0);
 
@@ -550,11 +551,13 @@ int set_router_sysevents(udhcpc_script_t *pinfo)
     return 0;
 }
 
-void delete_old_dns()
+void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
 {
   FILE* fptr = NULL;
   FILE* ftmp = NULL;
   char*  buffer = NULL;
+  char *tok = NULL;
+  char dns[256]={0};
   size_t read = 0;
   size_t size = BUFSIZE;
   char INTERFACE[BUFSIZE]={0};
@@ -568,6 +571,11 @@ void delete_old_dns()
   sysevent_get(sysevent_fd, sysevent_token, dns_server_no_query , dns_servers_number, sizeof(dns_servers_number));
   dns_server_no=atoi(dns_servers_number);
 
+  if(!dns_server_no)
+  {
+        dns_changed=true;
+  }
+
   struct dns_server* dns_server_list = malloc(sizeof(struct dns_server) * dns_server_no);
   for(i=0;i<dns_server_no;i++)
   {
@@ -577,6 +585,28 @@ void delete_old_dns()
      sysevent_get(sysevent_fd, sysevent_token, nameserver_ip_query , nameserver_ip, sizeof(nameserver_ip));
      snprintf(dns_server_list[i].data ,BUFSIZE,"nameserver %s",nameserver_ip);
   }
+
+  snprintf(dns,sizeof(dns),"%s",pinfo->dns);
+  printf("\n %s Comparing old and new ipv4 dns config dns=%s\n",__FUNCTION__,dns);
+  tok = strtok(dns, " ");
+  while (NULL != tok && dns_server_no != 0)
+  {
+        char new_nameserver[BUFSIZE]={0};
+        snprintf(new_nameserver,sizeof(new_nameserver),"nameserver %s",tok);
+        for(i=0;i<dns_server_no;i++)
+        {
+                if(strncmp(dns_server_list[i].data,new_nameserver,sizeof(new_nameserver)) !=0)
+                {
+                        dns_changed=true;
+                        printf("\n %s %s is not present in old dns config so resolv_conf file overide form service_udhcp\n",__FUNCTION__,new_nameserver);
+                        break;
+                }
+        }
+        tok = strtok(NULL, " ");
+  }
+
+  if(dns_changed)
+  {
 
   fptr  =  fopen(RESOLV_CONF,"r");
   if (fptr  ==  NULL)
@@ -602,11 +632,16 @@ void delete_old_dns()
       for(i=0;i<dns_server_no;i++)
       {
               char* ipv4_dns_match = NULL;
-              ipv4_dns_match = strstr(buffer,dns_server_list[i].data);
+              ipv4_dns_match = strstr(buffer,dns_server_list[i].data) || strstr(buffer,"nameserver 127.0.0.1");
               if(ipv4_dns_match !=NULL)
               {
                       search_ipv4_dns=1;
               }
+
+      }
+      if(!dns_server_no && strstr(buffer,"nameserver 127.0.0.1") != NULL)
+      {
+                search_ipv4_dns=1;
       }
 
 
@@ -618,9 +653,9 @@ void delete_old_dns()
           fprintf(ftmp, "%s",buffer);
       }
    }
-   
+
    if(dns_server_list != NULL)
-   { 
+   {
       free(dns_server_list);
    }
       fclose(fptr);
@@ -653,8 +688,9 @@ void delete_old_dns()
       fclose(fout);
       fclose(fIN);
       remove(RESOLV_CONF_TMP);
-
+   }
 }
+
 
 int update_resolveconf(udhcpc_script_t *pinfo)
 {
@@ -785,8 +821,30 @@ int handle_wan(udhcpc_script_t *pinfo)
     }
     else   
     {
-        //update resolve.conf 
-        update_resolveconf(pinfo);
+        //update resolve.conf
+        if(dns_changed)
+        {
+                update_resolveconf(pinfo);
+
+                FILE *fIn=NULL;
+                if(fIn = fopen("/tmp/ipv4_renew_dnsserver_restart","r"))
+                {
+                        fclose(fIn);
+                        /*As there is a change in resolv.conf restarting dhcp-server (dnsmasq)*/
+                        printf("\nAs there is a change in resolv.conf restarting dhcp-server (dnsmasq)\n",__FUNCTION__);
+                        sysevent_set(sysevent_fd, sysevent_token, "dhcp_server-stop","", 0);
+                        sysevent_set(sysevent_fd, sysevent_token, "dhcp_server-start","", 0);
+                }
+
+
+
+                system("touch /tmp/ipv4_renew_dnsserver_restart");
+        }
+        else
+        {
+                printf("\nNot Adding new IPV4 DNS Config to resolv.conf\n",__FUNCTION__);
+        }
+        dns_changed=false; 
         sysevent_set(sysevent_fd, sysevent_token, "dhcp_domain",getenv("domain"), 0);
     }
     return 0;
