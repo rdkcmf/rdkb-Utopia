@@ -672,6 +672,7 @@ prepare_static_dns_urls()
 #-----------------------------------------------------------------
 prepare_dhcp_conf () {
    echo "DHCP SERVER : Prepare DHCP configuration"
+   RF_CAPTIVE_PORTAL="false"
    LAN_IFNAME=`syscfg get lan_ifname`
    NAMESERVERENABLED=`syscfg get dhcp_nameserver_enabled`
    WAN_DHCP_NS=`sysevent get wan_dhcp_dns`
@@ -731,6 +732,8 @@ prepare_dhcp_conf () {
    # If redirection flag is "true" that means we are in factory default condition
    CAPTIVEPORTAL_ENABLED=`syscfg get CaptivePortal_Enable`
    REDIRECTION_ON=`syscfg get redirection_flag`
+   RF_CP_FEATURE_EN=`syscfg get enableRFCaptivePortal`
+   RF_CP_MODE=`syscfg get rf_captive_portal`
    WIFI_NOT_CONFIGURED=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
 
 echo "DHCP SERVER : redirection_flag val is $REDIRECTION_ON"
@@ -745,52 +748,66 @@ done
 
 echo "DHCP SERVER : NotifyWiFiChanges is $WIFI_NOT_CONFIGURED"
 echo "DHCP SERVER : CaptivePortal_Enabled is $CAPTIVEPORTAL_ENABLED"
+echo "DHCP SERVER : RF CP is $RF_CP_MODE, RF CP feature state is $RF_CP_FEATURE_EN"
 
 if [ "$CAPTIVEPORTAL_ENABLED" == "true" ]
 then
-	   if [ "$NETWORKRESPONSESTATUS" = "204" ] && [ "$REDIRECTION_ON" = "true" ] && [ "$WIFI_NOT_CONFIGURED" = "true" ]
-	   then
-	      	CAPTIVE_PORTAL_MODE="true"
-			echo "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE"
-			if [ -e "/nvram/reverted" ]
-			then
-				echo "DHCP SERVER : Removing reverted flag"
-				rm -f /nvram/reverted
-			fi
-	   else
-		CAPTIVE_PORTAL_MODE="false"
-			echo "DHCP SERVER : WiFi SSID and Passphrase are already modified or no network response ,set CAPTIVE_PORTAL_MODE to false"
-	   fi
-fi
-  
-   echo "domain-needed" >> $LOCAL_DHCP_CONF
-   echo "bogus-priv" >> $LOCAL_DHCP_CONF
-
-   if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
-   then
-	# Create a temporary resolv configuration file
-	# Pass that as an option in DNSMASQ
-	if [ ! -d $DEFAULT_CONF_DIR ]
-	then
-		mkdir $DEFAULT_CONF_DIR
-	fi
-	touch $DEFAULT_RESOLV_CONF
-	echo "nameserver 127.0.0.1" > $DEFAULT_RESOLV_CONF
-	echo "resolv-file=$DEFAULT_RESOLV_CONF" >> $LOCAL_DHCP_CONF
-	#echo "address=/#/$addr" >> $DHCP_CONF
-   else
-	if [ -e $DEFAULT_RESOLV_CONF ]
-	then
-		rm -f $DEFAULT_RESOLV_CONF
-	fi
-
-    if [ "0" = "$NAMESERVERENABLED" ] ; then
-		echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
+    noRf=0
+    if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "XB6" ]
+    then
+        if [ "$RF_CP_FEATURE_EN" = "true" ] && [ "$RF_CP_MODE" = "true" ]
+        then 
+            noRf=1
+            RF_CAPTIVE_PORTAL="true"
+            CAPTIVE_PORTAL_MODE="true"
+        fi
     fi
-   fi
 
-   #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
-   echo "expand-hosts" >> $LOCAL_DHCP_CONF
+    if [ "$noRf" = "0" ]
+    then
+        if [ "$NETWORKRESPONSESTATUS" = "204" ] && [ "$REDIRECTION_ON" = "true" ] && [ "$WIFI_NOT_CONFIGURED" = "true" ]
+        then
+            CAPTIVE_PORTAL_MODE="true"
+            echo "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE"
+            if [ -e "/nvram/reverted" ]
+            then
+                echo "DHCP SERVER : Removing reverted flag"
+                rm -f /nvram/reverted
+            fi
+        else
+            CAPTIVE_PORTAL_MODE="false"
+            echo "DHCP SERVER : WiFi SSID and Passphrase are already modified or no network response ,set CAPTIVE_PORTAL_MODE to false"
+        fi
+    fi
+fi
+
+   if [ "$RF_CAPTIVE_PORTAL" != "true" ]
+   then
+       echo "domain-needed" >> $LOCAL_DHCP_CONF
+       echo "bogus-priv" >> $LOCAL_DHCP_CONF
+
+       if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
+       then
+        # Create a temporary resolv configuration file
+        # Pass that as an option in DNSMASQ
+        if [ ! -d $DEFAULT_CONF_DIR ]
+        then
+            mkdir $DEFAULT_CONF_DIR
+        fi
+        touch $DEFAULT_RESOLV_CONF
+        echo "nameserver 127.0.0.1" > $DEFAULT_RESOLV_CONF
+        echo "resolv-file=$DEFAULT_RESOLV_CONF" >> $LOCAL_DHCP_CONF
+        #echo "address=/#/$addr" >> $DHCP_CONF
+       else
+        if [ -e $DEFAULT_RESOLV_CONF ]
+        then
+            rm -f $DEFAULT_RESOLV_CONF
+        fi
+
+        if [ "0" = "$NAMESERVERENABLED" ] ; then
+            echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
+        fi
+       fi
 
    if [ "$BOX_TYPE" = "HUB4" ]; then
       # dnsmasq is not taking the data from resolv-file hence populating the data on to LOCAL_DHCP_CONF
@@ -828,8 +845,14 @@ fi
          echo "domain=$LAN_DOMAIN" >> $LOCAL_DHCP_CONF
       fi
    fi
+   else
+       echo "no-resolv" >> $LOCAL_DHCP_CONF
+   fi
 
-   LOG_LEVEL=`syscfg get log_level`
+   #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
+   echo "expand-hosts" >> $LOCAL_DHCP_CONF
+
+      LOG_LEVEL=`syscfg get log_level`
    if [ "" = "$LOG_LEVEL" ] ; then
        LOG_LEVEL=1
    fi
@@ -843,11 +866,13 @@ fi
    echo "$PREFIX""dhcp-lease-max=$DHCP_NUM" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-hostsfile=$DHCP_STATIC_HOSTS_FILE" >> $LOCAL_DHCP_CONF
 
-   if [ "$CAPTIVE_PORTAL_MODE" = "false" ] && [ "0" = "$NAMESERVERENABLED" ]
+   if [ "$RF_CAPTIVE_PORTAL" != "true" ]
    then
-		echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
+       if [ "$CAPTIVE_PORTAL_MODE" = "false" ] && [ "0" = "$NAMESERVERENABLED" ]
+       then
+            echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
+       fi
    fi
-
 
    #if [ "$LOG_LEVEL" -gt 1 ] ; then
     #  echo "$PREFIX""log-dhcp" >> $LOCAL_DHCP_CONF
@@ -1042,15 +1067,18 @@ fi
    fi
    #fi
    #<<
-
+   addr=`syscfg get lan_ipaddr`
    if [ "$CAPTIVE_PORTAL_MODE" = "true" ]
    then
         # In factory default condition, prepare whitelisting and redirection IP
-	addr=`syscfg get lan_ipaddr`
-	echo "address=/#/$addr" >> $LOCAL_DHCP_CONF
-	echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
-        prepare_whitelist_urls $LOCAL_DHCP_CONF
-	sysevent set captiveportaldhcp completed
+        echo "address=/#/$addr" >> $LOCAL_DHCP_CONF
+
+        if [ "$RF_CAPTIVE_PORTAL" != "true" ]
+        then
+            echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
+            prepare_whitelist_urls $LOCAL_DHCP_CONF
+        fi
+        sysevent set captiveportaldhcp completed
    fi
 
 	if [ "1" == "$NAMESERVERENABLED" ]; then

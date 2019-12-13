@@ -693,6 +693,7 @@ int prepare_dhcp_conf (char *input)
     char l_cNetwork_Res[8] = {0}, l_cLocalDhcpConf[32] = {0};
     char l_cLanIPAddress[16] = {0}, l_cLanNetMask[16] = {0}, l_cLan_if_name[16] = {0};
     char l_cCaptivePortalEn[8] = {0}, l_cRedirect_Flag[8] = {0}, l_cMigCase[8] = {0};
+    char l_cRfCPFeatureEnabled[8] = {0}, l_cRfCPEnabled[8] = {0};
     char l_cWifi_Not_Configured[8] = {0}, l_cWifi_Res_Mig[8] = {0};
     char l_cIotEnabled[16] = {0}, l_cIotIfName[16] = {0}, l_cIotStartAddr[16] = {0};
    	char l_cIotEndAddr[16] = {0}, l_cIotNetMask[16] = {0};
@@ -703,12 +704,14 @@ int prepare_dhcp_conf (char *input)
 	char l_cDhcpNs_Enabled[ 32 ] 			 = { 0 },
 		 l_cWan_Dhcp_Dns [ 256 ]             = { 0 };
 
+
 	int l_iMkdir_Res, l_idhcp_num, l_iRet_Val;
 	int l_iRetry_Count = 0;
 
 	FILE *l_fLocal_Dhcp_ConfFile = NULL;
     FILE *l_fNetRes = NULL, *l_fDef_Resolv = NULL;
 
+    BOOL l_bRfCp = FALSE;
     BOOL l_bCaptivePortal_Mode = FALSE;
 	BOOL l_bCaptive_Check = FALSE;
 	BOOL l_bMig_Case = TRUE,
@@ -734,6 +737,10 @@ int prepare_dhcp_conf (char *input)
     syscfg_get(NULL, "lan_ifname", l_cLan_if_name, sizeof(l_cLan_if_name));
     syscfg_get(NULL, "CaptivePortal_Enable", l_cCaptivePortalEn, sizeof(l_cCaptivePortalEn));
     syscfg_get(NULL, "redirection_flag", l_cRedirect_Flag, sizeof(l_cRedirect_Flag));
+#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+    syscfg_get(NULL, "enableRFCaptivePortal", l_cRfCPFeatureEnabled, sizeof(l_cRfCPFeatureEnabled));
+    syscfg_get(NULL, "rf_captive_portal", l_cRfCPEnabled, sizeof(l_cRfCPEnabled));
+#endif
 
     if((0 == isValidLANIP(l_cLanIPAddress)) || (0 == isValidSubnetMask(l_cLanNetMask)))
     {
@@ -888,7 +895,38 @@ int prepare_dhcp_conf (char *input)
 
 	if (l_bCaptive_Check)
 	{
-           if  ((!strncmp(l_cNetwork_Res, "204", 3)) && (!strncmp(l_cRedirect_Flag, "true", 4)) && 
+#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+           if ((!strncmp(l_cRfCPFeatureEnabled,"true",4)) && (!strncmp(l_cRfCPEnabled,"true",4)))
+           {
+                l_bRfCp = TRUE;
+ 
+           }
+           if  ( (TRUE== l_bRfCp ) || ((!strncmp(l_cNetwork_Res, "204", 3)) && (!strncmp(l_cRedirect_Flag, "true", 4)) && 
+			 (!strncmp(l_cWifi_Not_Configured, "true", 4))))
+           {
+              l_bCaptivePortal_Mode = TRUE;
+              if (TRUE== l_bRfCp )
+              {
+                 fprintf(stderr, "DHCP SERVER : NO RF CAPTIVE_PORTAL_MODE\n");
+              }
+              else
+              {    
+                     fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
+                     if (access("/nvram/reverted", F_OK) == 0) //If file is present
+                     {
+                       fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");
+                       remove_file("/nvram/reverted");
+                     }
+              }
+           }
+           else
+           {
+              l_bCaptivePortal_Mode = FALSE;
+              fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
+              fprintf(stderr, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
+           }
+#else
+       if  ((!strncmp(l_cNetwork_Res, "204", 3)) && (!strncmp(l_cRedirect_Flag, "true", 4)) && 
 			 (!strncmp(l_cWifi_Not_Configured, "true", 4))) 
            {
               l_bCaptivePortal_Mode = TRUE;
@@ -905,64 +943,74 @@ int prepare_dhcp_conf (char *input)
               fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
               fprintf(stderr, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
            }
+#endif
 	}
 
+
+    // Dont add resolv-file if in norf captive portal mode
+    if(FALSE == l_bRfCp)
+    {
         fprintf(l_fLocal_Dhcp_ConfFile, "domain-needed\n");
-	fprintf(l_fLocal_Dhcp_ConfFile, "bogus-priv\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "bogus-priv\n");
 
-	if (TRUE == l_bCaptivePortal_Mode)
-	{
-    	// Create a temporary resolv configuration file
-	    // Pass that as an option in DNSMASQ
-		l_iMkdir_Res = mkdir(DEFAULT_CONF_DIR, S_IRUSR | S_IWUSR);
-		//mkdir successful or already exists
-		if (0 == l_iMkdir_Res || (0 != l_iMkdir_Res && EEXIST == errno)) 
-		{
-			l_fDef_Resolv = fopen(DEFAULT_RESOLV_CONF, "a+");	
-			if (NULL != l_fDef_Resolv)
-			{
-    			fprintf(l_fDef_Resolv, "nameserver 127.0.0.1\n");
-			    fprintf(l_fLocal_Dhcp_ConfFile, "resolv-file=%s\n",DEFAULT_RESOLV_CONF);
-				fclose(l_fDef_Resolv);
-			}
-			else
-			{
-				fprintf(stderr, "%s file creation failed\n", DEFAULT_RESOLV_CONF);
-			}
-		}
-	}
-   	else
-	{
-		if ((access(DEFAULT_RESOLV_CONF, F_OK) == 0)) //DEFAULT_RESOLV_CONF file exists
-		{
-			remove_file(DEFAULT_RESOLV_CONF);
-		}
+        if (TRUE == l_bCaptivePortal_Mode)
+        {
+            // Create a temporary resolv configuration file
+            // Pass that as an option in DNSMASQ
+            l_iMkdir_Res = mkdir(DEFAULT_CONF_DIR, S_IRUSR | S_IWUSR);
+            //mkdir successful or already exists
+            if (0 == l_iMkdir_Res || (0 != l_iMkdir_Res && EEXIST == errno)) 
+            {
+                l_fDef_Resolv = fopen(DEFAULT_RESOLV_CONF, "a+");
+                if (NULL != l_fDef_Resolv)
+                {
+                    fprintf(l_fDef_Resolv, "nameserver 127.0.0.1\n");
+                    fprintf(l_fLocal_Dhcp_ConfFile, "resolv-file=%s\n",DEFAULT_RESOLV_CONF);
+                    fclose(l_fDef_Resolv);
+                }
+                else
+                {
+                    fprintf(stderr, "%s file creation failed\n", DEFAULT_RESOLV_CONF);
+                }
+            }
+        }
+        else
+        {
+            if ((access(DEFAULT_RESOLV_CONF, F_OK) == 0)) //DEFAULT_RESOLV_CONF file exists
+            {
+                remove_file(DEFAULT_RESOLV_CONF);
+            }
 
-		if( FALSE == l_bDhcpNs_Enabled )
-		{
-			fprintf(l_fLocal_Dhcp_ConfFile, "resolv-file=%s\n", RESOLV_CONF); 
-		}
-	}
+            if( FALSE == l_bDhcpNs_Enabled )
+            {
+                fprintf(l_fLocal_Dhcp_ConfFile, "resolv-file=%s\n", RESOLV_CONF);
+            }
+        }
+
+        //Propagate Domain
+        syscfg_get(NULL, "dhcp_server_propagate_wan_domain", l_cPropagate_Dom, sizeof(l_cPropagate_Dom));
+
+        // if we are provisioned to use the wan domain name, the we do so
+        // otherwise we use the lan domain name
+        if (!strncmp(l_cPropagate_Dom, "1", 1))
+        {
+            sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_domain", l_cLan_Domain, sizeof(l_cLan_Domain));
+        }	
+        if (0 == l_cLan_Domain[0])	
+        {
+            syscfg_get(NULL, "lan_domain", l_cLan_Domain, sizeof(l_cLan_Domain));
+        }
+        if (0 != l_cLan_Domain[0])
+        {
+            fprintf(l_fLocal_Dhcp_ConfFile, "domain=%s\n",l_cLan_Domain);
+        }
+    }
+    else
+    {
+	    fprintf(l_fLocal_Dhcp_ConfFile, "no-resolv\n");
+    }
 
 	fprintf(l_fLocal_Dhcp_ConfFile, "expand-hosts\n");
-
-	//Propagate Domain
-	syscfg_get(NULL, "dhcp_server_propagate_wan_domain", l_cPropagate_Dom, sizeof(l_cPropagate_Dom));
-
-	// if we are provisioned to use the wan domain name, the we do so
-   	// otherwise we use the lan domain name
-	if (!strncmp(l_cPropagate_Dom, "1", 1))
-	{
-    	sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_domain", l_cLan_Domain, sizeof(l_cLan_Domain));
-	}	
-	if (0 == l_cLan_Domain[0])	
-	{
-		syscfg_get(NULL, "lan_domain", l_cLan_Domain, sizeof(l_cLan_Domain));
-	}
-	if (0 != l_cLan_Domain[0])
-	{
-		fprintf(l_fLocal_Dhcp_ConfFile, "domain=%s\n",l_cLan_Domain);
-	}
 
 	//Log Level is not used but still retaining the code
 	syscfg_get(NULL, "log_level", l_cLog_Level, sizeof(l_cLog_Level));
@@ -1225,11 +1273,15 @@ int prepare_dhcp_conf (char *input)
 	{
 		//In factory default condition, prepare whitelisting and redirection IP
 		fprintf(l_fLocal_Dhcp_ConfFile, "address=/#/%s\n", l_cLanIPAddress);
-		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=252,\"\\n\"\n");
-        prepare_whitelist_urls(l_fLocal_Dhcp_ConfFile);
-    	sysevent_set(g_iSyseventfd, g_tSysevent_token, "captiveportaldhcp", "completed", 0);
-	}
+        if(FALSE == l_bRfCp)
+        {
+            fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=252,\"\\n\"\n");
+            prepare_whitelist_urls(l_fLocal_Dhcp_ConfFile);
+        }
 
+        sysevent_set(g_iSyseventfd, g_tSysevent_token, "captiveportaldhcp", "completed", 0);
+	}
+ 
 	//Prepare static dns urls
 	if( l_bDhcpNs_Enabled )
 	{
