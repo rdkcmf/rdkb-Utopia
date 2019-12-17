@@ -1118,6 +1118,9 @@ $V3Support=false
 #ForwardSSH is enabled by default
 $ForwardSSH=true
 
+#mTlsDCMUpload is disabled by default.
+$mTlsDCMUpload_Enable=false
+
 #SyndicationFlowControl Defaults
 $SyndicationFlowControlEnable=false
 $DSCP_InitialForwardedMark=
