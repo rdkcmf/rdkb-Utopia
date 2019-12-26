@@ -469,8 +469,8 @@ LOCAL INT32 upnp_event_handler(Upnp_EventType EventType, VOID *event, VOID *Cook
  *
  *  Parameters:	
  *      device: 		Input. upnp device pointer. 
- *      ip_address: 	Input. Local IP Address. 
- *           				If input is NULL, an appropriate IP address will be automatically selected.
+ *      if_name:     	Input. Interface name. 
+ *           				If input is NULL, an appropriate interface will be automatically selected.
  *      port: 			Input . Local Port to listen for incoming connections.
  *           				If input is NULL, a appropriate port will be automatically selected.     
  *      timeout: 		Input. upnp device alive timeout value.
@@ -484,7 +484,7 @@ LOCAL INT32 upnp_event_handler(Upnp_EventType EventType, VOID *event, VOID *Cook
  *      0 if successful else error code. More error code is TBD
  ************************************************************/  
 INT32 PAL_upnp_device_init(struct upnp_device *device, 
-						CHAR *ip_address, 
+						CHAR *if_name, 
 						UINT32 port, 
 						UINT32 timeout,
 						const CHAR *desc_doc_name,
@@ -492,6 +492,8 @@ INT32 PAL_upnp_device_init(struct upnp_device *device,
 {
 	INT32 ret;
 	INT32 result = -1;
+    CHAR *ip_address;
+    CHAR *ip6_address;
 
 	if(upnp_initStatus != UPNP_DEVICE_NOT_INIT)
 	{
@@ -519,7 +521,7 @@ INT32 PAL_upnp_device_init(struct upnp_device *device,
 	upnp_device = device;
 
 	/* init upnp device*/
-	ret = PAL_upnp_init(ip_address, port);
+	ret = PAL_upnp_init(if_name, port);
 	if (PAL_UPNP_E_SUCCESS != ret) 
 	{
 		PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_WARNING, "UpnpInit() Error: %d\n", ret);
@@ -535,16 +537,15 @@ INT32 PAL_upnp_device_init(struct upnp_device *device,
 		return result;
     }*/
 
-    if(NULL == ip_address) 
-	{
-        ip_address = PAL_upnp_get_ipaddress();
-    }
+
+    ip_address = PAL_upnp_get_ipaddress();
+    ip6_address = PAL_upnp_get_ip6address();
+
 
     port = PAL_upnp_get_port();
-    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "UPnP Initialized\n ipaddress= %s\tport = %d\n", ip_address, port);
-
+    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "UPnP Initialized\n ip_address= %s\tip6_address = %s\tport = %d\n", ip_address, ip6_address, port);
+    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "description file: http://%s:%d/%s\n", ip_address, port, desc_doc_name);
     PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "Specifying the webserver root directory: %s\n", web_dir_path);  
-    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "description file: http://%s:%d/%s\n", ip_address, port, desc_doc_name);	
 
 	/* register root device*/		
 	ret = PAL_upnp_register_root_device(web_dir_path,
