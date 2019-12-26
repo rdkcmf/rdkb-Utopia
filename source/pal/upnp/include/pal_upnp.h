@@ -274,6 +274,19 @@ INT32 PAL_upnp_init(IN const CHAR *lo_ip, IN UINT16 lo_port);
 CHAR *PAL_upnp_get_ipaddress();
 
 /************************************************************
+ * Function: PAL_upnp_get_ip6address 
+ *
+ *  Parameters:	
+ *      
+ *  Description:
+ *      Gives back the local ipv6 address.
+ *
+ *  Return Values: INT32
+ *      return the IPv6 address string on success else NULL of failure
+ ************************************************************/ 
+CHAR *PAL_upnp_get_ip6address();
+
+/************************************************************
  * Function: PAL_upnp_get_port 
  *
  *  Parameters:	
