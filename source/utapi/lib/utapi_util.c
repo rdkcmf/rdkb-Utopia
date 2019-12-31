@@ -52,6 +52,7 @@ int  err_rc;
 char s_intbuf[16];
 char s_tokenbuf[256];
 
+static int parsePrefixAddress(const char *prefixAddr, char *address, int *plen);
 
 
 /* Helper function to map from HDK_Enum to string */
@@ -443,4 +444,91 @@ int Utopia_GetNamedLong (UtopiaContext *ctx, UtopiaValue ixUtopia,
     *out_long = atol(longbuf);
     return SUCCESS;
 }
+
+static int parsePrefixAddress(const char *prefixAddr, char *address, int *plen)
+{
+    int status = FALSE;
+    char tmpBuf[64] = {0};
+    char *separator;
+    int len;
+
+    if (prefixAddr == NULL || address == NULL || plen == NULL)
+    {
+       return status;
+    }
+
+    fprintf(stderr,"%s:%d - prefixAddr:%s \n", __FUNCTION__, __LINE__, prefixAddr);
+
+    *address = '\0';
+    *plen    = 128;
+
+    len = strlen(prefixAddr);
+
+    if (len < sizeof(tmpBuf))
+    {
+       sprintf(tmpBuf, "%s", prefixAddr);
+    }
+    else
+    {
+        fprintf(stderr,"Error invalid prefix length len : %d \n", __FUNCTION__, __LINE__, len);
+        return status;
+    }
+    separator = strchr(tmpBuf, '/');
+    if (separator != NULL)
+    {
+        /* break the string into two strings */
+        *separator = 0;
+        separator++;
+        while ((isspace(*separator)) && (*separator != 0))
+        {
+             /* skip white space after forward slash */
+            separator++;
+        }
+
+        *plen = atoi(separator);
+    }
+    fprintf(stderr,"%s:%d - address :%s plen:%d \n", __FUNCTION__, __LINE__, tmpBuf, *plen);
+    if (strlen(tmpBuf) < 40 && *plen <= 128)
+    {
+        strcpy(address, tmpBuf);
+        status = TRUE;
+    }
+
+    return status;
+}
+
+int IsValid_ULAAddress(const char *address)
+{
+    int status = FALSE;
+    struct in6_addr in6Addr;
+    int plen;
+    char   addr[64];
+
+    if (address == NULL)
+    {
+        fprintf(stderr, "prefix address is null");
+        return status;
+    }
+
+    if (parsePrefixAddress(address, addr, &plen) == 0)
+    {
+        fprintf(stderr,"%s:%d - Invalid Prefix:%s \n", __FUNCTION__, __LINE__, address);
+        return status;
+    }
+
+    if (inet_pton(AF_INET6, addr, &in6Addr) <= 0)
+    {
+        fprintf(stderr,"%s:%d - Invalid address:%s \n", __FUNCTION__, __LINE__, address);
+        return status;
+    }
+
+    if ((in6Addr.s6_addr[0] & 0xfe) == 0xfc)
+    {
+        fprintf(stderr, "Valid ULA ipv6 prefix_str=%s\n", address);
+        status = TRUE;
+    }
+
+    return status;
+}
+
 
