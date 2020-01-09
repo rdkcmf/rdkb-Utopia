@@ -1077,3 +1077,6 @@ $Advsecurity_RabidMemoryLimit=20
 
 #Enable RF Captive Portal
 $enableRFCaptivePortal=true
+
+#LNF network internet enable for lnf clients
+$BlockLostandFoundInternet=false
