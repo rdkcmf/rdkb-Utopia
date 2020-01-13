@@ -415,7 +415,7 @@ update_bridge_config () {
   fi
         
         
-        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MTU_VAL"`
+        br_mss_rule=`sysevent setunique GeneralPurposeMangleRule " -A POSTROUTING -o $br -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss $MSS_VAL"`
         sysevent set gre_${inst}_${br}_mss_rule "$br_mss_rule"
        if [ "$BOX_TYPE" = "XF3" ] ; then
        sleep 5
