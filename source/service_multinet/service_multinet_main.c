@@ -60,7 +60,6 @@
 #define MAX_CMD 255
 #define LNF_IPV4_CIDR "192.168.106.254/24"
 #define MESHBHAUL_IPV4_CIDR "192.168.245.254/24"
-#define MESHBHAUL_MTU 1600
 #endif
 #endif
 
@@ -186,15 +185,6 @@ FILE *mnetfp = NULL;
      multinet_bridgeUpInst(atoi(argv[2]), 0);
      // Assign IP to mesh backhaul bridge
      multinet_assignBridgeCIDR(atoi(argv[2]), MESHBHAUL_IPV4_CIDR, 4);
-     // Update MTU of backhaul bridge ports
-     multinet_setBridgePortsMTU(atoi(argv[2]), MESHBHAUL_MTU);
-
-     // TODO:
-     // 1. br403 (mesh backhaul bridge) needs to added to bbhm for this to work
-     // 2. Fetch platform-specific mesh backhaul wifi interfaces from configuration (or use #ifdef)
-     // 3. Update MTU mesh backhaul WiFi interfaces to MESHBHAUL_MTU
-
-     // Restart firewall
      system("sysevent set firewall-restart");
  }
 #endif

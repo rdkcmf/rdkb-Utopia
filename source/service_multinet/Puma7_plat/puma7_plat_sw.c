@@ -51,6 +51,7 @@
 #include "service_multinet_base.h"
 #include "puma7_plat_sw.h"
 #include "puma7_plat_map.h"
+#include "service_multinet_lib.h"
 #include "service_multinet_ep.h"
 #include "sysevent/sysevent.h"
 #include "syscfg/syscfg.h"
@@ -170,11 +171,16 @@ static int psm_get_record(const char *name, char *val, int size)
 int portHelper(char *bridge, char *port, int tagging, int vid, BOOL up)
 {
     int result = 0;
-    char temp_ifname[MAX_CMD_SIZE];
+    char temp_ifname[MAX_IFNAME_SIZE] = {0};
     char cmdBuff[MAX_CMD_SIZE];
     char suffix[8];
 
-    strncpy(temp_ifname, port, sizeof(temp_ifname));
+    if(!strstr(port, "sw_") ||
+        (STATUS_OK != getIfName(temp_ifname, port)))
+    {
+        /* If port is not sw_x or getIfName() returns failure then use port name as the interface name */
+        strncpy(temp_ifname, port, sizeof(temp_ifname));
+    }
 
     if (up)
     {

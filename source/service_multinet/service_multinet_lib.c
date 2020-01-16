@@ -69,6 +69,13 @@
 #define MAC_ADDRESS_LOCAL_MASK 0x02
 #endif
 
+#if defined (INTEL_PUMA7) || defined(MULTILAN_FEATURE)
+//Intel Proposed RDKB Bug Fix
+#define LAN_PORT_MAP_FILE "/etc/lan.cfg"
+#define BASE_IF_NAME_KEY "BaseInterface"
+#define SW_TYPE_KEY "Type=SW"
+#endif
+
  /* The service_multinet library provides service fuctions for manipulating the lifecycle 
  * and live configuration of system bridges and their device specific interface members. 
  * Authoritative configuration is considered to be held in nonvol storage, so most functions
@@ -86,6 +93,75 @@ static int remove_members(PL2Net network, PMember live_members, int numLiveMembe
 static SERVICE_STATUS check_status(PMember live_members, int numLiveMembers);
 static int resolve_member_diff(PL2Net network, PMember members, int* numMembers, PMember live_members, int* numLiveMembers, PMember keep_members, int* numKeepMembers); 
 static int isMemberEqual(PMember a, PMember b);
+
+#if defined (INTEL_PUMA7) || defined(MULTILAN_FEATURE)
+//Intel Proposed RDKB Bug Fix
+/* Get the interface name from the port name
+ * ifName would be the real interface name if it's not switch port.
+ * Otherwise, ifName would be same as port name */
+int getIfName(char *ifName, char *port)
+{
+    int i = 0;
+    char line[MAX_BUF_SIZE] = {0};
+    char *buff = NULL;
+    char *token = NULL;
+    char *token1 = NULL;
+    char *token2 = NULL;
+    char *c;
+    FILE *file = fopen(LAN_PORT_MAP_FILE, "r");
+    if(!file)
+    {
+        MNET_DEBUG("ERROR: failed to open file %s\n" COMMA LAN_PORT_MAP_FILE);
+        return STATUS_NOK;
+    }
+
+    /* Parsing map file */
+    while(fgets(line, sizeof(line), file) != NULL)
+    {
+        /* Skip the line if it's commented or blank line */
+        if('#' == line[0] || '\n' == line[0])
+        {
+            continue;
+        }
+        /* Skip if it's a switch port */
+        if(!strstr(line, port) || strstr(line, SW_TYPE_KEY))
+        {
+            continue;
+        }
+
+        buff = line;
+        while((token = strtok_r(buff, " ", &buff)))
+        {
+            /* Parse parameters and get values, e.g. token="LogicalPort=1", token1="LogicalPort", token2="1" */
+            token1 = strtok(token, "=");
+            if(!strcmp(token1, BASE_IF_NAME_KEY))
+            {
+                token2 = strtok(NULL, "=");
+                if(token2 == NULL)
+                {
+                        MNET_DEBUG("ERROR: Null pointer\n");
+                        close(file);
+                        return STATUS_NOK;
+                }
+                if((c = strchr(token2, '\n')))
+                {
+                        /* Removing new line character */
+                        *c = '\0';
+                }
+                strncpy(ifName, token2, MAX_IFNAME_SIZE);
+                MNET_DEBUG("%s: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
+                close(file);
+                return STATUS_OK;
+            }
+        }
+    }
+    /* port is switch port */
+    strncpy(ifName, port, sizeof(MAX_IFNAME_SIZE));
+    MNET_DEBUG("%s: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
+    close(file);
+    return STATUS_OK;
+}
+#endif
 
 //TODO Move these to a common lib
 static int nethelper_bridgeCreate(char* brname) {
@@ -630,13 +706,22 @@ static int resolve_member_diff(PL2Net network,
 #if defined(MULTILAN_FEATURE)
     int len = 0;
     char br_if_path[CMD_STRING_LEN] = {0};
+    char temp_ifname[MAX_IFNAME_SIZE] = {0};
 #endif
 
     for (i = 0; i < *numMembers; ++i ) {
         for (j = 0; j < *numLiveMembers; ++j) {
 
 #if defined (MULTILAN_FEATURE)
-            len = snprintf(br_if_path, CMD_STRING_LEN, BRIDGE_IFACE_PATH, network->name, live_members[j].interface->name);
+            memset(temp_ifname, 0, sizeof(temp_ifname));
+            if(!strstr(live_members[j].interface->name, "sw_") ||
+                  (STATUS_OK != getIfName(temp_ifname, live_members[j].interface->name)))
+            {
+                /* if port is not sw_x or getIfName() returns failure then use port name as the interface name */
+                strncpy(temp_ifname, live_members[j].interface->name, sizeof(temp_ifname));
+            }
+                  len = snprintf(br_if_path, CMD_STRING_LEN, BRIDGE_IFACE_PATH, network->name, temp_ifname);
+
             if (live_members[i].bTagging) {
                 snprintf(br_if_path+len, CMD_STRING_LEN-len, ".%d", network->vid);
             }
@@ -687,42 +772,6 @@ int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion) {
         MNET_DEBUG("nv fetch failed for instance %d.\n" COMMA l2netInst);
         return -1;
     }
-    return 0;
-}
-
-// Update the MTU of every port connected to a bridge instance
-int multinet_setBridgePortsMTU(int l2netInst, int MTU) {
-    L2Net l2net;
-    char cmdBuff[CMD_STRING_LEN] = {'\0'};
-    DIR *brif_dir;
-    struct dirent *brif_dir_entry;
-
-    memset(&l2net,0,sizeof(l2net));
-
-    // Get bridge details from nv
-    nv_get_bridge(l2netInst, &l2net);
-
-    if(strnlen(l2net.name, IFNAMSIZ) < 1) {
-        MNET_DEBUG("Failed to get bridge instance %d from nv\n" COMMA l2netInst);
-        return -1;
-    }
-
-    snprintf(cmdBuff, CMD_STRING_LEN, "/sys/class/net/%s/brif/", l2net.name);
-    brif_dir = opendir(cmdBuff);
-    if (brif_dir) {
-        while ((brif_dir_entry = readdir(brif_dir)) != NULL) {
-            if (brif_dir_entry->d_type == DT_LNK) {
-                MNET_DEBUG("Update MTU of %s enslaved to bridge %s instance %d\n" COMMA brif_dir_entry->d_name COMMA l2net.name COMMA l2netInst);
-                snprintf(cmdBuff, CMD_STRING_LEN, "ifconfig %s mtu %d", brif_dir_entry->d_name, MTU);
-                system(cmdBuff);
-            }
-        }
-        closedir(brif_dir);
-    }
-    // Update bridge MTU
-    snprintf(cmdBuff, CMD_STRING_LEN, "ifconfig %s mtu %d", l2net.name, MTU);
-    system(cmdBuff);
-
     return 0;
 }
 #endif
