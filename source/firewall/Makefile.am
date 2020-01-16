@@ -20,8 +20,13 @@ bin_PROGRAMS = firewall
 bin_PROGRAMS += nfq_handler
 AM_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include $(CPPFLAGS) $(DBUS_CFLAGS)
 AM_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz -lnetfilter_queue -lnfnetlink -lccsp_common $(DBUS_LIBS)
-firewall_SOURCES = firewall.c firewall_priv.c
+firewall_SOURCES = firewall.c firewall_priv.c firewall_interface.c
 nfq_handler_SOURCES = raw_socket_send.c nfq_handler.c
+
+if CPC_FIREWALL_ENABLE
+firewall_SOURCES += firewall_lib.c firewall_dsl.c rabid.c
+endif
+
 firewall_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                  $(top_builddir)/source/sysevent/lib/libsysevent.la \
                  $(top_builddir)/source/ulog/libulog.la
