@@ -38,9 +38,6 @@
 
 
 #include <stdio.h>
-#ifdef _HUB4_PRODUCT_REQ_
-#include <sys/time.h>
-#endif
 #include<stdlib.h>
 #include "ccsp_custom.h"
 extern FILE *firewallfp;
@@ -52,34 +49,22 @@ void do_device_based_pp_disabled_ip_appendrule(FILE *fp, const char *ins_num, co
 int do_parcon_mgmt_lan2wan_pc_site_appendrule(FILE *fp);
 void do_parcon_mgmt_lan2wan_pc_site_insertrule(FILE *fp, int index, char *nstdPort);
 
-#ifdef _HUB4_PRODUCT_REQ_
-time_t ltime;
-struct tm *info;
-struct timeval tv;
-struct timezone tz;
-#endif
-
 #ifdef FW_DEBUG
 #define COMMA ,
-#ifdef _HUB4_PRODUCT_REQ_
 #define FIREWALL_DEBUG(x) \
 if(firewallfp != NULL){ \
-gettimeofday(&tv, &tz); \
-info=localtime(&tv.tv_sec); \
-fprintf(firewallfp,"%02d%02d%02d-%02d:%02d:%02d.%d ",(info->tm_year-100)%100,(info->tm_mon+1),info->tm_mday,info->tm_hour,info->tm_min,info->tm_sec,tv.tv_usec); \
-fprintf(firewallfp,x);}\
-else \
-printf(" FILE Pointer is NULL \n");
-#else
-#define FIREWALL_DEBUG(x) \
-if(firewallfp != NULL){ \
-fprintf(firewallfp, x);}\
+fprintf(firewallfp, x);\
+fflush(firewallfp);}\
 else \
 printf(" FILE Pointer is NULL \n"); 
-#endif   // End of _HUB4_PRODUCT_REQ_
 #else 
 #define FIREWALL_DEBUG(x)
 #endif
+
+typedef enum {
+    IP_V4 = 0,
+    IP_V6,
+}ip_ver_t;
 
 /*
  *  rdkb_arm is same as 3939/3941
@@ -87,9 +72,18 @@ printf(" FILE Pointer is NULL \n");
 #define CONFIG_CCSP_LAN_HTTP_ACCESS
 #define CONFIG_CCSP_VPN_PASSTHROUGH
  */
+#if defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_))
+#define CONFIG_CCSP_VPN_PASSTHROUGH
+#endif
+
+#if defined (INTEL_PUMA7)
+#define CONFIG_KERNEL_NETFILTER_XT_TARGET_CT
+#endif
 #define CONFIG_CCSP_WAN_MGMT
 #define CONFIG_CCSP_WAN_MGMT_PORT
 //#define CONFIG_CCSP_WAN_MGMT_ACCESS //defined in ccsp_custom.h
+#ifndef _HUB4_PRODUCT_REQ_
 #define CONFIG_CCSP_CM_IP_WEBACCESS
+#endif /* * !_HUB4_PRODUCT_REQ_ */
 
 #endif
