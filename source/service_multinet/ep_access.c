@@ -35,6 +35,9 @@
 
 #include "service_multinet_ep.h"
 #include "service_multinet_ev.h"
+#if defined (INTEL_PUMA7)
+#include "service_multinet_lib.h"
+#endif
 #include "sysevent/sysevent.h"
 #include <stdio.h>
 #include <string.h>
@@ -43,18 +46,23 @@
 #if defined (INTEL_PUMA7)
 #include <unistd.h>
 #define MAX_CMD_LEN 256
-#define MAX_IF_NAME_SIZE 32
 #endif
 
 #if defined (INTEL_PUMA7)
 //Check if network interface is really connected to this bridge
 int ep_check_if_really_bridged(PL2Net net, char *ifname){
     char *cmd[MAX_CMD_LEN];
-    char ifnamebuf[MAX_IF_NAME_SIZE];
+    char ifnamebuf[MAX_IFNAME_SIZE];
 
     char *dash;
+    char temp_ifname[MAX_IFNAME_SIZE] = {0};
 
-    strncpy(ifnamebuf, ifname, MAX_IF_NAME_SIZE);
+    if(!strstr(ifname, "sw_") ||
+        (STATUS_OK != getIfName(ifnamebuf, ifname)))
+    {
+        /* If port is not sw_x or getIfName() returns failure then use port name as the interface name */
+        strncpy(ifnamebuf, ifname, MAX_IFNAME_SIZE);
+    }
 
     //If name is x-t, strip off -t and change name to x.[vlan id]
     if ((dash = strchr(ifnamebuf, '-'))){

@@ -39,6 +39,18 @@
  
  #define MAX_MEMBERS 32
  
+#if defined (INTEL_PUMA7) || defined(MULTILAN_FEATURE)
+//Intel Proposed RDKB Bug Fix
+#define MAX_BUF_SIZE 256
+#define MAX_IFNAME_SIZE 32
+#ifndef STATUS_OK
+#define STATUS_OK 0
+#endif
+#ifndef STATUS_NOK
+#define STATUS_NOK 1
+#endif
+#endif //defined (INTEL_PUMA7)
+ 
  extern unsigned char isDaemon;
  extern char* executableName;
  
@@ -57,10 +69,14 @@
  int multinet_ifStatusUpdate_ids(int l2netInst, char* ifname, char* ifType, char* status, char* tagging);
  
  int multinet_lib_init(BOOL daemon, char* exeName);
+ 
+#if defined (INTEL_PUMA7) || defined(MULTILAN_FEATURE)
+//Intel Proposed RDKB Bug Fix
+ int getIfName(char *ifName, char* portName);
+#endif
 
 #if defined(MULTILAN_FEATURE)
  int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion);
- int multinet_setBridgePortsMTU(int l2netInst, int MTU);
-#endif
+#endif 
  
  #endif

@@ -65,6 +65,7 @@
 # Once utopia is modified we can remove this handler.
 
 SWITCH_MAP_FILE="/var/tmp/map/mapping_table.txt"
+LAN_CONFIG_FILE="/etc/lan.cfg"
 PORT_VLAN_START=200
 PORT_VLAN_INC=100
 PORT_IF_PREFIX="sw_"
@@ -101,7 +102,7 @@ get_port_if_name() {
 }
 #Argument: Port ID
 get_auto_vlan() {
-	AUTO_VLAN=`expr $1 \* $PORT_VLAN_INC + $PORT_VLAN_START`
+	VLAN=`expr $1 \* $PORT_VLAN_INC + $PORT_VLAN_START`
 }
 
 #Arguments: Port ID, VLAN ID
@@ -112,7 +113,6 @@ add_vlan_to_port() {
 
 #Arguments: Port ID, VLAN ID
 del_vlan_from_port() {
-	get_auto_vlan $1
 	swctl -l 3 -c 1 -p $1 -v $2
 }
 
@@ -122,39 +122,90 @@ extract_from_map_line() {
 	BASE_IF="${14}"	
 }
 
+extract_from_lan_config()
+{
+    LOGICAL_PORT=`echo "${1}" | sed 's/LogicalPort=//' | awk '{print $1}'`
+    PORT_IF_NAME=`echo "${2}" | sed 's/LogicalName=//' | awk '{print $1}'`
+    #TYPE=`echo "${3}" | sed 's/Type=//' | awk '{print $1}'`
+    #SWITCH_DEV=`echo "${4}" | sed 's/SwitchDevIndex=//' | awk '{print $1}'`
+    #SWITCH_PORT=`echo "${5}" | sed 's/SwitchPortIndex=//' | awk '{print $1}'`
+    BASE_IF=`echo "${6}" | sed 's/BaseInterface=//' | awk '{print $1}'`
+    VLAN=`echo "${7}" | sed 's/VLAN=//' | awk '{print $1}'`
+}
+
+configure_port()
+{
+    echo "Configuring port $LOGICAL_PORT $PORT_IF_NAME $VLAN $BASE_IF"
+    add_vlan_to_port $LOGICAL_PORT $VLAN
+    ip link add link $BASE_IF name $PORT_IF_NAME type vlan id $VLAN
+    sysctl -w net.ipv6.conf.$PORT_IF_NAME.disable_ipv6=1
+    ifconfig $PORT_IF_NAME up
+    find_add_syscfg_entry $PORT_IF_NAME
+}
+
+deconfigure_port()
+{
+    echo "Deconfiguring port $LOGICAL_PORT $PORT_IF_NAME $VLAN $BASE_IF"
+    del_vlan_from_port $LOGICAL_PORT $VLAN
+    ip link del $PORT_IF_NAME
+}
+
 #Argument: "up" or "down"
 configure_all_switch_ports() {
-	case "$1" in
-	up)
-		#Configure first port which will ensure mapping file is created
-		swctl -l 3 -c 4 -p 0
+    case "$1" in
+    up)
+        #Configure first port which will ensure mapping file is created
+        swctl -l 3 -c 4 -p 0
 
-		#Iterate through switch mapping file and configure every port
-		cat $SWITCH_MAP_FILE | while read LINE; do
-			extract_from_map_line $LINE
-			get_auto_vlan $LOGICAL_PORT
-			get_port_if_name $LOGICAL_PORT
-			add_vlan_to_port $LOGICAL_PORT $AUTO_VLAN
-			ip link add link $BASE_IF name $PORT_IF_NAME type vlan id $AUTO_VLAN
-			sysctl -w net.ipv6.conf.$PORT_IF_NAME.disable_ipv6=1
-			ifconfig $PORT_IF_NAME up
-			find_add_syscfg_entry $PORT_IF_NAME
-		done
-	;;
-	down)
-		#Configure first port which will ensure mapping file is created
-		swctl -l 3 -c 4 -p 0
+        #Iterate through static switch mapping file (lan.cfg) and configure every port
+        if [ -f "$LAN_CONFIG_FILE" ]; then
+            cat $LAN_CONFIG_FILE | while read LINE; do
+                if [[ "$LINE" =~ .*"#".* ]]; then
+                    continue;
+                fi
+                LINE_SWPORT=`echo $LINE | egrep Type=SW`
+                if [ ! -z "$LINE_SWPORT" ]; then
+                    extract_from_lan_config $LINE_SWPORT 
+                    configure_port
+                fi
+            done
+        else
+            #If lan.cfg is not available then iterate through switch mapping file and configure every port
+            cat $SWITCH_MAP_FILE | while read LINE; do
+                extract_from_map_line $LINE
+                get_auto_vlan $LOGICAL_PORT
+                get_port_if_name $LOGICAL_PORT
+                configure_port
+            done
+        fi
+    ;;
+    down)
+        #Configure first port which will ensure mapping file is created
+        swctl -l 3 -c 4 -p 0
 
-		#Iterate through switch mapping file and configure every port
-		cat $SWITCH_MAP_FILE | while read LINE; do
-			extract_from_map_line $LINE
-			get_auto_vlan $LOGICAL_PORT
-			get_port_if_name $LOGICAL_PORT
-			del_vlan_from_port $LOGICAL_PORT $AUTO_VLAN
-			ip link del $PORT_IF_NAME
-		done
-	;;
-	esac
+        #Iterate through static switch mapping file (lan.cfg) and deconfigure ports
+        if [ -f "$LAN_CONFIG_FILE" ]; then
+            cat $LAN_CONFIG_FILE | while read LINE; do
+                if [[ "$LINE" =~ .*"#".* ]]; then
+                    continue;
+                fi
+                LINE_SWPORT=`echo $LINE | egrep Type=SW`
+                if [ ! -z "$LINE_SWPORT" ]; then
+                    extract_from_lan_config $LINE_SWPORT 
+                    deconfigure_port
+                fi
+            done
+        else
+            #If lan.cfg is not available then iterate through switch mapping file and deconfigure ports
+            cat $SWITCH_MAP_FILE | while read LINE; do
+                extract_from_map_line $LINE
+                get_auto_vlan $LOGICAL_PORT
+                get_port_if_name $LOGICAL_PORT
+                deconfigure_port
+            done
+        fi
+    ;;
+    esac
 }
 MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
 if [ "$MULTILAN_FEATURE" = "1" ]; then

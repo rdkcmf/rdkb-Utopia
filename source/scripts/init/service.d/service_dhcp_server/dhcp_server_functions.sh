@@ -1017,7 +1017,7 @@ fi
 			   echo "${PREFIX}""dhcp-option=l2sd0.4090,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
 
-        elif [ "$MODEL_NUM" = "CGM4331COM" ]; then
+        elif [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
             echo "interface=brlan112" >> $LOCAL_DHCP_CONF
             echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
 
