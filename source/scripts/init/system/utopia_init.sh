@@ -695,7 +695,7 @@ else
 	 fi
 #ifdef CISCO_XB3_PLATFORM_CHANGES
          ##Work around: RDKB3939-500: /nvram/RDKB3939-500_RebootNotByPwrOff file not created by utopia.service(atom side) in case of power off shut down
-      elif [ "$MODEL_NUM" = "DPC3939" ] && [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_ATOM" ] && [ ! -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
+      elif ( [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3939B" ] ) && [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_ATOM" ] && [ ! -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 	 if [ -e "/usr/bin/onboarding_log" ]; then
