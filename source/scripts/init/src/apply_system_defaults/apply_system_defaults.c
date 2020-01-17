@@ -1660,7 +1660,75 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							APPLY_PRINT("%s - XHS_SSIDprefix Value is NULL\n", __FUNCTION__ );
 						}	
 					}
-				}
+                                        paramObjVal = cJSON_GetObjectItem( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OAUTH.AuthMode" ), "ActiveValue" );
+                                        if( paramObjVal != NULL )
+                                        {
+                                            char *pcAuthMode = NULL;
+                    
+                                            pcAuthMode = paramObjVal->valuestring;
+                    
+                                            if( pcAuthMode != NULL )
+                                            {
+                                                set_syscfg_partner_values( pcAuthMode, "OAUTHAuthMode" );
+                                                pcAuthMode = NULL;
+                                            }
+                                            else
+                                            {
+                                                APPLY_PRINT( "%s - OAUTHAuthMode is NULL\n", __FUNCTION__ );
+                                            }
+                                        }
+                                        paramObjVal = cJSON_GetObjectItem( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OAUTH.ServerUrl" ), "ActiveValue" );
+                                        if( paramObjVal != NULL )
+                                        {
+                                            char *pcServerUrl = NULL;
+                    
+                                            pcServerUrl = paramObjVal->valuestring;
+                    
+                                            if( pcServerUrl != NULL )
+                                            {
+                                                set_syscfg_partner_values( pcServerUrl, "OAUTHServerUrl" );
+                                                pcServerUrl = NULL;
+                                            }
+                                            else
+                                            {
+                                                APPLY_PRINT( "%s - OAUTHServerUrl is NULL\n", __FUNCTION__ );
+                                            }
+                                        }
+                                        paramObjVal = cJSON_GetObjectItem( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OAUTH.TokenEndpoint" ), "ActiveValue" );
+                                        if( paramObjVal != NULL )
+                                        {
+                                            char *pcTokenEndpoint = NULL;
+                    
+                                            pcTokenEndpoint = paramObjVal->valuestring;
+                    
+                                            if( pcTokenEndpoint != NULL )
+                                            {
+                                                set_syscfg_partner_values( pcTokenEndpoint, "OAUTHTokenEndpoint" );
+                                                pcTokenEndpoint = NULL;
+                                            }
+                                            else
+                                            {
+                                                APPLY_PRINT( "%s - OAUTHTokenEndpoint is NULL\n", __FUNCTION__ );
+                                            }
+                                        }
+                                        paramObjVal = cJSON_GetObjectItem( cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OAUTH.ClientId" ), "ActiveValue" );
+                                        if( paramObjVal != NULL )
+                                        {
+                                            char *pcClientId = NULL;
+                    
+                                            pcClientId = paramObjVal->valuestring;
+                    
+                                            if( pcClientId != NULL )
+                                            {
+                                                set_syscfg_partner_values( pcClientId, "OAUTHClientId" );
+                                                pcClientId = NULL;
+                                            }
+                                            else
+                                            {
+                                                APPLY_PRINT( "%s - OAUTHClientId is NULL\n", __FUNCTION__ );
+                                            }
+                                        }
+                                }
 
 				if( 1 == isNeedToApplyPartnersDefault )
 				{
