@@ -86,10 +86,10 @@ DHCP_FIRST_OCTETS=0.0.0
 # dhcp address range
 DHCP_START=`syscfg get dhcp_start`
 # DHCP_NUM is the number of available dhcp address for the lan
-DHCP_NUM=`syscfg get dhcp_num`
-if [ "" = "$DHCP_NUM" ] ; then
-   DHCP_NUM=0
-fi
+#DHCP_NUM=`syscfg get dhcp_num`
+#if [ "" = "$DHCP_NUM" ] ; then
+#   DHCP_NUM=0
+#fi
 
 # are we propagating the nameserver learned from wan dhcp client to our lan clients
 PROPAGATE_NS=`syscfg get dhcp_server_propagate_wan_nameserver`
@@ -863,7 +863,7 @@ fi
    #echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$2,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-leasefile=$DHCP_LEASE_FILE" >> $LOCAL_DHCP_CONF
   # echo "$PREFIX""dhcp-script=$DHCP_ACTION_SCRIPT" >> $LOCAL_DHCP_CONF
-   echo "$PREFIX""dhcp-lease-max=$DHCP_NUM" >> $LOCAL_DHCP_CONF
+  # echo "$PREFIX""dhcp-lease-max=$DHCP_NUM" >> $LOCAL_DHCP_CONF
    echo "$PREFIX""dhcp-hostsfile=$DHCP_STATIC_HOSTS_FILE" >> $LOCAL_DHCP_CONF
 
    if [ "$RF_CAPTIVE_PORTAL" != "true" ]
