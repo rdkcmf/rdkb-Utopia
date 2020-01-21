@@ -698,14 +698,14 @@ int prepare_dhcp_conf (char *input)
     char l_cIotEnabled[16] = {0}, l_cIotIfName[16] = {0}, l_cIotStartAddr[16] = {0};
    	char l_cIotEndAddr[16] = {0}, l_cIotNetMask[16] = {0};
 	char l_cPropagate_Dom[8] = {0}, l_cLan_Domain[32] = {0}, l_cLog_Level[8] = {0};
-	char l_cDhcp_Num[16] = {0}, l_cLan_Status[16] = {0};
+	char l_cLan_Status[16] = {0};
     char l_cWan_Service_Stat[16] = {0}, l_cDns_Only_Prefix[8] = {0};
 	char *l_cpPsm_Get = NULL;
 	char l_cDhcpNs_Enabled[ 32 ] 			 = { 0 },
 		 l_cWan_Dhcp_Dns [ 256 ]             = { 0 };
 
 
-	int l_iMkdir_Res, l_idhcp_num, l_iRet_Val;
+	int l_iMkdir_Res, l_iRet_Val;
 	int l_iRetry_Count = 0;
 
 	FILE *l_fLocal_Dhcp_ConfFile = NULL;
@@ -1026,6 +1026,7 @@ int prepare_dhcp_conf (char *input)
   
 	//Not taking into account prefix 
 	fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-leasefile=%s\n", l_cDns_Only_Prefix, DHCP_LEASE_FILE);
+	#if 0
 	//DHCP_NUM is the number of available dhcp address for the lan
 	syscfg_get(NULL, "dhcp_num", l_cDhcp_Num, sizeof(l_cDhcp_Num));
 	if (0 == l_cDhcp_Num[0])
@@ -1039,6 +1040,7 @@ int prepare_dhcp_conf (char *input)
 	    fprintf(stderr, "DHCP NUM is not empty it is :%d\n", l_idhcp_num);
 	}
 	fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-lease-max=%d\n", l_cDns_Only_Prefix, l_idhcp_num);
+	#endif
 	fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-hostsfile=%s\n", l_cDns_Only_Prefix, DHCP_STATIC_HOSTS_FILE);
 
 	if ( ( FALSE == l_bCaptivePortal_Mode) &&\
