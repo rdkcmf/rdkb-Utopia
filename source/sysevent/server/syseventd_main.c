@@ -620,7 +620,6 @@ static int initialize_system(void)
       }
    }
 
-#ifndef INCLUDE_BREAKPAD
    // sigpipe ignore
    new_action.sa_handler = ignore_signal_handler;
    new_action.sa_flags   = 0;
@@ -659,7 +658,6 @@ static int initialize_system(void)
         }
       }
    }
-#endif
 
    // save our pid in the pid file
    pid_t pid = getpid();
