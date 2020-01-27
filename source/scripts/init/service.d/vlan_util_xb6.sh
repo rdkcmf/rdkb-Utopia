@@ -821,7 +821,7 @@ sync_group_settings() {
 	    # Excluding for AXB6 as there are no eth_0, eth_1 interfaces
             if [[ $num_iterations -ge $MAX_WAIT_PER_INTERFACE ]]; then
             	if [[ "$MODEL_NUM" == "TG3482G" ]]; then
-                	if [[ "$NEEDED_IF" != "eth_0" || "$NEEDED_IF" != "eth_1" ]]; then
+                	if [[ "$NEEDED_IF" != "eth_0" && "$NEEDED_IF" != "eth_1" ]]; then
                         	echo "ERROR: Interface $NEEDED_IF did not come up"
                         fi
                 else
