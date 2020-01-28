@@ -250,10 +250,10 @@ static int dhcp_stop(const char *ifname)
  *
  * returns:  0 on successful parsing, else -1
  ***/
-static int dhcp_parse_vendor_info( char *options, const int length )
+static int dhcp_parse_vendor_info( char *options, const int length, char *ethWanMode )
 {
     FILE *fp;
-    char subopt_num[12], subopt_value[64];
+    char subopt_num[12] ={0}, subopt_value[64] = {0} , mode[8] = {0} ;
     int num_read;
     
     if ((fp = fopen(VENDOR_SPEC_FILE, "ra")) != NULL) {
@@ -262,14 +262,31 @@ static int dhcp_parse_vendor_info( char *options, const int length )
         //Start the string off with "43:"
         opt_len = sprintf(options, "43:");
 
-        while ((num_read = fscanf(fp, "%11s %63s", subopt_num, subopt_value)) == 2) {
+        while ((num_read = fscanf(fp, "%7s %11s %63s", mode, subopt_num, subopt_value)) == 3) {
             char *ptr;
      
             if (length - opt_len < 6) {
                 fprintf( stderr, "%s: Too many options\n", __FUNCTION__ );
                 return -1;
             }
-            
+           
+#if defined (EROUTER_DHCP_OPTION_MTA) 
+	    if ( ( strcmp(mode,"DOCSIS") == 0 ) && ( strcmp (ethWanMode,"true") == 0) )
+            {
+                continue;
+            }
+
+            if ( ( strcmp(mode,"ETHWAN") == 0 ) && ( strcmp (ethWanMode,"false") == 0) )
+            {
+                continue;
+            }
+#else
+            if ( ( strcmp(mode,"ETHWAN") == 0 )) 
+          {
+                continue;
+          }
+#endif
+ 
             //Print the option number
             if (strcmp(subopt_num, "SUBOPTION2") == 0) {
                 opt_len += sprintf(options + opt_len, "02");
@@ -295,7 +312,7 @@ static int dhcp_parse_vendor_info( char *options, const int length )
             }
         } //while
         
-        if ((num_read != EOF) && (num_read != 2)) {
+        if ((num_read != EOF) && (num_read != 3)) {
             fprintf(stderr, "%s: Error parsing file\n", __FUNCTION__);
             return -1;
         }
@@ -311,13 +328,15 @@ static int dhcp_parse_vendor_info( char *options, const int length )
 
 static int dhcp_start(struct serv_wan *sw)
 {
-    char l_cErouter_Mode[16] = {0}, l_cWan_if_name[16] = {0}, l_cDhcpv6c_Enabled[8] = {0};
+    char l_cErouter_Mode[16] = {0}, l_cWan_if_name[16] = {0}, l_cDhcpv6c_Enabled[8] = {0}, cEthWanMode[8] = {0} ;
     int l_iErouter_Mode, err;
 
     syscfg_get(NULL, "last_erouter_mode", l_cErouter_Mode, sizeof(l_cErouter_Mode));
     l_iErouter_Mode = atoi(l_cErouter_Mode);
 
     syscfg_get(NULL, "wan_physical_ifname", l_cWan_if_name, sizeof(l_cWan_if_name));
+
+    syscfg_get(NULL, "eth_wan_enabled", cEthWanMode, sizeof(cEthWanMode));
     //if the syscfg is not giving any value hardcode it to erouter0
     Getdhcpcpidfile(DHCPC_PID_FILE,sizeof(DHCPC_PID_FILE));
     if (0 == l_cWan_if_name[0])
@@ -343,10 +362,11 @@ static int dhcp_start(struct serv_wan *sw)
 
     char udhcpflag[10]="";
     syscfg_get( NULL, "UDHCPEnable", udhcpflag, sizeof(udhcpflag));
+
     if( 0 == strcmp(udhcpflag,"true")){
     char options[VENDOR_OPTIONS_LENGTH];
 
-    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
+    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH,cEthWanMode)) == 0) {
         err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /usr/bin/service_udhcpc", sw->ifname, DHCPC_PID_FILE, options);
     }
     }
@@ -370,12 +390,24 @@ static int dhcp_start(struct serv_wan *sw)
 
     char options[VENDOR_OPTIONS_LENGTH];
 
-    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH)) == 0) {
+    if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH,cEthWanMode)) == 0) {
 
-#if defined (_XB6_PRODUCT_REQ_) && defined (_COSA_BCM_ARM_) // TCXB6 only
+#if defined (_XB6_PRODUCT_REQ_) && defined (_COSA_BCM_ARM_) // TCXB6 and TCXB7 only
         // tcxb6-6655, add "-b" option, so that, udhcpc forks to
         // background if lease cannot be immediately negotiated.
+
+  // In ethwan mode send dhcp options part of dhcp-client to get the eMTA dhcp options
+    
+    #if defined (EROUTER_DHCP_OPTION_MTA)
+	if (strcmp(cEthWanMode, "true") == 0 ) 
+      	  err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 122 -O 125 -x %s -x 125:0000118b0701027B7C7c0107 -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+	else
+         err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+    #else
+     {
         err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+     }
+    #endif
 #else
         err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
 #endif
@@ -1115,6 +1147,15 @@ static int wan_addr_unset(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
     sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", "0.0.0.0", 0);
     sysevent_set(sw->sefd, sw->setok, "current_wan_state", "down", 0);
+
+#if defined (EROUTER_DHCP_OPTION_MTA)      
+    sysevent_set(sw->sefd, sw->setok, "MTA_DHCPv4_PrimaryAddress", NULL, 0);
+    sysevent_set(sw->sefd, sw->setok, "MTA_DHCPv4_SecondaryAddress", NULL, 0);
+    sysevent_set(sw->sefd, sw->setok, "MTA_DHCPv6_PrimaryAddress", NULL, 0);
+    sysevent_set(sw->sefd, sw->setok, "MTA_DHCPv6_SecondaryAddress", NULL, 0);
+    sysevent_set(sw->sefd, sw->setok, "MTA_IP_PREF", NULL, 0);
+    sysevent_set(sw->sefd, sw->setok, "dhcp_mta_option", NULL, 0);
+#endif
 
 #if !defined(_WAN_MANAGER_ENABLED_)
     switch (sw->prot) {
