@@ -658,10 +658,10 @@ static int getFactoryPartnerId
 			sleep(3);
 			count++;
 		}
+		//TCCBR-4426 getFactoryPartnerId is implemented for XB6/HUB4 Products as of now
+		APPLY_PRINT("%s - Failed Get factoryPartnerId \n", __FUNCTION__);
 	}
 #endif
-
-	APPLY_PRINT("%s - Failed Get factoryPartnerId \n", __FUNCTION__);
 	return -1;
 }
 
