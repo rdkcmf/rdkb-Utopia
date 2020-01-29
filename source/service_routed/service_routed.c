@@ -803,7 +803,14 @@ static int gen_zebra_conf(int sefd, token_t setok)
 			for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
 			{
 			// Modifying rdnss value to fix the zebra config.
+#ifdef _HUB4_PRODUCT_REQ_
+                        if (0 == strncmp(lan_addr, tok, strlen(lan_addr)))
+                        {
+                            fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+                        }
+#else
         		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+#endif
 			}
 #ifdef MULTILAN_FEATURE
                         if (atoi(valid_lft) <= 3*atoi(ra_interval))
