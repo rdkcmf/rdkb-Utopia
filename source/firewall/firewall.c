@@ -12323,7 +12323,7 @@ static int service_start ()
    /*  ipv4 */
    prepare_ipv4_firewall(filename1);
    system("iptables-restore -c  < /tmp/.ipt");
-   
+  
    //if (!isFirewallEnabled) {
    //   unlink(filename1);
    //}
@@ -12435,6 +12435,27 @@ static int service_stop ()
     return 0;
 }
 
+int pid_count(char *pid_name)
+{
+        FILE *fp = NULL;
+        char buff[64] = {0};
+        char cmd[64] = {0};
+        int val = 1;
+
+        snprintf(cmd,sizeof(cmd),"pidof %s | wc -w",pid_name);
+
+        if(!(fp = popen(cmd,"r")))
+        {
+                FIREWALL_DEBUG("popen failed in pid_count...\n");
+                return val;
+        }
+        fgets(buff, sizeof(buff), fp);
+        pclose(fp);
+
+        val = atoi(buff);
+        return val;
+}  
+
 /*
  * Name           :  service_restart
  * Purpose        :  Restart the firewall service
@@ -12479,7 +12500,27 @@ int main(int argc, char **argv)
 	#ifdef INCLUDE_BREAKPAD
 	breakpad_ExceptionHandler();
 	#endif
-        FIREWALL_DEBUG("ENTERED FIREWALL, argc = %d \n" COMMA argc);
+
+   int pid_cnt = 0;
+   while(1)
+   {
+     pid_cnt = pid_count("firewall");
+     if (pid_cnt == 2)
+     {
+        FIREWALL_DEBUG("Firewall is already running. Waiting for 5sec...\n");
+        sleep(5);
+     }
+     else if (pid_cnt > 2)
+     {
+        FIREWALL_DEBUG("Firewall is already running more than 2 processes. Exiting with return 0...\n");
+        return rc;
+     }
+     else 
+     {
+        break;
+     }
+   }
+   FIREWALL_DEBUG("ENTERED FIREWALL, argc = %d \n" COMMA argc);
 
    if (argc > 1) {
        if (SERVICE_EV_UNKNOWN == (event = get_service_event(argv[1]))) {
