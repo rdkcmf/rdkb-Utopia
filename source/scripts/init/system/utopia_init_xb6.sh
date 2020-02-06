@@ -439,6 +439,17 @@ fi
    if [ -f /nvram/.CMchange_reboot_count ];then
       rm -f /nvram/.CMchange_reboot_count
    fi
+
+   # Remove lxy L2 dir
+   LOG_FILE=/rdklogs/logs/lxy.log
+   echo_t "[FR] Removing lxy L2 Dir" >> $LOG_FILE
+   if [ -f /etc/lxy.conf ];then
+       L2="$(grep '^L2=' /etc/lxy.conf | sed -e 's/L2=//')"
+   fi
+   if [ -d "$L2" ]; then
+       rm -rf $L2
+   fi
+
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
    if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
    	# Remove onboard files

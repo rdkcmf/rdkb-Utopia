@@ -418,6 +418,17 @@ fi
     rm -f /nvram/DISABLE_ONBOARD_LOGGING
     rm -rf /nvram2/onboardlogs
    fi
+
+   # Remove lxy L2 dir
+   LOG_FILE=/rdklogs/logs/lxy.log
+   echo_t "[FR] Removing lxy L2 Dir" >> $LOG_FILE
+   if [ -f /etc/lxy.conf ];then
+       L2="$(grep '^L2=' /etc/lxy.conf | sed -e 's/L2=//')"
+   fi
+   if [ -d "$L2" ]; then
+       rm -rf $L2
+   fi
+
      touch /nvram/.apply_partner_defaults   
    #>>zqiu
    create_wifi_default
