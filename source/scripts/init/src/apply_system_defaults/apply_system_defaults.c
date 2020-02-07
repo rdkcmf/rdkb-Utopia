@@ -1020,90 +1020,6 @@ int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
 	 return 0;
 }
 
-// This function can be removed after a few release cycles
-int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *PartnerID)
-{
-   APPLY_PRINT("%s\n", __FUNCTION__);
-
-   cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
-   cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);
-
-   cJSON *root_nvram_bs_json;
-   root_nvram_bs_json = cJSON_CreateObject();
-
-   cJSON *prop = cJSON_GetObjectItem(root_etc_json,"properties");
-   cJSON_AddItemReferenceToObject(root_nvram_bs_json, "properties", prop);
-
-   cJSON * subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
-   cJSON * subitem_nvram = cJSON_GetObjectItem(root_nvram_json,PartnerID);
-
-   char *key = NULL, *value = NULL, *value_nvram = NULL;
-   if( subitem_etc )
-   {
-      cJSON *param = subitem_etc->child;
-      cJSON *newPartnerObj = cJSON_CreateObject();
-      while( param )
-      {
-         cJSON *newParamObj = cJSON_CreateObject();
-         key = param->string;
-         cJSON * value_obj = cJSON_GetObjectItem(subitem_etc, key);
-         if (value_obj)
-            value = value_obj->valuestring;
-
-         if (value == NULL)
-         {
-            APPLY_PRINT("etc value is NULL for key = %s, skip it...\n", key);
-            param = param->next;
-            continue;
-         }
-
-         cJSON_AddStringToObject(newParamObj, "DefaultValue", value);
-         cJSON_AddStringToObject(newParamObj, "BuildTime", getBuildTime());
-
-         if ( subitem_nvram )
-         {
-            cJSON * value_nvram_obj = cJSON_GetObjectItem(subitem_nvram, key);
-            if (value_nvram_obj)
-               value_nvram = value_nvram_obj->valuestring;
-
-            if ( value_nvram && strcmp(value, value_nvram) != 0)
-            {
-               APPLY_PRINT("nvram value = %s\n", value_nvram);
-               cJSON_AddStringToObject(newParamObj, "ActiveValue", value_nvram);
-               cJSON_AddStringToObject(newParamObj, "UpdateTime", "unknown");
-               cJSON_AddStringToObject(newParamObj, "UpdateSource", "webpa"); //Assuming as webpa since we don't know who actually updated
-            }
-            else
-            {
-               cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
-               cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
-               cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
-            }
-         }
-         else
-         {
-            cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
-            cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
-            cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
-         }
-         cJSON_AddItemToObject(newPartnerObj, key, newParamObj);
-
-         param = param->next;
-      }
-      cJSON_AddItemToObject(root_nvram_bs_json, PartnerID, newPartnerObj);
-
-      char *out = cJSON_Print(root_nvram_bs_json);
-      APPLY_PRINT("out1 = %s\n", out);
-      writeToJson(out, BOOTSTRAP_INFO_FILE);
-      out = NULL;
-   }
-
-   cJSON_Delete(root_nvram_json);
-   cJSON_Delete(root_etc_json);
-
-   return 0;
-}
-
 void addInSysCfgdDB(char * key, char * value)
 {
    /* There are parameters which needs to be available in syscfg/PSM DBs
@@ -1253,6 +1169,90 @@ void updateSysCfgdDB(char * key, char * value)
       //Need to touch /tmp/.apply_partner_defaults_new_psm_member for PSM migration handling
       system("touch "PARTNER_DEFAULT_MIGRATE_FOR_NEW_PSM_MEMBER);
    }
+}
+
+// This function can be removed after a few release cycles
+int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *PartnerID)
+{
+   APPLY_PRINT("%s\n", __FUNCTION__);
+
+   cJSON * root_nvram_json = cJSON_Parse(partner_nvram_obj);
+   cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);
+
+   cJSON *root_nvram_bs_json;
+   root_nvram_bs_json = cJSON_CreateObject();
+
+   cJSON *prop = cJSON_GetObjectItem(root_etc_json,"properties");
+   cJSON_AddItemReferenceToObject(root_nvram_bs_json, "properties", prop);
+
+   cJSON * subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
+   cJSON * subitem_nvram = cJSON_GetObjectItem(root_nvram_json,PartnerID);
+
+   if( subitem_etc )
+   {
+      cJSON *param = subitem_etc->child;
+      cJSON *newPartnerObj = cJSON_CreateObject();
+      while( param )
+      {
+         char *key = NULL, *value = NULL, *value_nvram = NULL;
+         cJSON *newParamObj = cJSON_CreateObject();
+         key = param->string;
+         cJSON * value_obj = cJSON_GetObjectItem(subitem_etc, key);
+         if (value_obj)
+            value = value_obj->valuestring;
+
+         if (value == NULL)
+         {
+            APPLY_PRINT("etc value is NULL for key = %s, skip it...\n", key);
+            param = param->next;
+            continue;
+         }
+
+         cJSON_AddStringToObject(newParamObj, "DefaultValue", value);
+         cJSON_AddStringToObject(newParamObj, "BuildTime", getBuildTime());
+
+         if ( subitem_nvram )
+         {
+            cJSON * value_nvram_obj = cJSON_GetObjectItem(subitem_nvram, key);
+            if (value_nvram_obj)
+               value_nvram = value_nvram_obj->valuestring;
+
+            if ( value_nvram && strcmp(value, value_nvram) != 0)
+            {
+               APPLY_PRINT("nvram value = %s\n", value_nvram);
+               cJSON_AddStringToObject(newParamObj, "ActiveValue", value_nvram);
+               cJSON_AddStringToObject(newParamObj, "UpdateTime", "unknown");
+               cJSON_AddStringToObject(newParamObj, "UpdateSource", "webpa"); //Assuming as webpa since we don't know who actually updated
+            }
+            else
+            {
+               cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
+               cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
+               cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
+            }
+         }
+         else
+         {
+            cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
+            cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
+            cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
+         }
+         cJSON_AddItemToObject(newPartnerObj, key, newParamObj);
+         addInSysCfgdDB(key, value);
+         param = param->next;
+      }
+      cJSON_AddItemToObject(root_nvram_bs_json, PartnerID, newPartnerObj);
+
+      char *out = cJSON_Print(root_nvram_bs_json);
+      APPLY_PRINT("out1 = %s\n", out);
+      writeToJson(out, BOOTSTRAP_INFO_FILE);
+      out = NULL;
+   }
+
+   cJSON_Delete(root_nvram_json);
+   cJSON_Delete(root_etc_json);
+
+   return 0;
 }
 
 int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,char *PartnerID)
