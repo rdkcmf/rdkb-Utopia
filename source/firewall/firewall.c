@@ -11927,17 +11927,31 @@ static void do_ipv6_filter_table(FILE *fp){
       //{
            // DNS resolver request from client
            // DNS server replies from Internet servers
+#if !defined(_HUB4_PRODUCT_REQ_)
            fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname);
            //fprintf(fp, "-A INPUT -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", wan6_ifname);
            fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", lan_ifname);
+#else
+            // Remove burst limit on Hub4 IPv6 DNS requests
+           fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -j ACCEPT\n", lan_ifname);
+           fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 53 -j ACCEPT\n", lan_ifname);
+           fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -j ACCEPT\n", lan_ifname);
+#endif
       //}
       if(inf_num!= 0)
 	  {
 		int cnt =0;
 		for(cnt = 0;cnt < inf_num;cnt++)
 		{
+#if !defined(_HUB4_PRODUCT_REQ_)            
 		   fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -m limit --limit 100/sec -j ACCEPT\n", Interface[cnt]);
 		   fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -m limit --limit 100/sec -j ACCEPT\n", Interface[cnt]);
+#else
+            // Remove burst limit on Hub4 IPv6 DNS requests
+		   fprintf(fp, "-A INPUT -i %s -p udp -m udp --dport 53 -j ACCEPT\n", Interface[cnt]);
+           fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 53 -j ACCEPT\n", Interface[cnt]);
+		   fprintf(fp, "-A INPUT ! -i %s -p udp -m udp --sport 53 -j ACCEPT\n", Interface[cnt]);
+#endif           
 		}
 	  }
 
