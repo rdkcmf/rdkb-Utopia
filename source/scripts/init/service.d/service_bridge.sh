@@ -196,6 +196,8 @@ add_ebtable_rule()
 
     ip route del $subnet_wan dev $wan_if
     ip route add $subnet_wan dev $cmdiag_if #proto kernel scope link src $cmdiag_ip
+    ip route add default dev $cmdiag_if
+
 
     dst_ip=`syscfg get lan_ipaddr` # RT-10-580 @ XB3 
     ip addr add $dst_ip/24 dev $cmdiag_if
@@ -218,6 +220,7 @@ del_ebtable_rule()
     subnet_wan=`ip route show | grep $cmdiag_if | grep -v 192.168.100. | grep -v 10.0.0 | awk '/'$cmdiag_if'/ {print $1}'`
 
     ip route del $subnet_wan dev $cmdiag_if
+    ip route del default dev $cmdiag_if
     ip route add $subnet_wan dev $wan_if proto kernel scope link src $wan_ip
 
 
