@@ -1100,6 +1100,9 @@ static int wan_addr_unset(struct serv_wan *sw)
 
     sysevent_set(sw->sefd, sw->setok, "wan-status", "stopping", 0);
     sysevent_set(sw->sefd, sw->setok, "wan-errinfo", NULL, 0);
+    char prev_ip[100];
+    sysevent_get(sw->sefd, sw->setok, "current_wan_ipaddr",prev_ip, sizeof(prev_ip));
+    sysevent_set(sw->sefd, sw->setok, "previous_wan_ipaddr", prev_ip, sizeof(prev_ip));
 
     sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
     sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", "0.0.0.0", 0);
