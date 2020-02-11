@@ -246,6 +246,7 @@ fi
    rm -f /nvram/.keys/*
    rm -f /nvram/ble-enabled
    touch /nvram/.apply_partner_defaults
+   rm -f /nvram/mesh_enabled
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
    rm -f $SYSCFG_NEW_FILE
