@@ -193,6 +193,7 @@ add_ebtable_rule()
 
     dst_ip="10.0.0.1" # RT-10-580 @ XB3 
     ip addr add $dst_ip/24 dev $cmdiag_if
+    ip route add default dev $cmdiag_if
     ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
     echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
@@ -209,6 +210,7 @@ del_ebtable_rule()
 
     dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
     ip addr del $dst_ip/24 dev $cmdiag_if
+    ip route del default dev $cmdiag_if
     ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
     echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
 }
