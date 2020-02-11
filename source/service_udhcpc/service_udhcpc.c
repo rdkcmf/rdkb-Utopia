@@ -94,6 +94,7 @@ typedef struct udhcpc_script_t
 {
     char *wan_type;
     char *box_type;
+    char *model_num;
     char *input_option; 
     char *dns;
     char *router;
@@ -798,6 +799,35 @@ int handle_wan(udhcpc_script_t *pinfo)
         add_route(pinfo);
     }
 
+    //Deleting previous ip based rule and adding new rule
+    if (pinfo->box_type && (!strcmp("XB3",pinfo->box_type) || (!strcmp("XB6",pinfo->box_type) && !strcmp("TG3482G",pinfo->model_num) )))
+    {
+        char prev_ip[100];
+        sysevent_get(sysevent_fd, sysevent_token, "previous_wan_ipaddr",prev_ip, sizeof(prev_ip));
+        printf("\n %s removing ip rule based on prev_ip:%s and adding ip: %s\n",__FUNCTION__,prev_ip,ip);
+        if(strcmp(prev_ip,"") && strcmp(prev_ip,"0.0.0.0"))
+        {
+                memset(buf,0,sizeof(buf));
+                snprintf(buf,sizeof(buf),"ip -4 rule del from %s lookup erouter",prev_ip);
+                system(buf);
+                memset(buf,0,sizeof(buf));
+                snprintf(buf,sizeof(buf),"ip -4 rule del from %s lookup all_lans",prev_ip);
+                system(buf);
+
+        }
+
+                memset(buf,0,sizeof(buf));
+                snprintf(buf,sizeof(buf),"ip -4 rule add from %s lookup erouter",ip);
+                system(buf);
+                memset(buf,0,sizeof(buf));
+                snprintf(buf,sizeof(buf),"ip -4 rule add from %s lookup all_lans",ip);
+                system(buf);
+
+
+
+
+    }
+
     // Set default route
     if (pinfo->ip_util_exist)
     {
@@ -903,6 +933,7 @@ int init_udhcpc_script_info(udhcpc_script_t *pinfo, char *option)
     pinfo->input_option = option;
     pinfo->wan_type = GetDeviceProperties("WAN_TYPE");
     pinfo->box_type = GetDeviceProperties("BOX_TYPE");
+    pinfo->model_num = GetDeviceProperties("MODEL_NUM");
     dns = getenv("dns");
     router = getenv("router");
     if (dns)
