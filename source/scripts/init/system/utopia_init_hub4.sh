@@ -124,6 +124,7 @@ PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
 FR_FILE=$SYSCFG_MOUNT/factory_reset
+FR_COUNT_FILE=/nvram/.factory_reset_count
 
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
     if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
@@ -230,7 +231,11 @@ SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
 if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
    echo "[utopia][init] Performing factory reset"
-   
+
+rebReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`   
+rebCounter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
+echo "[utopia][init] Current Reason:$rebReason Counter:$rebCounter"
+
 SYSCFG_PARTNER_FR="`syscfg get PartnerID_FR`"
 if [ "1" = "$SYSCFG_PARTNER_FR" ]; then
    echo_t "[utopia][init] Performing factory reset due to PartnerID change"
@@ -276,6 +281,21 @@ fi
 	rm -f /nvram/DISABLE_ONBOARD_LOGGING
    	rm -rf /nvram2/onboardlogs
    fi
+
+   #Needs to increment factory reset count during PIN method
+   #If GUI FR reboot reason will come as factory-reset and reboot counter should be 1. so we don't need to increment
+   if [ "$rebCounter" != "1" ] ; then
+      FR_COUNT=0
+      if [ -f $FR_COUNT_FILE ]
+      then
+           FR_COUNT=`cat $FR_COUNT_FILE`
+      fi
+      FR_COUNT=$((FR_COUNT + 1))
+      echo $FR_COUNT > $FR_COUNT_FILE
+
+      echo "[utopia][init] Incremented Factory Reset Count after PIN method"
+   fi
+
    #>>zqiu
    create_wifi_default
    #<<zqiu
