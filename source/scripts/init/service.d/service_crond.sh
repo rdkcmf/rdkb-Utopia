@@ -287,12 +287,39 @@ service_start ()
       echo "#! /bin/sh" > /etc/cron/cron.every10minute/log_every10minute.sh
       echo "/usr/sbin/log_handle.sh" >> /etc/cron/cron.every10minute/log_every10minute.sh
       chmod 700 /etc/cron/cron.every10minute/log_every10minute.sh
-          
-          if [ "$BOX_TYPE" == "XB3" ]; then
-            echo "#! /bin/sh" > /etc/cron/cron.every10minute/start_gw_heath.sh
-            echo "/usr/ccsp/tad/start_gw_heath.sh" >> /etc/cron/cron.every10minute/start_gw_heath.sh
-            chmod 700 /etc/cron/cron.every10minute/start_gw_heath.sh
-          fi
+
+	#This variable is to check RFC ETHWAN Mode Enabled/Disabled from syscfg DB
+	rfc_ethwan_status=""
+	rfc_ethwan_status=`syscfg get eth_wan_enabled`
+
+	#This variable is to check RFC WANLinkHeal Enabled/Disabled from syscfg DB
+	rfc_wanlinkheal_status=""
+	rfc_wanlinkheal_status=`syscfg get wanlinkheal`
+
+	#To invoke start_gw_health script on bootup-check, Follwing condition need to statisfy
+	#RFC ETHWAN should be false/null and WAN_TYPE should be DOCSIS
+	#RF WANLinkHeal should be true and BOX_TYPE should be plaftorm specfic
+	#In CISCOXB3 platform, does not have WAN_TYPE paramenter in /etc/device.properties file, So added MODEL_NUM Check along with WAN_TYPE.
+	if [ "x$rfc_ethwan_status" == "xfalse" ] || [ "$rfc_ethwan_status" == "" ]; then
+		if [ "x$WAN_TYPE" == "xDOCSIS" ] || [ "x$MODEL_NUM" == "xDPC3941" ]; then
+			if [ "x$rfc_wanlinkheal_status" == "xtrue" ]; then
+				if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xXB6" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
+					echo_t "RFC WANLinkHeal Feature is Enabled"
+					echo "#! /bin/sh" > /etc/cron/cron.every10minute/start_gw_heath.sh
+					echo "/usr/ccsp/tad/start_gw_heath.sh" >> /etc/cron/cron.every10minute/start_gw_heath.sh
+					chmod 700 /etc/cron/cron.every10minute/start_gw_heath.sh
+				else
+					echo_t "RFC WANLinkHeal Feature is not Enabled"
+				fi
+			else
+				echo_t "Set RFC WANLinkHeal flag to Enable for WANLinkHeal Feature support"
+			fi
+		else
+			echo_t "This Device WAN TYPE is not DOCSIS, Needed DOCSIS type Device for WANLinkHeal"
+		fi
+	else
+		echo_t "This Device should not enabled ETHWAN mode"
+	fi
 
 	  # remove max cpu usage reached indication file once in 24 hours
 	  echo "#! /bin/sh" > /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
