@@ -704,7 +704,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
         else
         {
 #endif
+#ifdef _HUB4_PRODUCT_REQ_
+        fprintf(fp, "   ipv6 nd ra-lifetime 540\n");
+#else
         fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+#endif
 #if defined (INTEL_PUMA7)
         }
 #endif
