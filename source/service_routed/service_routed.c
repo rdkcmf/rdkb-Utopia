@@ -54,8 +54,6 @@
 #include <signal.h>
 #include "util.h"
 #ifdef _HUB4_PRODUCT_REQ_
-#include "utapi.h"
-#include "utapi_util.h"
 #include "ccsp_dm_api.h"
 #include "ccsp_custom.h"
 #include "ccsp_psm_helper.h"
@@ -76,11 +74,9 @@
 #define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
 #define PSM_LANMANAGEMENTENTRY_LAN_IPV6_ENABLE "dmsb.lanmanagemententry.lanipv6enable"
 #define PSM_LANMANAGEMENTENTRY_LAN_ULA_ENABLE  "dmsb.lanmanagemententry.lanulaenable"
-#define SYSEVENT_VALID_ULA_ADDRESS "valid_ula_address"
 
 static void* bus_handle = NULL;
 const char* const service_routed_component_id = "ccsp.routed";
-static int getULAAddressFromInterface(char *ulaAddress);
 #endif
 
 #ifdef MULTILAN_FEATURE
@@ -180,44 +176,6 @@ static int getLanIpv6Info(int *ipv6_enable, int *ula_enable)
 
     return 0;
 }
-static int getULAAddressFromInterface(char *ulaAddress)
-{
-    int status = FALSE;
-    FILE *fpStream = NULL;
-    char cmd[128] = "ifconfig brlan0 | grep inet6 | grep Global| awk '/inet6/{print $3}' | cut -d\"/\" -f1";
-    char line[128] = {0};
-
-    fpStream = popen(cmd,"r");
-    if (fpStream != NULL)
-    {
-        while ( NULL != fgets ( line, sizeof (line), fpStream ) )
-        {
-            char *p = NULL;
-
-            //Removing new line from string
-            p = strchr(line, '\n');
-            if(p)
-            {
-                *p = 0;
-            }
-            if (!strncmp(line, "fd", 2) || !strncmp(line, "fc", 2))
-            {
-                strncpy(ulaAddress, line, strlen(line)+1);
-                status = TRUE;
-                break;
-            }
-            memset (line,0, sizeof(line));
-        }
-        pclose(fpStream);
-    }
-    else
-    {
-        fprintf(stderr, "%s: Unable to open stream \n", __FUNCTION__);
-        status = FALSE;
-    }
-    return status;
-}
-
 #endif
 static int daemon_stop(const char *pid_file, const char *prog)
 {
@@ -484,7 +442,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
     int ipv6_enable = 0;
     int ula_enable = 0;
 #endif
-    
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
         return -1;
@@ -533,23 +490,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
        In case the ULA is not available, lan bridge's LL address can be advertise as DNS address.
     */
     sysevent_get(sefd, setok, "ula_address", lan_addr, sizeof(lan_addr));
-#ifdef _HUB4_PRODUCT_REQ_
-    if (IsValid_ULAAddress(lan_addr) == FALSE)
-    {
-        char ula_address_brlan[64] = {0};
-
-        if (getULAAddressFromInterface(ula_address_brlan) == TRUE)
-        {
-            fprintf(stderr, "%s: ula_address_brlan: %s\n", __FUNCTION__, ula_address_brlan);
-            sysevent_set(sefd, setok, "ula_address", ula_address_brlan, sizeof(ula_address_brlan));
-            sysevent_set(sefd, setok, SYSEVENT_VALID_ULA_ADDRESS, "true", 0);
-        }
-        else
-        {
-            sysevent_set(sefd, setok, SYSEVENT_VALID_ULA_ADDRESS, "false", 0);
-        }
-    }
-#endif
     if(ula_enable == 1)
         sysevent_get(sefd, setok, "ula_prefix", lan_addr_prefix, sizeof(lan_addr_prefix));
 #endif//_HUB4_PRODUCT_REQ_

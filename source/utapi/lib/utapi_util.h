@@ -216,7 +216,6 @@ int IsValid_IPAddr (const char *ip);
 int IsValid_IPAddrLastOctet (int ipoctet);
 int IsValid_Netmask (const char *ip);
 int IsValid_MACAddr (const char *mac);
-int IsValid_ULAAddress(const char *address);
 boolean_t IsInteger (const char *str);
 int IsSameNetwork(unsigned long addr1, unsigned long addr2, unsigned long mask);
 int IsLoopback(unsigned long addr);
