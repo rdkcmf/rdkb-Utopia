@@ -12501,6 +12501,7 @@ int main(int argc, char **argv)
 	breakpad_ExceptionHandler();
 	#endif
 
+#if !defined(_PLATFORM_RASPBERRYPI_)
    int pid_cnt = 0;
    while(1)
    {
@@ -12520,6 +12521,7 @@ int main(int argc, char **argv)
         break;
      }
    }
+#endif
    FIREWALL_DEBUG("ENTERED FIREWALL, argc = %d \n" COMMA argc);
 
    if (argc > 1) {
