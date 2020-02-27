@@ -1121,6 +1121,9 @@ $ForwardSSH=true
 #mTlsDCMUpload is disabled by default.
 $mTlsDCMUpload_Enable=false
 
+#mTlsLogUpload is disabled by default.
+$mTlsLogUpload_Enable=false
+
 #SyndicationFlowControl Defaults
 $SyndicationFlowControlEnable=false
 $DSCP_InitialForwardedMark=

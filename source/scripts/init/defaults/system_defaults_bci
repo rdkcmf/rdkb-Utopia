@@ -1100,6 +1100,9 @@ $ForwardSSH=true
 #mTlsDCMUpload is disabled by default
 $mTlsDCMUpload_Enable=false
 
+#mTlsLogUpload is disabled by default.
+$mTlsLogUpload_Enable=false
+
 #Enable log and core file encryption at S3 Amazon
 $encryptcloudupload=0
 $eth_wan_enabled=false
