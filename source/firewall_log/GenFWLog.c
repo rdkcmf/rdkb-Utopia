@@ -64,6 +64,7 @@
 #define IPT_COUNT_CMD "iptables -L -n -v "
 #define IPT_NAT_COUNT_CMD "iptables -t nat -L -n -v "
 #define IP6T_COUNT_CMD "ip6tables -L -n -v "
+#define IP6T_NAT_COUNT_CMD "ip6tables -t nat -L -n -v "
 //#define FIREWALL_LOG_DIR "/nvram/log/firewall"
 char FIREWALL_LOG_DIR[50];
 #define LOCK_FILE_NAME "/tmp/.fw_lock"
@@ -819,6 +820,11 @@ int main(int argc, char** argv){
         sprintf(cmd, "%s%s >> %s", IP6T_COUNT_CMD, iptables_flage, TEMP_FILE);
         printf("%s\n",cmd);
         system(cmd);
+#if defined (CONFIG_CISCO_PARCON_WALLED_GARDEN) && defined(_HUB4_PRODUCT_REQ_)
+        sprintf(cmd, "%s%s >> %s", IP6T_NAT_COUNT_CMD , iptables_flage, TEMP_FILE);
+        printf("%s\n",cmd);
+        system(cmd);
+#endif
     }
     
     if(opt == 1){
