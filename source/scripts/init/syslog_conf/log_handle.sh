@@ -481,9 +481,13 @@ then
     uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" $2
     if [ "$3" == "$DPC3939_OLD_FWLOG_FILE_PATH" ]
     then
-       cp  $DPC3939_OLD_FWLOG_FILE_PATH/???????? $2
-       cat $2/* >> $MERGED_FW_LOG_FILE
-       grep Time $MERGED_FW_LOG_FILE | sort -r -k2,5 > $SORT_FW_LOG_FILE 
+        #RDKB-27198 "cp: can't stat '/nvram/log/firewall/????????': No such file or directory"
+        count=`ls -A $DPC3939_OLD_FWLOG_FILE_PATH | wc -l`
+        if [ "$count" -ge 2 ]; then
+            cp  $DPC3939_OLD_FWLOG_FILE_PATH/???????? $2
+            cat $2/* >> $MERGED_FW_LOG_FILE
+            grep Time $MERGED_FW_LOG_FILE | sort -r -k2,5 > $SORT_FW_LOG_FILE
+        fi
     fi
 fi
 
