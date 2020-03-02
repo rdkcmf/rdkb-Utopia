@@ -391,6 +391,7 @@ fi
    FACTORY_RESET_REASON=true 
    rm -f /nvram/partners_defaults.json 
    rm -f /nvram/bootstrap.json
+   rm -f /opt/secure/RFC/tr181store.json
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
    rm -f $SYSCFG_NEW_FILE
