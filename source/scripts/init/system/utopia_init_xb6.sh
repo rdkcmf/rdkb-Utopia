@@ -435,6 +435,7 @@ fi
    rm -f /nvram/server-duid
    rm -f /nvram/partners_defaults.json 
    rm -f /nvram/bootstrap.json
+   rm -f /opt/secure/RFC/tr181store.json
    if [ -f /nvram/.CMchange_reboot_count ];then
       rm -f /nvram/.CMchange_reboot_count
    fi

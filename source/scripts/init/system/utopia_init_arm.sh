@@ -321,6 +321,7 @@ fi
 #   fi
    rm -f /nvram/partners_defaults.json
    rm -f /nvram/bootstrap.json
+   rm -f /opt/secure/RFC/tr181store.json
 # Remove syscfg and PSM storage files
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
