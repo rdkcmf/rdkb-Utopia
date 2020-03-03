@@ -9950,7 +9950,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    //SNMPv3 chains for logging and filtering
    fprintf(filter_fp, "%s\n", ":SNMPDROPLOG - [0:0]");
    fprintf(filter_fp, "%s\n", ":SNMP_FILTER - [0:0]");
-   fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
+   //Adding 10163 port to suport SNMPv3 SHA-256
+   fprintf(filter_fp, "-A INPUT -p udp -m udp --match multiport --dports 10161,10163 -j SNMP_FILTER\n");
        
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
@@ -10085,6 +10086,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #endif
 
    do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
+   do_snmp_IpAccessTable(filter_fp, "10163", AF_INET);
 
 #ifdef INTEL_PUMA7
 
@@ -10936,7 +10938,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    //SNMPv3 chains for logging and filtering
    fprintf(filter_fp, "%s\n", ":SNMPDROPLOG - [0:0]");
    fprintf(filter_fp, "%s\n", ":SNMP_FILTER - [0:0]");
-   fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
+   fprintf(filter_fp, "-A INPUT -p udp -m udp --match multiport --dports 10161,10163 -j SNMP_FILTER\n");
    fprintf(filter_fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
    fprintf(filter_fp, "-A SNMPDROPLOG -j DROP\n");
 #if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
@@ -10945,6 +10947,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
 #endif
    do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
+   do_snmp_IpAccessTable(filter_fp, "10163", AF_INET);
    }
 
    if(isComcastImage && isBridgeMode) {
@@ -11627,7 +11630,7 @@ static void do_ipv6_filter_table(FILE *fp){
 //SNMPv3 chains for logging and filtering
    fprintf(fp, "%s\n", ":SNMPDROPLOG - [0:0]");
    fprintf(fp, "%s\n", ":SNMP_FILTER - [0:0]");
-   fprintf(fp, "-A INPUT -p udp -m udp --dport 10161 -j SNMP_FILTER\n");
+   fprintf(fp, "-A INPUT -p udp -m udp --match multiport --dports 10161,10163 -j SNMP_FILTER\n");
    fprintf(fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
    fprintf(fp, "-A SNMPDROPLOG -j DROP\n");
 
@@ -11638,6 +11641,7 @@ static void do_ipv6_filter_table(FILE *fp){
        lan_telnet_ssh(fp, AF_INET6);
        do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
        do_snmp_IpAccessTable(fp, "10161", AF_INET6);
+       do_snmp_IpAccessTable(fp, "10163", AF_INET6);
        if(isComcastImage) {
           do_tr69_whitelistTable(fp, AF_INET6);
        }
@@ -11885,6 +11889,7 @@ static void do_ipv6_filter_table(FILE *fp){
       do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
 
       do_snmp_IpAccessTable(fp, "10161", AF_INET6);
+      do_snmp_IpAccessTable(fp, "10163", AF_INET6);
 
       // Development override
       if (isDevelopmentOverride) {
