@@ -139,7 +139,7 @@ service_start ()
        if [ "x$SYSCFG_ntp_server1" = "x" ] || [ "x$SYSCFG_ntp_server1" = x"no_ntp_address" ]; then
 	   if [ "x$PARTNER_ID" = "x" ]; then
 		echo "SERVICE_NTPD : PARTNER_ID is null, using the default ntp server."
-		SYSCFG_ntp_server1="ntp.ccp.xcal.tv"
+		SYSCFG_ntp_server1="time.xfinity.com"
 	   else
 		echo "NTP SERVER not available, not starting ntpd"
 		return 0

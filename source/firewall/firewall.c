@@ -8032,7 +8032,20 @@ static int do_lan2wan_IoT_Allow(FILE *filter_fp)
     */
       fprintf(filter_fp, "-A lan2wan_iot_allow -p udp --dport 53 -j ACCEPT\n");
       fprintf(filter_fp, "-A lan2wan_iot_allow -d ntp01.cmc.co.denver.comcast.net -j ACCEPT\n");
-      fprintf(filter_fp, "-A lan2wan_iot_allow -d ntp.ccp.xcal.tv -j ACCEPT\n");
+      char query[MAX_QUERY];
+      char name[MAX_QUERY];
+      int index = 1;
+      for( index = 1; index <= 5; ++index ) 
+      {
+        memset(query, 0, sizeof(query));
+        snprintf(name, sizeof(name), "ntp_server%d", index);
+        syscfg_get( NULL, name, query, sizeof(query));
+        if( query[0] != '\0')
+        {
+            fprintf(filter_fp, "-A lan2wan_iot_allow -d %s -j ACCEPT\n", query );
+        }
+      }
+  
       //fprintf(filter_fp, "-A lan2wan_iot_allow -d cpentp.services.cox.net -j ACCEPT\n");
       //fprintf(filter_fp, "-A lan2wan_iot_allow -d cpentp.services.coxlab.net -j ACCEPT\n");
       fprintf(filter_fp, "-A lan2wan_iot_allow -d fkps.ccp.xcal.tv -j ACCEPT\n");
