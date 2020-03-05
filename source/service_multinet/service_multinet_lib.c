@@ -452,6 +452,9 @@ int multinet_SyncInst(int l2netInst){
     IFType ifTypeBuf[MAX_MEMBERS];
     int i;
     
+    memset(nv_members,0,sizeof(nv_members));
+    memset(interfaceBuf,0,sizeof(interfaceBuf));
+    memset(ifTypeBuf,0,sizeof(ifTypeBuf));
     for (i = 0; i < MAX_MEMBERS; ++i) {
         nv_members[i].interface = interfaceBuf + i;
         interfaceBuf[i].type = ifTypeBuf +i;
