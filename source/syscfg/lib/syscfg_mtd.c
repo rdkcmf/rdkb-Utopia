@@ -224,7 +224,7 @@ int mtd_read_to_file (const char *mtd_device, const char *file)
         // fprintf(stderr, "%s: Error invalid mtd syscfg size %d\n", __FUNCTION__, mtd_hdr.size);
         goto err_mtd_read;
     }
-    if (-1 == (out_fd = open(file, O_CREAT | O_WRONLY | O_TRUNC))) {
+    if (-1 == (out_fd = open(file, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR))) {
         // perror("mtd_read: out file open()");
         rc = ERR_IO_FILE_OPEN;
         goto err_mtd_read;
