@@ -1231,7 +1231,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
         return -1;
 
     /*Begin write dibbler configurations*/
-    fprintf(fp, "log-level 8\n");
+    fprintf(fp, "log-level 4\n");
 #ifdef MULTILAN_FEATURE
     fprintf(fp, "reconfigure-enabled 1\n");
 #endif
