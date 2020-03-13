@@ -355,6 +355,7 @@ NOT_DEF:
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/file.h>
+#include <sys/mman.h>
 //#include "utapi.h"
 #include "ccsp_psm_helper.h"
 #include <ccsp_base_api.h>
@@ -463,7 +464,8 @@ static char *service_name = "firewall";
 
 const char* const firewall_component_id = "ccsp.firewall";
 static void* bus_handle = NULL;
-pthread_mutex_t firewall_check;
+//pthread_mutex_t firewall_check;
+fw_shm_mutex fwmutex;
 #define SERVICE_EV_COUNT 4
 enum{
     NAT_DISABLE = 0,
@@ -540,9 +542,6 @@ struct {
         { SERVICE_EV_SYSLOG_STATUS, "syslog-status" },
     } ;
 
-
-
-static int  lock_fd = -1;
 
 static int            sysevent_fd = -1;
 static char          *sysevent_name = "firewall";
@@ -12599,23 +12598,6 @@ static int service_init (int argc, char **argv)
    //int next_arg = get_options(argc, argv);
    get_options(argc, argv);
 
-   int too_much = 10;
-   // we use a O_EXCL file to ensure that only one firewall configuration instance exists
-   // for simultaneous calls the others block
-   // We also have a failsafe of a limited number of retries in case someone died and left lock on
-   mode_t mode = S_IRUSR | S_IWUSR;
-   do {
-      lock_fd = open("/tmp/firewall_lock", O_CREAT|O_EXCL, mode);    
-       if (0 > lock_fd) {
-          if (EEXIST == errno) {
-             sleep(1);
-          } else {
-             return(-4);
-          }           
-        }
-      too_much--;
-   } while (0 > lock_fd && 0 < too_much);   
-
    if (0 != (rc = syscfg_init())) {
       rc = -1;
       goto ret_err;
@@ -12675,13 +12657,7 @@ FIREWALL_DEBUG("Exiting firewall service_init()\n");
  */
 static int service_close ()
 {
-FIREWALL_DEBUG("Inside firewall service_close()\n");
-   if (0 <= lock_fd) {
-       close(lock_fd);
-       unlink("/tmp/firewall_lock");
-       ulog_debug(ULOG_FIREWALL, UL_INFO, "firewall closing firewall_lock");
-       FIREWALL_DEBUG("firewall closing firewall_lock\n");
-   }
+   FIREWALL_DEBUG("Inside firewall service_close()\n");
    if (0 <= sysevent_fd)  {
        ulog_debugf(ULOG_FIREWALL, UL_INFO, "firewall closing sysevent_fd %d, token %d",
                    sysevent_fd, sysevent_token);
@@ -12726,7 +12702,7 @@ static int service_start ()
    //clear content in firewall cron file.
    char *cron_file = crontab_dir"/"crontab_filename;
    FILE *cron_fp = NULL; // the crontab file we use to set wakeups for timed firewall events
-   pthread_mutex_lock(&firewall_check);
+   //pthread_mutex_lock(&firewall_check);
    FIREWALL_DEBUG("Inside firewall service_start()\n");
    cron_fp = fopen(cron_file, "w");
    if(cron_fp) {
@@ -12809,7 +12785,7 @@ static int service_start ()
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "started", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "started %s service", service_name);
    FIREWALL_DEBUG("started %s service\n" COMMA service_name);
-   pthread_mutex_unlock(&firewall_check);
+//   pthread_mutex_unlock(&firewall_check);
    FIREWALL_DEBUG("Exiting firewall service_start()\n");
  	return 0;
 }
@@ -12825,14 +12801,14 @@ static int service_start ()
 static int service_stop ()
 {
    char *filename1 = "/tmp/.ipt";
-	pthread_mutex_lock(&firewall_check);
+//	pthread_mutex_lock(&firewall_check);
 	FIREWALL_DEBUG("Inside firewall service_stop()\n");
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "stopping", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "stopping %s service", service_name);
 	FIREWALL_DEBUG("stopping %s service\n" COMMA service_name);
    FILE *fp = fopen(filename1, "w"); 
    if (NULL == fp) {
-   pthread_mutex_unlock(&firewall_check);
+//   pthread_mutex_unlock(&firewall_check);
       return(-2);
    }
    prepare_stopped_ipv4_firewall(fp);
@@ -12848,7 +12824,7 @@ static int service_stop ()
    sysevent_set(sysevent_fd, sysevent_token, "firewall-status", "stopped", 0);
    ulogf(ULOG_FIREWALL, UL_INFO, "stopped %s service", service_name);
    	FIREWALL_DEBUG("stopped %s service\n" COMMA service_name);
- pthread_mutex_unlock(&firewall_check);
+ //pthread_mutex_unlock(&firewall_check);
  	FIREWALL_DEBUG("Exiting firewall service_stop()\n");
     return 0;
 }
@@ -12867,8 +12843,115 @@ static int service_restart ()
 // just recalculate the rules - service start does that
 //    (void) service_stop();
 	FIREWALL_DEBUG("Inside Firewall service_restart () \n");
-    return service_start();
+	return service_start();
 }
+
+fw_shm_mutex fw_shm_mutex_init(char *mutexName) {
+
+	errno = 0;
+	fw_shm_mutex firewallMutex;
+	memset(&firewallMutex,0,sizeof firewallMutex);
+	strncpy(firewallMutex.fw_mutex, mutexName,sizeof(firewallMutex.fw_mutex));
+	
+	firewallMutex.fw_shm_fd= shm_open(mutexName, O_RDWR, 0660);
+
+	 if (errno == ENOENT) 
+	 {
+     	    FIREWALL_DEBUG("shm open in create mode\n");
+	    firewallMutex.fw_shm_fd = shm_open(mutexName, O_RDWR|O_CREAT, 0660);
+	    firewallMutex.fw_shm_create = 1;
+	 }
+
+
+	 if (firewallMutex.fw_shm_fd == -1) 
+	 {
+	    FIREWALL_DEBUG("shm_open call failed\n");
+	    return firewallMutex;
+	  }
+
+	  if (ftruncate(firewallMutex.fw_shm_fd, sizeof(pthread_mutex_t)) != 0) {
+	    FIREWALL_DEBUG("ftruncate call failed\n");
+	    return firewallMutex;
+	  }
+
+	  // Using mmap to map the pthread mutex into the shared memory.
+	  void *address = mmap(
+	    NULL,
+	    sizeof(pthread_mutex_t),
+	    PROT_READ|PROT_WRITE,
+	    MAP_SHARED,
+	    firewallMutex.fw_shm_fd,
+	    0
+	  );
+
+	  if (address == MAP_FAILED) {
+	    FIREWALL_DEBUG("mmap failed\n");
+	    return firewallMutex;
+	  }
+
+	  firewallMutex.ptr  = (pthread_mutex_t *)address;
+
+	  if (firewallMutex.fw_shm_create) 
+	  {
+
+		pthread_mutexattr_t attr;
+     	        if (pthread_mutexattr_init(&attr)) 
+		{
+			FIREWALL_DEBUG("pthread_mutexattr_init failed\n");
+		    	return firewallMutex;
+		}
+		int error = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+		if (error) 
+		{
+			FIREWALL_DEBUG("pthread_mutexattr_setpshared error %d: %s\n" COMMA error COMMA strerror(error));
+		      	return firewallMutex;
+		}
+
+		error = pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT);
+		if (error) 
+		{
+			 FIREWALL_DEBUG("pthread_mutexattr_setprotocol error %d: %s\n" COMMA error COMMA strerror(error));
+		}
+
+     	   	error = pthread_mutexattr_setrobust_np(&attr, PTHREAD_MUTEX_ROBUST_NP);
+	    	if (error) 
+		{
+			FIREWALL_DEBUG("pthread_mutexattr_setrobust_np error %d: %s\n" COMMA error COMMA strerror(error));
+	    	}
+
+
+		if (pthread_mutex_init(firewallMutex.ptr, &attr)) 
+		{
+			FIREWALL_DEBUG("pthread_mutex_init failed\n");
+			return firewallMutex;
+		}
+	  }
+		  return firewallMutex;
+}
+
+
+int fw_shm_mutex_close(fw_shm_mutex fwMutex) 
+{
+
+	  if (munmap((void *)fwMutex.ptr, sizeof(pthread_mutex_t))) 
+	  {
+		FIREWALL_DEBUG("munmap failed\n");
+	 	return -1;
+	  }
+
+	  fwMutex.ptr = NULL;
+
+	  if (close(fwMutex.fw_shm_fd)) 
+	  {
+     		FIREWALL_DEBUG("closing file handler");
+	    	return -1;
+	  }
+
+	  fwMutex.fw_shm_fd = 0;
+  return 0;
+}
+
+
 
 /*
  * Purpose        : Instantiate ipv4 and ipv6 firewall 
@@ -12886,6 +12969,9 @@ int main(int argc, char **argv)
 {
    int rc = 0;
    char syslog_status[32];
+   pid_t process_id;
+   
+   process_id = getpid();
 
    ulogf(ULOG_FIREWALL, UL_INFO, "%s called with %s", service_name, (argc > 1) ? argv[1] : "no arg");
 
@@ -12897,7 +12983,8 @@ int main(int argc, char **argv)
 	#ifdef INCLUDE_BREAKPAD
 	breakpad_ExceptionHandler();
 	#endif
-        FIREWALL_DEBUG("ENTERED FIREWALL, argc = %d \n" COMMA argc);
+
+   FIREWALL_DEBUG("ENTERED FIREWALL, argc = %d \n" COMMA argc);
 
    if (argc > 1) {
        if (SERVICE_EV_UNKNOWN == (event = get_service_event(argv[1]))) {
@@ -12914,12 +13001,41 @@ int main(int argc, char **argv)
          argv++;
       }
    }
-	pthread_mutex_init(&firewall_check, NULL);
+//	pthread_mutex_init(&firewall_check, NULL);
+
+
+  fw_shm_mutex fwmutex = fw_shm_mutex_init(SHM_MUTEX);
+  if (fwmutex.ptr == NULL) {
+    rc = -1;
+    return rc;
+  }
+
+  if (fwmutex.fw_shm_create) {
+    FIREWALL_DEBUG("Created shm mutex\n");
+  }
+
+int error;
+  // Use pthread calls for locking and unlocking.
+  FIREWALL_DEBUG(" Process %d is waiting for lock\n" COMMA process_id);
+  error = pthread_mutex_lock(fwmutex.ptr);
+
+  FIREWALL_DEBUG(" Process %d acquired the lock\n" COMMA process_id);
+  if (error == EOWNERDEAD) 
+  {
+	FIREWALL_DEBUG("Owner dead, acquring the lock\n");
+	error = pthread_mutex_consistent_np(fwmutex.ptr);
+  }
+
+
    rc = service_init(argc, argv);
    if (rc < 0) {
        service_close();
        if(firewallfp)
        fclose(firewallfp);
+	 pthread_mutex_unlock(fwmutex.ptr);
+	  if (fw_shm_mutex_close(fwmutex)) {
+	    return -1;
+	  }
        return rc;
    }
 
@@ -12961,5 +13077,11 @@ int main(int argc, char **argv)
 
         if(firewallfp)
        fclose(firewallfp);
+
+	 pthread_mutex_unlock(fwmutex.ptr);
+	 if (fw_shm_mutex_close(fwmutex)) {
+	    return -1;
+	 }
+
    return(rc);
 }

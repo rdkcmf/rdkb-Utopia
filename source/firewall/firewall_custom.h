@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include<stdlib.h>
+#include <pthread.h> 
 #include "ccsp_custom.h"
 extern FILE *firewallfp;
 #define FW_DEBUG 1
@@ -61,10 +62,25 @@ printf(" FILE Pointer is NULL \n");
 #define FIREWALL_DEBUG(x)
 #endif
 
+#define SHM_MUTEX "FirewallMutex"
+
 typedef enum {
     IP_V4 = 0,
     IP_V6,
 }ip_ver_t;
+
+typedef struct fw_shm_mutex {
+  pthread_mutex_t *ptr; 
+  int fw_shm_create;        
+  int fw_shm_fd;       
+  char fw_mutex[32];        
+
+} fw_shm_mutex;
+
+
+fw_shm_mutex fw_shm_mutex_init(char *name);
+
+int fw_shm_mutex_close(fw_shm_mutex mutex);
 
 /*
  *  rdkb_arm is same as 3939/3941
