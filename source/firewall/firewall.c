@@ -7680,16 +7680,14 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                 if(strstr(query, "://") != 0) {
                     fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp --icase -j %s\n", strstr(query, "://") + 3, drop_log);
 #ifdef _HUB4_PRODUCT_REQ_
-                    //In Hub4 keyword blocking is not working with FORWARD chain rules itself after CPE (dnsmasq) act as DNS Proxy.
-                    //Add rules in OUTPUT chain also to resolve this issue.
-                    fprintf(fp, "-I OUTPUT -o %s -m string --string \"%s\" --algo kmp --icase -j DROP\n", current_wan_ifname, strstr(query, "://") + 3);
-                    fprintf(fp, "-I OUTPUT -o %s -m string --string \"%s\" --algo kmp --icase -j %s\n", current_wan_ifname, strstr(query, "://") + 3, drop_log);
+                    //In Hub4 keyword blocking feature is not working with FORWARD chain rules as CPE (dnsmasq) acts as DNS Proxy.
+                    //Add rules in INPUT chain to resolve this issue.
+                    fprintf(fp, "-I INPUT -i %s -j lan2wan_pc_site \n", lan_ifname);
 #endif
                 } else {
                     fprintf(fp, "-A lan2wan_pc_site -m string --string \"%s\" --algo kmp --icase -j %s\n", query, drop_log);
 #ifdef _HUB4_PRODUCT_REQ_
-                    fprintf(fp, "-I OUTPUT -o %s -m string --string \"%s\" --algo kmp --icase -j DROP\n", current_wan_ifname, query);
-                    fprintf(fp, "-I OUTPUT -o %s -m string --string \"%s\" --algo kmp --icase -j %s\n", current_wan_ifname, query, drop_log);
+                    fprintf(fp, "-I INPUT -i %s -j lan2wan_pc_site \n", lan_ifname);
 #endif
                 }
             }
