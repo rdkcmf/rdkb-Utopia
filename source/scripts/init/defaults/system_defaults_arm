@@ -41,7 +41,7 @@
 ################################################################################
 
 # Version of the database. 
-$$Version=15
+$$Version=16
 
 #-------------------------------------------------------------------
 #     sysevent namespace
@@ -1218,6 +1218,9 @@ $low_queue_reboot_threshold=0
 
 #Enable DNS strict order
 $DNSStrictOrder=false
+
+# Rabid Enable
+$$Advsecurity_RabidEnable=1
 
 # Rabid memory limit
 $Advsecurity_RabidMemoryLimit=20
