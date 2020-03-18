@@ -43,8 +43,6 @@ typedef enum {
     CMD_SET,
     CMD_UNSET,
     CMD_COMMIT,
-    CMD_GETENCRYPT,
-    CMD_SETENCRYPT,
     CMD_ISMATCH,
     CMD_SHOW,
     CMD_DESTROY,
@@ -63,7 +61,7 @@ static inline void syscfg_create_usage()
 
 static inline void syscfg_usage()
 {
-    printf("Usage: syscfg [show | set [ns] name value | get [ns] name | unset [ns] name | \n       setenncrypt [ns] name value | getencrypt [ns] name | \n       ismatch [ns] name value | commit]\n");
+    printf("Usage: syscfg [show | set [ns] name value | get [ns] name | unset [ns] name | \n       ismatch [ns] name value | commit]\n");
 }
 
 static void print_check_error(int rc, const char *mtd_device)
@@ -160,10 +158,8 @@ static int get_cmd (const char *cmdstr)
 
     if (0 == strcasecmp(cmdstr, "get"))         { return CMD_GET; }
     if (0 == strcasecmp(cmdstr, "ismatch"))     { return CMD_ISMATCH; }
-    if (0 == strcasecmp(cmdstr, "getencrypt"))  { return CMD_GETENCRYPT; }
     if (0 == strcasecmp(cmdstr, "set"))         { return CMD_SET; }
     if (0 == strcasecmp(cmdstr, "unset"))       { return CMD_UNSET; }
-    if (0 == strcasecmp(cmdstr, "setencrypt"))  { return CMD_SETENCRYPT; }
     if (0 == strcasecmp(cmdstr, "commit"))      { return CMD_COMMIT; }
     if (0 == strcasecmp(cmdstr, "show"))        { return CMD_SHOW; }
     if (0 == strcasecmp(cmdstr, "destroy"))     { return CMD_DESTROY; }
@@ -273,7 +269,6 @@ int main(int argc, char **argv)
    cmd_t cmdtype = get_cmd(cmd[0]);
    switch (cmdtype) {
    case CMD_GET:
-   case CMD_GETENCRYPT:
        if (argc < 2) {
            syscfg_usage();
            return 1;
@@ -286,11 +281,7 @@ int main(int argc, char **argv)
            name = cmd[1];
        }
        // scripts rely on the output of get so don't give a error message
-       if (CMD_GET == cmdtype) {
-           rc = syscfg_get(ns, name, val, sizeof(val));
-       } else {
-           rc = syscfg_get_encrypt(ns, name, val, sizeof(val));
-       }
+       rc = syscfg_get(ns, name, val, sizeof(val));
        if (0 == rc) {
            puts(val);
        } else {
@@ -299,7 +290,6 @@ int main(int argc, char **argv)
        break;
 
    case CMD_SET:
-   case CMD_SETENCRYPT:
        if (argc < 3) {
            syscfg_usage();
            return 1;
@@ -312,11 +302,7 @@ int main(int argc, char **argv)
            name = cmd[1];
            value = cmd[2];
        }
-       if (CMD_SET == cmdtype) {
-           rc = syscfg_set(ns, name, value);
-       } else {
-           rc = syscfg_set_encrypt(ns, name, value);
-       }
+       rc = syscfg_set(ns, name, value);
        if (0 == rc) {
            // printf("success\n");
            // syscfg_commit();   -- implicit commit

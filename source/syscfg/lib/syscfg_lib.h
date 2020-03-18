@@ -211,8 +211,6 @@ static char* _syscfg_get (const char *ns, const char *name);
 static int _syscfg_getall (char *buf, int bufsz);
 static void _syscfg_destroy ();
 
-static void encrypt_str (const char *instr, char *outstr);
-
 static inline int read_lock (syscfg_shm_ctx *ctx);
 static inline int read_unlock (syscfg_shm_ctx *ctx);
 static inline int write_lock (syscfg_shm_ctx *ctx);

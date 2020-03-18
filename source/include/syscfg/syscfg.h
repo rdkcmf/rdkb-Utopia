@@ -194,39 +194,6 @@ int syscfg_unset(const char *ns, const char *name);
 int syscfg_commit();
 
 /*
- * Procedure     : syscfg_get_encrypt
- * Purpose       : Retrieve an encrypted entry from syscfg
- * Parameters    :   
- *   ns  -  namespace string (optional)
- *   name  - name string, entry to add
- *   out_val  - buffer to store decrypted output value string
- *   outbufsz  - output buffer size
- * Return Values :
- *    0 on success, -1 on error
- * Notes: 
- *   Use this only for retrieving values set using set_encrypt method
- */
-int syscfg_get_encrypt (const char *ns, const char *name, char *out_val, int outbufsz);
-
-/*
- * Procedure     : syscfg_set_encrypt
- * Purpose       : Adds an entry to syscfg in encrypted form
- * Parameters    :   
- *   ns  -  namespace string (optional)
- *   name  - name string, entry to add
- *   value  - value string to associate with name
- * Return Values :
- *    0 - success
- *    ERR_xxx - various errors codes dependening on the failure
- * Notes         :
- *    Should use syscfg_get_encrypt to get back the original string
- *    Only changes syscfg hash table, persistent store contents
- *    not changed until 'commit' operation
- *    When committed, only the encrypted value is stored in the system
- */
-int syscfg_set_encrypt (const char *ns, const char *name, const char *value);
-
-/*
  * Procedure     : syscfg_is_match
  * Purpose       : Compare the value of an entry from syscfg 
  * Parameters    :   

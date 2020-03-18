@@ -124,96 +124,6 @@ int syscfg_set (const char *ns, const char *name, const char *value)
 }
 
 /*
- * Procedure     : syscfg_get_encrypt
- * Purpose       : Retrieve an encrypted entry from syscfg
- * Parameters    :   
- *   ns  -  namespace string (optional)
- *   name  - name string, entry to add
- *   out_val  - buffer to store decrypted output value string
- *   outbufsz  - output buffer size
- * Return Values :
- *    0 on success, -1 on error
- * Notes: 
- *   Use this only for retrieving values set using set_encrypt method
- */
-int syscfg_get_encrypt (const char *ns, const char *name, char *out_val, int outbufsz)
-{
-    if (0 == syscfg_initialized || NULL == name || NULL == out_val) {
-        return -1;
-    }
-
-    /*
-    ** RDKB-7135, CID-32913, length of the string should be at least 2
-    ** strlen replaced with safer strnlen to limit the memory allocated.
-    ** strnlen value incremented by 1 to append string termination.
-    */
-    if(outbufsz > 1)
-    {
-        char *val = _syscfg_get(ns, name);
-        if (val) {
-            char *val_decrypt = malloc(strnlen( val, MAX_NAME_LEN)+1); 
-            if (NULL == val_decrypt) {
-                return ERR_MEM_ALLOC;
-            }
-            memset(val_decrypt, 0, strnlen( val, MAX_NAME_LEN)+1);
-            encrypt_str(val, val_decrypt);
-            strncpy(out_val, val_decrypt, outbufsz-1);
-            out_val[outbufsz-1] = '\0';
-            free(val_decrypt);/*RDKB-7135, CID-33450, free unused resources before exit */
-            return 0;
-        }
-    }
-    return -1;
-}
-
-/*
- * Procedure     : syscfg_set_encrypt
- * Purpose       : Adds an entry to syscfg in encrypted form
- * Parameters    :   
- *   ns  -  namespace string (optional)
- *   name  - name string, entry to add
- *   value  - value string to associate with name
- * Return Values :
- *    0 - success
- *    ERR_xxx - various errors codes dependening on the failure
- * Notes         :
- *    Should use syscfg_get_encrypt to get back the original string
- *    Only changes syscfg hash table, persistent store contents
- *    not changed until 'commit' operation
- *    When committed, only the encrypted value is stored in the system
- */
-int syscfg_set_encrypt (const char *ns, const char *name, const char *value)
-{
-    int rc = 0;
-
-    if (0 == syscfg_initialized || NULL == syscfg_ctx) {
-        return ERR_NOT_INITIALIZED;
-    }
-    if (NULL == name || NULL == value) {
-        return ERR_INVALID_PARAM;
-    }
-
-    /*
-    ** RDKB-7135, CID-32978,
-    ** strlen replaced with safer strnlen to limit the memory allocated.
-    ** strnlen value incremented by 1 to append string termination.
-    */
-    char *value_encrypt = malloc(strnlen(value, MAX_NAME_LEN)+1);
-    if (NULL == value_encrypt) {
-        return ERR_MEM_ALLOC;
-    }
-    memset(value_encrypt, 0, strnlen(value, MAX_NAME_LEN)+1);
-
-    encrypt_str(value, value_encrypt);
-
-    rc = _syscfg_set( ns, name, value_encrypt, 0);
-
-    free(value_encrypt); /*Once the value is set free it*/
-
-    return rc;
-}
-
-/*
  * Procedure     : syscfg_getall
  * Purpose       : Retrieve all entries from syscfg
  * Parameters    :   
@@ -600,20 +510,6 @@ static unsigned int hash (const char *str)
     return hash;
 }
 
-/*
- * A simple XOR encryption using a key
- * Assumption: outstr buffer size equal to instr
- */
-static void encrypt_str (const char *instr, char *outstr)
-{ 
-    unsigned int key = 5381;
-
-    for(;*instr;instr++,outstr++) {
-        *outstr = (char) ((*instr) ^ key);
-    }
-    *outstr = '\0';
-}
-
 /******************************************************************************
  *                Internal lock apis
  *****************************************************************************/
@@ -971,7 +867,7 @@ static char* _syscfg_get (const char *ns, const char *name)
     if (ns) {
         snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
     } else {
-        strncpy(name_p, name, sizeof(name_p));
+        snprintf(name_p, sizeof(name_p), "%s", name);
     }
 
     int index = hash(name_p) % SYSCFG_HASH_TABLE_SZ;
@@ -982,12 +878,12 @@ static char* _syscfg_get (const char *ns, const char *name)
         entryoffset = HT_ENTRY_NEXT(ctx,entryoffset);
     }
 
+    rw_unlock(ctx);
+
     if (entryoffset) {
-        rw_unlock(ctx);
         return HT_ENTRY_VALUE(ctx,entryoffset);
     }
 
-    rw_unlock(ctx);
     return NULL;
 }
 
