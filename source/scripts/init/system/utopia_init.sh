@@ -418,6 +418,14 @@ fi
     rm -f /nvram/DISABLE_ONBOARD_LOGGING
     rm -rf /nvram2/onboardlogs
    fi
+   if [ -f /etc/WEBCONFIG_ENABLE ]; then
+   # Remove webconfig_db.bin on factory reset on all RDKB platforms
+     rm -f /nvram/webconfig_db.bin
+     if [ "$BOX_TYPE" = "XB3" ];then
+        ATOM_RPC_IP=`cat /etc/device.properties | grep ATOM_ARPING_IP | cut -f 2 -d"="`
+        rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
+     fi
+   fi
 
    # Remove lxy L2 dir
    LOG_FILE=/rdklogs/logs/lxy.log

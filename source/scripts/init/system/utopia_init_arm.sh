@@ -346,6 +346,13 @@ fi
    	rm -f /nvram/.device_onboarded
    	rm -rf /nvram2/onboardlogs
    fi
+   if [ -f /etc/WEBCONFIG_ENABLE ]; then
+       # Remove webconfig_db.bin on factory reset on all RDKB platforms
+        rm -f /nvram/webconfig_db.bin
+        if [ "$BOX_TYPE" = "XB3" ];then
+           rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
+        fi
+   fi
      touch /nvram/.apply_partner_defaults   
    #>>zqiu
    create_wifi_default
