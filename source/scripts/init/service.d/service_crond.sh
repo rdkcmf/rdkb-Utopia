@@ -45,6 +45,7 @@
 # ----------------------------------------------------------------------------
 
 source /etc/utopia/service.d/ulog_functions.sh
+source /etc/utopia/service.d/log_capture_path.sh
 
 if [ -f /etc/device.properties ]
 then
