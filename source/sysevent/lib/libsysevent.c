@@ -411,29 +411,29 @@ unsigned int SE_string2size(const char *str)
  */
 int SE_msg_add_string(char *msg, unsigned int size, const char *str) 
 {
-   if (NULL == msg) {
-      return (0);
-   }
-   int aligned_size      = (NULL == str ? 0 : align(strlen(str)+1));
-   unsigned int msg_increase_size = (NULL == str ? SE_MSG_STRING_OVERHEAD : SE_string2size(str));  
-
-   if  ( msg_increase_size > size ) {
-      return(0);
-   } else {
-      memset(msg, 0, msg_increase_size);
-   }
-
+   unsigned int aligned_size;
+   unsigned int msg_increase_size;
    se_msg_string *tstruct;
-   tstruct       = (se_msg_string *) (msg);
+
+   if (msg == NULL)
+      return 0;
+
+   aligned_size = (str == NULL) ? 0 : align(strlen(str)+1);
+   msg_increase_size = sizeof(se_msg_string) + aligned_size;
+
+   if (msg_increase_size > size)
+      return 0;
+
+   tstruct = (se_msg_string *) msg;
    tstruct->size = htonl(aligned_size);
-  /* 
-   * Originally a se_msg_string had a zero length variable chat str[0]
-   * which was changed to support inclusion of header files in ISO C code,
-   * so instead we just know that the string starts immediately after size
-   */
-   //snprintf (tstruct->str, aligned_size, "%s", str);
-   snprintf (((char *)(&tstruct->size))+sizeof(tstruct->size), aligned_size, "%s", str);
-   return(msg_increase_size);
+
+   if (aligned_size != 0)
+   {
+      msg += sizeof(se_msg_string);
+      strncpy (msg, str, aligned_size);
+   }
+
+   return msg_increase_size;
 }
 
 int SE_msg_add_data(char *msg, unsigned int size, const char *data, const int data_length)
