@@ -1021,6 +1021,9 @@ $UpdateNvram=true
 #GW_health default Value
 $gw_health=0
 
+#Wan_LinkHeal_Enable default Value
+$wanlinkheal=true
+
 #UPnP Refactor default Value
 $Refactor=false
 
