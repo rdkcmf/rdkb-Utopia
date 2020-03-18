@@ -457,6 +457,11 @@ fi
 	rm -f /nvram/DISABLE_ONBOARD_LOGGING
    	rm -rf /nvram2/onboardlogs
    fi
+
+   if [ -f /etc/WEBCONFIG_ENABLE ]; then
+    # Remove webconfig_db.bin on factory reset on all RDKB platforms
+    rm -f /nvram/webconfig_db.bin
+   fi
    touch $SYSCFG_NEW_FILE
    touch $SYSCFG_BKUP_FILE
    touch $SYSCFG_FILE

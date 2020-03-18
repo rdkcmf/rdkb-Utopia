@@ -512,15 +512,15 @@ char * json_file_parse( char *path )
 
 	//File read
 	fileRead = fopen( path, "r" );
-
+  
 	//Null Check
 	if( fileRead == NULL ) 
 	{
-	 	APPLY_PRINT( "%s-%d : Error in opening JSON file\n" , __FUNCTION__, __LINE__ );
+	 	APPLY_PRINT( "%s-%d : Error in opening %s JSON file\n" , __FUNCTION__, __LINE__,path );
 		return NULL;
 	}
 
-	//Calculate length for memory allocation	 
+	//Calculate length for memory allocation 
 	fseek( fileRead, 0, SEEK_END );
 	len = ftell( fileRead );
 	fseek( fileRead, 0, SEEK_SET );
@@ -785,17 +785,17 @@ void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram
     char *version_etc = NULL;
     char *version_nvram = NULL;
     char *version_nvram_key = NULL;
-
+  
     if (!do_compare || !root_etc_json || !root_nvram_json)
         return;
 
     /* Check if entire parameters need to be compared based on version number
-    */ 
+    */
     properties_etc = cJSON_GetObjectItem(root_etc_json,"properties");
-        
+  
     if (!properties_etc)
         *do_compare = true;
-   
+  
     if (properties_etc)
     {
         properties_nvram = cJSON_GetObjectItem(root_nvram_json,"properties");
@@ -1075,6 +1075,14 @@ void addInSysCfgdDB(char * key, char * value)
          set_syscfg_partner_values( value,"IPv6PrimaryDhcpServerOptions" );
       }
    }
+   if ( 0 == strcmp ( key, "Device.X_RDK_WebConfig.URL") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "WEBCONFIG_INIT_URL" ) )
+      {
+         set_syscfg_partner_values( value,"WEBCONFIG_INIT_URL" );
+         IsPSMMigrationNeeded = 1;
+      }
+   }
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") )
    {
       if ( 0 == IsValuePresentinSyscfgDB( "IPv6SecondaryDhcpServerOptions" ) )
@@ -1128,6 +1136,11 @@ void updateSysCfgdDB(char * key, char * value)
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv4SecondaryDhcpServerOptions") )
    {
          set_syscfg_partner_values( value,"IPv4SecondaryDhcpServerOptions" );
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDK_WebConfig.URL") )
+   {
+         set_syscfg_partner_values( value,"WebConfig_url" );
+         IsPSMMigrationNeeded = 1;
    }
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
    {
@@ -1258,7 +1271,7 @@ int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *P
 int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,char *PartnerID)
 {
    APPLY_PRINT("%s\n", __FUNCTION__);
-
+  
    cJSON * root_nvram_bs_json = cJSON_Parse(partner_nvram_bs_obj);
    cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);
 
@@ -1641,6 +1654,22 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 							{
 									APPLY_PRINT("%s - Default TR69CertLocation Value is NULL\n", __FUNCTION__ );
 							}
+					}
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDK_WebConfig.URL"), "ActiveValue");
+					if ( paramObjVal != NULL )
+					{
+						char *webconfigurl = NULL;
+					 	webconfigurl = paramObjVal->valuestring;
+
+						if (webconfigurl != NULL)
+						{
+							 set_syscfg_partner_values(webconfigurl,"WEBCONFIG_INIT_URL");
+							webconfigurl = NULL;
+						}
+						else
+						{
+							APPLY_PRINT("%s - webconfigurl Value is NULL\n", __FUNCTION__ );
+						}
 					}
 
 					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix"), "ActiveValue");
