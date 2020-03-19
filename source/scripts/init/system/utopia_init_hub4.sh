@@ -512,6 +512,25 @@ rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
   /usr/bin/onboarding_log "[utopia][init] Detected last reboot reason as $rebootReason"
 fi
 
+#SKYH4-2611 After FR boot-up needs to check default IP and lan ip is same or not
+if [ "$FACTORY_RESET_REASON" = "true" ]; then
+   #brlan0 v4 address check
+   LAN_IF_NAME=`syscfg get lan_ifname`
+   LAN_CURRENT_IP=`ifconfig $LAN_IF_NAME | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+   LAN_DEFAULT_IP=`cat /usr/ccsp/config/bbhm_def_cfg.xml | grep dmsb.l3net.4.V4Addr | cut -d ">" -f 2 | cut -d "<" -f 1`
+
+   echo "[utopia][init] After FR - LAN_IF_NAME:$LAN_IF_NAME Current LAN_IP:$LAN_CURRENT_IP Default LAN_IP:$LAN_DEFAULT_IP"
+
+   if [ "$LAN_IF_NAME" != "" ] && [ "$LAN_CURRENT_IP" != "" ] && [ "$LAN_DEFAULT_IP" != "" ] && [ "$LAN_DEFAULT_IP" != "$LAN_CURRENT_IP" ]; then
+       echo "[utopia][init] Current and Default LAN IP mismatch. so needs to change LAN IP as $LAN_DEFAULT_IP"
+
+       LAN_DEFAULT_NETMASK=`cat /usr/ccsp/config/bbhm_def_cfg.xml | grep dmsb.l3net.4.V4SubnetMask | cut -d ">" -f 2 | cut -d "<" -f 1`
+       ifconfig $LAN_IF_NAME down
+       ifconfig $LAN_IF_NAME $LAN_DEFAULT_IP netmask $LAN_DEFAULT_NETMASK
+       ifconfig $LAN_IF_NAME up
+   fi
+fi
+
 #RDKB-24155 - TLVData.bin should not be used in EWAN mode
 eth_wan_enable=`syscfg get eth_wan_enabled`
 if [ "$eth_wan_enable" = "true" ] && [ -f $TR69TLVFILE ]; then
