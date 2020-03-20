@@ -194,7 +194,7 @@ SYSCFG_TMP_LOCATION=/tmp
 SYSCFG_FILE=$SYSCFG_TMP_LOCATION/syscfg.db
 SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg.db
 SYSCFG_OLDBKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
-PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
+PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_TMP_LOCATION/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"  
 
@@ -383,6 +383,13 @@ else
 		rm -f /nvram/cacert.pem
 	fi
 	cp -f /etc/cacert.pem /nvram/
+fi
+
+#CISCOXB3-6085:Removing current configuration from nvram as a part of PSM migration.
+if [ -f /nvram/bbhm_cur_cfg.xml  ]; then
+       mv /nvram/bbhm_cur_cfg.xml $PSM_CUR_XML_CONFIG_FILE_NAME
+else	
+	cp -f $PSM_BAK_XML_CONFIG_FILE_NAME $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
 
 #echo "[utopia][init] Starting system logging"
