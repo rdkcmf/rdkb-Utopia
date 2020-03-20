@@ -12581,7 +12581,6 @@ memset(buf,0,200);
     }
 }
 
-<<<<<<< HEAD
 /*
  * Function to add IP Table rules regarding IPv4 Fragmented Packets
  */
@@ -12819,8 +12818,6 @@ static int do_ipflooddetectv6(FILE *fp)
     }
 }
 
-=======
->>>>>>> ab28bc2... RDKB-25328:Refactor firewall code in Utopia & CPC.
 /*
  * Name           :  service_init
  * Purpose        :  Initialize resources & retrieve configurations
