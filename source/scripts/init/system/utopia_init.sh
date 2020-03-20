@@ -755,6 +755,15 @@ fi
 if [ -f "/nvram/RDKB3939-500_RebootNotByPwrOff" ]; then
 	rm /nvram/RDKB3939-500_RebootNotByPwrOff
 fi
+
+# Start Fixing CISCOXB3-5905
+if [ -e "/tmp/.nvmnt.log" ]; then
+    cat /tmp/.nvmnt.log >> /rdklogs/logs/Consolelog.txt.0
+    rm -rf /tmp/.nvmnt.log
+    touch /nvram/.nvmnt.log
+fi
+# Ending Fixing CISCOXB3-5905
+
 #endif 
 
 echo_t "[utopia][init] setting Multicast MAC before any switch configs"
