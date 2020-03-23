@@ -77,6 +77,11 @@
 #define OnboardLog(...)
 #endif
 
+#if defined (_COSA_BCM_ARM_) && defined (_MACSEC_SUPPORT_) // TCXB7 only
+#include <platform_hal.h>
+#endif
+
+
 #define PROG_NAME       "SERVICE-WAN"
 #define ER_NETDEVNAME "erouter0"
 
@@ -567,12 +572,20 @@ static int wan_start(struct serv_wan *sw)
         sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
         return -1;
     }
-#if defined (_XB7_PRODUCT_REQ_) && defined (_COSA_BCM_ARM_) && defined (_MACSEC_SUPPORT_) // TCXB7 only     
+#if defined (_COSA_BCM_ARM_) && defined (_MACSEC_SUPPORT_) // TCXB7 only     
     char isEthEnabled[64]={'\0'};
     if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0)) {
+        int macSecStarted;
+        BOOLEAN macSecEnabled;
+
         fprintf(stderr, "Calling platform_hal_StartMACsec()\n");
         extern    int platform_hal_StartMACsec(int ethPort, int timeoutSec);
-        platform_hal_StartMACsec(3, 10);
+        macSecStarted = platform_hal_StartMACsec(3, 10);
+        if (( RETURN_ERR == platform_hal_GetMACsecEnable( 3, &macSecEnabled )) || ((macSecEnabled == TRUE) && (macSecStarted == RETURN_ERR))) {
+            fprintf(stderr, "%s: macsec start error\n", __FUNCTION__);
+            sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
+            return -1;
+        }
     }
 #endif    
 #endif /*_WAN_MANAGER_ENABLED_*/
