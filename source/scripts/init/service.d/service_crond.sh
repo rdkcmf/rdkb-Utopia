@@ -243,6 +243,10 @@ service_start ()
       # log mem and cpu info once an hour
       echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
       echo "nice -n 19 sh /usr/ccsp/tad/log_hourly.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
+      if [ -f /usr/ccsp/rbus_status_logger.sh ]
+      then
+          echo "/usr/ccsp/rbus_status_logger.sh" >> /etc/cron/cron.hourly/log_hourly.sh
+      fi
       chmod 700 /etc/cron/cron.hourly/log_hourly.sh
    
       # add starting the process-monitor every 5 minute
