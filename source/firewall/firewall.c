@@ -10415,6 +10415,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":lan2self_plugins - [0:0]");
    fprintf(filter_fp, "%s\n", ":self2lan - [0:0]");
    fprintf(filter_fp, "%s\n", ":self2lan_plugins - [0:0]");
+   fprintf(filter_fp, "%s\n", ":moca_isolation - [0:0]");
    //>>DOS
 #ifdef _COSA_INTEL_XB3_ARM_
    fprintf(filter_fp, "%s\n", ":wandosattack - [0:0]");
@@ -11207,6 +11208,8 @@ int retPsm = 0;
 const char *HomeNetIsolation = "dmsb.l2net.HomeNetworkIsolation";
 const char *HomePrivateLan = "dmsb.l2net.1.Name";
 const char *HomeMoCALan = "dmsb.l2net.9.Name";
+char MoCA_AccountIsolation[8] = {0};
+int rc = 0;
    if(bus_handle != NULL)
    {
        retPsm = PSM_VALUE_GET_STRING(HomeNetIsolation, pVal);
@@ -11242,12 +11245,57 @@ const char *HomeMoCALan = "dmsb.l2net.9.Name";
           fprintf(filter_fp, "-A FORWARD -i %s -o erouter0 -j ACCEPT\n", mLan);
           fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", mLan,mLan);
           fprintf(filter_fp, "-A OUTPUT -o %s -j ACCEPT\n",mLan);
- 
+          MoCA_AccountIsolation[0] = '\0';
+          rc = syscfg_get(NULL, "enableMocaAccountIsolation", MoCA_AccountIsolation, sizeof(MoCA_AccountIsolation));
+          if (0 != rc || '\0' == MoCA_AccountIsolation[0]) {
+	  }
+          else if (0 == strcmp("true", MoCA_AccountIsolation)) {
+          // increment ttl if upnp discovery from brlan0
+          fprintf(mangle_fp, "-A PREROUTING -i %s -d 239.255.255.250 -j TTL --ttl-inc 1\n", pLan);
+
+          // traffic between brlan0 and brlan10, subject to moca_isolation
+          fprintf(filter_fp, "-I FORWARD -i %s -o %s -j moca_isolation\n", pLan, mLan);
+          fprintf(filter_fp, "-I FORWARD -i %s -o %s -j moca_isolation\n", mLan, pLan);
+          fprintf(filter_fp, "-A moca_isolation -o %s -s %s/24 -d 239.255.255.250/32 -j ACCEPT\n", mLan, lan_ipaddr);
+          // moca traffic, default to drop all
+          fprintf(filter_fp, "-A moca_isolation -i %s -d %s/24 -j DROP\n", mLan, lan_ipaddr);
+          fprintf(filter_fp, "-A moca_isolation -o %s -s %s/24 -j DROP\n", mLan, lan_ipaddr);
+          // if the packet does not match the above, do we DROP it ? ACCEPT it ? or
+          // send it back to the FORWARD chain ? currently send it back to FORWARD,
+
+          // moca whitelist, allow them
+          FILE *whitelist_fp;
+          char line[256];
+          int len;
+
+          whitelist_fp = fopen("/tmp/moca_whitelist.txt", "r");
+          if (whitelist_fp != NULL)
+          {
+              memset(line, 0, sizeof(line));
+              while (fgets(line, sizeof(line)-1, whitelist_fp) != 0)
+              {
+                  if (strstr(line, "169.254."))
+                  {
+                      len = strlen(line);
+                      line[len-2] = '\0';
+                      fprintf(filter_fp, "-I moca_isolation -i %s -s %s/32 -j ACCEPT\n", mLan, line);
+                      fprintf(filter_fp, "-I moca_isolation -o %s -d %s/32 -j ACCEPT\n", mLan, line);
+			/* Establish point to point traffic- whitelisting */
+                      fprintf(filter_fp, "-I moca_isolation -i %s -d %s/24 -s %s/32 -j ACCEPT\n", mLan, lan_ipaddr,line);
+                      fprintf(filter_fp, "-I moca_isolation -o %s -s %s/24 -d %s/32 -j ACCEPT\n", mLan, lan_ipaddr,line);
+                      memset(line, 0, sizeof(line));
+		  }
+	      }
+
+              fclose(whitelist_fp);
+	  }
+	}
        }
 
    } 
 }
 #endif
+
 /*
  *  Procedure     : prepare_enabled_ipv4_firewall
  *  Purpose       : prepare ipv4 firewall
@@ -12016,9 +12064,9 @@ int prepare_ipv6_firewall(const char *fw_file)
 #ifdef XDNS_ENABLE
     do_dns_route(nat_fp, 6);
 #endif
-#if defined(MOCA_HOME_ISOLATION)
-        prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
-#endif
+//#if defined(MOCA_HOME_ISOLATION)
+  //      prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
+//#endif
 #ifdef _HUB4_PRODUCT_REQ_
     do_hub4_voice_rules_v6(filter_fp, mangle_fp);
     if (do_hub4_dns_rule_v6(mangle_fp) == 0)
