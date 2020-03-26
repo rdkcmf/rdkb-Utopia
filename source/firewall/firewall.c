@@ -11441,6 +11441,15 @@ int prepare_ipv6_firewall(const char *fw_file)
 #endif
 #ifdef _HUB4_PRODUCT_REQ_
     do_hub4_voice_rules_v6(filter_fp);
+    if (do_hub4_dns_rule_v6(mangle_fp) == 0)
+    {
+        FIREWALL_DEBUG("INFO: Firewall rule addition success for IPv6 DNS CHECKSUM \n");
+    }
+    else
+    {
+        FIREWALL_DEBUG("INFO: Firewall rule addition failed for IPv6 DNS CHECKSUM \n");
+    }
+
 #ifdef HUB4_BFD_FEATURE_ENABLED
     do_hub4_bfd_rules_v6(filter_fp, mangle_fp);
 #endif //HUB4_BFD_FEATURE_ENABLED
