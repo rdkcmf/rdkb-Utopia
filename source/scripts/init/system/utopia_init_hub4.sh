@@ -295,9 +295,6 @@ fi
       echo "[utopia][init] Incremented Factory Reset Count after PIN method"
    fi
 
-   #>>zqiu
-   create_wifi_default
-   #<<zqiu
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
    touch $SYSCFG_NEW_FILE
    touch $SYSCFG_BKUP_FILE
@@ -319,7 +316,6 @@ fi
 
 elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
-    create_wifi_default
     syscfg unset $FACTORY_RESET_KEY
 #<<zqiu
 fi
