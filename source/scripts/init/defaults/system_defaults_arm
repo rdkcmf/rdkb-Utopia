@@ -1228,6 +1228,9 @@ $Advsecurity_RabidMemoryLimit=20
 # Rabid maccache size
 $Advsecurity_RabidMacCacheSize=10000
 
+# Rabid dnscache size
+$Advsecurity_RabidDNSCacheSize=10000
+
 #Ethernet bhaul bridge migration for LnF
 $iot_brname=br106
 
