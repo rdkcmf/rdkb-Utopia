@@ -123,7 +123,6 @@ PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
-FR_FILE=$SYSCFG_MOUNT/factory_reset
 FR_COUNT_FILE=/nvram/.factory_reset_count
 
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
@@ -159,8 +158,9 @@ CheckAndReCreateDB()
 }
 
 
-echo "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
+
 if [ -f $SYSCFG_BKUP_FILE ]; then
+    echo "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
     if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
     	cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
     fi
@@ -169,27 +169,30 @@ if [ -f $SYSCFG_BKUP_FILE ]; then
     if [ $? != 0 ]; then
 	 CheckAndReCreateDB
     fi
-else
-    if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
-    	      echo -n > $SYSCFG_NEW_FILE
-    fi
-
+elif [ -s $SYSCFG_NEW_FILE ]; then
+    echo "[utopia][init] Starting syscfg using file store ($SYSCFG_NEW_FILE)"
     SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
-    if [ "$SECURE_SYSCFG" = "false"  ] && [ ! -f $FR_FILE ]; then
+    echo "[utopia][init] UpdateNvram:$SECURE_SYSCFG"
+    if [ "$SECURE_SYSCFG" = "false"  ]; then
           cp $SYSCFG_NEW_FILE $SYSCFG_FILE
     else
+	  cp $SYSCFG_NEW_FILE $SYSCFG_BKUP_FILE
+	  cp $SYSCFG_NEW_FILE $SYSCFG_FILE 
+    fi
+          syscfg_create -f $SYSCFG_FILE
+          if [ $? != 0 ]; then
+               CheckAndReCreateDB
+          fi          
+else
          echo -n > $SYSCFG_FILE
          echo -n > $SYSCFG_BKUP_FILE
          echo -n > $SYSCFG_NEW_FILE
-    fi
-
-    syscfg_create -f $SYSCFG_FILE
-    if [ $? != 0 ]; then
+   syscfg_create -f $SYSCFG_FILE
+   if [ $? != 0 ]; then
 	 CheckAndReCreateDB
-    fi
-   
+   fi
    #>>zqiu
-   echo "[utopia][init] need to reset wifi when ($SYSCFG_BKUP_FILE) is not avaliable (for 1st time boot up)"
+   echo "[utopia][init] need to reset wifi when ($SYSCFG_BKUP_FILE) and ($SYSCFG_NEW_FILE) files are not available"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    #<<zqiu
    touch /nvram/.apply_partner_defaults
@@ -207,11 +210,6 @@ fi
 if [ -f $SYSCFG_NEW_BKUP_FILE ]; then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
 fi
-
-#if [ -f $FR_FILE ]; then
-#    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI
-#    rm -rf $FR_FILE
-#fi
 
 SYSCFG_LAN_DOMAIN=`syscfg get lan_domain` 
 

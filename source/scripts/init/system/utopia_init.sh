@@ -218,7 +218,6 @@ PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
-FR_FILE=$SYSCFG_MOUNT/factory_reset
 
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
        if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
@@ -282,8 +281,9 @@ CheckAndReCreateDB()
 	fi 
 }
 
-echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
+
 if [ -f $SYSCFG_BKUP_FILE ]; then
+   echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
    if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
         cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
    fi
@@ -291,26 +291,31 @@ if [ -f $SYSCFG_BKUP_FILE ]; then
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
-   fi   
-else
-   if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
-	echo -n > $SYSCFG_NEW_FILE
    fi
-   SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
-   if [ "$SECURE_SYSCFG" = "false"  ] && [ ! -f $FR_FILE ]; then
-         cp $SYSCFG_NEW_FILE $SYSCFG_FILE
-   else
-         echo -n > $SYSCFG_FILE
-         echo -n > $SYSCFG_BKUP_FILE
-         echo -n > $SYSCFG_NEW_FILE
-   fi
+elif [ -s $SYSCFG_NEW_FILE ]; then
+        echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_NEW_FILE)"
+        SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
+        echo_t "[utopia][init] UpdateNvram:$SECURE_SYSCFG"
+        if [ "$SECURE_SYSCFG" = "false"  ]; then
+             cp $SYSCFG_NEW_FILE $SYSCFG_FILE
+	else
+	     cp $SYSCFG_NEW_FILE $SYSCFG_BKUP_FILE
+             cp $SYSCFG_NEW_FILE $SYSCFG_FILE
+	fi
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
         CheckAndReCreateDB
    fi
-
+else
+   echo -n > $SYSCFG_FILE
+   echo -n > $SYSCFG_BKUP_FILE
+   echo -n > $SYSCFG_NEW_FILE
+   syscfg_create -f $SYSCFG_FILE
+   if [ $? != 0 ]; then
+        CheckAndReCreateDB
+   fi
    #>>zqiu
-   echo_t "[utopia][init] need to reset wifi when ($SYSCFG_BKUP_FILE ) is not avaliable (for 1st time boot up)"
+   echo_t "[utopia][init] need to reset wifi when($SYSCFG_BKUP_FILE) and ($SYSCFG_NEW_FILE) files are not available"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    syscfg commit
    #<<zqiu
@@ -337,12 +342,6 @@ fi
 
 if [ -f $SYSCFG_NEW_BKUP_FILE ];then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
-fi
-
-if [ -f $FR_FILE ]; then
-        syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_RGWIFI
-	syscfg commit
-        rm -rf $FR_FILE
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
