@@ -8184,11 +8184,14 @@ static int do_lan2wan_misc(FILE *filter_fp)
    {
       // enforce high security - per requirement
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 80   -j RETURN\n"); // HTTP
+      fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 8080 -j RETURN\n"); // WEBPA
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 443  -j RETURN\n"); // HTTPS
       fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 53   -j RETURN\n"); // DNS
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 53   -j RETURN\n"); // DNS
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 119  -j RETURN\n"); // NTP
+      fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 119  -j RETURN\n"); // NTP
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 123  -j RETURN\n"); // NTP
+      fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 123  -j RETURN\n"); // NTP
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 25   -j RETURN\n"); // EMAIL
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 110  -j RETURN\n"); // EMAIL
       fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 143  -j RETURN\n"); // EMAIL
