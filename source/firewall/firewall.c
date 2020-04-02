@@ -4193,8 +4193,8 @@ static int do_wan_nat_lan_clients(FILE *fp)
   if(bEthWANEnable)
   {/*fix RDKB-21704, SNAT is required only for private IP ranges. */
   memset(str, 0, sizeof(str));
-#if defined(_HUB4_PRODUCT_REQ_)
-  /*SKYH4-1344 : SNAT rule required to support local IP ranges with 10.X.X.X */
+  /*SKYH4-1344 : SNAT rule required to support local IP ranges with 10.X.X.X */   
+  /*RDKB-28433: [EWAN] Internet is not working when gateway IP is changed.*/
      if(!IS_EMPTY_STRING(natip4))
      {
          snprintf(str, sizeof(str),
@@ -4209,18 +4209,7 @@ static int do_wan_nat_lan_clients(FILE *fp)
                "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s", natip4);
 
      }
-#else
-  snprintf(str, sizeof(str),
-           "-A postrouting_towan -s 10.0.0.0/24  -j SNAT --to-source %s", natip4);
-  fprintf(fp, "%s\n", str);
-  memset(str, 0, sizeof(str));
-  snprintf(str, sizeof(str),
-           "-A postrouting_towan -s 192.168.0.0/16  -j SNAT --to-source %s", natip4);
-  fprintf(fp, "%s\n", str);
-  memset(str, 0, sizeof(str));
-  snprintf(str, sizeof(str),
-           "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s", natip4);
-#endif /*_HUB4_PRODUCT_REQ_*/
+
   }
   else
   {
