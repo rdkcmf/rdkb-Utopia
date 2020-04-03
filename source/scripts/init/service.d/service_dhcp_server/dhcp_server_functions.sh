@@ -815,6 +815,19 @@ then
     fi
 fi
 
+   localServerCnt=0
+   isLocalDNSOnly=0
+   localServerCnt=`wc -l < /etc/resolv.conf`
+   if [ "$localServerCnt" = "" ]
+   then
+       localServerCnt=0
+   fi
+   isLocalHostPresent=`grep "127.0.0.1" /etc/resolv.conf`
+   if [ $localServerCnt -lt 2 ] && [ "$isLocalHostPresent" != "" ]
+   then
+       isLocalDNSOnly=1
+   fi
+
    if [ "$RF_CAPTIVE_PORTAL" != "true" ]
    then
        echo "domain-needed" >> $LOCAL_DHCP_CONF
@@ -838,28 +851,23 @@ fi
             rm -f $DEFAULT_RESOLV_CONF
         fi
 
-        if [ "0" = "$NAMESERVERENABLED" ] ; then
+        if [ "0" = "$NAMESERVERENABLED" ] && [ $isLocalDNSOnly -eq 0 ] ; then
             echo "resolv-file=$RESOLV_CONF" >> $LOCAL_DHCP_CONF
         fi
+
        fi
 
-   if [ "$BOX_TYPE" = "HUB4" ]; then
-      # dnsmasq is not taking the data from resolv-file hence populating the data on to LOCAL_DHCP_CONF
-      domain=`grep 'domain' /etc/resolv.conf | grep -v '#' | awk '{print $2}'`
-      if [ "" != "$domain" ]; then
-         echo "domain=$domain" >> $LOCAL_DHCP_CONF
-      fi
-   fi
-
-   # if we are provisioned to use the wan domain name, the we do so
-   # otherwise we use the lan domain name
-   if [ "$BOX_TYPE" = "HUB4" ]; then
+      # if we are provisioned to use the wan domain name, the we do so
+      # otherwise we use the lan domain name
       if grep "domain=" $LOCAL_DHCP_CONF >/dev/null
       then
          echo "domain name is set "
       else
          if [ "1" = "$PROPAGATE_DOM" ] ; then
             LAN_DOMAIN=`sysevent get dhcp_domain`
+            if [ "" = "$LAN_DOMAIN" ] ; then
+               LAN_DOMAIN=`grep 'domain' /etc/resolv.conf | grep -v '#' | awk '{print $2}'`
+            fi
          fi
          if [ "" = "$LAN_DOMAIN" ] ; then
             LAN_DOMAIN=`syscfg get lan_domain`
@@ -867,18 +875,7 @@ fi
          if [ "" != "$LAN_DOMAIN" ] ; then
             echo "domain=$LAN_DOMAIN" >> $LOCAL_DHCP_CONF
          fi
-       fi
-   else
-      if [ "1" = "$PROPAGATE_DOM" ] ; then
-         LAN_DOMAIN=`sysevent get dhcp_domain`
-      fi
-      if [ "" = "$LAN_DOMAIN" ] ; then
-         LAN_DOMAIN=`syscfg get lan_domain`
-      fi
-      if [ "" != "$LAN_DOMAIN" ] ; then
-         echo "domain=$LAN_DOMAIN" >> $LOCAL_DHCP_CONF
-      fi
-   fi
+       fi  
    else
        echo "no-resolv" >> $LOCAL_DHCP_CONF
    fi
@@ -904,7 +901,10 @@ fi
    then
        if [ "$CAPTIVE_PORTAL_MODE" = "false" ] && [ "0" = "$NAMESERVERENABLED" ]
        then
-            echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
+            if [ $isLocalDNSOnly -eq 0 ]
+            then
+               echo "$PREFIX""dhcp-optsfile=$DHCP_OPTIONS_FILE" >> $LOCAL_DHCP_CONF
+            fi
        fi
    fi
 
