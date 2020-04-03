@@ -9701,7 +9701,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    char IPv4[17] = "0"; 
 
    //RDKB-25069 - Lan Admin page should able to access from connected clients.
-   fprintf(nat_fp, "-A prerouting_redirect -i %s -p tcp --dport 443 -d %s -j ACCEPT\n",lan_ifname,lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -i %s -p tcp --dport 443 -d %s -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr,lan_ipaddr);
      
    syscfg_set(NULL, "HTTP_Server_IP", lan_ipaddr);
    fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
@@ -11250,14 +11250,14 @@ static void do_ipv6_nat_table(FILE* fp)
    // RDKB-25069 - Lan Admin page should able to access from connected clients.
    if (strlen(IPv6) > 0)
    {
-       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 80 -d %s -j ACCEPT\n",lan_ifname,IPv6);
-       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 443 -d %s -j ACCEPT\n",lan_ifname,IPv6);
+       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 80 -d %s -j DNAT --to-destination %s\n",lan_ifname,IPv6,IPv6);
+       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 443 -d %s -j DNAT --to-destination %s\n",lan_ifname,IPv6,IPv6);
    }
 
    if ((lan_local_ipv6_num == 1) && strlen(lan_local_ipv6[0]) > 0)
    {
-       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 80 -d %s -j ACCEPT\n",lan_ifname,lan_local_ipv6[0]);
-       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 443 -d %s -j ACCEPT\n",lan_ifname,lan_local_ipv6[0]);
+       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 80 -d %s -j DNAT --to-destination %s\n",lan_ifname,lan_local_ipv6[0],lan_local_ipv6[0]);
+       fprintf(fp, "-A prerouting_redirect -i %s -p tcp --dport 443 -d %s -j DNAT --to-destination %s\n",lan_ifname,lan_local_ipv6[0],lan_local_ipv6[0]);
    }
 
    fprintf(fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination [%s]:21515\n",IPv6);
