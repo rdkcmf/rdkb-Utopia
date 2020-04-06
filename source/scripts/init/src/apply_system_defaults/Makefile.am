@@ -16,20 +16,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = apply_system_defaults
-DEPENDS = "hal-platform"
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/../hal/include  -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
-hardware_platform = i686-linux-gnu
-AM_LDFLAGS =  -lpthread -lz -lcjson \
-                $(top_builddir)/source/services/lib/libsrvmgr.la \
-                $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                $(top_builddir)/source/ulog/libulog.la \
-                $(top_builddir)/source/utapi/lib/libutapi.la \
-                $(top_builddir)/source/utctx/lib/libutctx.la \
-		-ltelemetry_msgsender
+
+AM_CFLAGS = -I$(top_srcdir)/source/include \
+            -I$(top_srcdir)/source/util \
+            -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 \
+	    -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
+
+AM_LDFLAGS = $(top_builddir)/source/services/lib/libsrvmgr.la \
+             $(top_builddir)/source/sysevent/lib/libsysevent.la \
+             $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+             $(top_builddir)/source/ulog/libulog.la \
+             $(top_builddir)/source/utapi/lib/libutapi.la \
+             $(top_builddir)/source/utctx/lib/libutctx.la \
+             -ltelemetry_msgsender \
+             -lcjson
+
 if PLATFORM_HAL_SYNDICATION
 AM_LDFLAGS += "-lhal_platform -lsysevent -lutctx -lutapi -lhal_wifi" 
 endif
+
+bin_PROGRAMS = apply_system_defaults
 
 apply_system_defaults_SOURCES = apply_system_defaults.c

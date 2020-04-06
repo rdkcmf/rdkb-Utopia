@@ -20,22 +20,23 @@ AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 
-AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 lib_LTLIBRARIES = libpal.la
-libpal_la_CPPFLAGS = -I$(top_srcdir)/source/include \
-                     -I$(top_srcdir)/source/pal/upnp/include \
-                     -I$(top_srcdir)/source/pal/xml/include \
-                     -I$(top_srcdir)/source/pal/kernel/include \
-                     -I$(top_srcdir)/source/pal/log/include \
-                     -I$(top_srcdir)/source/pal/include \
-                     $(CPPFLAGS)
 
 libpal_la_SOURCES = $(top_srcdir)/source/pal/kernel/src/pal_kernel.c \
                     $(top_srcdir)/source/pal/upnp/src/pal_upnp.c \
                     $(top_srcdir)/source/pal/upnp/src/pal_upnp_device.c \
                     $(top_srcdir)/source/pal/xml/src/pal_xml2s.c \
                     $(top_srcdir)/source/pal/xml/src/pal_xml.c
+
+libpal_la_CPPFLAGS = -I$(top_srcdir)/source/include \
+                     -I$(top_srcdir)/source/pal/upnp/include \
+                     -I$(top_srcdir)/source/pal/xml/include \
+                     -I$(top_srcdir)/source/pal/kernel/include \
+                     -I$(top_srcdir)/source/pal/log/include \
+                     -I$(top_srcdir)/source/pal/include
 
 libpal_la_LDFLAGS = -lixml -lupnp

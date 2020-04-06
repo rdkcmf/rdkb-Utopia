@@ -16,11 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = pmon
 AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_
 
-AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
+
+bin_PROGRAMS = pmon
+
+pmon_SOURCES = pmon.c
 
 pmon_CPPFLAGS = -I$(top_srcdir)/source/pal/upnp/include \
                 -I$(top_srcdir)/source/pal/xml/include \
@@ -28,10 +30,6 @@ pmon_CPPFLAGS = -I$(top_srcdir)/source/pal/upnp/include \
                 -I$(top_srcdir)/source/pal/include \
                 -I$(top_srcdir)/source/pal/log/include \
                 $(DBUS_CFLAGS)
-
-pmon_SOURCES = pmon.c
-
-pmon_LDFLAGS =  -lpthread -lz
 
 pmon_LDADD = $(top_builddir)/source/services/lib/libsrvmgr.la \
              $(top_builddir)/source/sysevent/lib/libsysevent.la \

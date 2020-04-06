@@ -16,21 +16,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
+
 bin_PROGRAMS = service_routed
 
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/utctx/lib -I$(top_srcdir)/source/utapi/lib -I$(top_srcdir)/source/util/utils
-
-AM_LDFLAGS =  -lpthread -lz -lsecure_wrapper
+AM_LDFLAGS = -lsecure_wrapper
 
 service_routed_SOURCES = service_routed.c
 
-service_routed_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
-                    $(top_builddir)/source/services/lib/libsrvmgr.la \
-                    $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                    $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                    $(top_builddir)/source/utapi/lib/libutapi.la \
-                    $(top_builddir)/source/utctx/lib/libutctx.la \
-                    $(top_builddir)/source/ulog/libulog.la \
-		    -ltelemetry_msgsender
+service_routed_CFLAGS = -I$(top_srcdir)/source \
+                        -I$(top_srcdir)/source/include \
+                        -I$(top_srcdir)/source/utctx/lib \
+                        -I$(top_srcdir)/source/utapi/lib \
+                        -I$(top_srcdir)/source/util/utils \
+                        -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 \
+                        -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
 
-service_routed_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/utctx/lib -I$(top_srcdir)/source/utapi/lib -I$(top_srcdir)/source/util/utils -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
+
+service_routed_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
+                       $(top_builddir)/source/services/lib/libsrvmgr.la \
+                       $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                       $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                       $(top_builddir)/source/utapi/lib/libutapi.la \
+                       $(top_builddir)/source/utctx/lib/libutctx.la \
+                       $(top_builddir)/source/ulog/libulog.la \
+                       -ltelemetry_msgsender

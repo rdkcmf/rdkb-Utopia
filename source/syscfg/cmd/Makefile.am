@@ -19,16 +19,14 @@
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-AM_LDFLAGS = -L/var/tmp/pc-rdkb/lib
-AM_LDFLAGS += -lpthread
-AM_LDFLAGS += -lz
 
-AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = syscfg
-syscfg_CPPFLAGS = -I$(top_srcdir)/source/include $(CPPFLAGS)
+
 syscfg_SOURCES = syscfgcmd.c
-syscfg_LDFLAGS =  -lpthread -lz \
-                  $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                  $(top_builddir)/source/ulog/libulog.la
+
+syscfg_CPPFLAGS = -I$(top_srcdir)/source/include
+
+syscfg_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+               $(top_builddir)/source/ulog/libulog.la

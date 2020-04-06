@@ -53,9 +53,10 @@
 #if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_) || defined(_SR300_PRODUCT_REQ_)
 #include "platform_hal.h"
 #endif
-#include "cJSON.h"
 #include <unistd.h>
 #include <stdbool.h>
+#include <cjson/cJSON.h>
+
 #define PARTNERS_INFO_FILE  							"/nvram/partners_defaults.json"
 #define PARTNERS_INFO_FILE_ETC                                                 "/etc/partners_defaults.json"
 #define BOOTSTRAP_INFO_FILE                                                    "/nvram/bootstrap.json"
