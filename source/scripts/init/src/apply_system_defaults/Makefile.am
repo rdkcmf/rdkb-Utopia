@@ -32,7 +32,7 @@ AM_LDFLAGS = $(top_builddir)/source/services/lib/libsrvmgr.la \
              -lcjson
 
 if PLATFORM_HAL_SYNDICATION
-AM_LDFLAGS += "-lhal_platform -lsysevent -lutctx -lutapi -lhal_wifi" 
+AM_LDFLAGS += "-lhal_platform -lsysevent -lutctx -lutapi -lhal_wifi"
 endif
 
 bin_PROGRAMS = apply_system_defaults

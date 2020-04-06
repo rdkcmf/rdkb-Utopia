@@ -1,4 +1,4 @@
-
+##########################################################################
 # If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
@@ -17,15 +17,15 @@
 # limitations under the License.
 ##########################################################################
 
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils $(CPPFLAGS) -I$(top_srcdir)/source/util/print_uptime -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
-
 bin_PROGRAMS = service_udhcpc
 
 service_udhcpc_SOURCES = service_udhcpc.c
 
 service_udhcpc_CPPFLAGS = -I$(top_srcdir)/source/include \
                           -I$(top_srcdir)/source/util/utils \
-                          -I$(top_srcdir)/source/util/print_uptime
+                          -I$(top_srcdir)/source/util/print_uptime \
+                          -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 \
+                          -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
 
 service_udhcpc_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                        $(top_builddir)/source/services/lib/libsrvmgr.la \

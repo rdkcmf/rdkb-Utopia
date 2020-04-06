@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_
+AM_CFLAGS =
 AM_CFLAGS += -DIPV6=1
 AM_CFLAGS += -DSET_REPLY_REQUIRED
 AM_CFLAGS += -DUSE_SYSCFG

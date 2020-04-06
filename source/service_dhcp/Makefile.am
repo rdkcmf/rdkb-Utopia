@@ -21,7 +21,6 @@ AM_CFLAGS = -fno-exceptions -Wall -Wextra
 
 bin_PROGRAMS = service_dhcp
 
-AM_LDFLAGS =  -lpthread -lz -lccsp_common $(DBUS_LIBS) -lsecure_wrapper
 service_dhcp_SOURCES = dhcp_server_functions.c lan_handler.c service_dhcp.c service_dhcp_server.c service_ipv4.c
 
 service_dhcp_CPPFLAGS = -I$(top_srcdir)/source/include \
@@ -31,6 +30,8 @@ service_dhcp_CPPFLAGS = -I$(top_srcdir)/source/include \
                         $(DBUS_CFLAGS) \
                         -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 \
                         -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
+
+service_dhcp_LDFLAGS = -lccsp_common $(DBUS_LIBS) -lsecure_wrapper
 
 service_dhcp_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                      $(top_builddir)/source/sysevent/lib/libsysevent.la \

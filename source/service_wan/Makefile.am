@@ -23,9 +23,11 @@ service_wan_SOURCES = service_wan.c
 
 service_wan_CPPFLAGS = -I$(top_srcdir)/source/include \
                        -I$(top_srcdir)/source/util/utils \
-                       -I$(top_srcdir)/source/util/print_uptime
+                       -I$(top_srcdir)/source/util/print_uptime \
+                       -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 \
+                       -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
 
-service_wan_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/util/print_uptime -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
+service_wan_LDFLAGS = -lsecure_wrapper
 
 service_wan_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                     $(top_builddir)/source/services/lib/libsrvmgr.la \
@@ -34,5 +36,3 @@ service_wan_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                     $(top_builddir)/source/util/print_uptime/libprint_uptime.la \
                     $(top_builddir)/source/ulog/libulog.la \
                     -ltelemetry_msgsender
-
-service_wan_LDFLAGS = -lsecure_wrapper 

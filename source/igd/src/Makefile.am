@@ -16,9 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS = -D_ANSC_LINUX
-AM_CFLAGS += -D_ANSC_USER
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
+AM_CFLAGS =
 AM_CFLAGS += -D_LINUX
 AM_CFLAGS += -DPAL_ULOG
 AM_CFLAGS += -DCONFIG_VENDOR_MODEL=\"\"
@@ -26,7 +24,7 @@ AM_CFLAGS += $(PTHREAD_CFLAGS)
 
 ACLOCAL_AMFLAGS = -I m4
 
-bin_PROGRAMS = IGD 
+bin_PROGRAMS = IGD
 
 IGD_SOURCES = igd_service_wan_ethlink_cfg.c igd_device_root.c igd_utility.c igd_device_lan.c igd_service_wan_commif_cfg.c igd_action_port_mapping.c igd_device_wan_connect.c igd_device_wan.c igd_platform_independent_inf.c igd_service_lanhostconfigmgmt.c igd_service_wan_connect.c igd_service_layer3_fwd.c
 
@@ -39,6 +37,8 @@ IGD_CPPFLAGS = -I$(top_srcdir)/source/pal/upnp/include \
                -I$(top_srcdir)/source/include \
                -I$(top_srcdir)/source/include/utapi
 
+IGD_LDFLAGS = -lthreadutil -Bdynamic -lupnp $(PTHREAD_LIBS)
+
 IGD_LDADD = $(top_builddir)/source/services/lib/libsrvmgr.la \
             $(top_builddir)/source/sysevent/lib/libsysevent.la \
             $(top_builddir)/source/ulog/libulog.la \
@@ -46,5 +46,3 @@ IGD_LDADD = $(top_builddir)/source/services/lib/libsrvmgr.la \
             $(top_builddir)/source/pal/libpal.la \
             $(top_builddir)/source/utapi/lib/libutapi.la \
             $(top_builddir)/source/syscfg/lib/libsyscfg.la
-
-IGD_LDFLAGS = -lthreadutil -Bdynamic -lupnp $(PTHREAD_LIBS)
