@@ -1244,7 +1244,6 @@ $dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled=0
 #NonRootSupport enable
 $NonRootSupport=true
 
-
 #DSLite
 #dslite_enable - Enable/disable DS-Lite
 $dslite_enable=0
@@ -1289,3 +1288,8 @@ $CredDwnld_Use=false
 #ocsp staple support
 $EnableOCSPStapling=false
 $EnableOCSPCA=false
+
+#Defaults for XHFW
+$XHFW_Enable=true
+$XHFW_Status="not activated"
+
