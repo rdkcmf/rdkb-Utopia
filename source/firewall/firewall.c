@@ -12471,7 +12471,6 @@ void RmConntrackEntry(char *IPaddr)
         snprintf(cmd, sizeof(cmd), "conntrack -D -f ipv6 -d %s", IPaddr);
         system(cmd);
 
- FIREWALL_DEBUG("Not adding thsi rule for ARRISXB6 ip6tables -I FORWARD -s -j DROP \n");
 /*Mamidi:12042017:Fix for ARRISXB6-5237 and ARRISXB6-6256*/
 #if !defined (INTEL_PUMA7)  
         memset(cmd,0,sizeof(cmd));
@@ -12498,7 +12497,6 @@ void RmConntrackEntry(char *IPaddr)
     {
         snprintf(cmd, sizeof(cmd), "conntrack -D --orig-src %s", IPaddr);
         system(cmd);
- FIREWALL_DEBUG("Not adding thsi rule for ARRISXB6 iptables -I FORWARD -s -j DROP \n"); 
 /*Mamidi:12042017:Fix for ARRISXB6-5237 and ARRISXB6-6256*/
 #if !defined (INTEL_PUMA7)  
         memset(cmd,0,sizeof(cmd));
