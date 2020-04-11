@@ -14699,10 +14699,10 @@ fw_shm_mutex fw_shm_mutex_init(char *mutexName) {
 			 FIREWALL_DEBUG("pthread_mutexattr_setprotocol error %d: %s\n" COMMA error COMMA strerror(error));
 		}
 
-     	   	error = pthread_mutexattr_setrobust_np(&attr, PTHREAD_MUTEX_ROBUST_NP);
+     	   	error = pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_ROBUST);
 	    	if (error) 
 		{
-			FIREWALL_DEBUG("pthread_mutexattr_setrobust_np error %d: %s\n" COMMA error COMMA strerror(error));
+			FIREWALL_DEBUG("pthread_mutexattr_setrobust error %d: %s\n" COMMA error COMMA strerror(error));
 	    	}
 
 
@@ -14809,7 +14809,7 @@ int error;
   if (error == EOWNERDEAD) 
   {
 	FIREWALL_DEBUG("Owner dead, acquring the lock\n");
-	error = pthread_mutex_consistent_np(fwmutex.ptr);
+	error = pthread_mutex_consistent(fwmutex.ptr);
   }
 
 

@@ -637,9 +637,9 @@ static int lock_init (syscfg_shm_ctx *ctx)
             err, strerror(err));
         return ERR_SEMAPHORE_INIT;
     }
-    err = pthread_mutexattr_setrobust_np(&mattr, PTHREAD_MUTEX_ROBUST_NP);
+    err = pthread_mutexattr_setrobust(&mattr, PTHREAD_MUTEX_ROBUST);
     if (err) {
-        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "pthread_mutexattr_setrobust_np error %d: %s\n",
+        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "pthread_mutexattr_setrobust error %d: %s\n",
             err, strerror(err));
         return ERR_SEMAPHORE_INIT;
     }
@@ -679,7 +679,7 @@ static inline int read_lock (syscfg_shm_ctx *ctx)
                 fclose(consolefp);
         }
        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "Process %d got EOWNERDEAD for read mutex\n", (int) getpid());
-        err = pthread_mutex_consistent_np(&ctx->cb.read_lock);
+        err = pthread_mutex_consistent(&ctx->cb.read_lock);
         //ulog(ULOG_SYSTEM, UL_SYSCFG, "Process %d locked read mutex\n", (int) getpid());
 
     }
@@ -705,7 +705,7 @@ static inline int write_lock (syscfg_shm_ctx *ctx)
                 fclose(consolefp);
         }
        ulog_errorf(ULOG_SYSTEM, UL_SYSCFG, "Process %d got EOWNERDEAD for write mutex\n", (int) getpid());
-       err = pthread_mutex_consistent_np(&ctx->cb.write_lock);
+       err = pthread_mutex_consistent(&ctx->cb.write_lock);
         //ulog(ULOG_SYSTEM, UL_SYSCFG, "Process %d locked write mutex\n", (int) getpid());
     }
 
@@ -752,7 +752,7 @@ static inline int commit_lock (syscfg_shm_ctx *ctx)
                 fclose(consolefp);
         }
         ulog_errorf(ULOG_SYSTEM, UL_SYSCFG,"Process %d got EOWNERDEAD for commit mutex\n", (int) getpid());
-        err = pthread_mutex_consistent_np(&ctx->cb.commit_lock);
+        err = pthread_mutex_consistent(&ctx->cb.commit_lock);
         //ulog(ULOG_SYSTEM, UL_SYSCFG,"Process %d locked commit mutex\n", (int) getpid());
     }
 
