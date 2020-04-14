@@ -460,8 +460,7 @@ void lan_restart()
 	char l_cLan_IpAddrv6[64] = {0}, l_cPsm_Parameter[255] = {0};
 	char *l_cpPsm_Get = NULL;
 	
-	char cWan_prefix[64] = {0} , cWan_prefixlen[8] = {0};
-	int l_iLanInst, l_iRetVal, iprefixlen;
+	int l_iLanInst, l_iRetVal;
 
 	syscfg_get(NULL, "lan_ipaddr", l_cLanIpAddr, sizeof(l_cLanIpAddr));
 
@@ -553,14 +552,6 @@ void lan_restart()
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_prefix_v6", 
                  l_cLan_PrefixV6, sizeof(l_cLan_PrefixV6));
 
-    sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan6_prefix", 
-		 cWan_prefix, sizeof(cWan_prefix));
-
-    sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan6_prefixlen", 
-		 cWan_prefixlen, sizeof(cWan_prefixlen));
-
-    iprefixlen = atoi(cWan_prefixlen);
-
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_restarted", 
                  l_cLanRestarted, sizeof(l_cLanRestarted));
 
@@ -581,13 +572,6 @@ void lan_restart()
                  l_cLan_IpAddrv6, l_cLanIfName);
 
         executeCmd(l_cSysevent_Cmd);
-	
-	if ( (cWan_prefix != NULL ) && (cWan_prefixlen != NULL) )
-	{
-	        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "ip -6 addr add %s1/%d dev %s",cWan_prefix, iprefixlen,l_cLanIfName);	
-	        executeCmd(l_cSysevent_Cmd);
-	}
 	
     }
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_restarted", "done", 0);
