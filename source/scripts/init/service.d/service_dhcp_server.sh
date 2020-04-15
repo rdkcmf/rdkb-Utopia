@@ -451,6 +451,19 @@ dhcp_server_start ()
    killall `basename $SERVER`
    rm -f $PID_FILE
 
+   InterfaceInConf=""
+   Bridge_Mode_t=`sysevent get bridge_mode`
+
+   InterfaceInConf=`grep "interface=" $DHCP_CONF`
+
+   if [ "x$InterfaceInConf" = "x" ] && [ "0" != "$Bridge_Mode_t" ] ; then
+        echo "dnsmasq.conf interface info not found"
+        $PMON unsetproc dhcp_server
+        sysevent set dhcp_server-status stopped
+        rm -f /var/tmp/lan_not_restart
+        return 0
+   fi
+
    if [ "$CONTAINER_SUPPORT" = "1" ]; then
       dnsserver_start_lxc
    fi

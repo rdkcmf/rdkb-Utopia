@@ -143,6 +143,30 @@ void dhcp_server_stop()
 	}
 }
 
+BOOL IsDhcpConfHasInterface(void)
+{
+    FILE *fp = NULL;
+    char buf[512];
+
+    fp = fopen(DHCP_CONF,"r");
+    if (NULL == fp)
+        return FALSE;
+    memset(buf,0,sizeof(buf));
+    while (fgets(buf,sizeof(buf),fp) != NULL)
+    {
+        char *interface = NULL;
+        interface = strstr(buf,"interface=");
+        if (interface)
+        printf ("\ninterface search res : %s\n",interface);
+        if (interface)
+            return TRUE;
+    }
+
+    fprintf(stderr, "dnsmasq.conf does not have any interfaces\n");
+    return FALSE;
+}
+
+
 int dhcp_server_start (char *input)
 {
 	//Declarations
@@ -151,6 +175,7 @@ int dhcp_server_start (char *input)
 	char l_cPmonCmd[255] = {0}, l_cDhcp_Tmp_Conf[32] = {0};
 	char l_cCurrent_PID[8] = {0}, l_cRpc_Cmd[64] = {0};
 	char l_cCommand[128] = {0}, l_cBuf[128] = {0};
+    char l_cBridge_Mode[8] = {0};
 
 	BOOL l_bRestart = FALSE, l_bFiles_Diff = FALSE, l_bPid_Present = FALSE;
 	FILE *l_fFp = NULL;
@@ -276,6 +301,24 @@ int dhcp_server_start (char *input)
    	system("killall `basename dnsmasq`");
 	remove_file(PID_FILE);
 
+    sysevent_get(g_iSyseventfd, g_tSysevent_token,
+                         "bridge_mode", l_cBridge_Mode,
+                         sizeof(l_cBridge_Mode));
+
+    // TCCBR:4710- In Bridge mode, Dont run dnsmasq when there is no interface in dnsmasq.conf
+    if ((strncmp(l_cBridge_Mode, "0", 1)) && (FALSE == IsDhcpConfHasInterface()))
+    {
+        fprintf(stderr, "no interface present in dnsmasq.conf %s process not started\n", SERVER);
+        sprintf(l_cSystemCmd, "%s unsetproc dhcp_server", PMON);
+        l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
+        if (0 != l_iSystem_Res)
+        {
+            fprintf(stderr, "%s command didnt execute successfully\n", l_cSystemCmd);
+        }
+		sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", "stopped", 0);
+		remove_file("/var/tmp/lan_not_restart");
+        return 0;
+    }
 #if defined _BWG_NATIVE_TO_RDKB_REQ_
 	/*Run script to reolve the IP address when upgrade from native to rdkb case only */
 	system("sh /etc/utopia/service.d/migration_native_rdkb.sh ");
