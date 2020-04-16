@@ -72,7 +72,7 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
     int i;
     PSwPortState portState;
 #if !defined(_COSA_INTEL_XB3_ARM_)
-    char cmdBuff[150];
+    char cmdBuff[180];
 #endif
     char ifname[80];
     char temp_ifname[80];
@@ -182,7 +182,7 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
     int i;
     PSwPortState portState;
 #if !defined(_COSA_INTEL_XB3_ARM_)
-    char cmdBuff[150];
+    char cmdBuff[180];
 #endif
     char ifname[80];
     
