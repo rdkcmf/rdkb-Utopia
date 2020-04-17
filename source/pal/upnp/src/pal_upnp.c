@@ -127,8 +127,7 @@ struct _pal_error_string g_pal_error_message[] = {
  * Function: PAL_upnp_init 
  *
  *  Parameters:	
- *      lo_ip: Input. Local IP Address. 
- *           If input is NULL, an appropriate IP address will be automatically selected.
+ *      if_name: Input. Interface name. 
  *      lo_port: Input . Local Port to listen for incoming connections.
  *           If input is NULL, a appropriate port will be automatically selected. 
  *
@@ -138,11 +137,11 @@ struct _pal_error_string g_pal_error_message[] = {
  *  Return Values: INT32
  *      0 if successful else error code. 
  ************************************************************/   
-INT32 PAL_upnp_init(IN const CHAR *lo_ip, IN UINT16 lo_port)
+INT32 PAL_upnp_init(IN const CHAR *if_name, IN UINT16 lo_port)
 {
     INT32 ret = 0;
     
-    ret = UpnpInit((const CHAR*)lo_ip,lo_port);
+    ret = UpnpInit2((const CHAR*)if_name,lo_port);
     
     return ret;
 }
@@ -165,6 +164,26 @@ CHAR *PAL_upnp_get_ipaddress()
     ipaddress = UpnpGetServerIpAddress();
 
     return ipaddress;
+}
+
+/************************************************************
+ * Function: PAL_upnp_get_ip6address 
+ *
+ *  Parameters:	
+ *      
+ *  Description:
+ *      Gives back the local ipv6 address.
+ *
+ *  Return Values: INT32
+ *      return the IPv6 address string on success else NULL of failure
+ ************************************************************/ 
+CHAR *PAL_upnp_get_ip6address()
+{
+    CHAR *ip6address = NULL;
+
+    ip6address = UpnpGetServerIp6Address();
+
+    return ip6address;
 }
 
 /************************************************************

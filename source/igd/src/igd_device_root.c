@@ -355,7 +355,7 @@ main( IN INT32 argc,
             igdAdvrExpire = DEFAULT_ADVR_EXPIRE;
         }
 
-        ret=PAL_upnp_device_init(&IGD_device,ip_address,0,igdAdvrExpire,DESC_DOC_NAME,DEFAULT_WEB_DIR);
+        ret=PAL_upnp_device_init(&IGD_device,igd_upnp_interface,0,igdAdvrExpire,DESC_DOC_NAME,DEFAULT_WEB_DIR);
 		if(ret)
 		{
 			PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_FAILURE,"initialize device fail '%d'\n", ret);
