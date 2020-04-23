@@ -922,8 +922,9 @@ static int wan_iface_up(struct serv_wan *sw)
 static int wan_iface_down(struct serv_wan *sw)
 {
     int err;
-
+#if !defined(_PLATFORM_RASPBERRYPI_)
     err = v_secure_system("ip -4 link set %s down", sw->ifname);
+#endif
 #if PUMA6_OR_NEWER_SOC_TYPE
 
     if(0 == strncmp(sw->ifname,ER_NETDEVNAME,strlen(ER_NETDEVNAME)))
