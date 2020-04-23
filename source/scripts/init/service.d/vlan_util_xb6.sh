@@ -471,6 +471,22 @@ check_xfinity_wifi(){
        isXfinityWiFiEnable=`psmcli get dmsb.hotspot.enable`
 }
 
+#Setup ethernet backhaul related vlans for nsgmii1.100
+#to support pod connected over ethernet
+setup_pod_ethbhaul() {
+
+    ETHERNET_IFACE="nsgmii1.100"
+    ip link add link $ETHERNET_IFACE ethsw101 type vlan proto 802.1Q id 101
+    ip link add link $ETHERNET_IFACE ethsw106 type vlan proto 802.1Q id 106
+    ip link add link $ETHERNET_IFACE ethsw1060 type vlan proto 802.1Q id 1060
+    ifconfig ethsw101 up
+    ifconfig ethsw106 up
+    ifconfig ethsw1060 up
+    brctl addif brlan1 ethsw101
+    brctl addif br106 ethsw106
+    brctl addif br403 ethsw1060
+}
+
 #Returns a space-separated list of interfaces that should be in this group in the current operating mode
 #Returns the list in IF_LIST
 get_expected_if_list() {
@@ -1274,6 +1290,7 @@ then
     ifconfig $BRIDGE_NAME 192.168.245.254
     ifconfig ath12 mtu 1600
     ifconfig ath13 mtu 1600
+    setup_pod_ethbhaul
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=MeshBhaulstart"
     $SYSEVENT set firewall-restart
