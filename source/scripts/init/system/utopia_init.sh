@@ -301,35 +301,16 @@ CheckAndReCreateDB()
 	fi 
 }
 
-
+echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
 if [ -f $SYSCFG_BKUP_FILE ]; then
-   echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
-   if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
-        cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
-   fi
    cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
    fi
-elif [ -s $SYSCFG_NEW_FILE ]; then
-        echo_t "[utopia][init] Starting syscfg using file store ($SYSCFG_NEW_FILE)"
-        SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
-        echo_t "[utopia][init] UpdateNvram:$SECURE_SYSCFG"
-        if [ "$SECURE_SYSCFG" = "false"  ]; then
-             cp $SYSCFG_NEW_FILE $SYSCFG_FILE
-	else
-	     cp $SYSCFG_NEW_FILE $SYSCFG_BKUP_FILE
-             cp $SYSCFG_NEW_FILE $SYSCFG_FILE
-	fi
-   syscfg_create -f $SYSCFG_FILE
-   if [ $? != 0 ]; then
-        CheckAndReCreateDB
-   fi
 else
    echo -n > $SYSCFG_FILE
    echo -n > $SYSCFG_BKUP_FILE
-   echo -n > $SYSCFG_NEW_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
         CheckAndReCreateDB
@@ -359,9 +340,11 @@ fi
 if [ -f $SYSCFG_OLDBKUP_FILE ];then
 	rm -rf $SYSCFG_OLDBKUP_FILE
 fi
-
 if [ -f $SYSCFG_NEW_BKUP_FILE ];then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
+fi
+if [ -f $SYSCFG_NEW_FILE ];then
+	rm -rf $SYSCFG_NEW_FILE
 fi
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
@@ -464,7 +447,6 @@ fi
    echo_t "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
    touch $SYSCFG_FILE
    touch $SYSCFG_BKUP_FILE
-   touch $SYSCFG_NEW_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
 	   CheckAndReCreateDB
@@ -539,14 +521,10 @@ sleep 1
 echo_t "[utopia][init] Setting any unset system values to default"
 apply_system_defaults
 changeFilePermissions $SYSCFG_BKUP_FILE 400
-changeFilePermissions $SYSCFG_NEW_FILE  400
 
-SYSCFG_DB_FILE="/nvram/syscfg.db"
-SECURE_SYSCFG=`syscfg get UpdateNvram`
-if [ "$SECURE_SYSCFG" = "false" ]; then
-      SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
-fi
-echo "[utopia][init] SEC: Syscfg stored in $SYSCFG_DB_FILE"
+echo "[utopia][init] SEC: Syscfg stored in $SYSCFG_BKUP_FILE"
+syscfg unset UpdateNvram
+syscfg commit
 
 #Added log to check the DHCP range corruption after system defaults applied.
 lan_ipaddr=`syscfg get lan_ipaddr`
