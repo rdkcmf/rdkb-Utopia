@@ -46,7 +46,11 @@ source /etc/device.properties
 if [ "$BOX_TYPE" = "HUB4" ]; then
    CMINTERFACE="erouter0"
 else
-   CMINTERFACE="wan0"
+   if [ -f "/nvram/ETHWAN_ENABLE" ];then
+   	CMINTERFACE="erouter0"
+   else
+   	CMINTERFACE="wan0"
+   fi
 fi
     
 SERVICE_NAME="sshd"

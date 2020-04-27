@@ -111,7 +111,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-down|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "lnf-setup|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-
+    "meshbhaul-setup|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "sw_ext_restore|/etc/utopia/service.d/service_multinet/handle_sw.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 #endif

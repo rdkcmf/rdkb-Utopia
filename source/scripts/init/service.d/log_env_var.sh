@@ -88,7 +88,7 @@ atom_journal_log="/rdklogs/logs/atom_journal_logs.txt.0"
 #fi
 
 #This change is needed for ArrisXB6 to choose sync location dynamically.
-if [ "$MODEL_NUM" == "TG3482G" ];then
+if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ];then
 	isNvram2Mounted=`grep nvram2 /proc/mounts`
 	if [ "$isNvram2Mounted" == "" ];then
 		LOG_SYNC_PATH="/nvram/logs/"

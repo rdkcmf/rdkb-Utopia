@@ -106,7 +106,7 @@ if [ $KERNEL_VERSION -lt 4 ] ; then
 	echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_time_wait
 	echo "10" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close
 	echo "20" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close_wait
-	if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+        if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
 		#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
 		echo "16384" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
 		echo "7440" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
@@ -124,7 +124,7 @@ else
 	echo "10" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait
 	echo "10" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close
 	echo "20" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close_wait
-	if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+	if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
 		#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
 		echo "16384" > /proc/sys/net/netfilter/nf_conntrack_max
 		echo "7440" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established

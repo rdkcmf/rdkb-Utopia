@@ -208,7 +208,7 @@ create_tunnel () {
         ip link set dev $GRE_IFNAME name $GRE_IFNAME_DUMMY
     fi
 
-    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+    if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
     	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     	ip link add $2 type gretap remote $1 dev $WAN_IF $extra nopmtudisc
     	ip link set $2 txqueuelen 1000 mtu 1500

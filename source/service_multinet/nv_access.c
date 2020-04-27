@@ -35,7 +35,7 @@
 #include "service_multinet_nv.h"
 #include <stdio.h>
 #include <string.h>
-#ifdef _COSA_INTEL_XB3_ARM_
+#if defined(_COSA_INTEL_XB3_ARM_) || defined(INTEL_PUMA7)
 #include "ccsp_custom.h"
 #include "ccsp_psm_helper.h"
 #include <ccsp_base_api.h>
@@ -55,7 +55,7 @@ char* typeStrings[] = {
 const char* const multinet_component_id = "ccsp.multinet";
 static void* 	  bus_handle = NULL;
 
-#ifdef _COSA_INTEL_XB3_ARM_
+#if defined(_COSA_INTEL_XB3_ARM_) || defined(INTEL_PUMA7)
 #define CCSP_SUBSYS 	"eRT."
 #define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
 
@@ -98,7 +98,7 @@ int dbusInit( void )
 int nv_get_members(PL2Net net, PMember memberList, int numMembers) 
 {
 /* Use to get psm value via dbus instead of psmcli util */
-#ifndef _COSA_INTEL_XB3_ARM_
+#if !defined(_COSA_INTEL_XB3_ARM_) && !defined(INTEL_PUMA7)
     int i;
     char cmdBuff[512] = {0};
     char valBuff[256] = {0};
@@ -254,7 +254,7 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 	char *pStr = NULL;
 
 /* Use to get psm value via dbus instead of psmcli util */
-#ifndef _COSA_INTEL_XB3_ARM_
+#if !defined(_COSA_INTEL_XB3_ARM_) && !defined(INTEL_PUMA7)
     char valBuff[80] = {0};
     char tmpBuf[15] = {0};
     FILE* psmcliOut = NULL;

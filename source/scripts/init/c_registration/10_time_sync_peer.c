@@ -16,8 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
- /**********************************************************************
-   Copyright [2015] [Cisco Systems, Inc.]
+
+/**********************************************************************
+   Copyright [2014] [Cisco Systems, Inc.]
  
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -31,36 +32,42 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 **********************************************************************/
-#ifndef MNET_LIB_H
- #define MNET_LIB_H
- 
- #include "service_multinet_base.h"
 
- 
- #define MAX_MEMBERS 32
- 
- extern unsigned char isDaemon;
- extern char* executableName;
- 
- int multinet_bridgeUp(PL2Net network, int bFirewallRestart);
- int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart);
- 
- int multinet_bridgeDown(PL2Net network);
- int multinet_bridgeDownInst(int l2netInst);
- 
- int multinet_Sync(PL2Net network, PMember members, int numMembers);
- int multinet_SyncInst(int l2netInst);
- 
- int multinet_bridgesSync();
- 
- int multinet_ifStatusUpdate(PL2Net network, PMember interface, IF_STATUS status);
- int multinet_ifStatusUpdate_ids(int l2netInst, char* ifname, char* ifType, char* status, char* tagging);
- 
- int multinet_lib_init(BOOL daemon, char* exeName);
+#include <stdio.h>
+#include "srvmgr.h"
 
-#if defined(MULTILAN_FEATURE)
- int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion);
- int multinet_setBridgePortsMTU(int l2netInst, int MTU);
-#endif
- 
- #endif
+const char* SERVICE_NAME            = "time_sync_peer";
+
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_time_sync_peer.sh";
+
+const char* SERVICE_CUSTOM_EVENTS[] = { "ntpd-status|/etc/utopia/service.d/service_time_sync_peer.sh", NULL };
+
+void srv_register(void) {
+   sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
+}
+
+void srv_unregister(void) {
+   sm_unregister(SERVICE_NAME);
+}
+
+int main(int argc, char **argv)
+{
+   cmd_type_t choice = parse_cmd_line(argc, argv);
+
+   switch(choice) {
+      case(nochoice):
+      case(start):
+         srv_register();
+         break;
+      case(stop):
+         srv_unregister();
+         break;
+      case(restart):
+         srv_unregister();
+         srv_register();
+         break;
+      default:
+         printf("%s called with invalid parameter (%s)\n", argv[0], 1==argc ? "" : argv[1]);
+   }
+   return(0);
+}

@@ -166,7 +166,7 @@ service_start ()
       echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE 
 
       # Generate Firewall statistics hourly
-      if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+      if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
       	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
       	#Don't Zero iptable Counter
       	echo "58 * * * * /usr/bin/GenFWLog -nz" >> $CRONTAB_FILE
@@ -183,7 +183,7 @@ service_start ()
       fi
 
       # RDKB-23651
-      if [ "$MODEL_NUM" = "CGM4331COM" ]; then
+      if [ "x$THERMALCTRL_ENABLE" == "xtrue" ]; then
          echo "*/15 * * * * /usr/ccsp/tad/check_fan.sh" >> $CRONTAB_FILE
       fi
 
