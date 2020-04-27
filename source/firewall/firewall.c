@@ -2533,12 +2533,8 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
             fprintf(filter_fp, "%s\n", str);
 #endif
          }
-#ifndef _HUB4_PRODUCT_REQ_
-            /* This fprintf is not really required.
-             * This makes the port mapping rule twice in iptables. */
-            fprintf(filter_fp, "%s\n", str);
-#endif //End _HUB4_PRODUCT_REQ_
-         }
+
+        }
       }
       if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&  (privateIpCheck(toip)) )	
 	  {
