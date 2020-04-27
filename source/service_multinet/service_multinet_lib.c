@@ -41,6 +41,8 @@
 #include "service_multinet_plat.h"
 #ifdef MULTILAN_FEATURE
 #include "syscfg/syscfg.h"
+#include <net/if.h>
+#include <dirent.h>
 #endif
 #include <string.h>
 #include <stdio.h>
@@ -61,7 +63,8 @@
 #define BASE_MAC_SYSCFG_KEY                  "base_mac_address"
 /* Offset at which LAN bridge mac addresses will start */
 #define BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY    "base_mac_bridge_offset"
-#define CMD_STRING_LEN 80
+#define BRIDGE_IFACE_PATH                    "/sys/class/net/%s/brif/%s"
+#define CMD_STRING_LEN 255
 #define MAC_ADDRESS_OCTET_MAX 0x100
 #define MAC_ADDRESS_LOCAL_MASK 0x02
 #endif
@@ -623,10 +626,24 @@ static int resolve_member_diff(PL2Net network,
                                PMember live_members, int* numLiveMembers,
                                PMember keep_members, int* numKeepMembers) {
     int i, j; 
-    
+
+#if defined(MULTILAN_FEATURE)
+    int len = 0;
+    char br_if_path[CMD_STRING_LEN] = {0};
+#endif
+
     for (i = 0; i < *numMembers; ++i ) {
         for (j = 0; j < *numLiveMembers; ++j) {
+
+#if defined (MULTILAN_FEATURE)
+            len = snprintf(br_if_path, CMD_STRING_LEN, BRIDGE_IFACE_PATH, network->name, live_members[j].interface->name);
+            if (live_members[i].bTagging) {
+                snprintf(br_if_path+len, CMD_STRING_LEN-len, ".%d", network->vid);
+            }
+            if (isMemberEqual(members + i, live_members + j) && (access(br_if_path, F_OK) == 0)) {       /* Added check: if previously added interfaces are connected to bridge */
+#else
             if (isMemberEqual(members + i, live_members + j)) {
+#endif
                 keep_members[*numKeepMembers] = members[i];
                 deleteFromMemberArray(members, i, numMembers);
                 deleteFromMemberArray(live_members, j, numLiveMembers);
@@ -641,6 +658,74 @@ static int resolve_member_diff(PL2Net network,
     return 0;
 }
 
+#if defined(MULTILAN_FEATURE)
+// Assign an address in CIDR format to a bridge instance
+int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion) {
+    L2Net l2net;
+    char cmdBuff[CMD_STRING_LEN] = {'\0'};
+
+    memset(&l2net,0,sizeof(l2net));
+
+    // Get bridge details from nv
+    nv_get_bridge(l2netInst, &l2net);
+
+    // Assign IP address in CIDR form to the bridge's network interface
+    if (strnlen(l2net.name, IFNAMSIZ) > 0)
+    {
+        MNET_DEBUG("About to assign CIDR address %s to instance %d. Name: %s\n" COMMA CIDR COMMA l2netInst COMMA l2net.name);
+        if (IPVersion == 4 || IPVersion == 6) {
+            snprintf(cmdBuff, CMD_STRING_LEN, "ip -%d addr change %s dev %s", IPVersion, CIDR, l2net.name);
+            system(cmdBuff);
+        }
+        else {
+            MNET_DEBUG("Unknown IP version %d\n" COMMA IPVersion);
+            return -1;
+        }
+    }
+    else
+    {
+        MNET_DEBUG("nv fetch failed for instance %d.\n" COMMA l2netInst);
+        return -1;
+    }
+    return 0;
+}
+
+// Update the MTU of every port connected to a bridge instance
+int multinet_setBridgePortsMTU(int l2netInst, int MTU) {
+    L2Net l2net;
+    char cmdBuff[CMD_STRING_LEN] = {'\0'};
+    DIR *brif_dir;
+    struct dirent *brif_dir_entry;
+
+    memset(&l2net,0,sizeof(l2net));
+
+    // Get bridge details from nv
+    nv_get_bridge(l2netInst, &l2net);
+
+    if(strnlen(l2net.name, IFNAMSIZ) < 1) {
+        MNET_DEBUG("Failed to get bridge instance %d from nv\n" COMMA l2netInst);
+        return -1;
+    }
+
+    snprintf(cmdBuff, CMD_STRING_LEN, "/sys/class/net/%s/brif/", l2net.name);
+    brif_dir = opendir(cmdBuff);
+    if (brif_dir) {
+        while ((brif_dir_entry = readdir(brif_dir)) != NULL) {
+            if (brif_dir_entry->d_type == DT_LNK) {
+                MNET_DEBUG("Update MTU of %s enslaved to bridge %s instance %d\n" COMMA brif_dir_entry->d_name COMMA l2net.name COMMA l2netInst);
+                snprintf(cmdBuff, CMD_STRING_LEN, "ifconfig %s mtu %d", brif_dir_entry->d_name, MTU);
+                system(cmdBuff);
+            }
+        }
+        closedir(brif_dir);
+    }
+    // Update bridge MTU
+    snprintf(cmdBuff, CMD_STRING_LEN, "ifconfig %s mtu %d", l2net.name, MTU);
+    system(cmdBuff);
+
+    return 0;
+}
+#endif
 
 //TODO:Deferred BRIDGES SYNC!!!
 //TODO: inspect differences from script

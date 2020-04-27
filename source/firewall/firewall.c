@@ -4220,6 +4220,51 @@ static int do_wan_nat_lan_clients(FILE *fp)
    return(0);
 }
 
+#if defined (MULTILAN_FEATURE)
+ /*
+ *  Procedure     : do_multinet_lan2self_attack
+ *  Purpose       : prepare rules for ipv4 firewall to prevent attacks
+ *                  from LAN addresses associated with multinet LANs
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int do_multinet_lan2self_attack(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(filter_fp, "-A lanattack -s %s -d %s -j xlog_drop_lanattack\n", net_resp, net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+#endif
+
 /*
  ==========================================================================
                      lan2self
@@ -4242,6 +4287,10 @@ static int do_lan2self_attack(FILE *fp)
  snprintf(str, sizeof(str),
             "-A lanattack -s %s -d %s -j xlog_drop_lanattack", lan_ipaddr, lan_ipaddr);
    fprintf(fp, "%s\n", str);
+
+#if defined (MULTILAN_FEATURE)
+   do_multinet_lan2self_attack(fp);
+#endif
 
    snprintf(str, sizeof(str),
             "-A lanattack -s 127.0.0.1 -j xlog_drop_lanattack");
@@ -4351,6 +4400,54 @@ static int do_lan2self_by_wanip6(FILE *filter_fp)
            FIREWALL_DEBUG("Exiting do_lan2self_by_wanip6\n");     
 }
 
+#if defined (MULTILAN_FEATURE)
+/*
+ *  Procedure     : do_multinet_lan2self_by_wanip
+ *  Purpose       : prepare rules for ipv4 firewall pertaining to access
+ *                  to the local host via a WAN address
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int do_multinet_lan2self_by_wanip(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    // First skip packets destined to primary LAN instance
+    fprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", lan_ipaddr);    
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+#endif
+
 static int do_lan2self_by_wanip(FILE *filter_fp, int family)
 {
    //As requested, we don't allow SNMP/HTTP/HTTPs/Ping
@@ -4360,7 +4457,12 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
    int rc = 0, ret;
    httpport[0] = '\0';
    httpsport[0] = '\0';
-           FIREWALL_DEBUG("Entering do_lan2self_by_wanip\n");     
+           FIREWALL_DEBUG("Entering do_lan2self_by_wanip\n");
+
+#if defined (MULTILAN_FEATURE)
+   do_multinet_lan2self_by_wanip(filter_fp);
+#endif
+
    fprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", current_wan_ipaddr); //eRouter address doesn't have any restrictions
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    if(isWanStaticIPReady){
@@ -4507,6 +4609,52 @@ static int do_lan2self(FILE *fp)
         // FIREWALL_DEBUG("Exiting do_lan2self\n");     
    return(0);
 }
+
+#if defined (MULTILAN_FEATURE)
+/*
+ *  Procedure     : do_multinet_wan2self_attack
+ *  Purpose       : prepare rules for ipv4 firewall to prevent attacks
+ *                  from LAN addresses associated with multinet LANs
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int do_multinet_wan2self_attack(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(filter_fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", net_resp);
+        fprintf(filter_fp, "-A wanattack -d %s -j xlog_drop_wanattack\n", net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+#endif
 
 /*
  ==========================================================================
@@ -4682,6 +4830,11 @@ static int do_wan2self_attack(FILE *fp)
 
     snprintf(str, sizeof(str),
              "-A wanattack -d %s -j xlog_drop_wanattack", lan_ipaddr);
+
+#if defined (MULTILAN_FEATURE)
+    do_multinet_wan2self_attack(fp);
+#endif
+
     fprintf(fp, "%s\n", str);
 
     snprintf(str, sizeof(str),
@@ -8068,6 +8221,54 @@ static int do_wan2lan_IoT_Allow(FILE *filter_fp)
    return(0);
 }
 
+#if defined (MULTILAN_FEATURE)
+/*
+ *  Procedure     : do_multinet_lan2wan_disable
+ *  Purpose       : prepare rules for ipv4 firewall for multinet LANs
+                    when in the disabled state
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int do_multinet_lan2wan_disable(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char net_resp2[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4subnet", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp2, sizeof(net_resp2));
+
+        fprintf(filter_fp, "-A lan2wan_disable -s %s/%s -j DROP\n", net_resp, net_resp2);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+#endif
+
 /*
  *  Procedure     : do_lan2wan_disable
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -8092,6 +8293,11 @@ static void do_lan2wan_disable(FILE *filter_fp)
          snprintf(str, sizeof(str),
                   "-A lan2wan_disable -s %s/%s -j DROP", lan_ipaddr, lan_netmask);
          fprintf(filter_fp, "%s\n", str);
+
+#if defined (MULTILAN_FEATURE)
+         do_multinet_lan2wan_disable(filter_fp);
+#endif
+
     }
    FIREWALL_DEBUG("Exiting do_lan2wan_disable\n"); 
 }
@@ -8514,7 +8720,53 @@ FirewallRuleNext2:
    return(0);
 }
 
+#if defined (MULTILAN_FEATURE)
+/*
+ *  Procedure     : do_multinet_wan2lan_disable
+ *  Purpose       : prepare rules for ipv4 firewall for multinet LANs
+                    when in the disabled state
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int do_multinet_wan2lan_disable(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char net_resp2[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
 
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4subnet", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp2, sizeof(net_resp2));
+
+        fprintf(filter_fp, "-A wan2lan_disabled -d %s/%s -j DROP\n", net_resp, net_resp2);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+#endif
 
 /*
  *  Procedure     : do_wan2lan_disabled
@@ -8561,6 +8813,11 @@ static int do_wan2lan_disabled(FILE *fp)
       snprintf(str, sizeof(str),
                "-A wan2lan_disabled -d %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
       fprintf(fp, "%s\n", str);
+
+#if defined (MULTILAN_FEATURE)
+      do_multinet_wan2lan_disable(fp);
+#endif
+
    }
 #endif
    FIREWALL_DEBUG("Exiting do_wan2lan_disabled\n"); 
@@ -8932,9 +9189,54 @@ static void prepare_ipc_filter(FILE *filter_fp) {
                 FIREWALL_DEBUG("Exiting prepare_ipc_filter\n"); 	  
 }
 
+/*
+ *  Procedure     : prepare_multinet_filter_input
+ *  Purpose       : prepare the iptables-restore file that establishes all
+ *                  ipv4 firewall rules pertaining to traffic
+ *                  which will be sent from LAN to the local host
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
 static int prepare_multinet_filter_input(FILE *filter_fp) {
-    
-                FIREWALL_DEBUG("Entering prepare_multinet_filter_input\n"); 	  
+
+#if defined (MULTILAN_FEATURE)
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+ 
+    FIREWALL_DEBUG("Entering prepare_multinet_filter_input\n"); 	  
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ifname", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(filter_fp, "-A INPUT -i %s -j lan2self\n", net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+#else
+    FIREWALL_DEBUG("Entering prepare_multinet_filter_input\n");
+#endif
+
     //Allow GRE tunnel traffic
     // TODO: Read sysevent enable flag
     fprintf(filter_fp, "-I INPUT -i %s -p gre -j ACCEPT\n", current_wan_ifname);
@@ -9564,7 +9866,52 @@ static int prepare_lnf_internet_rules(FILE *mangle_fp,int iptype)
     }
     return 0;
 }
- 
+
+#if defined (MULTILAN_FEATURE)
+/*
+ *  Procedure     : prepare_multinet_disabled_ipv4_firewall
+ *  Purpose       : prepare the iptables-restore file that establishes
+ *                  ipv4 firewall rules for when the firewall is disabled
+ *  Parameters    :
+ *    filter_fp   : An open file to write rules to
+ * Return Values  :
+ *    0           : Success
+ */
+static int prepare_multinet_disabled_ipv4_firewall(FILE *filter_fp) {
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char primary_inst[MAX_QUERY] = {0};
+
+    snprintf(net_query, sizeof(net_query), "ipv4-instances");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+    snprintf(net_query, sizeof(net_query), "primary_lan_l3net");
+    sysevent_get(sysevent_fd, sysevent_token, net_query, primary_inst, sizeof(inst_resp));
+
+    tok = strtok(inst_resp, " ");
+
+    if (tok) do {
+        // Skip primary LAN instance, it is handled elsewhere
+        if (strcmp(primary_inst,tok) == 0)
+            continue;
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        if (strcmp("up", net_resp) != 0)
+            continue;
+
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+        fprintf(filter_fp, "-A INPUT -i %s -j lan2self_mgmt\n", net_resp);
+
+    } while ((tok = strtok(NULL, " ")) != NULL);
+
+    return 0;
+}
+#endif
+
 /*
  *  Procedure     : prepare_subtables
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -10268,7 +10615,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #endif /*_HUB4_PRODUCT_REQ_*/
    }
    fprintf(filter_fp, "-A general_input -i %s -p udp -m udp --dport 161 -j xlog_drop_lan2self\n", lan_ifname);
+#if defined (MULTILAN_FEATURE)
+   fprintf(filter_fp, "-A lan2self -j lan2self_by_wanip\n");
+#else
    fprintf(filter_fp, "-A lan2self ! -d %s -j lan2self_by_wanip\n", lan_ipaddr);
+#endif
    fprintf(filter_fp, "-A lan2self -j lan2self_mgmt\n");
    fprintf(filter_fp, "-A lan2self -j lanattack\n");
    fprintf(filter_fp, "-A lan2self -j host_detect\n");
@@ -10902,7 +11253,11 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 #if defined(_COSA_BCM_MIPS_)
        fprintf(filter_fp, "-A INPUT -p tcp -m multiport --dports 80,443 -d %s -j ACCEPT\n",lan0_ipaddr);
 #endif
+#if defined (MULTILAN_FEATURE)
+       fprintf(filter_fp, "-A INPUT -i %s -j wan2self_mgmt\n", current_wan_ifname);
+#else
        fprintf(filter_fp, "-A INPUT ! -i %s -j wan2self_mgmt\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname);
+#endif
        do_remote_access_control(NULL, filter_fp, AF_INET);
    }
 
@@ -10959,6 +11314,11 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 
    if(!isBridgeMode) //brlan0 exists
        fprintf(filter_fp, "-A INPUT -i %s -j lan2self_mgmt\n", lan_ifname);
+
+
+#if defined (MULTILAN_FEATURE)
+   prepare_multinet_disabled_ipv4_firewall(filter_fp);
+#endif
 
    fprintf(filter_fp, "-A INPUT -i %s -j lan2self_mgmt\n", cmdiag_ifname); //lan0 always exist
 

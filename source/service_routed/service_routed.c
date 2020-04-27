@@ -367,7 +367,7 @@ static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsign
 
 static int route_set(struct serv_routed *sr)
 {
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+#if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(MULTILAN_FEATURE)
     unsigned int l2_insts[4] = {0};
     unsigned int enabled_iface_num = 0;
     char evt_name[64] = {0};
@@ -388,6 +388,19 @@ static int route_set(struct serv_routed *sr)
     /*Clean 'iif brlan0 table erouter' if exist already*/
     vsystem("ip -6 rule del iif brlan0 table erouter");
 #endif
+
+#if defined (MULTILAN_FEATURE)
+    /* Test to see if the default route for erouter0 is not empty and the default
+       route for router table is missing before trying to add a new default route
+       for erouter table via erouter0 to prevent vsystem returning error */
+    if (vsystem("gw=$(ip -6 route show default dev erouter0 | awk '/via/ {print $3}');"
+            "dr=$(ip -6 route show default dev erouter0 table erouter);"
+            "if [ \"$gw\" != \"\" -a \"$dr\" = \"\" ]; then"
+             "  ip -6 route add default via $gw dev erouter0 table erouter;"
+             "fi") != 0)
+         return -1;
+    return 0;
+#else
     if (vsystem("ip -6 rule add iif brlan0 table erouter;"
             "gw=$(ip -6 route show default dev erouter0 | awk '/via/ {print $3}');"
             "if [ \"$gw\" != \"\" ]; then"
@@ -395,11 +408,12 @@ static int route_set(struct serv_routed *sr)
             "fi") != 0)
         return -1;
     return 0;
+#endif
 }
 
 static int route_unset(struct serv_routed *sr)
 {
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+#if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(MULTILAN_FEATURE)
     unsigned int l2_insts[4] = {0};
     unsigned int enabled_iface_num = 0;
     char evt_name[64] = {0};

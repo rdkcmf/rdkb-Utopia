@@ -58,6 +58,9 @@
 #define P7_LEGACY_MULTINET_HANDLER "/etc/utopia/service.d/vlan_util_xb6.sh"
 #define P7_PP_ON_ATOM "/etc/utopia/use_multinet_exec"
 #define MAX_CMD 255
+#define LNF_IPV4_CIDR "192.168.106.254/24"
+#define MESHBHAUL_IPV4_CIDR "192.168.245.254/24"
+#define MESHBHAUL_MTU 1600
 #endif
 #endif
 
@@ -71,6 +74,7 @@ FILE *mnetfp = NULL;
  } EntryCall;
 #ifdef MULTILAN_FEATURE
  int handle_lnf_setup(char* argv[], int argc);
+ int handle_meshbhaul_setup(char* argv[], int argc);
 #endif
  int handle_up(char* argv[], int argc);
  int handle_down(char* argv[], int argc);
@@ -89,6 +93,7 @@ FILE *mnetfp = NULL;
  EntryCall calls[] = {
 #ifdef MULTILAN_FEATURE
 	 {"lnf-setup", handle_lnf_setup},
+	 {"meshbhaul-setup", handle_meshbhaul_setup},
 #endif
 	 {"multinet-up", handle_up},
 	 //{"multinet-ifStatus", handle_ifStatus},
@@ -169,6 +174,28 @@ FILE *mnetfp = NULL;
      MNET_DEBUG("Main: handle_lnf_setup")
      multinet_bridgeDownInst(atoi(argv[2]));
      multinet_bridgeUpInst(atoi(argv[2]), 0);
+     // Assign IP to LnF bridge
+     multinet_assignBridgeCIDR(atoi(argv[2]), LNF_IPV4_CIDR, 4);
+     // Restart firewall
+     system("sysevent set firewall-restart");
+ }
+
+ int handle_meshbhaul_setup(char* argv[], int argc) {
+     MNET_DEBUG("Main: handle_meshbhaul_setup")
+     multinet_bridgeDownInst(atoi(argv[2]));
+     multinet_bridgeUpInst(atoi(argv[2]), 0);
+     // Assign IP to mesh backhaul bridge
+     multinet_assignBridgeCIDR(atoi(argv[2]), MESHBHAUL_IPV4_CIDR, 4);
+     // Update MTU of backhaul bridge ports
+     multinet_setBridgePortsMTU(atoi(argv[2]), MESHBHAUL_MTU);
+
+     // TODO:
+     // 1. br403 (mesh backhaul bridge) needs to added to bbhm for this to work
+     // 2. Fetch platform-specific mesh backhaul wifi interfaces from configuration (or use #ifdef)
+     // 3. Update MTU mesh backhaul WiFi interfaces to MESHBHAUL_MTU
+
+     // Restart firewall
+     system("sysevent set firewall-restart");
  }
 #endif
  int handle_up(char* argv[], int argc) {
