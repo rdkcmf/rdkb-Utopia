@@ -109,12 +109,12 @@ if [ $KERNEL_VERSION -lt 4 ] ; then
 	if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
 		#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
 		echo "16384" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
-		echo "300" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
+		echo "7440" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
 	else
 		# TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
 		#echo "8192" > /proc/sys/net/ipv4/netfilter/ip_conntrack_max
 		echo "[$utc_time] [utopia][init] don't override nf_conntrack_max here, value is set at /lib/rdk/brcm.networking"
-		echo "1800" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
+		echo "7440" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established
 	fi
 
 else
@@ -127,12 +127,12 @@ else
 	if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
 		#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
 		echo "16384" > /proc/sys/net/netfilter/nf_conntrack_max
-		echo "300" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established
+		echo "7440" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established
 	else
 		# TCCBR-1849 - don't override nf_conntrack_max here, this value is set at /lib/rdk/brcm.networking
 		#echo "8192" > /proc/sys/net/netfilter/ip_conntrack_max
 		echo "[$utc_time] [utopia][init] don't override nf_conntrack_max here, value is set at /lib/rdk/brcm.networking"
-		echo "1800" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established
+		echo "7440" > /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established
 	fi
 fi
 
