@@ -95,7 +95,7 @@ echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
 echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 
 #echo "[utopia][init] Loading drivers"
-#MODULE_PATH=/fss/gw/lib/modules/`uname -r`/
+#MODULE_PATH=/lib/modules/`uname -r`/
 #insmod $MODULE_PATH/drivers/net/erouter_ni.ko netdevname=erouter0
 
 echo "Starting log module.."

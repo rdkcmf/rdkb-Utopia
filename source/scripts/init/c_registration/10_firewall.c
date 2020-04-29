@@ -40,7 +40,6 @@
 #include <stdlib.h>
 
 #define SERVICE_NAME              "firewall"
-//#define SERVICE_DEFAULT_HANDLER   "/fss/gw/usr/sbin/firewall"
 #define SERVICE_DEFAULT_HANDLER   "/etc/utopia/service.d/firewall_log_handle.sh"
 
 /*

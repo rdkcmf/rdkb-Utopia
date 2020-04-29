@@ -137,8 +137,8 @@ update_ddns_server() {
    done
            
    if [ "" != "${EXTRA_PARAMS}" ]; then
-       echo "/fss/gw/usr/bin/ez-ipupdate ${EXTRA_PARAMS} " 
-       /fss/gw/usr/bin/ez-ipupdate ${EXTRA_PARAMS} 
+       echo "/usr/bin/ez-ipupdate ${EXTRA_PARAMS} " 
+       /usr/bin/ez-ipupdate ${EXTRA_PARAMS} 
        RET_CODE=$?
    else
        RET_CODE=1

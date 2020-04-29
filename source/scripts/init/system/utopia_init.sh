@@ -136,7 +136,7 @@ fi
 
 
 #echo_t "[utopia][init] Loading drivers"
-#MODULE_PATH=/fss/gw/lib/modules/`uname -r`/
+#MODULE_PATH=/lib/modules/`uname -r`/
 #insmod $MODULE_PATH/drivers/net/erouter_ni.ko netdevname=erouter0
 
 #if [ "$distro" = "GAP" ]; then
@@ -170,7 +170,7 @@ fi
 #    cp /etc/utopia/service.d/nvram.dat /tmp
 #fi
 echo_t "Starting log module.."
-/fss/gw/usr/sbin/log_start.sh
+/usr/sbin/log_start.sh
 
 # Spawn telnet daemon only for production images
 #if [ $debug_build -ne 0 ]; then
@@ -377,7 +377,7 @@ if [ "1" = "$SYSCFG_PARTNER_FR" ]; then
    echo_t "[utopia][init] Performing factory reset due to PartnerID change"
 fi
 # Remove log file first because it need get log file path from syscfg   
-   /fss/gw/usr/sbin/log_handle.sh reset
+   /usr/sbin/log_handle.sh reset
    echo -e "\n" | syscfg_destroy 
 #   umount $SYSCFG_MOUNT
 #   SYSDATA_MTD=`grep SysData /proc/mtd | awk -F: '{print $1}'`
@@ -599,7 +599,7 @@ ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
 ip6tables -t mangle -A PREROUTING -i $ecm_wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 
-#/fss/gw/sbin/ulogd -c /fss/gw/etc/ulogd.conf -d
+#/sbin/ulogd -c /etc/ulogd.conf -d
 
 #echo_t "[utopia][init] Starting telnetd"
 #TELNET_ENABLE=`syscfg get mgmt_wan_telnetaccess`

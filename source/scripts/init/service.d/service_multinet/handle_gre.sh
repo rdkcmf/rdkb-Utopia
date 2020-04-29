@@ -52,18 +52,7 @@ source /etc/utopia/service.d/log_capture_path.sh
 source /lib/rdk/t2Shared_api.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
-if [ "$BOX_TYPE" = "XF3" ] ; then
-   export LOG4C_RCPATH=/etc
-   BINPATH=/usr/ccsp
-else
-
-   if [ "$BOX_TYPE" = "XB3" ] ; then
-      BINPATH=/fss/gw/usr/ccsp
-   else
-      BINPATH=/usr/bin/
-   fi
-   export LOG4C_RCPATH=/fss/gw/rdklogger
-fi
+export LOG4C_RCPATH=/etc
 
 MTU_VAL=1400
 MSS_VAL=1360

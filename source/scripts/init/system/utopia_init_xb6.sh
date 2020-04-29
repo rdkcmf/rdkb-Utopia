@@ -146,7 +146,7 @@ echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 #echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
 
 #echo "[utopia][init] Loading drivers"
-#MODULE_PATH=/fss/gw/lib/modules/`uname -r`/
+#MODULE_PATH=/lib/modules/`uname -r`/
 #insmod $MODULE_PATH/drivers/net/erouter_ni.ko netdevname=erouter0
 
 #if [ "$distro" = "GAP" ]; then
@@ -180,7 +180,7 @@ echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 #    cp /etc/utopia/service.d/nvram.dat /tmp
 #fi
 echo "Starting log module.."
-/fss/gw/usr/sbin/log_start.sh
+/usr/sbin/log_start.sh
 
 echo "[utopia][init] Starting udev.."
 
@@ -382,7 +382,7 @@ if [ "1" = "$SYSCFG_PARTNER_FR" ]; then
    echo_t "[utopia][init] Performing factory reset due to PartnerID change"
 fi
 # Remove log file first because it need get log file path from syscfg   
-   /fss/gw/usr/sbin/log_handle.sh reset
+   /usr/sbin/log_handle.sh reset
    echo -e "\n" | syscfg_destroy 
 #   umount $SYSCFG_MOUNT
 #   SYSDATA_MTD=`grep SysData /proc/mtd | awk -F: '{print $1}'`
