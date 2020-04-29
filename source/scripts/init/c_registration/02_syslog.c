@@ -44,10 +44,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
    // make syslog_rotated an event
-   char str[256];
-   snprintf(str, sizeof(str), "sysevent setoptions syslog_rotated %s", TUPLE_FLAG_EVENT);
-   system(str);
-
+   system("sysevent setoptions syslog_rotated " TUPLE_FLAG_EVENT);
    // syslog is started by inittab::sysinit once so just set its status here
    system("sysevent set syslog-status started");
 }
