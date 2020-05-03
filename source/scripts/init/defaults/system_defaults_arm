@@ -1282,3 +1282,7 @@ $dslite_tcpmss_1=1420
 
 #dslite_ipv6_frag_enable - Enable/disable dslite IPv6 frag
 $dslite_ipv6_frag_enable_1=0
+
+#NonRootSupport enable
+$NonRootSupport=false
+
