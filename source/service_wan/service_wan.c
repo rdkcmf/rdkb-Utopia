@@ -82,6 +82,21 @@
 #include <platform_hal.h>
 #endif
 
+#if defined (_PROPOSED_BUG_FIX_)
+#include <syslog.h>
+
+/*eRouter events*/
+#define EROUTER_EVT_ID                                      "eRouterEvents"
+#define EVENTS_EROUTER_ADMINISTRATIVELY_DISABLED            72003001
+#define EVENTS_EROUTER_IPV4_ONLY                            72003002
+#define EVENTS_EROUTER_IPV6_ONLY                            72003003
+#define EVENTS_EROUTER_DS_ENABLED                           72003004
+#define EVENTS_EROUTER_ADMINISTRATIVELY_DISABLED_STR        "eRouter is administratively disabled"
+#define EVENTS_EROUTER_IPV4_ONLY_STR                        "eRouter enabled as IPv4 only"
+#define EVENTS_EROUTER_IPV6_ONLY_STR                        "eRouter enabled as IPv6 only"
+#define EVENTS_EROUTER_DS_ENABLED_STR                       "eRouter enabled as Dual Stack"
+#endif
+
 
 #define PROG_NAME       "SERVICE-WAN"
 #define ER_NETDEVNAME "erouter0"
@@ -241,6 +256,9 @@ static int dhcp_stop(const char *ifname)
             kill(pid, SIGKILL);
         }
         */
+#if defined (_PROPOSED_BUG_FIX_)
+        syslog(LOG_INFO, "%u-%s", EVENTS_EROUTER_ADMINISTRATIVELY_DISABLED, EVENTS_EROUTER_ADMINISTRATIVELY_DISABLED_STR);
+#endif
     }
     unlink(DHCPC_PID_FILE);
 
@@ -1707,16 +1725,29 @@ static int serv_wan_init(struct serv_wan *sw, const char *ifname, const char *pr
         return -1;
     }
 
+#if defined (_PROPOSED_BUG_FIX_)
+    openlog(EROUTER_EVT_ID, LOG_NDELAY, LOG_LOCAL4);
+#endif
+
     syscfg_get(NULL, "last_erouter_mode", buf, sizeof(buf));
     switch (atoi(buf)) {
     case 1:
         sw->rtmod = WAN_RTMOD_IPV4;
+#if defined (_PROPOSED_BUG_FIX_)
+        syslog(LOG_INFO, "%u-%s", EVENTS_EROUTER_IPV4_ONLY, EVENTS_EROUTER_IPV4_ONLY_STR);
+#endif
         break;
     case 2:
         sw->rtmod = WAN_RTMOD_IPV6;
+#if defined (_PROPOSED_BUG_FIX_)
+        syslog(LOG_INFO, "%u-%s", EVENTS_EROUTER_IPV6_ONLY, EVENTS_EROUTER_IPV6_ONLY_STR);
+#endif
         break;
     case 3:
         sw->rtmod = WAN_RTMOD_DS;
+#if defined (_PROPOSED_BUG_FIX_)
+        syslog(LOG_INFO, "%u-%s", EVENTS_EROUTER_DS_ENABLED, EVENTS_EROUTER_DS_ENABLED_STR);
+#endif
         break;
     default:
         fprintf(stderr, "%s: unknow RT mode (last_erouter_mode)\n", __FUNCTION__);
@@ -1732,6 +1763,11 @@ static int serv_wan_init(struct serv_wan *sw, const char *ifname, const char *pr
 static int serv_wan_term(struct serv_wan *sw)
 {
     sysevent_close(sw->sefd, sw->setok);
+
+#if defined (_PROPOSED_BUG_FIX_)
+    closelog();
+#endif
+
     return 0;
 }
 

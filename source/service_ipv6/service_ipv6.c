@@ -80,6 +80,9 @@ const char* const service_ipv6_component_id = "ccsp.ipv6";
 #define MAX_LAN_IF_NUM             64
 #define CMD_BUF_SIZE              255
 #define MAX_ACTIVE_INSTANCE        64
+
+#define EROUTER_EVENT_LOG           "/var/log/event/eventlog"
+#define EROUTER_NO_PREFIX_MESSAGE   "/usr/bin/logger -p local4.crit \"72002001 -  LAN Provisioning No Prefix available for eRouter interface\""
 #endif
 
 #if defined(MULTILAN_FEATURE)
@@ -986,6 +989,36 @@ int compute_global_ip(char *prefix, char *if_name, char *ipv6_addr, unsigned int
     return 0;
 }
 
+#if defined (MULTILAN_FEATURE)
+ /*
+ *Report that one LAN didn't get an IPv6 prefix
+ */
+static void report_no_prefix(int i)
+{
+    (void)i;
+
+    vsystem("%s %d", EROUTER_NO_PREFIX_MESSAGE, i);
+}
+
+/*
+ *In case prefix assignment completely fails, report failure for all LANs
+ */
+static void report_no_lan_prefixes(struct serv_ipv6 *si6)
+{
+    unsigned int enabled_iface_num = 0;
+    unsigned int l2_insts[MAX_LAN_IF_NUM] = {0};
+    int i = 0;
+
+    if (si6 == NULL)
+        return;
+
+    get_active_lanif(si6, l2_insts, &enabled_iface_num);
+    for (i=0; i < enabled_iface_num; i++) {
+        report_no_prefix(l2_insts[i]);
+    }
+}
+#endif
+
 /*
  *Assign IPv6 address for lan interface from the corresponding interface-prefix
  */
@@ -1074,8 +1107,10 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
         compute_global_ip(iface_prefix, iface_name, ipv6_addr, sizeof(ipv6_addr));
 
 #ifdef MULTILAN_FEATURE
-        if(ipv6_addr[0] == '\0')
+        if(ipv6_addr[0] == '\0') {
+            report_no_prefix(l2_insts[i]);
            continue;
+        }
 #endif
 
 #if defined(MULTILAN_FEATURE)
@@ -1261,6 +1296,9 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
         if (divide_ipv6_prefix(si6) != 0) {
             fprintf(stderr, "divide the operator-delegated prefix to sub-prefix error.\n");
             sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
+#if defined (MULTILAN_FEATURE)
+            report_no_lan_prefixes(si6);
+#endif
             return -1;
         }
     }
