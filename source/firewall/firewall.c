@@ -6751,6 +6751,90 @@ static int determine_enforcement_schedule2(FILE *cron_fp, const char *namespace)
    return within_policy_start_stop;
 }
 
+static int getipv4_fromhostdesc(char *listname,char *hostdesc, char *ipv4, int ipv4_max_size)
+{
+    int count=0, idx, rc;
+    char query[MAX_QUERY], result[MAX_QUERY];
+
+    if (!listname || !hostdesc || !ipv4 || !ipv4_max_size)
+        return -1;
+
+    snprintf(query, sizeof(query), "%sCount", listname);
+    result[0] = '\0';
+    rc = syscfg_get(NULL, query, result, sizeof(result));
+    if (rc == 0 && result[0] != '\0') count = atoi(result);
+    if (count < 0) count = 0;
+    if (count > MAX_SYSCFG_ENTRIES) count = MAX_SYSCFG_ENTRIES;
+    for (idx = 1; idx <= count; idx++)
+    {
+        char namespace[MAX_QUERY];
+        snprintf(query, sizeof(query), "%s_%d", listname, idx);
+        namespace[0] = '\0';
+        rc = syscfg_get(NULL, query, namespace, sizeof(namespace));
+        if (0 != rc || '\0' == namespace[0]) {
+            continue;
+        }
+        int this_iptype = 4;
+        query[0] = '\0';
+        rc = syscfg_get(namespace, "ip_type", query, sizeof(query));
+        if (rc == 0 && query[0] != '\0') this_iptype = atoi(query);
+        if (this_iptype != 6) this_iptype = 4;
+
+        if (6 == this_iptype)
+            continue;
+        query[0] = '\0';
+        rc = syscfg_get(namespace, "desc", query, sizeof(query));
+        if (rc == 0 && query[0] != '\0')
+        {
+            if (!strcmp(query,hostdesc))
+            {
+                query[0] = '\0';
+                rc = syscfg_get(namespace, "ip_addr", query, sizeof(query));
+                if (rc == 0 && query[0] != '\0')
+                {
+                    strncpy(ipv4,query,ipv4_max_size);
+                    break;
+                }
+            }
+        }
+    }
+
+    return 0; 
+}
+
+static int getmacaddress_fromip(char *ipaddress, int iptype, char *mac, int mac_size)
+{
+    FILE *fp = NULL;
+    char buf[200] = {0};
+    char output[50] = {0};
+
+    if (!ipaddress || !mac || !mac_size)
+        return -1;
+    memset(buf,0,200);
+    memset(output,0,50);
+    if (4 == iptype)
+    {
+        snprintf(buf, sizeof(buf), "ip nei show | grep brlan0 | grep -i %s | awk '{print $5}' ", ipaddress);
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "ip -6 nei show | grep brlan0 | grep -i %s | awk '{print $5}' ", ipaddress);
+    }
+    system(buf);
+    if(!(fp = popen(buf, "r")))
+    {
+        return -1;
+    }
+    while(fgets(output, sizeof(output), fp)!=NULL)
+    {
+        output[strlen(output) - 1] = '\0';
+        strncpy(mac,output,mac_size);
+        break;
+    }
+    pclose(fp);
+    return 0;
+}
+
 /*
  *  Procedure     : do_parental_control_allow_trusted
  *  Purpose       : prepare the iptables-restore statements for parental control trusted user
@@ -6806,7 +6890,39 @@ static int do_parental_control_allow_trusted(FILE *fp, int iptype, const char* l
          rc = syscfg_get(namespace, "ip_addr", query, sizeof(query)); 
          if (rc == 0 && query[0] != '\0')
          {
-            fprintf(fp, "-A %s -s %s -j RETURN\n", table_name, query);
+            char mac[32];
+            int ret = 0;
+            char hostDesc[64];
+            char ipaddress[64];
+            memset(mac,0,sizeof(mac));
+            // ARRISXB6-10410 - Allow Trusted computer based on mac address.
+            ret = getmacaddress_fromip(query,iptype,mac,sizeof(mac));
+            if ((0 == ret) && (strlen(mac) > 0))
+            {
+                fprintf(fp, "-A %s -m mac --mac-source %s -j RETURN\n", table_name, mac);
+            }
+            else
+            {   // !!! fail safe for ipv6: check and get mac address using ipv4.
+                if (6 == iptype)
+                {
+                    memset(hostDesc,0,sizeof(hostDesc));
+                    memset(ipaddress,0,sizeof(ipaddress));
+                    rc = syscfg_get(namespace, "desc", hostDesc, sizeof(hostDesc));
+                    if (rc == 0 && (strlen(hostDesc) > 0))
+                    {
+                        int retval = 0;
+                        retval = getipv4_fromhostdesc(list_name,hostDesc,ipaddress,sizeof(ipaddress));  
+                        if (strlen(ipaddress) > 0 && (retval == 0))
+                        {
+                            ret = getmacaddress_fromip(ipaddress,4,mac,sizeof(mac));
+                            if ((0 == ret) && (strlen(mac) > 0))
+                            {
+                                fprintf(fp, "-A %s -m mac --mac-source %s -j RETURN\n", table_name, mac);
+                            }
+                        }
+                    }
+                }
+            }
          }
       }
    }
