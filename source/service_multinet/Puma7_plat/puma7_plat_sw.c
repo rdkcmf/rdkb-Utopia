@@ -348,6 +348,13 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
 
         if (up)
         {
+
+#if defined (MULTILAN_FEATURE)
+            //Form command to add wifi interfaces to the respective bridge
+            sprintf(cmdBuff, "brctl addif %s %s", args[0].hints.network->name,temp_ifname);
+            //Run command here
+            result = system_wrapper(cmdBuff);
+#else
             //Form command to add wifi
             if (args[i].vidParams.tagging) {
                 sprintf(cmdBuff, "%s/%s create_vap %s %s %d", 
@@ -370,9 +377,16 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
             //Run command here
             MNET_DEBUG("%s: command is %s\n" COMMA __FUNCTION__ COMMA cmdBuff);
             result = system_wrapper(cmdBuff);
+#endif //defined (MULTILAN_FEATURE)
         }
         else
         {
+#if defined (MULTILAN_FEATURE)
+            //Form command to delete wifi interfaces from the respective bridge
+            sprintf(cmdBuff, "brctl delif %s %s", args[0].hints.network->name,temp_ifname);
+            //Run command here
+            result = system_wrapper(cmdBuff);
+#else
             //Form command to delete wifi
                 sprintf(cmdBuff, "%s/%s delete_vap %s", 
                         SERVICE_D_BASE_DIR, 
@@ -382,6 +396,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
             //Run command here
             MNET_DEBUG("%s: command is %s\n" COMMA __FUNCTION__ COMMA cmdBuff);
             result = system_wrapper(cmdBuff);
+#endif
         }
         
     }
