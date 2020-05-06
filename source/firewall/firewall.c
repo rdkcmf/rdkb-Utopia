@@ -1701,7 +1701,9 @@ static int prepare_globals_from_configuration(void)
    get_ip6address(ecm_wan_ifname, ecm_wan_ipv6, &ecm_wan_ipv6_num,IPV6_ADDR_SCOPE_GLOBAL);
    get_ip6address(lan_ifname, lan_local_ipv6, &lan_local_ipv6_num,IPV6_ADDR_SCOPE_LINKLOCAL);
    
-   //get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num,IPV6_ADDR_SCOPE_GLOBAL);
+#if defined (_PROPOSED_BUG_FIX_)
+   get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num,IPV6_ADDR_SCOPE_GLOBAL);
+#endif
 
    if (0 == strcmp("true", container_enabled)) {
       isContainerEnabled = bIsContainerEnabled();
@@ -11784,7 +11786,7 @@ static void do_ipv6_nat_table(FILE* fp)
 
        rc = syscfg_get(NULL, "dmz_dst_ip_addrv6", ipv6host, sizeof(ipv6host));
        if(rc == 0 && ipv6host[0] != '\0' && strcmp(ipv6host, "x") != 0) {
-           fprintf(fp, "-A PREROUTING -d %s -j DNAT --to-destination %s \n", current_wan_ipv6, ipv6host);
+           fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s \n", wan6_ifname, current_wan_ipv6, ipv6host);
        }
    }
     FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
