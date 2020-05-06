@@ -168,7 +168,30 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
         portConfig.config.vidParams.pvid = net->vid;
         portConfig.handled = 0;
         portConfig.config.vidParams.tagging = members->member[i].bTagging;
-        
+
+#if defined (MULTILAN_FEATURE)
+        //Change in logic for WiFi interfaces: Instead of using handler returned by map, using generic portHelper()
+        //to create User VLAN (if necessary) and connect interface to the bridge.
+        if (!strcmp("WiFi", members->member[i].interface->type->name ))
+        {
+            if ( portHelper(net->name, members->member[i].interface->name, members->member[i].bTagging, net->vid, add) != -1 )
+            {
+                if (add)
+                {
+                    members->member[i].bReady = STATUS_STARTED;
+                }
+            }
+            else
+            {
+                if (add)
+                {
+                    members->member[i].bReady = STATUS_STOPPED;
+                }
+            }
+            continue;
+        }
+#endif
+
         if ( swfab_configVlan_inner(&portConfig, net, add) == 0 )
         {
             if (add) 

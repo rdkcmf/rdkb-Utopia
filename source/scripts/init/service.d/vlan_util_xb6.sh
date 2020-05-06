@@ -504,10 +504,10 @@ get_expected_if_list() {
                 if [ "$isport2enable" = "true" ]
                 then
                     #Switch port 2 connected to XFinity Private LAN
-                    IF_LIST="eth_1 eth_0 $MOCA_INTERFACE ath0 ath1"
+                    IF_LIST="eth_1 eth_0 $MOCA_INTERFACE ath0 ath1 lbr0"
                 else
                     #Switch port 2 connected to XFinity Home
-                    IF_LIST="eth_1 $MOCA_INTERFACE ath0 ath1"
+                    IF_LIST="eth_1 $MOCA_INTERFACE ath0 ath1 lbr0"
                 fi
             fi
 
@@ -677,6 +677,10 @@ add_to_group() {
 	else
           echo_t "Xfinity WiFi is not enabled"
         fi
+    fi
+
+    if [ "$IF_TO_ADD" = "lbr0" ] ; then
+        ifconfig $IF_TO_ADD up
     fi
     
     $VLAN_UTIL add_interface $BRIDGE_NAME $IF_TO_ADD $VLAN_TO_ADD

@@ -83,4 +83,8 @@ int stringIDExtSw (void* portID, char* stringbuf, int bufSize) ;
 
 int eventIDSw (void* portID, char* stringbuf, int bufSize);
 
+#if defined (MULTILAN_FEATURE)
+int portHelper(char *bridge, char *port, int tagging, int vid, BOOL up);
+#endif
+
 #endif
