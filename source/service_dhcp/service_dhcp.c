@@ -431,7 +431,11 @@ int main(int argc, char *argv[])
 			dhcp_server_start(NULL);
 		}
 	}
-    else if (!strncmp(argv[1], "lan-status", 10))
+        else if(!strncmp(argv[1],"dhcp_server-stop",16))
+        {
+             dhcp_server_stop();
+        }
+        else if (!strncmp(argv[1], "lan-status", 10))
 	{
 		//If lan-status is called with lan_not_restart then 
 		//the same is used in further function calls
