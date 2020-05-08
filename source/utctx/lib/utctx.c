@@ -1242,13 +1242,19 @@ static UtopiaTransact_Node* s_UtopiaTransact_Find(UtopiaContext* pUtopiaCtx, Uto
 
     if (pszKey == 0)
     {
+        UTCTX_LOG_ERR2("%s: pszKey is NULL, ixUtopia= %d\n", __FUNCTION__, (int)ixUtopia);
+        return 0;
+    }
+    if (pUtopiaCtx == 0)
+    {
+        UTCTX_LOG_ERR2("%s: pUtopiaCtx is NULL, ixUtopia= %d\n", __FUNCTION__, (int)ixUtopia);
         return 0;
     }
 
     /* Iterate the transaction list and return node if it's there */
     for (pNode = pUtopiaCtx->pHead; pNode; pNode = pNode->pNext)
     {
-        if (strcmp(pNode->pszKey, pszKey) == 0 &&
+        if (pNode->pszKey != 0  && strcmp(pNode->pszKey, pszKey) == 0 &&
             (pNode->pszNamespace == 0 || pszNamespace == 0 || strcmp(pNode->pszNamespace, pszNamespace) == 0))
         {
             return pNode;
@@ -1266,6 +1272,22 @@ int UtopiaTransact_Get(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* ps
                        char* pszValue, unsigned int ccbBuf)
 {
     UtopiaTransact_Node* pNode;
+
+    if (pUtopiaCtx == 0)
+    {
+        UTCTX_LOG_ERR2("%s: pUtopiaCtx is NULL, ixUtopia= %d\n", __FUNCTION__, (int)ixUtopia);
+        return 0;
+    }
+    if (pszKey == 0)
+    {
+        UTCTX_LOG_ERR2("%s: pszKey is NULL, ixUtopia= %d\n", __FUNCTION__, (int)ixUtopia);
+        return 0;
+    }
+    if (pszValue == 0)
+    {
+        UTCTX_LOG_ERR2("%s: pszValue is NULL, ixUtopia= %d\n", __FUNCTION__, (int)ixUtopia);
+        return 0;
+    }
 
     /* Check the transaction list for value */
     if ((pNode = s_UtopiaTransact_Find(pUtopiaCtx, ixUtopia, pszNamespace, pszKey)) != 0)
