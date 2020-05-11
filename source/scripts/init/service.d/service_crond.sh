@@ -56,35 +56,9 @@ SERVICE_NAME="crond"
 SELF_NAME="`basename $0`"
 #BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
 
-register_docsis_init_handler () 
-{
-    ID=`sysevent get crond_docsis_async`
-    if [ x = x"$ID" ] ; then
-       if [ -f "/nvram/ETHWAN_ENABLE" ];then
-       ID=`sysevent async ethwan-initialized /etc/utopia/service.d/service_crond.sh`
-       else
-       ID=`sysevent async docsis-initialized /etc/utopia/service.d/service_crond.sh`
-       fi
-       sysevent set crond_docsis_async "$ID"
-    fi
-}
-
 service_start () 
 {
-  
-   if [ -f "/nvram/ETHWAN_ENABLE" ];then
-     if [ "x1" != "x`sysevent get ethwan-initialized`" ]; then
-         echo "SERVICE_CROND : register_ethwan_init_handler"
-         register_docsis_init_handler
-         return
-     fi
-     else
-     if [ "x1" != "x`sysevent get docsis-initialized`" ]; then
-         echo "SERVICE_CROND : register_docsis_init_handler"
-         register_docsis_init_handler
-         return
-     fi
-   fi
+   echo_t "SERVICE_CROND : starting ${SERVICE_NAME} service"
    ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
 
    killall crond
@@ -92,6 +66,7 @@ service_start ()
    CRONTAB_DIR="/var/spool/cron/crontabs/"
    CRONTAB_FILE=$CRONTAB_DIR"root"
    if [ ! -e $CRONTAB_FILE ] || [ ! -e "/etc/cron/cron.monthly" ]  ; then
+      echo_t "SERVICE_CROND : creating cron files"
       # make a pseudo random seed from our mac address
       # we will get the same values of random over reboots
       # but there will be divergence of values accross hosts
@@ -334,6 +309,7 @@ service_start ()
    
    # start the cron daemon
    # echo "[utopia][registration] Starting cron daemon"
+   echo_t "SERVICE_CROND : Starting cron daemon"
    crond -l 9
 
    sysevent set ${SERVICE_NAME}-status "started"
@@ -341,13 +317,14 @@ service_start ()
 
 service_stop () 
 {
+   echo_t "SERVICE_CROND : stopping ${SERVICE_NAME} service"
    ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
    killall crond
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
 
 # Entry
-
+echo_t "SERVICE_CROND : event $1"
 case "$1" in
   ${SERVICE_NAME}-start)
       service_start
@@ -367,12 +344,6 @@ case "$1" in
         crond -l 9
       fi
       ;;
-   docsis-initialized)
-      service_start
-   ;;
-   ethwan-initialized)
-      service_start
-   ;;
   *)
       echo "Usage: $SELF_NAME [${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" >&2
       exit 3
