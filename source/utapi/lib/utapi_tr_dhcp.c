@@ -500,8 +500,13 @@ int Utopia_GetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
        pSAddr_t->InstanceNumber = 0;
        strcpy(pSAddr_t->Alias,"");
    } else {
-       Utopia_GetIndexed(ctx,UtopiaValue_DHCP_StaticHost_Alias,ulIndex + 1,  &pSAddr_t->Alias, sizeof(pSAddr_t->Alias));
-       g_IndexMapStaticAddr[pSAddr_t->InstanceNumber] = ulIndex;
+        Utopia_GetIndexed(ctx,UtopiaValue_DHCP_StaticHost_Alias,ulIndex + 1,  &pSAddr_t->Alias, sizeof(pSAddr_t->Alias));
+        if (pSAddr_t->InstanceNumber > MAX_NUM_INSTANCES) {
+            sprintf(ulog_msg, "%s: Error: pSAddr_t->InstanceNumber greater than MAX_NUM_INSTANCES(%d) !!!", __FUNCTION__, MAX_NUM_INSTANCES);
+            ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+            return ERR_INVALID_ARGS;
+        }
+        g_IndexMapStaticAddr[pSAddr_t->InstanceNumber] = ulIndex;
    }
    
    Utopia_GetDhcpV4SPool_SAddressByIndex(ctx,ulIndex,pSAddr_t); 
