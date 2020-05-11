@@ -363,6 +363,10 @@ NOT_DEF:
 #include "firewall_custom.h"
 #include "secure_wrapper.h"
 
+#if defined (_PROPOSED_BUG_FIX_)
+#include <linux/version.h>
+#endif
+
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
 #endif
@@ -4702,12 +4706,30 @@ static int do_wan2self_attack(FILE *fp)
    //Smurf attack, actually the below rules are to prevent us from being the middle-man host
 #if defined(_HUB4_PRODUCT_REQ_) /* ULOG target removed in kernels 3.17+ */
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\" --log-level 7\n", logRateLimit);
+#elif defined(_PROPOSED_BUG_FIX_)
+   if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0))
+   {
+   	fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\" --log-level 7\n", logRateLimit);
+   }
+   else
+   {
+   	fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
+   }
 #else
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request -j xlog_drop_wanattack\n");
 #if defined(_HUB4_PRODUCT_REQ_) /* ULOG target removed in kernels 3.17+ */
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\" --log-level 7\n", logRateLimit);
+#elif defined(_PROPOSED_BUG_FIX_)
+   if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0))
+   {
+   	fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\" --log-level 7\n", logRateLimit);
+   }
+   else
+   {
+   	fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
+   }
 #else
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -4717,6 +4739,15 @@ static int do_wan2self_attack(FILE *fp)
    fprintf(fp, "-A wanattack -p icmp -m limit --limit 5/s --limit-burst 10 -j RETURN\n"); //stop traveling the rest of the wanattack chain
 #if defined(_HUB4_PRODUCT_REQ_) /* ULOG target removed in kernels 3.17+ */
    fprintf(fp, "-A wanattack -p icmp %s -j LOG --log-prefix \"DoS Attack - ICMP Flooding\" --log-level 7\n", logRateLimit);
+#elif defined(_PROPOSED_BUG_FIX_)
+   if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0))
+   {
+   	fprintf(fp, "-A wanattack -p icmp %s -j LOG --log-prefix \"DoS Attack - ICMP Flooding\" --log-level 7\n", logRateLimit);
+   }
+   else
+   {
+   	fprintf(fp, "-A wanattack -p icmp %s -j ULOG --ulog-prefix \"DoS Attack - ICMP Flooding\" --ulog-cprange 50\n", logRateLimit);
+   }
 #else
    fprintf(fp, "-A wanattack -p icmp %s -j ULOG --ulog-prefix \"DoS Attack - ICMP Flooding\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -4726,6 +4757,15 @@ static int do_wan2self_attack(FILE *fp)
    fprintf(fp, "-A wanattack -p tcp --syn -m limit --limit 10/s --limit-burst 20 -j RETURN\n");
 #if defined(_HUB4_PRODUCT_REQ_) /* ULOG target removed in kernels 3.17+ */
    fprintf(fp, "-A wanattack -p tcp --syn %s -j LOG --log-prefix \"DoS Attack - TCP SYN Flooding\" --log-level 7\n", logRateLimit);
+#elif defined(_PROPOSED_BUG_FIX_)
+   if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0))
+   {
+   	fprintf(fp, "-A wanattack -p tcp --syn %s -j LOG --log-prefix \"DoS Attack - TCP SYN Flooding\" --log-level 7\n", logRateLimit);
+   }
+   else
+   {
+   	fprintf(fp, "-A wanattack -p tcp --syn %s -j ULOG --ulog-prefix \"DoS Attack - TCP SYN Flooding\" --ulog-cprange 50\n", logRateLimit);
+   }
 #else
    fprintf(fp, "-A wanattack -p tcp --syn %s -j ULOG --ulog-prefix \"DoS Attack - TCP SYN Flooding\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -4737,6 +4777,15 @@ static int do_wan2self_attack(FILE *fp)
        fprintf(fp, "-A wanattack -p udp -s %s -d 224.0.0.0/8 -j RETURN\n", current_wan_ipaddr);
 #if defined(_HUB4_PRODUCT_REQ_) /* ULOG target removed in kernels 3.17+ */
        fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" --log-level 7\n", current_wan_ipaddr, logRateLimit);
+#elif defined(_PROPOSED_BUG_FIX_)
+       if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0))
+       {
+       	fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" --log-level 7\n", current_wan_ipaddr, logRateLimit);
+       }
+       else
+       {
+       	fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", current_wan_ipaddr, logRateLimit);
+       }
 #else
        fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", current_wan_ipaddr, logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/

@@ -62,6 +62,26 @@ if [ -f /etc/mount-utils/getConfigFile.sh ];then
       mkdir -p /tmp/.dropbear
      . /etc/mount-utils/getConfigFile.sh
 fi
+
+#Determine which IP addresses on wan0 to listen on (ipv4 and ipv6 if present)
+get_listen_params() {
+    LISTEN_PARAMS=""
+    #Get IPv4 address of wan0
+    CM_IP4=`ip -4 addr show dev wan0 scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    #Get IPv6 address of wan0
+    CM_IP6=`ip -6 addr show dev wan0 scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    if [ "$CM_IP4" != "" ] ; then
+        LISTEN_PARAMS="-p [${CM_IP4}]:22"
+    fi
+    if [ "$CM_IP6" != "" ] ; then
+        LISTEN_PARAMS="$LISTEN_PARAMS -p [${CM_IP6}]:22"
+    fi
+    #If there is no ipv4 or ipv6 address to listen on, bind to local address only
+    if [ "$LISTEN_PARAMS" = "" ] ; then
+        LISTEN_PARAMS="-p [127.0.0.1]:22"
+    fi
+}
+
 do_start() {
    #DIR_NAME=/tmp/home/admin
    #if [ ! -d $DIR_NAME ] ; then
@@ -72,6 +92,11 @@ do_start() {
       #chgrp admin $DIR_NAME
       #chmod 755 $DIR_NAME
    #fi
+
+    if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
+    	get_listen_params
+    fi
+
     CM_IP=""
     CM_IP=`ifconfig ${CMINTERFACE} | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
 
@@ -90,7 +115,13 @@ do_start() {
    DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"
    getConfigFile $DROPBEAR_PARAMS_1
    getConfigFile $DROPBEAR_PARAMS_2
-   dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
+
+   if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
+   	dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 $LISTEN_PARAMS 2>/dev/null -P $PID_FILE
+   else
+   	dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
+   fi
+
    # The PID_FILE created after demonize the process. So added delay for 1 sec.
    sleep 1
    if [ ! -f "$PID_FILE" ] ; then

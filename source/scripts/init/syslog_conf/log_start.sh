@@ -85,5 +85,11 @@ EVENTLOG=$(grep -e "eventlog" /etc/syslog.conf | awk '{print $2}')
 #fi
 
 nice -5 klogd -c $level 
-nice -5 syslogd -l $level
 
+if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ; then
+	if [ -f /tmp/utopia_inited ] ; then
+		systemctl restart syslog
+	fi
+else
+	nice -5 syslogd -l $level
+fi
