@@ -93,8 +93,8 @@ do_start_igmpproxy () {
 #HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
 if [ "$HOME_LAN_ISOLATION" == "1" ]; then
 if [ "$MOCA_LAN_UP" == "1" ]; then
-   echo "phyint $SYSCFG_lan_ifname enable ttl-threshold 11" >> $LOCAL_CONF_FILE
-   echo "phyint $MOCA_INTERFACE enable ttl-threshold 3" >> $LOCAL_CONF_FILE
+   echo "phyint $SYSCFG_lan_ifname enable ttl-threshold 1" >> $LOCAL_CONF_FILE
+   echo "phyint $MOCA_INTERFACE enable ttl-threshold 1" >> $LOCAL_CONF_FILE
    if [ "$NEW_SMCROUTE" != "1" ]; then
        echo "mgroup from $SYSCFG_lan_ifname group 239.255.255.250" >> $LOCAL_CONF_FILE
        echo "mgroup from $MOCA_INTERFACE group 239.255.255.250" >> $LOCAL_CONF_FILE
