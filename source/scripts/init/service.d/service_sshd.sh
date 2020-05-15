@@ -126,6 +126,9 @@ do_start() {
    sleep 1
    if [ ! -f "$PID_FILE" ] ; then
       echo_t "[utopia] $PID_FILE file is not created"
+      #Create the pid file in case if it not created by dropbear
+      ps | grep 'dropbear -E -s -b /etc/sshbanner.txt' | head -n1 |  awk '{print $1;}' > $PID_FILE
+      echo_t "[utopia] $PID_FILE file is created explicitly"
    else
       echo_t "[utopia] $PID_FILE file is created. PID : `cat $PID_FILE`"
    fi
@@ -136,7 +139,18 @@ do_stop() {
    # echo "[utopia] Stopping SSH daemon" > /dev/console
    sysevent set ssh_daemon_state down
 #   kill -9 dropbear
-   kill -9 `cat $PID_FILE`
+   if [ ! -f "$PID_FILE" ] ; then
+     tmp_filename="/tmp/dropbear.pid"
+     #Get the dropbear IPV6 process IDs. There could be more than 1 dropbear IPV6 process running based on number of open ssh connections
+     ps | grep 'dropbear -E -s -b /etc/sshbanner.txt' | sed '/grep/d' > $tmp_filename
+     while read -r line; do
+       pid=`echo $line | head -n1 |  awk '{print $1;}'`
+       kill -9 $pid
+       done < "$tmp_filename"
+     rm $tmp_filename  
+   else
+     kill -9 `cat $PID_FILE`
+   fi
    rm -f $PID_FILE
 #    /etc/init.d/dropbear stop
 }
@@ -174,9 +188,8 @@ service_stop () {
    echo_t "[utopia] stopping ${SERVICE_NAME} service"
 #   ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
 
-   if [ -f "$PID_FILE" ] ; then
-      do_stop
-   fi
+   do_stop
+
    $PMON unsetproc ssh 
 
    sysevent set ${SERVICE_NAME}-errinfo
