@@ -43,6 +43,7 @@ TYPE=Gre
 GRE_IFNAME="gretap0"
 GRE_IFNAME_DUMMY="gretap_0"
 recover="false"
+hotspot_down_notification="false"
 
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
@@ -475,7 +476,10 @@ get_ssids() {
             succeed_check=`dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep value | cut -f3 -d : | cut -f2 -d " "`
             if [ "true" = "$succeed_check" ]; then                                                                                                                                                                             
                 localifs="$localifs $localinfo"                                                                                             
-            fi                                                                                                                              
+            fi
+            if [ $hotspot_down_notification = "true" ]; then
+                localifs="$localifs $localinfo"
+            fi
        done            
       
         ssids=""                                                                                                                                                              
@@ -512,6 +516,7 @@ set_ssids_enabled() {
     fi
     done
     for rad in $radios; do
+        echo "Executing ApplySetting"
         eval $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySettingSSID int \${mask_${rad}}
         $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySetting bool true &
     done
@@ -592,7 +597,10 @@ hotspot_down() {
     
     kill_procs $inst
     
+    #This hotspot_down_notification is to notify that ssid's are checked when tunnel is destroyed (hotspot to be down) 
+    hotspot_down_notification="true";
     set_ssids_enabled $inst false
+    hotspot_down_notification="false";
     
     sysevent set `sysevent get ${inst}_arp_queue_rule`
     sysevent set ${inst}_arp_queue_rule
