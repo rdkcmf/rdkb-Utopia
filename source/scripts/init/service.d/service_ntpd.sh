@@ -71,7 +71,15 @@ erouter_wait ()
 
        #Make sure erouter0 has an IPv4 or IPv6 address before telling NTP to listen on Interface
        EROUTER_IPv4=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
-       EROUTER_IPv6=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+
+       if [ "x$BOX_TYPE" = "xHUB4" ]; then
+           CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
+           if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
+               EROUTER_IPv6=`ifconfig $NTPD_IPV6_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+           fi
+       else
+           EROUTER_IPv6=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+       fi
 
        if [ -n "$EROUTER_IPv4" ] || [ -n "$EROUTER_IPv6" ]; then
           if [ "x$2" = "xquickSync" ];then
@@ -205,19 +213,14 @@ service_start ()
 	QUICK_SYNC_WAN_IP=""
 	
 	if [ "$NTPD_INTERFACE" == "erouter0" ]; then
-		if [ "x$BOX_TYPE" = "xHUB4" ]; then
-			sleep 30
-			WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+		sleep 30
+		if [ -f "/nvram/ETHWAN_ENABLE" ];then
+			# Quick Sync doesn't allow NIC Rules in Configuration File So Need to Pass IP on Command Line
+			# but need NIC Rule for NTPD Daemon Mode
+			erouter_wait QUICK_SYNC_WAN_IP quickSync
+			erouter_wait WAN_IP
 		else
-			sleep 30
-			if [ -f "/nvram/ETHWAN_ENABLE" ];then
-				# Quick Sync doesn't allow NIC Rules in Configuration File So Need to Pass IP on Command Line
-				# but need NIC Rule for NTPD Daemon Mode
-				erouter_wait QUICK_SYNC_WAN_IP quickSync
-				erouter_wait WAN_IP
-			else
-				erouter_wait WAN_IP
-			fi
+			erouter_wait WAN_IP
 		fi
 	else
 		PROVISIONED_TYPE=""
@@ -254,7 +257,7 @@ service_start ()
         # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
             CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
             if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
-                echo "interface listen  $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
+                echo "interface listen $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
             fi
         fi
 
