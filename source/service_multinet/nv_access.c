@@ -260,8 +260,9 @@ int nv_get_bridge(int l2netInst, PL2Net net)
     FILE* psmcliOut = NULL;
 
     snprintf(cmdBuff, sizeof(cmdBuff), 
-            "psmcli get -e X dmsb.l2net.%d.Name X dmsb.l2net.%d.Vid X dmsb.l2net.%d.Enable", 
+           "psmcli get -e X dmsb.l2net.%d.Name X dmsb.l2net.%d.Vid X dmsb.l2net.%d.Enable", 
              l2netInst, l2netInst, l2netInst);
+
     psmcliOut = popen(cmdBuff, "r");
 
     if(psmcliOut) /*RDKB-7137, CID-33276, null check before use */
@@ -310,9 +311,18 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 		 pStr = NULL;
 	} 
 
-	/* dmsb.l2net.%d.Vid */
+	/* dmsb.l2net.%d.Vid */ 
 	memset(cmdBuff,0,sizeof(cmdBuff));
-	snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.Vid",l2netInst);
+#if defined (_BWG_PRODUCT_REQ_)
+        /* dmsb.l2net.%d.XfinityNewVid  */
+        if((l2netInst == 3)||(l2netInst == 4)||(l2netInst == 7)||(l2netInst == 8)) {
+           snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.XfinityNewVid",l2netInst);
+        }
+        else
+            snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.Vid",l2netInst);
+#else
+        snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.Vid",l2netInst);
+#endif
 
 	rc = PSM_VALUE_GET_STRING(cmdBuff, pStr);
 	if(rc == CCSP_SUCCESS && pStr != NULL)
@@ -344,6 +354,5 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 
 	net->inst = l2netInst;
 #endif /* !_COSA_INTEL_XB3_ARM_ */
-
     return 0;
 }
