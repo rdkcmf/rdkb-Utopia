@@ -52,7 +52,7 @@
 #if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_)
 #include "platform_hal.h"
 #endif
-#include "cJSON.h"
+#include "cjson/cJSON.h"
 #include <unistd.h>
 #include <stdbool.h>
 #define PARTNERS_INFO_FILE  							"/nvram/partners_defaults.json"
