@@ -1111,3 +1111,6 @@ $NonRootSupport=true
 #Credential Download and usage is diasbled by default
 $CredDwnld_Enable=false
 $CredDwnld_Use=false
+#ocsp staple support
+$EnableOCSPStapling=false
+$EnableOCSPCA=false

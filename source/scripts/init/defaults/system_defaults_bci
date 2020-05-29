@@ -1207,3 +1207,7 @@ $CredDwnld_Use=false
 
 #Low Queue Reboot Threshold
 $low_queue_reboot_threshold=0
+
+#ocsp staple support
+$EnableOCSPStapling=false
+$EnableOCSPCA=false
