@@ -24,7 +24,7 @@
 
 . /etc/device.properties
 
-TMP_RESOLV_FILE=/tmp/resolv.conf
+TMP_RESOLV_FILE=/tmp/tmp_resolv.conf
 RESOLV_CONF=/etc/resolv.conf
 ATOM_USER_NAME=root
 retries=0
@@ -36,6 +36,12 @@ PEER_COMM_ID="/tmp/elxrretyt.swr"
 if [ ! -f /usr/bin/GetConfigFile ];then
     echo "Error: GetConfigFile Not Found"
     exit 127
+fi
+
+#If we don't have an IP to copy the DNS settings to, there is no need to proceed
+if [ "$ATOM_INTERFACE_IP" = "" ] ; then
+    echo "DNS sync not needed"
+    exit  0
 fi
 
 while :
@@ -90,3 +96,4 @@ else
 fi
 
 rm -f $PEER_COMM_ID
+rm -f $TMP_RESOLV_FILE
