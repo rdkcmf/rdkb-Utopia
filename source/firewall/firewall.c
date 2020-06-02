@@ -951,9 +951,9 @@ static int privateIpCheck(char *ip_to_check)
     l_iRes &= inet_pton(AF_INET, l_cDhcpStart, &l_sDhcpStart);
     l_iRes &= inet_pton(AF_INET, l_cDhcpEnd, &l_sDhcpEnd);
 
-    l_iIpValue = (long int)l_sIpValue.s_addr;
-    l_iDhcpStart = (long int)l_sDhcpStart.s_addr;
-    l_iDhcpEnd = (long int)l_sDhcpEnd.s_addr;
+    l_iIpValue = ntohl(l_sIpValue.s_addr);
+    l_iDhcpStart = ntohl(l_sDhcpStart.s_addr);
+    l_iDhcpEnd = ntohl(l_sDhcpEnd.s_addr);
 
 	switch(l_iRes) 
 	{
@@ -2455,8 +2455,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       
       char str[MAX_QUERY];
       
-      if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&
-		  (!(isBridgeMode && privateIpCheck(toip))))
+    if ( (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) && (privateIpCheck(toip)) )
 	  {
 	     if (isNatReady) {
             snprintf(str, sizeof(str),
@@ -2541,8 +2540,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif //End _HUB4_PRODUCT_REQ_
          }
       }
-      if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) && 
-		  (!(isBridgeMode && privateIpCheck(toip))))	
+      if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&  (privateIpCheck(toip)) )	
 	  {
 		 if (isNatReady) {
             snprintf(str, sizeof(str),
@@ -2708,8 +2706,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
            * so if it get failed, keep doing the next step */ 
           if(0 == rc && '\0' != public_ip[0] ){
               // do one-2-one nat 
-              if ((0 != strcmp("0.0.0.0", public_ip)) &&
-				  (!(isBridgeMode && privateIpCheck(toip))))
+              if ((0 != strcmp("0.0.0.0", public_ip)) &&  ( privateIpCheck(toip) ))
 			  {
 /* if TRUE static IP not be configed , skip one 2 one nat */
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
@@ -2847,8 +2844,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
       
       char str[MAX_QUERY];
       
-      if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&
-		  (!(isBridgeMode && privateIpCheck(toip))))
+      if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) && (privateIpCheck(toip)))
 	  {
 		 if (isNatReady) {
             snprintf(str, sizeof(str),
@@ -2902,8 +2898,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 #endif
          }
       }
-      if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&
-          (!(isBridgeMode && privateIpCheck(toip))))
+      if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&  (privateIpCheck(toip)) )
 	  {
 		 if (isNatReady) {
             snprintf(str, sizeof(str),
@@ -3080,7 +3075,7 @@ static int do_wellknown_ports_forwarding(FILE *nat_fp, FILE *filter_fp)
          }
 
          char str[MAX_QUERY];
-		 if (!(isBridgeMode && privateIpCheck(toip)))
+		 if  (privateIpCheck(toip))
 		 {
 		 	if (isWanReady) {
             	snprintf(str, sizeof(str),
@@ -3227,8 +3222,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
 
          
          char str[MAX_QUERY];
-         if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&
-  			 (!(isBridgeMode && privateIpCheck(toip))))
+         if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&  (privateIpCheck(toip)) )
 		 {
 			if (isNatReady) {
                snprintf(str, sizeof(str),
@@ -3265,8 +3259,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
                 fprintf(filter_fp, "%s\n", str);
             }
          }
-         if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&
-             (!(isBridgeMode && privateIpCheck(toip))))
+         if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&  (privateIpCheck(toip)) )
 		 {
 			if (isNatReady) {
                snprintf(str, sizeof(str),
@@ -3403,7 +3396,12 @@ static int do_port_forwarding(FILE *nat_fp, FILE *filter_fp)
     *   a PREROUTING DNAT rule
     *   an ACCEPT rule
     */
-      //     FIREWALL_DEBUG("Entering do_port_forwarding\n");       
+      //     FIREWALL_DEBUG("Entering do_port_forwarding\n"); 
+   if(isBridgeMode)
+   {
+        FIREWALL_DEBUG("do_port_forwarding : Device is in bridge mode returning\n");  
+        return(0);    
+   }      
    do_single_port_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_port_range_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_wellknown_ports_forwarding(nat_fp, filter_fp);
