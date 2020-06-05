@@ -10641,6 +10641,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-I INPUT -i wan0 -p udp -m udp -j wandosattack\n");
    fprintf(filter_fp, "-I INPUT -i mta0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j mtadosattack\n");
    fprintf(filter_fp, "-I INPUT -i mta0 -p udp -m udp -j mtadosattack\n");
+   fprintf(filter_fp, "-A wandosattack -p tcp -m tcp --dport 22 -m limit --limit 25/sec --limit-burst 80 -j RETURN\n");
    fprintf(filter_fp, "-A wandosattack -m limit --limit 25/sec --limit-burst 80 -j ACCEPT\n");
    fprintf(filter_fp, "-A wandosattack -j DROP\n");
    fprintf(filter_fp, "-A mtadosattack -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n");
@@ -11468,6 +11469,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-I INPUT -i wan0 -p udp -m udp -j wandosattack\n");
    fprintf(filter_fp, "-I INPUT -i mta0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j mtadosattack\n");
    fprintf(filter_fp, "-I INPUT -i mta0 -p udp -m udp -j mtadosattack\n");
+   fprintf(filter_fp, "-A wandosattack -p tcp -m tcp --dport 22 -m limit --limit 25/sec --limit-burst 80 -j RETURN\n");
    fprintf(filter_fp, "-A wandosattack -m limit --limit 25/sec --limit-burst 80 -j ACCEPT\n");
    fprintf(filter_fp, "-A wandosattack -j DROP\n");
    fprintf(filter_fp, "-A mtadosattack -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n");
@@ -12162,6 +12164,7 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-I INPUT -i wan0 -p udp -m udp -j wandosattack\n");
    fprintf(fp, "-I INPUT -i mta0 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j mtadosattack\n");
    fprintf(fp, "-I INPUT -i mta0 -p udp -m udp -j mtadosattack\n");
+   fprintf(fp, "-A wandosattack -p tcp -m tcp --dport 22 -m limit --limit 25/sec --limit-burst 80 -j RETURN\n");
    fprintf(fp, "-A wandosattack -m limit --limit 25/sec --limit-burst 80 -j ACCEPT\n");
    fprintf(fp, "-A wandosattack -j DROP\n");
    fprintf(fp, "-A mtadosattack -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n");
