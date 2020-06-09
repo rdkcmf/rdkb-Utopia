@@ -137,6 +137,16 @@ then
 fi
 
 URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb.cgi"
+if [ -f /tmp/DCMSettings.conf ]; then
+
+      URL=`grep 'LogUploadSettings:UploadRepository:URL' /tmp/DCMSettings.conf | cut -d '=' -f2`
+      if [ -z "$URL" ]; then
+            echo "urn:settings:LogUploadSettings:UploadRepository' is not found in DCMSettings.conf"
+            URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb.cgi"
+      else
+            echo "upload URL is $URL in DCMSettings.conf"
+      fi
+fi    
 
 if [ -z $LOG_PATH ]; then
     LOG_PATH="$LOG_FOLDER/logs/"
