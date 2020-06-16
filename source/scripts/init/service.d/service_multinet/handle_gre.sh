@@ -507,7 +507,7 @@ set_ssids_enabled() {
        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_EnableOnline bool true &
         eval eval mask=\\\${mask_\${ssid_${instance}_radio}}
         eval eval mask_\${ssid_${instance}_radio}=$(( (2 ** ($instance - 1)) + $mask )) 
-    if [ "$BOX_TYPE" = "XB6" ] && [ "$MODEL_NUM" != "CGM4331COM" ] ; then
+    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "TCCBR" ] && [ "$MODEL_NUM" != "CGM4331COM" ] ; then
        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.Enable bool $2 &
     fi
     done
@@ -899,7 +899,7 @@ case "$1" in
             ifconfig ${GRE_IFNAME} down
             sysevent set if_${GRE_IFNAME}-status $IF_DOWN
         fi
-        if [ "$BOX_TYPE" != "XB6" ] ; then
+        if [ "$BOX_TYPE" != "XB6" ] && [ "$BOX_TYPE" != "TCCBR" ]; then
            check_ssids
         fi
     ;;
