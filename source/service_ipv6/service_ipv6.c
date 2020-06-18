@@ -334,6 +334,18 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
     char dml_path[CMD_BUF_SIZE] = {0};
     char iface_name[64] = {0};
 #endif
+    char l_cSecWebUI_Enabled[8] = {0};
+    syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
+    if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
+    {
+        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
+        syscfg_commit();
+    }
+    else
+    {
+        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
+        syscfg_commit();
+    } 
 
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "bEnabled", cfg->enable);
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "RapidEnable", cfg->rapid_enable);

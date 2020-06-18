@@ -444,6 +444,18 @@ static int route_unset(struct serv_routed *sr)
 
 static int gen_zebra_conf(int sefd, token_t setok)
 {
+    char l_cSecWebUI_Enabled[8] = {0};
+    syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
+    if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
+    {
+        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
+        syscfg_commit();
+    }
+    else
+    {
+        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
+        syscfg_commit();
+    }
     FILE *fp = NULL;
 #if !defined (INTEL_PUMA7)
     char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16];
