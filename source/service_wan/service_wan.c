@@ -150,7 +150,7 @@ static int wan_dhcp_renew(struct serv_wan *sw);
 static int wan_static_start(struct serv_wan *sw);
 static int wan_static_stop(struct serv_wan *sw);
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
 static int wan_static_start_v6(struct serv_wan *sw);
 static int wan_static_stop_v6(struct serv_wan *sw);
 #endif
@@ -438,7 +438,7 @@ static int dhcp_start(struct serv_wan *sw)
 
 static int route_config(const char *ifname)
 {
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
     if (v_secure_system("ip rule add iif %s lookup all_lans && "
                 "ip rule add oif %s lookup erouter ",
                 ifname, ifname) != 0) {
@@ -456,7 +456,7 @@ static int route_config(const char *ifname)
 
 static int route_deconfig(const char *ifname)
 {
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
     if (v_secure_system("ip rule del iif %s lookup all_lans && "
                 "ip rule del oif %s lookup erouter ",
                 ifname, ifname) != 0) {
@@ -472,7 +472,7 @@ static int route_deconfig(const char *ifname)
     return 0;
 }
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
 static int route_config_v6(const char *ifname)
 {
     if (vsystem("ip -6 rule add iif %s lookup all_lans && "
@@ -627,7 +627,7 @@ static int wait_till_dhcpv6_client_reply(struct serv_wan *sw)
 static int wan_start(struct serv_wan *sw)
 {
     char status[16];
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
     char buf[16] = {0};
 #endif
     int ret;
@@ -654,7 +654,7 @@ static int wan_start(struct serv_wan *sw)
     /* do start */
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "starting", 0);
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
     /*
      * If we are in routing mode and executing a wan-restart
      * sysevent last_erouter_mode will allow us to stop the
@@ -688,7 +688,7 @@ static int wan_start(struct serv_wan *sw)
 #endif    
 #endif /*_WAN_MANAGER_ENABLED_*/
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
     /*
      * IPV6 static and dhcp configurations
      */
@@ -705,9 +705,16 @@ static int wan_start(struct serv_wan *sw)
            }
 #endif
                fprintf(stderr, "Starting DHCPv6 Client now\n");
+#if defined (_PROPOSED_BUG_FIX_)
+               //Intel Proposed RDKB Bug Fix
+               /* In IPv6 or dual mode, raise wan-status event here */
+               sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
+               system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
+#else
                system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
                if (sw->rtmod == WAN_RTMOD_IPV6)
                        sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
+#endif
 
 #ifdef DSLITE_FEATURE_SUPPORT
                wait_till_dhcpv6_client_reply(sw);
@@ -766,7 +773,7 @@ static int wan_start(struct serv_wan *sw)
         return -1;
     }
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
     /*
      * Saving the WAN protocol configuration to the sysevent variable.
      * It's value will specify the protocol configuration of the previously
@@ -781,7 +788,7 @@ static int wan_start(struct serv_wan *sw)
 done:
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
 
-#if defined(_PLATFORM_IPQ_) || defined(_WAN_MANAGER_ENABLED_)
+#if defined(_PLATFORM_IPQ_) || defined(_WAN_MANAGER_ENABLED_) || defined(_PROPOSED_BUG_FIX_)
     /*
      * Firewall should be run, once dhcp/v6 client are started and wan_service-status
      * is set to started. */
@@ -817,6 +824,14 @@ done:
     get_dateanduptime(buffer,&uptime);
 	printf("%s Wan_init_complete:%d\n",buffer,uptime);
 	OnboardLog("Wan_init_complete:%d\n",uptime);
+	
+#if defined (_PROPOSED_BUG_FIX_)
+    //Intel Proposed RDKB Bug Fix
+    /* In IPv6 only DHCP mode, set wan-status to Started, as it won't get set elsewhere */
+    if (sw->rtmod == WAN_RTMOD_IPV6 && sw->prot == WAN_PROT_DHCP)
+        sysevent_set(sw->sefd, sw->setok, "wan-status", "started", 0);	
+#endif
+
     /* RDKB-24991 to handle snmpv3 based on wan-status event */
     system("sh /lib/rdk/postwanstatusevent.sh &");
     return 0;
@@ -826,7 +841,7 @@ static int wan_stop(struct serv_wan *sw)
 {
     char val[64];
     char status[16];
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined (_PROPOSED_BUG_FIX_)
     char buf[16] = {0};
 #endif
 
@@ -843,7 +858,7 @@ static int wan_stop(struct serv_wan *sw)
     /* do stop */
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopping", 0);
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined (_PROPOSED_BUG_FIX_)
     /*
      * To facilitate mode switch between IPV4, IPv6 and Mix mode we set last_erouter_mode
      * to 1, 2, 3 respectively and do wan-restart, to stop the right set of services we
@@ -930,7 +945,7 @@ static int wan_stop(struct serv_wan *sw)
         }
     }
 
-#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_)
+#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_) && !defined(_PROPOSED_BUG_FIX_)
     if (wan_iface_down(sw) != 0) {
         fprintf(stderr, "%s: wan_iface_down error\n", __FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
@@ -960,8 +975,17 @@ static int wan_restart(struct serv_wan *sw)
     if (wan_stop(sw) != 0)
         fprintf(stderr, "%s: wan_stop error\n", __FUNCTION__);
 
+#if defined (_PROPOSED_BUG_FIX_)
+    //Intel Proposed RDKB Bug Fix
+    /* Do not try to start WAN if mode is unknown */
+    if (sw->rtmod != WAN_RTMOD_UNKNOW) {
+        if ((err = wan_start(sw)) != 0)
+            fprintf(stderr, "%s: wan_start error\n", __FUNCTION__);
+    }
+#else
     if ((err = wan_start(sw)) != 0)
         fprintf(stderr, "%s: wan_start error\n", __FUNCTION__);
+#endif
 
     sysevent_set(sw->sefd, sw->setok, "wan-restarting", "0", 0);
     return err;
@@ -1087,7 +1111,15 @@ static int wan_addr_set(struct serv_wan *sw)
     char lanstatus[10] = {0};
     char brmode[4] = {0};
 
+#if defined (_PROPOSED_BUG_FIX_)
+    //Intel Proposed RDKB Bug Fix
+    /* When in IPv4 only mode, we need to raise the wan-status event here */
+    if (sw->rtmod == WAN_RTMOD_IPV4)
+        sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
+#else
     sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
+#endif
+
     sysevent_set(sw->sefd, sw->setok, "wan-errinfo", NULL, 0);
 
 #if !defined(_WAN_MANAGER_ENABLED_)
@@ -1112,7 +1144,7 @@ static int wan_addr_set(struct serv_wan *sw)
     }
 #endif /*_WAN_MANAGER_ENABLED_*/
 
-#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_)
+#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_) && !defined(_PROPOSED_BUG_FIX_)
     /*
      * The trigger of 'current_ipv4_link_state' to 'up' is moved to WAN service
      * from Gateway provisioning App. This is done to save the delay in getting
@@ -1343,7 +1375,7 @@ static int wan_addr_unset(struct serv_wan *sw)
     get_dateanduptime(buffer,&uptime);
     OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
     vsystem("killall -q dns_sync.sh");
 #endif
     sysevent_set(sw->sefd, sw->setok, "wan-status", "stopped", 0);
@@ -1582,7 +1614,7 @@ static int wan_static_stop(struct serv_wan *sw)
     return 0;
 }
 
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PROPOSED_BUG_FIX_)
 static int wan_static_start_v6(struct serv_wan *sw)
 {
     unsigned char wan_ipaddr_v6[16] = {0};

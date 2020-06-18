@@ -457,19 +457,16 @@ static int gen_zebra_conf(int sefd, token_t setok)
         syscfg_commit();
     }
     FILE *fp = NULL;
-#if !defined (INTEL_PUMA7)
     char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16];
-#else
-    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-    char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16], ra_interval[8] = {0};
-#endif
+    char ra_interval[8] = {0};
     char name_servs[1024] = {0};
     char dnssl[2560] = {0};
-    char prefix[64], orig_prefix[64], lan_addr[64];
-    char preferred_lft[16], valid_lft[16];
-#ifdef MULTILAN_FEATURE
     char dnssl_lft[16];
     unsigned int dnssllft = 0;
+    char prefix[64], orig_prefix[64], lan_addr[64];
+    char preferred_lft[16], valid_lft[16];
+#if defined(MULTILAN_FEATURE)
+    char orig_lan_prefix[64];
 #endif
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
@@ -498,10 +495,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #ifdef _HUB4_PRODUCT_REQ_
     char lan_addr_prefix[64] = {0};
 #endif
-#if defined (INTEL_PUMA7)
-    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     char wan_st[16] = {0};
-#endif
 
 #ifdef _HUB4_PRODUCT_REQ_
     char server_type[16] = {0};
@@ -535,6 +529,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fclose(fp);
         return 0;
     }
+    syscfg_get(NULL, "ra_interval", ra_interval, sizeof(ra_interval));
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
@@ -550,16 +545,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fprintf(stderr, "getLanIpv6Info failed");
         return -1;
     }
-    if(strncmp(prefix, orig_prefix, 64) == 0) {
-        strncpy(orig_prefix, "", sizeof(orig_prefix));
-        sysevent_set(sefd, setok, "previous_ipv6_prefix", orig_prefix, 0);
-    }
     sysevent_get(sefd, setok, "previous_ipv6_prefix_vldtime", prev_valid_lft, sizeof(prev_valid_lft));
     /* As per Sky requirement, hub should advertise lan bridge's ULA address as DNS address for lan clients as part of RA.
        In case the ULA is not available, lan bridge's LL address can be advertise as DNS address.
     */
     sysevent_get(sefd, setok, "ula_address", lan_addr, sizeof(lan_addr));
-#ifdef _HUB4_PRODUCT_REQ_
+
     if (IsValid_ULAAddress(lan_addr) == FALSE)
     {
         char ula_address_brlan[64] = {0};
@@ -575,10 +566,17 @@ static int gen_zebra_conf(int sefd, token_t setok)
             sysevent_set(sefd, setok, SYSEVENT_VALID_ULA_ADDRESS, "false", 0);
         }
     }
-#endif
+
     if(ula_enable == 1)
         sysevent_get(sefd, setok, "ula_prefix", lan_addr_prefix, sizeof(lan_addr_prefix));
 #endif//_HUB4_PRODUCT_REQ_
+
+    // If the current prefix is the same as the previous prefix, no need to advertise the previous one with a lifetime of 0
+    if(strncmp(prefix, orig_prefix, 64) == 0) {
+        strncpy(orig_prefix, "", sizeof(orig_prefix));
+        sysevent_set(sefd, setok, "previous_ipv6_prefix", orig_prefix, 0);
+    }
+
 #ifdef MULTILAN_FEATURE
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, valid_lft, sizeof(valid_lft));
@@ -596,40 +594,46 @@ static int gen_zebra_conf(int sefd, token_t setok)
     if ( atoi(preferred_lft) > atoi(valid_lft) )
         snprintf(preferred_lft, sizeof(preferred_lft), "%s",valid_lft);
 
-#if defined (INTEL_PUMA7)
-    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-    sysevent_get(sefd, setok, "wan-status", wan_st, sizeof(wan_st));	
-#endif
+    sysevent_get(sefd, setok, "wan-status", wan_st, sizeof(wan_st));
+    syscfg_get(NULL, "last_erouter_mode", rtmod, sizeof(rtmod));
 
-#ifndef MULTILAN_FEATURE
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+#if defined(MULTILAN_FEATURE) || defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
     get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
-    for (i = 0; i < enabled_iface_num; i++) {
+    for (i = 0; i < enabled_iface_num; i++)
+    {
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
         sysevent_get(sefd, setok, evt_name, lan_if, sizeof(lan_if));
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", lan_if);
         sysevent_get(sefd, setok, evt_name, prefix, sizeof(prefix));
+        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", lan_if);
+        sysevent_get(sefd, setok, evt_name, lan_addr, sizeof(lan_addr));
+#endif
 #if defined (_COSA_BCM_MIPS_)
        if (strlen(prefix) == 0)
          {
            sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
          }
 #endif
-        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", lan_if);
-        sysevent_get(sefd, setok, evt_name, lan_addr, sizeof(lan_addr));
+
+#if defined(MULTILAN_FEATURE)
+        snprintf(evt_name, sizeof(evt_name), "previous_ipv6_%s-prefix", lan_if);
+        sysevent_get(sefd, setok, evt_name, orig_lan_prefix, sizeof(orig_lan_prefix));
+
+        //If previous prefix is the same as current one, no need to advertise with lifetime 0
+        if(strncmp(prefix, orig_lan_prefix, 64) == 0) {
+            strncpy(orig_lan_prefix, "", sizeof(orig_prefix));
+            snprintf(evt_name, sizeof(evt_name), "previous_ipv6_%s-prefix", lan_if);
+            sysevent_set(sefd, setok, evt_name, orig_lan_prefix, 0);
+        }
 #endif
+
+#if defined (MULTILAN_FEATURE)
+        fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
+            prefix, orig_lan_prefix, lan_addr);
 #else
-    get_active_lanif(sefd, setok, l2_insts, &enabled_iface_num);
-    for (i = 0; i < enabled_iface_num; i++) {
-        snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
-        sysevent_get(sefd, setok, evt_name, lan_if, sizeof(lan_if));
-        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", lan_if);
-        sysevent_get(sefd, setok, evt_name, prefix, sizeof(prefix));
-        snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", lan_if);
-        sysevent_get(sefd, setok, evt_name, lan_addr, sizeof(lan_addr));
-#endif
-    fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
+        fprintf(fp, "# Based on prefix=%s, old_previous=%s, LAN IPv6 address=%s\n", 
             prefix, orig_prefix, lan_addr);
+#endif
 
 #if defined(_COSA_FOR_BCI_)
     if ((strlen(prefix) || strlen(orig_prefix)) && bEnabled)
@@ -676,45 +680,41 @@ static int gen_zebra_conf(int sefd, token_t setok)
             fprintf(fp, "   ipv6 nd prefix %s 0 0\n", lan_addr_prefix);
         }
 #else
-#if defined (INTEL_PUMA7)
-	//Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-	if (strcmp(wan_st, "stopped") == 0)
-		fprintf(fp, "   ipv6 nd prefix %s %s 0\n", prefix, valid_lft);
-	else
-	{
-		fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
-	}
-#else
-        if (strlen(prefix))
-        {
-#if defined (INTEL_PUMA7)
-            //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-            if (strcmp(wan_st, "stopped") == 0)
-            	fprintf(fp, "   ipv6 nd prefix %s %s 0\n", prefix, valid_lft);
-            else
+            //Do not write a config line for the prefix if it's blank
+            if (strlen(prefix))
             {
-#endif
-            fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
 #if defined (INTEL_PUMA7)
-            }
+                //If WAN has stopped, advertise the prefix with lifetime 0 so LAN clients don't use it any more
+                if (strcmp(wan_st, "stopped") == 0)
+                {
+                    fprintf(fp, "   ipv6 nd prefix %s 0 0\n", prefix);
+                }
+                else
 #endif
-        }
+                {
+                    fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+                }
+            }
 
-        if (strlen(orig_prefix))
-            fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
-#endif //#if defined (INTEL_PUMA7)
+#if defined (MULTILAN_FEATURE)
+            if (strlen(orig_lan_prefix))
+                fprintf(fp, "   ipv6 nd prefix %s 0 0\n", orig_lan_prefix);
+#else
+            if (strlen(orig_prefix))
+                fprintf(fp, "   ipv6 nd prefix %s 0 0\n", orig_prefix);
+#endif
+
 #endif//_HUB4_PRODUCT_REQ_
 #if defined (INTEL_PUMA7)
-        //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-        // Read ra_interval from syscfg.db
-        syscfg_get(NULL, "ra_interval", ra_interval, sizeof(ra_interval));
-        if (strlen(ra_interval) > 0)
-        {
-            fprintf(fp, "   ipv6 nd ra-interval %s\n", ra_interval);
-        } else
-        {
-            fprintf(fp, "   ipv6 nd ra-interval 30\n"); //Set ra-interval to default 30 secs as per Erouter Specs.
-        }
+            //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+            // Use ra_interval from syscfg.db
+            if (strlen(ra_interval) > 0)
+            {
+                fprintf(fp, "   ipv6 nd ra-interval %s\n", ra_interval);
+            } else
+            {
+                fprintf(fp, "   ipv6 nd ra-interval 30\n"); //Set ra-interval to default 30 secs as per Erouter Specs.
+            }
 #else
 #ifndef _HUB4_PRODUCT_REQ_
         fprintf(fp, "   ipv6 nd ra-interval 3\n");
@@ -723,21 +723,21 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif //_HUB4_PRODUCT_REQ_
 #endif
 
-#if defined (INTEL_PUMA7)
-        //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-        if (strcmp(wan_st, "stopped") == 0)
-        	fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
-        else
-        {
+#if defined (INTEL_PUMA7) || defined (_COSA_INTEL_XB3_ARM_)
+            /* If WAN is stopped or not in IPv6 or dual stack mode, send RA with router lifetime of zero */
+            if ( (strcmp(wan_st, "stopped") == 0) || (atoi(rtmod) != 2 && atoi(rtmod) != 3) )
+            {
+                fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
+            }
+            else
 #endif
+            {
 #ifdef _HUB4_PRODUCT_REQ_
         fprintf(fp, "   ipv6 nd ra-lifetime 540\n");
 #else
         fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
 #endif
-#if defined (INTEL_PUMA7)
-        }
-#endif
+            }
 
         syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
         if (strcmp(m_flag, "1") == 0)
@@ -901,37 +901,34 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #else
         		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
 #endif
-			}
-#ifdef MULTILAN_FEATURE
-                        if (atoi(valid_lft) <= 3*atoi(ra_interval))
-                        {
-                             // According to RFC8106 section 5.2 dnssl lifttime must be atleast 3 time MaxRtrAdvInterval.
-                             dnssllft = 3*atoi(ra_interval);
-                             snprintf(dnssl_lft, sizeof(dnssl_lft), "%d", dnssllft);
-                        }
-                        else
-                        {
-                             snprintf(dnssl_lft, sizeof(dnssl_lft), "%s", valid_lft);
-                        }
-                        sysevent_get(sefd, setok, "ipv6_dnssl", dnssl, sizeof(dnssl));
-                        for(start = dnssl; (tok = strtok_r(start, " ", &sp)); start = NULL)
-                        {
-                              fprintf(fp, "   ipv6 nd dnssl %s %s\n", tok, dnssl_lft);
-                        }
+                }
 
-#endif
+                if (atoi(valid_lft) <= 3*atoi(ra_interval))
+                {
+                    // According to RFC8106 section 5.2 dnssl lifttime must be atleast 3 time MaxRtrAdvInterval.
+                    dnssllft = 3*atoi(ra_interval);
+                    snprintf(dnssl_lft, sizeof(dnssl_lft), "%d", dnssllft);
+                }
+                else
+                {
+                    snprintf(dnssl_lft, sizeof(dnssl_lft), "%s", valid_lft);
+                }
+                sysevent_get(sefd, setok, "ipv6_dnssl", dnssl, sizeof(dnssl));
+                for(start = dnssl; (tok = strtok_r(start, " ", &sp)); start = NULL)
+                {
+                    fprintf(fp, "   ipv6 nd dnssl %s %s\n", tok, dnssl_lft);
+                }
+
+
 		}
 	}
     
 
     fprintf(fp, "interface %s\n", lan_if);
     fprintf(fp, "   ip irdp multicast\n");
-#ifndef MULTILAN_FEATURE
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION        
-    }
-#endif
-#else
-}
+
+#if defined(MULTILAN_FEATURE) || defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
+    } //for (i = 0; i < enabled_iface_num; i++)
 #endif
 
 #ifndef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
