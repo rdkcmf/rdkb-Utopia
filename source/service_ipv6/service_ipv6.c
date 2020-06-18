@@ -1135,6 +1135,11 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
     unsigned int l2_insts[MAX_LAN_IF_NUM] = {0};
     char if_name[16] = {0};
     char iface_prefix[INET6_ADDRSTRLEN] = {0};
+#if defined (_PROPOSED_BUG_FIX_)
+    char old_iface_prefix[INET6_ADDRSTRLEN] = {0};
+    char default_lan_ifname[16] = {0};
+    char old_lan_iface_prefix[INET6_ADDRSTRLEN] = {0};
+#endif
     char iface_addr[INET6_ADDRSTRLEN] = {0};
     int prefix_len;
     unsigned int if_num = 0;
@@ -1159,9 +1164,31 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
     }
 #endif
 
+#if defined (_PROPOSED_BUG_FIX_)
+    snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
+    sysevent_get(si6->sefd, si6->setok, evt_name, default_lan_ifname, sizeof(if_name));/*interface name*/
+    sysevent_get(si6->sefd, si6->setok, "previous_ipv6_prefix", old_iface_prefix, sizeof(old_iface_prefix));
+    snprintf(evt_name, sizeof(evt_name), "previous_ipv6_%s-prefix", default_lan_ifname);
+    sysevent_get(si6->sefd, si6->setok, evt_name, old_lan_iface_prefix, sizeof(iface_prefix));
+    if (strstr(old_iface_prefix, "/")) {
+        strncpy(old_iface_prefix, strtok(old_iface_prefix, "/"), sizeof(old_iface_prefix));
+    }
+    if (strstr(old_lan_iface_prefix, "/")) {
+        strncpy(old_lan_iface_prefix, strtok(old_lan_iface_prefix, "/"), sizeof(old_lan_iface_prefix));
+    }    
+#endif
+
     for (; i < if_num; i++) {
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
         sysevent_get(si6->sefd, si6->setok, evt_name, if_name, sizeof(if_name));/*interface name*/
+#if defined (_PROPOSED_BUG_FIX_)
+        if (strlen(old_iface_prefix) && strcmp(old_iface_prefix, old_lan_iface_prefix)) {
+            snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", if_name);
+            sysevent_get(si6->sefd, si6->setok, evt_name, iface_prefix, sizeof(iface_prefix));
+            snprintf(evt_name, sizeof(evt_name), "previous_ipv6_%s-prefix", if_name);
+            sysevent_set(si6->sefd, si6->setok, evt_name, iface_prefix, 0);
+        }
+#endif
 
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-prefix", if_name);
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_prefix, sizeof(iface_prefix));
@@ -1581,7 +1608,14 @@ static int serv_ipv6_init(struct serv_ipv6 *si6)
     syscfg_get(NULL, "last_erouter_mode", buf, sizeof(buf));
     if(atoi(buf) == 1) {/*v4 only*/
         fprintf(stderr, "IPv6 not enabled on board!\n");
+#if defined (_PROPOSED_BUG_FIX_)
+        //Intel Proposed RDKB Bug Fix
+        si6->mso_prefix[0] = '\0';
+        si6->wan_ready = false;
+        return 0;
+#else
         return -1;
+#endif
     }
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix", si6->mso_prefix, sizeof(si6->mso_prefix));
