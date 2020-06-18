@@ -699,11 +699,9 @@ prepare_dhcp_conf () {
    RF_CAPTIVE_PORTAL="false"
    SECWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
    if [ "$SECWEBUI_ENABLED" = "true" ]; then
-       syscfg set dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled 1
        syscfg set dhcp_nameserver_enabled 1
        syscfg commit
    else
-       syscfg set dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled 0
        syscfg set dhcp_nameserver_enabled 0
        syscfg commit
    fi
