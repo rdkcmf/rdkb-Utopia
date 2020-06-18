@@ -690,6 +690,8 @@ $router_other_flag=1
 # allow wan interface to be provisioned using router advertisement
 $router_adv_provisioning_enable=1
 
+#Threshold value of reinitMac
+$rdkbReinitMacThreshold=5
 
 # Locale Settings
 $locale=en-us
