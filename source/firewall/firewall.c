@@ -5030,8 +5030,10 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     if (family == AF_INET6)
     {
 #endif
+#if !defined(_PLATFORM_RASPBERRYPI_)
        remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
        remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
+#endif
 #if defined(_ENABLE_EPON_SUPPORT_)
     }
 #endif
@@ -10440,7 +10442,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
 #endif
-#if defined(_COSA_BCM_ARM_)
+#if defined(_COSA_BCM_ARM_) && !defined(_PLATFORM_RASPBERRYPI_)
    fprintf(filter_fp, "-A INPUT -s 172.31.255.40/32 -p tcp -m tcp --dport 9000 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -s 172.31.255.40/32 -p udp -m udp --dport 9000 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 9000 -j REJECT\n");
@@ -10476,7 +10478,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-A INPUT -i %s -j wan2self_mgmt\n", ecm_wan_ifname);
 #endif /*_HUB4_PRODUCT_REQ_*/
    fprintf(filter_fp, "-A INPUT -i %s -j wan2self_mgmt\n", current_wan_ifname);
-#if !defined(_HUB4_PRODUCT_REQ_)
+#if !defined(_HUB4_PRODUCT_REQ_) && !defined(_PLATFORM_RASPBERRYPI_)
    fprintf(filter_fp, "-A INPUT -i %s -j wan2self_mgmt\n", emta_wan_ifname);
 #endif /*_HUB4_PRODUCT_REQ_*/
    fprintf(filter_fp, "-A INPUT -i %s -j lan2self\n", lan_ifname);
@@ -10549,7 +10551,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", ecm_wan_ifname);
    }
-
+#if !defined(_PLATFORM_RASPBERRYPI_)
    if (emta_wan_ifname[0]) // spare eMTA wan interface from Utopia firewall
    {
       fprintf(filter_fp, "-A INPUT -i %s -p udp --dport 80 -j DROP\n", emta_wan_ifname);
@@ -10557,6 +10559,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
       fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", emta_wan_ifname);
    }
+#endif
 #endif /*_HUB4_PRODUCT_REQ_*/
    /* if(isProdImage) {
        do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
