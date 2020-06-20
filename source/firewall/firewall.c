@@ -11229,7 +11229,7 @@ const char *HomeMoCALan = "dmsb.l2net.9.Name";
        }
        if((strlen(pLan) != 0)&&(strlen(mLan) != 0))
        {
-          fprintf(filter_fp, "-A INPUT -i %s -j ACCEPT\n", mLan);
+          fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", mLan);
           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", pLan,mLan);
           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", mLan,pLan);
           fprintf(filter_fp, "-A FORWARD -i erouter0 -o %s -j ACCEPT\n",mLan);
