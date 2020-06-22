@@ -1242,7 +1242,7 @@ $SecureWebUI_LocalFqdn=myrouter.io
 $dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled=0
 
 #NonRootSupport enable
-$NonRootSupport=false
+$NonRootSupport=true
 
 
 #DSLite
