@@ -752,8 +752,8 @@ int handle_wan(udhcpc_script_t *pinfo)
             sysevent_set(sysevent_fd, sysevent_token, "ipv4_wan_ipaddr", ip, 0);
         }
         sysevent_set(sysevent_fd, sysevent_token, "current_ipv4_link_state", "up", 0);
-        sysevent_set(sysevent_fd, sysevent_token, "wan_service-status", "started", 0);
-        sysevent_set(sysevent_fd, sysevent_token, "wan-status", "started", 0);
+        // sysevent_set(sysevent_fd, sysevent_token, "wan_service-status", "started", 0);
+        //sysevent_set(sysevent_fd, sysevent_token, "wan-status", "started", 0);
     }    
 
     if (pinfo->wan_type && !strcmp(pinfo->wan_type,"EPON"))
