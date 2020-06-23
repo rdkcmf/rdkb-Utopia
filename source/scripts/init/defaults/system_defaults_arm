@@ -1335,3 +1335,6 @@ $hwHealthTest=false
 #TDK Enable default value
 $TDKEnable=false
 
+#Alias Manager
+$custom_data_model_enabled=0
+$custom_data_model_file_name=/usr/ccsp/tr069pa/custom_mapper.xml
