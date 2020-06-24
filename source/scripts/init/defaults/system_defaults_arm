@@ -1315,3 +1315,6 @@ $ddns_server_retryinterval_4=660
 $ddns_server_checkinterval_5=0
 $ddns_server_maxretries_5=10
 $ddns_server_retryinterval_5=660
+
+#Use XPKI certificate
+UseXPKI_Enable=false

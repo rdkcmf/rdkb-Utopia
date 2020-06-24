@@ -1114,3 +1114,6 @@ $CredDwnld_Use=false
 #ocsp staple support
 $EnableOCSPStapling=false
 $EnableOCSPCA=false
+
+#Use XPKI certificate
+UseXPKI_Enable=false
