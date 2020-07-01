@@ -1194,6 +1194,7 @@ static void s_UtopiaEvent_Trigger(UtopiaContext* pUtopiaCtx)
 static UtopiaTransact_Node* s_UtopiaTransact_Add(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey, char* pszValue)
 {
     UtopiaTransact_Node* pNode;
+    size_t len;
 
     if (pszKey == 0)
     {
@@ -1201,7 +1202,7 @@ static UtopiaTransact_Node* s_UtopiaTransact_Add(UtopiaContext* pUtopiaCtx, Utop
     }
 
     /* Allocate a transaction node */
-    if ((pNode = (UtopiaTransact_Node*)malloc(sizeof(UtopiaTransact_Node))) == 0)
+    if ((pNode = malloc(sizeof(UtopiaTransact_Node))) == 0)
     {
         return 0;
     }
@@ -1209,42 +1210,50 @@ static UtopiaTransact_Node* s_UtopiaTransact_Add(UtopiaContext* pUtopiaCtx, Utop
     /* Zero out the transaction node */
     memset(pNode, 0, sizeof(UtopiaTransact_Node));
 
-    if (pszNamespace && (pNode->pszNamespace = (char*)malloc(sizeof(char*) * (strlen(pszNamespace) + 1))) == 0)
+    if (pszNamespace)
     {
-        free(pNode);
-        return 0;
+        len = strlen(pszNamespace);
+        if ((pNode->pszNamespace = malloc(len + 1)) == 0)
+        {
+            free(pNode);
+            return 0;
+        }
+
+        memcpy(pNode->pszNamespace, pszNamespace, len + 1);
     }
-    if ((pNode->pszKey = (char*)malloc(sizeof(char*) * (strlen(pszKey) + 1))) == 0)
+
+    len = strlen(pszKey);
+    if ((pNode->pszKey = malloc(len + 1)) == 0)
     {
         if (pNode->pszNamespace)
         {
             free(pNode->pszNamespace);
         }
-        free(pNode);
-        return 0;
-    }
-    if (pszValue && (pNode->pszValue = (char*)malloc(sizeof(char*) * (strlen(pszValue) + 1))) == 0)
-    {
-        if (pNode->pszNamespace)
-        {
-            free(pNode->pszNamespace);
-        }
-        free(pNode->pszKey);
         free(pNode);
         return 0;
     }
 
-    /* Set the utopia index, namespace, key, and value */
-    pNode->ixUtopia = ixUtopia;
-    if (pszNamespace)
-    {
-        strcpy(pNode->pszNamespace, pszNamespace);
-    }
-    strcpy(pNode->pszKey, pszKey);
+    memcpy(pNode->pszKey, pszKey, len + 1);
+
     if (pszValue)
     {
-        strcpy(pNode->pszValue, pszValue);
+        len = strlen(pszValue);
+        if ((pNode->pszValue = malloc(len + 1)) == 0)
+        {
+            if (pNode->pszNamespace)
+            {
+                free(pNode->pszNamespace);
+            }
+            free(pNode->pszKey);
+            free(pNode);
+            return 0;
+        }
+
+        memcpy(pNode->pszValue, pszValue, len + 1);
     }
+
+    /* Set the utopia index */
+    pNode->ixUtopia = ixUtopia;
 
     /* Add the node to the transaction list */
     pNode->pNext = pUtopiaCtx->pHead;
@@ -1347,9 +1356,6 @@ int UtopiaTransact_Get(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* ps
     return 1;
 }
 
-extern int UtopiaTransact_Set(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey,
-                              char* pszValue);
-
 /* Helper function for setting a value into the transaction list */
 int UtopiaTransact_Set(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey,
                        char* pszValue)
@@ -1377,11 +1383,13 @@ int UtopiaTransact_Set(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* ps
         /* Allocate memory and copy value if needed */
         if (pszValue)
         {
-            if ((pNode->pszValue = (char*)malloc(sizeof(char*) * (strlen(pszValue) + 1))) == 0)
+            size_t len = strlen(pszValue);
+
+            if ((pNode->pszValue = malloc(len + 1)) == 0)
             {
                 return 0;
             }
-            strcpy(pNode->pszValue, pszValue);
+            memcpy(pNode->pszValue, pszValue, len + 1);
         }
         else
         {
