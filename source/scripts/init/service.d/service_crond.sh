@@ -162,9 +162,12 @@ service_start ()
          echo "*/15 * * * * /usr/ccsp/tad/check_fan.sh" >> $CRONTAB_FILE
       fi
 
-      # add syncing the timeoffset everyday at 01:00 AM
       if [ "$BOX_TYPE" == "HUB4" ]; then
+          # add syncing the timeoffset everyday at 01:00 AM
           echo "0 1 * * * /etc/sky/sync_timeoffset.sh" >> $CRONTAB_FILE
+
+          #To monitor all wifi interface packets in every 15minutes
+          echo "*/15 * * * * /etc/sky/monitor_wifi_packets.sh" >> $CRONTAB_FILE
       fi
 
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
