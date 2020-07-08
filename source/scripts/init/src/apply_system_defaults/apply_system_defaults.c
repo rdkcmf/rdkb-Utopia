@@ -82,8 +82,26 @@ static int   syscfg_dirty;
 
 static int global_fd = 0;
 
+/*
+   By default the variable "convert" will be set if $Version is found in
+   system_defaults and its value does not match the currently configured value
+   (the actual value isn't important, it just needs to be a different string).
+
+   However, during development we want changes in system_defaults to be applied
+   without the need to repeatedly update $Version. Setting ALWAYS_CONVERT
+   effectively does that (ie it's the same as forcing the $Version check to
+   always detect a difference even if the values match).
+
+   The end result should be that values in system_defaults defined with $$ will
+   always over-ride any setting which may have already been configured.
+*/
+
+//#define ALWAYS_CONVERT
+
+#if ! defined (ALWAYS_CONVERT)
 //Flag to indicate a db conversion is necessary
 static int convert = 0;
+#endif
 
 // we can use one global id for sysevent because we are single threaded
 token_t global_id;
@@ -229,7 +247,9 @@ static int set_syscfg (char *name, char *value)
     //Note to force write if the value does not match and is marked, and increment past the mark.
     if (name[0] == '$')
     {
+#if ! defined (ALWAYS_CONVERT)
         if (convert)
+#endif
             force = 1;
         name ++;
     }
@@ -260,6 +280,7 @@ static int set_syscfg (char *name, char *value)
     return rc;
 }
 
+#if ! defined (ALWAYS_CONVERT)
 static int handle_version (char* name, char* value)
 {
     char get_val[128];
@@ -347,6 +368,7 @@ static int check_version (void)
 
    return 0;
 }
+#endif
 
 /*
  * Procedure     : set_syscfg_defaults
@@ -512,7 +534,10 @@ static int set_sysevent_defaults (void)
  */
 static int set_defaults(void)
 {
+#if ! defined (ALWAYS_CONVERT)
    check_version();
+#endif
+
    set_syscfg_defaults();
    set_sysevent_defaults();
    return(0);
