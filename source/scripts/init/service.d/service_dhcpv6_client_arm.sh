@@ -129,7 +129,7 @@ service_start()
 				echo_t "SERVICE_DHCP6C : dhcp6c PID is `cat $DHCPV6_PID_FILE`"
 			else
 				echo_t "SERVICE_DHCP6C : Starting dibbler client"
-				sh /etc/dibbler/dibbler-init.sh
+				sh /lib/rdk/dibbler-init.sh
 				$DHCPV6_BINARY start
 			fi
 			rm -f $DHCP6C_PROGRESS_FILE
