@@ -1310,7 +1310,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     fprintf(fp, "log-level 4\n");
    /*Run scipt to config route */
 #if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_)
-    fprintf(fp, "script \"/var/lib/dibbler/server-notify.sh\" \n");
+    fprintf(fp, "script \"/lib/rdk/server-notify.sh\" \n");
 #endif
 
 #ifdef MULTILAN_FEATURE
