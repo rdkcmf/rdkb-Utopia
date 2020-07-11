@@ -913,6 +913,7 @@ fi
    #Option for parsing plume vendor code
    if [ "$BOX_TYPE" = "XB6" ]; then
     echo "dhcp-option=vendor:Plume,43,tag=1060" >> $LOCAL_DHCP_CONF 
+    echo "dhcp-option=vendor:PP203X,43,tag=1060" >> $LOCAL_DHCP_CONF 
    fi
 
    if [ "dns_only" != "$3" ] ; then
