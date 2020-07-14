@@ -242,7 +242,7 @@ SYSCFG_ENCRYPTED_PATH=/opt/secure/
 SYSCFG_PERSISTENT_PATH=/opt/secure/data
 SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
 SYSCFG_NEW_BKUP_FILE=$SYSCFG_PERSISTENT_PATH/syscfg_bkup.db
-PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_TMP_LOCATION/bbhm_cur_cfg.xml"
+PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
@@ -417,6 +417,7 @@ fi
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
    rm -f $SYSCFG_NEW_FILE
+   rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
    rm -f $TR69TLVFILE
@@ -499,13 +500,6 @@ else
 		rm -f /nvram/cacert.pem
 	fi
 	cp -f /etc/cacert.pem /nvram/
-fi
-
-#CISCOXB3-6085:Removing current configuration from nvram as a part of PSM migration.
-if [ -f /nvram/bbhm_cur_cfg.xml  ]; then
-       mv /nvram/bbhm_cur_cfg.xml $PSM_CUR_XML_CONFIG_FILE_NAME
-else
-        cp -f $PSM_BAK_XML_CONFIG_FILE_NAME $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
 
 #echo "[utopia][init] Starting system logging"
@@ -681,10 +675,10 @@ elif [ -f /nvram/restore_reboot ]; then
               ##Hence we are storing a backup and replacing it to current config upon such cases
               a=`md5sum /nvram/bbhm_cur_cfg.xml-temp`
               a=$(echo $a | cut -f 1 -d " ")
-              b=`md5sum $PSM_CUR_XML_CONFIG_FILE_NAME`  
+              b=`md5sum /nvram/bbhm_cur_cfg.xml`  
               b=$(echo $b | cut -f 1 -d " ")
               if [[ $a != $b ]]; then
-                  cp /nvram/bbhm_cur_cfg.xml-temp $PSM_CUR_XML_CONFIG_FILE_NAME
+                  cp /nvram/bbhm_cur_cfg.xml-temp /nvram/bbhm_cur_cfg.xml
               fi
               rm -f /nvram/bbhm_cur_cfg.xml-temp
          fi
