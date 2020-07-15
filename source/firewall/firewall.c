@@ -8479,6 +8479,10 @@ static void do_lan2wan_disable(FILE *filter_fp)
 {
    char str[MAX_QUERY];
    FIREWALL_DEBUG("Entering do_lan2wan_disable\n"); 
+
+   fprintf(filter_fp, "-A lan2wan_disable -d 169.254.0.0/16 -j DROP\n");
+   fprintf(filter_fp, "-A lan2wan_disable -s 169.254.0.0/16 -j DROP\n");
+
    /* if nat is disable or
      * wan is not ready or
      * nat is not ready
