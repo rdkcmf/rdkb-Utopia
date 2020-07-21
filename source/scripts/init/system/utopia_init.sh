@@ -687,6 +687,7 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 else
    rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
+   rebootCounter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
    echo_t "[utopia][init] X_RDKCENTRAL-COM_LastRebootReason ($rebootReason)"
    if [ "$rebootReason" = "factory-reset" ]; then
       echo_t "[utopia][init] Setting last reboot reason as unknown"
@@ -750,7 +751,7 @@ else
 #ifdef CISCO_XB3_PLATFORM_CHANGES
       	  if [ -e "/proc/P-UNIT/status" ]; then
 	         Punit_status=`grep -i "Last reset origin" /proc/P-UNIT/status | awk '{print $9}'`
-	         if [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ] && [ "$rebootReason" = "Software_upgrade" ] && [ -e "/nvram/reboot_due_to_sw_upgrade" ];then
+	         if [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ] && [ "$rebootReason" = "Software_upgrade" ] && [ "$rebootCounter" = "1" ] && [ -e "/nvram/reboot_due_to_sw_upgrade" ];then
                      echo_t "[utopia][init] Setting last reboot reason as Software_upgrade_Watchdog_Reboot"
                      syscfg set X_RDKCENTRAL-COM_LastRebootReason "Software_upgrade_Watchdog_Reboot"
                      syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
