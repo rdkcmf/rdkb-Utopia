@@ -522,18 +522,18 @@ set_ssids_enabled() {
     
     get_ssids $1
     for instance in $ssids; do
-       $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_RouterEnabled bool $2 &
-       $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_EnableOnline bool true &
+       dmcli eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_RouterEnabled bool $2 &
+       dmcli eRT setv Device.WiFi.SSID.${instance}.X_CISCO_COM_EnableOnline bool true &
         eval eval mask=\\\${mask_\${ssid_${instance}_radio}}
         eval eval mask_\${ssid_${instance}_radio}=$(( (2 ** ($instance - 1)) + $mask )) 
     if [ "$BOX_TYPE" = "TCCBR" ] ; then
-       $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.SSID.${instance}.Enable bool $2 &
+       dmcli eRT setv Device.WiFi.SSID.${instance}.Enable bool $2 &
     fi
     done
     for rad in $radios; do
         echo "Executing ApplySetting"
-        eval $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySettingSSID int \${mask_${rad}}
-        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySetting bool true &
+        eval dmcli eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySettingSSID int \${mask_${rad}}
+        dmcli eRT setv Device.WiFi.Radio.$rad.X_CISCO_COM_ApplySetting bool true &
     done
     
     sysevent set hotspot_ssids_up $2
@@ -543,7 +543,7 @@ set_ssids_enabled() {
 set_apisolation() {
     get_ssids $1
     for instance in $ssids; do
-        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.AccessPoint.$instance.IsolationEnable bool true
+        dmcli eRT setv Device.WiFi.AccessPoint.$instance.IsolationEnable bool true
     done
 }
 
@@ -551,7 +551,7 @@ set_apisolation() {
 kick_clients () {
     get_ssids $1
     for instance in $ssids; do
-        $BINPATH/ccsp_bus_client_tool eRT setv Device.WiFi.AccessPoint.${instance}.X_CISCO_COM_KickAssocDevices bool true &
+        dmcli eRT setv Device.WiFi.AccessPoint.${instance}.X_CISCO_COM_KickAssocDevices bool true &
     done
 }
 #args: hotspot instance
