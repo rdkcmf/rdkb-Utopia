@@ -661,7 +661,7 @@ static SERVICE_STATUS check_status(PMember live_members, int numLiveMembers) {
     int all = 1, none=1;
     
     for (i = 0; i < numLiveMembers; ++i ) {
-        if (!live_members[i].interface->dynamic || live_members[i].bReady) {
+        if ((live_members[i].interface->map == NULL) || !live_members[i].interface->dynamic || live_members[i].bReady) {
             none = 0;
         } else {
             all = 0;
