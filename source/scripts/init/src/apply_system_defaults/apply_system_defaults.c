@@ -2068,7 +2068,7 @@ int main( int argc, char **argv )
 	else
 	{
 
-#if !defined (_XB6_PRODUCT_REQ_)
+#if !defined (_XB6_PRODUCT_REQ_) && !defined(_HUB4_PRODUCT_REQ_)
 		//Partner ID is null so need to set default partner ID as "comcast"
 		memset( PartnerID, 0, sizeof( PartnerID ) );
 #if defined (_RDK_REF_PLATFORM_)
