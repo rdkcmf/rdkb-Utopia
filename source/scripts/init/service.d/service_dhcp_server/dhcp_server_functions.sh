@@ -878,6 +878,15 @@ fi
        echo "no-resolv" >> $LOCAL_DHCP_CONF
    fi
 
+   # DHCP option 125 vendor specific data for Device gateway association
+   MFR_OUI=`dmcli eRT getv Device.DeviceInfo.ManufacturerOUI | grep value | awk '{print $5}'`
+   SERIAL_NUM=`dmcli eRT getv Device.DeviceInfo.SerialNumber | grep value | awk '{print $5}'`
+   PROD_CLASS=`dmcli eRT getv Device.DeviceInfo.ProductClass | grep value | awk '{print $5}'`
+
+   echo "dhcp-option=cpewan-id,vi-encap:3561,6,\"$PROD_CLASS\"
+dhcp-option=cpewan-id,vi-encap:3561,5,\"$SERIAL_NUM\"
+dhcp-option=cpewan-id,vi-encap:3561,4,\"$MFR_OUI\"" >> $LOCAL_DHCP_CONF
+
    #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
    echo "expand-hosts" >> $LOCAL_DHCP_CONF
 
