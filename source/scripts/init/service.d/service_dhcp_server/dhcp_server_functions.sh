@@ -785,7 +785,7 @@ echo "DHCP SERVER : RF CP is $RF_CP_MODE, RF CP feature state is $RF_CP_FEATURE_
 if [ "$CAPTIVEPORTAL_ENABLED" == "true" ]
 then
     noRf=0
-    if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "XB6" ]
+    if [ "$BOX_TYPE" = "XB6" ]
     then
         if [ "$RF_CP_FEATURE_EN" = "true" ] && [ "$RF_CP_MODE" = "true" ]
         then 
