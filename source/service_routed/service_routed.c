@@ -781,7 +781,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif
 		}
 	}
-#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PROD_REQ_)
+#if defined (_XB6_PROD_REQ_)
         syscfg_get(NULL, "enableRFCaptivePortal", rfCpEnable, sizeof(rfCpEnable));
         if(rfCpEnable != NULL)
         {

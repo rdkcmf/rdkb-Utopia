@@ -9902,7 +9902,7 @@ static int isInCaptivePortal()
 //RF Captive Portal
 static int isInRFCaptivePortal()
 {
-#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_)
    int retCode = 0;
 
    retCode=syscfg_get(NULL, "rf_captive_portal", rfCaptivePortalEnabled, sizeof(rfCaptivePortalEnabled));
@@ -10207,7 +10207,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
    fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
 #endif
-#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_)
    fprintf(nat_fp, "%s\n", ":prerouting_noRFCP_redirect - [0:0]");
 #endif
    fprintf(nat_fp, "%s\n", ":prerouting_ephemeral - [0:0]");
@@ -10233,7 +10233,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "-A POSTROUTING -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
    fprintf(nat_fp, "-A POSTROUTING -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
 #endif
-#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_)
    do_ipv4_norf_captiveportalrule (nat_fp);
 #endif
    fprintf(nat_fp, "-A PREROUTING -j prerouting_ephemeral\n");
@@ -11803,7 +11803,7 @@ static void do_ipv6_nat_table(FILE* fp)
    memset(IPv6, 0, INET6_ADDRSTRLEN);
    sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", IPv6, sizeof(IPv6));
 
-#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_)
    if(rfstatus == 1)
    {
       fprintf(fp, "%s\n", ":prerouting_noRFCP_redirect - [0:0]");

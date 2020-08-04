@@ -773,7 +773,7 @@ int prepare_dhcp_conf (char *input)
     syscfg_get(NULL, "lan_ifname", l_cLan_if_name, sizeof(l_cLan_if_name));
     syscfg_get(NULL, "CaptivePortal_Enable", l_cCaptivePortalEn, sizeof(l_cCaptivePortalEn));
     syscfg_get(NULL, "redirection_flag", l_cRedirect_Flag, sizeof(l_cRedirect_Flag));
-#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_)
     syscfg_get(NULL, "enableRFCaptivePortal", l_cRfCPFeatureEnabled, sizeof(l_cRfCPFeatureEnabled));
     syscfg_get(NULL, "rf_captive_portal", l_cRfCPEnabled, sizeof(l_cRfCPEnabled));
 #endif
@@ -931,7 +931,7 @@ int prepare_dhcp_conf (char *input)
 
 	if (l_bCaptive_Check)
 	{
-#if defined (_COSA_INTEL_XB3_ARM_) || defined (_XB6_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_)
            if ((!strncmp(l_cRfCPFeatureEnabled,"true",4)) && (!strncmp(l_cRfCPEnabled,"true",4)))
            {
                 l_bRfCp = TRUE;
