@@ -474,7 +474,15 @@ check_xfinity_wifi(){
 #Setup ethernet backhaul related vlans for nsgmii1.100
 #to support pod connected over ethernet
 setup_pod_ethbhaul() {
-
+    #CMX Platform check
+    if [[ "$MODEL_NUM" == "TG4482A" ]]; then
+      echo_t "Ethernet bhaul feature not supported" 
+      exit 1
+    fi
+    eb_enable=`syscfg get eb_enable`
+    if [ "$eb_enable" != "true" ];then
+        exit 1
+    fi
     ETHERNET_IFACE="nsgmii1.100"
     ip link add link $ETHERNET_IFACE ethsw101 type vlan proto 802.1Q id 101
     ip link add link $ETHERNET_IFACE ethsw106 type vlan proto 802.1Q id 106
@@ -485,6 +493,16 @@ setup_pod_ethbhaul() {
     brctl addif brlan1 ethsw101
     brctl addif br106 ethsw106
     brctl addif br403 ethsw1060
+}
+
+#Remove ethernet backhaul related vlans for nsgmii1.100
+remove_pod_ethbhaul() {
+    ifconfig ethsw101 down
+    ifconfig ethsw106 down
+    ifconfig ethsw1060 down
+    vconfig rem ethsw101
+    vconfig rem ethsw106
+    vconfig rem ethsw1060
 }
 
 #Returns a space-separated list of interfaces that should be in this group in the current operating mode
@@ -932,6 +950,12 @@ then
 elif [ "$EVENT" = "meshbhaul-setup" ]
 then
     MODE="meshbhaul-start"
+elif [ "$EVENT" = "meshethbhaul-up" ]
+then
+    MODE="meshethbhaul-start"
+elif [ "$EVENT" = "meshethbhaul-down" ]
+then
+    MODE="meshethbhaul-stop"
 elif [ "$EVENT" = "multinet-down" ]
 then
     MODE="stop"
@@ -957,6 +981,9 @@ echo_t "Received INSTANCE:$INSTANCE"
 BRIDGE_NAME=""
 BRIDGE_VLAN=0
 case $INSTANCE in
+    0)
+        #Bridge
+    ;;
     1)
         #Private LAN
         BRIDGE_NAME="brlan0"
@@ -1045,6 +1072,14 @@ then
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstart"
     $SYSEVENT set firewall-restart
+elif [ $MODE = "meshethbhaul-start" ]
+then
+    #config ethernet backhaul vlan
+    setup_pod_ethbhaul
+elif [ $MODE = "meshethbhaul-stop" ]
+then
+    #delete ethernet backhaul vlahbhaul-start"
+    remove_pod_ethbhaul
 elif [ $MODE = "lnf-stop" ]
 then
     update_instances stop
@@ -1167,6 +1202,9 @@ echo_t "Received INSTANCE:$INSTANCE"
 BRIDGE_NAME=""
 BRIDGE_VLAN=0
 case $INSTANCE in
+    0)
+        #Bridge
+    ;;
     1)
         #Private LAN
         BRIDGE_NAME="brlan0"
