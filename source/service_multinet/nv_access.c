@@ -104,13 +104,14 @@ int dbusInit( void )
 
 int nv_get_members(PL2Net net, PMember memberList, int numMembers) 
 {
-/* Use to get psm value via dbus instead of psmcli util */
+
 #if !defined(_COSA_INTEL_XB3_ARM_) && !defined(INTEL_PUMA7)
+
     int i;
-    char cmdBuff[512] = {0};
-    char valBuff[256] = {0};
+    char cmdBuff[512];
+    char valBuff[256];
     int offset = 0;
-    FILE* psmcliOut = NULL;
+    FILE* psmcliOut;
     char* ifToken = NULL, *dash = NULL;
     
     int actualNumMembers = 0;
@@ -149,7 +150,11 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 
         pclose(psmcliOut); /*RDKB-7137, CID-33325, free unused resources before exit */
     }
+
 #else
+
+    /* Get psm value via dbus instead of psmcli util */
+
     char  cmdBuff[512];
     char  *ifToken, 
 		  *dash,
@@ -175,7 +180,6 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 #if defined(MOCA_HOME_ISOLATION)
 	if(net->inst == 1)
 	{
-		memset(cmdBuff,0,sizeof(cmdBuff));
 		snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.HomeNetworkIsolation"); 
 		rc = PSM_VALUE_GET_STRING(cmdBuff, pStr);
 		if(rc == CCSP_SUCCESS && pStr != NULL)
@@ -186,7 +190,6 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
     for (i = 0; i < sizeof(typeStrings)/sizeof(*typeStrings); ++i) 
 	{
 		/* dmsb.l2net.%d.Members.%s*/
-		memset(cmdBuff,0,sizeof(cmdBuff));
 		snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.Members.%s",net->inst, typeStrings[i]); 
 
 		MNET_DEBUG("nv_get_members, lookup string %s index %d\n" COMMA cmdBuff COMMA i)
@@ -273,45 +276,42 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 
 int nv_get_bridge(int l2netInst, PL2Net net) 
 {
-    char cmdBuff[512] = {0};
+    char cmdBuff[128];
 
-/* Use to get psm value via dbus instead of psmcli util */
 #if !defined(_COSA_INTEL_XB3_ARM_) && !defined(INTEL_PUMA7)
-    char valBuff[80] = {0};
-    char tmpBuf[15] = {0};
-    FILE* psmcliOut = NULL;
 
-    snprintf(cmdBuff, sizeof(cmdBuff), 
-           "psmcli get -e X dmsb.l2net.%d.Name X dmsb.l2net.%d.Vid X dmsb.l2net.%d.Enable", 
-             l2netInst, l2netInst, l2netInst);
+    char tmpBuf[8];
+    FILE* psmcliOut;
+    int matches;
+
+    snprintf(cmdBuff, sizeof(cmdBuff), "psmcli get -e X dmsb.l2net.%d.Name X dmsb.l2net.%d.Vid X dmsb.l2net.%d.Enable", l2netInst, l2netInst, l2netInst);
 
     psmcliOut = popen(cmdBuff, "r");
+    if (!psmcliOut)
+        return 0;
 
-    if(psmcliOut) /*RDKB-7137, CID-33276, null check before use */
-    {
+    /*
+       The output from the psmcli command will be on 3 separate lines so rely
+       on the space characters in the fscanf format string to match any
+       whitespace, including the newline characters. Limit the Name string to
+       15 chars to match the size of net->name (which is 16) and limit the
+       Enable string to 7 chars to match the size of the local tmpBuf buffer
+       (which is 8).
+    */
+    matches = fscanf (psmcliOut, "X=\"%15[^\"]\" X=\"%d\" X=\"%7[^\"]\"", net->name, &net->vid, tmpBuf);
+    pclose(psmcliOut);
+    if (matches != 3)
+        return 0;
+    net->bEnabled = (strcasecmp(tmpBuf, "TRUE") == 0) ? 1 : 0;
+    net->inst = l2netInst;
 
-        fgets(valBuff, sizeof(valBuff), psmcliOut);
-        *strrchr(valBuff, '"') = '\0';
-        sscanf(valBuff, "X=\"%s\n", net->name); 
-
-        fgets(valBuff, sizeof(valBuff), psmcliOut);
-        sscanf(valBuff, "X=\"%d\"\n", &net->vid);
-
-        fgets(valBuff, sizeof(valBuff), psmcliOut);
-        sscanf(valBuff, "X=\"%s\"\n", tmpBuf);
-        if(!strcmp("FALSE", tmpBuf)) {
-            net->bEnabled = 0;
-        } else {
-            net->bEnabled = 1;
-        }
-
-        net->inst = l2netInst;
-
-        pclose(psmcliOut);
-    }
 #else
-    int  rc;
-    char *pStr = NULL;
+
+	/* Get psm value via dbus instead of psmcli util */
+
+	int  rc;
+	char *pStr = NULL;
+
 	/* dbus init based on bus handle value */
  	if(bus_handle == NULL)
 	dbusInit( );
@@ -323,8 +323,7 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 	}
 
 	/* dmsb.l2net.%d.Name */
-	memset(cmdBuff,0,sizeof(cmdBuff));
-    snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.Name",l2netInst); 
+	snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.Name",l2netInst); 
 
 	rc = PSM_VALUE_GET_STRING(cmdBuff, pStr);
 	if(rc == CCSP_SUCCESS && pStr != NULL)
@@ -335,7 +334,6 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 	} 
 
 	/* dmsb.l2net.%d.Vid */ 
-	memset(cmdBuff,0,sizeof(cmdBuff));
 #if defined (_BWG_PRODUCT_REQ_)
         /* dmsb.l2net.%d.XfinityNewVid  */
         if((l2netInst == 3)||(l2netInst == 4)||(l2netInst == 7)||(l2netInst == 8)||(l2netInst == 11)) {
@@ -356,7 +354,6 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 	}  
 
 	/* dmsb.l2net.%d.Enable */
-	memset(cmdBuff,0,sizeof(cmdBuff));
 	snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.Enable",l2netInst); 
 
 	rc = PSM_VALUE_GET_STRING(cmdBuff, pStr);
