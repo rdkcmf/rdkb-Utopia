@@ -10689,8 +10689,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
 #if defined (INTEL_PUMA7) ||  defined  (_COSA_INTEL_XB3_ARM_)
    //ARRISXB6-8429
-   fprintf(filter_fp, "-I FORWARD -p udp -m state --state NEW -m connbytes --connbytes 0:10 --connbytes-dir original --connbytes-mode packets -j GWMETA --dis-pp\n");
-   fprintf(filter_fp, "-I FORWARD -p tcp -m state --state NEW -m connbytes --connbytes 0:10 --connbytes-dir original --connbytes-mode packets -j GWMETA --dis-pp\n");
+   fprintf(filter_fp, "-I FORWARD -m conntrack --ctdir original -m connbytes --connbytes 0:10 --connbytes-dir original --connbytes-mode packets -j GWMETA --dis-pp\n");
+   fprintf(filter_fp, "-I FORWARD -m conntrack --ctdir reply -m connbytes --connbytes 0:10 --connbytes-dir reply --connbytes-mode packets -j GWMETA --dis-pp\n");
 #endif
 
 #if defined(_COSA_BCM_ARM_)
