@@ -657,13 +657,9 @@ ifconfig l2sd0.1060 up
 ip rule add from all iif l2sd0.1060 lookup erouter
 
 # Add QinQ for pod ethernet backhaul traffic
-ip link add link l2sd0.100 l2sd0.100.1060 type vlan proto 802.1Q id 1060
-ip link set l2sd0.100.1060 up
 brctl addbr br403
 ifconfig br403 192.168.245.1 netmask 255.255.255.0 up
-brctl addif br403 l2sd0.100.1060
 brctl addif br403 l2sd0.1060
-ip rule add from all iif l2sd0.100.1060 lookup erouter
 ip rule add from all iif br403 lookup erouter
 
 #--------Marvell LAN-side egress flood mitigation----------------
@@ -677,11 +673,8 @@ vconfig add l2sd0 106
 brctl addbr br106
 ifconfig l2sd0.106 up
 ifconfig br106 192.168.106.1 netmask 255.255.255.0 up
-ip link add link l2sd0.100 l2sd0.100.106 type vlan proto 802.1Q id 106
 brctl addif br106 l2sd0.106
-brctl addif br106 l2sd0.100.106
 ip rule add from all iif l2sd0.106 lookup erouter
-ip rule add from all iif l2sd0.100.106 lookup erouter
 ip rule add from all iif br106 lookup erouter
 
 # Check and set factory-reset as reboot reason 
