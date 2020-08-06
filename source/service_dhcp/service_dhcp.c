@@ -72,8 +72,9 @@ char g_cMig_Check[8] = {0};
 
 static int dbusInit( void )
 {
-    int ret = -1;
+    int ret = 0;
     char* pCfg = CCSP_MSG_BUS_CFG;
+
     if (g_vBus_handle == NULL)
     {
 #ifdef DBUS_INIT_SYNC_MODE // Dbus connection init
@@ -89,11 +90,11 @@ static int dbusInit( void )
                                     (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback,
                                     Ansc_FreeMemory_Callback);
 #endif  /* DBUS_INIT_SYNC_MODE */
+
         if (ret == -1)
         {
             // Dbus connection error
             fprintf(stderr, "DBUS connection error\n");
-            g_vBus_handle = NULL;
         }
     }
     return ret;
