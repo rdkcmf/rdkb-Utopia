@@ -7013,7 +7013,10 @@ void block_url_by_ipaddr(FILE *fp, char *url, char *dropLog, int ipver, char *in
     else
         snprintf(filePath, sizeof(filePath), "/var/.pc_url2ip_%s", insNum);
 
+/* * Actually needs to get IP address of every firewall-restart iteration otherwise blocking wont work properly */
+#if !defined(_HUB4_PRODUCT_REQ_)
     ipRecords = fopen(filePath, "r");
+#endif /* * _HUB4_PRODUCT_REQ_ */
 
     if(ipRecords == NULL) {
         struct addrinfo hints, *res, *p;
