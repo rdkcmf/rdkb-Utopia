@@ -48,7 +48,7 @@ backupenable=`syscfg get logbackup_enable`
 #dmesg sync
 DMESG_FILE="/rdklogs/logs/messages.txt"
 lastdmesgsync="/tmp/lastdmesgsynctime"
-atom_journal_log="/rdklogs/logs/atom_journal_logs.txt.0"
+journal_log="/rdklogs/logs/journal_logs.txt.0"
 
 #if [ -f /etc/device.properties ]
 #then
