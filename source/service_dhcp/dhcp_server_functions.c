@@ -1306,6 +1306,29 @@ int prepare_dhcp_conf (char *input)
                 fprintf(stderr, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
         }
 #endif
+#if defined (_PLATFORM_TURRIS_)
+	fprintf(l_fLocal_Dhcp_ConfFile, "interface=wifi2\n");
+	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n");
+
+	// Add wifi2 custom dns server configuration
+	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+	{
+		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=wifi2,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(stderr, "DHCP_SERVER : [wifi2] dhcp-option=wifi2,6,%s\n", l_cWan_Dhcp_Dns);
+	}
+
+	fprintf(l_fLocal_Dhcp_ConfFile, "interface=wifi3\n");
+	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n");
+
+	// Add wifi3 custom dns server configuration
+	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+	{
+		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=wifi3,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(stderr, "DHCP_SERVER : [wifi3] dhcp-option=wifi3,6,%s\n", l_cWan_Dhcp_Dns);
+	}
+
+	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-script=/etc/dhcp_script.sh\n");
+#endif
 	if (TRUE == l_bCaptivePortal_Mode)
 	{
 		//In factory default condition, prepare whitelisting and redirection IP
