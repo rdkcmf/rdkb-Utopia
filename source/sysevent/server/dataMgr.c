@@ -67,6 +67,7 @@
 #include <arpa/inet.h>
 #include <ctype.h>   // for isspace
 #include "syseventd.h"
+#include <unistd.h>
 #include "dataMgr.h"
 #ifdef USE_SYSCFG
 #include <syscfg/syscfg.h>
@@ -115,6 +116,7 @@ static int init_data_element_t(data_element_t *de)
    de->trigger_id     = 0;
    de->name           = NULL;
    de->value          = NULL;
+   de->value_length   = 0;
    de->options        = TUPLE_FLAG_NONE;
    return(0);
 }
@@ -202,12 +204,25 @@ static int free_data_elements(void)
       cur_element = &((global_data_elements.elements)[i]);
 
       if (0 != cur_element->used && NULL != cur_element->name) {
-         fprintf(fp, "< %-55s %-50s 0x%x  0x%x %x >\n", 
-                              cur_element->name,
-                              cur_element->value,
-                              cur_element->options,
-                              cur_element->source,
-                              cur_element->tid);
+          if (!cur_element->value_length)
+          {
+              fprintf(fp, "< %-55s %-50s 0x%x  0x%x %x >\n",
+                      cur_element->name,
+                      cur_element->value,
+                      cur_element->options,
+                      cur_element->source,
+                      cur_element->tid);
+          }
+          else
+          {
+              fprintf(fp, "< %-55s %-80s 0x%x  0x%x %x >\n",
+                      cur_element->name,
+                      "use cmd `sysevent getdata <name>`, cmd output -> /tmp/getdata.bin",
+                      cur_element->options,
+                      cur_element->source,
+                      cur_element->tid);
+
+          }
       }
    }
    return(0);
@@ -345,6 +360,7 @@ static data_element_t *get_data_element(const char *name)
       return(NULL);
    }
    de_ptr->value = NULL;
+   de_ptr->value_length = 0;
    (global_data_elements.num_elements)++;
 
    return(de_ptr);
@@ -807,6 +823,66 @@ char *DATA_MGR_get(char *name, char *value_buf, int *buf_size)
    return(value_buf);
 }
 
+char *DATA_MGR_get_bin(char *name, char *value_buf, int *buf_size)
+{
+   if (!DATA_MGR_inited) {
+      return(NULL);
+   }
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Attempting to get mutex: data_elements\n", id);
+   )
+   pthread_mutex_lock(&global_data_elements.mutex);
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Got mutex: data_elements\n", id);
+   )
+   // use find_existing_data_element instead of get_data_element so that
+   // in the case of an element that doesnt exist, we dont allocate and immediately
+   // deallocate it.
+   int ignore;
+   data_element_t *element = find_existing_data_element(name, &ignore);
+   
+   int value_buf_size = *buf_size;
+   *buf_size          = 0;
+
+   // it is possible that the tuple has no value.
+   // in this case element->value is NULL
+   // it is also possible that the tuple does not exist
+   if (NULL == element || NULL == element->value) {
+      value_buf[0] = '\0';
+      *buf_size = 0;
+   } else {
+      // There is some legitimate data, so copy it to the provided buffer
+      if (value_buf_size > element->value_length)
+      {
+          memcpy(value_buf, element->value,element->value_length);
+          *buf_size = element->value_length;
+      }
+      else
+      {
+          memcpy(value_buf, element->value,value_buf_size);
+          *buf_size = value_buf_size;
+      }
+   } 
+
+   if (NULL != element) {
+      if (NULL == element->value && 0 == element->trigger_id && TUPLE_FLAG_NONE == element->options) {
+         // the element is quite useless and memory for it can be
+         // recovered. 
+         rm_data_element(element);
+      }
+   }
+
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Releasing mutex: data_elements\n", id);
+   )
+   pthread_mutex_unlock(&global_data_elements.mutex);
+   return(value_buf);
+}
+
+
 /*
  * Procedure     : DATA_MGR_show
  * Purpose       : Print the value of a all data item
@@ -1028,6 +1104,223 @@ int DATA_MGR_set(char *name, char *value, int source, int tid)
    pthread_mutex_unlock(&global_data_elements.mutex);
    return(0);
 }
+
+int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int tid)
+{
+
+   if (!DATA_MGR_inited) {
+      return(ERR_NOT_INITED);
+   }
+
+   char *local_value = NULL;
+   char buf[256] = {0};
+   int fileret = access("/tmp/sysevent_debug", F_OK);
+
+   if (NULL == value || val_length == 0) {
+      local_value = NULL;
+   } else {
+      local_value = value;
+      if (NULL == local_value) {
+         return(ERR_ALLOC_MEM);
+      } 
+   }
+
+    if (0 == fileret)
+    {
+         snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,val_length);
+         system(buf);
+    }
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Attempting to get mutex: data_elements\n", id);
+   )
+   pthread_mutex_lock(&global_data_elements.mutex);
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Got mutex: data_elements\n", id);
+   )
+   data_element_t *element = get_data_element(name);
+
+   if (NULL == element) {
+      SE_INC_LOG(MUTEX,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d Releasing mutex: data_elements\n", id);
+      )
+      pthread_mutex_unlock(&global_data_elements.mutex);
+      return(ERR_SYSTEM);
+   }
+
+   /*
+    * If the tuple is set write once read many, and is already set then
+    * dont reset it
+    */
+   if (TUPLE_FLAG_WORM & element->options) {
+      if (NULL != element->value && '\0' != (element->value)[0]) {
+         SE_INC_LOG(MUTEX,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d Releasing mutex: data_elements\n", id);
+         )
+         pthread_mutex_unlock(&global_data_elements.mutex);
+         return(0);
+      }
+   }
+
+   /*
+    * If the tuple has a tid then it was previously seem on this node.
+    * We need to determine if it is a looped message.
+    * If the message came from this node (source is our source) then
+    * if the tid is lower or equal to the current tid, then it must be old
+    * If the message came from another source, then if the tid is equal to our saved tid
+    * then we have already seen it.
+    */
+   if (0 != element->tid && 0 != tid) {
+      if ( (source == daemon_node_id && element->tid >= tid) ||
+           (element->source == source && element->tid == tid) ) { 
+         SE_INC_LOG(MUTEX,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d Releasing mutex: data_elements\n", id);
+         )
+         pthread_mutex_unlock(&global_data_elements.mutex);
+         ulogf(ULOG_SYSTEM, UL_SYSEVENT, "Sysevent Loop detected by DATA_MGR. < %s , %s, 0x%x %x>, Ignoring set.\n",
+                    element->name, element->value, element->source, element->tid);
+         SE_INC_LOG(ERROR,
+            printf("Sysevent Loop detected by DATA_MGR. < %s , %s, 0x%x %x>, Ignoring set.\n",
+                    element->name, element->value, element->source, element->tid);
+            )
+         return(ERR_DUPLICATE_MSG);
+      }
+   }
+ 
+   int changed = 0;
+
+   if (NULL == local_value && NULL == element->value) {
+      if (TUPLE_FLAG_NONE == element->options) {
+         SE_INC_LOG(MUTEX,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d Releasing mutex: data_elements\n", id);
+         )
+         pthread_mutex_unlock(&global_data_elements.mutex);
+         return(0);
+      }
+   } else if (NULL == local_value && NULL != element->value) {
+      changed = 1; 
+       sysevent_free(&(element->value), __FILE__, __LINE__);
+        
+       if (0 == fileret)
+       {
+         snprintf(buf,sizeof(buf),"echo fname %s: unset changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
+         system(buf);
+       }
+ 
+   } else if (NULL != local_value && NULL == element->value) {
+      changed = 1;
+      element->value = sysevent_malloc(val_length, __FILE__, __LINE__);
+      if (NULL == element->value) {
+         SE_INC_LOG(MUTEX,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d Releasing mutex: data_elements\n", id);
+         )
+         pthread_mutex_unlock(&global_data_elements.mutex);
+         return(ERR_ALLOC_MEM);
+      }
+       element->value_length = val_length;
+       memcpy(element->value,value,val_length);
+   } else {
+       if (val_length != element->value_length)
+       {
+           changed = 1; 
+       }
+       else if (element->value && element->value_length > 0)
+       {
+            if (0 != memcmp(element->value,value,val_length))
+            {
+                changed = 1;
+                if (0 == fileret)
+                {
+                    snprintf(buf,sizeof(buf),"echo fname %s: content not same changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
+                    system(buf);
+                }
+ 
+            }
+            else if (0 == fileret)
+            {
+                snprintf(buf,sizeof(buf),"echo fname %s: content same changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
+                system(buf);
+
+            }
+       }
+      if (changed) {
+          if (val_length != element->value_length) {
+             sysevent_free(&(element->value), __FILE__,__LINE__);
+             if (0 == fileret)
+             {
+                 snprintf(buf,sizeof(buf),"echo fname %s: freed prev .changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
+                 system(buf);
+             }
+             element->value = sysevent_malloc(val_length, __FILE__, __LINE__);
+         }  
+          if (NULL == element->value) {
+              SE_INC_LOG(MUTEX,
+                      int id = thread_get_id(worker_data_key);
+                      printf("Thread %d Releasing mutex: data_elements\n", id);
+                      )
+                  pthread_mutex_unlock(&global_data_elements.mutex);
+              return(ERR_ALLOC_MEM);
+          }
+         element->value_length = val_length;
+         memcpy(element->value,value,val_length);
+      }
+   } 
+   if (0 == fileret)
+   {
+         snprintf(buf,sizeof(buf),"echo fname %s: changed flag %d  before setdata >> /tmp/sys_d.txt",__FUNCTION__,changed);
+         system(buf);
+ 
+      FILE *pFile = fopen("/tmp/setdata.bin","wb");
+       if (pFile && element->value)
+       {
+           fwrite(element->value,element->value_length,1,pFile);
+           fclose(pFile);
+       }
+   }
+   // if the tuple options are set for event then we execute notifications
+   // even if there is no tuple value change
+   if (TUPLE_FLAG_EVENT & element->options) {
+      changed = 1;
+   }
+
+   // set or reset the tid if necessary
+   if (0 == tid) {
+      // this is a new set request. So create a new tid
+      element->source = daemon_node_id; 
+      element->tid=daemon_node_msg_num;
+      daemon_node_msg_num++;
+   } else {
+      /* reset the tid to the specified value */
+      element->source = source;
+      element->tid    = tid;
+   }
+
+   if (changed && 0 != element->trigger_id) {
+      // if there is  a trigger id then there is a trigger for this data element
+      // we will start the trigger manager 
+      TRIGGER_MGR_execute_trigger_actions_data(element->trigger_id, element->name, element->value, element->value_length, element->source, element->tid);
+   }
+
+   if (NULL == element->value && 0 == element->trigger_id && TUPLE_FLAG_NONE == element->options) {
+      // the element is quite useless and memory for it can be
+      // recovered. 
+      rm_data_element(element);
+   }
+
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Releasing mutex: data_elements\n", id);
+   )
+   pthread_mutex_unlock(&global_data_elements.mutex);
+   return(0);
+}
+
 
 /*
  * Procedure     : DATA_MGR_set_unique

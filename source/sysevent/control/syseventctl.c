@@ -68,6 +68,28 @@ static int server_connect(char *host, short port, token_t *token)
    return(fd);
 }
 
+static int server_connect_data(char *host, short port, token_t *token)
+{
+   int fd = -1;
+   if (1 == use_tcp) {
+      port &= 0x0000FFFF;
+      fd = sysevent_open_data(host, port, SE_VERSION, SE_NAME, token);
+      if (0 > fd) {
+         // printf("Unable to register with sysevent daemon at %s %u.\n", host, port);
+         return(-1);
+      }
+   } else {
+      fd = sysevent_local_open_data(UDS_PATH, SE_VERSION, SE_NAME, token);
+      if (0 > fd) {
+         // printf("Unable to register with sysevent daemon at %s.\n", UDS_PATH);
+         return(-1);
+      }
+
+   }
+   return(fd);
+}
+
+
 static int server_disconnect(int fd, const token_t token)
 {
    sysevent_close(fd, token);
@@ -101,6 +123,58 @@ static int handle_get(char *target)
    return(rc);
 }
 
+static int handle_unset(char *target)
+{
+   int fd;
+   token_t token;
+   if (0 > (fd = server_connect(server_host, server_port, &token))) {
+      puts("");
+      return(-1);
+   }
+
+   int  rc;
+   rc = sysevent_unset(fd, token, target);
+   server_disconnect(fd, token);
+   if (rc) {
+      printf("Unable to get ->%s<-. Reason (%d) %s\n", target, rc, SE_strerror(rc));   
+   }
+   return(rc);
+}
+
+// if there is no current value then return ""
+static int handle_get_data(char *target)
+{
+   int fd;
+   token_t token;
+   if (0 > (fd = server_connect_data(server_host, server_port, &token))) {
+      puts("");
+      return(-1);
+   }
+
+   unsigned int bin_size = sysevent_get_binmsg_maxsize();
+   char *return_buffer = malloc(bin_size);
+   int  rc = 0;
+   int copiedBufLength = 0;
+   if (return_buffer)
+   {
+       rc = sysevent_get_data(fd, token, target, return_buffer, bin_size ,&copiedBufLength);
+       server_disconnect(fd, token);
+       if (rc) {
+           printf("Unable to get ->%s<-. Reason (%d) %s\n", target, rc, SE_strerror(rc));
+       } else {
+           FILE *pFile = fopen("/tmp/getdata.bin","wb");
+           if (pFile != NULL)
+           {
+               fwrite(return_buffer,copiedBufLength,1,pFile);
+               fclose(pFile);
+           }
+       }
+       free(return_buffer);
+       printf("freed %s\n", __FUNCTION__);
+   }
+   return(rc);
+}
+
 static int handle_set(char *target, char *value) 
 {
    int fd;
@@ -123,6 +197,55 @@ static int handle_set(char *target, char *value)
    server_disconnect(fd, token);
    return(rc);
 }
+
+static int handle_set_data(char *target, char *value)
+{
+   int fd;
+   token_t token;
+   int length = 0;
+   if (0 > ( fd = server_connect_data(server_host, server_port, &token))) {
+      return(-1);
+   }
+
+   char *valp = NULL;
+   if (NULL == value) {
+      valp = NULL;
+      return -1;
+   } else {
+      valp = value;
+   }
+
+   FILE *pFile = fopen(value,"rb");
+   if (pFile != NULL)
+   {
+       fseek(pFile, 0, SEEK_END);
+       length = ftell(pFile);
+       rewind(pFile);
+       valp = (char *) malloc(length * sizeof(char));
+       if (!valp)
+            return -1;
+       fread(valp,length,1,pFile);
+       fclose(pFile);
+   }
+
+   int rc;
+   int fileread = access("/tmp/sysevent_debug", F_OK);
+   if (fileread == 0)
+   {
+       char buf[256] = {0};
+          unsigned int bin_size = sysevent_get_binmsg_maxsize();
+       snprintf(buf,sizeof(buf),"echo fname %s: length %d bin size %u datafd %d >> /tmp/sys_d.txt",__FUNCTION__,length,bin_size,fd);
+
+       system(buf);
+   }
+   rc = sysevent_set_data(fd, token, target, valp, length);
+
+   server_disconnect(fd, token);
+   free(valp);
+   printf("freed %s\n", __FUNCTION__);
+   return(rc);
+}
+
 
 static int handle_setunique(char *target, char *value) 
 {
@@ -427,6 +550,53 @@ static int handle_notification(char *subject)
    return(rc);
 }
 
+static int handle_notification_data(char *subject)
+{
+   int fd;
+   token_t token;
+   if (0 > (fd = server_connect_data(server_host, server_port, &token))) {
+      return(-1);
+   }
+
+   async_id_t async_id;
+   int rc = sysevent_setnotification(fd, token, subject, &async_id);
+   printf("async id:  0x%x 0x%x\n", async_id.trigger_id, async_id.action_id);
+
+   char name_buf[200];
+   unsigned int bin_size = sysevent_get_binmsg_maxsize();
+   char *val_buf = malloc(bin_size);
+   int  name_size;
+   int  val_size;
+   int i;
+   // in case you cant tell this is just example code
+   while (val_buf) 
+   {
+      name_size = sizeof(name_buf);
+      val_size  = bin_size;
+      rc = sysevent_getnotification_data(fd, token, name_buf, &name_size, val_buf, &val_size, &async_id);
+      if (0 == strcmp(name_buf,subject))
+      {
+        FILE *pFile = fopen("/tmp/notify_data.bin","wb");
+          printf("rc is %d\n", rc);
+          printf("name ->%s<- \n", name_buf);
+          printf("asynch_id:  0x%x 0x%x\n", async_id.trigger_id, async_id.action_id);
+
+          if (pFile != NULL)
+          {
+              fwrite(val_buf,val_size,1,pFile);
+              fclose(pFile);
+          }
+          break;
+      }
+      sleep(1);
+   }
+   rc = sysevent_rmcallback(fd, token, async_id);
+   server_disconnect(fd, token);
+   printf("freed %s\n", __FUNCTION__);
+   free(val_buf);
+   return(rc);
+}
+
 static int handle_show(char *filename) 
 {
    int fd; 
@@ -479,6 +649,10 @@ static void printhelp(char *name) {
       printf (" commands:\n");
       printf ("    get name\n");
       printf ("    set name value\n");
+      printf ("    setdata name binary_file_path\n");
+      printf ("         successful output stores --> /tmp/setdata.bin\n");
+      printf ("    getdata name\n");
+      printf ("         successful output stores --> /tmp/getdata.bin\n");
       printf ("    setunique name value\n");
       printf ("       add a value to a pool named name\n");
       printf ("       if the values must maintain order during iteration then the pool name is !name\n");
@@ -513,6 +687,8 @@ static void printhelp(char *name) {
       printf ("          @name  - to have the runtime value of tuple <name> in sysEvent passed in the command-line to the executable\n");
       printf ("        Note that implicit param aysnc name will be prepended to param list\n");
       printf ("    notification name\n");
+      printf ("    notificationdata name\n");
+      printf ("          notified output stores into -> /tmp/notify_data.bin\n");
       printf ("    rm_async asyncid_1 asyncid_2\n");
       printf ("       asyncid_1 and 2 are two halves of an asyncid\n");
       printf ("    show  name_of_file_to_print_to\n");
@@ -613,6 +789,25 @@ int main(int argc, char **argv)
       }
       return(retval);
    }
+
+      // parse the next command-line argument as the command
+   if (!strcmp(argv[next_arg], "unset")) {
+      if ((argc-1) != next_arg+1) {
+         printhelp(argv[0]);
+      } else {
+         retval = handle_unset(argv[next_arg+1]);
+      }
+      return(retval);
+   }
+
+   if (!strcmp(argv[next_arg], "getdata")) {
+      if ((argc-1) != next_arg+1) {
+         printhelp(argv[0]);
+      } else {
+         retval = handle_get_data(argv[next_arg+1]);
+      }
+      return(retval);
+   }
    if (!strcmp(argv[next_arg], "set")) {
 
       char *val;
@@ -628,6 +823,29 @@ int main(int argc, char **argv)
       }
       return(retval);
    }
+ if (!strcmp(argv[next_arg], "setdata")) {
+
+      char *val;
+      char buf[256] = {0};
+      int fileread = access("/tmp/sysevent_debug", F_OK);
+      if (argc <= next_arg+2                ||
+          NULL == (val = argv[next_arg+2])  ||
+          0 == strcasecmp("NULL", val)) {
+         val = NULL;
+      }
+      if (fileread == 0)
+      {
+          snprintf(buf,sizeof(buf),"echo fname %s: arg.count %d index %d >>  /tmp/sys_d.txt",__FUNCTION__,argc,next_arg);
+          system(buf);
+      }
+      if ((argc-1) != next_arg+1 && (argc-1) != next_arg+2) {
+         printhelp(argv[0]);
+      } else {
+         retval = handle_set_data(argv[next_arg+1], val);
+      }
+      return(retval);
+   }
+
    if (!strcmp(argv[next_arg], "setunique")) {
 
       char *val;
@@ -731,6 +949,15 @@ int main(int argc, char **argv)
       }
       return(retval);
    }
+   if (!strcmp(argv[next_arg], "notificationdata")) {
+       if ((argc-1) != next_arg+1) {
+           printhelp(argv[0]);
+       } else {
+           retval = handle_notification_data(argv[next_arg+1]);
+       }
+       return(retval);
+   }
+
    if (!strcmp(argv[next_arg], "show")) {
       if ((argc-1) != next_arg+1) {
          printhelp(argv[0]);

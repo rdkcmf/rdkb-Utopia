@@ -72,6 +72,8 @@ extern "C" {
  * sizeof(int) - 1
  */
 #define SE_MAX_MSG_SIZE 1023
+#define SE_MAX_MSG_DATA_SIZE 40960 /* 40K Max */
+#define SE_MAX_MSG_DATA_SIZE_READ_FILE "/tmp/sysevent_binsize_max"
 
 /*
  * null async_id_t
@@ -155,7 +157,15 @@ typedef enum
    SE_MSG_NOTIFICATION                = 30,
    SE_MSG_SHOW_DATA_ELEMENTS          = 31,
    SE_MSG_ERRORED                     = 32,  /* msg corrupted */
-   SE_MSG_DEBUG                       = 33   /* change debug level */
+   SE_MSG_DEBUG                       = 33,   /* change debug level */
+   SE_MSG_SET_DATA                    = 34,   
+   SE_MSG_GET_DATA                    = 35,   
+   SE_MSG_GET_DATA_REPLY              = 36,
+   SE_MSG_SEND_NOTIFICATION_DATA      = 37,
+   SE_MSG_SET_ASYNC_MESSAGE_DATA      = 38,
+   SE_MSG_NOTIFICATION_DATA           = 39,
+   SE_MSG_RUN_EXTERNAL_EXECUTABLE_DATA = 40,
+   SE_MSG_OPEN_CONNECTION_DATA = 41
 } se_msg_type;
 
 typedef unsigned int token_t;
@@ -908,6 +918,8 @@ void init_libsysevent(const char* const name);
  *    >0            : file descriptor for connection
  */
 int sysevent_open(char *ip, unsigned short port, int version, char *id, token_t *token);
+int sysevent_open_data (char *ip, unsigned short port, int version, char *id, token_t *token);
+
 
 /*
  * Procedure     : sysevent_local_open
@@ -922,6 +934,7 @@ int sysevent_open(char *ip, unsigned short port, int version, char *id, token_t 
  *    -1 if error
  */
 int sysevent_local_open (char *target, int version, char *id, token_t *token);
+int sysevent_local_open_data (char *target, int version, char *id, token_t *token);
 
 /*
  * Procedure     : sysevent_close
@@ -992,6 +1005,28 @@ int sysevent_ping_test (int fd, token_t token, struct timeval* tv);
 int sysevent_get(const int fd, const token_t token, const char *inbuf, char *outbuf, int outbytes);
 
 /*
+ * Procedure     : sysevent_get_data
+ * Purpose       : Send a get to the sysevent daemon and receive reply
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : Server provided opaque value
+ *    inbuf         : A null terminated string which is the thing to get
+ *    inbytes       : The length of the string not counting terminating null
+ *    outbuf        : A buffer to hold returned value
+ *    outbytes      : The maximum number of bytes in outbuf
+ *    bufsizecopied : The actual number of bytes copied into outbuf
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ * Notes        :
+ *    If outbuf is not big enough to hold the reply value, then the value will
+ *    be truncated to fit. An error of ERR_INSUFFICIENT_ROOM will be returned.
+ *    The value will always be NULL terminated, so the outbuf must contain
+ *    enough bytes for the return value as well as the NULL byte.
+ */
+int sysevent_get_data(const int fd, const token_t token, const char *inbuf, char *outbuf, int outbytes,int *actualsizecopied);
+
+/*
  * Procedure     : sysevent_set
  * Purpose       : Send a set to the sysevent daemon
  *                 A set may change the value of a tuple
@@ -1007,6 +1042,36 @@ int sysevent_get(const int fd, const token_t token, const char *inbuf, char *out
 
 int sysevent_set(const int fd, const token_t token, const char *name, const char *value, int conf_req);
 
+/*
+ * Procedure     : sysevent_set_data
+ * Purpose       : Send a set to the sysevent daemon
+ *                 A set may change the value of a tuple
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : Server provided opaque value
+ *    name          : A null terminated string which is the tuple to set
+ *    value         : buffer holds binary data which is the value to set tuple to, or NULL
+ *    value_length  : actual size of binary data buffer
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ */
+int sysevent_set_data(const int fd, const token_t token, const char *name, const char *value, int value_length);
+
+/*
+ * Procedure     : sysevent_unset
+ * Purpose       : Send a set to the sysevent daemon
+ *                 A set with NULL value of a tuple to clear existing value from volatile memory.
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : Server provided opaque value
+ *    name          : A null terminated string which is the tuple to set
+ *    value         : NULL by default
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ */
+int sysevent_unset (const int fd, const token_t token, const char *name);
 
 
 /*
@@ -1217,6 +1282,31 @@ int sysevent_rmnotification(const int fd, const token_t token, async_id_t async_
 int sysevent_getnotification (const int fd, const token_t token, char *namebuf, int *namebytes, char *valbuf, int *valbytes, async_id_t *async_id);
 
 /*
+ * Procedure     : sysevent_getnotification_data
+ * Purpose       : Wait for a notification and return the results when received
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : A server generated opaque value
+ *    namebuf       : A buffer to hold the name received
+ *    namebytes     : The length of the string not counting terminating null
+ *    valbuf        : A buffer to hold returned value
+ *    valbytes      : On input the maximum number of bytes in outbuf
+ *                    On output the actual number of bytes in outbuf
+ *    async_id      : The async id of the action
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ * Notes        :
+ *    If a buffer is not big enough to hold the reply value, then the value will
+ *    be truncated to fit. An error of ERR_INSUFFICIENT_ROOM will be returned.
+ *    The value will always be NULL terminated, so the buffer must contain
+ *    enough bytes for the return value as well as the NULL byte.
+ * Notes
+ *   This will block
+ */
+int sysevent_getnotification_data (const int fd, const token_t token, char *namebuf, int *namebytes, char *valbuf, int *valbytes, async_id_t *async_id);
+
+/*
  * Procedure     : sysevent_show
  * Purpose       : Tell daemon to show all data elements
  * Parameters    :
@@ -1242,6 +1332,7 @@ int sysevent_show (const int fd, const token_t token, const char *file);
  */
 int sysevent_debug (char *ip, unsigned short port, int level);
 
+unsigned int sysevent_get_binmsg_maxsize();
 #ifdef __cplusplus
 }
 #endif

@@ -72,6 +72,7 @@ typedef struct {
    int       notifications;
    int       errors;
    char      name[CLIENT_NAME_SIZE];
+   int       isData;
 } a_client_t;
 
 /*

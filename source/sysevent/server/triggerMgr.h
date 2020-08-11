@@ -270,6 +270,7 @@ int TRIGGER_MGR_remove_notification_message_actions(const token_t owner);
  *     !0           : Some error
  */
 int TRIGGER_MGR_execute_trigger_actions(const int trigger_id, const char const *name, const char const *value, const int source, const int tid);
+int TRIGGER_MGR_execute_trigger_actions_data(const int trigger_id, const char const *name, const char const *value, const int value_length, const int source, const int tid);
 
 /*
  * Procedure     : TRIGGER_MGR_get_cloned_action

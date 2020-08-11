@@ -123,6 +123,9 @@ extern int main_communication_fd_listener_end;
 // communicaton between trigger thread and workers
 extern int trigger_communication_fd_writer_end;
 extern int trigger_communication_fd_listener_end;
+extern int trigger_datacommunication_fd_writer_end;
+extern int trigger_datacommunication_fd_listener_end;
+
 
 // mutex to protect inter thread communication
 extern pthread_mutex_t  main_communication_mutex;

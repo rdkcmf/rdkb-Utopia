@@ -68,6 +68,7 @@ typedef struct {
    tuple_flag_t          options;
    char                  *name;
    char                  *value;
+   int                  value_length;
 } data_element_t;
 
 /*
@@ -109,6 +110,7 @@ typedef struct {
  *   only if outgoing buf_size < incoming buf_size
  */
 char *DATA_MGR_get(char *name, char *value_buf, int *buf_size);
+char *DATA_MGR_get_bin(char *name, char *value_buf, int *buf_size);
 
 /*
  * Procedure     : DATA_MGR_set
@@ -124,6 +126,7 @@ char *DATA_MGR_get(char *name, char *value_buf, int *buf_size);
  *     !0           : Some error
  */
 int DATA_MGR_set(char *name, char *value, int source, int tid);
+int DATA_MGR_set_bin(char *name, char *value, int value_length, int source, int tid);
 
 /*
  * Procedure     : DATA_MGR_set_unique
