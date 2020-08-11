@@ -436,6 +436,62 @@ int SE_msg_add_string(char *msg, unsigned int size, const char *str)
    return(msg_increase_size);
 }
 
+int SE_msg_add_data(char *msg, unsigned int size, const char *data, const int data_length)
+{
+   if (NULL == msg) {
+      return (0);
+   }
+   int aligned_size      = (NULL == data ? 0 : data_length);
+   unsigned int msg_increase_size = (NULL == data ? 0 : data_length);
+
+   if  ( msg_increase_size > size ) {
+      return(0);
+   }
+   else
+   {
+       if (msg_increase_size !=0)
+       {
+           memset(msg, 0, msg_increase_size);
+       }
+   }
+
+   se_msg_string *tstruct;
+   tstruct       = (se_msg_string *) (msg);
+   tstruct->size = htonl(aligned_size);
+   if (data_length == 0)
+      return 0;
+  /*
+   * Originally a se_msg_string had a zero length variable chat str[0]
+   * which was changed to support inclusion of header files in ISO C code,
+   * so instead we just know that the string starts immediately after size
+   */
+   //snprintf (tstruct->str, aligned_size, "%s", str);
+   memcpy(((char *)(&tstruct->size))+sizeof(tstruct->size),data,data_length);
+   return(msg_increase_size);
+}
+
+char *SE_msg_get_data(char *msg, int *size)
+{
+   if (NULL == msg) {
+      *size = 0;
+      return (NULL);
+   }
+
+   se_msg_string *tstruct;
+   tstruct = (se_msg_string *) (msg);
+   // size includes the string as well as the rest of the se_msg_string
+   int string_len = ntohl(tstruct->size);
+   *size   = string_len;
+  /*
+   * Originally a se_msg_string had a zero length variable chat str[0]
+   * which was changed to support inclusion of header files in ISO C code,
+   * so instead we just know that the string starts mmediately after size
+   */
+//   return(0 == string_len ? NULL : (char *)(tstruct->str));
+   return(0 == string_len ? NULL : (char *)(((char *)(&tstruct->size))+sizeof(tstruct->size)));
+}
+
+
 /*
  * Procedure     : SE_msg_get_string
  * Purpose       : Get a string from a SE_msg buffer. The buffer 
@@ -487,6 +543,8 @@ static char *mtype2str(int mtype)
          return("SE_MSG_NONE");
       case(SE_MSG_OPEN_CONNECTION):
          return("SE_MSG_OPEN_CONNECTION");
+      case(SE_MSG_OPEN_CONNECTION_DATA):
+         return("SE_MSG_OPEN_CONNECTION_DATA");    
       case(SE_MSG_OPEN_CONNECTION_REPLY):
          return("SE_MSG_OPEN_CONNECTION_REPLY");
       case(SE_MSG_CLOSE_CONNECTION):
@@ -503,10 +561,16 @@ static char *mtype2str(int mtype)
          return("SE_MSG_DIE");
       case(SE_MSG_GET):
          return("SE_MSG_GET");
+      case(SE_MSG_GET_DATA):
+         return("SE_MSG_GET_DATA");
       case(SE_MSG_GET_REPLY):
          return("SE_MSG_GET_REPLY");
+      case(SE_MSG_GET_DATA_REPLY):
+         return("SE_MSG_GET_DATA_REPLY");
       case(SE_MSG_SET):
          return("SE_MSG_SET");
+       case(SE_MSG_SET_DATA):
+         return("SE_MSG_SET_DATA");        
       case(SE_MSG_SET_REPLY):
          return("SE_MSG_SET_REPLY");
       case(SE_MSG_SET_UNIQUE):
@@ -569,6 +633,7 @@ int SE_print_message(char* inmsg, int type)
          break;
       }
       case(SE_MSG_OPEN_CONNECTION):
+      case(SE_MSG_OPEN_CONNECTION_DATA):
       {
          int             id_size;
          se_open_connection_msg *msg = (se_open_connection_msg *)inmsg;
@@ -651,6 +716,19 @@ int SE_print_message(char* inmsg, int type)
          printf("| subject       : %s\n", subject);
          printf("|----------------------------------------|\n");
          break;
+      }      
+      case(SE_MSG_GET_DATA):
+      {
+         int       subject_size;
+         se_get_msg *msg = (se_get_msg *)inmsg;
+         char *data      = (char *)&(msg->data);
+         char *subject   = SE_msg_get_string(data, &subject_size);
+
+         printf("|------------- SE_MSG_GET ---------------|\n");
+         printf("| subject_bytes : %d\n", subject_size);
+         printf("| subject       : %s\n", subject);
+         printf("|----------------------------------------|\n");
+         break;
       }
       case(SE_MSG_GET_REPLY):
       {
@@ -671,6 +749,24 @@ int SE_print_message(char* inmsg, int type)
          printf("|----------------------------------------|\n");
          break;
       }
+      case(SE_MSG_GET_DATA_REPLY):
+      {
+         int              subject_size;
+         int              value_size;
+         se_get_reply_msg *msg = (se_get_reply_msg *)inmsg;
+         char *data            = (char *)&(msg->data);
+         char *subject         = SE_msg_get_string(data, &subject_size);
+         data += subject_size;
+         char *value           =  SE_msg_get_data(data, &value_size);
+
+         printf("|------------ SE_MSG_GET_DATA_REPLY ----------|\n");
+         printf("| status        : 0x%x\n", ntohl(msg->status));
+         printf("| subject_bytes : %d\n", subject_size);
+         printf("| value_bytes   : %d\n", value_size);
+         printf("| subject       : %s\n", subject);
+         printf("|----------------------------------------|\n");
+         break;
+      }
       case(SE_MSG_SET):
       {
          int        subject_size;
@@ -688,6 +784,26 @@ int SE_print_message(char* inmsg, int type)
          printf("| value_bytes   : %d\n", value_size);
          printf("| subject       : %s\n", subject);
          printf("| value         : %s\n", value);
+         printf("|----------------------------------------|\n");
+         break;
+      }
+
+      case(SE_MSG_SET_DATA):
+      {
+         int        subject_size;
+         int        value_size;
+         se_set_msg *msg = (se_set_msg *)inmsg;
+         char *data            = (char *)&(msg->data);
+         char *subject         = SE_msg_get_string(data, &subject_size);
+         data += subject_size;
+         char *value           =  SE_msg_get_data(data, &value_size);
+
+         printf("|-------------- SE_MSG_SET_DATA --------------|\n");
+         printf("| source        : %d\n", msg->source);
+         printf("| tid           : %d\n", msg->tid);
+         printf("| subject_bytes : %d\n", subject_size);
+         printf("| value_bytes   : %d\n", value_size);
+         printf("| subject       : %s\n", subject);
          printf("|----------------------------------------|\n");
          break;
       }
@@ -1046,6 +1162,7 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
 {
    int msg_bytes = sizeof(se_msg_hdr);
    switch(ntohl(hdr->mtype)) {
+      case(SE_MSG_OPEN_CONNECTION_DATA):
       case(SE_MSG_OPEN_CONNECTION):
       {
          se_open_connection_msg *msg = (se_open_connection_msg *) SE_MSG_HDR_2_BODY(hdr);
@@ -1094,6 +1211,7 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
          msg_bytes   = sizeof(se_msg_hdr) + sizeof(se_ping_reply_msg);
          break;
       }
+      case(SE_MSG_GET_DATA):
       case(SE_MSG_GET):
       {
          se_get_msg    *msg      = (se_get_msg *) SE_MSG_HDR_2_BODY(hdr);
@@ -1108,6 +1226,24 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
          break;
       }
       case(SE_MSG_GET_REPLY):
+      {
+         se_get_reply_msg *msg     = (se_get_reply_msg *) SE_MSG_HDR_2_BODY(hdr);
+         se_msg_string    *tstruct = (se_msg_string *)&(msg->data);
+         int              datasize = 0;
+         int              string_len;
+
+         // datasize includes the string as well as the rest of the se_msg_string
+         string_len = ntohl(tstruct->size) + SE_MSG_STRING_OVERHEAD;
+         datasize  += string_len;
+         tstruct    = (se_msg_string *) (((char *)tstruct) + string_len);
+         string_len = ntohl(tstruct->size) + SE_MSG_STRING_OVERHEAD;
+         datasize  += string_len;
+
+         msg_bytes = sizeof(se_msg_hdr) + sizeof(se_get_reply_msg) +
+                      datasize - sizeof(void *);
+         break;
+      }
+       case(SE_MSG_GET_DATA_REPLY):
       {
          se_get_reply_msg *msg     = (se_get_reply_msg *) SE_MSG_HDR_2_BODY(hdr);
          se_msg_string    *tstruct = (se_msg_string *)&(msg->data);
@@ -1140,6 +1276,31 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
          datasize   += string_len;
 
 
+         msg_bytes   = sizeof(se_msg_hdr) + sizeof(se_set_msg) +
+                       datasize - sizeof(void *);
+         break;
+      }
+       case(SE_MSG_SET_DATA):
+      {
+         se_set_msg *msg = (se_set_msg *) SE_MSG_HDR_2_BODY(hdr);
+         se_msg_string    *tstruct = (se_msg_string *)&(msg->data);
+         int              datasize = 0;
+         int              string_len;
+
+         // datasize includes the strings as well as the rest of the se_msg_string
+         string_len = ntohl(tstruct->size) + SE_MSG_STRING_OVERHEAD;
+         datasize   += string_len;
+         tstruct    = (se_msg_string *) (((char *)tstruct) + string_len);
+         string_len = ntohl(tstruct->size) + SE_MSG_STRING_OVERHEAD;
+         datasize   += string_len;
+
+         int fileread = access("/tmp/sysevent_debug", F_OK);
+         if (fileread == 0)
+         {
+             char buf[256] = {0};
+             snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,datasize);
+             system(buf);
+         }
          msg_bytes   = sizeof(se_msg_hdr) + sizeof(se_set_msg) +
                        datasize - sizeof(void *);
          break;
@@ -1334,6 +1495,7 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
          msg_bytes   = sizeof(se_msg_hdr) + sizeof(se_remove_async_reply_msg);
          break;
       }
+      case(SE_MSG_SEND_NOTIFICATION_DATA):
       case(SE_MSG_SEND_NOTIFICATION):
       {
          se_send_notification_msg *msg = (se_send_notification_msg *) SE_MSG_HDR_2_BODY(hdr);
@@ -1350,8 +1512,20 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
 
          msg_bytes = sizeof(se_msg_hdr) + sizeof(se_send_notification_msg) +
                       datasize - sizeof(void *);
+
+         if(SE_MSG_SEND_NOTIFICATION_DATA == ntohl(hdr->mtype))
+         {
+             int fileread = access("/tmp/sysevent_debug", F_OK);
+             if (fileread == 0)
+             {
+                 char buf[256] = {0};
+                 snprintf(buf,sizeof(buf),"echo SE_MSG_SEND_NOTIFICATION_DATA fname %s: %d msgbytes %d >> /tmp/sys_d.txt",__FUNCTION__,datasize,msg_bytes);
+                 system(buf);
+             }
+         }
          break;
       }
+      case(SE_MSG_RUN_EXTERNAL_EXECUTABLE_DATA):
       case(SE_MSG_RUN_EXTERNAL_EXECUTABLE):
       {
          se_run_executable_msg *msg = (se_run_executable_msg *) SE_MSG_HDR_2_BODY(hdr);
@@ -1370,6 +1544,7 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
                      datasize - sizeof(void *);
          break;
       }
+      case(SE_MSG_NOTIFICATION_DATA):
       case(SE_MSG_NOTIFICATION):
       {
          se_notification_msg *msg = (se_notification_msg *) SE_MSG_HDR_2_BODY(hdr);
@@ -1383,6 +1558,17 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
          tstruct    = (se_msg_string *) (((char *)tstruct) + string_len);
          string_len = ntohl(tstruct->size) + SE_MSG_STRING_OVERHEAD;
          datasize  += string_len;
+
+         if(SE_MSG_NOTIFICATION_DATA == ntohl(hdr->mtype))
+         {
+             int fileread = access("/tmp/sysevent_debug", F_OK);
+             if (fileread == 0)
+             {
+                 char buf[256] = {0};
+                 snprintf(buf,sizeof(buf),"echo SE_MSG_NOTIFICATION_DATA fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,datasize);
+                 system(buf);
+             }
+         }
 
          msg_bytes = sizeof(se_msg_hdr) + sizeof(se_notification_msg) +
                       datasize - sizeof(void *);
@@ -1595,6 +1781,71 @@ int SE_msg_send (int fd, char *sendmsg)
    }
 }
 
+int SE_msg_send_data (int fd, char *sendmsg,int msgsize)
+{
+   se_msg_hdr *msg_hdr = (se_msg_hdr *)sendmsg;
+   char buf_t[256] = {0};
+   int fileread = access("/tmp/sysevent_debug", F_OK);
+   SE_msg_hdr_mbytes_fixup(msg_hdr);
+
+   // keep track of the number of bytes in the msg (including the header)
+   int bytes_to_write = ntohl(msg_hdr->mbytes);
+   unsigned int bin_size = sysevent_get_binmsg_maxsize();
+   char *send_msg_buffer = sendmsg;
+   if (bytes_to_write + sizeof(se_msg_footer) > bin_size) {
+      return(-2);
+   } else {
+       if (fileread == 0)
+       {
+           snprintf(buf_t,sizeof(buf_t),"echo fname %s: bytestowrite %d before msg copy >> /tmp/sys_d.txt",__FUNCTION__,bytes_to_write);
+           system(buf_t);
+
+       }
+      // add a transport message footer to help ensure message integrity during transport
+      se_msg_footer footer;
+      footer.poison = htonl(MSG_DELIMITER);
+       memcpy(((char *)send_msg_buffer)+bytes_to_write, &footer, sizeof(footer));
+      bytes_to_write += sizeof(footer);
+   }
+
+   // try to write a maximum of num_retries
+   int bytes_sent = 0;
+   int num_retries = 3;
+   int rc;
+   if (fileread == 0)
+   {
+       snprintf(buf_t,sizeof(buf_t),"echo fname before write %s: %d >> /tmp/sys_d.txt",__FUNCTION__, bytes_to_write);
+       system(buf_t);
+   }
+   while (0 < bytes_to_write && 0 < num_retries) {
+      rc = write(fd, send_msg_buffer+bytes_sent, bytes_to_write);
+      if (0 < rc) {
+         num_retries = 3;
+         bytes_to_write -= rc;
+         bytes_sent+=rc;
+      } else if (0 == rc) {
+         num_retries--;
+      } else {
+         struct timespec sleep_time;
+         sleep_time.tv_sec = 0;
+         sleep_time.tv_nsec  = 100000000;  // .1 secs
+         nanosleep(&sleep_time, NULL);
+         num_retries--;
+      }
+   }
+   if (fileread == 0)
+   {
+       snprintf(buf_t,sizeof(buf_t),"echo fname after write %s: %d >> /tmp/sys_d.txt",__FUNCTION__, bytes_to_write);
+       system(buf_t);
+   }
+   if (0 == bytes_to_write) {
+      return(0);
+   } else {
+      return(-1);
+   }
+}
+
+
 /*
  * Procedure     : SE_msg_send_receive
  * Purpose       : Send a message to the sysevent daemon and wait for a reply
@@ -1642,7 +1893,40 @@ int SE_msg_send_receive (int fd, char *sendmsg, char *replymsg, unsigned int *re
    }
    return(msgtype); 
 }
-   
+
+int SE_msg_send_receive_data (int fd, char *sendmsg, int sendmsg_size, char *replymsg, unsigned int *replymsg_size)
+{
+   int rc = SE_msg_send_data(fd, sendmsg,sendmsg_size);
+   if (0 != rc) {
+      return(SE_MSG_NONE);
+   }
+
+   token_t who;
+   int error = 0;
+   int msgtype;
+   struct timeval tv;
+   tv.tv_sec=5;
+   tv.tv_usec=0;
+
+   msgtype = msg_receive_internal(fd, replymsg, replymsg_size, &who, &tv, &error);
+   if (SE_MSG_NONE == msgtype) {
+#ifdef RUNTIME_DEBUG
+      FILE *fp = fopen(debug_filename, "a+");
+      if (NULL != fp) {
+         if (0 == error) {
+            fprintf(fp, "SE_msg_send_receive Got SE_MSG_NONE for %s using fd %d\n",
+                         NULL==g_name ? "unknown" : g_name, fd);
+         } else {
+            fprintf(fp, "SE_msg_send_receive error (%d) %s for %s using fd %d\n",
+                         error, strerror(error), NULL==g_name ? "unknown" : g_name, fd);
+         }
+         fclose(fp);
+      }
+#endif  // RUNTIME_DEBUG
+   }
+   return(msgtype);
+}
+
 /*
  * Procedure     : SE_strerror
  * Purpose       : Return a string version of an error code
@@ -2124,6 +2408,165 @@ int sysevent_open (char *ip, unsigned short port, int version, char *id, token_t
    return(sockfd);
 }
 
+int sysevent_open_data (char *ip, unsigned short port, int version, char *id, token_t *token)
+{
+   int                sockfd = -1;
+
+   *token = TOKEN_NULL;
+
+   // make sure this is an unsigned short
+   port &= 0x0000FFFF;
+
+   // Ensure that the input parameters are sane
+   // Limit the id to 40 chars
+   if (NULL == id      || 
+      0 == strlen(id)  || 
+     40 <=  strlen(id) ) {
+      return(ERR_NAME_TOO_LONG);
+   }
+   if ( 0 >= port) {
+      return(ERR_BAD_PORT);
+   }
+   if ( 1 != version) {
+      return(ERR_INCORRECT_VERSION);
+   }
+
+   // prepare a open connection message
+   se_buffer              send_msg_buffer;
+   se_open_connection_msg *send_msg_body;
+   if (NULL == 
+      (send_msg_body = (se_open_connection_msg *)SE_msg_prepare (send_msg_buffer, 
+                                                          sizeof(send_msg_buffer), 
+                                                          SE_MSG_OPEN_CONNECTION_DATA, TOKEN_NULL)) ) {
+      return(ERR_MSG_PREPARE); 
+   }
+
+   init_libsysevent(id);
+
+   int rc;
+   rc = connect_to_sysevent_daemon(ip, port, &sockfd); 
+   if (0 != rc) {
+      if(sockfd != -1) { /*RDKB-7132, CID-33536, close socket handle before exit*/
+        close(sockfd);
+      }
+      return(rc);
+   } 
+
+   int   remaining_buf_bytes;
+   remaining_buf_bytes = sizeof(send_msg_buffer);
+   remaining_buf_bytes -= sizeof(se_msg_hdr);
+   remaining_buf_bytes -= sizeof(se_open_connection_msg);
+
+   // set up the rest of the message header
+   send_msg_body->version  = htonl(version);
+
+   // set up the message body
+   char *send_data_ptr = (char *)&(send_msg_body->data);
+   SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+
+   // send registration msg and receive the reply
+   se_buffer                     reply_msg_buffer;
+   se_open_connection_reply_msg *reply_msg_body = (se_open_connection_reply_msg *)reply_msg_buffer;
+   unsigned int                  reply_msg_size = sizeof(reply_msg_buffer);
+   int reply_msg_type = SE_msg_send_receive(sockfd, 
+                                            send_msg_buffer, 
+                                            reply_msg_buffer, &reply_msg_size);
+
+   // see if the registration was acceptable
+   if (SE_MSG_OPEN_CONNECTION_REPLY != reply_msg_type || 0 != ntohl(reply_msg_body->status)) {
+      close(sockfd);
+      return(ERR_REGISTRATION_REFUSED);
+   } 
+
+   // it was acceptable and now we have an id to use in future messages
+   // this is an opaque value
+   
+   *token = ntohl(reply_msg_body->token_id);
+   char buf[256] = {0};
+   snprintf(buf,sizeof(buf),"echo fname %s: fd %d >> /tmp/sys_d.txt",__FUNCTION__,sockfd);
+   system(buf);
+
+
+   return(sockfd);
+}
+
+int sysevent_local_open_data (char *target, int version, char *id, token_t *token)
+{
+   int                sockfd = -1;
+
+   *token = TOKEN_NULL;
+
+   // Ensure that the input parameters are sane
+   // Limit the id to 40 chars
+   if (NULL == id      || 
+      0 == strlen(id)  || 
+     40 <=  strlen(id) ) {
+      return(ERR_NAME_TOO_LONG);
+   }
+   if ( 1 != version) {
+      return(ERR_INCORRECT_VERSION);
+   }
+
+   // prepare a open connection message
+   se_buffer              send_msg_buffer;
+   se_open_connection_msg *send_msg_body;
+   if (NULL == 
+      (send_msg_body = (se_open_connection_msg *)SE_msg_prepare (send_msg_buffer, 
+                                                          sizeof(send_msg_buffer), 
+                                                          SE_MSG_OPEN_CONNECTION_DATA, TOKEN_NULL)) ) {
+      return(ERR_MSG_PREPARE); 
+   }
+
+   init_libsysevent(id);
+
+   int rc;
+   rc = connect_to_local_sysevent_daemon(target, &sockfd);
+   if (0 != rc) {
+      if (sockfd != -1) { /*RDKB-7132, CID-33207, close socket handle before exit*/
+         close(sockfd);
+      }
+      return(rc);
+   }
+
+   int   remaining_buf_bytes;
+   remaining_buf_bytes = sizeof(send_msg_buffer);
+   remaining_buf_bytes -= sizeof(se_msg_hdr);
+   remaining_buf_bytes -= sizeof(se_open_connection_msg);
+
+   // set up the rest of the message header
+   send_msg_body->version  = htonl(version);
+
+   // set up the message body
+   char *send_data_ptr = (char *)&(send_msg_body->data);
+   SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+
+   // send registration msg and receive the reply
+   se_buffer                     reply_msg_buffer;
+   se_open_connection_reply_msg *reply_msg_body = (se_open_connection_reply_msg *)reply_msg_buffer;
+   unsigned int                  reply_msg_size = sizeof(reply_msg_buffer);
+
+   int reply_msg_type = SE_msg_send_receive(sockfd, 
+                                            send_msg_buffer, 
+                                            reply_msg_buffer, &reply_msg_size);
+
+   // see if the registration was acceptable
+   if (SE_MSG_OPEN_CONNECTION_REPLY != reply_msg_type || 0 != ntohl(reply_msg_body->status)) {
+      close(sockfd);
+      return(ERR_REGISTRATION_REFUSED);
+   } 
+
+   // it was acceptable and now we have an id to use in future messages
+   // this is an opaque value
+   
+   *token = ntohl(reply_msg_body->token_id);
+   char buf[256] = {0};
+   snprintf(buf,sizeof(buf),"echo fname %s: fd %d >> /tmp/sys_d.txt",__FUNCTION__,sockfd);
+   system(buf);
+
+   return(sockfd);
+}
+
+
 /*
  * Procedure     : sysevent_local_open
  * Purpose       : Connect to the sysevent daemon using Unix Domain Socket
@@ -2499,6 +2942,136 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
 }
 
 /*
+ * Procedure     : sysevent_get_data
+ * Purpose       : Send a get to the sysevent daemon and receive reply
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : Server provided opaque value
+ *    inbuf         : A null terminated string which is the thing to get
+ *    inbytes       : The length of the string not counting terminating null
+ *    outbuf        : A buffer to hold returned value
+ *    outbytes      : The maximum number of bytes in outbuf
+ *    bufsizecopied : The actual number of bytes copied into outbuf
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ * Notes        :
+ *    If outbuf is not big enough to hold the reply value, then the value will
+ *    be truncated to fit. An error of ERR_INSUFFICIENT_ROOM will be returned.
+ *    The value will always be NULL terminated, so the outbuf must contain
+ *    enough bytes for the return value as well as the NULL byte.
+ */
+int sysevent_get_data(const int fd, const token_t token, const char *inbuf, char *outbuf, int outbytes, int *bufsizecopied)
+{
+   se_buffer    send_msg_buffer;
+   se_get_msg   *send_msg_body;
+   int          inbytes;
+
+   if (NULL == inbuf || NULL == outbuf || 0 == (inbytes = strlen(inbuf)) || bufsizecopied == NULL ) {
+      return(ERR_BAD_BUFFER);
+   }
+   if (0 == outbytes) {
+      return(ERR_BAD_BUFFER);
+   }
+   if (0 > fd) {
+      outbuf[0] = '\0';
+      return(ERR_NOT_CONNECTED);
+   }
+
+   // calculate the size of the se_get_msg once it has been populated 
+   unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_get_msg) +
+                       SE_string2size(inbuf) - sizeof(void *);
+
+   // if the se_get_msg will be too long to fit into our buffer
+   // then abort
+   if (send_msg_size >= sizeof(send_msg_buffer)) {
+      outbuf[0] = '\0';
+      return(ERR_MSG_TOO_LONG);
+   } 
+   // prepare the header of the se_get_msg
+   if (NULL == 
+      (send_msg_body = (se_get_msg *)SE_msg_prepare (send_msg_buffer, 
+                                                     sizeof(send_msg_buffer), 
+                                                     SE_MSG_GET_DATA, token)) ) {
+      outbuf[0] = '\0';
+      return(ERR_MSG_PREPARE); 
+   } 
+
+   // prepare the body of the se_get_msg
+   int  remaining_buf_bytes;
+   char *send_data_ptr = (char *)&(send_msg_body->data);
+   remaining_buf_bytes = sizeof(send_msg_buffer);
+   remaining_buf_bytes -= sizeof(se_msg_hdr);
+   remaining_buf_bytes -= sizeof(se_get_msg);
+   int strsize    = SE_msg_add_string(send_data_ptr, 
+                                      remaining_buf_bytes,
+                                      inbuf);
+   if (0 == strsize) {
+      outbuf[0] = '\0';
+      return(ERR_CANNOT_SET_STRING);
+   }
+
+   unsigned int bin_size = sysevent_get_binmsg_maxsize();
+   // send get msg and receive the get_msg_reply
+   char *reply_msg_buffer = (char *)malloc(bin_size);
+   if (!reply_msg_buffer)
+         return ERR_SERVER_ERROR;
+   se_get_reply_msg *reply_msg_body = (se_get_reply_msg *)reply_msg_buffer;
+   unsigned int     reply_msg_size  = bin_size;
+
+   pthread_mutex_lock(&g_client_fd_mutex);
+   int reply_msg_type = SE_msg_send_receive_data(fd, 
+                                            send_msg_buffer,
+                                            sizeof(send_msg_buffer),                                          
+                                            reply_msg_buffer, &reply_msg_size);
+   pthread_mutex_unlock(&g_client_fd_mutex);
+
+   // see if the get was received and returned
+   if (SE_MSG_GET_DATA_REPLY != reply_msg_type) {
+      outbuf[0] = '\0';
+      free(reply_msg_buffer);
+      if (SE_MSG_ERRORED == reply_msg_type) {
+         return(ERR_CORRUPTED);
+      } else {
+         return(ERR_SERVER_ERROR);
+      }
+   } 
+   if (0 != reply_msg_body->status) {
+      outbuf[0] = '\0';
+      free(reply_msg_buffer);
+      return(ERR_SERVER_ERROR);
+   } 
+
+   // extract the subject and value from the return message data
+   int   subject_bytes;
+   int   value_bytes;
+   char *subject_str;
+   char *value_str;
+   char *reply_data_ptr;
+
+   // we ignore the subject field, but future enhancements could use it
+   reply_data_ptr  = (char *)&(reply_msg_body->data);
+   subject_str     = SE_msg_get_string(reply_data_ptr, &subject_bytes);
+   reply_data_ptr += subject_bytes;
+   value_str       =  SE_msg_get_data(reply_data_ptr, &value_bytes);
+
+   // make sure the caller has enough room in their buffer for the
+   // value. If not truncate and notify them via return code
+   if (value_bytes > outbytes) {
+      memcpy(outbuf, value_str, outbytes);
+      *bufsizecopied = outbytes;
+      free(reply_msg_buffer);
+      return(ERR_INSUFFICIENT_ROOM);
+   } else {
+      memcpy(outbuf, value_str, value_bytes);
+      *bufsizecopied = value_bytes;
+      free(reply_msg_buffer);
+      return(0);
+   }
+}
+
+
+/*
  * Procedure     : sysevent_set_private
  * Purpose       : Send a set to the sysevent daemon and receive reply
  *                 A set may change the value of a tuple
@@ -2609,7 +3182,157 @@ int sysevent_set (const int fd, const token_t token, const char *name, const cha
    return(sysevent_set_private(fd,token,name,value,0,0));
 }
 
+static int sysevent_set_data_private (const int fd, const token_t token, const char *name, const char *value, const int value_length,const int source, const int tid) 
+{
+//   se_buffer_data     send_msg_buffer;
+   char *send_msg_buffer =  NULL;
+   se_set_msg   *send_msg_body;
+   int           subbytes;
+   int           valbytes;
+   int fileread = access("/tmp/sysevent_debug", F_OK);
 
+   if (NULL == name || 0 == (subbytes = strlen(name)) ) {
+      return(ERR_BAD_BUFFER);
+   }
+   if (0 > fd) {
+      return(ERR_NOT_CONNECTED);
+   }
+
+   valbytes = (NULL == value ? 0 : value_length);
+
+   // calculate the size of the se_set_msg once it has been populated
+   unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_set_msg) +
+                       SE_string2size(name) +
+                       (NULL == value ? 0 : value_length) - sizeof(void *) ;
+    unsigned int bin_size = sysevent_get_binmsg_maxsize();
+
+   if (send_msg_size >= bin_size) {
+      return(ERR_MSG_TOO_LONG);
+   } 
+
+   send_msg_buffer = (char*)malloc(bin_size);
+
+   if (NULL == send_msg_buffer)
+       return ERR_MSG_PREPARE;
+
+   if (NULL == 
+      (send_msg_body = (se_set_msg *)SE_msg_prepare (send_msg_buffer, 
+                                                     bin_size, 
+                                                     SE_MSG_SET_DATA, token)) ) {
+      free(send_msg_buffer);
+      return(ERR_MSG_PREPARE); 
+   }
+
+   // prepare the body of the se_set_msg
+   int   remaining_buf_bytes;
+   send_msg_body->source  = htonl(source);
+   send_msg_body->tid     = htonl(tid);
+   char *send_data_ptr    = (char *)&(send_msg_body->data);
+   remaining_buf_bytes    = bin_size;
+   remaining_buf_bytes   -=sizeof(se_msg_hdr);
+   remaining_buf_bytes   -= sizeof(se_set_msg); 
+   int strsize            = SE_msg_add_string(send_data_ptr,
+                                        remaining_buf_bytes,
+                                        name);
+   if (0 == strsize) {
+       free(send_msg_buffer);
+      return(ERR_CANNOT_SET_STRING);
+   }
+   
+   remaining_buf_bytes -= strsize;
+   send_data_ptr       += strsize;
+      strsize              = SE_msg_add_data(send_data_ptr,
+                                         remaining_buf_bytes,
+                                         value,
+                                         value_length);
+
+      if (fileread == 0)
+      {
+          char buf[256] = {0};
+          snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,value_length);
+          system(buf);
+      }
+#ifndef SET_REPLY_REQUIRED
+   SE_msg_send_data(fd, send_msg_buffer,bin_size);
+#else
+   // send set msg and receive the reply
+   se_buffer         reply_msg_buffer;
+   se_set_reply_msg *reply_msg_body = (se_set_reply_msg *)reply_msg_buffer;
+   unsigned int     replymsg_size   = sizeof(reply_msg_buffer);
+
+   pthread_mutex_lock(&g_client_fd_mutex);
+   int reply_msg_type = SE_msg_send_receive_data(fd, 
+           send_msg_buffer, 
+           bin_size,
+           reply_msg_buffer, &replymsg_size);
+   pthread_mutex_unlock(&g_client_fd_mutex);
+   // see if the set was received and returned
+   if (SE_MSG_SET_REPLY != reply_msg_type) {
+       free(send_msg_buffer);
+       return(ERR_SERVER_ERROR);
+   } 
+   if (0 != reply_msg_body->status) {
+       free(send_msg_buffer);
+       return(ERR_SERVER_ERROR);
+   }
+#endif
+   free(send_msg_buffer);
+   return(0);
+}
+
+
+
+/*
+ * Procedure     : sysevent_set_data
+ * Purpose       : Send a set to the sysevent daemon
+ *                 A set may change the value of a tuple
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : Server provided opaque value
+ *    name          : A null terminated string which is the tuple to set
+ *    value         : buffer holds binary data which is the value to set tuple to, or NULL
+ *    value_length  : actual size of binary data buffer
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ */
+int sysevent_set_data (const int fd, const token_t token, const char *name, const char *value, int value_length) 
+{
+   return (sysevent_set_data_private(fd,token,name,value,value_length,0,0));
+}
+
+unsigned int sysevent_get_binmsg_maxsize()
+{
+    FILE *fp = fopen(SE_MAX_MSG_DATA_SIZE_READ_FILE,"r");
+    if (NULL != fp) {
+        unsigned int value = 0;
+        fscanf(fp, "%u",&value);
+        fclose(fp);
+        if (value != 0)
+        {    
+            return value + 1024 /* additional 1k is headermsg*/;
+        }
+    }
+    return SE_MAX_MSG_DATA_SIZE + 1024 /* additional 1k is headermsg*/;
+}
+
+/*
+ * Procedure     : sysevent_unset
+ * Purpose       : Send a set to the sysevent daemon
+ *                 A set with NULL value of a tuple to clear existing value from volatile memory.
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : Server provided opaque value
+ *    name          : A null terminated string which is the tuple to set
+ *    value         : NULL by default
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ */
+int sysevent_unset (const int fd, const token_t token, const char *name)
+{
+    return(sysevent_set_private(fd,token,name,NULL,0,0));
+}
 
 
 /*
@@ -3426,6 +4149,10 @@ int sysevent_rmnotification(const int fd, const token_t token, async_id_t async_
  */
 int sysevent_getnotification (const int fd, const token_t token, char *namebuf, int *namebytes, char *valbuf, int *valbytes, async_id_t *async_id) 
 {
+   if (NULL == namebytes || NULL == valbytes) {
+     return(ERR_BAD_BUFFER);
+   }
+
    if (NULL == namebuf || NULL == valbuf) {
       *namebytes = 0;
       *valbytes  = 0;
@@ -3445,6 +4172,10 @@ int sysevent_getnotification (const int fd, const token_t token, char *namebuf, 
       return(ERR_NOT_CONNECTED);
    }
 
+   if (*namebytes == 0 || *valbytes == 0)
+       return ERR_INSUFFICIENT_ROOM;
+
+   
    // receive the notification
    se_buffer            reply_msg_buffer;
    se_notification_msg *reply_msg_body = (se_notification_msg *)reply_msg_buffer;
@@ -3527,6 +4258,142 @@ notif_reply_received:
    }
    return(rc);
 }
+
+/*
+ * Procedure     : sysevent_getnotification_data
+ * Purpose       : Wait for a notification and return the results when received
+ * Parameters    :
+ *    fd            : The connection id
+ *    token         : A server generated opaque value
+ *    namebuf       : A buffer to hold the name received
+ *    namebytes     : The length of the string not counting terminating null
+ *    valbuf        : A buffer to hold returned value
+ *    valbytes      : On input the maximum number of bytes in outbuf
+ *                    On output the actual number of bytes in outbuf
+ *    async_id      : The async id of the action
+ * Return Code   :
+ *    0             : Reply received
+ *    !0            : Some error
+ * Notes        :
+ *    If a buffer is not big enough to hold the reply value, then the value will
+ *    be truncated to fit. An error of ERR_INSUFFICIENT_ROOM will be returned.
+ *    The value will always be NULL terminated, so the buffer must contain
+ *    enough bytes for the return value as well as the NULL byte.
+ * Notes
+ *   This will block
+ */
+int sysevent_getnotification_data (const int fd, const token_t token, char *namebuf, int *namebytes, char *valbuf, int *valbytes, async_id_t *async_id) 
+{
+   if (NULL == namebytes || NULL == valbytes) {
+     return(ERR_BAD_BUFFER);
+   }
+   if (NULL == namebuf || NULL == valbuf) {
+      *namebytes = 0;
+      *valbytes  = 0;
+      return(ERR_BAD_BUFFER);
+   }
+  if (NULL == async_id) {
+      *namebytes = 0;
+      *valbytes  = 0;
+      return(ERR_PARAM_NOT_FOUND);
+  }
+
+  if (*namebytes == 0 || *valbytes == 0)
+      return ERR_INSUFFICIENT_ROOM;
+
+   if (0 > fd) {
+      *namebytes = 0;
+      namebuf[0] = '\0';
+      *valbytes = 0;
+      valbuf[0] = '\0';
+      return(ERR_NOT_CONNECTED);
+   }
+
+   // receive the notification
+   unsigned int bin_size = sysevent_get_binmsg_maxsize();
+   char *reply_msg_buffer = (char *)malloc(bin_size);   
+   if (!reply_msg_buffer)
+       return -1;
+   se_notification_msg *reply_msg_body = (se_notification_msg *)reply_msg_buffer;
+   unsigned int         reply_msg_size  = bin_size;
+   token_t              from = token; // not necessary to assign value
+   int                  rc = 0;
+   int                  reply_msg_type;
+
+   /*
+    * it is possible to get out of order messages while waiting on 
+    * a notification. For example a stale async set confirmation.
+    * Our policy is to ignore them unless we think the server is messed up. 
+    */
+   int loop;
+   for (loop=0 ; loop<4; loop++) {
+      reply_msg_size  = bin_size;
+      reply_msg_type = SE_msg_receive(fd, reply_msg_buffer, &reply_msg_size, &from);
+      if (SE_MSG_NOTIFICATION_DATA == reply_msg_type) {
+         goto notif_reply_received;
+      }
+   }
+   if (SE_MSG_NONE == reply_msg_type) {
+      *namebytes = 0;
+      namebuf[0] = '\0';
+      *valbytes = 0;
+      valbuf[0] = '\0';
+      free(reply_msg_buffer);
+      return(ERR_CANNOT_SET_STRING);
+   }
+   if (SE_MSG_NOTIFICATION_DATA != reply_msg_type) {
+      *namebytes = 0;
+      namebuf[0] = '\0';
+      *valbytes = 0;
+      valbuf[0] = '\0';
+      free(reply_msg_buffer);
+      return(ERR_OUT_OF_ORDER);
+   }
+
+notif_reply_received:
+   async_id->trigger_id = (reply_msg_body->async_id).trigger_id;
+   async_id->action_id = (reply_msg_body->async_id).action_id;
+
+   // extract the subject and value from the return message data
+   int   subject_bytes;
+   int   value_bytes;
+   char *subject_str;
+   char *value_str;
+   char *reply_data_ptr;
+
+   reply_data_ptr  = (char *)&(reply_msg_body->data);
+   subject_str     = SE_msg_get_string(reply_data_ptr, &subject_bytes);
+   reply_data_ptr += subject_bytes;
+   value_str       =  SE_msg_get_data(reply_data_ptr, &value_bytes);
+
+   // value_bytes and subject_bytes are sysevent strings (and include size info)
+   // so change them to the strlen
+   subject_bytes = strlen(subject_str);
+
+   // make sure the caller has enough room in their buffer for the name and
+   // value. If not truncate and notify them via return code
+   if (subject_bytes > (*namebytes - 1)) {
+      memcpy(namebuf, subject_str, *namebytes-1);
+      namebuf[*namebytes-1] = '\0';
+      (*namebytes)--;
+      rc = ERR_INSUFFICIENT_ROOM;
+   } else {
+      memcpy(namebuf, subject_str, subject_bytes);
+      namebuf[subject_bytes] = '\0';
+      *namebytes = subject_bytes;
+   }
+
+   if (value_bytes > *valbytes) {
+      memcpy(valbuf, value_str, *valbytes);
+      rc = ERR_INSUFFICIENT_ROOM;
+   } else {
+      memcpy(valbuf, value_str, value_bytes);
+      *valbytes = value_bytes;
+   }
+   free(reply_msg_buffer);
+   return(rc);
+}
+
 
 /*
  * Procedure     : sysevent_show

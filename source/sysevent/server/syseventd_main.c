@@ -173,6 +173,12 @@ int trigger_communication_fd_writer_end = 0;
 // listener side of the communication fd between trigger thread and workers
 int trigger_communication_fd_listener_end = 0;
 
+// writer side of the communication fd between trigger thread and workers
+int trigger_datacommunication_fd_writer_end = 0;
+
+// listener side of the communication fd between trigger thread and workers
+int trigger_datacommunication_fd_listener_end = 0;
+
 // pipe for threads to communicate to fork helper process;
 int fork_helper_pipe[2];
 
@@ -261,6 +267,16 @@ static int deinitialize_system(void)
    if (0 != trigger_communication_fd_writer_end) {
       close(trigger_communication_fd_writer_end);
       trigger_communication_fd_writer_end = 0;
+   }
+
+   if (0 != trigger_datacommunication_fd_listener_end) {
+      close(trigger_datacommunication_fd_listener_end);
+      trigger_datacommunication_fd_listener_end = 0;
+   }
+
+   if (0 != trigger_datacommunication_fd_writer_end) {
+      close(trigger_datacommunication_fd_writer_end);
+      trigger_datacommunication_fd_writer_end = 0;
    }
 
    if (-1 != global_tcp_fd) {
@@ -712,6 +728,18 @@ static int initialize_system(void)
                        trigger_communication_fd_writer_end, trigger_communication_fd_listener_end);
     )
 
+   if (-1 == pipe(pfd)) {
+      SE_INC_LOG(ERROR,
+         printf("Problem making msg queue 2. Reason (%d) %s\n", errno, strerror(errno));
+      )
+      return(ERR_COMMUNICATION_FD);
+    }
+    trigger_datacommunication_fd_writer_end      = pfd[1];
+    trigger_datacommunication_fd_listener_end    = pfd[0];
+    SE_INC_LOG(MESSAGES,
+               printf("trigger thread/workers data communication fds: writer: %d reader: %d\n",
+                       trigger_datacommunication_fd_writer_end, trigger_datacommunication_fd_listener_end);
+    )
    // Prepare the pipe for communication with the fork helper
    if (-1 == pipe(fork_helper_pipe)) {
       fork_helper_pipe[0] = -1;
@@ -1367,7 +1395,7 @@ int main (int argc, char **argv)
             close(newsockfd);
             continue;
          }
-         if (SE_MSG_OPEN_CONNECTION != msgtype) {
+         if ((SE_MSG_OPEN_CONNECTION != msgtype) && (SE_MSG_OPEN_CONNECTION_DATA != msgtype)) {
             SE_INC_LOG(ERROR,
                printf("Main thread: Received a unexpected msgtype (%d) instead of OPEN_CONNECTION\n", msgtype);
             )
@@ -1412,7 +1440,16 @@ int main (int argc, char **argv)
 
                   close(newsockfd);
                   continue;
-               } else { 
+               } else {
+                   if (SE_MSG_OPEN_CONNECTION_DATA == msgtype)
+                   {
+                       new_client->isData = 1;
+                       char buf[256] = {0};
+                       snprintf(buf,sizeof(buf),"echo fname %s: new fd %d dataclient %d msgtype %d >> /tmp/sys_d.txt",__FUNCTION__,newsockfd, new_client->isData, msgtype);
+                       system(buf);
+
+                   }                  
+
                   // first inform the workers about the new client. then ack the new client
                   SE_INC_LOG(LISTENER,
                      printf("New Client: %s id: %x (fd: %d)\n", new_client->name, new_client->id, new_client->fd);

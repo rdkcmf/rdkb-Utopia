@@ -125,6 +125,7 @@ static void init_a_client(a_client_t *c)
    c->notifications = 0;
    c->errors        =  0;
    c->used          =  0;
+   c->isData        =  0;
 }
 
 /*

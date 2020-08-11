@@ -330,6 +330,59 @@ static int prepare_action_type_function_msg (se_buffer buffer, int trigger_id, t
    return(0);
 }
 
+static int prepare_action_type_function_msg_data (char *buffer, int buf_length, int trigger_id, trigger_action_t *action, 
+                                             const char const *name, const char const *value,const int value_length)
+{
+   // figure out how much space the se_msg_strings will take
+   int subbytes  = SE_string2size(name);
+   int valbytes  = value_length;
+
+   // calculate the size of the se_send_notification_msg once it will be populated
+   unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_run_executable_msg) +
+                       subbytes + valbytes - sizeof(void *);
+
+   if (send_msg_size >= buf_length) {
+      return(ERR_MSG_TOO_LONG);
+   }
+
+   se_run_executable_msg   *send_msg_body;
+
+   send_msg_body = (se_run_executable_msg *)
+             SE_msg_prepare(buffer, buf_length, SE_MSG_RUN_EXTERNAL_EXECUTABLE_DATA, TOKEN_NULL);
+   if (NULL != send_msg_body) {
+      // prepare the message
+      (send_msg_body->async_id).trigger_id = htonl(trigger_id);
+      (send_msg_body->async_id).action_id  = htonl(action->action_id);
+      send_msg_body->token_id = htonl(action->owner);
+      send_msg_body->flags    = htonl(action->action_flags);
+      int  remaining_buf_bytes;
+      char *send_data_ptr = (char *)&(send_msg_body->data);
+      remaining_buf_bytes = buf_length;
+      remaining_buf_bytes -= sizeof(se_msg_hdr);
+      remaining_buf_bytes -= sizeof(se_run_executable_msg);
+      int strsize    = SE_msg_add_string(send_data_ptr,
+                                         remaining_buf_bytes,
+                                         name);
+      if (0 == strsize) {
+         return(ERR_CANNOT_SET_STRING);
+      }
+      remaining_buf_bytes -= strsize;
+      send_data_ptr       += strsize;
+      strsize              = SE_msg_add_data(send_data_ptr,
+                                               remaining_buf_bytes,
+                                               value,
+                                               valbytes);
+      if (0 == strsize) {
+         return(ERR_CANNOT_SET_STRING);
+      }
+
+   } else {
+      return(-1);
+   }
+   return(0);
+}
+
+
 /*
  * Procedure     : prepare_action_type_message_msg
  * Purpose       : prepare a msg of type ACTION_TYPE_MESSAGE
@@ -411,6 +464,73 @@ static int prepare_action_type_message_msg (se_buffer buffer, const int trigger_
       }
    return(0);
 }
+
+static int prepare_action_type_message_msg_data (char* buffer, const int buf_length, const int trigger_id, trigger_action_t *action, const char const *name, const char const *value, const int value_length, const int source, const int tid)
+{
+
+   // if the action owner has disconnected, then there is no need to send this message
+   // so check with the client manager
+   int fd = CLI_MGR_id2fd(action->owner);
+   
+   if (0 == fd) {
+      SE_INC_LOG(INFO,
+         printf("Dead Peer %x Detected while preparing notification msg. Cleaning up stale notification request\n", 
+                 action->owner);
+      )
+      // we are mutex locked so calling free_trigger_action is valid
+      free_trigger_action_t(action);
+      return(-2);
+   }
+
+   // figure out how much space the se_msg_strings will take
+   int subbytes  = SE_string2size(name);
+   int valbytes  =  value_length;
+
+   // calculate the size of the se_send_notification_msg once it will be populated
+   unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_send_notification_msg) +
+                       subbytes + valbytes - sizeof(void *);
+
+   if (send_msg_size >= buf_length) {
+      return(ERR_MSG_TOO_LONG);
+   }
+
+   se_send_notification_msg *send_msg_body;
+   send_msg_body = (se_send_notification_msg *)
+             SE_msg_prepare(buffer, buf_length, SE_MSG_SEND_NOTIFICATION_DATA, TOKEN_NULL);
+      if (NULL != send_msg_body) {
+         // prepare the message
+         send_msg_body->source = htonl(source);
+         send_msg_body->tid = htonl(tid);
+         int  remaining_buf_bytes;
+         char *send_data_ptr = (char *)&(send_msg_body->data);
+         remaining_buf_bytes = buf_length;
+         remaining_buf_bytes -= sizeof(se_msg_hdr);
+         remaining_buf_bytes -= sizeof(se_send_notification_msg);
+         int strsize    = SE_msg_add_string(send_data_ptr,
+                                            remaining_buf_bytes,
+                                            name);
+         if (0 == strsize) {
+            return(ERR_CANNOT_SET_STRING);
+         }
+         remaining_buf_bytes -= strsize;
+         send_data_ptr       += strsize;
+         strsize              = SE_msg_add_data(send_data_ptr,
+                                            remaining_buf_bytes,
+                                            value,
+                                            valbytes);
+         if (0 == strsize) {
+            return(ERR_CANNOT_SET_STRING);
+         }
+         (send_msg_body->async_id).trigger_id = htonl(trigger_id);
+         (send_msg_body->async_id).action_id  = htonl(action->action_id);
+         send_msg_body->token_id = htonl(action->owner);
+         send_msg_body->flags    = htonl(action->action_flags);
+      } else {
+         return(-1);
+      }
+   return(0);
+}
+
 
 /*
  * Procedure     : execute_trigger_actions
@@ -642,6 +762,247 @@ static int execute_trigger_actions(const trigger_t *tr, const char const *name, 
    }
    return(0);
 }
+
+static int execute_trigger_actions_data(const trigger_t *tr, const char const *name, const char const *value, const int value_length, const int source, const int tid)
+{
+   if (NULL == tr->trigger_actions) {
+      return(0);
+   }
+   if (0 == tr->num_actions) {
+      return(0);
+   }
+  
+   // FLAG_SERIAL NOT SUPPORTED for now.
+#if 0
+   /*
+    * Depending on the trigger_flags we will either
+    * have each trigger action be sent to the worker thread immediately
+    * or we will collect all of the actions in an array so that the 
+    * worker will execute them serially
+    */
+   if (TUPLE_FLAG_SERIAL & tr->trigger_flags) {
+      /*
+       * prepare a list of messages, each of which describes
+       * one work item. The only work items currently supported
+       * is send_notification, and run_external msgs
+       */
+      se_buffer *list;
+      /*
+       * tr->num_actions indicates the number of actions registered for the trigger
+       * num_actions indicates the number of valid actions encounted during processing
+       * for example a Dead Peer detected will drop those actions
+       */
+      int        num_actions = 0;
+      size_t     size        = (sizeof(se_buffer)* tr->num_actions);
+      list  = (se_buffer *)sysevent_malloc(size, __FILE__, __LINE__);
+      if (NULL == list) {
+        return(-1);
+      } else {
+         unsigned int i;
+         unsigned int idx = 0;
+         for (i=0; i<tr->max_actions; i++) {
+            trigger_action_t *action;
+            action = &((tr->trigger_actions)[i]);
+            if (0 != action->used) {
+               se_buffer  *bufptr = (se_buffer *) (&(list[idx]));
+               se_msg_hdr *msghdr = (se_msg_hdr *) (&(list[idx]));
+
+               if (ACTION_TYPE_EXT_FUNCTION == action->action_type) {
+                  int rc = prepare_action_type_function_msg(*bufptr, tr->trigger_id, action, name, value);
+                  if (0 != rc) {
+                     continue;
+                  }
+               } else if (ACTION_TYPE_MESSAGE == action->action_type) {
+                  int rc = prepare_action_type_message_msg(*bufptr, tr->trigger_id, action, name, value, source, tid);
+                  if (0 != rc) {
+                     continue;
+                  }
+               } else {
+                  SE_INC_LOG(TRIGGER_MGR,
+                     printf("Unhandled action type %d\n", action->action_type);
+                  )
+                  continue;
+            	}
+                // we need to manually fixup the msg_hdr since we are not calling SE_msg_send
+                SE_msg_hdr_mbytes_fixup(msghdr);
+                num_actions++;
+                idx++;
+            }
+         }
+      }   
+
+      // the ordered list has been prepared, now send it
+      se_buffer            send_msg_buffer;
+      se_run_serially_msg *send_msg_body;
+
+      send_msg_body = (se_run_serially_msg *)
+             SE_msg_prepare(send_msg_buffer, sizeof(send_msg_buffer), SE_MSG_EXECUTE_SERIALLY, TOKEN_NULL);
+      if (NULL != send_msg_body) {
+         // prepare the message
+         send_msg_body->num_msgs = num_actions;
+         send_msg_body->async_id.trigger_id = tr->trigger_id;
+         // we can send a pointer because we KNOW that this is a message within this process
+         send_msg_body->data     = list;
+      } else {
+         sysevent_free(&list, __FILE__, __LINE__);
+         return(-1);
+      }
+      SE_INC_LOG(MUTEX,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d Attempting to get mutex: trigger_communication\n", id);
+      )
+      pthread_mutex_lock(&trigger_communication_mutex);
+      SE_INC_LOG(MUTEX,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d Got mutex: trigger_communication\n", id);
+      )
+      int rc = SE_msg_send(trigger_communication_fd_writer_end, send_msg_buffer);
+      if (0 != rc) {
+         SE_INC_LOG(ERROR,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d: TriggerMgr unable to send SE_MSG_EXECUTE_SERIALLY using fd %d\n",
+               id, trigger_communication_fd_writer_end);
+         )
+      } else {
+         SE_INC_LOG(MESSAGES,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d: Sent %s (%d) to threads using fd %d\n",
+                   id, SE_print_mtype(SE_MSG_EXECUTE_SERIALLY), SE_MSG_EXECUTE_SERIALLY, trigger_communication_fd_writer_end);
+         )
+         SE_INC_LOG(MESSAGE_VERBOSE,
+             SE_print_message_hdr(send_msg_buffer);
+         )
+      }
+
+      SE_INC_LOG(MUTEX,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d Releasing mutex: trigger_communication\n", id);
+      )
+      pthread_mutex_unlock(&trigger_communication_mutex);
+   } 
+   else
+#endif
+   {
+      unsigned int i;
+      for (i=0; i<tr->max_actions; i++) {
+         trigger_action_t *action;
+         action = &((tr->trigger_actions)[i]);
+         if (0 != action->used) {
+            if (ACTION_TYPE_EXT_FUNCTION == action->action_type) {
+               if (0 != trigger_datacommunication_fd_writer_end) {
+                  unsigned int bin_size = sysevent_get_binmsg_maxsize();
+                  char *send_msg_buffer = sysevent_malloc(bin_size, __FILE__, __LINE__);
+                  if (!send_msg_buffer)
+                      return -1;
+
+                  if (0 == prepare_action_type_function_msg_data(send_msg_buffer,bin_size, tr->trigger_id, action, name, value,value_length)) {
+                     SE_INC_LOG(MUTEX,
+                        int id = thread_get_id(worker_data_key);
+                        printf("Thread %d Attempting to get mutex: trigger_communication\n", id);
+                     )
+                     pthread_mutex_lock(&trigger_communication_mutex);
+                     SE_INC_LOG(MUTEX,
+                        int id = thread_get_id(worker_data_key);
+                        printf("Thread %d Got mutex: trigger_communication\n", id);
+                     )
+                     int rc = SE_msg_send_data(trigger_datacommunication_fd_writer_end, send_msg_buffer,bin_size);
+                     sysevent_free(&send_msg_buffer,__FILE__, __LINE__);
+                     if (0 != rc) {
+                        SE_INC_LOG(ERROR,
+                           int id = thread_get_id(worker_data_key);
+                           printf("Thread %d: TriggerMgr unable to send SE_MSG_SEND_NOTIFICATION, using fd %d\n",
+                              id, trigger_datacommunication_fd_writer_end);
+                        )
+                     } else {
+                       SE_INC_LOG(MESSAGES,
+                          int id = thread_get_id(worker_data_key);
+                          printf("Thread %d: Sent %s (%d) to threads using fd %d\n",
+                                 id, SE_print_mtype(SE_MSG_RUN_EXTERNAL_EXECUTABLE_DATA), SE_MSG_RUN_EXTERNAL_EXECUTABLE_DATA, trigger_datacommunication_fd_writer_end);
+                       )
+                       SE_INC_LOG(MESSAGE_VERBOSE,
+                           SE_print_message_hdr(send_msg_buffer);
+                       )
+                     }
+                     SE_INC_LOG(MUTEX,
+                        int id = thread_get_id(worker_data_key);
+                        printf("Thread %d Releasing mutex: trigger_communication\n", id);
+                     )
+                     pthread_mutex_unlock(&trigger_communication_mutex);
+                  }
+               }
+            } else if (ACTION_TYPE_MESSAGE == action->action_type) {
+               if (0 != trigger_datacommunication_fd_writer_end) 
+               {
+                  unsigned int bin_size = sysevent_get_binmsg_maxsize();
+                  char *send_msg_buffer = sysevent_malloc(bin_size, __FILE__, __LINE__);
+                  int fileread = access("/tmp/sysevent_debug", F_OK);
+                  if (!send_msg_buffer)
+                      return -1;
+                  char buf_t[256] = {0};
+                  if (0 == fileread)
+                  {
+                      snprintf(buf_t,sizeof(buf_t),"echo fname %s: sizeofmsgbuf %d msgbufp %p valuep %p before prepare >> /tmp/sys_d.txt",__FUNCTION__,sizeof(send_msg_buffer),send_msg_buffer,value);
+                      system(buf_t);
+                  }
+                  if (0 == prepare_action_type_message_msg_data(send_msg_buffer,bin_size, tr->trigger_id, action, name, value, value_length, source, tid)) {
+                     SE_INC_LOG(MUTEX,
+                        int id = thread_get_id(worker_data_key);
+                        printf("Thread %d Attempting to get mutex: trigger_communication\n", id);
+                     )
+                     pthread_mutex_lock(&trigger_communication_mutex);
+                     SE_INC_LOG(MUTEX,
+                        int id = thread_get_id(worker_data_key);
+                        printf("Thread %d Got mutex: trigger_communication\n", id);
+                     )
+
+                     int rc = SE_msg_send_data(trigger_datacommunication_fd_writer_end, send_msg_buffer,bin_size);
+                     if (0 == fileread)
+                     {
+                         snprintf(buf_t,sizeof(buf_t),"echo fname %s: freed >> /tmp/sys_d.txt",__FUNCTION__);
+                         system(buf_t);
+                     }
+                     sysevent_free(&send_msg_buffer,__FILE__, __LINE__);
+                     if (0 != rc) {
+                        SE_INC_LOG(ERROR,
+                           int id = thread_get_id(worker_data_key);
+                           printf("Thread %d: TriggerMgr unable to send SE_MSG_SEND_NOTIFICATION_DATA, using fd %d\n",
+                              id, trigger_datacommunication_fd_writer_end);
+                        )
+                     } else {
+                       SE_INC_LOG(MESSAGES,
+                          int id = thread_get_id(worker_data_key);
+                          printf("Thread %d: Sent %s (%d) to threads using fd %d\n",
+                                 id, SE_print_mtype(SE_MSG_SEND_NOTIFICATION_DATA), SE_MSG_SEND_NOTIFICATION_DATA, trigger_datacommunication_fd_writer_end);
+                       )
+                       SE_INC_LOG(MESSAGE_VERBOSE,
+                           SE_print_message_hdr(send_msg_buffer);
+                       )
+                     }
+
+                     SE_INC_LOG(MUTEX,
+                        int id = thread_get_id(worker_data_key);
+                        printf("Thread %d Releasing mutex: trigger_communication\n", id);
+                     )
+                     pthread_mutex_unlock(&trigger_communication_mutex);
+                  }
+               } else {
+                  SE_INC_LOG(ERROR,
+                     printf("prepare_action_type_message failed for <%s %s>\n", 
+                               NULL == name ? "Unknown" : name, 
+                               NULL == value ? "(null)" : value);
+                  )
+               }
+            } else {
+               SE_INC_LOG(TRIGGER_MGR,
+                  printf("Unhandled action type %d\n", action->action_type);
+               )
+            }
+         }
+      }
+   }
+   return(0);
+}
+
 
 /*
  * Procedure     : provision_executable_call_action
@@ -1433,6 +1794,43 @@ int TRIGGER_MGR_remove_notification_message_actions(const token_t owner)
    pthread_mutex_unlock(&global_triggerlist.mutex);
    return(0);
 }
+
+int TRIGGER_MGR_execute_trigger_actions_data(const int trigger_id, const char const *name, const char const *value, const int value_length, const int source, int tid)
+{
+
+   if (!TRIGGER_MGR_inited) {
+      return(ERR_NOT_INITED);
+   }
+
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Attempting to get mutex: triggerlist\n", id);
+   )
+   pthread_mutex_lock(&global_triggerlist.mutex);
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Got mutex: triggerlist\n", id);
+   )
+
+   trigger_t *trigger = find_trigger_by_trigger_id(trigger_id);
+   if (NULL == trigger) {
+      SE_INC_LOG(MUTEX,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d Releasing mutex: triggerlist\n", id);
+      )
+      pthread_mutex_unlock(&global_triggerlist.mutex);
+      return(0);
+   }
+
+   execute_trigger_actions_data(trigger, name, value, value_length, source, tid);
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Releasing mutex: triggerlist\n", id);
+   )
+   pthread_mutex_unlock(&global_triggerlist.mutex);
+   return(0);
+}
+
 
 /*
  * Procedure     : TRIGGER_MGR_free_cloned_action

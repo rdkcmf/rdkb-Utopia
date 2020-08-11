@@ -575,6 +575,106 @@ static int handle_get_request(const int fd, const token_t who, se_get_msg *msg)
    }
 }
 
+static int handle_get_request_data(const int fd, const token_t who, se_get_msg *msg)
+{
+   int   subject_bytes;
+   int   rc             = 0;
+   char *inmsg_data_ptr = (char *)&(msg->data);
+
+   char *subject_str   = SE_msg_get_string(inmsg_data_ptr, &subject_bytes);
+
+
+   // extract the subject string.
+   if (NULL == inmsg_data_ptr || NULL == subject_str || 0 >= subject_bytes) {
+      rc = ERR_BAD_PARAMETER;
+   }
+
+   unsigned int bin_size = sysevent_get_binmsg_maxsize();
+   char *value_buf = sysevent_malloc(bin_size, __FILE__, __LINE__);
+   if (!value_buf)
+       return -1;
+   // make sure not to get a larger value from data manager than could fit in the reply buffer
+   int       value_buf_size = bin_size - (sizeof(se_msg_hdr)+sizeof(se_get_reply_msg)+4);
+   char     *value;
+   if (!rc) {
+      value = DATA_MGR_get_bin( subject_str, value_buf, &value_buf_size);
+   } else {
+      value = NULL;
+   }
+
+   int value_str_size = NULL == value ? 0 :  value_buf_size;
+
+   // prepare the reply message
+   unsigned int reply_msg_size = sizeof(se_msg_hdr) + sizeof(se_get_reply_msg) +
+                        SE_string2size(subject_str) + value_str_size  - sizeof(void *);
+
+   if (reply_msg_size >= bin_size) {
+      sysevent_free(&value_buf, __FILE__, __LINE__);
+      rc = ERR_MSG_TOO_LONG;
+   }
+
+   se_get_reply_msg *reply_msg_body;
+   char  *reply_msg_buffer = sysevent_malloc(bin_size, __FILE__, __LINE__);
+   if (!reply_msg_buffer)
+   {
+       sysevent_free(&value_buf, __FILE__, __LINE__);
+       return -1;
+   }
+
+   reply_msg_body = (se_get_reply_msg *)SE_msg_prepare(reply_msg_buffer, 
+                                                       bin_size, 
+                                                       SE_MSG_GET_DATA_REPLY, TOKEN_NULL);
+   if (NULL == reply_msg_body) {
+        sysevent_free(&value_buf, __FILE__, __LINE__);
+         sysevent_free(&reply_msg_buffer, __FILE__, __LINE__);
+      return(ERR_UNABLE_TO_PREPARE_MSG);
+   } else {
+      if (!rc) {
+         char *data_str    = (char *)&(reply_msg_body->data);
+         int buf_size      = bin_size;
+         buf_size         -= sizeof(se_msg_hdr);
+         buf_size         -= sizeof(se_get_reply_msg);
+         int strsize       = SE_msg_add_string(data_str, buf_size, subject_str);
+         if (0 == strsize) {
+            rc = (ERR_CANNOT_SET_STRING);
+         } else {
+            buf_size -= strsize;
+            data_str += strsize;
+            if (NULL == value) {
+               strsize = SE_msg_add_data(data_str, buf_size, NULL,0);
+            } else {
+               strsize = SE_msg_add_data(data_str, buf_size, value,value_buf_size);
+            }
+            if (0 == strsize) {
+               rc = (ERR_CANNOT_SET_STRING);
+            }
+         }
+      }
+
+      reply_msg_body->status = htonl(rc);
+      sysevent_free(&value_buf, __FILE__, __LINE__);
+
+      int rc                 = SE_msg_send_data(fd, reply_msg_buffer,bin_size);
+      if (0 != rc) {
+           sysevent_free(&reply_msg_buffer, __FILE__, __LINE__);
+         return(ERR_UNABLE_TO_SEND);
+      } else {
+         SE_INC_LOG(MESSAGES,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d: Sent %s (%d) to client %x on fd %d\n",
+                   id, SE_print_mtype(SE_MSG_GET_DATA_REPLY), SE_MSG_GET_DATA_REPLY, (unsigned int)who, fd);
+         )
+         SE_INC_LOG(MESSAGE_VERBOSE,
+             SE_print_message_hdr(reply_msg_buffer);
+         )
+         debug_num_gets++;
+          sysevent_free(&reply_msg_buffer, __FILE__, __LINE__);
+         return(0);
+      }
+   }
+}
+
+
 /*
  * Procedure     : handle_set_request
  * Purpose       : Handle an set request message from a client
@@ -653,6 +753,82 @@ static int handle_set_request(const int fd, const token_t who, se_set_msg *msg)
 #endif
    return(0);
 }
+
+static int handle_set_request_data(const int fd, const token_t who, se_set_msg *msg)
+{
+   int  subject_bytes;
+   int  value_bytes;
+   char *subject_str;
+   char *value_str;
+   int   rc           = 0;
+   int   source;
+   int   tid;
+   int fileread = access("/tmp/sysevent_debug", F_OK);
+   // extract the subject and value strings.
+   source               = ntohl(msg->source);
+   tid                  = ntohl(msg->tid);
+   char *inmsg_data_ptr = (char *) &(msg->data);
+   subject_str          = SE_msg_get_string(inmsg_data_ptr, &subject_bytes);
+   inmsg_data_ptr      += subject_bytes;   
+   value_str            =  SE_msg_get_data(inmsg_data_ptr, &value_bytes);
+
+   // value is allowed to be 0
+   if (NULL == subject_str || 0 >= subject_bytes) {
+      rc = ERR_BAD_PARAMETER;
+   }
+
+   if (!rc) {
+       if (fileread == 0)
+       {
+          char buf[256] = {0};
+         snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,value_bytes);
+         system(buf);
+       }
+      rc = DATA_MGR_set_bin( subject_str, value_str, value_bytes, source, tid); 
+      if (0 != rc) {
+         SE_INC_LOG(LISTENER,
+            printf("handle_set_request: Call to Data Mgr failed. Reason (%d), %s\n",
+                                rc, SE_strerror(rc));
+         )
+      }
+   } else {
+      SE_INC_LOG(ERROR,
+         printf("handle_set_request got bad subject parameter\n");
+      )
+   }
+
+#ifdef SET_REPLY_REQUIRED
+   se_buffer        reply_msg_buffer;
+   se_set_reply_msg *reply_msg_body;
+
+   reply_msg_body = (se_set_reply_msg *)SE_msg_prepare(reply_msg_buffer, 
+                                                       sizeof(reply_msg_buffer), 
+                                                       SE_MSG_SET_REPLY, TOKEN_NULL);
+   if (NULL == reply_msg_body) {
+      return(ERR_UNABLE_TO_PREPARE_MSG);
+   } else {
+      reply_msg_body->status = htonl(rc);
+      int rc                 = SE_msg_send_data(fd, reply_msg_buffer,sizeof(reply_msg_buffer));
+      if (0 != rc) {
+         return(ERR_UNABLE_TO_SEND);
+      } else {
+         SE_INC_LOG(MESSAGES,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d: Sent %s (%d) to client %x on fd %d\n",
+                   id, SE_print_mtype(SE_MSG_SET_REPLY), SE_MSG_SET_REPLY, (unsigned int)who, fd);
+         )
+         SE_INC_LOG(MESSAGE_VERBOSE,
+             SE_print_message_hdr(reply_msg_buffer);
+         )
+         debug_num_sets++;
+         return(0);
+      }
+   }
+#endif
+   return(0);
+}
+
+
 
 /*
  * Procedure     : handle_set_unique_request
@@ -1369,6 +1545,135 @@ static int handle_send_notification_msg(const int local_fd, const token_t who, s
    return(0);
 }
 
+static int handle_send_notification_msg_data(const int local_fd, const token_t who, se_send_notification_msg *msg)
+{
+   int   rc            = 0;
+   int   trigger_id;
+   int   action_id;
+
+   // extract the trigger_id and action_id
+   trigger_id = ntohl((msg->async_id).trigger_id);
+   action_id  = ntohl((msg->async_id).action_id);
+   if (0 == trigger_id || 0 == action_id) {
+      rc = ERR_UNKNOWN_ASYNC_ID;
+   }
+
+   // extract the subject and value from the message data
+   int   subject_bytes;
+   int   value_bytes;
+   char *subject_str;
+   char *value_str;
+   char *data_ptr;
+
+   data_ptr      = (char *)&(msg->data);
+   subject_str   = SE_msg_get_string(data_ptr, &subject_bytes);
+   data_ptr += subject_bytes;
+   value_str     =  SE_msg_get_data(data_ptr, &value_bytes);
+
+   // it is possible for the value to be NULL. This would occur if the
+   // tuple were unset.
+   // However some clients might not be able to handle a NULL so we
+   // will send an empty string
+   if (NULL == value_str) {
+      value_str = emptystr;
+   }
+   if (NULL == subject_str) {
+      subject_str = emptystr;
+   }
+
+   token_t id = ntohl(msg->token_id);
+   action_flag_t action_flags = ntohl(msg->flags); // not currently used
+
+   int fd = CLI_MGR_id2fd(id);
+   if (0 > fd) {
+      SE_INC_LOG(INFO,
+         printf("Dead Peer %x Detected while attempting notification.Cleaning up %d %d\n", (unsigned int)id, trigger_id, action_id);
+      )
+      int rc;
+      rc = DATA_MGR_remove_async_notification(trigger_id, action_id, id);
+      return(0);
+   }
+
+  se_notification_msg *send_msg_body;
+
+   // figure out how much space the se_msg_strings will take
+   int subbytes  = SE_string2size(subject_str);
+   int valbytes  = value_bytes;
+
+   // calculate the size of the se_notification_msg once it will be populated
+   unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_notification_msg) +
+                       subbytes + valbytes - sizeof(void *);
+
+   unsigned int bin_size = sysevent_get_binmsg_maxsize();
+   if (send_msg_size >= bin_size) {
+      return(ERR_MSG_TOO_LONG);
+   }
+   char *send_msg_buffer = sysevent_malloc(bin_size, __FILE__, __LINE__);
+   if (!send_msg_buffer)
+       return -1;
+ 
+   if (NULL ==
+      (send_msg_body = (se_notification_msg *)
+             SE_msg_prepare(send_msg_buffer, bin_size, SE_MSG_NOTIFICATION_DATA, TOKEN_NULL)) ) {
+       sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+     return(ERR_MSG_TOO_LONG);
+   }
+
+   // prepare the message
+   int  remaining_buf_bytes;
+   send_msg_body->source  = msg->source;
+   send_msg_body->tid     = msg->tid;
+   char *send_data_ptr    = (char *)&(send_msg_body->data);
+   remaining_buf_bytes    = bin_size;
+   remaining_buf_bytes    -= sizeof(se_msg_hdr);
+   remaining_buf_bytes    -= sizeof(se_notification_msg);
+   int strsize    = SE_msg_add_string(send_data_ptr,
+                                      remaining_buf_bytes,
+                                      subject_str);
+   if (0 == strsize) {
+       sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+      return(ERR_CANNOT_SET_STRING);
+   }
+   remaining_buf_bytes -= strsize;
+   send_data_ptr       += strsize;
+   strsize              = SE_msg_add_data(send_data_ptr,
+                                      remaining_buf_bytes,
+                                      value_str,
+                                      valbytes);
+   if (0 == strsize) {
+      sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+      return(ERR_CANNOT_SET_STRING);
+   }
+
+   (send_msg_body->async_id).trigger_id = htonl(trigger_id);
+   (send_msg_body->async_id).action_id  = htonl(action_id);
+
+   SE_INC_LOG(LISTENER,
+       printf("Sending event <%s %d> to client: %x (fd:%d)\n", subject_str, valbytes, (unsigned int)id, fd);
+   )
+   int rc2 = SE_msg_send_data(fd, send_msg_buffer,bin_size);
+   if (rc2) {
+      SE_INC_LOG(ERROR,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d: Failed to send %s (%d) to client on fd %d (%d) %s\n",
+                id, SE_print_mtype(SE_MSG_NOTIFICATION_DATA), SE_MSG_NOTIFICATION_DATA, fd, rc2, SE_strerror(rc2));
+      )
+   } else {
+      SE_INC_LOG(MESSAGES,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d: Sent %s (%d) to client on fd %d\n",
+                id, SE_print_mtype(SE_MSG_NOTIFICATION_DATA), SE_MSG_NOTIFICATION_DATA, fd);
+      )
+      SE_INC_LOG(MESSAGE_VERBOSE,
+         SE_print_message_hdr(send_msg_buffer);
+      )
+   }
+
+  sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+   return(0);
+}
+
+
 /*
  * Procedure     : handle_show_data_elements
  * Purpose       : Handle an se_show_data_elements msg
@@ -2057,6 +2362,178 @@ static int handle_execute_serially(const int local_fd, const token_t who, se_run
    return(0);
 }
 
+/*
+ * Procedure     : handle_messagedata_from_client
+ * Purpose       : Handle a message from a client
+ * Parameters    :
+ *    fd           : File Descriptor to receive on
+ * Return Code   :
+ *     0            : Message handled.
+ *    !0            : Error code 
+ */
+static int handle_messagedata_from_client(const int fd)
+{
+   unsigned  int msglen = sysevent_get_binmsg_maxsize();
+   char *msg = sysevent_malloc(msglen,__FILE__, __LINE__);
+   token_t   who;
+   int       msgtype;
+   int rc = 0;
+
+   if (NULL == msg)
+       return -1;
+   /*
+    * The multi threaded nature of syseventd requires us to ensure that the fd hasn't
+    * been reused already by the main thread
+    */ 
+   if (TOKEN_INVALID == CLI_MGR_fd2id) {
+      int id = thread_get_id(worker_data_key);
+      SE_INC_LOG(ERROR,
+        printf("Thread %d: fd %d represents a stale client. Handled correctly\n", id, fd);
+      )
+      sysevent_free(&msg, __FILE__, __LINE__);
+      return(ERR_UNKNOWN_CLIENT);
+   }
+
+   msgtype =  SE_minimal_blocking_msg_receive(fd, msg, &msglen, &who);
+      
+   SE_INC_LOG(MESSAGES,
+            int id = thread_get_id(worker_data_key);
+            printf("Thread %d: %s (%d) received from client %x on fd %d\n", id, SE_print_mtype(msgtype), msgtype, (unsigned int)who, fd);
+   )
+   SE_INC_LOG(MESSAGE_VERBOSE,
+       SE_print_message(msg, msgtype);
+   )
+   SE_INC_LOG(SEMAPHORE,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Posting to worker_sem (cli)\n", id);
+   )
+
+   thread_set_state(worker_data_key, 0);
+   sem_post(&worker_sem);
+   switch(msgtype) {
+      case (SE_MSG_CLOSE_CONNECTION):
+      {
+         rc = handle_close_connection_request(fd, who);
+         break;
+      }
+      case (SE_MSG_PING):
+      {
+         se_ping_msg *new = (se_ping_msg *)msg;
+         rc = handle_ping_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_GET):
+      {
+         se_get_msg *new = (se_get_msg *)msg;
+         rc = handle_get_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+     case (SE_MSG_GET_DATA):
+      {
+         se_get_msg *new = (se_get_msg *)msg;
+         rc = handle_get_request_data(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+
+      case (SE_MSG_SET):
+      {
+         se_set_msg *new = (se_set_msg *)msg;
+         rc = handle_set_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_SET_DATA):
+      {
+         se_set_msg *new = (se_set_msg *)msg;
+         rc = handle_set_request_data(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_SET_UNIQUE):
+      {
+         se_set_unique_msg *new = (se_set_unique_msg *)msg;
+         rc = handle_set_unique_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_DEL_UNIQUE):
+      {
+         se_del_unique_msg *new = (se_del_unique_msg *)msg;
+         rc = handle_del_unique_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_ITERATE_GET):
+      {
+         se_iterate_get_msg *new = (se_iterate_get_msg *)msg;
+         rc = handle_get_unique_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_NEXT_ITERATOR_GET):
+      {
+         se_iterate_get_iterator_msg *new = (se_iterate_get_iterator_msg *)msg;
+         rc = handle_get_next_unique_iterator(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_SET_OPTIONS):
+      {
+         se_set_options_msg *new = (se_set_options_msg *)msg;
+         rc = handle_set_options_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_SET_ASYNC_ACTION):
+      {
+         se_set_async_action_msg *new = (se_set_async_action_msg *)msg;
+         rc = handle_set_async_action_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_SET_ASYNC_MESSAGE):
+      {
+         se_set_async_message_msg *new = (se_set_async_message_msg *)msg;
+         rc = handle_set_async_message_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_REMOVE_ASYNC):
+      {
+         se_remove_async_msg *new = (se_remove_async_msg *)msg;
+         rc = handle_remove_async_request(fd, who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_SHOW_DATA_ELEMENTS):
+      {
+         se_show_data_elements_msg *new = (se_show_data_elements_msg *)msg;
+         rc = handle_show_data_elements(who, new);
+         CLI_MGR_clear_client_error_by_fd (fd);
+         break;
+      }
+      case (SE_MSG_NONE): 
+      {
+         CLI_MGR_handle_client_error_by_fd(fd);
+         break;
+      }
+      case (SE_MSG_ERRORED): {
+         break;
+      }
+      default:
+         SE_INC_LOG(INFO,
+            printf("Unhandled message from client type 0x%x\n", msgtype);
+         )
+         rc = ERR_UNHANDLED_CASE_STATEMENT;
+         break;
+   }
+   sysevent_free(&msg, __FILE__, __LINE__);
+   return rc;
+}
+
 
 /*
  * Procedure     : handle_message_from_client
@@ -2073,8 +2550,6 @@ static int handle_message_from_client(const int fd)
    unsigned  int msglen = sizeof(msg);
    token_t   who;
    int       msgtype;
-
-
    /*
     * The multi threaded nature of syseventd requires us to ensure that the fd hasn't
     * been reused already by the main thread
@@ -2307,6 +2782,84 @@ static int handle_message_from_main_thread(int fd)
    return(0);
 }
 
+static int handle_messagedata_from_trigger_thread(int fd)
+{
+   unsigned  int msglen = sysevent_get_binmsg_maxsize();
+   char *msg = sysevent_malloc(msglen,__FILE__, __LINE__);
+   token_t   who;
+   int       rc         = 0;
+
+    if (NULL == msg)
+            return -1;
+   // Note: Mutex protection is probably not required on the receive because
+   // we are already under a semaphore. But just in case ...
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Attempting to get mutex: trigger_communication\n", id);
+   )
+   pthread_mutex_lock(&trigger_communication_mutex);
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Got mutex: trigger_communication\n", id);
+   )
+
+   int msgtype = SE_minimal_blocking_msg_receive(fd, msg, &msglen, &who);
+   SE_INC_LOG(MUTEX,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Releasing mutex: trigger_communication\n", id);
+   )
+   pthread_mutex_unlock(&trigger_communication_mutex);
+
+   SE_INC_LOG(MESSAGES,
+         int id = thread_get_id(worker_data_key);
+         printf("Thread %d: %s (%d) received from trigger thread\n", id, SE_print_mtype(msgtype), msgtype);
+   )
+   SE_INC_LOG(MESSAGE_VERBOSE,
+         SE_print_message(msg, msgtype);
+   )
+
+   SE_INC_LOG(SEMAPHORE,
+      int id = thread_get_id(worker_data_key);
+      printf("Thread %d Posting to worker_sem (trig)\n", id);
+   )
+   thread_set_state(worker_data_key, 0);
+   sem_post(&worker_sem);
+   switch(msgtype) {
+      case (SE_MSG_SEND_NOTIFICATION):
+      {
+         se_send_notification_msg *new = (se_send_notification_msg *)msg;
+         rc = handle_send_notification_msg(fd, who, new);
+         break;
+      }
+      case (SE_MSG_RUN_EXTERNAL_EXECUTABLE):
+      {
+         se_run_executable_msg *new = (se_run_executable_msg *)msg;
+         rc = handle_run_executable_msg(fd, who, new, 0);
+         break;
+      }
+      case (SE_MSG_SEND_NOTIFICATION_DATA):
+      {
+         se_send_notification_msg *new = (se_send_notification_msg *)msg;
+         rc = handle_send_notification_msg_data(fd, who, new);
+         break;
+      }
+      case (SE_MSG_EXECUTE_SERIALLY):
+      {
+         se_run_serially_msg *new = (se_run_serially_msg *)msg;
+         rc = handle_execute_serially(fd, who, new);
+         break;
+      }
+      default:
+         SE_INC_LOG(INFO,
+            printf("Unhandled message from trigger thread type 0x%x\n", msgtype);
+         )
+         rc = ERR_UNHANDLED_CASE_STATEMENT;
+         break;
+   }
+    sysevent_free(&msg, __FILE__, __LINE__);
+   return(rc);
+}
+
 /*
  * Procedure     : handle_message_from_trigger_thread
  * Purpose       : Handle a message from the trigger thread
@@ -2442,6 +2995,12 @@ void *worker_thread_main(void *arg)
          maxfd = trigger_communication_fd_listener_end;
       }
 
+      FD_SET(trigger_datacommunication_fd_listener_end, &rd_set);
+      if (trigger_datacommunication_fd_listener_end > maxfd) {
+         maxfd = trigger_datacommunication_fd_listener_end;
+      }
+
+
       // go through the table of clients and figure out what file descriptors
       // we should be listening to
       unsigned int i;
@@ -2530,12 +3089,54 @@ SE_INC_LOG(SEMAPHORE,
       /* first look for the first ready fd from a client */
       for (cur_read_fd=0; cur_read_fd<=maxfd; cur_read_fd++) {
          if (cur_read_fd != trigger_communication_fd_listener_end && FD_ISSET(cur_read_fd, &rd_set)) {
-            break;
+             if (cur_read_fd != trigger_datacommunication_fd_listener_end)
+             {
+                break;
+             }
          }
       }
       /* if found then handle */
       if (maxfd >= cur_read_fd) {
-         handle_message_from_client(cur_read_fd);
+          int dataClient = 0;
+          int index = 0;
+          for (index=0; index < global_clients.max_cur_clients; ++index) {
+              if ((global_clients.clients)[index].used) {
+                  int cur_fd;
+                  cur_fd = (global_clients.clients)[index].fd;
+                  if (-1 == cur_fd) {
+                      SE_INC_LOG(ERROR,
+                              printf("main select got used client with a bad fd. Ignoring\n");
+                              )
+                  }
+                  else if (cur_fd == cur_read_fd)
+                  {
+                      if ((global_clients.clients)[index].isData)
+                      {
+                          dataClient = 1;
+                          break;
+                      }
+                  }
+              }
+          }
+           int fileread = access("/tmp/sysevent_debug", F_OK);
+
+          if ((fileread == 0) && dataClient)
+          {
+              char buf[256] = {0};
+              snprintf(buf,sizeof(buf),"echo fname %s: fd %d dataclient %d >> /tmp/sys_d.txt",__FUNCTION__,cur_read_fd,dataClient);
+              system(buf);
+
+          }
+
+          if (dataClient == 1)
+          {
+              handle_messagedata_from_client(cur_read_fd);
+          }
+          else
+          {
+
+              handle_message_from_client(cur_read_fd);
+          }
          continue;
       }
 
@@ -2546,8 +3147,13 @@ SE_INC_LOG(SEMAPHORE,
        */
       int myid = thread_get_id(worker_data_key);
       if (NUM_CLIENT_ONLY_THREAD < myid && FD_ISSET(trigger_communication_fd_listener_end, &rd_set)) {
-         handle_message_from_trigger_thread(trigger_communication_fd_listener_end);
-         continue;
+          handle_message_from_trigger_thread(trigger_communication_fd_listener_end);
+          continue;
+      }
+
+      if (NUM_CLIENT_ONLY_THREAD < myid && FD_ISSET(trigger_datacommunication_fd_listener_end, &rd_set)) {
+          handle_messagedata_from_trigger_thread(trigger_datacommunication_fd_listener_end);
+          continue;
       }
 
       /*
