@@ -41,7 +41,7 @@
 #define MNET_EP_MEMBER_SET_FORMAT(ifname, iftype, ready) "%s:%s,%hhu" , iftype, ifname, ready
 #define MNET_EP_BRIDGE_VID_FORMAT(instance) "multinet_%d-vid", instance
 #define MNET_EP_BRIDGE_NAME_FORMAT(instance) "multinet_%d-name", instance
-
+#define MNET_EP_BRIDGE_MODE_KEY "bridge_mode"
 
 //int ep_set_memberStatus(PL2Net net, PMember member); 
 
@@ -58,6 +58,8 @@ int ep_netIsStarted(int netInst); // TODO
 
 int ep_get_bridge(int l2netinst, PL2Net net); 
 int ep_set_bridge(PL2Net net);
+
+int ep_get_bridge_mode(void);
 
 //-- Raw
 

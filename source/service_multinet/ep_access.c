@@ -207,6 +207,21 @@ int ep_get_bridge(int l2netinst, PL2Net net) {
     return 0;
 }
 
+int ep_get_bridge_mode(void) {
+    char keybuf[64];
+    char valbuf[64];
+    int bridge_mode = 0;
+
+    snprintf(keybuf, sizeof(keybuf), MNET_EP_BRIDGE_MODE_KEY);
+    sysevent_get(sysevent_fd_interactive, sysevent_token_interactive,keybuf, valbuf, sizeof(valbuf));
+
+    if(strlen(valbuf) > 0) {
+        bridge_mode = atoi(valbuf);
+    }
+
+    return bridge_mode;
+}
+
 int ep_set_bridge(PL2Net net) {
     char keybuf[64];
     char valbuf[64];

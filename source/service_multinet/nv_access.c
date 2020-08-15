@@ -356,3 +356,50 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 #endif /* !_COSA_INTEL_XB3_ARM_ */
     return 0;
 }
+
+int nv_get_primary_l2_inst(void) 
+{
+    int rc;
+    char *pStr = NULL;
+    int primary_l2_inst = 0;
+
+/* Use to get psm value via dbus instead of psmcli util */
+#if !defined(_COSA_INTEL_XB3_ARM_) && !defined(INTEL_PUMA7)
+    char cmdBuff[512] = {0};
+    char valBuff[80] = {0};
+    char tmpBuf[15] = {0};
+    FILE* psmcliOut = NULL;
+
+    snprintf(cmdBuff, sizeof(cmdBuff), "psmcli get %s", MNET_NV_PRIMARY_L2_INST_KEY);
+    psmcliOut = popen(cmdBuff, "r");
+
+    if(psmcliOut) /*RDKB-7137, CID-33276, null check before use */
+    {
+        fgets(valBuff, sizeof(valBuff), psmcliOut);
+        if(strnlen(valBuff, sizeof(valBuff)) > 0)
+            primary_l2_inst = atoi(valBuff);
+
+        pclose(psmcliOut);
+    }
+#else
+    /* dbus init based on bus handle value */
+    if(bus_handle == NULL)
+    dbusInit( );
+
+    if(bus_handle == NULL)
+    {
+        MNET_DEBUG("nv_get_primary_l2_inst, Dbus init error\n")
+        return 0;
+    }
+
+    rc = PSM_VALUE_GET_STRING(MNET_NV_PRIMARY_L2_INST_KEY, pStr);
+    if(rc == CCSP_SUCCESS && pStr != NULL)
+    {
+         sscanf(pStr, MNET_NV_PRIMARY_L2_INST_FORMAT, &primary_l2_inst);
+         Ansc_FreeMemory_Callback(pStr);
+         pStr = NULL;
+    } 
+#endif /* !_COSA_INTEL_XB3_ARM_ */
+
+    return primary_l2_inst;
+}
