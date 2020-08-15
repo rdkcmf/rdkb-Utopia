@@ -76,6 +76,14 @@
 #define SW_TYPE_KEY "Type=SW"
 #endif
 
+#if defined (INTEL_PUMA7)
+/* Command for clearing CPE table on Puma 7 */
+#define CLEAR_CPE_TABLE_COMMAND "ncpu_exec -e service_bridge.sh clear_cpe_table"
+#elif defined (_COSA_INTEL_XB3_ARM_)
+/* Command for clearing CPE table on Puma 6 */
+#define CLEAR_CPE_TABLE_COMMAND "echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt"
+#endif
+
  /* The service_multinet library provides service fuctions for manipulating the lifecycle 
  * and live configuration of system bridges and their device specific interface members. 
  * Authoritative configuration is considered to be held in nonvol storage, so most functions
@@ -392,6 +400,13 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
 	}
 #endif
     }
+#if defined (CLEAR_CPE_TABLE_COMMAND)
+    //If this is the primary instance and bridge mode is enabled, clear CPE table
+    if (l2netInst == nv_get_primary_l2_inst() && ep_get_bridge_mode() != 0)
+        system(CLEAR_CPE_TABLE_COMMAND); 
+#endif
+
+    return 0;
 }
 
 
@@ -530,6 +545,7 @@ int multinet_SyncInst(int l2netInst){
     NetInterface interfaceBuf[MAX_MEMBERS];
     IFType ifTypeBuf[MAX_MEMBERS];
     int i;
+    int result = 0;
     
     memset(nv_members,0,sizeof(nv_members));
     memset(interfaceBuf,0,sizeof(interfaceBuf));
@@ -546,9 +562,16 @@ int multinet_SyncInst(int l2netInst){
         nv_get_bridge(l2netInst, &nv_net);
         numNvMembers = nv_get_members(&nv_net, nv_members, sizeof(nv_members)/sizeof(*nv_members));
         numNvMembers += plat_addImplicitMembers(&nv_net, nv_members+numNvMembers);
-        return multinet_Sync(&nv_net, nv_members, numNvMembers);
+        result = multinet_Sync(&nv_net, nv_members, numNvMembers);
     }
-    return 0;
+
+#if defined (CLEAR_CPE_TABLE_COMMAND)
+    //If this is the primary instance and bridge mode is enabled, clear CPE table
+    if (l2netInst == nv_get_primary_l2_inst() && ep_get_bridge_mode() != 0)
+        system(CLEAR_CPE_TABLE_COMMAND); 
+#endif
+
+    return result;
 }
 
 int multinet_bridgesSync(){

@@ -35,10 +35,14 @@
 #ifndef MNET_NV_H
 #define MNET_NV_H
 
+#define MNET_NV_PRIMARY_L2_INST_KEY "dmsb.MultiLAN.PrimaryLAN_l2net"
+#define MNET_NV_PRIMARY_L2_INST_FORMAT "%3d"
+
 #include "service_multinet_base.h"
 
 
 int nv_get_members(PL2Net net, PMember memberList, int numMembers);
 int nv_get_bridge(int l2netInst, PL2Net net);
+int nv_get_primary_l2_inst(void);
 
 #endif
