@@ -988,7 +988,6 @@ int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
 					 cJSON_ReplaceItemInObject(partnerObj, pKey, cJSON_CreateString(pValue));
 				 }
 				 cJsonOut = cJSON_Print(json);
-				 APPLY_PRINT( "Updated json content is %s\n", cJsonOut);
 				 configUpdateStatus = writeToJson(cJsonOut, PARTNERS_INFO_FILE);
 				 if ( !configUpdateStatus)
 				 {
