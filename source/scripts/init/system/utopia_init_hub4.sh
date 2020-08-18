@@ -261,6 +261,11 @@ fi
    rm -f $XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME
    rm -f $MAINT_START
    rm -f $MAINT_END
+
+   #remove Aker configuration
+   rm -f /nvram/pcs.bin
+   rm -f /nvram/pcs.bin.md5
+
    # Remove DHCP lease file
    rm -f /nvram/dnsmasq.leases
    rm -f /nvram/server-IfaceMgr.xml
