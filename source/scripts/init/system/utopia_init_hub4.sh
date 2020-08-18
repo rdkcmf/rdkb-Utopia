@@ -461,6 +461,12 @@ case "$LastRebootReason" in
       syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
    ;;
 
+   PANICBootUp)
+      echo "[utopia][init] Setting last reboot reason as Panic-On-BootUp"
+      syscfg set X_RDKCENTRAL-COM_LastRebootReason "Panic-On-BootUp"
+      syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+   ;;
+
    *)
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo "[utopia][init] Detected last reboot reason as factory-reset"
