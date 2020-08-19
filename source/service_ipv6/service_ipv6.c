@@ -1508,6 +1508,7 @@ static int dhcpv6s_start(struct serv_ipv6 *si6)
        return 0;
     }
 #endif
+    sleep(1);
     v_secure_system("%s start", DHCPV6_SERVER);
     return 0;
 }
