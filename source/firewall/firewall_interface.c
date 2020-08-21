@@ -95,7 +95,7 @@ void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, const cha
 }
 
 __attribute__((weak))
-void do_snmp_IpAccessTable(FILE *filt_fp, const char *port, int family)
+void do_snmp_IpAccessTable(FILE *filt_fp, int family)
 {
     FIREWALL_DEBUG("Entering do_snmp_IpAccessTable\n");
     FIREWALL_DEBUG("Exiting do_snmp_IpAccessTable\n");
