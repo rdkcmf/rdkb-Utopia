@@ -10618,8 +10618,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
     fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
 #endif
 
-   do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
-   do_snmp_IpAccessTable(filter_fp, "10163", AF_INET);
+   do_snmp_IpAccessTable(filter_fp, AF_INET);
 
 #ifdef INTEL_PUMA7
 
@@ -11492,8 +11491,8 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 #else
    fprintf(filter_fp, "-A SSH_FILTER -j ACCEPT\n");
 #endif
-   do_snmp_IpAccessTable(filter_fp, "10161", AF_INET);
-   do_snmp_IpAccessTable(filter_fp, "10163", AF_INET);
+   do_snmp_IpAccessTable(filter_fp, AF_INET);
+
    }
 
    if(isComcastImage && isBridgeMode) {
@@ -12195,8 +12194,7 @@ static void do_ipv6_filter_table(FILE *fp){
 
        lan_telnet_ssh(fp, AF_INET6);
        do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
-       do_snmp_IpAccessTable(fp, "10161", AF_INET6);
-       do_snmp_IpAccessTable(fp, "10163", AF_INET6);
+       do_snmp_IpAccessTable(fp, AF_INET6);
        if(isComcastImage) {
           do_tr69_whitelistTable(fp, AF_INET6);
        }
@@ -12443,8 +12441,8 @@ static void do_ipv6_filter_table(FILE *fp){
       } */
       do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
 
-      do_snmp_IpAccessTable(fp, "10161", AF_INET6);
-      do_snmp_IpAccessTable(fp, "10163", AF_INET6);
+       do_snmp_IpAccessTable(fp, AF_INET6);
+
 
       // Development override
       if (isDevelopmentOverride) {
@@ -13516,7 +13514,7 @@ static int service_start ()
    char *filename2 = "/tmp/.ipt_v6";
    BOOL needs_flush = FALSE;
    char temp[20];
-   int res_rfcfile = -1, res_rfclock = -1;
+   //int res_rfcfile = -1, res_rfclock = -1;
 
    /* If firewall is starting for the first time, we need to flush connection tracking */
    temp[0] = '\0';
@@ -13561,6 +13559,8 @@ static int service_start ()
        /* Apply Mac Filtering rules */
        system("/bin/sh -c /tmp/mac_filter.sh");
    #endif
+
+  #if 0
    /* RFC REFRESH for dynamic whitelisting of IPs */
    FIREWALL_DEBUG("Before check whether RFC file for SSH present or not\n");
    res_rfcfile = access("/tmp/RFC/.RFC_SSHWhiteList.list", F_OK);
@@ -13568,10 +13568,11 @@ static int service_start ()
    if ( ( res_rfcfile != -1 ) && ( res_rfclock == -1 ) ) 
    {
       FIREWALL_DEBUG("RFC file for SSH present. Whitelisting IP's\n");
-      system("sh /lib/rdk/rfc_refresh.sh SSH_REFRESH &");
+      system("sh /lib/rdk/rfc_refresh.sh SSH_REFRESH");
    }
 
    FIREWALL_DEBUG(".RFC_SSHWhiteList.list status[%d] /tmp/.rfcLock status[%d]\n" COMMA res_rfcfile COMMA res_rfclock);
+   #endif
 
    if (isContainerEnabled && access("/tmp/container_env.sh", F_OK) != -1 && access("/tmp/.lxcIptablesLock", F_OK) == -1) {
       FIREWALL_DEBUG("LXC Support enabled. Adding rules for lighttpd container\n");
