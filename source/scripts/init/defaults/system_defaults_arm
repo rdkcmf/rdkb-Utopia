@@ -1251,6 +1251,9 @@ $dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled=0
 #NonRootSupport enable
 $NonRootSupport=true
 
+#Aggressive selfheal interval default value
+$AggressiveInterval=5
+
 #DSLite
 #dslite_enable - Enable/disable DS-Lite
 $dslite_enable=0
