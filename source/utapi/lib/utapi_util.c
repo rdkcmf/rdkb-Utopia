@@ -372,7 +372,7 @@ int Utopia_GetIndexedBool (UtopiaContext *ctx, UtopiaValue ixUtopia,
     if (0 == Utopia_GetIndexed(ctx, ixUtopia, index, intbuf, sizeof(intbuf))) {
         return ERR_UTCTX_OP;
     }
-    *out_bool = (0 == strcmp(intbuf, "1")) ? TRUE : FALSE;
+    *out_bool = (( 0 == strcmp(intbuf, "1") ) || ( 0 == strcasecmp(intbuf,"true")) ) ? TRUE : FALSE;
     return SUCCESS;
 }
 
