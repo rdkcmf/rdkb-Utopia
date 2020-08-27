@@ -2386,7 +2386,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       rc = syscfg_get(namespace, "enabled", query, sizeof(query));
       if (0 != rc || '\0' == query[0]) {
          continue;
-      } else if (0 == strcmp("0", query)) {
+      } else if ( (0 == strcmp("0", query)) || (0 == strcasecmp("false", query)) ) {
         continue;
       }
    
@@ -2676,7 +2676,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
       rc = syscfg_get(namespace, "enabled", query, sizeof(query));
       if (0 != rc || '\0' == query[0]) {
          continue;
-      } else if (0 == strcmp("0", query)) {
+      } else if ( (0 == strcmp("0", query)) || (0 == strcasecmp("false", query)) ) {
         continue;
       }
        
