@@ -20,7 +20,7 @@ bin_PROGRAMS = service_udhcpc
 
 AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils $(CPPFLAGS)
 
-AM_LDFLAGS =  -lpthread -lz
+AM_LDFLAGS =  -lpthread -lz -lnanomsg
 
 service_udhcpc_SOURCES = service_udhcpc.c
 
