@@ -1181,4 +1181,24 @@ int Utopia_GetDNSServer(UtopiaContext *ctx, DNS_Client_t * dns);
 int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCallForAdd );
 int Utopia_privateIpCheck(char *ip_to_check);
 
+typedef struct DynamicDnsClient
+{
+   unsigned long  InstanceNumber;
+   char           Alias[64];
+   int            Status;
+   int            LastError;
+   char           Server[256];
+   char           Interface[256];
+   char           Username[256];
+   char           Password[256];
+   boolean_t      Enable;
+}DynamicDnsClient_t;
+
+int Utopia_GetDynamicDnsClientInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins);
+int Utopia_GetNumberOfDynamicDnsClient(UtopiaContext *ctx, int *num);
+int Utopia_GetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias);
+int Utopia_AddDynamicDnsClient(UtopiaContext *ctx, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_DelDynamicDnsClient(UtopiaContext *ctx, unsigned long ins);
 #endif // _UTAPI_H_

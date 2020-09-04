@@ -737,6 +737,15 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "end_time",                  UtopiaValue_ParentalControl_ManagedDevice }, /* UtopiaValue_ParentalControl_ManagedDevice_EndTime */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "days",                      UtopiaValue_ParentalControl_ManagedDevice }, /* UtopiaValue_ParentalControl_ManagedDevice_Days */
     /* End of parental control */
+    { Utopia_Type_Config,        Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__,   1, "DynamicDnsClientCount", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_DynamicDnsClientCount */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "DynamicDnsClient_%d", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_DynamicDnsClient */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "ins_num",             UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_InsNum */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "alias",               UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Alias */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "enable",              UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Enable */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "Username",            UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Username */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "Password",            UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Password */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "Server",            UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Server */
+    /* End of Dynamic DNS */
     { Utopia_Type_Config, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "lan_clients_count", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_USGv2_Lan_Clients_Count */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "lan_clients_%d", UtopiaValue__UNKNOWN__ },  /* UtopiaValue_USGv2_Lan_Clients */
     { Utopia_Type_NamedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Name_For_Key, 1, "lan_clients_mac_%s", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_USGv2_Lan_Clients_Mac */

@@ -1296,3 +1296,22 @@ $XHFW_Status="not activated"
 #Alias Manager
 $custom_data_model_enabled=0
 $custom_data_model_file_name=/usr/ccsp/tr069pa/custom_mapper.xml
+
+# Dynamic DNS
+$dynamic_dns_enable=0
+$ddns_service_providers_list=no-ip,dyndns,duckdns,afraid,easydns
+$ddns_server_checkinterval_1=0
+$ddns_server_maxretries_1=10
+$ddns_server_retryinterval_1=660
+$ddns_server_checkinterval_2=0
+$ddns_server_maxretries_2=10
+$ddns_server_retryinterval_2=660
+$ddns_server_checkinterval_3=0
+$ddns_server_maxretries_3=10
+$ddns_server_retryinterval_3=660
+$ddns_server_checkinterval_4=0
+$ddns_server_maxretries_4=10
+$ddns_server_retryinterval_4=660
+$ddns_server_checkinterval_5=0
+$ddns_server_maxretries_5=10
+$ddns_server_retryinterval_5=660

@@ -1171,4 +1171,26 @@ typedef struct dns_client{
 int Utopia_SetDNSEnable(UtopiaContext *ctx, boolean_t enable);
 int Utopia_GetDNSEnable(UtopiaContext *ctx, boolean_t* enable);
 int Utopia_GetDNSServer(UtopiaContext *ctx, DNS_Client_t * dns);
+
+typedef struct DynamicDnsClient
+{
+   unsigned long  InstanceNumber;
+   char           Alias[64];
+   int            Status;
+   int            LastError;
+   char           Server[256];
+   char           Interface[256];
+   char           Username[256];
+   char           Password[256];
+   boolean_t      Enable;
+}DynamicDnsClient_t;
+
+int Utopia_GetDynamicDnsClientInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins);
+int Utopia_GetNumberOfDynamicDnsClient(UtopiaContext *ctx, int *num);
+int Utopia_GetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias);
+int Utopia_AddDynamicDnsClient(UtopiaContext *ctx, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_DelDynamicDnsClient(UtopiaContext *ctx, unsigned long ins);
+
 #endif // _UTAPI_H_
