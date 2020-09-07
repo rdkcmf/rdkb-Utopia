@@ -568,7 +568,6 @@ dhcp_server_start ()
        if [ -f "/usr/bin/rpcclient" ] ; then
            rpcclient $ATOM_ARPING_IP "touch /tmp/broadcast_ssids"
        fi
-       print_uptime "boot_to_WIFI_uptime"
 
        touch /tmp/dhcp_server_start
    fi
