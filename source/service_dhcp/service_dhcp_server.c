@@ -411,7 +411,6 @@ int dhcp_server_start (char *input)
 		print_with_uptime("LAN initization is complete notify SSID broadcast");
 		snprintf(l_cRpc_Cmd, sizeof(l_cRpc_Cmd), "rpcclient %s \"touch /tmp/broadcast_ssids\"", g_cAtom_Arping_IP);
 		executeCmd(l_cRpc_Cmd);
-       	system("print_uptime \"boot_to_WIFI_uptime\"");
 	}
    
     // This function is called for brlan0 and brlan1
