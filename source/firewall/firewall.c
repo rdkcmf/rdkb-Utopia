@@ -924,6 +924,10 @@ static int IsValidIPv6Addr(char* ip_addr_string)
 	return ret;
 }
 
+#ifdef DSLITE_FEATURE_SUPPORT
+static void add_dslite_mss_clamping(FILE *fp);
+#endif
+
 #ifdef _HUB4_PRODUCT_REQ_
 static int IsValidIPv4Addr(char* ip_addr_string)
 {
@@ -11593,7 +11597,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "-A PREROUTING -j prerouting_mgmt_override\n");
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromlan\n", lan_ifname);
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);    
-   /*char IPv4[17] = "0";*/
 
    //RDKB-25069 - Lan Admin page should able to access from connected clients.
    fprintf(nat_fp, "-A prerouting_redirect -i %s -p tcp --dport 443 -d %s -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr,lan_ipaddr);
@@ -11601,11 +11604,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    syscfg_set(NULL, "HTTP_Server_IP", lan_ipaddr);
    fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
 
-   //IPv4[0] = '\0';
    syscfg_set(NULL, "HTTPS_Server_IP", lan_ipaddr);
    fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 443 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
 
-   //IPv4[0] = '\0';
    syscfg_set(NULL, "Default_Server_IP", lan_ipaddr);
    fprintf(nat_fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination %s:21515\n",lan_ipaddr);
    fprintf(nat_fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
@@ -12133,7 +12134,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    do_forwardPorts(filter_fp);
 
    // RDKB-4826 - IOT rules for DHCP
-   static char iot_enabled[20];
+   char iot_enabled[20];
    memset(iot_enabled, 0, sizeof(iot_enabled));
    syscfg_get(NULL, "lost_and_found_enable", iot_enabled, sizeof(iot_enabled));
   
@@ -14565,7 +14566,7 @@ static int get_options(int argc, char **argv)
             break;
 
          case 'i':
-            snprintf(sysevent_ip, sizeof(sysevent_ip),"%s", optarg);
+            snprintf(sysevent_ip, sizeof(sysevent_ip), "%s", optarg);
             break;
 
          case 'h':
@@ -14697,7 +14698,7 @@ BOOL validate_mac(char * physAddress)
 					
 	return FALSE;
 }
-int ClearEstbConnection()
+static int ClearEstbConnection(void)
 {
 char mac[20];
 char buf[200] = {0};
@@ -15493,7 +15494,7 @@ int error;
    return(rc);
 }
 #ifdef DSLITE_FEATURE_SUPPORT
-void add_dslite_mss_clamping(FILE *fp)
+static void add_dslite_mss_clamping(FILE *fp)
 {
     char val[64] = {0};
     sysevent_get(sysevent_fd, sysevent_token, "dslite_service-status", val, sizeof(val));

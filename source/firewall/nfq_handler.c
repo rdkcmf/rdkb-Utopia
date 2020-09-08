@@ -453,7 +453,7 @@ static int http_get_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *
 
     return ret;
 }
-void getIFMac(char *interface, char *mac){
+static void getIFMac(char *interface, char *mac){
     int s;
     struct ifreq buffer;
     int ret = -1;
