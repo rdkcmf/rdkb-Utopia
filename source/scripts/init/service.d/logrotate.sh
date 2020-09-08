@@ -1,10 +1,21 @@
- #!/bin/sh
+#!/bin/sh
+
+source /etc/device.properties
+
+if [ "$BOX_TYPE" == "HUB4" ]; then
+VARLOG_DIR_THRESHOLD=3000
+else
+VARLOG_DIR_THRESHOLD=5000
+fi
 
 dir=`du /var/log/ | awk -v sum=0 '{print sum+=$1}' | tail -1`
 
 ksize=0
 i=0
-kfile[2]=""
+
+#4 files mentioned for kernel, user, kernel.log, user.log
+kfile[4]=""
+
     file_list=`ls /var/log/`
     for file in $file_list
       do
@@ -18,12 +29,17 @@ kfile[2]=""
 
 dir=`expr $dir - $ksize`
 
-if [ $ksize -gt 5000 ]; then
-    cat /dev/null > /var/log/${kfile[0]}
-    cat /dev/null > /var/log/${kfile[1]}
+if [ $ksize -gt $VARLOG_DIR_THRESHOLD ]; then
+    #Needs to clear all the kernel files
+    for i in "${kfile[@]}"
+    do
+       if [ "$i" != "" ]; then
+          cat /dev/null > /var/log/$i
+       fi  
+    done
 fi
 
-if [ $dir -gt 5000 ]; then
+if [ $dir -gt $VARLOG_DIR_THRESHOLD ]; then
     file_list=`ls /var/log/`
     for file in $file_list
       do
