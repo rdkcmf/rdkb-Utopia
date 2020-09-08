@@ -277,39 +277,49 @@ void ulog_sys_Init(int prior, unsigned int enable)
 
 int ulog_GetProcId(size_t size, char *name, pid_t *pid)
 {
-    char  *buf[ULOG_STR_SIZE];
-    char  *file_name[ULOG_STR_SIZE];
+    char  buf[ULOG_STR_SIZE];
+    char  file_name[ULOG_STR_SIZE];
     int   len;  
     char  *retStr; 
-    char  *str[ULOG_STR_SIZE];
+    char  str[ULOG_STR_SIZE];
     FILE* stream;        
 
     if(size == 0 || !name || !pid)
         return -1;
     name[0] = '\0';
-    pid = (pid_t *)getpid();
+    *pid = getpid();
     printf("After getpid,  pid = %d  \n", *pid);
 
-    sprintf((char *)file_name, "/proc/%d/stat", *pid);
+    snprintf(file_name, sizeof(file_name), "/proc/%d/stat", *pid);
     stream = fopen((const char *)file_name, "r");
     printf("After fopen /proc/pid/stat  file  \n");
     if (stream == NULL)
     {
         return -1;
     }
-    retStr = fgets((char *)buf, sizeof(buf), stream);
+    retStr = fgets(buf, sizeof(buf), stream);
+    fclose(stream);
     if (retStr == NULL)
     {
-	fclose(stream);
         return -1;
     }
-    sscanf((const char *)buf, "%*d (%s", (char *)str);
-    len = strlen((const char *)str);
-    str[len - 1] = '\0';
-    strncpy(name, (const char *)str, size - 1);
-    name[size - 1] = '\0';
+    /*
+       The name will be extracted with a final ')' which needs to be dropped
+       before writing the final result to "name".
+    */
+    sscanf(buf, "%*d (%s", str);
 
-    fclose(stream);
+    len = strlen(str);
+    if (len > 0)
+    {
+        len--;
+    }
+    if (len >= size)
+    {
+        len = size - 1;
+    }
+    memcpy (name, str, len);
+    name[len] = 0;
     return 0;
 }
 

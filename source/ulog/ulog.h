@@ -82,6 +82,7 @@ void ulog_log_Init(int, unsigned int);
 int ulog_GetGlobalPrior(void);
 void ulog_SetGlobalPrior(int prior);
 int ulog_GetProcId(size_t size, char *name, pid_t *pid);
+unsigned int ulog_GetEnable(void);
 void ulog_SetEnable(unsigned int enable);
 void ulog_sys(int prior, const char* fileName, int line, const char* format, ...);
 int ulog_GetPrior(void);
