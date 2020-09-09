@@ -52,6 +52,7 @@ NTP_CONF_TMP=/tmp/ntp.conf
 NTP_CONF_QUICK_SYNC=/tmp/ntp_quick_sync.conf
 LOCKFILE=/var/tmp/service_ntpd.pid
 BIN=ntpd
+EROUTER_IPV6_UP=0
 
 if [ "x$NTPD_LOG_NAME" == "x" ];then
 NTPD_LOG_NAME=/rdklogs/logs/ntpLog.log
@@ -75,7 +76,8 @@ erouter_wait ()
        if [ "x$BOX_TYPE" = "xHUB4" ]; then
            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
            if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
-               EROUTER_IPv6=`ifconfig $NTPD_IPV6_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+               EROUTER_IPv6=`ifconfig $NTPD_IPV6_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | grep -v 'fdd7' | cut -d '/' -f1 | head -n1`
+               EROUTER_IPV6_UP=1
            fi
        else
            EROUTER_IPv6=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
@@ -189,13 +191,22 @@ service_start ()
 	# Start NTP Config Creation with Legacy Single Server Setup
 	echo_t "SERVICE_NTPD : Creating NTP config" >> $NTPD_LOG_NAME
 	if [ -f "/nvram/ETHWAN_ENABLE" ];then
-	    echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
-	    echo "server time1.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-	    echo "server time2.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-	    echo "server time3.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-	    if [ "$BOX_TYPE" = "HUB4" ]; then
-	        echo "server ntp1.isp.sky.com" >> $NTP_CONF_TMP # adding SKY NTP server for fallback case.
-	    fi
+            if [ "$BOX_TYPE" = "HUB4" ]; then
+            PARTER_ID=`syscfg get PartnerID`
+            if [ "$PARTER_ID" = "sky-italia" ]; then
+                echo "server ntp1.it.isp.sky true" >> $NTP_CONF_TMP # adding SKY Italy NTP server
+                echo "server ntp2.it.isp.sky" >> $NTP_CONF_TMP # adding SKY NTP server for fallback case.
+                echo "server time1.google.com" >> $NTP_CONF_TMP # adding Google public NTP server for fallback case.
+            else
+                echo "server ntp1.isp.sky.com true" >> $NTP_CONF_TMP # adding SKY UK NTP server
+                echo "server time1.google.com" >> $NTP_CONF_TMP # adding Google public NTP server for fallback case.
+            fi
+            else
+                echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
+                echo "server time1.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+                echo "server time2.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+                echo "server time3.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
+            fi
         else
 	    echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
 	fi
@@ -255,9 +266,12 @@ service_start ()
 
         if [ "x$BOX_TYPE" = "xHUB4" ]; then
         # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
-            CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
-            if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
-                echo "interface listen $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
+            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
+            if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
+                CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
+                if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
+                    echo "interface listen $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
+                fi
             fi
         fi
 
@@ -279,7 +293,15 @@ service_start ()
                 if [ -n "$QUICK_SYNC_WAN_IP" ]; then
                 	# Try and Force Quick Sync to Run on a single interface
                 	echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-                	ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
+                    if [ "x$BOX_TYPE" = "xHUB4" ]; then
+                        if [ $EROUTER_IPV6_UP -eq 1 ];then
+                            ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
+                        else
+                            ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -4 -l $NTPD_LOG_NAME & sleep 60 # We have only v4 IP. Restrict to v4.
+                        fi
+                    else
+                        ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
+                    fi
                 else
                 	echo_t "SERVICE_NTPD : Quick Sync Failed No Erouter0 IP Address" >> $NTPD_LOG_NAME
                 fi
@@ -395,11 +417,11 @@ case "$1" in
          service_start
       fi
       ;;
-  ipv6_prefix)
+  ipv6_connection_state)
       if [ "x$BOX_TYPE" = "xHUB4" ]; then
          CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
-         if [ "$CURRENT_WAN_V6_PREFIX" != "x" ] ; then
-            echo_t "SERVICE_NTPD : ipv6_prefix calling service_start" >> $NTPD_LOG_NAME
+         if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ] ; then
+            echo_t "SERVICE_NTPD : ipv6_connection_state calling service_start" >> $NTPD_LOG_NAME
             service_start
          fi
       fi

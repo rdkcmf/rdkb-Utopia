@@ -738,11 +738,18 @@ static int gen_zebra_conf(int sefd, token_t setok)
         syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
         if (strcmp(m_flag, "1") == 0)
             fprintf(fp, "   ipv6 nd managed-config-flag\n");
+#ifdef _HUB4_PRODUCT_REQ_
+            else if (strcmp(m_flag, "0") == 0)
+                fprintf(fp, "   no ipv6 nd managed-config-flag\n");
+#endif
 
         syscfg_get(NULL, "router_other_flag", o_flag, sizeof(o_flag));
         if (strcmp(o_flag, "1") == 0)
             fprintf(fp, "   ipv6 nd other-config-flag\n");
-
+#ifdef _HUB4_PRODUCT_REQ_
+            else if (strcmp(o_flag, "0") == 0)
+                fprintf(fp, "   no ipv6 nd other-config-flag\n");
+#endif
         syscfg_get(NULL, "dhcpv6s_enable", dh6s_en, sizeof(dh6s_en));
         if (strcmp(dh6s_en, "1") == 0)
             fprintf(fp, "   ipv6 nd other-config-flag\n");

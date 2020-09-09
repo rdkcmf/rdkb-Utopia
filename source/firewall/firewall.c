@@ -447,10 +447,10 @@ NOT_DEF:
 #ifdef HUB4_BFD_FEATURE_ENABLED
 #define IPOE_HEALTHCHECK "ipoe_healthcheck"
 #endif //HUB4_BFD_FEATURE_ENABLED
-#ifdef HUB4_MAPT_FEATURE_ENABLED
+#ifdef FEATURE_MAPT
 #define MAPT_NAT_IPV4_POST_ROUTING_TABLE "OUTBOUND_POSTROUTING"
 #define SYSEVENT_MAPT_CONFIG_FLAG "mapt_config_flag"
-#endif //HUB4_MAPT_FEATURE_ENABLED
+#endif //FEATURE_MAPT
 #ifdef HUB4_SELFHEAL_FEATURE_ENABLED
 #define SELFHEAL "SELFHEAL"
 #define HTTP_HIJACK_DIVERT "HTTP_HIJACK_DIVERT"
@@ -10310,9 +10310,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, ":%s - [0:0]\n", IPOE_HEALTHCHECK);
    fprintf(nat_fp, "-I PREROUTING -j %s\n", IPOE_HEALTHCHECK);
 #endif //HUB4_BFD_FEATURE_ENABLED
-#ifdef HUB4_MAPT_FEATURE_ENABLED
+#ifdef FEATURE_MAPT
    fprintf(nat_fp, ":%s - [0:0]\n", MAPT_NAT_IPV4_POST_ROUTING_TABLE);
-#endif //End HUB4_MAPT_FEATURE_ENABLED.
+#endif //End FEATURE_MAPT.
 #endif //_HUB4_PRODUCT_REQ_
 
    /*
@@ -10446,9 +10446,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, ":%s - [0:0]\n", IPOE_HEALTHCHECK);
    fprintf(filter_fp, "-I INPUT -j %s\n", IPOE_HEALTHCHECK);
 #endif //HUB4_BFD_FEATURE_ENABLED
-#ifdef HUB4_MAPT_FEATURE_ENABLED
+#ifdef FEATURE_MAPT
    fprintf(filter_fp,":%s - [0:0]\n", MAPT_NAT_IPV4_POST_ROUTING_TABLE);
-#endif //HUB4_MAPT_FEATURE_ENABLED
+#endif //FEATURE_MAPT
 #endif //_HUB4_PRODUCT_REQ_
 
    if(isComcastImage) {
@@ -11312,9 +11312,9 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
 #ifdef HUB4_BFD_FEATURE_ENABLED
    do_hub4_bfd_rules_v4(nat_fp, filter_fp, mangle_fp);
 #endif //HUB4_BFD_FEATURE_ENABLED
-#ifdef HUB4_MAPT_FEATURE_ENABLED
+#ifdef FEATURE_MAPT
    do_hub4_mapt_rules_v4(nat_fp, filter_fp);
-#endif //HUB4_MAPT_FEATURE_ENABLED
+#endif //FEATURE_MAPT
 
 #ifdef HUB4_QOS_MARK_ENABLED
    do_qos_output_marking_v4(mangle_fp);
@@ -12018,7 +12018,7 @@ int prepare_ipv6_firewall(const char *fw_file)
         prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
 #endif
 #ifdef _HUB4_PRODUCT_REQ_
-    do_hub4_voice_rules_v6(filter_fp);
+    do_hub4_voice_rules_v6(filter_fp, mangle_fp);
     if (do_hub4_dns_rule_v6(mangle_fp) == 0)
     {
         FIREWALL_DEBUG("INFO: Firewall rule addition success for IPv6 DNS CHECKSUM \n");
@@ -12031,9 +12031,9 @@ int prepare_ipv6_firewall(const char *fw_file)
 #ifdef HUB4_BFD_FEATURE_ENABLED
     do_hub4_bfd_rules_v6(filter_fp, mangle_fp);
 #endif //HUB4_BFD_FEATURE_ENABLED
-#ifdef HUB4_MAPT_FEATURE_ENABLED
+#ifdef FEATURE_MAPT
     do_hub4_mapt_rules_v6(filter_fp);
-#endif //HUB4_MAPT_FEATURE_ENABLED
+#endif //FEATURE_MAPT
 
 #ifdef HUB4_QOS_MARK_ENABLED
    do_qos_output_marking_v6(mangle_fp);
