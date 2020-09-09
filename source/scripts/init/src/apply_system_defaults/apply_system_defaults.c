@@ -1462,6 +1462,97 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 			partnerObj = cJSON_GetObjectItem( json, PartnerID );
 			if( partnerObj != NULL) 
 			{
+				if( 0 != strstr(PartnerID, "telekom"))
+                                {
+                                    unsigned int  numVlanIfc = 0;
+                                    unsigned int  idx;
+                                    char *value = NULL;
+
+                                    if ( cJSON_GetObjectItem( partnerObj, "Vlan_NumOfIfs") != NULL )
+                                    {
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Vlan_NumOfIfs"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+                                                value = paramObjVal->valuestring;
+
+                                                if (value != NULL)
+                                                {
+                                                        set_syscfg_partner_values(value,"Vlan_NumOfIfs");
+							numVlanIfc = atoi(value);
+                                                        value = NULL;
+                                                }
+                                                else
+                                                {
+                                                        APPLY_PRINT("%s-%d : Partner ID %s have %d VLAN Interfaces.\n", __FUNCTION__, __LINE__, PartnerID, numVlanIfc);
+                                                }
+                                        }
+                                    }
+
+                                    for (idx = 1; idx <= numVlanIfc; idx++)
+                                    {
+                                        char paramName[32] = {0};
+                                        sprintf(paramName, "Vlan_%d_Name", idx);
+                                        if ( cJSON_GetObjectItem( partnerObj, paramName) != NULL )
+                                        {
+					    paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, paramName), "ActiveValue");
+                                            if ( paramObjVal != NULL )
+                                            {
+                                                value = paramObjVal->valuestring;
+
+                                                if (value != NULL)
+                                                {
+                                                        set_syscfg_partner_values(value,paramName);
+                                                        value = NULL;
+                                                }
+                                                else
+                                                {
+							APPLY_PRINT("%s-%d : set_syscfg %s=%s\n", __FUNCTION__, __LINE__, paramName, value);
+                                                }
+                                            }
+                                        }
+                                        sprintf(paramName, "Vlan_%d_ID", idx);
+                                        if ( cJSON_GetObjectItem( partnerObj, paramName) != NULL )
+                                        {
+           				    paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, paramName), "ActiveValue");
+                                            if ( paramObjVal != NULL )
+                                            {
+                                                value = paramObjVal->valuestring;
+
+                                                if (value != NULL)
+                                                {
+                                                        set_syscfg_partner_values(value,paramName);
+                                                        value = NULL;
+                                                }
+                                                else
+                                                {
+                                                        APPLY_PRINT("%s-%d : set_syscfg %s=%s\n", __FUNCTION__, __LINE__, paramName, value);
+                                                }
+                                            }
+
+                                        }
+                                        sprintf(paramName, "Vlan_%d_ServiceType", idx);
+                                        if ( cJSON_GetObjectItem( partnerObj, paramName) != NULL )
+                                        {
+                        		    paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, paramName), "ActiveValue");
+                                            if ( paramObjVal != NULL )
+                                            {
+                                                value = paramObjVal->valuestring;
+
+                                                if (value != NULL)
+                                                {
+                                                        set_syscfg_partner_values(value,paramName);
+                                                        value = NULL;
+                                                }
+                                                else
+                                                {
+                                                        APPLY_PRINT("%s-%d : set_syscfg %s=%s\n", __FUNCTION__, __LINE__, paramName, value);
+                                                }
+                                            }
+
+                                        }
+
+                                    }
+                                }
 				// Don't overwrite this value into syscfg.db for comcast partner
 				if( ( 0 == isThisComcastPartner ) && \
 					( 1 == isNeedToApplyPartnersDefault )

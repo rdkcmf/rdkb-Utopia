@@ -68,7 +68,7 @@ case "$1" in
            	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
             	service_routed radv-restart
            else
-           	service_routed stop
+            	service_routed radv-restart
            fi
        fi
        ;;

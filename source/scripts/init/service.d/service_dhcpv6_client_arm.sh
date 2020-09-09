@@ -98,7 +98,7 @@ service_start()
    then
       # Non IPv6 Mode
      echo_t "SERVICE_DHCP6C : Non IPv6 Mode, service_stop"
-      service_stop
+#      service_stop
    elif [ "$WAN_LINK_STATUS" = "down" ]
    then
       # WAN LINK is Down
@@ -130,7 +130,7 @@ service_start()
 			else
 				echo_t "SERVICE_DHCP6C : Starting dibbler client"
 				sh /etc/dibbler/dibbler-init.sh
-				$DHCPV6_BINARY start
+#				$DHCPV6_BINARY start
 			fi
 			rm -f $DHCP6C_PROGRESS_FILE
 

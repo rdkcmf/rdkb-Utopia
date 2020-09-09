@@ -191,7 +191,7 @@ add_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
-    dst_ip="10.0.0.1" # RT-10-580 @ XB3 
+    dst_ip=`syscfg get lan_ipaddr` # RT-10-580 @ XB3
     ip addr add $dst_ip/24 dev $cmdiag_if
     ip route add default dev $cmdiag_if
     ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
@@ -208,7 +208,7 @@ del_ebtable_rule()
     cmdiag_if=`syscfg get cmdiag_ifname`
     cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
 
-    dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
+    dst_ip=`syscfg get lan_ipaddr` # RT-10-580 @ XB3 PRD
     ip addr del $dst_ip/24 dev $cmdiag_if
     ip route del default dev $cmdiag_if
     ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac

@@ -52,12 +52,16 @@ else
    	CMINTERFACE="wan0"
    fi
 fi
-    
+
+pwd=`cat /etc/shadow | grep root | cut -d: -f2`
+[ -z $pwd ] && echo -e "DTelek0m\nDTelek0m" | passwd root
+
+SSHPORT=`syscfg get mgmt_wan_sshport`
+
 SERVICE_NAME="sshd"
 SELF_NAME="`basename $0`"
 
-PID_FILE=/var/run/dropbear.pid
-PMON=/etc/utopia/service.d/pmon.sh
+PID_FILE=/var/run/dropbear
 if [ -f /etc/mount-utils/getConfigFile.sh ];then
       mkdir -p /tmp/.dropbear
      . /etc/mount-utils/getConfigFile.sh
@@ -81,23 +85,28 @@ do_start() {
 #   /etc/init.d/dropbear start
    #dropbear -r /etc/rsa_key.priv
    #dropbear -E -s -b /etc/sshbanner.txt -s -a -p [$CM_IP]:22
-   if [ "$CM_IP" = "" ]
-   then
-      #wan0 should be in v4
-      CM_IP=`ifconfig ${CMINTERFACE} | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
-   fi
+
+   #wan0 should be in v4
+   CM_IP="${CM_IP} `ifconfig ${CMINTERFACE} | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`"
+   #LAN side
+   LANINTERFACE="brlan0"
+   CM_IP="${CM_IP} `ifconfig ${LANINTERFACE} | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`"
+   CM_IP="${CM_IP} `ifconfig ${LANINTERFACE} | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`"
+
+   for i in $CM_IP; do
    DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$"
    DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"
    getConfigFile $DROPBEAR_PARAMS_1
    getConfigFile $DROPBEAR_PARAMS_2
-   dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
+   dropbear -R -E -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$i]:$SSHPORT -P ${PID_FILE}_${i}.pid -B
    # The PID_FILE created after demonize the process. So added delay for 1 sec.
    sleep 1
-   if [ ! -f "$PID_FILE" ] ; then
-      echo_t "[utopia] $PID_FILE file is not created"
+   if [ ! -f "${PID_FILE}_${i}.pid" ] ; then
+      echo_t "[utopia] ${PID_FILE}_${i}.pid file is not created"
    else
-      echo_t "[utopia] $PID_FILE file is created. PID : `cat $PID_FILE`"
+      echo_t "[utopia] $PID_FILE file is created. PID : `cat ${PID_FILE}_${i}.pid`"
    fi
+   done
    sysevent set ssh_daemon_state up
 }
 
@@ -105,8 +114,12 @@ do_stop() {
    # echo "[utopia] Stopping SSH daemon" > /dev/console
    sysevent set ssh_daemon_state down
 #   kill -9 dropbear
-   kill -9 `cat $PID_FILE`
-   rm -f $PID_FILE
+   kill -9 `cat $PID_FILE*`
+   rm -f $PID_FILE*
+   pidlist=`pidof dropbear`
+   for i in $pidlist; do
+       kill -9 $i
+   done
 #    /etc/init.d/dropbear stop
 }
 
@@ -120,7 +133,8 @@ service_start() {
 
 	#if [ "$SSH_ENABLE" = "0" ]; then
 
-		if [ ! -f "$PID_FILE" ] ; then
+        PID_LIST=`cat $PID_FILE* | wc -l`
+		if [ "$PID_LIST" -eq 0 ] ; then
 			#while [ "started" != "$CURRENT_WAN_STATE" ]
 			#do
 				#sleep 1
@@ -129,7 +143,6 @@ service_start() {
 
 		do_start
 		fi
-		$PMON setproc ssh dropbear $PID_FILE "/etc/utopia/service.d/service_sshd.sh sshd-restart"
 
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status "started"
@@ -143,10 +156,10 @@ service_stop () {
    echo_t "[utopia] stopping ${SERVICE_NAME} service"
 #   ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
 
-   if [ -f "$PID_FILE" ] ; then
+   PID_LIST=`cat $PID_FILE* | wc -l`
+   if [ "$PID_LIST" -gt 0 ] ; then
       do_stop
    fi
-   $PMON unsetproc ssh 
 
    sysevent set ${SERVICE_NAME}-errinfo
    sysevent set ${SERVICE_NAME}-status "stopped"

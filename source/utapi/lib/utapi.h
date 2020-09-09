@@ -89,7 +89,7 @@ typedef int boolean_t;
 #define NAME_SZ 64      // generic friendly name size
 #define IAP_KEYWORD_SZ    64
 #define TR_ALIAS_SZ 65
-
+#define DEST_NAME_SZ 256
 
 /*
  * Platform specific settings
@@ -233,6 +233,9 @@ typedef struct wan_ppp {
     char server_ipaddr[IPADDR_SZ];            // for pptp, l2tp
     wanConnectMethod_t conn_method;
     int max_idle_time;
+    unsigned int max_mru;
+    boolean_t ipcp;
+    boolean_t ipv6cp;
     int redial_period;
     boolean_t ipAddrStatic;   // for pptp/l2tp: true - use wan_static, false - use dhcp
 }__attribute__ ((__packed__)) wan_ppp_t;
@@ -369,8 +372,9 @@ typedef struct portFwdSingle {
     protocol_t protocol;
     int        external_port;
     int        internal_port;
-    char       dest_ip[IPADDR_SZ];              
-    char       dest_ipv6[64];              
+    char       dest_ip[DEST_NAME_SZ];
+    char       dest_ipv6[64];
+    char       remotehost[IPADDR_SZ];
 } portFwdSingle_t;
 
 typedef struct portMapDyn {
@@ -395,9 +399,10 @@ typedef struct portFwdRange {
     int        end_port;
     int        internal_port;
     int        internal_port_range_size;
-    char       dest_ip[IPADDR_SZ];              
-    char       dest_ipv6[64];    
-	char       public_ip[IPADDR_SZ];              
+    char       dest_ip[DEST_NAME_SZ];
+    char       dest_ipv6[64];
+    char       remotehost[IPADDR_SZ];
+    char       public_ip[IPADDR_SZ];
 } portFwdRange_t;
 
 typedef struct portRangeTrig {
@@ -917,10 +922,12 @@ typedef struct firewall {
     boolean_t allow_ipsec_passthru;
     boolean_t allow_pptp_passthru;
     boolean_t allow_l2tp_passthru;
+    boolean_t allow_ssl_passthru;
     boolean_t filter_http_from_wan;
     boolean_t filter_http_from_wan_v6;
     boolean_t filter_p2p_from_wan;
     boolean_t filter_p2p_from_wan_v6;
+    boolean_t filter_rfc1918_from_wan;
     boolean_t true_static_ip_enable;
     boolean_t true_static_ip_enable_v6;
     boolean_t smart_pkt_dection_enable;
@@ -1180,5 +1187,47 @@ int Utopia_GetDNSServer(UtopiaContext *ctx, DNS_Client_t * dns);
 
 int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCallForAdd );
 int Utopia_privateIpCheck(char *ip_to_check);
+
+typedef struct DynamicDnsClient
+{
+   unsigned long  InstanceNumber;
+   char           Alias[64];
+   int            Status;
+   int            LastError;
+   char           Server[256];
+   char           Interface[256];
+   char           Username[256];
+   char           Password[256];
+   boolean_t      Enable;
+}DynamicDnsClient_t;
+
+
+int Utopia_GetDynamicDnsClientInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins);
+int Utopia_GetNumberOfDynamicDnsClient(UtopiaContext *ctx, int *num);
+int Utopia_GetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias);
+int Utopia_AddDynamicDnsClient(UtopiaContext *ctx, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_DelDynamicDnsClient(UtopiaContext *ctx, unsigned long ins);
+
+typedef struct VlanTermination
+{
+   unsigned long  InstanceNumber;
+   char           Alias[64];
+   char           LowerLayer[1024];
+   char           Name[64];
+   char           EthLinkName[64];
+   unsigned long  TPID;
+   unsigned long  VLANID;
+   boolean_t      Enable;
+}vlantermination_t;
+
+int Utopia_GetVLANTerminationInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins);
+int Utopia_GetNumberOfVLANTermination(UtopiaContext *ctx, int *num);
+int Utopia_GetVLANTerminationByIndex(UtopiaContext *ctx, unsigned long ulIndex, vlantermination_t *vt);
+int Utopia_SetVLANTerminationByIndex(UtopiaContext *ctx, unsigned long ulIndex, const vlantermination_t *vt);
+int Utopia_SetVLANTerminationInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias);
+int Utopia_AddVLANTermination(UtopiaContext *ctx, const vlantermination_t *vt);
+int Utopia_DelVLANTermination(UtopiaContext *ctx, unsigned long ins);
 
 #endif // _UTAPI_H_

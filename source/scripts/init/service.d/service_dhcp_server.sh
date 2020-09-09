@@ -57,7 +57,14 @@ SERVICE_NAME="dhcp_server"
 
 #DHCP_CONF=/etc/dnsmasq.conf
 DHCP_CONF=/var/dnsmasq.conf
-RESOLV_CONF=/etc/resolv.conf
+
+WAN_PROTO=`syscfg get wan_proto`
+if [ "pppoe" = "$WAN_PROTO" ] ; then
+    RESOLV_CONF=/etc/resolv.dnsmasq
+else
+    RESOLV_CONF=/etc/resolv.conf
+fi
+
 BIN=dnsmasq
 SERVER=${BIN}
 PMON=/etc/utopia/service.d/pmon.sh

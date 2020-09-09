@@ -70,15 +70,13 @@ erouter_wait ()
        retry=`expr $retry + 1`
 
        #Make sure erouter0 has an IPv4 or IPv6 address before telling NTP to listen on Interface
-       EROUTER_IPv4=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
-
+#      EROUTER_IPv4=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
+       EROUTER_IPv4=`dmcli eRT getv Device.IP.Interface.1.IPv4Address.1.IPAddress | grep value| tr -s ' ' |cut -f5 -d" "`
        if [ "x$BOX_TYPE" = "xHUB4" ]; then
            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
            if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
                EROUTER_IPv6=`ifconfig $NTPD_IPV6_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
            fi
-       else
-           EROUTER_IPv6=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
        fi
 
        if [ -n "$EROUTER_IPv4" ] || [ -n "$EROUTER_IPv6" ]; then
@@ -101,7 +99,7 @@ erouter_wait ()
        fi
     done
 	
-	eval $1=\$EROUTER_UP
+	eval $1=\$EROUTER_IPv4
 }
 
 service_start ()
@@ -144,27 +142,27 @@ service_start ()
 
    rm -rf $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC
 
-   if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
+   if [ "$SYSCFG_ntp_enabled" = "1" ]; then
        # Start NTP Config Creation with Multiple Server Setup
        echo_t "SERVICE_NTPD : Creating NTP config with New NTP Enabled" >> $NTPD_LOG_NAME
        if [ "x$SYSCFG_ntp_server1" != "x" ] && [ "x$SYSCFG_ntp_server1" != "xno_ntp_address" ]; then
-           echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
+	   echo "server $SYSCFG_ntp_server1 true minpoll 4 maxpoll 5" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server2" != "x" ] && [ "x$SYSCFG_ntp_server2" != "xno_ntp_address" ]; then
-           echo "server $SYSCFG_ntp_server2" >> $NTP_CONF_TMP
+           echo "server $SYSCFG_ntp_server2 true minpoll 4 maxpoll 5" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server3" != "x" ] && [ "x$SYSCFG_ntp_server3" != "xno_ntp_address" ]; then
-           echo "server $SYSCFG_ntp_server3" >> $NTP_CONF_TMP
+           echo "server $SYSCFG_ntp_server3 true minpoll 4 maxpoll 5" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server4" != "x" ] && [ "x$SYSCFG_ntp_server4" != "xno_ntp_address" ]; then
-           echo "server $SYSCFG_ntp_server4" >> $NTP_CONF_TMP
+           echo "server $SYSCFG_ntp_server4 true minpoll 4 maxpoll 5" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server5" != "x" ] && [ "x$SYSCFG_ntp_server5" != "xno_ntp_address" ]; then
-           echo "server $SYSCFG_ntp_server5" >> $NTP_CONF_TMP
+           echo "server $SYSCFG_ntp_server5 true minpoll 4 maxpoll 5" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
 
@@ -239,13 +237,13 @@ service_start ()
 		cp $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC  
 	fi #if [ -f "/nvram/ETHWAN_ENABLE" ];then
 
-	if [ "x$BOX_TYPE" != "xHUB4" ]  && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ] ; then
-		echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
-	fi
-	echo "restrict default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
-	echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
+#	if [ "x$BOX_TYPE" != "xHUB4" ]  && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ] ; then
+#		echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
+#	fi
+        echo "restrict -4 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
+#	echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
 	echo "restrict 127.0.0.1" >> $NTP_CONF_TMP
-	echo "restrict -6 ::1" >> $NTP_CONF_TMP
+#	echo "restrict -6 ::1" >> $NTP_CONF_TMP
 	echo "interface ignore wildcard" >> $NTP_CONF_TMP
 
    	if [ "$WAN_IP" != "" ]
@@ -287,7 +285,7 @@ service_start ()
                 killall ntpd
                 sysevent set ntp_time_sync 1
 		fi
-
+                cp $NTP_CONF_TMP $NTP_CONF
 		echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
 		systemctl start ntpd.service
 	fi

@@ -65,11 +65,10 @@
 
 #define CRC32_TABLE_SIZE 256
 #define POLYNOMIAL 0xEDB88320L
-
 #define CALCULATE_CRC32_TABLE_ENTRY(X) (((X) & 1) ? (POLYNOMIAL^ ((X) >> 1)) : ((X) >> 1))
 
 /*
- * utapi.c - 
+ * utapi.c -
  */
 
 /* WanType table */
@@ -398,9 +397,9 @@ int Utopia_GetLanSettings (UtopiaContext *ctx, lanSetting_t *lan)
     UTOPIA_GET(ctx, UtopiaValue_LAN_IPAddr, lan->ipaddr, IPADDR_SZ);
     UTOPIA_GET(ctx, UtopiaValue_LAN_Netmask, lan->netmask, IPADDR_SZ);
     /*just for USGv2*/
-    get_dhcp_wan_domain(lan->domain);
-    if(lan->domain[0]==0)
-        Utopia_Get(ctx, UtopiaValue_LAN_Domain, lan->domain, IPHOSTNAME_SZ);
+    //get_dhcp_wan_domain(lan->domain);
+   // if(lan->domain[0]==0)
+    Utopia_Get(ctx, UtopiaValue_LAN_Domain, lan->domain, IPHOSTNAME_SZ);
     Utopia_Get(ctx, UtopiaValue_LAN_IfName, lan->ifname, IFNAME_SZ);
     s_get_interface_mac(lan->ifname, lan->macaddr, MACADDR_SZ);
 
@@ -770,7 +769,6 @@ static int s_SetWANStaticSetting (UtopiaContext *ctx, wan_static_t wstatic)
 static int s_SetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo_t *wan)
 {
     int rc = SUCCESS;
-
     /*
      * PPP common settings
      */
@@ -784,6 +782,9 @@ static int s_SetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
     UTOPIA_SET(ctx, UtopiaValue_WAN_PPPConnMethod, p);
     UTOPIA_SETINT(ctx, UtopiaValue_WAN_PPPKeepAliveInterval, wan->ppp.redial_period);
     UTOPIA_SETINT(ctx, UtopiaValue_WAN_PPPIdleTime, wan->ppp.max_idle_time);
+    UTOPIA_SETINT(ctx, UtopiaValue_WAN_Max_MRU, wan->ppp.max_mru);
+    UTOPIA_SETBOOL(ctx, UtopiaValue_WAN_PPPIPCP, wan->ppp.ipcp);
+    UTOPIA_SETBOOL(ctx, UtopiaValue_WAN_PPPIPV6CP, wan->ppp.ipv6cp);
 
     if (PPPOE == wan_proto) {
         UTOPIA_SET(ctx, UtopiaValue_WAN_PPPoEServiceName, wan->ppp.service_name);
@@ -797,14 +798,12 @@ static int s_SetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
             rc = s_SetWANStaticSetting (ctx, wan->wstatic);
         }
     }
-
     return rc;
 }
 
 int Utopia_SetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
 {
     int rc = SUCCESS;
-
     if (NULL == ctx || NULL == wan_info) {
         return ERR_INVALID_ARGS;
     }
@@ -812,13 +811,13 @@ int Utopia_SetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
     /*
      * WAN Procotol
      */
+
     char *p = s_EnumToStr(g_WanTypeMap, wan_info->wan_proto);
     if (NULL == p) {
         return ERR_INVALID_WAN_TYPE;
     }
 
-    UTOPIA_SET(ctx, UtopiaValue_WAN_Proto, p);
-
+      UTOPIA_SET(ctx, UtopiaValue_WAN_Proto, p);
     /*
      * MTU
      */
@@ -841,7 +840,6 @@ int Utopia_SetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
     case L2TP:
     case TELSTRA:
         rc = s_SetWANPPPSetting (ctx, wan_info->wan_proto, wan_info);
-
         break;
     default:
         return ERR_INVALID_WAN_TYPE;
@@ -870,7 +868,9 @@ static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
      */
     Utopia_Get(ctx, UtopiaValue_WAN_ProtoUsername, wan->ppp.username, USERNAME_SZ);
     Utopia_Get(ctx, UtopiaValue_WAN_ProtoPassword, wan->ppp.password, PASSWORD_SZ);
-
+    Utopia_GetInt(ctx, UtopiaValue_WAN_Max_MRU, &wan->ppp.max_mru);
+    Utopia_GetBool(ctx, UtopiaValue_WAN_PPPIPCP, &wan->ppp.ipcp);
+    Utopia_GetBool(ctx, UtopiaValue_WAN_PPPIPV6CP, &wan->ppp.ipv6cp);
     Utopia_Get(ctx, UtopiaValue_WAN_PPPConnMethod, s_tokenbuf, sizeof(s_tokenbuf));
     wan->ppp.conn_method = s_StrToEnum(g_WanConnMap, s_tokenbuf);
 
@@ -1945,6 +1945,7 @@ int Utopia_GetStaticRouteTable (int *count, routeStatic_t **out_sroute)
 static const char *s_blockipsec =  "blockipsec";
 static const char *s_blockpptp =  "blockpptp";
 static const char *s_blockl2tp =  "blockl2tp";
+static const char *s_blockssl = "blockssl";
 
 static int setFWBlockingRule (UtopiaContext *ctx, int w2l_rule_index,
                               const char *ns, const char *name, const char *result)
@@ -1988,6 +1989,7 @@ int Utopia_SetFirewallSettings (UtopiaContext *ctx, firewall_t fw)
      UTOPIA_SETBOOL(ctx, UtopiaValue_Firewall_BlockCookies, fw.filter_web_cookies);
      UTOPIA_SETBOOL(ctx, UtopiaValue_Firewall_BlockHttp, fw.filter_http_from_wan);
      UTOPIA_SETBOOL(ctx, UtopiaValue_Firewall_BlockP2p, fw.filter_p2p_from_wan);
+     UTOPIA_SETBOOL(ctx, UtopiaValue_Firewall_BlockRFC1918, fw.filter_rfc1918_from_wan);
 
      UTOPIA_SETBOOL(ctx, UtopiaValue_Firewall_BlockPingV6, fw.filter_anon_req_v6);
      UTOPIA_SETBOOL(ctx, UtopiaValue_Firewall_BlockMulticastV6, fw.filter_multicast_v6);
@@ -2004,15 +2006,14 @@ int Utopia_SetFirewallSettings (UtopiaContext *ctx, firewall_t fw)
 
      int rule_count = 0;
 
-     if (FALSE == fw.allow_ipsec_passthru) {
-         setFWBlockingRule(ctx, ++rule_count, s_blockipsec, "ipsec", "$DROP");
-     }
-     if (FALSE == fw.allow_pptp_passthru) {
-         setFWBlockingRule(ctx, ++rule_count, s_blockpptp, "pptp", "$DROP");
-     }
-     if (FALSE == fw.allow_l2tp_passthru) {
-         setFWBlockingRule(ctx, ++rule_count, s_blockl2tp, "l2tp", "$DROP");
-     }
+         FALSE == fw.allow_ipsec_passthru? setFWBlockingRule(ctx, ++rule_count, s_blockipsec, "ipsec", "$DROP") : setFWBlockingRule(ctx, ++rule_count, s_blockipsec, "ipsec", "$ACCEPT");
+
+      FALSE == fw.allow_pptp_passthru? setFWBlockingRule(ctx, ++rule_count, s_blockpptp, "pptp", "$DROP") : setFWBlockingRule(ctx, ++rule_count, s_blockpptp, "pptp", "$ACCEPT");
+
+     FALSE == fw.allow_l2tp_passthru? setFWBlockingRule(ctx, ++rule_count, s_blockl2tp, "l2tp", "$DROP") : setFWBlockingRule(ctx, ++rule_count, s_blockl2tp, "l2tp", "$ACCEPT");
+
+      FALSE == fw.allow_ssl_passthru? setFWBlockingRule(ctx, ++rule_count, s_blockssl, "ssl", "$DROP") : setFWBlockingRule(ctx, ++rule_count, s_blockssl, "ssl", "$ACCEPT");
+
 
      UTOPIA_SETINT(ctx, UtopiaValue_Firewall_W2LWKRuleCount, rule_count);
 
@@ -2023,6 +2024,7 @@ int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw)
 {
     int rule_count;
     int i;
+    char buf[8];
     
     bzero(fw, sizeof(firewall_t));
 
@@ -2033,6 +2035,8 @@ int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw)
     Utopia_GetBool(ctx, UtopiaValue_Firewall_BlockIdent, &fw->filter_ident);
     Utopia_GetBool(ctx, UtopiaValue_Firewall_BlockP2p, &fw->filter_p2p_from_wan);
     Utopia_GetBool(ctx, UtopiaValue_Firewall_BlockHttp, &fw->filter_http_from_wan);
+    Utopia_GetBool(ctx, UtopiaValue_Firewall_BlockP2pV6, &fw->filter_rfc1918_from_wan);
+    Utopia_GetBool(ctx, UtopiaValue_Firewall_BlockRFC1918, &fw->filter_rfc1918_from_wan);
 
     Utopia_GetBool(ctx, UtopiaValue_Firewall_BlockPingV6, &fw->filter_anon_req_v6);
     Utopia_GetBool(ctx, UtopiaValue_Firewall_BlockMulticastV6, &fw->filter_multicast_v6);
@@ -2067,20 +2071,35 @@ int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw)
     fw->allow_ipsec_passthru = TRUE;
     fw->allow_pptp_passthru = TRUE;
     fw->allow_l2tp_passthru = TRUE;
+    fw->allow_ssl_passthru = TRUE;
 
-    for (i = 0; i < rule_count; i++) {
-        Utopia_GetIndexed(ctx, UtopiaValue_FW_W2LWellKnown, i + 1, s_tokenbuf, sizeof(s_tokenbuf));
-
-        if (0 == strcmp(s_tokenbuf, s_blockipsec)) {
-            fw->allow_ipsec_passthru = FALSE;
-        }
-        else if (0 == strcmp(s_tokenbuf, s_blockpptp)) {
-            fw->allow_pptp_passthru = FALSE;
-        }
-        else if (0 == strcmp(s_tokenbuf, s_blockl2tp)) {
-            fw->allow_l2tp_passthru = FALSE;
-        }
+     memset(buf, 0, sizeof(buf));
+    syscfg_get(NULL, "blockssl::result", buf, sizeof(buf));
+    if (0 == strcmp("$DROP",buf))
+    {
+           fw->allow_ssl_passthru = FALSE;
     }
+
+    memset(buf, 0, sizeof(buf));
+    syscfg_get(NULL, "blockipsec::result", buf, sizeof(buf));
+    if (0 == strcmp("$DROP",buf))
+    {
+           fw->allow_ipsec_passthru = FALSE;
+    }
+
+    memset(buf, 0, sizeof(buf));
+    syscfg_get(NULL, "blockl2tp::result", buf, sizeof(buf));
+    if (0 == strcmp("$DROP",buf))
+    {
+           fw->allow_l2tp_passthru = FALSE;
+    }
+
+    memset(buf, 0, sizeof(buf));
+    syscfg_get(NULL, "blockpptp::result", buf, sizeof(buf));
+    if (0 == strcmp("$DROP",buf))
+    {
+           fw->allow_pptp_passthru = FALSE;
+     }
 
     return SUCCESS;
 }
@@ -2088,6 +2107,55 @@ int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw)
 /*
  * Port Mapping Settings
  */
+
+/*
+ * @brief removeConntrackRules() - Function to remove conntrack rules for PortMapping & DMZ based on the reconfiguration done by the user during runtime.
+ */
+static int removeConntrackRules(protocol_t proto, int internalport, char *destination)
+{
+    char buf[256] = {0};
+    char toip[256] = {0};
+    FILE *lanClients = NULL;
+
+    if (proto == -1) { // DMZ
+        memset(buf, 0, sizeof(buf));
+        v_secure_system("conntrack -D -r %s", destination);
+        sprintf(ulog_msg, "%s: Existing conntrack rules for DMZ host %s removed due to reconfiguration.", __FUNCTION__, destination);
+        ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        return SUCCESS;
+    }
+    else { // PortForwarding
+        if (fopen("/tmp/lanClients", "r" ) == NULL) {  // connected hosts info available in '/tmp/lanClients' file
+            sprintf(ulog_msg, "%s: File /tmp/lanClients (which gives connected hosts info) not present.", __FUNCTION__);
+            ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+            return ERR_FILE_NOT_FOUND;
+        }
+        snprintf(buf, sizeof(buf), "cat /tmp/lanClients | grep -w %s | awk '{print $3}'| tail -1", destination);
+        if (!(lanClients = popen(buf, "r"))) {
+            sprintf(ulog_msg, "%s: Lan client - %s not present in /tmp/lanClients file.", __FUNCTION__, destination);
+            ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+            return ERR_ITEM_NOT_FOUND;
+        }
+        fgets(toip, sizeof(toip), lanClients);
+        toip[strlen(toip) - 1] = '\0';
+        pclose(lanClients);
+        if (proto == BOTH_TCP_UDP ) {
+            memset(buf, 0, sizeof(buf));
+            v_secure_system("conntrack -D -p tcp --reply-port-src %d -r %s", internalport, toip);
+            memset(buf, 0, sizeof(buf));
+            v_secure_system("conntrack -D -p udp --reply-port-src %d -r %s", internalport, toip);
+            sprintf(ulog_msg, "%s: Existing conntrack rules for PortForwarding client %s (for both protocols - TCP & UDP) removed due to reconfiguration.", __FUNCTION__, toip);
+            ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        }
+        else {
+            v_secure_system("conntrack -D -p %s --reply-port-src %d -r %s", ((proto == TCP)? "tcp" : "udp"), internalport, toip);
+            sprintf(ulog_msg, "%s: Existing conntrack rules for PortForwarding client %s removed due to reconfiguration.", __FUNCTION__, toip);
+            ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        }
+        return SUCCESS;
+    }
+}
+
 static int s_getportfwd_ruleid (UtopiaContext *ctx, int index)
 {
     int rule_id = -1;
@@ -2146,9 +2214,10 @@ static int s_getportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap
     Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_ExternalPort, index, &portmap->external_port);
     Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_InternalPort, index, &portmap->internal_port);
 //    Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_ToIp, index, &portmap->dest_ip);
-    Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIp, index, &portmap->dest_ip, IPADDR_SZ);
+    Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIp, index, &portmap->dest_ip, DEST_NAME_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIpV6, index, &portmap->dest_ipv6, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_SPF_Protocol, index, s_tokenbuf, sizeof(s_tokenbuf));
+    Utopia_GetIndexed(ctx, UtopiaValue_SPF_RemoteHost, index, &portmap->remotehost, IPADDR_SZ);
     portmap->protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
     
     return SUCCESS;
@@ -2164,6 +2233,7 @@ static int s_setportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap
 //    UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_SPF_ToIp, index, portmap->dest_ip);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SPF_ToIp, index,portmap->dest_ip);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SPF_ToIpV6, index,portmap->dest_ipv6);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_SPF_RemoteHost, index,portmap->remotehost);
     char *p = s_EnumToStr(g_ProtocolMap, portmap->protocol);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SPF_Protocol, index, p);
     
@@ -2180,6 +2250,7 @@ static int s_unsetportfwd (UtopiaContext *ctx, int index)
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_ToIp, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_ToIpV6, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_Protocol, index);
+    UTOPIA_UNSETINDEXED(ctx, UtopiaValue_SPF_RemoteHost, index);
 
     return SUCCESS;
 }
@@ -2198,10 +2269,10 @@ int Utopia_SetPortForwarding (UtopiaContext *ctx, int count, portFwdSingle_t *fw
         {
             return ERR_INVALID_VALUE;
         }
-        if(!IsValid_IPAddr(fwdinfo[i].dest_ip))
+       /* if(!IsValid_IPAddr(fwdinfo[i].dest_ip))
         {
             return ERR_INVALID_IP;       
-        }
+        }*/
     }
 
     Utopia_GetPortForwardingCount(ctx, &old_count);
@@ -2231,10 +2302,10 @@ int Utopia_AddPortForwarding (UtopiaContext *ctx, portFwdSingle_t *portmap)
     {
         return ERR_INVALID_VALUE;
     }
-    else if(!IsValid_IPAddr(portmap->dest_ip))
+    /*else if(!IsValid_IPAddr(portmap->dest_ip))
     {
         return ERR_INVALID_IP;       
-    }
+    }*/
     else if (portmap->rule_id == 0)
     {
         s_setportfwd_ruleid(ctx, count+1, count+1); // maintain legacy behavior for backware compatibility
@@ -2414,7 +2485,7 @@ int Utopia_SetPortForwardingByRuleId (UtopiaContext *ctx, portFwdSingle_t *fwdin
 int Utopia_DelPortForwardingByRuleId (UtopiaContext *ctx, int rule_id)
 {
     int index, count = 0;
-
+    portFwdSingle_t  singleInfo = {0};
     if (rule_id < 0)
     {
         return ERR_ITEM_NOT_FOUND;
@@ -2428,6 +2499,12 @@ int Utopia_DelPortForwardingByRuleId (UtopiaContext *ctx, int rule_id)
     }
 
     // found
+    singleInfo.rule_id = rule_id;
+    Utopia_GetPortForwardingByRuleId(ctx, &singleInfo);
+    if (removeConntrackRules(singleInfo.protocol, singleInfo.internal_port, singleInfo.dest_ip) != SUCCESS) {
+        sprintf(ulog_msg, "%s: removeConntrackRules() returned failure.", __FUNCTION__);
+        ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+    }
     s_unsetportfwd(ctx, index);
     for (;index<count;index++)
     {
@@ -3044,10 +3121,12 @@ static int s_getportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *por
     Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_InternalPort, index, &portmap->internal_port);
     Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_InternalPortRangeSize, index, &portmap->internal_port_range_size);
     //Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_ToIp, index, &portmap->dest_ip);
-    Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIp, index, &portmap->dest_ip, IPADDR_SZ);
+    Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIp, index, &portmap->dest_ip, DEST_NAME_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIpV6, index, &portmap->dest_ipv6, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_PublicIp, index, &portmap->public_ip, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_Protocol, index, s_tokenbuf, sizeof(s_tokenbuf));
+    Utopia_GetIndexed(ctx, UtopiaValue_PFR_RemoteHost, index, &portmap->remotehost, IPADDR_SZ);
+
     portmap->protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
 
     *port_range = '\0';
@@ -3088,6 +3167,7 @@ static int s_setportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *por
     UTOPIA_SETINDEXED(ctx, UtopiaValue_PFR_Protocol, index, p);
     snprintf(port_range, sizeof(port_range), "%d %d", portmap->start_port, portmap->end_port);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_PFR_ExternalPortRange, index, port_range);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_PFR_RemoteHost, index,portmap->remotehost);
     
     return SUCCESS;
 }
@@ -3104,6 +3184,7 @@ static int s_unsetportfwdrange (UtopiaContext *ctx, int index)
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_ToIpV6, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_Protocol, index);
     UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_ExternalPortRange, index);
+    UTOPIA_UNSETINDEXED(ctx, UtopiaValue_PFR_RemoteHost, index);
     
     return SUCCESS;
 }
@@ -3122,14 +3203,14 @@ int Utopia_SetPortForwardingRange (UtopiaContext *ctx, int count, portFwdRange_t
         {
             return ERR_INVALID_VALUE;
         }
-        if(!IsValid_IPAddr(fwdinfo[i].dest_ip))
+    /*    if(!IsValid_IPAddr(fwdinfo[i].dest_ip))
         {
             return ERR_INVALID_IP;       
         }
         if(fwdinfo[i].public_ip[0] != 0 && !IsValid_IPAddr(fwdinfo[i].public_ip))
         {
             return ERR_INVALID_IP;       
-        }
+        }*/
     }
 
     Utopia_GetInt(ctx, UtopiaValue_Firewall_PFRCount, &old_count);
@@ -3200,14 +3281,14 @@ int Utopia_AddPortForwardingRange (UtopiaContext *ctx, portFwdRange_t *portmap)
         s_setportfwdrange_ruleid(ctx, count+1, count+1);
         s_setportfwdrange(ctx, count+1, portmap);
     }
-    else if(!IsValid_IPAddr(portmap->dest_ip))
+    /*else if(!IsValid_IPAddr(portmap->dest_ip))
     {
         return ERR_INVALID_IP;       
     }
     else if(portmap->public_ip[0] != 0 && !IsValid_IPAddr(portmap->dest_ip))
     {
         return ERR_INVALID_IP;       
-    }
+    }*/
     else
     {
         int i, j;
@@ -3329,7 +3410,7 @@ int Utopia_SetPortForwardingRangeByRuleId (UtopiaContext *ctx, portFwdRange_t *f
 int Utopia_DelPortForwardingRangeByRuleId (UtopiaContext *ctx, int rule_id)
 {
     int index, count = 0;
-
+    portFwdRange_t  rangeInfo = {0};
     if (rule_id < 0)
     {
         return ERR_ITEM_NOT_FOUND;
@@ -3342,6 +3423,12 @@ int Utopia_DelPortForwardingRangeByRuleId (UtopiaContext *ctx, int rule_id)
     }
 
     // found
+    rangeInfo.rule_id = rule_id;
+    Utopia_GetPortForwardingRangeByRuleId(ctx, &rangeInfo);
+    if (removeConntrackRules(rangeInfo.protocol, rangeInfo.internal_port, rangeInfo.dest_ip) != SUCCESS) {
+        sprintf(ulog_msg, "%s: removeConntrackRules() returned failure.", __FUNCTION__);
+        ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+    }
     s_unsetportfwdrange(ctx, index);
     for (;index<count;index++)
     {
@@ -3858,7 +3945,13 @@ int Utopia_SetDMZSettings (UtopiaContext *ctx, dmz_t dmz)
     if (NULL == ctx) {
         return ERR_INVALID_ARGS;
     }
-
+    dmz_t tmpDmz = {0};
+    if (Utopia_GetDMZSettings(ctx, &tmpDmz) == SUCCESS) {
+        if (removeConntrackRules(-1, 0, tmpDmz.dest_ip) != SUCCESS) {
+            sprintf(ulog_msg, "%s: removeConntrackRules() returned failure.", __FUNCTION__);
+            ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        }
+    }
     UTOPIA_SETBOOL(ctx, UtopiaValue_DMZ_Enabled, dmz.enabled);
     if (TRUE == dmz.enabled) {
         if (IsValid_IPAddr(dmz.source_ip_start) && 
@@ -7553,4 +7646,242 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
      }
  
   return SUCCESS;
+}
+
+int Utopia_GetDynamicDnsClientInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins)
+{
+    return Utopia_GetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, uIndex+1, ins);
+}
+
+static int g_DynamicDnsClientCount = 0;
+
+int Utopia_GetNumberOfDynamicDnsClient(UtopiaContext *ctx, int *num)
+{
+    int rc = SUCCESS;
+
+    if(g_DynamicDnsClientCount == 0)
+    {
+        Utopia_GetInt(ctx, UtopiaValue_DynamicDnsClientCount, &g_DynamicDnsClientCount);
+    }
+
+    *num = g_DynamicDnsClientCount;
+    return rc;
+}
+
+
+int Utopia_GetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, DynamicDnsClient_t *DynamicDnsClient)
+{
+    int index = ulIndex + 1;
+    int ins_num = 0;
+
+    Utopia_GetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, index, &ins_num); DynamicDnsClient->InstanceNumber = ins_num;
+    Utopia_GetIndexedBool(ctx, UtopiaValue_DynamicDnsClient_Enable, index, &DynamicDnsClient->Enable);
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, index, DynamicDnsClient->Alias, sizeof(DynamicDnsClient->Alias));
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Username, index, DynamicDnsClient->Username, sizeof(DynamicDnsClient->Username));
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Password, index, DynamicDnsClient->Password, sizeof(DynamicDnsClient->Password));
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Server, index, DynamicDnsClient->Server, sizeof(DynamicDnsClient->Server));
+
+    return 0;
+}
+
+int Utopia_SetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, const DynamicDnsClient_t *DynamicDnsClient)
+{
+    int index = ulIndex + 1;
+    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "arddnsclient_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient, index, s_tokenbuf);
+
+    Utopia_SetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, index, DynamicDnsClient->InstanceNumber);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, index, (char*)DynamicDnsClient->Alias);
+    Utopia_SetIndexedBool(ctx, UtopiaValue_DynamicDnsClient_Enable, index, DynamicDnsClient->Enable);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Username, index, (char *)DynamicDnsClient->Username);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Password, index, (char *)DynamicDnsClient->Password);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Server, index, (char *)DynamicDnsClient->Server);
+
+    return 0;
+}
+
+int Utopia_SetDynamicDnsClientInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias)
+{
+    int index = ulIndex+1;
+    Utopia_SetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, index, ins);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, index, (char*)alias);
+    return 0;
+}
+
+int Utopia_AddDynamicDnsClient(UtopiaContext *ctx, const DynamicDnsClient_t *DynamicDnsClient)
+{
+    int index;
+
+    Utopia_GetNumberOfDynamicDnsClient(ctx, &index);
+
+    g_DynamicDnsClientCount++;
+    Utopia_SetInt(ctx, UtopiaValue_DynamicDnsClientCount, g_DynamicDnsClientCount);
+
+    Utopia_SetDynamicDnsClientByIndex(ctx, index, DynamicDnsClient);
+
+    return 0;
+}
+
+
+int Utopia_DelDynamicDnsClient(UtopiaContext *ctx, unsigned long ins)
+{
+    int count, index;
+
+    Utopia_GetNumberOfDynamicDnsClient(ctx, &count);
+    for (index = 0; index < count; index++)
+    {
+        int ins_num;
+        Utopia_GetDynamicDnsClientInsNumByIndex(ctx, index, &ins_num);
+        if (ins_num == (int)ins)
+       {
+            break;
+        }
+    }
+
+    if (index >= count)
+    {
+        return -1;
+    }
+
+    if (index < count-1)
+    {
+        for (;index < count-1; index++)
+        {
+            DynamicDnsClient_t DynamicDnsClient;
+            Utopia_GetDynamicDnsClientByIndex(ctx, index+1, &DynamicDnsClient);
+            Utopia_SetDynamicDnsClientByIndex(ctx, index, &DynamicDnsClient);
+        }
+    }
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_InsNum, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Enable, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Username, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Password, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Server, count);
+    g_DynamicDnsClientCount--;
+    Utopia_SetInt(ctx, UtopiaValue_DynamicDnsClientCount, g_DynamicDnsClientCount);
+    return 0;
+}
+
+int Utopia_GetVLANTerminationInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins)
+{
+    return Utopia_GetIndexedInt(ctx, UtopiaValue_VLANTermination_InsNum, uIndex+1, ins);
+}
+
+static int g_VLANTerminationCount = 0;
+
+int Utopia_GetNumberOfVLANTermination(UtopiaContext *ctx, int *num)
+{
+    int rc = SUCCESS;
+
+    if(g_VLANTerminationCount == 0)
+    {
+        Utopia_GetInt(ctx, UtopiaValue_VLANTerminationCount, &g_VLANTerminationCount);
+    }
+
+    *num = g_VLANTerminationCount;
+    return rc;
+}
+
+int Utopia_GetVLANTerminationByIndex(UtopiaContext *ctx, unsigned long ulIndex, vlantermination_t *vt)
+{
+    int index = ulIndex + 1;
+    int ins_num = 0;
+    Utopia_GetIndexedInt(ctx, UtopiaValue_VLANTermination_InsNum, index, &ins_num);
+    vt->InstanceNumber = ins_num;
+    Utopia_GetIndexedBool(ctx, UtopiaValue_VLANTermination_Enable, index, &vt->Enable);
+    Utopia_GetIndexed(ctx, UtopiaValue_VLANTermination_Alias, index, vt->Alias, sizeof(vt->Alias));
+    Utopia_GetIndexed(ctx,UtopiaValue_VLANTermination_Name , index, vt->Name, sizeof(vt->Name));
+    Utopia_GetIndexed(ctx,UtopiaValue_VLANTermination_LowerLayer , index, vt->LowerLayer, sizeof(vt->LowerLayer));
+    Utopia_GetIndexed(ctx,UtopiaValue_VLANTermination_EthLinkName , index, vt->EthLinkName, sizeof(vt->EthLinkName));
+    Utopia_GetIndexedInt(ctx, UtopiaValue_VLANTermination_VLANID, index,&vt->VLANID);
+    Utopia_GetIndexedInt(ctx, UtopiaValue_VLANTermination_TPID, index,&vt->TPID);
+    return 0;
+}
+int Utopia_SetVLANTerminationByIndex(UtopiaContext *ctx, unsigned long ulIndex, const vlantermination_t *vt)
+{
+    int index = ulIndex + 1;
+    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "ardvlantermination_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_VLANTermination, index, s_tokenbuf);
+
+    Utopia_SetIndexedInt(ctx, UtopiaValue_VLANTermination_InsNum, index, vt->InstanceNumber);
+    Utopia_SetIndexed(ctx, UtopiaValue_VLANTermination_Alias, index, (char*)vt->Alias);
+    Utopia_SetIndexedBool(ctx, UtopiaValue_VLANTermination_Enable, index, vt->Enable);
+    Utopia_SetIndexed(ctx, UtopiaValue_VLANTermination_Name, index, (char *)vt->Name);
+    Utopia_SetIndexed(ctx, UtopiaValue_VLANTermination_LowerLayer, index, (char *)vt->LowerLayer);
+    Utopia_SetIndexed(ctx, UtopiaValue_VLANTermination_EthLinkName, index,(char *)vt->EthLinkName);
+    Utopia_SetIndexedInt(ctx, UtopiaValue_VLANTermination_TPID, index, vt->TPID);
+    Utopia_SetIndexedInt(ctx, UtopiaValue_VLANTermination_VLANID, index, vt->VLANID);
+
+    return 0;
+}
+
+int Utopia_SetVLANTerminationInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias)
+{
+    int index = ulIndex+1;
+    Utopia_SetIndexedInt(ctx, UtopiaValue_VLANTermination_InsNum, index, ins);
+    Utopia_SetIndexed(ctx, UtopiaValue_VLANTermination_Alias, index, (char*)alias);
+    return 0;
+}
+int Utopia_AddVLANTermination(UtopiaContext *ctx, const vlantermination_t *vt)
+{
+    int index = 0;
+
+    Utopia_GetNumberOfVLANTermination(ctx, &index);
+
+    g_VLANTerminationCount++;
+    Utopia_SetInt(ctx, UtopiaValue_VLANTerminationCount, g_VLANTerminationCount);
+
+    Utopia_SetVLANTerminationByIndex(ctx, index, vt);
+
+    return 0;
+}
+
+int Utopia_DelVLANTermination(UtopiaContext *ctx, unsigned long ins)
+{
+    int count = 0, index = 0;
+
+    Utopia_GetNumberOfVLANTermination(ctx, &count);
+    for (index = 0; index < count; index++)
+    {
+        int ins_num = 0;
+        Utopia_GetVLANTerminationInsNumByIndex(ctx, index, &ins_num);
+        if (ins_num == (int)ins)
+       {
+            break;
+        }
+    }
+
+    if (index >= count)
+    {
+        return -1;
+    }
+
+    if (index < count-1)
+    {
+        for (;index < count-1; index++)
+{
+            vlantermination_t vt;
+            Utopia_GetVLANTerminationByIndex(ctx, index+1, &vt);
+            Utopia_SetVLANTerminationByIndex(ctx, index, &vt);
+        }
+    }
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_InsNum, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_Alias, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_LowerLayer, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_Name, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_TPID, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_VLANID, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_Enable, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_VLANTermination_EthLinkName, count);
+    g_VLANTerminationCount--;
+    Utopia_SetInt(ctx, UtopiaValue_VLANTerminationCount, g_VLANTerminationCount);
+
+    Utopia_GetNumberOfVLANTermination(ctx, &count);
+    for (index = 0; index < count; index++)
+    {
+        vlantermination_t vt;
+        Utopia_GetVLANTerminationByIndex(ctx, index, &vt);
+    }
+    return 0;
 }

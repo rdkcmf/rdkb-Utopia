@@ -79,6 +79,7 @@
 
 #ifndef IGD_PLATFORM_INDEPENDENT_INF_H
 #define IGD_PLATFORM_INDEPENDENT_INF_H
+#define CONFIG_VENDOR_MODEL "DT_Router"
 
 #include "pal_def.h"
 #include "igd_platform_dependent_inf.h"

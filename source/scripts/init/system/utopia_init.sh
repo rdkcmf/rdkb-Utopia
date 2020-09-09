@@ -200,6 +200,12 @@ echo_t "[utopia][init] Starting udev.."
 
 mkdir -p /tmp/cron
 
+# Starting ipv6 route monitor daemon during bootup
+/usr/bin/ipv6rtmon &
+
+# Creating the dibbler directory for its pid files in /tmp
+mkdir -p /tmp/dibbler
+
 BUTTON_THRESHOLD=15
 FACTORY_RESET_KEY=factory_reset
 FACTORY_RESET_RGWIFI=y
@@ -343,6 +349,8 @@ fi
 if [ -f $SYSCFG_NEW_BKUP_FILE ];then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
 fi
+
+touch /nvram/ETHWAN_ENABLE
 
 # Read reset duration to check if the unit was rebooted by pressing the HW reset button
 if cat /proc/P-UNIT/status | grep -q "Reset duration from shadow register"; then
@@ -625,6 +633,11 @@ fi
 ifconfig l2sd0.4090 192.168.251.1 netmask 255.255.255.0 up
 ip rule add from all iif l2sd0.4090 lookup erouter
 
+# WebPa enabling / disabling as per setting
+WEBPA_ENABLED=`syscfg get webpa_enable`
+if [ "$WEBPA_ENABLED" = "0" ]; then
+    systemctl stop parodus
+fi
 
 # RDKB-15951 : Dedicated l2sd0 vlan for Mesh Bhaul
 vconfig add l2sd0 1060
@@ -802,3 +815,31 @@ $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
 
 #echo_t "[utopia][init] started dropbear process"
 #/etc/utopia/service.d/service_sshd.sh sshd-start &
+
+echo_t "[utopia][init] Setting NAT Timeouts"
+UDP_TIMEOUT=`syscfg get UDP_TIMEOUT`
+UDP_STREAM_TIMEOUT=`syscfg get UDP_STREAM_TIMEOUT`
+ICMP_TIMEOUT=`syscfg get ICMP_TIMEOUT`
+
+if [ $UDP_TIMEOUT -lt 120 ]; then
+    UDP_TIMEOUT=120 # Default proc value for nf_conntrack_udp_timeout in Linux
+fi
+echo $UDP_TIMEOUT > /proc/sys/net/netfilter/nf_conntrack_udp_timeout
+
+if [ $UDP_STREAM_TIMEOUT -lt $UDP_TIMEOUT ]; then
+    UDP_STREAM_TIMEOUT=$(($UDP_TIMEOUT+180))  # Default proc value for nf_conntrack_udp_timeout_stream in Linux
+fi
+echo $UDP_STREAM_TIMEOUT > /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream
+
+if [ $ICMP_TIMEOUT -lt 60 ]; then
+    ICMP_TIMEOUT=60 # Default proc value for nf_conntrack_icmp_timeout in RFC
+fi
+echo $ICMP_TIMEOUT > /proc/sys/net/netfilter/nf_conntrack_icmp_timeout
+
+
+echo 1 >> /proc/sys/net/ipv6/conf/all/forwarding
+
+if [ -f /usr/bin/inotify-minidump-watcher ];then
+       mkdir -p /minidumps
+      /usr/bin/inotify-minidump-watcher /minidumps /lib/rdk/uploadDumps.sh  "\"\" 0" "*.dmp" &
+fi

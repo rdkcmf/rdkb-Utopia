@@ -52,7 +52,14 @@ LOCAL_DHCP_CONF=/tmp/dnsmasq.conf$$
 LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts$$
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options$$
 fi
-RESOLV_CONF=/etc/resolv.conf
+
+#ToDo: Only PPPoE is running over vlan. So limit the changes only for pppoe for now.
+WAN_PROTO=`syscfg get wan_proto`
+if [ "pppoe" = "$WAN_PROTO" ] ; then
+    RESOLV_CONF=/etc/resolv.dnsmasq
+else
+    RESOLV_CONF=/etc/resolv.conf
+fi
 
 # Variables needed for captive portal mode : start
 DEFAULT_RESOLV_CONF="/var/default/resolv.conf"
@@ -341,7 +348,7 @@ calculate_dhcp_range () {
       	if [ "$MASKBITS" -eq "24" ]
       	then
           	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-3`
-          	DHCP_END=253
+          	DHCP_END=254
           	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
           	echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
@@ -349,7 +356,7 @@ calculate_dhcp_range () {
       	elif [ "$MASKBITS" -eq "16" ]
       	then
         	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-2`
-          	DHCP_END="255.253"
+          	DHCP_END="255.254"
           	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
           	echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
@@ -357,7 +364,7 @@ calculate_dhcp_range () {
       	elif [ "$MASKBITS" -eq "8" ]
       	then
           	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1`
-          	DHCP_END="255.255.253"
+          	DHCP_END="255.255.254"
           	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
           	echo "DHCP_SERVER: End address to syscfg_db $DHCP_END_ADDR"
@@ -702,7 +709,7 @@ prepare_dhcp_conf () {
        syscfg set dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled 1
        syscfg set dhcp_nameserver_enabled 1
        syscfg commit
-   else
+   elif [ "$SECWEBUI_ENABLED" = "false" ]; then
        syscfg set dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled 0
        syscfg set dhcp_nameserver_enabled 0
        syscfg commit
@@ -823,7 +830,7 @@ fi
        localServerCnt=0
    fi
    isLocalHostPresent=`grep "127.0.0.1" /etc/resolv.conf`
-   if [ $localServerCnt -lt 2 ] && [ "$isLocalHostPresent" != "" ]
+   if [ "$RESOLV_CONF" != "/etc/resolv.dnsmasq" ] && [ $localServerCnt -lt 2 ] && [ "$isLocalHostPresent" != "" ]
    then
        isLocalDNSOnly=1
    fi
@@ -863,12 +870,12 @@ fi
       then
          echo "domain name is set "
       else
-         if [ "1" = "$PROPAGATE_DOM" ] ; then
-            LAN_DOMAIN=`sysevent get dhcp_domain`
-            if [ "" = "$LAN_DOMAIN" ] ; then
-               LAN_DOMAIN=`grep 'domain' /etc/resolv.conf | grep -v '#' | awk '{print $2}'`
-            fi
-         fi
+        # if [ "1" = "$PROPAGATE_DOM" ] ; then
+        #   LAN_DOMAIN=`sysevent get dhcp_domain`
+        #   if [ "" = "$LAN_DOMAIN" ] ; then
+        #      LAN_DOMAIN=`grep 'domain' /etc/resolv.conf | grep -v '#' | awk '{print $2}'`
+        #   fi
+        # fi
          if [ "" = "$LAN_DOMAIN" ] ; then
             LAN_DOMAIN=`syscfg get lan_domain`
          fi
@@ -882,6 +889,7 @@ fi
 
    #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
    echo "expand-hosts" >> $LOCAL_DHCP_CONF
+   echo "cache-size=1000" >> $LOCAL_DHCP_CONF
 
       LOG_LEVEL=`syscfg get log_level`
    if [ "" = "$LOG_LEVEL" ] ; then
@@ -923,12 +931,12 @@ fi
 	  prepare_dhcp_options_wan_dns	
    fi
    
-   if [ "x$BOX_TYPE" != "xHUB4" ]; then
-      nameserver=`grep "nameserver" $RESOLV_CONF | awk '{print $2}'|grep -v ":"|tr '\n' ','| sed -e 's/,$//'`
-      if [ "" != "$nameserver" ]; then
-         echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
-      fi
-   fi
+#   if [ "x$BOX_TYPE" != "xHUB4" ]; then
+#     nameserver=`grep "nameserver" $RESOLV_CONF | awk '{print $2}'|grep -v ":"|tr '\n' ','| sed -e 's/,$//'`
+#      if [ "" != "$nameserver" ]; then
+#         echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
+#      fi
+#   fi
    
    if [ "started" = $CURRENT_LAN_STATE ]; then
       calculate_dhcp_range $LAN_IPADDR $LAN_NETMASK

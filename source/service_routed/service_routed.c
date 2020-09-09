@@ -69,6 +69,7 @@
 #define RIPD_PID_FILE   "/var/ripd.pid"
 #define ZEBRA_CONF_FILE "/var/zebra.conf"
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
+#define ZEBRA_PROG_NAME  "zebra"
 
 #ifdef _HUB4_PRODUCT_REQ_
 #define LAN_BRIDGE "brlan0"
@@ -249,7 +250,7 @@ static int daemon_stop(const char *pid_file, const char *prog)
     return 0;
 }
 
-#ifdef _HUB4_PRODUCT_REQ_
+//#ifdef _HUB4_PRODUCT_REQ_
 /* SKYH4-1765: checks the daemon running status */
 static int is_daemon_running(const char *pid_file, const char *prog)
 {
@@ -278,7 +279,7 @@ static int is_daemon_running(const char *pid_file, const char *prog)
 
     return 0;
 }
-#endif
+//#endif
 
 #ifdef MULTILAN_FEATURE
 static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
@@ -455,11 +456,13 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char dnssl[2560] = {0};
     char prefix[64], orig_prefix[64], lan_addr[64];
     char preferred_lft[16], valid_lft[16];
+    char ipv6_wan_defrtr[16] = {0};
 #ifdef MULTILAN_FEATURE
     char dnssl_lft[16];
     unsigned int dnssllft = 0;
 #endif
-    char m_flag[16], o_flag[16];
+    char m_flag[16], o_flag[16], ra_mtu[16], pref[16];
+
     char rec[256], val[512];
     char buf[6];
     char rfCpEnable[6] = {0};
@@ -477,7 +480,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         "!password zebra\n"
         "!enable password admin\n"
         "!log stdout\n"
-        "log file /var/log/zebra.log errors\n"
+        "log file /var/log/zebra.log \n"
         "table 255\n";
     unsigned int l2_insts[4] = {0};
     unsigned int enabled_iface_num = 0;
@@ -486,7 +489,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #ifdef _HUB4_PRODUCT_REQ_
     char lan_addr_prefix[64] = {0};
 #endif
-#if defined (INTEL_PUMA7)
+    char dhcpv6_server_type[5]= {0};
+    syscfg_get(NULL, "dhcpv6s00::servertype", dhcpv6_server_type, sizeof(dhcpv6_server_type));
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
     //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     char wan_st[16] = {0};
 #endif
@@ -573,18 +578,19 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #else
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
+    sysevent_get(sefd, setok, "ipv6_wan_defrtr", ipv6_wan_defrtr, sizeof(ipv6_wan_defrtr));
 #endif
     syscfg_get(NULL, "lan_ifname", lan_if, sizeof(lan_if));
 #endif
-    if (atoi(preferred_lft) <= 0)
+/*    if (atoi(preferred_lft) <= 0)
         snprintf(preferred_lft, sizeof(preferred_lft), "300");
     if (atoi(valid_lft) <= 0)
-        snprintf(valid_lft, sizeof(valid_lft), "300");
+        snprintf(valid_lft, sizeof(valid_lft), "300");*/
 
     if ( atoi(preferred_lft) > atoi(valid_lft) )
         snprintf(preferred_lft, sizeof(preferred_lft), "%s",valid_lft);
 
-#if defined (INTEL_PUMA7)
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
     //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     sysevent_get(sefd, setok, "wan-status", wan_st, sizeof(wan_st));	
 #endif
@@ -675,21 +681,32 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #else
         if (strlen(prefix))
         {
-#if defined (INTEL_PUMA7)
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
             //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-            if (strcmp(wan_st, "stopped") == 0)
-            	fprintf(fp, "   ipv6 nd prefix %s %s 0\n", prefix, valid_lft);
+            if (strcmp(wan_st, "stopped") == 0) {
+                if (strcmp(dhcpv6_server_type, "1" ) == 0)
+                    fprintf(fp, "   ipv6 nd prefix %s %s 0 off-link no-autoconfig\n", prefix, valid_lft);
+                else
+                    fprintf(fp, "   ipv6 nd prefix %s %s 0 router-address\n", prefix, valid_lft);
+            }
             else
             {
 #endif
-            fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
-#if defined (INTEL_PUMA7)
+            if (strcmp(dhcpv6_server_type, "1" ) == 0)
+                fprintf(fp, "   ipv6 nd prefix %s %s %s off-link no-autoconfig\n", prefix, valid_lft, preferred_lft);
+            else
+                fprintf(fp, "   ipv6 nd prefix %s %s %s router-address\n", prefix, valid_lft, preferred_lft);
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
             }
 #endif
         }
 
-        if (strlen(orig_prefix))
-            fprintf(fp, "   ipv6 nd prefix %s 300 0\n", orig_prefix);
+        if (strlen(orig_prefix)) {
+            if (strcmp(dhcpv6_server_type, "1" ) == 0)
+                fprintf(fp, "   ipv6 nd prefix %s 0 0 off-link no-autoconfig\n", orig_prefix);
+            else
+                fprintf(fp, "   ipv6 nd prefix %s 0 0 router-address\n", orig_prefix);
+        }
 #endif //#if defined (INTEL_PUMA7)
 #endif//_HUB4_PRODUCT_REQ_
 #if defined (INTEL_PUMA7)
@@ -711,7 +728,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif //_HUB4_PRODUCT_REQ_
 #endif
 
-#if defined (INTEL_PUMA7)
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
         //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
         if (strcmp(wan_st, "stopped") == 0)
         	fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
@@ -721,9 +738,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #ifdef _HUB4_PRODUCT_REQ_
         fprintf(fp, "   ipv6 nd ra-lifetime 540\n");
 #else
-        fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+        if ((strcmp(wan_st, "stopped") == 0) || (strcmp(ipv6_wan_defrtr, "0") == 0) || (strcmp(preferred_lft, "0") == 0) || (strcmp(valid_lft, "0") == 0))
+            fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
+        else
+            fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
 #endif
-#if defined (INTEL_PUMA7)
+#if defined (INTEL_PUMA7) || defined (_COSA_BCM_ARM_)
         }
 #endif
 
@@ -735,11 +755,27 @@ static int gen_zebra_conf(int sefd, token_t setok)
         if (strcmp(o_flag, "1") == 0)
             fprintf(fp, "   ipv6 nd other-config-flag\n");
 
+        syscfg_get(NULL, "router_mtu", ra_mtu, sizeof(ra_mtu));
+        if (strcmp(ra_mtu, "0") != 0)
+        fprintf(fp, "   ipv6 nd mtu %s\n", ra_mtu);
+
         syscfg_get(NULL, "dhcpv6s_enable", dh6s_en, sizeof(dh6s_en));
         if (strcmp(dh6s_en, "1") == 0)
             fprintf(fp, "   ipv6 nd other-config-flag\n");
 
-        fprintf(fp, "   ipv6 nd router-preference medium\n");
+        syscfg_get(NULL, "router_preference",pref, sizeof(pref));
+        if (strcmp(pref, "1") == 0)
+       	{
+        	fprintf(fp, "   ipv6 nd router-preference high\n");
+       	}
+       	else if(strcmp(pref, "2") == 0)
+       	{
+       		fprintf(fp, "   ipv6 nd router-preference medium\n");
+       	}
+       	else
+        {
+         	fprintf(fp, "   ipv6 nd router-preference low\n");
+        }
 
 	// During captive portal no need to pass DNS
 	// Check the reponse code received from Web Service
@@ -890,6 +926,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
         		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
 #endif
 			}
+			memset(val,0,sizeof(val));
+                        syscfg_get(NULL, "lan_domain", val, sizeof(val));
+                        if(val[0] != '0')
+                            fprintf(fp, "   ipv6 nd dnssl %s infinite\n", val);
 #ifdef MULTILAN_FEATURE
                         if (atoi(valid_lft) <= 3*atoi(ra_interval))
                         {
@@ -951,8 +991,12 @@ if(!strncmp(out,"true",strlen(out)))
 		sprintf(cmd, "%s%s",token,"_ipaddr_v6");
 		memset(prefix,0,sizeof(prefix));
 		sysevent_get(sefd, setok, cmd, prefix, sizeof(prefix));
-        if (strlen(prefix) != 0)
-            fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+        if (strlen(prefix) != 0) {
+            if (strcmp(dhcpv6_server_type,"1") == 0 )
+                fprintf(fp, "   ipv6 nd prefix %s %s %s off-link no-autoconfig\n", prefix, valid_lft, preferred_lft);
+            else
+                fprintf(fp, "   ipv6 nd prefix %s %s %s router-address\n", prefix, valid_lft, preferred_lft);
+        }
 
         fprintf(fp, "   ipv6 nd ra-interval 3\n");
         fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
@@ -996,6 +1040,11 @@ if(!strncmp(out,"true",strlen(out)))
                         // Modifying rdnss value to fix the zebra config.
                         fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
                         }
+
+                        memset(out,0,sizeof(out));
+                        syscfg_get(NULL, "lan_domain", out, sizeof(out));
+                        if(out[0] != '0')
+                            fprintf(fp, "   ipv6 nd dnssl %s infinite\n", out);
          }
 
 	fprintf(fp, "interface %s\n", token);
@@ -1065,19 +1114,18 @@ static int radv_start(struct serv_routed *sr)
         return -1;
     }
 
-#ifdef _HUB4_PRODUCT_REQ_
     /*
-     * SKYH4-1765: we do not want to restart the zebra if it is already running,
+     * we do not want to restart the zebra if it is already running,
      * since restarting zebra will leads clear the current zebra counter.
-     * So we send SIGUSR1 to zebra to notify 'read the updated zebra.conf'
+     * So we send SIGUSR1 to zebra to 'read the updated zebra.conf'
      */
-    int pid = is_daemon_running(ZEBRA_PID_FILE, "zebra");
+    int pid = is_daemon_running(ZEBRA_PID_FILE, ZEBRA_PROG_NAME);
     if(pid)
     {
         kill(pid, SIGUSR1);
         return 0;
     }
-#endif
+
     daemon_stop(ZEBRA_PID_FILE, "zebra");
 
 #if defined(_COSA_FOR_BCI_)
@@ -1095,16 +1143,20 @@ static int radv_start(struct serv_routed *sr)
 
 static int radv_stop(struct serv_routed *sr)
 {
-#ifdef _HUB4_PRODUCT_REQ_
+    char ra_en[16] = {0};
+    syscfg_get(NULL, "router_adv_enable", ra_en, sizeof(ra_en));
+    if (strcmp(ra_en, "0") == 0) {
+        // stopping zebra daemon when router adv is disabled via data model
+        return daemon_stop(ZEBRA_PID_FILE, "zebra");
+    }
     /*
-     * SKYH4-1765: we do not want to restart the zebra if it is already running,
+     * we do not want to restart the zebra if it is already running,
      * since restarting zebra will clear the current zebra counter.
      */
-    if(is_daemon_running(ZEBRA_PID_FILE, "zebra"))
+    else if(is_daemon_running(ZEBRA_PID_FILE, ZEBRA_PROG_NAME))
     {
         return 0;
     }
-#endif
     return daemon_stop(ZEBRA_PID_FILE, "zebra");
 }
 

@@ -165,11 +165,16 @@ int getIfName(char *ifName, char *port)
 
 //TODO Move these to a common lib
 static int nethelper_bridgeCreate(char* brname) {
-    
-    char cmdBuff[80];
-    snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s; ifconfig %s up", brname, brname);
-    MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff)
-    system(cmdBuff);
+
+   if (strcmp(brname,"brlan0") == 0) {
+        v_secure_system("/usr/sbin/lan_macassign.sh");
+    }
+    else {
+        char cmdBuff[80];
+        snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s; ifconfig %s up", brname, brname);
+        MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff)
+        v_secure_system(cmdBuff);
+    }
 }
 #ifdef MULTILAN_FEATURE
 /* nethelper_bridgeCreateUniqueMac
@@ -445,7 +450,7 @@ int multinet_Sync(PL2Net network, PMember members, int numMembers){
     memset(live_members,0, sizeof(live_members));
     memset(interfaceBuf,0, sizeof(interfaceBuf));
     memset(ifTypeBuf,0, sizeof(ifTypeBuf));
-    
+
     for (i = 0; i < MAX_MEMBERS; ++i) {
         live_members[i].interface = interfaceBuf + i;
         interfaceBuf[i].type = ifTypeBuf +i;

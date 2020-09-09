@@ -123,8 +123,18 @@ int Utopia_GetUserCfg(UtopiaContext *ctx, void *pUserCfg)
     if(0 == pUserCfg_t->InstanceNumber)
         return ERR_INVALID_ARGS;
 
-    ulIndex = g_IndexMapUser[pUserCfg_t->InstanceNumber];
-    Utopia_GetUserByIndex(ctx,ulIndex,pUserCfg_t); 
+       char buffer[100] = {0};
+       FILE *p;
+       p = popen("syscfg get user_insNum_1","r");
+       fgets(buffer,sizeof(buffer),p);
+       pclose(p);
+       if(g_IndexMapUser[pUserCfg_t->InstanceNumber] ==0 && pUserCfg_t->InstanceNumber != (atoi(buffer)))
+               {
+                       return SUCCESS;
+               }
+       ulIndex= g_IndexMapUser[pUserCfg_t->InstanceNumber];
+
+       Utopia_GetUserByIndex(ctx,ulIndex,pUserCfg_t);
     return SUCCESS;
 }
 
@@ -266,7 +276,7 @@ int Utopia_GetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
 #endif
 
     Utopia_GetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1),pUserCfg_t->Username,STR_SZ);
-    Utopia_GetIndexed(ctx,UtopiaValue_Password,(ulIndex + 1),pUserCfg_t->Password,STR_SZ);
+    Utopia_GetIndexed(ctx,UtopiaValue_Password,(ulIndex + 1),pUserCfg_t->Password,PWD_SZ);
     Utopia_GetIndexed(ctx,UtopiaValue_User_Language,(ulIndex + 1),pUserCfg_t->Language,sizeof(pUserCfg_t->Language));
 
     Utopia_GetIndexedInt(ctx,UtopiaValue_User_Enabled,(ulIndex + 1),&iVal);
@@ -304,9 +314,9 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
 	}
     }
     Utopia_SetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1), pUserCfg_t->Username);
-    if(strcmp(pUserCfg_t->Username, "admin") != 0){
+   // if(strcmp(pUserCfg_t->Username, "admin") != 0){
         Utopia_SetIndexed(ctx,UtopiaValue_Password,(ulIndex + 1),pUserCfg_t->Password);
-    }
+   // }
     Utopia_SetIndexed(ctx,UtopiaValue_User_Language,(ulIndex + 1),pUserCfg_t->Language);
 
     iVal = (FALSE == pUserCfg_t->bEnabled) ? 0 : 1;

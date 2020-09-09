@@ -310,15 +310,18 @@ static struct
     { Utopia_Type_Config, Utopia_Event__NONE__,            Utopia_Static__NONE__, Utopia_For__NONE__, 1, "nameserver1",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_NameServer1 */
     { Utopia_Type_Config, Utopia_Event__NONE__,            Utopia_Static__NONE__, Utopia_For__NONE__, 1, "nameserver2",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_NameServer2 */
     { Utopia_Type_Config, Utopia_Event__NONE__,            Utopia_Static__NONE__, Utopia_For__NONE__, 1, "nameserver3",                    UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_NameServer3 */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_proto_username",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoUsername */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_proto_password",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoPassword */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ppp_conn_method",                UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPConnMethod */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ppp_keepalive_interval",         UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPKeepAliveInterval */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ppp_idle_time",                  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPIdleTime */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_proto_remote_name",          UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoRemoteName */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_proto_username",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoUsername */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_proto_password",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoPassword */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ppp_conn_method",                UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPConnMethod */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ppp_keepalive_interval",         UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPKeepAliveInterval */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ppp_idle_time",                  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPIdleTime */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "MaxMRUSize",                  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_Max_MRU */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "IPCPEn",                  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPIPCP  */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "IPV6CPEn",                  UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPIPV6CP  */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_proto_remote_name",          UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoRemoteName */
     { Utopia_Type_Config, Utopia_Event__NONE__,            Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_domain",                     UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoAuthDomain */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "pppoe_service_name",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPoEServiceName */
-    { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "pppoe_access_concentrator_name", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPoEAccessConcentratorName */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "pppoe_service_name",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPoEServiceName */
+    { Utopia_Type_Config, Utopia_Event__NONE__,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "pppoe_access_concentrator_name", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPPoEAccessConcentratorName */
     { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "wan_proto_server_address",       UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_ProtoServerAddress */
     { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "pptp_address_static",            UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_PPTPAddressStatic */
     { Utopia_Type_Config, Utopia_Event_WAN_Restart,        Utopia_Static__NONE__, Utopia_For__NONE__, 1, "l2tp_address_static",            UtopiaValue__UNKNOWN__ }, /* UtopiaValue_WAN_L2TPAddressStatic */
@@ -373,6 +376,7 @@ static struct
     { Utopia_Type_Config, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "block_httpv6",                     UtopiaValue__UNKNOWN__ }, /* UtopiaValue_Firewall_BlockHttpV6 */
     { Utopia_Type_Config, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "block_p2p",                      UtopiaValue__UNKNOWN__ }, /* UtopiaValue_Firewall_BlockP2p */
     { Utopia_Type_Config, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "block_p2pv6",                      UtopiaValue__UNKNOWN__ }, /* UtopiaValue_Firewall_BlockP2pV6 */
+    { Utopia_Type_Config, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "block_rfc1918", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_Firewall_BlockRFC1918 */
     { Utopia_Type_Config, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "firewall_level", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_Firewall_Level */
     { Utopia_Type_Config, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "firewall_levelv6", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_Firewall_LevelV6 */
     { Utopia_Type_Config, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "firewall_true_static_ip_enable", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_Firewall_TrueStaticIpEnable */
@@ -434,6 +438,7 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "internal_port",                    UtopiaValue_SinglePortForward },    /* UtopiaValue_SPF_InternalPort */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "to_ip",                            UtopiaValue_SinglePortForward },    /* UtopiaValue_SPF_ToIp */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "to_ipv6",                          UtopiaValue_SinglePortForward },    /* UtopiaValue_SPF_ToIpV6 */
+    { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "remote_host",                            UtopiaValue_SinglePortForward },    /* UtopiaValue_SPF_RemoteHost */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "PortRangeForward_%d",              UtopiaValue__UNKNOWN__ },           /* UtopiaValue_PortRangeForward */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "enabled",                          UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_Enabled */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "name",                             UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_Name */
@@ -444,6 +449,7 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "to_ip",                            UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_ToIp */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "public_ip",                        UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_PublicIp */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "to_ipv6",                          UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_ToIpV6 */
+    { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "remote_host",                            UtopiaValue_PortRangeForward },     /* UtopiaValue_PFR_RemoteHost */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "QoSPolicy_%d",                     UtopiaValue__UNKNOWN__ },           /* UtopiaValue_QoSPolicy */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "QoSDefinedPolicy_%d",              UtopiaValue__UNKNOWN__ },           /* UtopiaValue_QoSDefinedPolicy */
     { Utopia_Type_IndexedConfig, Utopia_Event_Firewall_Restart,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "name",                             UtopiaValue_QoSDefinedPolicy },     /* UtopiaValue_QDP_Name */
@@ -737,6 +743,26 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "end_time",                  UtopiaValue_ParentalControl_ManagedDevice }, /* UtopiaValue_ParentalControl_ManagedDevice_EndTime */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "days",                      UtopiaValue_ParentalControl_ManagedDevice }, /* UtopiaValue_ParentalControl_ManagedDevice_Days */
     /* End of parental control */
+    { Utopia_Type_Config,        Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__,   1, "DynamicDnsClientCount", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_DynamicDnsClientCount */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "DynamicDnsClient_%d", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_DynamicDnsClient */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "ins_num",             UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_InsNum */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "alias",               UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Alias */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "enable",              UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Enable */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "Username",            UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Username */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "Password",            UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Password */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "Server",            UtopiaValue_DynamicDnsClient }, /* UtopiaValue_DynamicDnsClient_Server */
+    /* End of Dynamic DNS */
+    { Utopia_Type_Config,        Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__,   1, "VTCount", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_VLANTerminationCount */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "vt_%d", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_VLANTermination */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_ins_num",             UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_InsNum */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_alias",               UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_Alias */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_lowerlayer",              UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_LowerLayer */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_name",            UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_Name */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_tpid",            UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_TPID */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_vlanid",              UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_VLANID */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_enable",              UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_Enable */
+     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "vt_ethlinkname",              UtopiaValue_VLANTermination }, /* UtopiaValue_VLANTermination_EthLinkName */
+    /* End of VLANTermination */
     { Utopia_Type_Config, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "lan_clients_count", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_USGv2_Lan_Clients_Count */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "lan_clients_%d", UtopiaValue__UNKNOWN__ },  /* UtopiaValue_USGv2_Lan_Clients */
     { Utopia_Type_NamedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Name_For_Key, 1, "lan_clients_mac_%s", UtopiaValue__UNKNOWN__ }, /* UtopiaValue_USGv2_Lan_Clients_Mac */

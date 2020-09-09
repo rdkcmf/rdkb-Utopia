@@ -56,6 +56,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <sys/types.h>
+#include <stdbool.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "sysevent/sysevent.h"
@@ -63,6 +64,7 @@
 #include "util.h"
 #include "errno.h"
 #include <sys/sysinfo.h>
+#include <stdbool.h>
 #include <time.h>
 #include <sys/time.h>
 #if PUMA6_OR_NEWER_SOC_TYPE
@@ -94,11 +96,20 @@ char DHCPC_PID_FILE[100]="";
 //this value is from erouter0 dhcp client(5*127+10*4)
 #define SW_PROT_TIMO   675 
 #define RESOLV_CONF_FILE  "/etc/resolv.conf"
-
+#define RESOLV_CONF_PPP "/etc/ppp/resolve.conf"
+#define RESOLV_CONF_PPP_RUN "/run/ppp/resolve.conf"
+#define ROUTER_ADV_PPP "/tmp/ppp_ra.conf"
+#define PPP_OPTIONS "/etc/ppp/options"
 #define WAN_STARTED "/var/wan_started"
+
+#define DUID_CLIENT "/tmp/dibbler/client-duid"
+#define DUID_TYPE "00:03:"    //duid-type duid-ll 3
+#define HW_TYPE "00:01:"     //hw type is always 1
+
 enum wan_prot {
     WAN_PROT_DHCP,
     WAN_PROT_STATIC,
+    WAN_PROT_PPPOE,
 };
 
 /*
@@ -146,6 +157,11 @@ static int wan_dhcp_renew(struct serv_wan *sw);
 static int wan_static_start(struct serv_wan *sw);
 static int wan_static_stop(struct serv_wan *sw);
 
+static int wan_pppoe_start(struct serv_wan *sw);
+static int wan_pppoe_stop(struct serv_wan *sw);
+static int wan_pppoe_restart(struct serv_wan *sw);
+static int wan_pppoe_start_v6(struct serv_wan *sw);
+
 #if defined(_PLATFORM_IPQ_)
 static int wan_static_start_v6(struct serv_wan *sw);
 static int wan_static_stop_v6(struct serv_wan *sw);
@@ -166,6 +182,10 @@ static struct cmd_op cmd_ops[] = {
     {"dhcp-restart",wan_dhcp_restart, "restart DHCP procedure"},
     {"dhcp-release",wan_dhcp_release,"trigger DHCP release"},
     {"dhcp-renew",  wan_dhcp_renew, "trigger DHCP renew"},
+    /*pppoe specific*/
+    {"pppoe-start", wan_pppoe_start, "PPPOE - PPP session establish"},
+    {"pppoe-stop", wan_pppoe_stop, "PPPOE - Termiate PPP session"},
+    {"pppoe-restart", wan_pppoe_restart, "PPPOE - restart PPP session "},
 };
 
 static int Getdhcpcpidfile(char *pidfile,int size )
@@ -191,7 +211,77 @@ static int Getdhcpcpidfile(char *pidfile,int size )
 #endif
 return 0;
 }
+static int pppoe_isRunning()
+{
+    int retval = -1;
+    FILE *fp = NULL;
+    char pppoe_status[128] = {0};
+    fp = popen("/usr/sbin/pppoe-status", "r");
+    if (fp == NULL) {
+    printf("pppoe-status command failed to run\n" );
+    return -1;
+    }
+    if(fgets(pppoe_status, sizeof(pppoe_status), fp) != NULL) {
+        if(strstr (pppoe_status, "Link is up")){
+            printf("pppoe link is up");
+            retval =1;
+        }
+        else if (strstr (pppoe_status, "Link is down")){
+            printf("pppoe link is down");
+            retval = 0;
+       }
+        else
+            printf("failed to take the pppoe_status");
+    }
+    pclose(fp);
+    return retval;
+}
 
+static int pppoe_start(struct serv_wan *sw)
+{
+    int ret=0;
+    int retry=10;
+    char l_cErouter_Mode[16] = {0}, l_cWan_if_name[16] = {0};
+    int l_iErouter_Mode, err;
+
+    syscfg_get(NULL, "last_erouter_mode", l_cErouter_Mode, sizeof(l_cErouter_Mode));
+    l_iErouter_Mode = atoi(l_cErouter_Mode);
+
+    syscfg_get(NULL, "wan_physical_ifname", l_cWan_if_name, sizeof(l_cWan_if_name));
+    //if the syscfg is not giving any value hardcode it to erouter0
+    //TODO: TE - need to implement PPPoE error condition check - "if already started" , pppoe.conf file exist ...etc
+    if (0 == l_cWan_if_name[0])
+    {
+       strncpy(l_cWan_if_name, "erouter0", 8);
+       l_cWan_if_name[8] = '\0';
+    }
+    if (sw->rtmod == WAN_RTMOD_IPV4 || sw->rtmod == WAN_RTMOD_DS)
+    {
+      v_secure_system("/etc/utopia/service.d/service_wan/pppoe_config.sh & ");
+      sleep(3);
+      v_secure_system("/usr/sbin/pppoe-start & ");
+       while(pppoe_isRunning()!=1)
+       {
+           retry--;
+           if(retry==0)
+           {
+               printf("failed to establish pppoe connection");
+	       ret = -1;
+               break;
+           }
+           sleep(1);
+       }
+
+    }
+    return ret;
+}
+
+static int pppoe_stop(const char *ifname)
+{
+    //TODO: TE - revisit rp-pppoe if it handles all termination. if not handle it.
+    v_secure_system("/usr/sbin/pppoe-stop ");
+    return 0;
+}
 static int dhcp_stop(const char *ifname)
 {
     FILE *fp;
@@ -411,11 +501,11 @@ static int dhcp_start(struct serv_wan *sw)
          err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
     #else
      {
-        err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+        err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 121 -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
      }
     #endif
 #else
-        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 121 -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
 #endif
 
     }
@@ -452,7 +542,7 @@ static int route_config(const char *ifname)
 
 static int route_deconfig(const char *ifname)
 {
-#if defined(_PLATFORM_IPQ_)
+#if defined(_PLATFORM_IPQ_) || defined(_PLATFORM_RASPBERRYPI_)
     if (v_secure_system("ip rule del iif %s lookup all_lans && "
                 "ip rule del oif %s lookup erouter ",
                 ifname, ifname) != 0) {
@@ -527,6 +617,33 @@ void get_dateanduptime(char *buffer, int *uptime)
     *uptime= info.uptime;
 }
 
+static int Enable_CaptivePortal(bool enable)
+{
+
+    if( enable == true )
+    {
+        if ( syscfg_set(NULL, "CaptivePortal_Enable", "true") != 0 )
+        {
+              fprintf(stderr, "%s: syscfg_set failed for parameter CaptivePortal_Enable\n", __FUNCTION__);
+        }
+        v_secure_system("/etc/redirect_url.sh");
+   }
+    else
+    {
+        if ( syscfg_set(NULL, "CaptivePortal_Enable", "false") != 0 )
+        {
+              fprintf(stderr, "%s: syscfg_set failed for parameter CaptivePortal_Enable\n", __FUNCTION__);
+        }
+       v_secure_system("/etc/revert_redirect.sh");
+    }
+
+    if (syscfg_commit() != 0)
+    {
+        fprintf(stderr, "%s: syscfg_set failed for syscfg_commit\n", __FUNCTION__);
+    }
+
+}
+
 static int wan_start(struct serv_wan *sw)
 {
     char status[16];
@@ -556,6 +673,46 @@ static int wan_start(struct serv_wan *sw)
 
     /* do start */
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "starting", 0);
+
+    /* dibbler client-duid file generation*/
+    ret = checkFileExists(DUID_CLIENT);
+    if(ret == 0)
+    {
+        char Duid[64] = {0},Wan_ifname[16] = {0}, file_path[32]={0};
+        char MAC[64] = {0};
+        FILE *fp,*mac_fp;
+
+       syscfg_get(NULL, "wan_physical_ifname", Wan_ifname, sizeof(Wan_ifname));
+
+       if(Wan_ifname == NULL){
+            v_secure_system("logger -p local7.notice iface not available");
+       }
+
+       sprintf(file_path,"/sys/class/net/%s/address",Wan_ifname);
+
+       mac_fp = fopen(file_path,"r");
+
+        if(mac_fp == NULL){
+          v_secure_system("logger -p local7.notice MAC address file not exist for iface mentioned");
+        }
+        else{
+            fread(MAC,sizeof(MAC),1,mac_fp);
+            fclose(mac_fp);
+        }
+
+        fp = fopen(DUID_CLIENT,"w");
+
+       if(fp){
+               sprintf(Duid,DUID_TYPE);
+               sprintf(Duid+6,HW_TYPE);
+               sprintf(Duid+12,MAC);
+               fprintf(fp,"%s",Duid);
+               fclose(fp);
+       }
+    }
+ else{
+      v_secure_system("logger -p local7.notice dibbler client-duid file exist");
+    }
 
 #if defined(_PLATFORM_IPQ_)
     /*
@@ -609,6 +766,13 @@ static int wan_start(struct serv_wan *sw)
                        return -1;
                }
                break;
+       case WAN_PROT_PPPOE:
+               if (wan_pppoe_start_v6(sw) != 0) {
+                    fprintf(stderr, "%s: wan_pppoe_start error\n", __FUNCTION__);
+                    return -1;
+               }
+              break;
+
        default:
                fprintf(stderr, "%s: unknow wan protocol\n", __FUNCTION__);
        }
@@ -655,6 +819,8 @@ static int wan_start(struct serv_wan *sw)
            sysevent_set(sw->sefd, sw->setok, "last_wan_proto", "dhcp", 0);
     }else if (sw->prot == WAN_PROT_STATIC) {
            sysevent_set(sw->sefd, sw->setok, "last_wan_proto", "static", 0);
+    }else if (sw->prot == WAN_PROT_PPPOE) {
+           sysevent_set(sw->sefd, sw->setok, "last_wan_proto", "pppoe", 0);
     }
 #endif
 done:
@@ -705,10 +871,11 @@ static int wan_stop(struct serv_wan *sw)
 {
     char val[64];
     char status[16];
+    char buff[16] = {0};
 #if defined(_PLATFORM_IPQ_)
     char buf[16] = {0};
 #endif
-
+    syscfg_get(NULL, "wan_proto", buff, sizeof(buff));
     /* state check */
     sysevent_get(sw->sefd, sw->setok, "wan_service-status", status, sizeof(status));
     if (strcmp(status, "stopping") == 0 || strcmp(status, "stopped") == 0) {
@@ -718,7 +885,19 @@ static int wan_stop(struct serv_wan *sw)
         fprintf(stderr, "%s: cannot start in status %s !\n", __FUNCTION__, status);
         return -1;
     }
- 
+   else if (strcasecmp(buff, "pppoe") == 0) {
+        /*In PPPoE mode we will never stop the pppd deamon.
+
+          We are moving the "wan_service-status" stopped in ppp ip-down script.
+          But that works for scenarios when PPPoE server is stopped.
+          For scenarios when wan cable is disconnected, erouter0 will be down after
+          some time (when PADT pkt is received from server) but gwprovapp checks
+          for wire disconnection and sends wan-stop before erouter0 is down.
+          So we have added this return to handle those scearios.
+        */
+        return 0;
+    }
+
     /* do stop */
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopping", 0);
 
@@ -794,13 +973,13 @@ static int wan_stop(struct serv_wan *sw)
         }
     }
 
-#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_)
+#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_) && !defined(_PLATFORM_RASPBERRYPI_)
     if (wan_iface_down(sw) != 0) {
         fprintf(stderr, "%s: wan_iface_down error\n", __FUNCTION__);
         sysevent_set(sw->sefd, sw->setok, "wan_service-status", "error", 0);
         return -1;
     }
-#endif  /*_PLATFORM_IPQ_ && _WAN_MANAGER_ENABLED_*/
+#endif  /*_PLATFORM_IPQ_ && _WAN_MANAGER_ENABLED_ && _PLATFORM_RASPBERRYPI_*/
 
     system("rm -rf /tmp/ipv4_renew_dnsserver_restart");
     system("rm -rf /tmp/ipv6_renew_dnsserver_restart");
@@ -872,7 +1051,7 @@ static int wan_iface_up(struct serv_wan *sw)
             sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", sw->ifname, "1");
             sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra", sw->ifname, "2");
             sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra_defrtr", sw->ifname, "1");
-            sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra_pinfo", sw->ifname, "0");
+            sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra_pinfo", sw->ifname, "1");
             sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", sw->ifname, "1");
             sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", sw->ifname, "0");
         } else {
@@ -886,8 +1065,9 @@ static int wan_iface_up(struct serv_wan *sw)
         sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/forwarding", "mta0", "0");
         break;
     default:
-        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", sw->ifname, "1");
-        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", sw->ifname, "0");
+        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra", sw->ifname, "2");
+        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", sw->ifname, "0");
+        sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", sw->ifname, "1");
         break;
     }
 #endif
@@ -970,6 +1150,14 @@ static int wan_addr_set(struct serv_wan *sw)
         }
 
         break;
+    case WAN_PROT_PPPOE:
+        if (wan_pppoe_start(sw) != 0) {
+	    sysevent_set(sw->sefd, sw->setok, "wan-status", "stopped", 0);
+            fprintf(stderr, "%s: wan_pppoe_start error\n", __FUNCTION__);
+            return -1;
+        }
+
+        break;
     default:
         fprintf(stderr, "%s: unknow wan protocol\n", __FUNCTION__);
         return -1;
@@ -1025,6 +1213,20 @@ static int wan_addr_set(struct serv_wan *sw)
     if (strlen(val)){
         printf("Setting current_wan_ipaddr  %s\n",val);     
         sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", val, 0);
+        // Shared Address Space address range 100.64.0.0/10 as per IANA for Carrier Grade NAT
+        unsigned long cgnat_addr = 0xffffffff, cgnat_mask = 0xffffffff;
+        inet_pton(AF_INET, "100.64.0.0", &cgnat_addr);
+        inet_pton(AF_INET, "255.192.0.0", &cgnat_mask);
+        unsigned long wan_address = 0xffffffff;
+        inet_pton(AF_INET, val, &wan_address);
+        if((wan_address & cgnat_mask) == (cgnat_addr & cgnat_mask)) {
+            if( syscfg_set(NULL, "UseSharedCGNAddress", "true") != 0 && syscfg_commit() != 0)
+                fprintf(stderr, "syscfg_set failed for parameter UseSharedCGNAddress \n");
+        }
+        else {
+            if( syscfg_set(NULL, "UseSharedCGNAddress", "false") != 0 && syscfg_commit() != 0)
+                fprintf(stderr, "syscfg_set failed for parameter UseSharedCGNAddress \n");
+        }
     }
     else
     {
@@ -1131,6 +1333,7 @@ static int wan_addr_set(struct serv_wan *sw)
     sysevent_set(sw->sefd, sw->setok, "firewall_flush_conntrack", "1", 0);
 
     sysevent_set(sw->sefd, sw->setok, "wan-status", "started", 0);
+    Enable_CaptivePortal(false);
 /*XB6 brlan0 comes up earlier so ned to find the way to restart the firewall
  IPv6 not yet supported so we can't restart in service routed  because of missing zebra.conf*/
 #if  defined(INTEL_PUMA7) || defined(_COSA_BCM_ARM_) || defined(_PLATFORM_IPQ_)
@@ -1188,6 +1391,14 @@ static int wan_addr_unset(struct serv_wan *sw)
         }
 
         break;
+    case WAN_PROT_PPPOE:
+        if (wan_pppoe_stop(sw) != 0) {
+            fprintf(stderr, "%s: wan_pppoe_stop error\n", __FUNCTION__);
+            return -1;
+        }
+
+        break;
+
     default:
         fprintf(stderr, "%s: unknow wan protocol\n", __FUNCTION__);
         return -1;
@@ -1211,6 +1422,7 @@ static int wan_addr_unset(struct serv_wan *sw)
     vsystem("killall -q dns_sync.sh");
 #endif
     sysevent_set(sw->sefd, sw->setok, "wan-status", "stopped", 0);
+    Enable_CaptivePortal(true);
     return 0;
 }
 
@@ -1287,6 +1499,38 @@ static int wan_dhcp_restart(struct serv_wan *sw)
         fprintf(stderr, "%s: dhcp_stop error\n", __FUNCTION__);
 
     return dhcp_start(sw);
+}
+static int wan_pppoe_start(struct serv_wan *sw)
+{
+    int ret = 0;
+
+    if( 1 != pppoe_isRunning())
+    {
+        if ((ret=pppoe_start(sw)) !=0 )
+            return ret;
+    }
+
+    v_secure_system("sysevent set current_ipv4_link_state up");
+    v_secure_system("sysevent set ipv4_wan_ipaddr `ifconfig erouter0 \
+                   | grep \"inet addr\" | cut -d':' -f2 | awk '{print$1}'`");
+    v_secure_system("sysevent set ipv4_wan_subnet `ifconfig erouter0 \
+                   | grep \"inet addr\" | cut -d':' -f4 | awk '{print$1}'`");
+
+    if (access(RESOLV_CONF_PPP_RUN, F_OK) == 0)
+        vsystem("cp %s %s ",RESOLV_CONF_PPP_RUN,RESOLV_CONF_PPP);
+    return ret;
+}
+static int wan_pppoe_stop(struct serv_wan *sw)
+{
+    return pppoe_stop(sw->ifname);
+}
+
+static int wan_pppoe_restart(struct serv_wan *sw)
+{
+    if (pppoe_stop(sw->ifname) != 0)
+        fprintf(stderr, "%s: pppoe_stop error\n", __FUNCTION__);
+
+    return pppoe_start(sw);
 }
 
 static int wan_dhcp_release(struct serv_wan *sw)
@@ -1446,6 +1690,35 @@ static int wan_static_stop(struct serv_wan *sw)
     return 0;
 }
 
+/* set '+ipv6' ppp options in rp-pppoe client at "/etc/ppp/options"  */
+static int wan_pppoe_start_v6(struct serv_wan *sw)
+{
+    FILE *fd;
+    char line[32];
+    bool found = false;
+
+    fd=fopen(PPP_OPTIONS,"r");
+    if(fd<0) {
+      fprintf(stderr, "%s: %s - %s  !\n", __FUNCTION__,PPP_OPTIONS,strerror(errno));
+       return -1 ;
+    }
+
+    memset(line, 0 ,sizeof(line));
+    while(fgets(line,sizeof(line), fd) != NULL) {
+       if(line[0] == ' ' || line[0] == '\n')
+           continue;
+        if(strstr(line, "+ipv6") != NULL) {
+           found = true;
+           break;
+        }
+    }
+    close(fd);
+    if(!found)
+        vsystem("echo +ipv6 >>  %s",PPP_OPTIONS);
+
+    return 0;
+}
+
 #if defined(_PLATFORM_IPQ_)
 static int wan_static_start_v6(struct serv_wan *sw)
 {
@@ -1516,7 +1789,7 @@ static int serv_wan_init(struct serv_wan *sw, const char *ifname, const char *pr
     if (ifname)
         snprintf(sw->ifname, sizeof(sw->ifname), "%s", ifname);
     else
-        syscfg_get(NULL, "wan_physical_ifname", sw->ifname, sizeof(sw->ifname));
+        syscfg_get(NULL, "wan_ifname", sw->ifname, sizeof(sw->ifname));
 
     if (!strlen(sw->ifname)) {
         fprintf(stderr, "%s: fail to get ifname\n", __FUNCTION__);
@@ -1534,6 +1807,8 @@ static int serv_wan_init(struct serv_wan *sw, const char *ifname, const char *pr
         sw->prot = WAN_PROT_DHCP;
     else if (strcasecmp(buf, "static") == 0)
         sw->prot = WAN_PROT_STATIC;
+    else if (strcasecmp(buf, "pppoe") == 0)
+        sw->prot = WAN_PROT_PPPOE;
     else {
         fprintf(stderr, "%s: fail to get wan protocol\n", __FUNCTION__);
         return -1;
@@ -1578,12 +1853,76 @@ static void usage(void)
         fprintf(stderr, "    %-20s%s\n", cmd_ops[i].cmd, cmd_ops[i].desc);
     fprintf(stderr, "PROTOCOLS\n");
         fprintf(stderr, "    dhcp, static\n");
+   fprintf(stderr, "    dhcp, static and pppoe \n");
 }
+
+void vlan_initialize()
+{
+
+    while (true)
+    {
+        if( access( "/tmp/pam_initialized", F_OK ) != -1 ) {
+            break;
+        }
+        else {
+            sleep(1);
+        }
+    }
+
+    v_secure_system("/etc/vlan_init.sh");
+}
+
+void vlan_wan_start()
+{
+    unsigned int idx;
+    char baseIfc[64] = {0};
+    char buff[64] = {0};
+    unsigned int numVlanIfc = 0;
+
+    syscfg_get(NULL, "Vlan_NumOfIfs", buff, sizeof(buff));
+    numVlanIfc = atoi(buff);
+    syscfg_get(NULL, "wan_physical_ifname", baseIfc, sizeof(baseIfc));
+
+    for (idx = 1; idx <= numVlanIfc; idx++)
+    {
+        char paramName[32] = {0};
+        char currVlanId[64] = {0};
+        char currVlanServType[64] = {0};
+        sprintf(paramName, "Vlan_%d_ID", idx);
+        syscfg_get(NULL, paramName, currVlanId, sizeof(currVlanId));
+
+        sprintf(paramName, "Vlan_%d_ServiceType", idx);
+        syscfg_get(NULL, paramName, currVlanServType, sizeof(currVlanServType));
+
+        if(idx != 1) {
+	     if( strcasecmp(currVlanServType, "dhcp") == 0 ){
+               FILE *fp = NULL;
+               char pidFilePath [32] ={0};
+               char pidStr[10];
+               int  pid = -1;
+
+               sprintf(pidFilePath, "/tmp/udhcpc.%s.%s.pid", baseIfc, currVlanId);
+               if ((fp = fopen(pidFilePath, "rb")) != NULL) {
+                   if (fgets(pidStr, sizeof(pidStr), fp) != NULL && atoi(pidStr) > 0)
+                       pid = atoi(pidStr);
+
+                   fclose(fp);
+               }
+               if ( (pid < 0) || (0 != kill(pid, 0)) ) {
+                   v_secure_system("/sbin/udhcpc -i %s.%s -n -p /tmp/udhcpc.%s.%s.pid -s /etc/udhcpc_vlan.script", baseIfc, currVlanId, baseIfc, currVlanId);
+               }
+            }
+        }
+
+    }
+}
+
 
 int main(int argc, char *argv[])
 {
     int i;
     struct serv_wan sw;
+    char buff[64] = {0};
 
     fprintf(stderr, "[%s] -- IN\n", PROG_NAME);
 	
@@ -1605,8 +1944,25 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    if (syscfg_init() != 0) {
+        fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
+        return -1;
+    }
+
+    syscfg_get(NULL, "wan_proto", buff, sizeof(buff));
+    printf("wan_proto: %s\n", buff);
+    if (strcasecmp(buff, "pppoe") == 0)
+    {
+        vlan_initialize();
+    }
+
     if (serv_wan_init(&sw, (argc > 2 ? argv[2] : NULL), (argc > 3 ? argv[3] : NULL)) != 0)
         exit(1);
+
+    if (strcasecmp(buff, "pppoe") == 0)
+    {
+        vlan_wan_start();
+    }
 
     /* execute commands */
     for (i = 0; i < NELEMS(cmd_ops); i++) {

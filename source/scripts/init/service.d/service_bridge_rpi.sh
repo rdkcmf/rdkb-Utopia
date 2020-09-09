@@ -214,7 +214,7 @@ add_ebtable_rule()
     echo "ip route add $subnet_wan dev $cmdiag_if" #proto kernel scope link src $cmdiag_ip"
     ip route add $subnet_wan dev $cmdiag_if #proto kernel scope link src $cmdiag_ip
 
-    dst_ip="10.0.0.1" # RT-10-580 @ XB3 
+    dst_ip=`syscfg get lan_ipaddr` # RT-10-580 @ XB3
     echo "ip addr add $dst_ip/24 dev $cmdiag_if"
     ip addr add $dst_ip/24 dev $cmdiag_if
 
@@ -243,8 +243,7 @@ del_ebtable_rule()
     ip route add $subnet_wan dev $wan_if proto kernel scope link src $wan_ip
 
 
-
-    dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
+    dst_ip=`syscfg get lan_ipaddr` # RT-10-580 @ XB3 PRD
     ip addr del $dst_ip/24 dev $cmdiag_if
     ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
     #echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
@@ -450,7 +449,8 @@ virtual_interface_ebtables_rules ()
 {
     CMDIAG_IF=`syscfg get cmdiag_ifname`
     CMDIAG_MAC=`cat /sys/class/net/${CMDIAG_IF}/address`   
-    EROUTER_MAC=`cat /sys/class/net/erouter0/address`
+    wan_if=`syscfg get wan_physical_ifname`
+    EROUTER_MAC=`cat /sys/class/net/$wan_if/address`
     BRIDGE_NAME=`syscfg get lan_ifname`
     LAN_IP=`syscfg get lan_ipaddr`
      if [ "$1" = "enable" ] ; then
