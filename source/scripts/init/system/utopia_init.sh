@@ -691,7 +691,7 @@ else
    if [ "$rebootReason" = "factory-reset" ]; then
       echo_t "[utopia][init] Setting last reboot reason as unknown"
       syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
-   else
+   fi
       if [ "`cat /proc/P-UNIT/status|grep "Last reset origin"|awk '{ print $9 }'`" == "RESET_ORIGIN_HW" ]; then
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
@@ -771,7 +771,6 @@ else
          fi
 #endif
       fi
-   fi
 fi
 
 if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
