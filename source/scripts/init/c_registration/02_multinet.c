@@ -197,6 +197,8 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-down|/etc/utopia/service.d/vlan_util_hub4.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/vlan_util_hub4.sh|NULL|"TUPLE_FLAG_EVENT,
     "meshbhaul-setup|/etc/utopia/service.d/vlan_util_hub4.sh|NULL|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-up|/etc/utopia/service.d/vlan_util_hub4.sh|NULL|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-down|/etc/utopia/service.d/vlan_util_hub4.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 #elif defined (_COSA_BCM_ARM_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_CUSTOM_EVENTS[] = { 

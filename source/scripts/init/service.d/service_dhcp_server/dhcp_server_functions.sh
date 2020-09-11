@@ -931,7 +931,7 @@ fi
    #fi
 
    #Option for parsing plume vendor code
-   if [ "$BOX_TYPE" = "XB6" ]; then
+   if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ]; then
      echo "dhcp-option=vendor:Plume,43,tag=123" >> $LOCAL_DHCP_CONF 
      echo "dhcp-option=vendor:PP203X,43,tag=123" >> $LOCAL_DHCP_CONF
      echo "dhcp-option=vendor:SE401,43,tag=123" >> $LOCAL_DHCP_CONF
@@ -1115,6 +1115,9 @@ fi
                            echo "${PREFIX}""dhcp-option=brlan7,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
                    fi
 
+           echo "interface=brebhaul" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.85.5,169.254.85.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+           
            echo "interface=br403" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
 
