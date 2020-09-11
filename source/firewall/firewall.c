@@ -12657,6 +12657,7 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A INPUT -i brlan3 -j ACCEPT \n");
       fprintf(fp, "-A INPUT -i brlan4 -j ACCEPT \n");
       fprintf(fp, "-A INPUT -i brlan5 -j ACCEPT \n");
+      fprintf(fp, "-A INPUT -i brpublic -j ACCEPT \n");
       // Logging and rejecting politely (rate limiting anyway)
       fprintf(fp, "-A INPUT -j LOG_INPUT_DROP \n");
 
@@ -12679,6 +12680,7 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A FORWARD -i brlan3 -o brlan3 -j ACCEPT\n");
       fprintf(fp, "-A FORWARD -i brlan4 -o brlan4 -j ACCEPT\n");
       fprintf(fp, "-A FORWARD -i brlan5 -o brlan5 -j ACCEPT\n");
+      fprintf(fp, "-A FORWARD -i brpublic -o brpublic -j ACCEPT\n");
 
       // Link local should never be forwarded
       fprintf(fp, "-A FORWARD -s fe80::/64 -j LOG_FORWARD_DROP\n");

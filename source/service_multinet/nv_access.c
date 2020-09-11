@@ -315,7 +315,7 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 	memset(cmdBuff,0,sizeof(cmdBuff));
 #if defined (_BWG_PRODUCT_REQ_)
         /* dmsb.l2net.%d.XfinityNewVid  */
-        if((l2netInst == 3)||(l2netInst == 4)||(l2netInst == 7)||(l2netInst == 8)) {
+        if((l2netInst == 3)||(l2netInst == 4)||(l2netInst == 7)||(l2netInst == 8)||(l2netInst == 11)) {
            snprintf(cmdBuff, sizeof(cmdBuff),"dmsb.l2net.%d.XfinityNewVid",l2netInst);
         }
         else
