@@ -236,13 +236,6 @@ service_start ()
       echo "nice -n 19 sh /etc/utopia/service.d/pmon.sh" >> /etc/cron/cron.every5minute/pmon_every5minute.sh
       chmod 700 /etc/cron/cron.every5minute/pmon_every5minute.sh
 
-      # add starting the var and tmp log-monitor every 5 minute
-      if [ "$BOX_TYPE" == "HUB4" ]; then
-          echo "#! /bin/sh" > /etc/cron/cron.every5minute/monitor_log_every5minute.sh
-          echo "nice -n 19 sh /etc/sky/monitor_log.sh" >> /etc/cron/cron.every5minute/monitor_log_every5minute.sh
-          chmod 700 /etc/cron/cron.every5minute/monitor_log_every5minute.sh
-      fi
-
       # add a sysevent tick every minute
       echo "#! /bin/sh" > /etc/cron/cron.everyminute/sysevent_tick.sh
       echo "sysevent set cron_every_minute" >> /etc/cron/cron.everyminute/sysevent_tick.sh
