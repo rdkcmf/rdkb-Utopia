@@ -71,6 +71,7 @@ fi
 dmesg -n 5
 
 TR69TLVFILE="/nvram/TLVData.bin"
+TR69KEYS="/nvram/.keys"
 REVERTFLAG="/nvram/reverted"
 MAINT_START="/nvram/.FirmwareUpgradeStartTime"
 MAINT_END="/nvram/.FirmwareUpgradeEndTime"
@@ -704,6 +705,10 @@ syscfg commit
 eth_wan_enable=`syscfg get eth_wan_enabled`
 if [ "$eth_wan_enable" = "true" ] && [ -f $TR69TLVFILE ]; then
   rm -f $TR69TLVFILE
+  #RDKB-30774 - Remove existing ACS server URL and passwords, when migrating from DOCSIS to EWAN
+  #Default ACS URL from partners_defaults would be populated when booting in EWAN mode for the first time
+  rm -rf $TR69KEYS
+  sed -i '/eRT.com.cisco.spvtg.ccsp.tr069pa.Device.ManagementServer.URL.Value/d' $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
       
 echo "[utopia][init] completed creating utopia_inited flag"
