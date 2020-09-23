@@ -4190,7 +4190,12 @@ static int do_wan_nat_lan_clients(FILE *fp)
     }
   }
 #endif
+
+#if defined (_COSA_BCM_ARM_) && !defined (_HUB4_PRODUCT_REQ_)
+ if(bEthWANEnable || isBridgeMode) // Check is required for TCHXB6 TCHXB7 CBR and not for HUB4
+#else
   if(bEthWANEnable)
+#endif
   {/*fix RDKB-21704, SNAT is required only for private IP ranges. */
   memset(str, 0, sizeof(str));
   /*SKYH4-1344 : SNAT rule required to support local IP ranges with 10.X.X.X */   
