@@ -425,11 +425,7 @@ fi
    fi
    if [ -f /etc/WEBCONFIG_ENABLE ]; then
    # Remove webconfig_db.bin on factory reset on all RDKB platforms
-     rm -f /nvram/webconfig_db.bin
-     if [ "$BOX_TYPE" = "XB3" ];then
-        ATOM_RPC_IP=`cat /etc/device.properties | grep ATOM_ARPING_IP | cut -f 2 -d"="`
-        rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
-     fi
+     rm -f /nvram/webconfig_db.bin     
    fi
 
    # Remove lxy L2 dir
@@ -837,6 +833,11 @@ if [ -f /usr/bin/rpcserver ];then
     /usr/bin/rpcserver &
 fi
 
+# Remove webconfig_db.bin on factory reset on XB3 platforms,CISCOXB3-6731
+if [ "$FACTORY_RESET_REASON" = "true" ] && [ "$BOX_TYPE" = "XB3" ];then
+        ATOM_RPC_IP=`grep ATOM_ARPING_IP /etc/device.properties | cut -f 2 -d"="`
+        rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
+fi
 #operating rbus based on new naming nomenclature
 if [ -e /nvram/rbus_support_on_pending ]; then
     touch /nvram/rbus_support

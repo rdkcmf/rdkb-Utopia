@@ -318,7 +318,7 @@ fi
 #      echo "[utopia][init] remounting system data flash"
 #      mount -t jffs2 mtd:SysData $SYSCFG_MOUNT
 #      echo -n > $SYSCFG_FILE
-#   fi
+#   fi  
    rm -f /nvram/partners_defaults.json
    rm -f /nvram/bootstrap.json
    rm -f /opt/secure/RFC/tr181store.json
@@ -348,10 +348,7 @@ fi
    fi
    if [ -f /etc/WEBCONFIG_ENABLE ]; then
        # Remove webconfig_db.bin on factory reset on all RDKB platforms
-        rm -f /nvram/webconfig_db.bin
-        if [ "$BOX_TYPE" = "XB3" ];then
-           rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
-        fi
+        rm -f /nvram/webconfig_db.bin        
    fi
      touch /nvram/.apply_partner_defaults   
    #>>zqiu
@@ -511,4 +508,10 @@ if [ ! -f $WAN_HTTPPORT_ERT_CHD ];then
     syscfg set mgmt_wan_httpport_ert 8080
     syscfg commit
     touch $WAN_HTTPPORT_ERT_CHD
+fi
+
+# Remove webconfig_db.bin on factory reset on XB3 platforms,CISCOXB3-6731
+if [ "$BOX_TYPE" = "XB3" ];then
+        ATOM_RPC_IP=`grep ATOM_ARPING_IP /etc/device.properties | cut -f 2 -d"="`
+        rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
 fi
