@@ -1094,6 +1094,18 @@ void addInSysCfgdDB(char * key, char * value)
       set_syscfg_partner_values( value,"XHS_SSIDprefix" );
       IsPSMMigrationNeeded = 1;
    }
+   #ifdef MTA_TR104SUPPORT
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable") )
+   {
+       if ( 0 == IsValuePresentinSyscfgDB( "TR104Enable" ) )
+       {
+           set_syscfg_partner_values( value,"TR104Enable" );
+       }
+   }
+   #else
+       APPLY_PRINT("TR104 is not supported so making TR104 value as false\n");
+       set_syscfg_partner_values( "false","TR104Enable" );
+   #endif
 
    //Check whether migration needs to be handled or not
    if( 1 == IsPSMMigrationNeeded )
@@ -1172,6 +1184,18 @@ void updateSysCfgdDB(char * key, char * value)
    {
          set_syscfg_partner_values( value,"AllowEthernetWAN" );
    }
+#ifdef MTA_TR104SUPPORT
+      if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable" ) )
+      {
+          set_syscfg_partner_values( value, "TR104Enable");
+      }
+#else
+      if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable" ) )
+      {
+          APPLY_PRINT("TR104 is not supported so making TR104 value as false\n");
+          set_syscfg_partner_values( "false", "TR104Enable");
+      }
+#endif
    //Check whether migration needs to be handled or not
    if( 1 == IsPSMMigrationNeeded )
    {
@@ -1633,19 +1657,20 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
                                         }
 					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.RDKB_UIBranding.AllowEthernetWAN"), "ActiveValue");
 					if ( paramObjVal != NULL )
-					{
-                                            allow_ethernet_wan = paramObjVal->valuestring;
+                    {
+                        allow_ethernet_wan = paramObjVal->valuestring;
 
-                                            if (allow_ethernet_wan != NULL)
-                                            {
-                                              set_syscfg_partner_values(allow_ethernet_wan,"AllowEthernetWAN");
-                                              allow_ethernet_wan = NULL;
-                                            }
-                                            else
-                                            {
-                                              APPLY_PRINT("%s - AllowEthernetWAN Value is NULL\n", __FUNCTION__ );
-                                            }
-                                          }
+                        if (allow_ethernet_wan != NULL)
+                        {
+                            set_syscfg_partner_values(allow_ethernet_wan,"AllowEthernetWAN");
+                            allow_ethernet_wan = NULL;
+                        }
+                        else
+                        {
+                            APPLY_PRINT("%s - AllowEthernetWAN Value is NULL\n", __FUNCTION__ );
+                        }
+                    }
+ 
 				}
 
 				if( ( 1 == isNeedToApplyPartnersDefault ) || \
@@ -1937,7 +1962,26 @@ if ( paramObjVal != NULL )
 							APPLY_PRINT("%s - Default Syndication_EnableCWMP Value is NULL\n", __FUNCTION__ );
 						}	
 					}
-
+#ifdef MTA_TR104SUPPORT
+                                        paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable"), "ActiveValue");
+                                                            if ( paramObjVal != NULL )
+{
+    char *TR104Enable = NULL;
+    TR104Enable = paramObjVal->valuestring;
+    if(TR104Enable != NULL)
+    {
+        set_syscfg_partner_values(TR104Enable,"TR104Enable");
+        TR104Enable = NULL;
+    }
+    else
+    {
+        APPLY_PRINT("%s - TR104Enable Value is NULL\n", __FUNCTION__ );
+    }
+}
+#else
+    APPLY_PRINT("TR104 is not supported so making TR104 value as false\n");
+    set_syscfg_partner_values("false","TR104Enable");
+#endif
 				}
 			}
 			else
