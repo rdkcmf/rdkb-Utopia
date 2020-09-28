@@ -114,7 +114,7 @@ static EnumString_Map g_QoSCustomTypeMap[] =
     { "game", QOS_CUSTOM_GAME },
     { 0, 0 }
 };
-
+#if !defined(DDNS_BROADBANDFORUM)
 static EnumString_Map g_DDNSProviderMap[] =
 {
     { "dyndns",           DDNS_DYNDNS },
@@ -144,7 +144,7 @@ static EnumString_Map g_DDNSStatus[] =
     { "error",         DDNS_STATUS_FAILED },
     { 0, 0 }
 };
-
+#endif
 
 const char *g_NetworkServices[] = 
 
@@ -1433,7 +1433,7 @@ int Utopia_GetBridgeSettings (UtopiaContext *ctx, bridgeInfo_t *bridge_info)
 
     return rc;
 }
-
+#if !defined(DDNS_BROADBANDFORUM)
 static int ddns_status_reset ()
 {
     char *val = "";
@@ -1514,7 +1514,7 @@ int Utopia_GetDDNSServiceStatus (UtopiaContext *ctx, ddnsStatus_t *ddnsStatus)
     
     return UT_SUCCESS;
 }
-
+#endif
 int Utopia_SetMACAddressClone (UtopiaContext *ctx, boolean_t enable, char macaddr[MACADDR_SZ])
 {
     if (TRUE == enable) {
@@ -7554,3 +7554,120 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
  
   return SUCCESS;
 }
+
+#if defined(DDNS_BROADBANDFORUM)
+
+int Utopia_GetDynamicDnsClientInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins)
+{
+    return Utopia_GetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, uIndex+1, ins);
+}
+
+static int g_DynamicDnsClientCount = 0;
+
+int Utopia_GetNumberOfDynamicDnsClient(UtopiaContext *ctx, int *num)
+{
+    int rc = SUCCESS;
+
+    if(g_DynamicDnsClientCount == 0)
+    {
+        Utopia_GetInt(ctx, UtopiaValue_DynamicDnsClientCount, &g_DynamicDnsClientCount);
+    }
+
+    *num = g_DynamicDnsClientCount;
+    return rc;
+}
+
+int Utopia_GetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, DynamicDnsClient_t *DynamicDnsClient)
+{
+    int index = ulIndex + 1;
+    int ins_num = 0;
+
+    Utopia_GetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, index, &ins_num); DynamicDnsClient->InstanceNumber = ins_num;
+    Utopia_GetIndexedBool(ctx, UtopiaValue_DynamicDnsClient_Enable, index, &DynamicDnsClient->Enable);
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, index, DynamicDnsClient->Alias, sizeof(DynamicDnsClient->Alias));
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Username, index, DynamicDnsClient->Username, sizeof(DynamicDnsClient->Username));
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Password, index, DynamicDnsClient->Password, sizeof(DynamicDnsClient->Password));
+    Utopia_GetIndexed(ctx, UtopiaValue_DynamicDnsClient_Server, index, DynamicDnsClient->Server, sizeof(DynamicDnsClient->Server));
+
+    return 0;
+}
+
+int Utopia_SetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, const DynamicDnsClient_t *DynamicDnsClient)
+{
+    int index = ulIndex + 1;
+    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "arddnsclient_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient, index, s_tokenbuf);
+
+    Utopia_SetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, index, DynamicDnsClient->InstanceNumber);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, index, (char*)DynamicDnsClient->Alias);
+    Utopia_SetIndexedBool(ctx, UtopiaValue_DynamicDnsClient_Enable, index, DynamicDnsClient->Enable);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Username, index, (char *)DynamicDnsClient->Username);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Password, index, (char *)DynamicDnsClient->Password);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Server, index, (char *)DynamicDnsClient->Server);
+
+    return 0;
+}
+
+int Utopia_SetDynamicDnsClientInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias)
+{
+    int index = ulIndex+1;
+    Utopia_SetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, index, ins);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, index, (char*)alias);
+    return 0;
+}
+
+int Utopia_AddDynamicDnsClient(UtopiaContext *ctx, const DynamicDnsClient_t *DynamicDnsClient)
+{
+    int index;
+
+    Utopia_GetNumberOfDynamicDnsClient(ctx, &index);
+
+    g_DynamicDnsClientCount++;
+    Utopia_SetInt(ctx, UtopiaValue_DynamicDnsClientCount, g_DynamicDnsClientCount);
+
+    Utopia_SetDynamicDnsClientByIndex(ctx, index, DynamicDnsClient);
+
+    return 0;
+}
+
+int Utopia_DelDynamicDnsClient(UtopiaContext *ctx, unsigned long ins)
+{
+    int count, index;
+
+    Utopia_GetNumberOfDynamicDnsClient(ctx, &count);
+    for (index = 0; index < count; index++)
+    {
+        int ins_num;
+        Utopia_GetDynamicDnsClientInsNumByIndex(ctx, index, &ins_num);
+        if (ins_num == (int)ins)
+       {
+            break;
+        }
+    }
+
+    if (index >= count)
+    {
+        return -1;
+    }
+
+    if (index < count-1)
+    {
+        for (;index < count-1; index++)
+        {
+            DynamicDnsClient_t DynamicDnsClient;
+            Utopia_GetDynamicDnsClientByIndex(ctx, index+1, &DynamicDnsClient);
+            Utopia_SetDynamicDnsClientByIndex(ctx, index, &DynamicDnsClient);
+        }
+    }
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_InsNum, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Enable, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Username, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Password, count);
+    Utopia_UnsetIndexed(ctx, UtopiaValue_DynamicDnsClient_Server, count);
+    g_DynamicDnsClientCount--;
+    Utopia_SetInt(ctx, UtopiaValue_DynamicDnsClientCount, g_DynamicDnsClientCount);
+    return 0;
+}
+
+#endif
