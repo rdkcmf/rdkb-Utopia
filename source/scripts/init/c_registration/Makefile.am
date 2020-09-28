@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = 02_bridge 02_forwarding 02_ipv4 02_lanHandler 02_multinet 02_parodus 02_wan 09_xdns 10_firewall 10_mcastproxy 10_mldproxy 10_ntpd 15_ccsphs 15_ddnsclient 15_dhcp_server 15_dhcpv6_client 15_dhcpv6_server 15_hotspot 15_igd 15_misc 15_ssh_server 20_routing 25_crond 26_potd 33_cosa 
+bin_PROGRAMS = 02_bridge 02_forwarding 02_ipv4 02_lanHandler 02_multinet 02_parodus 02_wan 09_xdns 10_firewall 10_mcastproxy 10_mldproxy 10_ntpd 15_ccsphs 15_ddnsclient 15_dhcp_server 15_dhcpv6_client 15_dhcpv6_server 15_hotspot 15_igd 15_misc 15_ssh_server 20_routing 25_crond 26_potd 33_cosa 15_dynamic_dns 
 
 bin_PROGRAMS += 02_parodus
 
@@ -84,3 +84,4 @@ AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir
 15_ccsphs_SOURCES = 15_ccsphs.c
 02_parodus_SOURCES = 02_parodus.c
 10_time_sync_peer_SOURCES = 10_time_sync_peer.c
+15_dynamic_dns_SOURCES = 15_dynamic_dns.c
