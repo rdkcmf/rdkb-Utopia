@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include "srvmgr.h"
+#include "syscfg/syscfg.h"
 
 const char* SERVICE_NAME            = "multinet";
 
@@ -170,7 +171,65 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 #endif
 #endif
 void srv_register(void) {
-   sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
+
+  #if defined (_BRIDGE_UTILS_BIN_)
+
+      const char* SERVICE_DEFAULT_HANDLER_OVS = "/usr/bin/bridgeUtils";
+      
+      const char* SERVICE_CUSTOM_EVENTS_OVS[] = { 
+      "multinet-syncNets|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "multinet-syncMembers|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "multinet-down|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "multinet-up|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "lnf-setup|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "meshbhaul-setup|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "meshethbhaul-bridge-setup|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      NULL };
+
+      syscfg_init();
+      int ovsEnable = 0 , bridgeUtilEnable=0 ;
+      char buf[ 8 ] = { 0 };
+      if( 0 == syscfg_get( NULL, "mesh_ovs_enable", buf, sizeof( buf ) ) )
+      {
+          if ( strcmp (buf,"true") == 0 )
+            ovsEnable = 1;
+          else 
+            ovsEnable = 0;
+
+      }
+      else
+      {
+          printf("syscfg_get failed to retrieve ovs_enable\n");
+
+      }
+
+      memset(buf,0,sizeof(buf));
+
+      if( 0 == syscfg_get( NULL, "bridge_util_enable", buf, sizeof( buf ) ) )
+      {
+              if ( strcmp (buf,"true") == 0 )
+                  bridgeUtilEnable = 1;
+              else 
+                  bridgeUtilEnable = 0;   
+      }
+      else
+      {
+          printf("syscfg_get failed to retrieve bridge_util_enable\n");
+
+      }
+
+      if ( ovsEnable == 1  || bridgeUtilEnable == 1 )
+      {
+            sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER_OVS, SERVICE_CUSTOM_EVENTS_OVS);
+      }
+      else
+      {
+            sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
+      }
+
+  #else
+    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
+  #endif
 #ifdef MULTILAN_FEATURE
 #if !defined(_COSA_BCM_ARM_) || defined(INTEL_PUMA7) || !defined(_CBR_PRODUCT_REQ_)
    system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
@@ -213,4 +272,5 @@ int main(int argc, char **argv)
    }   
    return(0);
 }
+
 

@@ -1337,6 +1337,9 @@ $AutoExcludedURL=https://xconf.xcal.tv/xconf/swu/stb
 #HWSelfTest Enable(Default =false)
 $hwHealthTest=false
 
+#BridgeUtilEnableParam
+$bridge_util_enable=false
+
 #TDK Enable default value
 $TDKEnable=false
 

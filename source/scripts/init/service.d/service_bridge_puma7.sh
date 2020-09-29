@@ -31,7 +31,6 @@ source /etc/utopia/service.d/event_handler_functions.sh
 POSTD_START_FILE="/tmp/.postd_started"
 
 SERVICE_NAME="bridge"
-MULTINET_HANDLER="/etc/utopia/service.d/vlan_util_xb6.sh"
 
 #Separate routing table used to ensure that responses from the web UI go directly to the LAN interface, not out erouter0
 BRIDGE_MODE_TABLE=69
@@ -245,7 +244,7 @@ service_start(){
             sysevent set multinet-down $INSTANCE
             sysevent set multinet-up $INSTANCE
         else
-            $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+            sysevent set multinet-syncMembers $INSTANCE
         fi
         
         #Block traffic coming from the lbr0 connector interfaces at the MUX
@@ -282,7 +281,7 @@ service_stop(){
             sysevent set multinet-down $INSTANCE
             sysevent set multinet-up $INSTANCE
         else
-            $MULTINET_HANDLER multinet-syncMembers $INSTANCE
+            sysevent set  multinet-syncMembers $INSTANCE
         fi
                 
         #Disconnect management interface

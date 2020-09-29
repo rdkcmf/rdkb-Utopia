@@ -318,17 +318,24 @@ qtn_setup_all(){
     setup_qtn $1 ath9
 }
 
+
+MAX_GRE_STATUS_WAIT_TIME=180
+GRE_READY_STATE="0"
+
 wait_for_gre_ready(){
-    while [ "`$SYSEVENT get if_${LAN_GRE_TUNNEL}-status`" != "ready" ] ; do
+    gre_wait_iter=1
+    while [  $gre_wait_iter -le $MAX_GRE_STATUS_WAIT_TIME ] ; do
+
+        if [ "`$SYSEVENT get if_${LAN_GRE_TUNNEL}-status`" = "ready" ];then
+            echo_t "$LAN_GRE_TUNNEL status ready...,breaking the loop"
+
+             GRE_READY_STATE=1
+             break;
+        fi
         echo_t "Waiting for $LAN_GRE_TUNNEL to be ready..."
         sleep 1
-    done
-}
+        gre_wait_iter=$(($gre_wait_iter + 1))
 
-wait_for_erouter0_ready(){
-    while [ "`$SYSEVENT get wan-status`" != "started" ] ; do
-        echo_t "Waiting for erouter0 to be ready..."
-        sleep 1
     done
 }
 
@@ -350,9 +357,11 @@ setup_gretap(){
 
         #Wait until gre got created
         wait_for_gre_ready
-        vconfig add $LAN_GRE_TUNNEL $LAN_VLAN
-        ifconfig $LAN_GRE_TUNNEL up
-        ifconfig ${LAN_GRE_TUNNEL}.$LAN_VLAN up
+        if [ "$GRE_READY_STATE" = "1" ];then
+                vconfig add $LAN_GRE_TUNNEL $LAN_VLAN
+                ifconfig $LAN_GRE_TUNNEL up
+                ifconfig ${LAN_GRE_TUNNEL}.$LAN_VLAN up
+        fi
      else
          echo "Tunnel already present not recreating."
      fi
@@ -702,7 +711,6 @@ add_to_group() {
 	if [ $isXfinityWiFiEnable -eq 1 ]
 	then
 		echo_t "Xfinity wifi enabled"
-		wait_for_erouter0_ready
         	sh /etc/utopia/service.d/service_multinet/handle_gre.sh create $INSTANCE $DEFAULT_GRE_TUNNEL
         	setup_gretap start $BRIDGE_NAME $BRIDGE_VLAN
 	else

@@ -44,6 +44,7 @@ GRE_IFNAME="gretap0"
 GRE_IFNAME_DUMMY="gretap_0"
 recover="false"
 hotspot_down_notification="false"
+SYSEVENT="sysevent"
 
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
@@ -114,6 +115,14 @@ AB_DELIM=","
 
 BASEQUEUE=1
 
+
+wait_for_erouter0_ready(){
+    while [ "`$SYSEVENT get wan-status`" != "started" ] ; do
+        echo_t "Waiting for erouter0 to be ready..."
+        sleep 1
+    done
+}
+
 init_snooper_sysevents () {
     if [ x1 = x$SNOOP_CIRCUIT ]; then
         sysevent set snooper-circuit-enable 1
@@ -158,7 +167,8 @@ read_greInst()
                rm /tmp/tunnel_destroy_flag
           fi
       fi
-      
+     
+       wait_for_erouter0_ready
        for i in $BRIDGE_INSTS; do
           brinst=`echo $i |cut -d . -f 4`
           sysevent set multinet-start $brinst
@@ -216,7 +226,7 @@ create_tunnel () {
     else
     	ip link add $2 type gretap remote $1 dev $WAN_IF $extra
     fi
-
+    ifconfig $2 up
     sysevent set gre_current_endpoint $1
     sysevent set if_${2}-status $IF_READY
 }
@@ -660,7 +670,7 @@ hotspot_up() {
 
     #Hard code for old images
     set_apisolation $inst
-    
+    wait_for_erouter0_ready
     brinst=""
     if [ "$BOX_TYPE" = "TCCBR" ] ; then
         OLD_IFS="$IFS"
@@ -1014,6 +1024,8 @@ case "$1" in
         brinst=""
         OLD_IFS="$IFS"
         IFS="${AB_DELIM}${AB_SSID_DELIM}"
+
+        wait_for_erouter0_ready
         for i in $BRIDGE_INSTS; do
             brinst=`echo $i |cut -d . -f 4`
             status=`sysevent get multinet_$brinst-status`
