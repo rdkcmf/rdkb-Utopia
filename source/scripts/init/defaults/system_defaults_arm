@@ -888,6 +888,13 @@ $rlog_port=514
 # Device Fingerprint Enable
 $$Advsecurity_DeviceFingerPrint=1
 
+$Advsecurity_SafeBrowsing=0
+$Advsecurity_Softflowd=0
+$Adv_PCActivate=0
+$Adv_PPActivate=0
+$Advsecurity_LoggingPeriod=1440
+$Advsecurity_LookupTimeout=350
+
 #Firewall log settings
 $FW_LOG_FILE_PATH=/nvram/log/firewall
 @FW_LOG_FILE_PATH_V2=/nvram/log/firewall
