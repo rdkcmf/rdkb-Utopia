@@ -278,14 +278,27 @@ int removeAndGetTrunkPorts(PVlanTrunkState vidState, PPlatformPort oldPort, PLis
 }
 
 int addMemberPort(PEntityPortList entity, PPlatformPort port) {
+	ListIterator iter;
+	PListItem item;
+	PPlatformPort curPort;
 
 	if (!port)
 		return -1;
 	
 	entity->dirty = 1;
 
-	MNET_DEBUG("addMemberPort, adding ") MNET_DBG_CMD(printPlatport(port)) MNET_DEBUG(" to entity %d\n" COMMA entity->entity)
+	//Check if this port is already on this list, and if so, don't add it again
+	initIterator(&entity->memberPorts,&iter);
+	while ((item = getNext(&iter))) {
+		curPort = (PPlatformPort) item->data;
+		if(curPort->hal->id == port->hal->id && curPort->hal->isEqual(curPort, port)) {
+			MNET_DEBUG("addMemberPort, skip dupe port ") MNET_DBG_CMD(printPlatport(port)) MNET_DEBUG(" in entity %d\n" COMMA entity->entity)
+			return 0;
+		}
+	}
 
+	MNET_DEBUG("addMemberPort, adding ") MNET_DBG_CMD(printPlatport(port)) MNET_DEBUG(" to entity %d\n" COMMA entity->entity)
+	
 	return addToList(&entity->memberPorts, port);
 }
 
