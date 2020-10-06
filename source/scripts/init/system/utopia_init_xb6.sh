@@ -640,6 +640,20 @@ execute_dir $INIT_DIR&
 #ifconfig l2sd0.106 192.168.106.1 netmask 255.255.255.0 up
 #ip rule add from all iif l2sd0.106 lookup erouter
 
+cause_file="/sys/bus/acpi/devices/INT34DB:00/reset_cause"
+type_file="/sys/bus/acpi/devices/INT34DB:00/reset_type"
+COLD_REBOOT=false
+if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]; then
+   if [ -e $cause_file && -e $type_file ];then
+      value_c=$(cat $cause_file)
+      value_t=$(cat $type_file)
+      if [ "$value_t" == "0" && "$value_c" == "0" ];then
+         COLD_REBOOT=true
+      fi
+   fi
+fi
+
+
 # Check and set factory-reset as reboot reason
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    echo "[utopia][init] Detected last reboot reason as factory-reset"
@@ -687,6 +701,12 @@ elif [ -f /nvram/restore_reboot ]; then
      fi
      rm -f /nvram/restore_reboot
      rm -f /nvram/syscfg.db.prev
+elif [ "$COLD_REBOOT" == "true" ]; then
+     if [ -e "/usr/bin/onboarding_log" ]; then
+         /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as HW or Power-On Reset"
+     fi
+     syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
+     syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 else
    rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason` 
    reboot_counter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
