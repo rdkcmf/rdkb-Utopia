@@ -856,7 +856,8 @@ INT32 IGD_pii_add_portmapping_entry( IN INT32 WanDeviceIndex,
                  * if for different internal client, return error
                  */
                 PAL_LOG("igd_platform", "debug", "%s: entry exists for different internal client (error)", __FUNCTION__);
-                rc = 1;
+                //rc = 1;
+                rc = ERROR_CONFLICT_FOR_MAPPING_ENTRY;
             }
         } else {
             /*
