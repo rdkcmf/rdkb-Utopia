@@ -283,7 +283,7 @@ typedef enum{
 /*
  * DDNS Settings
  */
-
+#if !defined(DDNS_BROADBANDFORUM)
 typedef enum ddnsProvider {
     DDNS_EZIP,
     DDNS_PGPOW,
@@ -321,7 +321,7 @@ typedef enum {
     DDNS_STATUS_FAILED_AUTH,
     DDNS_STATUS_SUCCESS,
 } ddnsStatus_t;
-
+#endif
 /*
  * Route Settings
  */
@@ -786,12 +786,12 @@ int Utopia_DeleteDHCPServerLANHost (char *ipaddr);
 
 int Utopia_SetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info);
 int Utopia_GetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info);
-
+#if !defined(DDNS_BROADBANDFORUM)
 int Utopia_SetDDNSService (UtopiaContext *ctx, ddnsService_t *ddns);
 int Utopia_UpdateDDNSService (UtopiaContext *ctx);
 int Utopia_GetDDNSService (UtopiaContext *ctx, ddnsService_t *ddns);
 int Utopia_GetDDNSServiceStatus (UtopiaContext *ctx, ddnsStatus_t *ddnsStatus);
-
+#endif
 int Utopia_SetMACAddressClone (UtopiaContext *ctx, boolean_t enable, char macaddr[MACADDR_SZ]);
 int Utopia_GetMACAddressClone (UtopiaContext *ctx, boolean_t *enable, char macaddr[MACADDR_SZ]);
 
@@ -1180,5 +1180,28 @@ int Utopia_GetDNSServer(UtopiaContext *ctx, DNS_Client_t * dns);
 
 int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCallForAdd );
 int Utopia_privateIpCheck(char *ip_to_check);
+
+#if defined(DDNS_BROADBANDFORUM)
+typedef struct DynamicDnsClient
+{
+   unsigned long  InstanceNumber;
+   char           Alias[64];
+   int            Status;
+   int            LastError;
+   char           Server[256];
+   char           Interface[256];
+   char           Username[256];
+   char           Password[256];
+   boolean_t      Enable;
+}DynamicDnsClient_t;
+
+int Utopia_GetDynamicDnsClientInsNumByIndex(UtopiaContext *ctx, unsigned long uIndex, int *ins);
+int Utopia_GetNumberOfDynamicDnsClient(UtopiaContext *ctx, int *num);
+int Utopia_GetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_SetDynamicDnsClientInsAndAliasByIndex(UtopiaContext *ctx, unsigned long ulIndex, unsigned long ins, const char *alias);
+int Utopia_AddDynamicDnsClient(UtopiaContext *ctx, const DynamicDnsClient_t *DynamicDnsClient);
+int Utopia_DelDynamicDnsClient(UtopiaContext *ctx, unsigned long ins);
+#endif
 
 #endif // _UTAPI_H_
