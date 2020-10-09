@@ -51,6 +51,8 @@ SERVICE_MULTINET_PATH="/etc/utopia/service.d/service_multinet"
 THIS=/etc/utopia/service.d/lan_handler.sh
 SERVICE_NAME="lan_handler"
 
+POSTD_START_FILE="/tmp/.postd_started"
+
 RPI_SPECIFIC=`grep -i "BOX_TYPE" /etc/device.properties  | cut -f2 -d=`
 #args: router IP, subnet mask
 ap_addr() {
@@ -193,7 +195,11 @@ case "$1" in
 				echo_t "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2"
                 sysevent set lan-status started
                 firewall
-                execute_dir /etc/utopia/post.d/
+                if [ ! -f "$POSTD_START_FILE" ];
+                then
+                    touch $POSTD_START_FILE
+                    execute_dir /etc/utopia/post.d/
+                fi
             elif [ x"ready" != x`sysevent get start-misc` -a x != x`sysevent get current_wan_ipaddr` -a "0.0.0.0" != `sysevent get current_wan_ipaddr` ]; then
 				echo_t "LAN HANDLER : Triggering DHCP server using LAN status based on start misc"
 				sysevent set lan-status started
@@ -219,9 +225,13 @@ case "$1" in
                     gw_lan_refresh&
                 fi
                	firewall
-                execute_dir /etc/utopia/post.d/ restart
-            else
-				echo_t "LAN HANDLER : Triggering DHCP server using LAN status"
+                if [ ! -f "$POSTD_START_FILE" ];
+                then
+                    touch $POSTD_START_FILE
+                    execute_dir /etc/utopia/post.d/
+                fi            
+	   else
+		echo_t "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started
 		echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART"
                 sysevent set firewall-restart

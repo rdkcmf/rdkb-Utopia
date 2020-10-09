@@ -44,6 +44,7 @@ SERVICE_NAME="bridge"
 UDHCPC_PID_FILE=/var/run/udhcpc.pid
 UDHCPC_SCRIPT=/etc/utopia/service.d/service_bridge/dhcp_link.sh
 
+POSTD_START_FILE="/tmp/.postd_started"
 
 #Separate routing table used to ensure that responses from the web UI go directly to the LAN interface, not out erouter0
 BRIDGE_MODE_TABLE=69
@@ -715,13 +716,21 @@ case "$1" in
    ${SERVICE_NAME}-start)
       firewall firewall-stop
       service_start
-      execute_dir /etc/utopia/post.d/
+      if [ ! -f "$POSTD_START_FILE" ];
+      then
+          touch $POSTD_START_FILE
+          execute_dir /etc/utopia/post.d/
+      fi         
       #gw_lan_refresh
       sysevent set firewall-restart
       ;;
    ${SERVICE_NAME}-stop)
         service_stop
-        execute_dir /etc/utopia/post.d/
+        if [ ! -f "$POSTD_START_FILE" ];
+        then
+              touch $POSTD_START_FILE
+              execute_dir /etc/utopia/post.d/
+        fi           
         #gw_lan_refresh
         sysevent set firewall-restart
 
