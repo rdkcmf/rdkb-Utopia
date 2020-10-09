@@ -41,6 +41,8 @@ then
     exit 0
 fi
 
+POSTD_START_FILE="/tmp/.postd_started"
+
 UTOPIA_PATH="/etc/utopia/service.d"
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/utopia/service.d/ut_plat.sh
@@ -68,8 +70,11 @@ then
 
 #    gw_lan_refresh &
     firewall
-    execute_dir /etc/utopia/post.d/ restart
-
+    if [ ! -f "$POSTD_START_FILE" ];
+    then
+            touch $POSTD_START_FILE
+            execute_dir /etc/utopia/post.d/
+    fi
     sysevent set start-misc ready	
     sysevent set misc-ready-from-mischandler true
 

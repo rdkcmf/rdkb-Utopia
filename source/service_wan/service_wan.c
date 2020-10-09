@@ -106,6 +106,7 @@ char DHCPC_PID_FILE[100]="";
 #define DHCPV6_PID_FILE 		"/var/run/erouter_dhcp6c.pid"
 #define DHCP6C_PROGRESS_FILE 	"/tmp/dhcpv6c_inprogress"
 
+#define POSTD_START_FILE "/tmp/.postd_started"
 //this value is from erouter0 dhcp client(5*127+10*4)
 #define SW_PROT_TIMO   675 
 #define RESOLV_CONF_FILE  "/etc/resolv.conf"
@@ -806,11 +807,20 @@ static int wan_start(struct serv_wan *sw)
     }
 #endif
 
-    fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
+    if (access(POSTD_START_FILE, F_OK) != 0)
+    {
+            char postd_cmd[128] = {0};
+            snprintf(postd_cmd,sizeof(postd_cmd),"touch %s ; execute_dir /etc/utopia/post.d/",POSTD_START_FILE);
+            fprintf(stderr, "[%s] Restarting post.d from service_wan\n", __FUNCTION__);
+            system(postd_cmd);
+    }
 
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
     sysevent_set(sw->sefd, sw->setok, "current_wan_state", "up", 0);
     sysevent_set(sw->sefd, sw->setok, "wan-status", "started", 0);
+
+    fprintf(stderr, "[%s] start firewall fully\n", PROG_NAME);
+
 /*XB6 brlan0 comes up earlier so ned to find the way to restart the firewall
  IPv6 not yet supported so we can't restart in service routed  because of missing zebra.conf*/
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
@@ -819,9 +829,6 @@ static int wan_start(struct serv_wan *sw)
      memset(buffer,0,sizeof(buffer));
     get_dateanduptime(buffer,&uptime);
     OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
-
-    vsystem("execute_dir /etc/utopia/post.d/ restart");
-
 
     printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
@@ -1264,7 +1271,7 @@ static int wan_addr_set(struct serv_wan *sw)
 
     /* Should not be executed before wan_service-status is set to started for _PLATFORM_IPQ_ */
 #if !defined(_PLATFORM_IPQ_) && !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
-        vsystem("gw_lan_refresh");  // firewall is restarted after starting dhcv6 client
+        vsystem("firewall && gw_lan_refresh"); 
 #endif
     } else {
 
@@ -1275,7 +1282,7 @@ static int wan_addr_set(struct serv_wan *sw)
     		//only for first time
     #if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
     		fprintf(stderr, "[%s] ready is set from misc handler. Doing gw_lan_refresh\n", PROG_NAME);
-    		system("gw_lan_refresh ");
+    		system("firewall && gw_lan_refresh");
     #endif
     		sysevent_set(sw->sefd, sw->setok, "misc-ready-from-mischandler", "false", 0);
     	}

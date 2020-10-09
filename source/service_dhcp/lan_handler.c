@@ -41,6 +41,8 @@
 #define IPV4_NV_IP      "V4Addr"
 #define IPV4_NV_SUBNET  "V4SubnetMask"
 
+#define POSTD_START_FILE "/tmp/.postd_started"
+
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 
@@ -348,8 +350,15 @@ void ipv4_status(int l3_inst, char *status)
 			fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2");
     		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
             system("firewall");
-            system("execute_dir /etc/utopia/post.d/");
-		}
+
+            if (access(POSTD_START_FILE, F_OK) != 0)
+            {
+                    char postd_cmd[128] = {0};
+                    snprintf(postd_cmd,sizeof(postd_cmd),"touch %s ; execute_dir /etc/utopia/post.d/",POSTD_START_FILE);
+                    fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
+                    system(postd_cmd);
+            }		
+        }
 		else if ((strncmp(l_cStart_Misc, "ready", 5)) && 
 				 (0 != l_cCurrentWan_IpAddr[0]) &&
 				 (strncmp(l_cCurrentWan_IpAddr, "0.0.0.0", 7)))
@@ -378,9 +387,16 @@ void ipv4_status(int l3_inst, char *status)
                 fprintf(stderr, "LAN HANDLER : Refreshing LAN from handler\n");
                 system("gw_lan_refresh&");				
 			}
-            system("firewall");
-            system("execute_dir /etc/utopia/post.d/ restart");
-		}
+                system("firewall");
+
+                if (access(POSTD_START_FILE, F_OK) != 0)
+                {
+                        char postd_cmd[128] = {0};
+                        snprintf(postd_cmd,sizeof(postd_cmd),"touch %s ; execute_dir /etc/utopia/post.d/",POSTD_START_FILE);
+                        fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
+                        system(postd_cmd);
+                }   
+            }
         else
 		{
 			fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status\n");

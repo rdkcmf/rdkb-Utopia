@@ -28,6 +28,8 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 #source /etc/utopia/service.d/brcm_ethernet_helper.sh
 
+POSTD_START_FILE="/tmp/.postd_started"
+
 SERVICE_NAME="bridge"
 MULTINET_HANDLER="/etc/utopia/service.d/vlan_util_xb6.sh"
 
@@ -349,14 +351,22 @@ case "$1" in
         firewall firewall-stop
         /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_bridged
         service_start
-        execute_dir /etc/utopia/post.d/
+        if [ ! -f "$POSTD_START_FILE" ];
+        then
+                touch $POSTD_START_FILE
+                execute_dir /etc/utopia/post.d/
+        fi        
         gw_lan_refresh
         sysevent set firewall-restart
     ;;
     ${SERVICE_NAME}-stop)
         /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_routed
         service_stop
-        execute_dir /etc/utopia/post.d/
+        if [ ! -f "$POSTD_START_FILE" ];
+        then
+                touch $POSTD_START_FILE
+                execute_dir /etc/utopia/post.d/
+        fi        
         gw_lan_refresh
         sysevent set firewall-restart
     ;;
