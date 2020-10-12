@@ -629,6 +629,8 @@ static int wan_start(struct serv_wan *sw)
     int ret;
 	int uptime = 0;
 	char buffer[64] = {0};
+    FILE *fp;
+    char line[64] = {0}, *cp;
     get_dateanduptime(buffer,&uptime);
 	printf("%s Wan_init_start:%d\n",buffer,uptime);
     OnboardLog("Wan_init_start:%d\n",uptime);
@@ -823,7 +825,17 @@ static int wan_start(struct serv_wan *sw)
 
     printf("Network Response script called to capture network response\n ");
     /*Network Response captured ans stored in /var/tmp/network_response.txt*/
-	
+    if ((fp = fopen("/proc/uptime", "rb")) != NULL)
+    {
+    
+        memset(line,0,sizeof(line));
+        if (fgets(line, sizeof(line), fp) != NULL) {
+            if ((cp = strchr(line, '.')) != NULL)
+                *cp = '\0';
+            sysevent_set(sw->sefd, sw->setok, "wan_start_time", line, 0);
+        }
+        fclose(fp);
+    }
 #if defined (INTEL_PUMA7)
     //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     pid = pid_of("sh", "network_response.sh");
@@ -1454,7 +1466,7 @@ static int wan_dhcp_renew(struct serv_wan *sw)
     if ((fp = fopen("/proc/uptime", "rb")) == NULL)
         return -1;
     if (fgets(line, sizeof(line), fp) != NULL) {
-        if ((cp = strchr(line, ',')) != NULL)
+        if ((cp = strchr(line, '.')) != NULL)
             *cp = '\0';
         sysevent_set(sw->sefd, sw->setok, "wan_start_time", line, 0);
     }
