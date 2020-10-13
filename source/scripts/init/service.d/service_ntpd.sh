@@ -312,6 +312,9 @@ service_start ()
 
 		echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
 		systemctl start ntpd.service
+                if [ "x$BOX_TYPE" = "xHUB4" ]; then
+		    sysevent set firewall-restart
+                fi
 	fi
 
     ret_val=$?

@@ -168,6 +168,12 @@ service_start ()
 
           #To monitor all wifi interface packets in every 15minutes
           echo "*/15 * * * * /etc/sky/monitor_wifi_packets.sh" >> $CRONTAB_FILE
+
+          #To monitor all wifi interface dhd dump in every 15minutes
+          echo "*/15 * * * * /etc/sky/monitor_dhd_dump.sh" >> $CRONTAB_FILE
+
+	  #To monitor CcspTelemetry in every 15minutes
+          echo "*/15 * * * * /lib/rdk/dca_utility.sh" >> $CRONTAB_FILE
       fi
 
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
@@ -233,11 +239,11 @@ service_start ()
       echo "nice -n 19 sh /etc/utopia/service.d/pmon.sh" >> /etc/cron/cron.every5minute/pmon_every5minute.sh
       chmod 700 /etc/cron/cron.every5minute/pmon_every5minute.sh
 
-      # add starting the varlog-monitor every 5 minute
+      # add starting the var and tmp log-monitor every 5 minute
       if [ "$BOX_TYPE" == "HUB4" ]; then
-          echo "#! /bin/sh" > /etc/cron/cron.every5minute/monitor_varlog_every5minute.sh
-          echo "nice -n 19 sh /etc/sky/monitor_varlog.sh" >> /etc/cron/cron.every5minute/monitor_varlog_every5minute.sh
-          chmod 700 /etc/cron/cron.every5minute/monitor_varlog_every5minute.sh
+          echo "#! /bin/sh" > /etc/cron/cron.every5minute/monitor_log_every5minute.sh
+          echo "nice -n 19 sh /etc/sky/monitor_log.sh" >> /etc/cron/cron.every5minute/monitor_log_every5minute.sh
+          chmod 700 /etc/cron/cron.every5minute/monitor_log_every5minute.sh
       fi
 
       # add a sysevent tick every minute

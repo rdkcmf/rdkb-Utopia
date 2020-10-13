@@ -446,6 +446,12 @@ echo "[utopia][init] Detected last reboot reason from driver as $LastRebootReaso
 #Once you read then clear the driver file
 echo "" > /proc/skyrbd
 
+if [ "$FACTORY_RESET_REASON" = "true" ]; then
+   echo "[utopia][init] Detected last reboot reason as factory-reset"
+
+   syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
+   syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+else
 #Check last reboot reasons
 case "$LastRebootReason" in
     PCIEReset | OOPS | BAD | ABORT | POOM | BUG | BADS | BABORT | PANIC | POOM | OOM )
@@ -473,12 +479,6 @@ case "$LastRebootReason" in
    ;;
 
    *)
-if [ "$FACTORY_RESET_REASON" = "true" ]; then
-   echo "[utopia][init] Detected last reboot reason as factory-reset"
-
-   syscfg set X_RDKCENTRAL-COM_LastRebootReason "factory-reset"
-   syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-else
    if [ "$LastRebootReason" = "Reboot" ] || [ "$LastRebootReason" = "SWReset" ] ; then
       #extra handling for reason
       if [ -f /nvram/restore_reboot ];then
@@ -508,9 +508,13 @@ else
       echo "[utopia][init] Setting last reboot reason as unknown"
            syscfg set X_RDKCENTRAL-COM_LastRebootReason "unknown"
    fi
-fi
    ;;
+
 esac
+fi
+
+#Needs to commit DB value after set
+syscfg commit
 
 #Onboarding log needs to set
 if [ -e "/usr/bin/onboarding_log" ]; then
