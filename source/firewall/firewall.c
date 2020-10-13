@@ -4385,7 +4385,7 @@ static int lan_telnet_ssh(FILE *fp, int family)
 
        }
    }
-#if 0 //Disabling WFA wifi test suite port 9000
+#ifdef WTS_ENABLED /* Enable port 9000 for WFA Wi-Fi Test Suite */
    if(family == AF_INET6) {
        if(!isBridgeMode) //brlan0 exists
            fprintf(fp, "-I %s -i %s -p tcp --dport 9000 -j ACCEPT\n", "INPUT", lan_ifname);
@@ -4394,7 +4394,7 @@ static int lan_telnet_ssh(FILE *fp, int family)
            fprintf(fp, "-I %s -i %s -p tcp --dport 9000 -j ACCEPT\n", "INPUT", lan_ifname);
            fprintf(fp, "-I %s -p tcp --dport 9000 -j ACCEPT\n", "lan2self_mgmt");
    }
-#endif
+#endif /* WTS_ENABLED */
 #endif // _HUB4_PRODUCT_REQ_
 
    FIREWALL_DEBUG("Exiting lan_telnet_ssh\n");
