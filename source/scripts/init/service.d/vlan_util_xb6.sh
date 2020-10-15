@@ -1177,6 +1177,12 @@ then
 elif [ "$EVENT" = "meshbhaul-setup" ]
 then
     MODE="meshbhaul-start"
+elif [ "$EVENT" = "meshethbhaul-up" ]
+then
+    MODE="meshethbhaul-start"
+elif [ "$EVENT" = "meshethbhaul-down" ]
+then
+    MODE="meshethbhaul-stop"
 elif [ "$EVENT" = "multinet-down" ]
 then
     MODE="stop"
@@ -1316,6 +1322,14 @@ then
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstart"
     $SYSEVENT set firewall-restart
+elif [ $MODE = "meshethbhaul-start" ]
+then
+    #config ethernet backhaul vlan
+    setup_pod_ethbhaul
+elif [ $MODE = "meshethbhaul-stop" ]
+then
+    #delete ethernet backhaul vlahbhaul-start"
+    remove_pod_ethbhaul
 elif [ $MODE = "lnf-stop" ]
 then
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
