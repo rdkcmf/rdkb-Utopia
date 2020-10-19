@@ -191,7 +191,9 @@ restart_request ()
    # save a copy of the dnsmasq conf file to help determine whether or not to 
    # kill the server
    DHCP_TMP_CONF="/tmp/dnsmasq.conf.orig"
-   cp -f $DHCP_CONF $DHCP_TMP_CONF
+   if [ -f $DHCP_CONF ];then
+	   cp -f $DHCP_CONF $DHCP_TMP_CONF
+   fi
 
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
       prepare_hostname
@@ -207,11 +209,17 @@ restart_request ()
    # or whether to just have it reread everything
    # SIGHUP is reread (except for dnsmasq.conf)
    RESTART=0
-   FOO=`diff $DHCP_CONF $DHCP_TMP_CONF`
+   FOO=""
+   if [ -f $DHCP_CONF ] && [ -f $DHCP_TMP_CONF ];then
+           FOO=`diff $DHCP_CONF $DHCP_TMP_CONF`
+   fi
    if [ -n "$FOO" ] ; then
       RESTART=1
    fi
-   CURRENT_PID=`cat $PID_FILE`
+   CURRENT_PID=""
+   if [ -f $PID_FILE ];then
+	   CURRENT_PID=`cat $PID_FILE`
+   fi  
    if [ -z "$CURRENT_PID" ] ; then
       RESTART=1
    else
@@ -416,8 +424,9 @@ dhcp_server_start ()
    # we need to decide whether to start dnsmasq or just sighup it
    # one criterea is whether the dnsmasq.conf file changes
    DHCP_TMP_CONF="/tmp/dnsmasq.conf.orig"
-   cp -f $DHCP_CONF $DHCP_TMP_CONF
-
+   if [ -f $DHCP_CONF ];then
+   	cp -f $DHCP_CONF $DHCP_TMP_CONF
+   fi
    # set hostname and /etc/hosts cause we are the dns forwarder
    prepare_hostname
    # also prepare dhcp conf cause we are the dhcp server too
@@ -429,11 +438,18 @@ dhcp_server_start ()
    # or whether to just have it reread everything
    # SIGHUP is reread (except for dnsmasq.conf)
    RESTART=0
-   FOO=`diff $DHCP_CONF $DHCP_TMP_CONF`
+   FOO=""
+   if [ -f $DHCP_CONF ] && [ -f $DHCP_TMP_CONF ];then
+	   FOO=`diff $DHCP_CONF $DHCP_TMP_CONF`
+   fi
    if [ -n "$FOO" ] ; then
       RESTART=1
    fi
-   CURRENT_PID=`cat $PID_FILE`
+   
+   CURRENT_PID=""
+   if [ -f $PID_FILE ];then
+           CURRENT_PID=`cat $PID_FILE`
+   fi
    if [ -z "$CURRENT_PID" ] ; then
       RESTART=1
    else
