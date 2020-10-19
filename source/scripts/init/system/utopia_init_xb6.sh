@@ -76,11 +76,12 @@ REVERTFLAG="/nvram/reverted"
 MAINT_START="/nvram/.FirmwareUpgradeStartTime"
 MAINT_END="/nvram/.FirmwareUpgradeEndTime"
 # determine the distro type (GAP or GNP)
-if [ -n "$(grep TPG /etc/drg_version.txt)" ]; then
-    distro=GAP
-else
-    distro=GNP
-fi
+#distro not used
+#if [ -n "$(grep TPG /etc/drg_version.txt)" ]; then
+#    distro=GAP
+#else
+#    distro=GNP
+#fi
 
 # determine the build type (debug or production)
 if [ -f /etc/debug_build ] ; then
