@@ -53,6 +53,8 @@ extern void subnet(char *ipv4Addr,
 //======================
 void remove_config(int l3_inst)
 {
+    	fprintf(stderr, "ipv4 remove_config\n");
+
 	char l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0};
 	char l_cIfName[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cSubnet[16] = {0};
 	int l_iRT_Table, l_iCIDR;	
@@ -74,6 +76,7 @@ void remove_config(int l3_inst)
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
 			 "ip addr del %s/%d dev %s", l_cCur_Ipv4_Addr, l_iCIDR, l_cIfName);
+    
 	executeCmd(l_cSysevent_Cmd);	
  
 	// TODO: Fix this static workaround. Should have configurable routing policy.
@@ -117,10 +120,15 @@ void remove_config(int l3_inst)
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-status", l3_inst);    
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "down", 0);
+
+    fprintf(stderr, "ipv4 remove_config complete\n");
+
 }
 
 void teardown_instance(int l3_inst)
 {
+    fprintf(stderr, "ipv4 teardown instance, instance is %d\n",l3_inst);
+
 	char l_cAsyncIDString[16] = {0}, l_cIpv4_Instances[8] = {0};
 	char l_cLower[8] = {0}, l_cActiveInstances[8] = {0};
 	char l_cSysevent_Cmd[255] = {0};
@@ -130,15 +138,17 @@ void teardown_instance(int l3_inst)
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-lower", l3_inst);
     sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cLower, sizeof(l_cLower));
 
-	if (0 != l_cLower[0])	
+
+	if ( '\0' != l_cLower[0] )	
 	{
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-l2async", l3_inst);
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, 
 					 l_cAsyncIDString, sizeof(l_cAsyncIDString));
 
     	sscanf(l_cAsyncIDString, "%d %d", &l_sAsyncID.trigger_id, &l_sAsyncID.action_id);
+
     	sysevent_rmcallback(g_iSyseventfd, g_tSysevent_token, l_sAsyncID);
-	
+
 		remove_config(l3_inst);
 		
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-l2async", l3_inst);
@@ -155,8 +165,10 @@ void teardown_instance(int l3_inst)
 		{
 			if (l3_inst != atoi(l_cToken))
 			{
-				snprintf(l_cActiveInstances, sizeof(l_cActiveInstances), "%s", l_cToken);
-			}	
+                		strncat(l_cActiveInstances,l_cToken,sizeof(l_cActiveInstances) - strlen(l_cActiveInstances) - 1);
+			}
+            		l_cToken = strtok(NULL, " ");
+	
 		}
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-instances", l_cActiveInstances, 0);	
     }	
