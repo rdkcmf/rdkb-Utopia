@@ -490,7 +490,18 @@ int main(int argc, char *argv[])
         {
             printf("Insufficient number of arguments for %s\n", argv[1]);
         }
-    }   
+    }
+    else if(!strncmp(argv[1], "ipv4-down", 9)) 
+    {   
+        if (argc > 2)
+        {
+            teardown_instance(atoi(argv[2]));
+        }
+        else
+        {
+            printf("Insufficient number of arguments for %s\n", argv[1]);
+        }
+    }    
     else if((!strncmp(argv[1], "multinet_1-status", 17)) ||  
             (!strncmp(argv[1], "multinet_2-status", 17)) ||  
             (!strncmp(argv[1], "multinet_3-status", 17)) ||

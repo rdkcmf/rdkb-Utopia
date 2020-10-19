@@ -69,7 +69,7 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ipv4.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "ipv4-resyncAll|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
     "ipv4-resync|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
-    "ipv4-down|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
+    "ipv4-down|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
     "ipv4-up|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
     "ipv4-set_dyn_config|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
     "ipv4-sync_tsip_all|/etc/utopia/service.d/service_ipv4.sh|NULL|"TUPLE_FLAG_EVENT,
