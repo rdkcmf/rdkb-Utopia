@@ -1115,6 +1115,10 @@ $AggressiveInterval=5
 #Credential Download and usage is diasbled by default
 $CredDwnld_Enable=false
 $CredDwnld_Use=false
+
+#CA store download is disabled by default
+$DLCaStoreEnabled=false
+
 #ocsp staple support
 $EnableOCSPStapling=false
 $EnableOCSPCA=false

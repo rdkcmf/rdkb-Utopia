@@ -1295,6 +1295,9 @@ $dslite_ipv6_frag_enable_1=0
 $CredDwnld_Enable=false
 $CredDwnld_Use=false
 
+#CA store download is disabled by default
+$DLCaStoreEnabled=false
+
 #ocsp staple support
 $EnableOCSPStapling=false
 $EnableOCSPCA=false
