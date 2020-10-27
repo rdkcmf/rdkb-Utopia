@@ -1328,3 +1328,6 @@ $ddns_server_retryinterval_5=660
 #Control firmware update exclusion
 $AutoExcludedEnabled=false
 $AutoExcludedURL=https://xconf.xcal.tv/xconf/swu/stb
+
+#HWSelfTest Enable(Default =false)
+$hwHealthTest=false
