@@ -756,6 +756,7 @@ $log_remote=0
 # Quality of Service
 #------------------
 $qos_enable=1
+$WMMdownstreamMap_enable=false
 
 # NAS Shared Folder
 #------------------
