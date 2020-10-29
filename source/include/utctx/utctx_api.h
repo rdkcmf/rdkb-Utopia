@@ -582,18 +582,6 @@ typedef enum _UtopiaValue
     UtopiaValue_ParentalControl_ManagedDevice_StartTime,
     UtopiaValue_ParentalControl_ManagedDevice_EndTime,
     UtopiaValue_ParentalControl_ManagedDevice_Days,
-    #if defined(DDNS_BROADBANDFORUM)
-    UtopiaValue_DynamicDnsClientCount,
-    UtopiaValue_DynamicDnsClient,
-    UtopiaValue_DynamicDnsClient_InsNum,
-    UtopiaValue_DynamicDnsClient_Alias,
-    UtopiaValue_DynamicDnsClient_Enable,
-    UtopiaValue_DynamicDnsClient_Username,
-    UtopiaValue_DynamicDnsClient_Password,
-    UtopiaValue_DynamicDnsClient_Server,
-
-    #endif
-
     /*Added for USGv2 Project*/
     UtopiaValue_USGv2_Lan_Clients_Count,
     UtopiaValue_USGv2_Lan_Clients,
