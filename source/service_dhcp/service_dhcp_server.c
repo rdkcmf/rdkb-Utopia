@@ -87,6 +87,32 @@ void getRFC_Value(const char* dnsOption)
             fprintf(stderr, "RFC DNSTRICT ORDER is not defined or Enabled %s\n", l_DnsStrictOrderStatus);
         }
 }
+int dnsmasq_server_start()
+{
+    char l_cXdnsRefacCodeEnable[8] = {0};
+    char l_cSystemCmd[255] = {0};
+
+    getRFC_Value (dnsOption);
+    fprintf(stdout, "Adding DNSMASQ Option: %s\n", dnsOption);
+    strtok(dnsOption,"\n");
+    if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
+    {
+        syscfg_get(NULL, "XDNS_RefacCodeEnable", l_cXdnsRefacCodeEnable, sizeof(l_cXdnsRefacCodeEnable));
+        if (!strncmp(l_cXdnsRefacCodeEnable, "1", 1)){
+                sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s --xdns-refac-code",
+                                SERVER, DHCP_CONF,dnsOption);
+        }else{
+                sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",
+                                SERVER, DHCP_CONF,dnsOption);
+        }
+    }
+    else //If XDNS is not enabled 
+    {
+        sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
+    }
+
+	return system(l_cSystemCmd);
+}
 
 void dhcp_server_stop()
 {
@@ -116,22 +142,9 @@ void dhcp_server_stop()
 	remove_file(PID_FILE);
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", "stopped", 0);
 
-        getRFC_Value (dnsOption);
-	fprintf(stdout, "Adding DNSMASQ Option: %s\n", dnsOption);
-        strtok(dnsOption,"\n");
-	// restart the dns server
 	memset(l_cSystemCmd, 0x00, sizeof(l_cSystemCmd));
-	if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
-    {
-        sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",
-				SERVER, DHCP_CONF,dnsOption);
-    }
-    else //If XDNS is not enabled 
-    {
-        sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
-    }
 
-    l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
+    l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
     if (0 == l_iSystem_Res)
     {
         fprintf(stderr, "dns-server started successfully\n");
@@ -323,25 +336,14 @@ int dhcp_server_start (char *input)
 	/*Run script to reolve the IP address when upgrade from native to rdkb case only */
 	system("sh /etc/utopia/service.d/migration_native_rdkb.sh ");
 #endif
-        getRFC_Value (dnsOption);
-	fprintf(stdout, "Adding DNSMASQ Option: %s\n", dnsOption);
-        strtok(dnsOption,"\n");
 	//we use dhcp-authoritative flag to indicate that this is
    	//the only dhcp server on the local network. This allows
    	//the dns server to give out a _requested_ lease even if
    	//that lease is not found in the dnsmasq.leases file
 	print_with_uptime("RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:");
 	int l_iDnamasq_Retry;	
-	if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
-	{
-		sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",SERVER, DHCP_CONF,dnsOption);
-	}
-	else //If XDNS is not enabled 
-	{
-    	sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
-	}
 
-	l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
+	l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
 	if (0 == l_iSystem_Res)
 	{
     	fprintf(stderr, "%s process started successfully\n", SERVER);
@@ -355,7 +357,7 @@ int dhcp_server_start (char *input)
 			{
             	fprintf(stderr, "%s process failed to start sleep for 5 sec and restart it\n", SERVER);
 	            sleep(5);
-				l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
+				l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
 			    if (0 == l_iSystem_Res)
 			    {
     				fprintf(stderr, "%s process started successfully\n", SERVER);
@@ -590,24 +592,11 @@ void lan_status_change(char *input)
     	//set hostname and /etc/hosts cause we are the dns forwarder
         prepare_hostname();
 
-        getRFC_Value (dnsOption);
-	fprintf(stdout, "Adding DNSMASQ Option: %s\n", dnsOption);
-        strtok(dnsOption,"\n");
         //also prepare dns part of dhcp conf cause we are the dhcp server too
         prepare_dhcp_conf("dns_only");
 
         fprintf(stderr, "SERVICE DHCP : Start dhcp-server from lan status change");
-		if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
-	    {
-    	    sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s", 
-					SERVER, DHCP_CONF,dnsOption);
-    	}
-    	else //If XDNS is not enabled 
-    	{
-        	snprintf(l_cSystemCmd, sizeof(l_cSystemCmd), "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
-    	}
-		fprintf(stderr, "Starting dnsmasq: %s now\n", l_cSystemCmd);
-	    l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
+	    l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
     	if (0 == l_iSystem_Res)
 	    {
     	    fprintf(stderr, "%s process started successfully\n", SERVER);
