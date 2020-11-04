@@ -107,6 +107,34 @@ dnsserver_start_lxc ()
    fi
 }
 
+dnsmasq_server_start ()
+{
+         if [ "$XDNS_ENABLE" = "true" ]; then
+                SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
+                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
+                SYSCFG_XDNSREFAC_FLAG=`syscfg get XDNS_RefacCodeEnable`
+                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
+                        if [ "$SYSCFG_XDNSREFAC_FLAG" = "1" ] ; then
+                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0 --xdns-refac-code  #--enable-dbus
+                        else
+                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0  #--enable-dbus
+                        fi
+
+                else
+                        if [ "$SYSCFG_XDNSREFAC_FLAG" = "1" ] ; then
+                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --xdns-refac-code  #--enable-dbus
+                        else
+                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
+                        fi
+                fi
+         else
+                $SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
+         fi
+
+}
+
+
+
 #-----------------------------------------------------------------
 #  lan_status_change
 #
@@ -147,17 +175,7 @@ lan_status_change ()
          else
               echo "RFC DNSTRICT ORDER is not defined or Enabled"
          fi
-	 if [ "$XDNS_ENABLE" = "true" ]; then
-		SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
-                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
-                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0  #--enable-dbus
-		else
-		 	$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
-		fi		 
-	 else
-		$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
-	 fi
+	 dnsmasq_server_start
          sysevent set dns-status started
       else
 	     sysevent set lan_status-dhcp started
@@ -269,35 +287,15 @@ restart_request ()
    fi
 
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
-     if [ "$XDNS_ENABLE" = "true" ]; then
-                SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
-                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
-                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0  #--enable-dbus
-		else
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
-		fi	
-	 else
-		$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
-	 fi
-      sysevent set dns-status started
+        dnsmasq_server_start
+	sysevent set dns-status started
    else
       # we use dhcp-authoritative flag to indicate that this is
       # the only dhcp server on the local network. This allows 
       # the dns server to give out a _requested_ lease even if
       # that lease is not found in the dnsmasq.leases file
       # Get the DNS strict order option
-      if [ "$XDNS_ENABLE" = "true" ]; then
-                SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
-                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
-                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0  #--enable-dbus
-		else
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
-		fi	
-      else
-		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
-      fi
+      dnsmasq_server_start
 
       if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ] ; then
          echo "#!/bin/sh" > $TIME_FILE
@@ -520,17 +518,7 @@ dhcp_server_start ()
    fi
    
    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
-   if [ "$XDNS_ENABLE" = "true" ]; then
-                SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
-                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
-                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0   #--enable-dbus
-		else
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION   #--enable-dbus
-		fi
-   else
-	$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
-   fi
+   dnsmasq_server_start
 
    if [ $? -eq 0 ]; then
    	echo_t "$SERVER process started successfully"
@@ -540,13 +528,8 @@ dhcp_server_start ()
         	COUNTER=0
         	while [ $COUNTER -lt 5 ]; do
    			echo_t "$SERVER process failed to start sleep for 5 sec and restart it"
-			sleep 5
-			if [ "$XDNS_ENABLE" = "true" ]; then
-				$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
-			else
-				$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
-			fi
-
+                        sleep 5
+			dnsmasq_server_start
                 	if [ $? -eq 0 ]; then
 				break
 			fi
@@ -675,18 +658,7 @@ dhcp_server_stop ()
    fi
 
    # restart the dns server
-   if [ "$XDNS_ENABLE" = "true" ]; then
-	SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
-                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
-                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
-		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0 #--enable-dbus
-	else
-		$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION #--enable-dbus
-	fi
-   else
-	$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
-   fi
-
+   dnsmasq_server_start
    sysevent set dns-status started
 }
 
@@ -751,30 +723,9 @@ dns_start ()
    # the dns server to give out a _requested_ lease even if
    # that lease is not found in the dnsmasq.leases file
    if [ "stopped" = "$DHCP_STATE" ]; then
-	 if [ "$XDNS_ENABLE" = "true" ]; then
-        	SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
-                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
-                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0  #--enable-dbus
-		else
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
-		fi
-	 else
-		$SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
-	 fi
+	dnsmasq_server_start
    else
-   	 if [ "$XDNS_ENABLE" = "true" ]; then
-                SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
-                SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
-                if [ "$MODEL_NUM" = "CGA4131COM" ] && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0 #--enable-dbus
-		else
-			$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION #--enable-dbus
-		fi	
-	 else
-		$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
-	 fi
-
+        dnsmasq_server_start
 	 if [ $? -eq 0 ]; then
    		echo_t "$SERVER process started successfully"
    	 else
@@ -784,12 +735,7 @@ dns_start ()
         		while [ $COUNTER -lt 5 ]; do
    				echo_t "$SERVER process failed to start sleep for 5 sec and restart it"
 				sleep 5
-				if [ "$XDNS_ENABLE" = "true" ]; then
-					$SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh --dhcp-authoritative -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION #--enable-dbus
-				else
-					$SERVER -u nobody --dhcp-authoritative -P 4096 -C $DHCP_CONF  #--enable-dbus
-				fi
-
+				dnsmasq_server_start
                 		if [ $? -eq 0 ]; then
 					break
 				fi

@@ -413,6 +413,9 @@ $UDHCPEnable=false
 
 $dibbler_client_enable=false
 
+#Bydefault dnsmasq uses new code changes
+$XDNS_RefacCodeEnable=1
+
 #Mullti profile xdns by default is disabled(0).
 $MultiProfileXDNS=0
 

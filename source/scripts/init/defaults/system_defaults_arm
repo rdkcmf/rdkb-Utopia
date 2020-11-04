@@ -412,6 +412,9 @@ $UDHCPEnable=false
 
 $dibbler_client_enable=false
 
+#Bydefault dnsmasq uses new code changes
+$XDNS_RefacCodeEnable=1
+
 # static dhcp leases
 # ------------------
 #    if you want to have static addresses given to lan hosts by the dhcp server then
