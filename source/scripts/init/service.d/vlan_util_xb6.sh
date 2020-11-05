@@ -486,26 +486,19 @@ setup_pod_ethbhaul() {
         exit 1
     fi
     ETHERNET_IFACE="nsgmii1.100"
-    ip link add link $ETHERNET_IFACE ethsw101 type vlan proto 802.1Q id 101
-    ip link add link $ETHERNET_IFACE ethsw106 type vlan proto 802.1Q id 106
-    ip link add link $ETHERNET_IFACE ethsw1060 type vlan proto 802.1Q id 1060
-    ifconfig ethsw101 up
-    ifconfig ethsw106 up
-    ifconfig ethsw1060 up
-    brctl addif brlan1 ethsw101
-    brctl addif br106 ethsw106
-    brctl addif br403 ethsw1060
+    EB_BRIDGE="brebhaul"
+    ip link add link $ETHERNET_IFACE ethsw123 type vlan proto 802.1Q id 123
+    ifconfig ethsw123 up
+    brctl addbr $EB_BRIDGE
+    ifconfig $EB_BRIDGE 169.254.85.1 netmask 255.255.255.0 up
+    brctl addif $EB_BRIDGE ethsw123
 }
 
 #Remove ethernet backhaul related vlans for nsgmii1.100
 remove_pod_ethbhaul() {
-    if [ -d "/sys/class/net/ethsw1060" ] || [ -d "/sys/class/net/ethsw101" ] || [ -d "/sys/class/net/ethsw106" ]; then
-        ifconfig ethsw101 down
-        ifconfig ethsw106 down
-        ifconfig ethsw1060 down
-        vconfig rem ethsw101
-        vconfig rem ethsw106
-        vconfig rem ethsw1060
+    if [ -d "/sys/class/net/ethsw123" ]; then
+        ifconfig ethsw123 down
+        vconfig rem ethsw123
     fi
 }
 

@@ -658,6 +658,10 @@ ifconfig br403 192.168.245.1 netmask 255.255.255.0 up
 brctl addif br403 l2sd0.1060
 ip rule add from all iif br403 lookup erouter
 
+# Add a new bridge for ethernet bhaul delivery
+brctl addbr brebhaul
+ifconfig brebhaul 169.254.85.1 netmask 255.255.255.0 up
+
 #--------Marvell LAN-side egress flood mitigation----------------
 echo_t "88E6172: Do not egress flood unicast with unknown DA"
 swctl -c 11 -p 5 -r 4 -b 0x007b

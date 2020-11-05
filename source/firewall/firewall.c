@@ -469,6 +469,9 @@ NOT_DEF:
 #define PORT_SCAN_CHECK_CHAIN "PORT_SCAN_CHK"
 #define PORT_SCAN_DROP_CHAIN  "PORT_SCAN_DROP"
 
+#define XHS_GRE_CLAMP_MSS   1400
+#define XHS_EB_MARK         4703
+
 static int do_blockfragippktsv4(FILE *fp);
 static int do_ipflooddetectv4(FILE *fp);
 static int do_portscanprotectv4(FILE *fp);
@@ -9879,11 +9882,15 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i brlan112 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brlan113 -d 169.254.1.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brlan113 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -d 169.254.85.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_) && !defined(_HUB4_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6
     fprintf(filter_fp, "-A INPUT -i ath12 -d 169.254.0.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath12 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath13 -d 169.254.1.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i ath13 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -d 169.254.85.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined(_COSA_BCM_MIPS_)
     FIREWALL_DEBUG("after cosa_bcm check\n");
     fprintf(filter_fp, "-A INPUT -i brlan112 -d 169.254.0.0/24 -j ACCEPT\n");
@@ -9892,6 +9899,8 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i brlan113 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -d 169.254.85.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined(_HUB4_PRODUCT_REQ_)
     fprintf(filter_fp, "-A INPUT -i brlan6 -d 169.254.0.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brlan6 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
@@ -9899,6 +9908,8 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i brlan7 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -d 169.254.85.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #endif
 #endif
 #if !defined(_HUB4_PRODUCT_REQ_)
@@ -9931,6 +9942,40 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     } while ((tok = strtok(NULL, " ")) != NULL);
       FIREWALL_DEBUG("Exiting prepare_multinet_filter_forward\n"); 	 
     return 0;
+}
+
+/*
+** Clamping the MSS of brlan1 traffic when GRE interface is present in the brlan1 during 
+** Ethernet backhaul. 
+*/
+static int prepare_ethernetbhaul_greclamp( FILE *mangle_fp) {
+   char xhs[16] = {0};
+   char *pVal = NULL;
+   char eb_gre_status[20] = {0};
+   int isEBGreup = 0;
+   const char *XHSLan = "dmsb.l2net.2.Name";
+   int ret = 0;
+
+   eb_gre_status[0] = '\0';
+   sysevent_get(sysevent_fd, sysevent_token, "eb_gre", eb_gre_status, sizeof(eb_gre_status));
+   isEBGreup = (0 == strcmp("up", eb_gre_status)) ? 1 : 0; 
+   FIREWALL_DEBUG("Entering prepare_ethernetbhaul_greclamp status:%s\n" COMMA eb_gre_status);
+   if( isEBGreup) {
+    (bus_handle && PSM_VALUE_GET_STRING(XHSLan, pVal) == CCSP_SUCCESS && pVal) ? strcpy(xhs,pVal) :
+                                                                                         strcpy(xhs,"brlan1");
+    if(pVal) {
+        Ansc_FreeMemory_Callback(pVal);
+        pVal = NULL;
+    }
+    FIREWALL_DEBUG("prepare_ethernetbhaul_greclamp clamping mss since gre present\n");
+    fprintf(mangle_fp, "-A PREROUTING -i %s -j MARK --set-mark %d\n", xhs, XHS_EB_MARK);
+    fprintf(mangle_fp, "-A POSTROUTING -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d\n", xhs, XHS_GRE_CLAMP_MSS);
+    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p tcp -m tcp --tcp-flags SYN,RST SYN -m mark --mark %d -j TCPMSS --set-mss %d\n", XHS_EB_MARK, XHS_GRE_CLAMP_MSS);
+   } else {
+    FIREWALL_DEBUG("prepare_ethernetbhaul_greclamp skip clamping mss since gre not present\n");
+   }
+   FIREWALL_DEBUG("Exiting prepare_ethernetbhaul_greclamp\n");
+   return 0;
 }
 
 static int prepare_multinet_mangle(FILE *mangle_fp) {
@@ -11530,7 +11575,10 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    do_filter_table_general_rules(filter_fp);
    do_raw_logs(raw_fp);
    do_logs(filter_fp);
-   
+  
+/* Prepare mangle table rules for brlan1 traffic marking used to clamp mss for GRE traffic */
+   prepare_ethernetbhaul_greclamp(mangle_fp);
+ 
    prepare_multinet_mangle(mangle_fp);
 #ifdef _HUB4_PRODUCT_REQ_
    do_hub4_voice_rules_v4(filter_fp);

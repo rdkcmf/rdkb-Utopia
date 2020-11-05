@@ -923,8 +923,13 @@ fi
 
    #Option for parsing plume vendor code
    if [ "$BOX_TYPE" = "XB6" ]; then
-    echo "dhcp-option=vendor:Plume,43,tag=1060" >> $LOCAL_DHCP_CONF 
-    echo "dhcp-option=vendor:PP203X,43,tag=1060" >> $LOCAL_DHCP_CONF 
+    if [ "$BOX_TYPE" != "TG3482G" ]; then
+     echo "dhcp-option=vendor:Plume,43,tag=123" >> $LOCAL_DHCP_CONF 
+     echo "dhcp-option=vendor:PP203X,43,tag=123" >> $LOCAL_DHCP_CONF
+    else
+     echo "dhcp-option=vendor:Plume,43,tag=1060" >> $LOCAL_DHCP_CONF 
+     echo "dhcp-option=vendor:PP203X,43,tag=1060" >> $LOCAL_DHCP_CONF
+    fi
    fi
 
    if [ "dns_only" != "$3" ] ; then
@@ -1012,6 +1017,7 @@ fi
 		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
 			   echo "${PREFIX}""dhcp-option=l2sd0.113,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
+
            #RDKB-15951 - Mesh Bhaul vlan address pool
            echo "interface=l2sd0.1060" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
@@ -1041,6 +1047,11 @@ fi
             if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
                 echo "${PREFIX}""dhcp-option=brlan113,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
             fi
+            
+            if [ "$MODEL_NUM" != "TG4482A" ]; then
+             echo "interface=brebhaul" >> $LOCAL_DHCP_CONF
+             echo "dhcp-range=169.254.85.5,169.254.85.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+            fi
 
             echo "interface=br403" >> $LOCAL_DHCP_CONF
             echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
@@ -1063,7 +1074,12 @@ fi
 		   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
 			   echo "${PREFIX}""dhcp-option=ath13,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
-           
+          
+           if [ "$BOX_TYPE" != "TG3482G" ]; then
+            echo "interface=brebhaul" >> $LOCAL_DHCP_CONF
+            echo "dhcp-range=169.254.85.5,169.254.85.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
+           fi
+ 
 	   echo "interface=br403" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
 
