@@ -883,6 +883,17 @@ static int gen_zebra_conf(int sefd, token_t setok)
 																			   __LINE__,
 																			   StaticDNSServersEnabled,
 																			   name_servs );
+                                if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
+                                {
+                                    char static_dns[256] = {0};
+                                    sysevent_get(sefd, setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
+                                    fprintf(fp, "   ipv6 nd rdnss %s 86400\n", static_dns);
+                                    if (strlen(name_servs) == 0) {
+                                        sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs),
+                                                sizeof(name_servs) - strlen(name_servs));
+                                    }
+                                }
+                                    
 			}
 			else
 			{
@@ -993,6 +1004,17 @@ if(!strncmp(out,"true",strlen(out)))
                                                                                                                                                            __LINE__,
                                                                                                                                                            StaticDNSServersEnabled,
                                                                                                                                                            name_servs );
+                                if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
+                                {
+                                    char static_dns[256] = {0};
+                                    sysevent_get(sefd, setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
+                                    fprintf(fp, "   ipv6 nd rdnss %s 86400\n", static_dns);
+                                    /* DNS from WAN (if no static DNS) */
+                                    if (strlen(name_servs) == 0) {
+                                        sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs),
+                                                sizeof(name_servs) - strlen(name_servs));
+                                    }
+                                 }
                         }
                         else
                         {
