@@ -78,7 +78,7 @@
 #endif
 
 #ifdef _HUB4_PRODUCT_REQ_
-#include "wan_manager_ipc_msg.h"
+#include "ipc_msg.h"
 #endif
 
 #define RESOLVE_CONF_BIN_FULL_PATH  "/sbin/resolvconf"
@@ -127,17 +127,17 @@ typedef struct udhcpc_script_t
 /**
  * @brief Retrieve DHCPv4 data from environment variables and fill
  * the data structure.
- * @param dhcpv4_data Pointer to dhcpv4_data_t structure hold data
+ * @param dhcpv4_data Pointer to ipc_dhcpv4_data_t structure hold data
  * @param pinfo Pointer to udhcpc_script_t contains basic ipv4 info
  * @return 0 on success else returns -1.
  */
-static int get_and_fill_env_data (dhcpv4_data_t *dhcpv4_data, udhcpc_script_t* pinfo);
+static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_t* pinfo);
 /**
  * @brief Send dhcpv4 data to RdkWanmanager.
  * @param structure contains the dhcpv4 data
  * @return 0 on success else returned -1
  */
-static int send_dhcp_data_to_wanmanager (dhcpv4_data_t *dhcpv4_data);
+static int send_dhcp_data_to_wanmanager (ipc_dhcpv4_data_t *dhcpv4_data);
 #endif
 
 void compare_and_delete_old_dns(udhcpc_script_t *pinfo);
@@ -780,7 +780,7 @@ int handle_leasefail(udhcpc_script_t *pinfo)
 
     OnboardLog("[%s][%d] Received [%s] event from udhcpc \n", __FUNCTION__,__LINE__,pinfo->input_option);
     int ret = 0;
-    dhcpv4_data_t data;
+    ipc_dhcpv4_data_t data;
     memset (&data, 0, sizeof(data));
 
     ret = get_and_fill_env_data (&data, pinfo);
@@ -818,7 +818,7 @@ int handle_wan(udhcpc_script_t *pinfo)
  
     OnboardLog("[%s][%d] Received [%s] event from udhcpc \n", __FUNCTION__,__LINE__,pinfo->input_option);
     int ret = 0;
-    dhcpv4_data_t data;
+    ipc_dhcpv4_data_t data;
     memset (&data, 0, sizeof(data));
 
     ret = get_and_fill_env_data (&data, pinfo);
@@ -1086,7 +1086,7 @@ int init_udhcpc_script_info(udhcpc_script_t *pinfo, char *option)
     return 0;
 }
 #ifdef _HUB4_PRODUCT_REQ_
-static int get_and_fill_env_data (dhcpv4_data_t *dhcpv4_data, udhcpc_script_t* pinfo)
+static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_t* pinfo)
 {
     if (dhcpv4_data == NULL || pinfo == NULL)
     {
@@ -1264,7 +1264,7 @@ static int get_and_fill_env_data (dhcpv4_data_t *dhcpv4_data, udhcpc_script_t* p
     return 0;
 }
 
-static int send_dhcp_data_to_wanmanager (dhcpv4_data_t *dhcpv4_data)
+static int send_dhcp_data_to_wanmanager (ipc_dhcpv4_data_t *dhcpv4_data)
 {
     int ret = 0;
     if ( NULL == dhcpv4_data)
@@ -1276,16 +1276,16 @@ static int send_dhcp_data_to_wanmanager (dhcpv4_data_t *dhcpv4_data)
     /**
      * Send data to wanmanager.
      */
-    msg_payload_t msg;
-    memset(&msg, 0, sizeof(msg_payload_t));
+    ipc_msg_payload_t msg;
+    memset(&msg, 0, sizeof(ipc_msg_payload_t));
 
     msg.msg_type = DHCPC_STATE_CHANGED;
-    memcpy(&msg.data.dhcpv4, dhcpv4_data, sizeof(dhcpv4_data_t));
+    memcpy(&msg.data.dhcpv4, dhcpv4_data, sizeof(ipc_dhcpv4_data_t));
 
     int sock   = -1;
     int conn   = -1;
     int bytes  = -1;
-    int sz_msg = sizeof(msg_payload_t);
+    int sz_msg = sizeof(ipc_msg_payload_t);
 
     sock = nn_socket(AF_SP, NN_PUSH);
     if (sock < 0)
