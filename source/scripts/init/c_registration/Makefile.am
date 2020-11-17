@@ -48,7 +48,6 @@ AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir
 15_xhs_SOURCES = 15_xhs.c
 15_dhcp_server_SOURCES = 15_dhcp_server.c
 20_factorydefault_SOURCES = 20_factorydefault.c
-01_init_SOURCES = 01_init.c
 10_sysevent_proxy_SOURCES = 10_sysevent_proxy.c
 02_lanHandler_SOURCES = 02_lanHandler.c
 15_qos_SOURCES = 15_qos.c
