@@ -102,7 +102,7 @@ dnsserver_start_lxc ()
    if [ -f /usr/bin/lxc-ls ]; then
         IS_CONTAINER_ACTIVE=`/usr/bin/lxc-ls --active`
         if [ "$IS_CONTAINER_ACTIVE" = "webui" ]; then
-             $SERVER -u nobody --strict-order --bind-interfaces --pid-file=$LXC_PID_FILE --conf-file=$LXC_DHCP_CONF --listen-address 147.0.3.1 --dhcp-range 147.0.3.2,147.0.3.254 --dhcp-lease-max=253 --dhcp-no-override --except-interface=lo --interface=$LXC_BRIDGE_NAME --dhcp-leasefile=/tmp/dnsmasq.$LXC_BRIDGE_NAME.leases --dhcp-authoritative
+             $SERVER --strict-order --bind-interfaces --pid-file=$LXC_PID_FILE --conf-file=$LXC_DHCP_CONF --listen-address 147.0.3.1 --dhcp-range 147.0.3.2,147.0.3.254 --dhcp-lease-max=253 --dhcp-no-override --except-interface=lo --interface=$LXC_BRIDGE_NAME --dhcp-leasefile=/tmp/dnsmasq.$LXC_BRIDGE_NAME.leases --dhcp-authoritative
         fi
    fi
 }
@@ -115,20 +115,20 @@ dnsmasq_server_start ()
                 SYSCFG_XDNSREFAC_FLAG=`syscfg get XDNS_RefacCodeEnable`
                 if ([ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]) && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
                         if [ "$SYSCFG_XDNSREFAC_FLAG" = "1" ] ; then
-                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0 --xdns-refac-code  #--enable-dbus
+                                $SERVER -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0 --xdns-refac-code  #--enable-dbus
                         else
-                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0  #--enable-dbus
+                                $SERVER -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0  #--enable-dbus
                         fi
 
                 else
                         if [ "$SYSCFG_XDNSREFAC_FLAG" = "1" ] ; then
-                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --xdns-refac-code  #--enable-dbus
+                                $SERVER -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --xdns-refac-code  #--enable-dbus
                         else
-                                $SERVER -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
+                                $SERVER -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION  #--enable-dbus
                         fi
                 fi
          else
-                $SERVER -u nobody -P 4096 -C $DHCP_CONF  #--enable-dbus
+                $SERVER -P 4096 -C $DHCP_CONF  #--enable-dbus
          fi
 
 }

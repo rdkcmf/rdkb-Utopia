@@ -108,17 +108,17 @@ int dnsmasq_server_start()
 
         syscfg_get(NULL, "XDNS_RefacCodeEnable", l_cXdnsRefacCodeEnable, sizeof(l_cXdnsRefacCodeEnable));
         if (!strncmp(l_cXdnsRefacCodeEnable, "1", 1)){
-                sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s --xdns-refac-code",
+                sprintf(l_cSystemCmd, "%s -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s --xdns-refac-code",
                                 SERVER, DHCP_CONF,dnsOption);
         }else{
-                sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",
+                sprintf(l_cSystemCmd, "%s -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",
                                 SERVER, DHCP_CONF,dnsOption);
         }
     }
     else //If XDNS is not enabled 
 #endif
     {
-        sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
+        sprintf(l_cSystemCmd, "%s -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
     }
 
 	return system(l_cSystemCmd);
