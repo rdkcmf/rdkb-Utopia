@@ -57,6 +57,7 @@ int ep_set_entity_vid_portMembers(int vid, int entity, char* memberPortNames[], 
     }
     
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, offset ? valbuf : NULL, 0);
+    return 0;
 }
 
 int ep_set_entity_vidMembers(int vid, int entities[], int numEntities) {
@@ -72,6 +73,7 @@ int ep_set_entity_vidMembers(int vid, int entities[], int numEntities) {
     }
     
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, offset ? valbuf : NULL, 0);
+    return 0;
 }
 
 int ep_set_trunkPort_vid_paths(int vid, char* portName, PEntityPath paths, int numPaths) {
@@ -87,6 +89,7 @@ int ep_set_trunkPort_vid_paths(int vid, char* portName, PEntityPath paths, int n
     }
     
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, offset ? valbuf : NULL, 0);
+    return 0;
 }
 int ep_set_trunkPort_vidMembers(int vid, char* portNames[], int numPorts){
     char keybuf[80];
@@ -101,6 +104,7 @@ int ep_set_trunkPort_vidMembers(int vid, char* portNames[], int numPorts){
     }
     
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, offset ? valbuf : NULL, 0);
+    return 0;
 }
 
 //---gets
@@ -128,9 +132,9 @@ int ep_get_entity_vid_portMembers(int vid, int entity, char* memberPortNames[], 
     
     while (token) {
 			
-	if(numPorts == MAX_ADD_PORTS )
+	if((int)numPorts == MAX_ADD_PORTS )
 	{
-		MNET_DEBUG("ep_get_entity_vid_portMembers  numPorts is exceeded [%d]\n"COMMA numPorts)
+		MNET_DEBUG("ep_get_entity_vid_portMembers  numPorts is exceeded [%d]\n"COMMA (int)numPorts)
 		break;
 	}
         memberPortNames[*numPorts] = buf + offset;
@@ -139,6 +143,7 @@ int ep_get_entity_vid_portMembers(int vid, int entity, char* memberPortNames[], 
         
         token = strtok(NULL, " ");
     }
+    return 0;
 }
 int ep_get_entity_vidMembers(int vid, int entities[], int* numEntities){
     char keybuf[80];
@@ -161,6 +166,7 @@ int ep_get_entity_vidMembers(int vid, int entities[], int* numEntities){
         
         token = strtok(NULL, " ");
     }
+    return 0;
 }
 
 int ep_get_trunkPort_vid_paths(int vid, char* portName, PEntityPath paths, int* numPaths){
@@ -182,6 +188,7 @@ int ep_get_trunkPort_vid_paths(int vid, char* portName, PEntityPath paths, int* 
         (*numPaths)++;
         token = strtok(NULL, " ");
     }
+    return 0;
 }
 int ep_get_trunkPort_vidMembers(int vid, char* portNames[], int* numPorts, char buf[], int bufSize){
     char keybuf[80];
@@ -203,9 +210,9 @@ int ep_get_trunkPort_vidMembers(int vid, char* portNames[], int* numPorts, char 
     *numPorts = 0;
     while (token) {
 			
-	if(numPorts == MAX_ADD_PORTS )
+	if((int)numPorts == MAX_ADD_PORTS )
 	{
-		MNET_DEBUG("ep_get_entity_vid_portMembers numPorts is exceeded[%d]\n"COMMA numPorts)
+		MNET_DEBUG("ep_get_entity_vid_portMembers numPorts is exceeded[%d]\n"COMMA (int)numPorts)
 		break;
 	}
         portNames[*numPorts] = buf + offset;
@@ -213,4 +220,5 @@ int ep_get_trunkPort_vidMembers(int vid, char* portNames[], int* numPorts, char 
         (*numPorts)++;
         token = strtok(NULL, " ");
     }
+    return 0;
 }

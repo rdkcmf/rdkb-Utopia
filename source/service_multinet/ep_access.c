@@ -53,7 +53,7 @@
 //Check if network interface is really connected to this bridge
 //Returns 1 if the interface is not connected to the bridge, 0 if it is
 int ep_check_if_really_bridged(PL2Net net, char *ifname){
-    char *cmd[MAX_CMD_LEN];
+    char cmd[MAX_CMD_LEN] = {0};
     char ifnamebuf[MAX_IFNAME_SIZE]; //Used to return the real interface name
     char *dash = NULL;
     char temp_ifname[MAX_IFNAME_SIZE] = {0}; //Used to store a copy of ifname that we can modify
@@ -93,7 +93,6 @@ int ep_check_if_really_bridged(PL2Net net, char *ifname){
 #endif
 
 int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
-    int i;
     char ifnamebuf[32];
     char iflistbuf[512];
     char netmemberskey[32];
@@ -111,7 +110,7 @@ int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
     {
         MNET_DEBUG("%s: Token [%s]\n" COMMA __FUNCTION__ COMMA ifToken);
  
-        sscanf(ifToken, MNET_EP_MEMBER_FORMAT(ifnamebuf, live_members[curNumMembers].interface->type->name, &live_members[curNumMembers].bReady));
+        sscanf(ifToken, MNET_EP_MEMBER_FORMAT(ifnamebuf, live_members[curNumMembers].interface->type->name, (unsigned char *)&live_members[curNumMembers].bReady));
  
 #ifdef MULTILAN_FEATURE
 #if defined (INTEL_PUMA7)
@@ -179,6 +178,7 @@ int ep_set_allMembers(PL2Net net, PMember members, int numMembers) {
     snprintf(netmemberskey, sizeof(netmemberskey), MNET_EP_ALLMEMBERS_KEY_FORMAT(net->inst));
     
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, netmemberskey, offset ? iflistbuf : NULL, 0);
+    return 0;
 }
 
 int ep_add_active_net(PL2Net net) { // TODO deferred
@@ -250,14 +250,16 @@ int ep_set_bridge(PL2Net net) {
     snprintf(keybuf, sizeof(keybuf),  MNET_EP_BRIDGE_NAME_FORMAT(net->inst));
     snprintf(valbuf, sizeof(valbuf), "%s", net->name);
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, valbuf, 0);
-    
+    return 0;
 }
 
 int ep_set_rawString(char* key, char* value) {
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, key, value, 0);
+    return 0;
 }
 int ep_get_rawString(char* key, char* value, int valueSize) {
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive,key, value, valueSize);
+    return 0;
 }
 
 int ep_clear(PL2Net net) {
@@ -270,6 +272,7 @@ int ep_clear(PL2Net net) {
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive, keybuf, NULL, 0);
     
     ep_set_allMembers(net, NULL, 0);
+    return 0;
 }
 
 // int ep_add_members(PL2Net net, PMember members, int numMembers){

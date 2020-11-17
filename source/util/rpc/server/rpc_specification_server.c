@@ -15,9 +15,10 @@ extern FILE *logfp;
 rpc_CommandBuf *
 executecommand_1_svc(rpc_CommandBuf *argp, struct svc_req *rqstp)
 {
-	char cmdBuf[255]={0};
+	//argp->buffer size is 4096
+	char cmdBuf[4110]={0};
   	int counter=0;
-	snprintf(cmdBuf,TEMP_BUF_LEN,"%s 2>&1\n",argp->buffer);
+	snprintf(cmdBuf,sizeof(cmdBuf),"%s 2>&1",argp->buffer);
 	RPC_PRINT("Server received command %s \n",cmdBuf);
 	FILE *cmd = popen(cmdBuf, "r");
 	char line [128] = {0}; /* or other suitable maximum line size */
@@ -48,9 +49,10 @@ executecommand_1_svc(rpc_CommandBuf *argp, struct svc_req *rqstp)
 
 int * exec_1_svc(rpc_CommandBuf *cmd, struct svc_req *req)
 {
-	char cmdBuf[255]={0};
+	//cmd->buffer size is 4096
+	char cmdBuf[4100]={0};
 	int ret = 1;
-    snprintf(cmdBuf,TEMP_BUF_LEN,"%s &\n",cmd->buffer);
+	snprintf(cmdBuf,sizeof(cmdBuf),"%s &",cmd->buffer);
 	system(cmdBuf);
 	return &ret;
 }

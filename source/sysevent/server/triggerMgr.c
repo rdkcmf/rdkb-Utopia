@@ -70,16 +70,20 @@
 #include <ctype.h> // for isspace
 #include <arpa/inet.h> // for htonl
 #include "triggerMgr.h"
+#include <stdlib.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 #include "syseventd.h"
 #include "libsysevent_internal.h"
 
+
 static int TRIGGER_MGR_inited = 0;
 static int  next_trigger_id   = 1;  // dont assign 0
 
 static trigger_list_t  global_triggerlist = { PTHREAD_MUTEX_INITIALIZER, 0, 0, NULL };
+
+
 /*
 =======================================================================
 Utilities to manipulate the list of actions that is associated with
@@ -166,16 +170,16 @@ static int free_trigger_action_t(trigger_action_t *ta)
       if (NULL != ta->argv) {
          for (i=0; i<num_args; i++) {
             if (NULL != ta->argv[i]) {
-               sysevent_free(&(ta->argv[i]), __FILE__, __LINE__);
+               sysevent_free((void **)&(ta->argv[i]), __FILE__, __LINE__);
             }
          }
          // Free the argument vector
-         sysevent_free(&(ta->argv), __FILE__, __LINE__);
+         sysevent_free((void **)&(ta->argv), __FILE__, __LINE__);
       }
 
       // Free the action
       if (NULL != ta->action) {
-         sysevent_free(&(ta->action), __FILE__, __LINE__);
+         sysevent_free((void **)&(ta->action), __FILE__, __LINE__);
       }
    }
 
@@ -209,7 +213,7 @@ static int free_trigger_t(trigger_t *tr)
       }
 
       // Free the trigger actions array
-      sysevent_free(&(tr->trigger_actions), __FILE__, __LINE__);
+      sysevent_free((void **)&(tr->trigger_actions), __FILE__, __LINE__);
    }
 
    // Reinitialize
@@ -236,7 +240,7 @@ static int free_global_trigger_list(void)
       }
  
       // Free the trigger array
-      sysevent_free(&(global_triggerlist.trigger_list), __FILE__, __LINE__);
+      sysevent_free((void **)&(global_triggerlist.trigger_list), __FILE__, __LINE__);
    }
 
    // Reinitialize
@@ -280,7 +284,7 @@ static trigger_t *find_trigger_by_trigger_id(int id)
  *   -1          : some error
  */
 static int prepare_action_type_function_msg (se_buffer buffer, int trigger_id, trigger_action_t *action, 
-                                             const char const *name, const char const *value)
+                                             const char* const name, const char* const value)
 {
    // figure out how much space the se_msg_strings will take
    int subbytes  = SE_string2size(name);
@@ -331,7 +335,7 @@ static int prepare_action_type_function_msg (se_buffer buffer, int trigger_id, t
 }
 
 static int prepare_action_type_function_msg_data (char *buffer, int buf_length, int trigger_id, trigger_action_t *action, 
-                                             const char const *name, const char const *value,const int value_length)
+                                             const char* const name, const char* const value,const int value_length)
 {
    // figure out how much space the se_msg_strings will take
    int subbytes  = SE_string2size(name);
@@ -400,7 +404,7 @@ static int prepare_action_type_function_msg_data (char *buffer, int buf_length, 
  *   -2          : Dead peer detected and cleaned up
  * Note          : The buffer must be at least sizeof(se_buffer)
  */
-static int prepare_action_type_message_msg (se_buffer buffer, const int trigger_id, trigger_action_t *action, const char const *name, const char const *value, const int source, const int tid)
+static int prepare_action_type_message_msg (se_buffer buffer, const int trigger_id, trigger_action_t *action, const char* const name, const char* const value, const int source, const int tid)
 {
 
    // if the action owner has disconnected, then there is no need to send this message
@@ -465,7 +469,7 @@ static int prepare_action_type_message_msg (se_buffer buffer, const int trigger_
    return(0);
 }
 
-static int prepare_action_type_message_msg_data (char* buffer, const int buf_length, const int trigger_id, trigger_action_t *action, const char const *name, const char const *value, const int value_length, const int source, const int tid)
+static int prepare_action_type_message_msg_data (char* buffer, const int buf_length, const int trigger_id, trigger_action_t *action, const char*  const name, const char* const value, const int value_length, const int source, const int tid)
 {
 
    // if the action owner has disconnected, then there is no need to send this message
@@ -548,7 +552,7 @@ static int prepare_action_type_message_msg_data (char* buffer, const int buf_len
  *   For safety this should be called while TRIGGER_MGR is locked, but it is
  *   going to take a while
  */
-static int execute_trigger_actions(const trigger_t *tr, const char const *name, const char const *value, const int source, const int tid)
+static int execute_trigger_actions(const trigger_t *tr, const char* const name, const char* const value, const int source, const int tid)
 {
    if (NULL == tr->trigger_actions) {
       return(0);
@@ -628,7 +632,7 @@ static int execute_trigger_actions(const trigger_t *tr, const char const *name, 
          // we can send a pointer because we KNOW that this is a message within this process
          send_msg_body->data     = list;
       } else {
-         sysevent_free(&list, __FILE__, __LINE__);
+         sysevent_free((void **)&list, __FILE__, __LINE__);
          return(-1);
       }
       SE_INC_LOG(MUTEX,
@@ -763,7 +767,7 @@ static int execute_trigger_actions(const trigger_t *tr, const char const *name, 
    return(0);
 }
 
-static int execute_trigger_actions_data(const trigger_t *tr, const char const *name, const char const *value, const int value_length, const int source, const int tid)
+static int execute_trigger_actions_data(const trigger_t *tr, const char* const name, const char* const value, const int value_length, const int source, const int tid)
 {
    if (NULL == tr->trigger_actions) {
       return(0);
@@ -906,7 +910,7 @@ static int execute_trigger_actions_data(const trigger_t *tr, const char const *n
                         printf("Thread %d Got mutex: trigger_communication\n", id);
                      )
                      int rc = SE_msg_send_data(trigger_datacommunication_fd_writer_end, send_msg_buffer,bin_size);
-                     sysevent_free(&send_msg_buffer,__FILE__, __LINE__);
+                     sysevent_free((void **)&send_msg_buffer,__FILE__, __LINE__);
                      if (0 != rc) {
                         SE_INC_LOG(ERROR,
                            int id = thread_get_id(worker_data_key);
@@ -961,7 +965,7 @@ static int execute_trigger_actions_data(const trigger_t *tr, const char const *n
                          snprintf(buf_t,sizeof(buf_t),"echo fname %s: freed >> /tmp/sys_d.txt",__FUNCTION__);
                          system(buf_t);
                      }
-                     sysevent_free(&send_msg_buffer,__FILE__, __LINE__);
+                     sysevent_free((void **)&send_msg_buffer,__FILE__, __LINE__);
                      if (0 != rc) {
                         SE_INC_LOG(ERROR,
                            int id = thread_get_id(worker_data_key);
@@ -1759,7 +1763,7 @@ int TRIGGER_MGR_remove_notification_message_actions(const token_t owner)
  * Note          : This function is called by data manager while it
  *   has a mutex lock. DO NOT CALL ANY DATA_MGR functions
  */
- int TRIGGER_MGR_execute_trigger_actions(const int trigger_id, const char const *name, const char const *value, const int source, int tid)
+ int TRIGGER_MGR_execute_trigger_actions(const int trigger_id, const char* const name, const char* const value, const int source, int tid)
 {
 
    if (!TRIGGER_MGR_inited) {
@@ -1795,7 +1799,7 @@ int TRIGGER_MGR_remove_notification_message_actions(const token_t owner)
    return(0);
 }
 
-int TRIGGER_MGR_execute_trigger_actions_data(const int trigger_id, const char const *name, const char const *value, const int value_length, const int source, int tid)
+int TRIGGER_MGR_execute_trigger_actions_data(const int trigger_id, const char* const name, const char* const value, const int value_length, const int source, int tid)
 {
 
    if (!TRIGGER_MGR_inited) {
@@ -1872,7 +1876,7 @@ int TRIGGER_MGR_free_cloned_action(trigger_action_t *action)
  *    0                  : success
  *   !0                  : failure
  */
-static int clone_action(trigger_action_t *dest_action, const trigger_action_t const *src_action)
+static int clone_action(trigger_action_t *dest_action, const trigger_action_t* const src_action)
 {
    dest_action->used         = src_action->used;
    dest_action->owner        = src_action->owner;

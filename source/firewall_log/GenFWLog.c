@@ -34,7 +34,6 @@
 **********************************************************************/
 
 #include <stdio.h>
-#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -47,8 +46,12 @@
 #include "syscfg/syscfg.h"
 #include "sysevent/sysevent.h"
 #include "autoconf.h"
+#define _XOPEN_SOURCE
+#include <time.h>
 //#define _NO_MMAP__
-#define CONFIG_CISCO_PARCON_WALLED_GARDEN
+#ifndef CONFIG_CISCO_PARCON_WALLED_GARDEN
+ #define CONFIG_CISCO_PARCON_WALLED_GARDEN
+#endif
 
 #define TIME_SIZE 25
 #define DESP_SIZE 100
@@ -83,8 +86,9 @@ char FIREWALL_LOG_DIR[50];
 #define STRING_DEVICE_BLOCKED_ALL "LOG_DeviceBlocked_DROP"
 #define STRING_URL "host match "
 
-//#define NEED_CLEAN_LOG 1
+char *strptime(const char *s, const char *format, struct tm *tm);
 
+//#define NEED_CLEAN_LOG 1
 const char SHORT_LOG_PREFIX[2][10] = {
     "LOG_",
     "UTOPIA:"
@@ -121,6 +125,7 @@ time_t t;
 rule_info_t *g_p_rule_tbl = NULL;
 int g_rule_tlb_len = 0;
 
+int _memcpy_2_graph(char *d, char *s, size_t count);
 #define printf(x, argv...) 
 
 int fLock(){
@@ -589,7 +594,7 @@ void merger_rule(FILE* fd, int *num){
     char *line = NULL;
     int ret = 0;
     int size = 0;
-    rule_info_t info = {0}; /*RDKB-7143, CID-33545; init before use */
+    rule_info_t info = {{0},{0},{0},{0},0}; /*RDKB-7143, CID-33545; init before use */
 
     while(-1 != getline(&line, &size, fd)){
         ret = sscanf(line, "Count=\"%d\"; Time=\"%[^\"]\"; Action=\"%[^\"]\"; Desp=\"%[^\"]\";\n", &(info.count), info.time, info.action, info.desp);
@@ -603,18 +608,16 @@ void merger_rule(FILE* fd, int *num){
 }
 
 void get_rule_time(int count){
-    char cmd[100];
+    char cmd[120];
     char *line = NULL;
     char today[32];
     int i = 0;
-    size_t size; 
     rule_info_t *tbl = g_p_rule_tbl;
 #ifndef _NO_MMAP__
     int fd;
     struct stat statbuf;
-    char *start, *end, *pos;
+    char *start, *end;
     int j = 0;
-    int ret;
 #else
     FILE *fd;
 #endif
@@ -623,6 +626,7 @@ void get_rule_time(int count){
 //    printf("%s\n", cmd);
     system(cmd);
 #ifdef _NO_MMAP__
+    size_t size;
     fd = fopen(FW_ORG_LOG_NAME,"r");
     if(fd == NULL){
         remove(FW_ORG_LOG_NAME);
@@ -735,7 +739,7 @@ int main(int argc, char** argv){
     FILE *ipt;
     FILE *log;
     int  lock;
-    char fName[64];
+    char fName[80];
     char *line = NULL;
     size_t size;
     int opt = 0;

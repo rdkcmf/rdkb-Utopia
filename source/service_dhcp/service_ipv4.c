@@ -48,6 +48,7 @@ extern unsigned int mask2cidr(char *subnetMask);
 extern unsigned int countSetBits(int byte);
 extern void subnet(char *ipv4Addr, 
                    char *ipv4Subnet, char *subnet);
+extern void get_device_props();
 
 //=======================
 //service_ipv4.sh conversion
@@ -776,7 +777,7 @@ void resync_instance (int l3_inst)
 	char l_cNv_EthLower[8] = {0}, l_cNv_Ip[16] = {0}, l_cNv_Subnet[16] = {0};
 	char l_cNv_Enabled[8] = {0}, l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
 	char l_cLower[8] = {0}, l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0};
-	char l_cIpv4_Static[16] = {0}, l_cIpv4_Instances[8] = {0}, l_cNv_Lower_Status[16] = {0};
+	char l_cIpv4_Static[16] = {0}, l_cIpv4_Instances[8] = {0}, l_cNv_Lower_Status[16] = {0}, l_cIpv4_Instances_new[30];
 	char l_cNv_Lower[8] = {0};
 	char l_cAsyncId[16] = {0};
 	char l_cEvent_Name[32] = {0}, l_cL3Inst[8] = {0};
@@ -949,16 +950,17 @@ void resync_instance (int l3_inst)
 			sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 						 "ipv4-instances", l_cIpv4_Instances, 
 						 sizeof(l_cIpv4_Instances));
-			if (0 != l_cIpv4_Instances[0])
-				snprintf(l_cIpv4_Instances, sizeof(l_cIpv4_Instances), 
+			if (0 != l_cIpv4_Instances[0]){
+				snprintf(l_cIpv4_Instances_new, sizeof(l_cIpv4_Instances_new), 
 						 "%s %d", l_cIpv4_Instances, l3_inst);
+			}
 			else
-				snprintf(l_cIpv4_Instances, sizeof(l_cIpv4_Instances), 
+				snprintf(l_cIpv4_Instances_new, sizeof(l_cIpv4_Instances_new), 
 						 "%d", l3_inst);
 
-			fprintf(stderr, "IPv4 instances is:%s\n", l_cIpv4_Instances);
+			fprintf(stderr, "IPv4 instances is:%s\n", l_cIpv4_Instances_new);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, 
-						 "ipv4-instances", l_cIpv4_Instances, 0);
+						 "ipv4-instances", l_cIpv4_Instances_new, 0);
 
 			snprintf(l_cEvent_Name, sizeof(l_cEvent_Name), "multinet_%s-status", l_cNv_Lower);
 			snprintf(l_cL3Inst, sizeof(l_cL3Inst), "%d", l3_inst);

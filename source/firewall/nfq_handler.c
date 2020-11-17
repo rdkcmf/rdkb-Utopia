@@ -55,6 +55,7 @@
 #include <linux/netfilter.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include "secure_wrapper.h"
 
 #define _NFQ_DEBUG_LEVEL 0
 #define PARCON_IP_PATH "/var/parcon/"
@@ -106,7 +107,6 @@ static char *get_dns_header(char *payload)
     if(ipHdr->version == 4){
         udpHdr = (struct udphdr *)(payload + ((struct iphdr*)payload)->ihl * 4);
     }else{
-        struct ip6_hdr *ip6Hdr = (struct ip6Hdr *)(payload);
         udpHdr = (struct udphdr *)(payload + sizeof(struct ip6_hdr));
     }
     return (char *)udpHdr + sizeof(struct udphdr);
@@ -114,6 +114,7 @@ static char *get_dns_header(char *payload)
 
 //Get pointer to the start of url in the packet assuming there is only one question
 //Note: Neither DjbDNS, BIND, nor MSDNS support queries where QDCOUNT > 1
+#if _NFQ_DEBUG_LEVEL >= 1
 static int get_query_url(char *url, char* dnsData)
 {
     char *ptr = url;
@@ -138,6 +139,7 @@ static int get_query_url(char *url, char* dnsData)
 
     return len + 1; //add the last 00 octet
 }
+#endif
 
 static int get_query_url_length(char* dnsData)
 {
@@ -160,12 +162,15 @@ static int get_query_url_length(char* dnsData)
 //moniter dns query to get the IP of specific MAC
 void handle_dns_query(struct nfq_data *pkt)
 {
-    char mac[64], cmd[256], ipAddr[32], saddr[32];
+    char mac[64], ipAddr[32], saddr[32];
+#if _NFQ_DEBUG_LEVEL == 1
+    char cmd[256];
+#endif
     char *payload;
     FILE *mac2Ip;
     
     struct nfqnl_msg_packet_hw *macAddr = nfq_get_packet_hw(pkt);
-    int len = nfq_get_payload(pkt, &payload);
+    int len = nfq_get_payload(pkt, (unsigned char **)&payload);
     struct iphdr *ipHdr = ((struct iphdr*)payload);
     unsigned char *srcIp = (unsigned char*)&ipHdr->saddr;
     
@@ -201,29 +206,25 @@ void handle_dns_query(struct nfq_data *pkt)
             fprintf(mac2Ip, "%s", ipAddr);
             fclose(mac2Ip);
         }
-        snprintf(cmd, sizeof(cmd), "iptables -F pp_disabled_%u", insNum);
 #if _NFQ_DEBUG_LEVEL == 1
-        printf("system: %s\n", cmd);
+        printf("system: iptables -F pp_disabled_%u\n", insNum);
 #endif
-        system(cmd);
+        v_secure_system("iptables -F pp_disabled_%u", insNum);
 
-        snprintf(cmd, sizeof(cmd), "iptables -A pp_disabled_%u -d %s -p tcp -m multiport --sports 80,443 -m state --state ESTABLISHED -m connbytes --connbytes 0:5 --connbytes-dir reply --connbytes-mode packets -j GWMETA --dis-pp", insNum, ipAddr);
 #if _NFQ_DEBUG_LEVEL == 1
-        printf("system: %s\n", cmd);
+        printf("system: iptables -A pp_disabled_%u -d %s -p tcp -m multiport --sports 80,443 -m state --state ESTABLISHED -m connbytes --connbytes 0:5 --connbytes-dir reply --connbytes-mode packets -j GWMETA --dis-pp\n", insNum, ipAddr);
 #endif
-        system(cmd);
+        v_secure_system("iptables -A pp_disabled_%u -d %s -p tcp -m multiport --sports 80,443 -m state --state ESTABLISHED -m connbytes --connbytes 0:5 --connbytes-dir reply --connbytes-mode packets -j GWMETA --dis-pp", insNum, ipAddr);
 
-        snprintf(cmd, sizeof(cmd), "iptables -F device_%u_container", insNum);
 #if _NFQ_DEBUG_LEVEL == 1
-        printf("system: %s\n", cmd);
+        printf("system: iptables -F device_%u_container\n", insNum);
 #endif
-        system(cmd);
+        v_secure_system("iptables -F device_%u_container", insNum);
         
-        snprintf(cmd, sizeof(cmd), "iptables -A device_%u_container -d %s -j wan2lan_dnsr_nfqueue_%u", insNum, ipAddr, insNum);
 #if _NFQ_DEBUG_LEVEL == 1
-        printf("system: %s\n", cmd);
+        printf("system: iptables -A device_%u_container -d %s -j wan2lan_dnsr_nfqueue_%u\n", insNum, ipAddr, insNum);
 #endif
-        system(cmd);
+        v_secure_system("iptables -A device_%u_container -d %s -j wan2lan_dnsr_nfqueue_%u", insNum, ipAddr, insNum);
     }
     else
         fprintf(stderr, "nfq_handler: error during nfq_get_payload() in %s\n", __FUNCTION__);
@@ -234,9 +235,9 @@ void handle_dns_response(char *payload, uint32_t mark)
     char *dnsHdr = get_dns_header(payload);
     char *dnsData = dnsHdr + sizeof(struct dns_header);
     char *dnsAns;
-    
-    char url[512];
+#if _NFQ_DEBUG_LEVEL == 1 || _NFQ_DEBUG_LEVEL == 2
     char cmd[256];
+#endif
     char ipAddr[INET6_ADDRSTRLEN];
     int ansNum = 0, queryNameLen = 0, i;
     __u16 type, dataLen;
@@ -244,6 +245,7 @@ void handle_dns_response(char *payload, uint32_t mark)
     uint32_t insNum = mark & 0xff;
 
 #if _NFQ_DEBUG_LEVEL >= 1
+    char url[512];
     queryNameLen = get_query_url(url, dnsData);
 #else 
     queryNameLen = get_query_url_length(dnsData);
@@ -282,13 +284,12 @@ void handle_dns_response(char *payload, uint32_t mark)
                 unsigned char *ip = (unsigned char*)(dnsAns + sizeof(struct dns_answer));
 
                 snprintf(ipAddr, sizeof(ipAddr), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
-                snprintf(cmd, sizeof(cmd), "ipset -! add %u %s", insNum, ipAddr);
 
 #if _NFQ_DEBUG_LEVEL == 1
                 printf("%s - %s\n", url, ipAddr);
-                printf("system(\"%s\")\n", cmd);
+                printf("system(\"ipset -! add %u %s\")\n", insNum, ipAddr);
 #endif
-                system(cmd);
+                v_secure_system("ipset -! add %u %s", insNum, ipAddr);
             }else if (type == 0x001c){ /* Type AAAA*/
 #if _NFQ_DEBUG_LEVEL == 2
                 printf("type of answer in answer is %d\n", type);
@@ -298,12 +299,11 @@ void handle_dns_response(char *payload, uint32_t mark)
 
                 snprintf(ipAddr, sizeof(ipAddr), "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", \
                         ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], ip[6], ip[7], ip[8], ip[9], ip[10], ip[11], ip[12], ip[13], ip[14], ip[15]);
-                snprintf(cmd, sizeof(cmd), "ipset -! add %u_v6 %s", insNum, ipAddr);
 #if _NFQ_DEBUG_LEVEL == 2 
                 printf("%s - %s\n", url, ipAddr);
-                printf("system(\"%s\")\n", cmd);
+                printf("system(\"ipset -! add %u_v6 %s\")\n", insNum, ipAddr);
 #endif
-                system(cmd);
+                v_secure_system("ipset -! add %u_v6 %s", insNum, ipAddr);
             }
 
             dnsAns += sizeof(struct dns_answer) + dataLen;
@@ -331,8 +331,8 @@ static int dns_response_callback(struct nfq_q_handle *queueHandle, struct nfgenm
 {
     int id = 0x00; /*RDKB-7144, CID-33468, init before use */
     struct nfqnl_msg_packet_hdr *ph = nfq_get_msg_packet_hdr(pkt);
-    char *payload;
-    int len = nfq_get_payload(pkt, &payload);
+    char *payload = NULL;
+    int len = nfq_get_payload(pkt, (unsigned char **)&payload);
 
     if (ph)
         id = ntohl(ph->packet_id);
@@ -352,12 +352,11 @@ static int http_get_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *
     struct nfqnl_msg_packet_hdr *ph = nfq_get_msg_packet_hdr(pkt);
     char *payload;
     char dstMac[64];
-    int len = nfq_get_payload(pkt, &payload);
+    int len = nfq_get_payload(pkt, (unsigned char **)&payload);
     
     uint32_t mark = nfq_get_nfmark(pkt);
     uint32_t insNum = mark;
     char dstIpAddr[INET6_ADDRSTRLEN], srcIpAddr[INET6_ADDRSTRLEN];
-    char cmd[256];
     struct tcphdr *tcpHdr;
     int family;
 
@@ -381,8 +380,7 @@ static int http_get_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *
         snprintf(dstIpAddr, sizeof(dstIpAddr), "%u.%u.%u.%u", dstIp[0], dstIp[1], dstIp[2], dstIp[3]);
         snprintf(srcIpAddr, sizeof(srcIpAddr), "%u.%u.%u.%u", srcIp[0], srcIp[1], srcIp[2], srcIp[3]);
         if(insNum != 0){ 
-            snprintf(cmd, sizeof(cmd), "ipset -! add %u %s", insNum, dstIpAddr);
-            system(cmd);
+            v_secure_system("ipset -! add %u %s", insNum, dstIpAddr);
         }
         
 #if _NFQ_DEBUG_LEVEL == 2
@@ -397,11 +395,10 @@ static int http_get_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *
             struct ip6_hdr *ipv6Hdr = (struct ip6_hdr*)payload;
             struct in6_addr *daddr = &(ipv6Hdr->ip6_dst);
             struct in6_addr *saddr = &(ipv6Hdr->ip6_src);
-            tcpHdr = (struct tcpHdr *)(payload + sizeof(struct ip6_hdr)); 
+            tcpHdr = (struct tcphdr *)(payload + sizeof(struct ip6_hdr)); 
             inet_ntop(AF_INET6, daddr, dstIpAddr, sizeof(dstIpAddr));
             inet_ntop(AF_INET6, saddr, srcIpAddr, sizeof(srcIpAddr));
-            snprintf(cmd, sizeof(cmd), "ipset -! add %u_v6 %s", insNum, dstIpAddr);
-            system(cmd);
+            v_secure_system("ipset -! add %u_v6 %s", insNum, dstIpAddr);
 #if _NFQ_DEBUG_LEVEL == 2
             printf("\nip daddr is  %s\n", dstIpAddr);
             printf("tcp hdr len is %u\n", tcpHdr->doff * 4);
@@ -437,8 +434,8 @@ static int http_get_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *
 #if _NFQ_DEBUG_LEVEL == 1
             printf("sending pkt %s:%u ---> %s:%u\n", dstIpAddr, ntohs(tcpHdr->dest), srcIpAddr, ntohs(tcpHdr->source));
 #endif
-            //snprintf(cmd, sizeof(cmd), "a.out brlan0 %s %s %s %u %u %lu %lu %s", \
-                    mac, dstIpAddr, srcIpAddr, ntohs(tcpHdr->dest), ntohs(tcpHdr->source), ntohl(tcpHdr->ack_seq), ackNum, url);
+            /*snprintf(cmd, sizeof(cmd), "a.out brlan0 %s %s %s %u %u %lu %lu %s", \
+                    mac, dstIpAddr, srcIpAddr, ntohs(tcpHdr->dest), ntohs(tcpHdr->source), ntohl(tcpHdr->ack_seq), ackNum, url);*/
             //printf("cmd is %s\n", cmd);
             //system(cmd);
 
@@ -469,7 +466,6 @@ void getIFMac(char *interface, char *mac){
         sleep(5);
     }while(ret != 0);
     strcpy(mac, (void *)ether_ntoa((struct ether_addr *)(buffer.ifr_hwaddr.sa_data)));
-    return 0;
 }
 //skeleton to connect to iptables NFQUEUE argv[1]
 //argv[2] query:intercept dns query, response:intercept dns response
@@ -571,10 +567,10 @@ int main(int argc, char *argv[])
 
     if(family == AF_INET) {
         numOfCfg = sizeof(nfqCfg) / sizeof(nfq_cfg);
-        pNfqCfg = nfqCfg;
+        pNfqCfg = (nfq_cfg *)nfqCfg;
     } else {
         numOfCfg = sizeof(nfqCfgV6) / sizeof(nfq_cfg);
-        pNfqCfg = nfqCfgV6;
+        pNfqCfg = (nfq_cfg *)nfqCfgV6;
     }
 
     for(i = 0; i < numOfCfg; i++) {

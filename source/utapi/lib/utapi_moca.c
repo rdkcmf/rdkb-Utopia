@@ -134,13 +134,13 @@ int Utopia_GetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
     else
         deviceMocaIntfCfg->PrivacyEnabledSetting = (iVal == 0)? FALSE : TRUE ;
 
-    Utopia_Get(pCtx, UtopiaValue_Moca_Alias, &deviceMocaIntfCfg->Alias, UTOPIA_TR181_PARAM_SIZE);
+    Utopia_Get(pCtx, UtopiaValue_Moca_Alias, (char *)&deviceMocaIntfCfg->Alias, UTOPIA_TR181_PARAM_SIZE);
     
     Utopia_Get(pCtx, UtopiaValue_Moca_FreqCurMaskSet, buf, sizeof(buf));
     buf[strlen(buf)] = '\0';
     getHex(buf, deviceMocaIntfCfg->FreqCurrentMaskSetting, HEX_SZ);
 
-    if(Utopia_Get(pCtx, UtopiaValue_Moca_KeyPassPhrase, &deviceMocaIntfCfg->KeyPassphrase, KEYPASS_SZ) == 0)
+    if(Utopia_Get(pCtx, UtopiaValue_Moca_KeyPassPhrase, (char *)&deviceMocaIntfCfg->KeyPassphrase, KEYPASS_SZ) == 0)
         memset(deviceMocaIntfCfg->KeyPassphrase, 0, KEYPASS_SZ);    /*default value */
     if(Utopia_GetInt(pCtx, UtopiaValue_Moca_TxPowerLimit, (int*)&deviceMocaIntfCfg->TxPowerLimit) != 0)
         deviceMocaIntfCfg->TxPowerLimit = 36;       /*default value */
@@ -157,7 +157,7 @@ int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
     Obj_Device_MoCA_Interface_i_cfg *deviceMocaIntfCfg = NULL;
     int iVal = -1;
     char buf[64] = {'\0'};
-    char cmd[64] = {'\0'};
+    char cmd[128] = {'\0'};
     char key_val[64] = {'\0'};
     
     if (!pCtx || !str_handle) {
@@ -224,21 +224,21 @@ int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
  
     memset(cmd, 0, sizeof(cmd));
     Utopia_SetInt(pCtx, UtopiaValue_Moca_TxPowerLimit, deviceMocaIntfCfg->TxPowerLimit); 
-    sprintf(key_val, "%d", deviceMocaIntfCfg->TxPowerLimit);
+    sprintf(key_val, "%lu", deviceMocaIntfCfg->TxPowerLimit);
     sprintf(cmd, "mocacfg -s moca maxtxpower %s", key_val);
     system(cmd);
 
     memset(cmd, 0, sizeof(cmd));
     memset(key_val, 0, sizeof(key_val));
     Utopia_SetInt(pCtx, UtopiaValue_Moca_PwrCntlPhyTarget, deviceMocaIntfCfg->PowerCntlPhyTarget);
-    sprintf(key_val, "%d", deviceMocaIntfCfg->PowerCntlPhyTarget);
+    sprintf(key_val, "%lu", deviceMocaIntfCfg->PowerCntlPhyTarget);
     sprintf(cmd, "mocacfg -s moca phyrate %s", key_val);
     system(cmd);
 
     memset(cmd, 0, sizeof(cmd));
     memset(key_val, 0, sizeof(key_val));
     Utopia_SetInt(pCtx, UtopiaValue_Moca_BeaconPwrLimit, deviceMocaIntfCfg->BeaconPowerLimit);
-    sprintf(key_val, "%d", deviceMocaIntfCfg->BeaconPowerLimit);
+    sprintf(key_val, "%lu", deviceMocaIntfCfg->BeaconPowerLimit);
     sprintf(cmd, "mocacfg -s moca bbackoff %s", key_val);
     system(cmd);
 

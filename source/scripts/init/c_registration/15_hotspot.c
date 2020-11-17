@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include "srvmgr.h"
+#include <stdlib.h>
 
 const char* SERVICE_NAME            = "hotspot";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet/handle_gre.sh";

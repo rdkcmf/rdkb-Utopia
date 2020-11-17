@@ -98,13 +98,13 @@ LOCAL INT32 _igd_wan_device_desc_file(INOUT FILE *fp,IN const CHAR *uuid)
 		fprintf(fp, "<friendlyName>%s</friendlyName>\n",WANDEVICE_FRIENDLY_NAME);
 		fprintf(fp, "<manufacturer>%s</manufacturer>\n",MANUFACTURER);
 		fprintf(fp, "<manufacturerURL>%s</manufacturerURL>\n",MANUFACTURER_URL);
-		fprintf(fp, "<modelDescription>%s</modelDescription>\n",MODULE_DESCRIPTION);
-		fprintf(fp, "<modelName>%s</modelName>\n",MODULE_NAME);
-		fprintf(fp, "<modelNumber>%s</modelNumber>\n",MODULE_NUMBER);
+		fprintf(fp, "<modelDescription>%s</modelDescription>\n",(char *)MODULE_DESCRIPTION);
+		fprintf(fp, "<modelName>%s</modelName>\n",(char *)MODULE_NAME);
+		fprintf(fp, "<modelNumber>%s</modelNumber>\n",(char *)MODULE_NUMBER);
 		fprintf(fp, "<modelURL>%s</modelURL>\n",MODULE_URL);
 		fprintf(fp, "<serialNumber>%s</serialNumber>\n",IGD_pii_get_serial_number());
 		fprintf(fp, "<UDN>%s</UDN>\n", uuid);
-		fprintf(fp, "<UPC>%s</UPC>\n",UPC);
+		fprintf(fp, "<UPC>%s</UPC>\n",(char *)UPC);
 		fprintf(fp, "<serviceList>\n");
 	return 0;
 }

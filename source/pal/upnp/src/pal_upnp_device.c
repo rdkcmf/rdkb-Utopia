@@ -58,7 +58,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-
 #include "pal_upnp.h"
 #include "pal_xml.h"
 #include "pal_upnp_device.h"
@@ -492,8 +491,6 @@ INT32 PAL_upnp_device_init(struct upnp_device *device,
 {
 	INT32 ret;
 	INT32 result = -1;
-    CHAR *ip_address;
-    CHAR *ip6_address;
 
 	if(upnp_initStatus != UPNP_DEVICE_NOT_INIT)
 	{
@@ -503,12 +500,12 @@ INT32 PAL_upnp_device_init(struct upnp_device *device,
 
 	PAL_LOG_REGISTER(UDT_LNAME, NULL);
 
-    if(NULL == desc_doc_name)
-        desc_doc_name = DEFAULT_DEVICE_DESC_NAME;
-
-	if(NULL == web_dir_path)
-        web_dir_path = DEFAULT_WEB_DIR;
-
+	if(NULL == desc_doc_name){
+		desc_doc_name = DEFAULT_DEVICE_DESC_NAME;
+	}
+	if(NULL == web_dir_path){
+		web_dir_path = DEFAULT_WEB_DIR;
+	}
 	if (device->init_function)
 	{
 		ret = device->init_function();
@@ -538,13 +535,11 @@ INT32 PAL_upnp_device_init(struct upnp_device *device,
     }*/
 
 
-    ip_address = PAL_upnp_get_ipaddress();
-    ip6_address = PAL_upnp_get_ip6address();
 
 
     port = PAL_upnp_get_port();
-    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "UPnP Initialized\n ip_address= %s\tip6_address = %s\tport = %d\n", ip_address, ip6_address, port);
-    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "description file: http://%s:%d/%s\n", ip_address, port, desc_doc_name);
+    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "UPnP Initialized\n ip_address= %s\tip6_address = %s\tport = %d\n", PAL_upnp_get_ipaddress(), PAL_upnp_get_ip6address(), port);
+    PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "description file: http://%s:%d/%s\n", PAL_upnp_get_ipaddress(), port, desc_doc_name);
     PAL_LOG(UDT_LNAME, PAL_LOG_LEVEL_INFO, "Specifying the webserver root directory: %s\n", web_dir_path);  
 
 	/* register root device*/		

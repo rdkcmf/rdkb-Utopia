@@ -11,6 +11,7 @@
 #include <memory.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #ifndef SIG_PF
 #define SIG_PF void(*)(int)
@@ -78,7 +79,6 @@ main (int argc, char **argv)
         char buf[512] = {0} ; 
         const char splitChar[2] = "=";
         char* token;
-        unsigned long ulIpAddress;
         int found=0;
         int udpSock, tcpSock;
         int ret;

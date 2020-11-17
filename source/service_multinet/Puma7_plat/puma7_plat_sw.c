@@ -49,6 +49,7 @@
    limitations under the License.
 *****************************bLibInited*****************************************/
 #include "service_multinet_base.h"
+#include "service_multinet_swfab_LinIF.h"
 #include "puma7_plat_sw.h"
 #include "puma7_plat_map.h"
 #include "service_multinet_lib.h"
@@ -63,6 +64,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <signal.h>
 
 #define PP_DRIVER_MODULE_ID                         (0xDF)
@@ -108,8 +110,8 @@ int system_wrapper(const char * command)
 static int configure_vpid(char * ifname, bool create)
 {
     int rc = 0;
-    int ppDevfd = NULL;
-    pp_dev_ioctl_param_t interface_param = {{0}};
+    int ppDevfd = 0;
+    pp_dev_ioctl_param_t interface_param = {{0},0};
     void * data = (void *)&interface_param;
     unsigned int cmd;
 
@@ -150,6 +152,8 @@ static int configure_vpid(char * ifname, bool create)
     return 0;
 }
 
+//unused function
+#if 0
 static int psm_get_record(const char *name, char *val, int size)
 {
     FILE *fp;
@@ -166,6 +170,7 @@ static int psm_get_record(const char *name, char *val, int size)
     pclose(fp);
     return 0;
 }
+#endif
 
 /* Helper function to connect/disconnect ports to/from bridge */
 int portHelper(char *bridge, char *port, int tagging, int vid, BOOL up)
@@ -318,7 +323,6 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
 int configVlan_puma7(PSWFabHALArg args, int numArgs, BOOL up) 
 {
     int i;
-    char cmdBuff[MAX_CMD_SIZE];
     char temp_ifname[MAX_CMD_SIZE];
     int result = 0;
    
@@ -340,7 +344,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     int i;
     char cmdBuff[MAX_CMD_SIZE];
     char temp_ifname[MAX_CMD_SIZE];
-    int result;
+    int result = 0;
 
     for (i = 0; i < numArgs; ++i ) 
 	{ 

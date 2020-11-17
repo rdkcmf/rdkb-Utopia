@@ -79,7 +79,7 @@
 
 #include "igd_utility.h"
 #include "pal_log.h"
-
+#include "utapi.h"
 #include "igd_platform_independent_inf.h"
 
 #include "igd_service_wan_connect.h"

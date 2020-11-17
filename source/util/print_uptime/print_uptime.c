@@ -33,6 +33,7 @@ int getValueFromDeviceProperties(char *value, int size,char *name)
 	char buf[DATA_SIZE] = {0};
 	char *temp = NULL;
 	int ret = -1;
+	errno_t rc = -1;
 
 	fp = fopen(DEVICE_PROPS_FILE, "r");
 	if (fp == NULL)
@@ -48,7 +49,10 @@ int getValueFromDeviceProperties(char *value, int size,char *name)
 			buf[strcspn(buf, "\r\n")] = 0; // Strip off any carriage returns
 			temp = strstr(buf, "=");
 			temp++;
-			strcpy_s(value, size, temp);
+			rc = strcpy_s(value, size, temp);
+			if( rc != EOK ){
+				ERR_CHK(rc);
+			}
 			ret = 0;
 			break;
 		}

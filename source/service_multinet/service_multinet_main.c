@@ -54,7 +54,6 @@
 #ifndef SERVICE_MULTINET_EXE_PATH
 #define SERVICE_MULTINET_EXE_PATH "/etc/utopia/service.d/service_multinet_exec"
 #endif
-
 #ifdef MULTILAN_FEATURE
 #if defined (INTEL_PUMA7)
 #define P7_LEGACY_MULTINET_HANDLER "/etc/utopia/service.d/vlan_util_xb6.sh"
@@ -76,6 +75,13 @@ FILE *mnetfp = NULL;
 #ifdef MULTILAN_FEATURE
  int handle_lnf_setup(char* argv[], int argc);
  int handle_meshbhaul_setup(char* argv[], int argc);
+#endif
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
+void addMeshBhaulVlan();
+void createMeshVlan();
+void addRadiusVlan();
+void addIpcVlan();
+void setMulticastMac();
 #endif
  int handle_up(char* argv[], int argc);
  int handle_down(char* argv[], int argc);
@@ -163,7 +169,7 @@ void multinet_log( char* fmt, ...)
 #endif 
         MNET_DEBUG("ENTERED MULTINET APP, argc = %d \n" COMMA argc)
         if((retval = multinet_lib_init(0, SERVICE_MULTINET_EXE_PATH))) {
-            printf("%s failed to init multinet lib. code=%d\n" SERVICE_MULTINET_EXE_PATH, retval);
+            printf("%s failed to init multinet lib. code=%d\n", SERVICE_MULTINET_EXE_PATH, retval);
             exit(retval);
         }
 	
@@ -199,6 +205,7 @@ void multinet_log( char* fmt, ...)
      multinet_assignBridgeCIDR(atoi(argv[2]), LNF_IPV4_CIDR, 4);
      // Restart firewall
      system("sysevent set firewall-restart");
+     return 0;
  }
 
  int handle_meshbhaul_setup(char* argv[], int argc) {
@@ -208,36 +215,44 @@ void multinet_log( char* fmt, ...)
      // Assign IP to mesh backhaul bridge
      multinet_assignBridgeCIDR(atoi(argv[2]), MESHBHAUL_IPV4_CIDR, 4);
      system("sysevent set firewall-restart");
+     return 0;
  }
 #endif
  int handle_up(char* argv[], int argc) {
-     MNET_DEBUG("Main: handle_up")
+    MNET_DEBUG("Main: handle_up")
     multinet_bridgeUpInst(atoi(argv[2]), 0);
+    return 0;
  }
  int handle_down(char* argv[], int argc) {
      MNET_DEBUG("Main: handle_down")
      multinet_bridgeDownInst(atoi(argv[2]));
+     return 0;
  }
  int handle_start(char* argv[], int argc){
      MNET_DEBUG("Main: handle_start")
      multinet_bridgeUpInst(atoi(argv[2]), 1);
+     return 0;
  }
  int handle_stop(char* argv[], int argc){
      MNET_DEBUG("Main: handle_stop")
      multinet_bridgeDownInst(atoi(argv[2]));
+     return 0;
  }
  int handle_syncMembers(char* argv[], int argc){
      MNET_DEBUG("Main: handle_syncMembers")
      multinet_SyncInst(atoi(argv[2]));
+     return 0;
  }
  int handle_syncNets(char* argv[], int argc){
      MNET_DEBUG("Main: handle_syncNets NOT SUPPORTED")
         //deferred
+     return 0;
  }
  int handle_restart(char* argv[], int argc){
-     MNET_DEBUG("Main: handle_restart")
+    MNET_DEBUG("Main: handle_restart")
     multinet_bridgeDownInst(atoi(argv[2]));
     multinet_bridgeUpInst(atoi(argv[2]), 0);
+    return 0;
  }
  //exeName, eventName, statusValue, netIdString, ifname, iftype, tag?
  int handle_ifStatus(char* argv[], int argc){
@@ -246,6 +261,7 @@ void multinet_log( char* fmt, ...)
      sscanf(argv[3], "%d", &l2netInst);
      
      multinet_ifStatusUpdate_ids(l2netInst, argv[4], argv[5], argv[2], argv[6]);
+     return 0;
  }
 
  int set_multicast_mac(char* argv[], int argc)
@@ -254,13 +270,15 @@ void multinet_log( char* fmt, ...)
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
 	setMulticastMac();
 #endif
+    return 0;
  }
 
  int add_ipc_vlan(char* argv[], int argc)
  {
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     addIpcVlan();
-#endif	
+#endif
+    return 0;
  }
 
  int add_radius_vlan(char* argv[], int argc)
@@ -268,6 +286,7 @@ void multinet_log( char* fmt, ...)
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     addRadiusVlan();
 #endif
+    return 0;
  }
 
  int create_mesh_vlan(char* argv[], int argc)
@@ -275,6 +294,7 @@ void multinet_log( char* fmt, ...)
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     createMeshVlan();
 #endif
+    return 0;
  }
 
  int add_meshbhaul_vlan(char* argv[], int argc)
@@ -282,4 +302,5 @@ void multinet_log( char* fmt, ...)
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_)
     addMeshBhaulVlan();
 #endif
+    return 0;
  }

@@ -31,3 +31,5 @@ extern void* g_vBus_handle;
 
 void bring_lan_up();
 void ipv4_status(int, char *);
+void lan_restart();
+void teardown_instance(int l3_inst);

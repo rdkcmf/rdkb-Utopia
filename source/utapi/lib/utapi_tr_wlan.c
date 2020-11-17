@@ -66,6 +66,8 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.*/
 #include "utapi_util.h"
 #include "utapi_tr_wlan.h"
 #include "DM_TR181.h"
+#include <arpa/inet.h>
+#include "utapi_tr_wlan.h"
 
 const wifiTRPlatformSetup_t wifiTRPlatform[] =
 {
@@ -117,7 +119,7 @@ int Utopia_GetWifiRadioEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pE
    Utopia_GetIndexedWifiRadioCfg(ctx, ulIndex, &(pEntry_t->Cfg));
    Utopia_GetWifiRadioSinfo(ulIndex, &(pEntry_t->StaticInfo));
    Utopia_GetIndexedWifiRadioDinfo(ctx, ulIndex, &(pEntry_t->DynamicInfo));
-
+   return SUCCESS;
 }
 
 int Utopia_GetIndexedWifiRadioCfg(UtopiaContext *ctx, unsigned long ulIndex, void *cfg)
@@ -159,6 +161,7 @@ int Utopia_GetIndexedWifiRadioCfg(UtopiaContext *ctx, unsigned long ulIndex, voi
         cfg_t->InstanceNumber = iVal;
         Utopia_GetWifiRadioCfg(ctx,0,cfg_t);
     }
+    return SUCCESS;
 }
 
 int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
@@ -175,7 +178,6 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     unsigned long ulVal = 0;
     char *prefix;
     unsigned long ulIndex;
-    double tx_rate = 0.0;
 
 #ifdef _DEBUG_
     sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
@@ -542,7 +544,7 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
 
     /* Validation required */
     memset(buf,0,STR_SZ);
-    switch(cfg_t->TxRate) {
+    switch((int)cfg_t->TxRate) {
         case 1:
             strcpy(buf,"auto");
             break;
@@ -668,7 +670,7 @@ int Utopia_GetIndexedWifiRadioDinfo(UtopiaContext *ctx, unsigned long ulIndex, v
            g_IndexMapRadio[iVal] = ulIndex;
         Utopia_GetWifiRadioDinfo(iVal,dInfo);
     }
-
+    return SUCCESS;
 }
 int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
 {
@@ -903,7 +905,7 @@ int Utopia_GetWifiSSIDEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pEn
     Utopia_GetIndexedWifiSSIDCfg(ctx, ulIndex, &(pEntry_t->Cfg));
     Utopia_GetWifiSSIDSInfo(ulIndex, &(pEntry_t->StaticInfo)); 
     Utopia_GetIndexedWifiSSIDDInfo(ctx, ulIndex, &(pEntry_t->DynamicInfo));
-
+    return SUCCESS;
 }
 
 int Utopia_GetIndexedWifiSSIDCfg(UtopiaContext *ctx, unsigned long ulIndex, void *cfg)
@@ -945,6 +947,7 @@ int Utopia_GetIndexedWifiSSIDCfg(UtopiaContext *ctx, unsigned long ulIndex, void
         cfg_t->InstanceNumber = iVal;
         Utopia_GetWifiSSIDCfg(ctx,0,cfg_t);
     }
+    return SUCCESS;
 } 
 
 int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
@@ -1018,7 +1021,7 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
             {
                 /* Set a temporary SSID */
                 prefix = wifiTRPlatform_multiSSID[ulIndex].syscfg_namespace_prefix;
-                sprintf(tmpBuf,"Cisco-SSID-%d",ulIndex);
+                sprintf(tmpBuf,"Cisco-SSID-%lu",ulIndex);
                 UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_SSID,prefix,tmpBuf);
                 strcpy(cfg_t->SSID,tmpBuf);
             }
@@ -1154,6 +1157,7 @@ int Utopia_GetIndexedWifiSSIDDInfo(UtopiaContext *ctx, unsigned long ulIndex, vo
            g_IndexMapSSID[iVal] = ulIndex;
         Utopia_GetWifiSSIDDInfo(iVal,dInfo);
     }
+    return SUCCESS;
 }
 
 int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
@@ -1268,7 +1272,6 @@ int Utopia_SetWifiSSIDCfg(UtopiaContext *ctx, void *cfg)
 
 int Utopia_AddWifiSSID(UtopiaContext *ctx, void *entry)
 {
-    unsigned long ulIndex = 0;
     int count,i,j = 0;
     char append[STR_SZ] = {'\0'};
     char intfName[STR_SZ] = {'\0'};
@@ -1327,7 +1330,7 @@ int Utopia_AddWifiSSID(UtopiaContext *ctx, void *entry)
 
            return SUCCESS;
         }
-        sprintf(append,"");
+        sprintf(append, "%s", "");
         /* Reset the RadioName to original value */
         strcpy(cfg_t.WiFiRadioName,intfName);
     }
@@ -1378,7 +1381,7 @@ int Utopia_DelWifiSSID(UtopiaContext *ctx, unsigned long ulInstanceNumber)
           strcpy(wifiTRPlatform_multiSSID[ulIndex].ap_name,wifiTRPlatform_multiSSID[ulIndex+1].ap_name );
           Utopia_GetIndexed(ctx,UtopiaValue_WLAN_SSID_Radio,(ulIndex + 1),ifCfg,sizeof(ifCfg));
           Utopia_SetIndexed(ctx,UtopiaValue_WLAN_SSID_Radio,ulIndex,ifCfg);
-          Utopia_GetNamedInt(ctx,UtopiaValue_WLAN_SSID_Instance_Num,wifiTRPlatform_multiSSID[ulIndex+1].ssid_name,&ulInsNum);
+          Utopia_GetNamedInt(ctx,UtopiaValue_WLAN_SSID_Instance_Num,wifiTRPlatform_multiSSID[ulIndex+1].ssid_name,(int *)&ulInsNum);
           g_IndexMapSSID[ulInsNum] = ulIndex; /* Point the instance number to correct index */
        }
        freeMultiSSID_Struct(ulIndex);
@@ -1493,7 +1496,7 @@ int Utopia_GetWifiAPEntry(UtopiaContext *ctx, char *pSSID, void *pEntry)
     }
     Utopia_GetIndexedWifiAPCfg(ctx, ulIndex, &(pEntry_t->Cfg));
     Utopia_GetWifiAPInfo(ctx, pSSID, &(pEntry_t->Info));
-
+    return SUCCESS;
 }
 
 int Utopia_GetIndexedWifiAPCfg(UtopiaContext *ctx, unsigned long ulIndex, void *pCfg)
@@ -1536,6 +1539,7 @@ int Utopia_GetIndexedWifiAPCfg(UtopiaContext *ctx, unsigned long ulIndex, void *
         cfg_t->InstanceNumber = iVal;
         Utopia_GetWifiAPCfg(ctx,0,cfg_t);
     }
+    return SUCCESS;
 }
 
 int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
@@ -1633,14 +1637,14 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
     prefix = wifiTRPlatform_multiSSID[ulIndex].ssid_name;
 
     /* Check if we have an InstanceNumber stored for this SSID */
-    if(Utopia_GetNamedInt(ctx,UtopiaValue_WLAN_SSID_Instance_Num,prefix,&ssidInstanceNum))
+    if(Utopia_GetNamedInt(ctx,UtopiaValue_WLAN_SSID_Instance_Num,prefix,(int *)&ssidInstanceNum))
     {
 	/* We didnt find any instance num for this SSID */
-	sprintf(cfg_t->SSID,"Device.WiFi.SSID.%u.",(ulIndex+1));
+	sprintf(cfg_t->SSID,"Device.WiFi.SSID.%lu.",(ulIndex+1));
     }
     else
     {
-        sprintf(cfg_t->SSID,"Device.WiFi.SSID.%u.",ssidInstanceNum);
+        sprintf(cfg_t->SSID,"Device.WiFi.SSID.%lu.",ssidInstanceNum);
     }
 
     return SUCCESS;
@@ -2090,10 +2094,11 @@ int Utopia_SetWifiAPSecCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     }else if((cfg_t->ModeEnabled & WIFI_SECURITY_WPA_Enterprise ) || (cfg_t->ModeEnabled & WIFI_SECURITY_WPA2_Enterprise))
     {
        /* Set the values in Syscfg */
-       
        UTOPIA_SETNAMED(ctx, UtopiaValue_WLAN_Shared, prefix, cfg_t->RadiusSecret);
        Utopia_SetNamedInt(ctx, UtopiaValue_WLAN_RadiusPort, prefix, cfg_t->RadiusServerPort);
-       UTOPIA_SETNAMED(ctx, UtopiaValue_WLAN_RadiusServer, prefix, inet_ntoa(cfg_t->RadiusServerIPAddr.Value));
+       struct in_addr addrVal;
+       addrVal.s_addr = cfg_t->RadiusServerIPAddr.Value;
+       UTOPIA_SETNAMED(ctx, UtopiaValue_WLAN_RadiusServer, prefix, inet_ntoa(addrVal));
     }
     if(cfg_t->EncryptionMethod == WIFI_SECURITY_TKIP)
     {
@@ -2338,7 +2343,7 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
             vif_num = 0;
     }
  
-    sprintf(buf,"wlancfg_tr %s %d | grep AssociatedDevice_%d |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulAPIndex].ifconfig_interface, vif_num, ulIndex, WLANCFG_AP_ASSOC_DEV_FILE);
+    sprintf(buf,"wlancfg_tr %s %d | grep AssociatedDevice_%lu |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulAPIndex].ifconfig_interface, vif_num, ulIndex, WLANCFG_AP_ASSOC_DEV_FILE);
     system(buf);
     memset(buf, 0, sizeof(buf));
 
@@ -2383,6 +2388,7 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
     }
 
     free_paramList(head);/*RDKB-7127, CID-33011, free unused resource before exit*/
+    return SUCCESS;
 }
 
 unsigned long Utopia_GetWifiAPIndex(UtopiaContext *ctx, char *pSSID)
@@ -2390,7 +2396,6 @@ unsigned long Utopia_GetWifiAPIndex(UtopiaContext *ctx, char *pSSID)
     int i = 0;
     char strVal[STR_SZ] = {'\0'};
     char *prefix;
-    int iVal = -1;
 
     if ((NULL == ctx) || (NULL == pSSID)) {
         return ERR_INVALID_ARGS;
@@ -2440,14 +2445,14 @@ int getMacList(char *macList, unsigned char *macAddr, char *tok, unsigned long *
 
 int setMacList(unsigned char *macAddr, char *macList, unsigned long numMac)
 {
-    int i = 0;
+    int i;
     int j = 0;
     char mac[50][18];
     
     if(!macList)
         return ERR_INVALID_ARGS;
 
-    for(i; i<numMac; i++){
+    for(i =0; i<numMac; i++){
        if(i > 0)
            strcat(macList, " ");
        sprintf(mac[i], "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[j], macAddr[j+1], macAddr[j+2], macAddr[j+3], macAddr[j+4], macAddr[j+5]);

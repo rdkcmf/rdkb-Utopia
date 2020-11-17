@@ -45,6 +45,7 @@
 #include <arpa/inet.h>
 #include "utapi.h"
 #include "utapi_util.h"
+#include <unistd.h>
 
 // Global
 char ulog_msg[1024];
@@ -314,7 +315,7 @@ int Utopia_SetNamedLong (UtopiaContext *ctx, UtopiaValue ixUtopia, char *prefix,
 {
     char longbuf[32];
 
-    snprintf(longbuf, sizeof(longbuf), "%u", value);
+    snprintf(longbuf, sizeof(longbuf), "%lu", value);
     return (0 == Utopia_SetNamed(ctx, ixUtopia, prefix, longbuf)) ? ERR_UTCTX_OP : SUCCESS;
 }
 
@@ -470,7 +471,7 @@ static int parsePrefixAddress(const char *prefixAddr, char *address, int *plen)
     }
     else
     {
-        fprintf(stderr,"Error invalid prefix length len : %d \n", __FUNCTION__, __LINE__, len);
+        fprintf(stderr,"%s:%d - Error invalid prefix length len : %d \n", __FUNCTION__, __LINE__, len);
         return status;
     }
     separator = strchr(tmpBuf, '/');

@@ -42,9 +42,10 @@
 #include "service_multinet_swfab_LinIF.h"
 #include <string.h>
 
+int portHelper(char *bridge, char *port, int tagging, int vid, BOOL up);
+
 
 static int map(PL2Net net, PMemberControl members, BOOL mark) {
-    
     int i;
     PNetInterface iface;
     PPlatformPort matchPort;
@@ -120,14 +121,15 @@ static int swfab_configVlan_inner(PPortConfigControl portConfig, PL2Net net, BOO
 
 static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
     
-    int i, j;
-    PNetInterface iface;
+    int i;
+#ifndef MULTILAN_FEATURE
+    int j;
+#endif
 #ifdef MULTILAN_FEATURE
-    SWFabHALArg args;
     PortConfigControl portConfig;
 #else
     SWFabHALArg args[HAL_MAX_PORTS];
-    PortConfigControl portConfigs[MAX_ADD_PORTS] = {0};
+    PortConfigControl portConfigs[MAX_ADD_PORTS] = {{{NULL},0}};
 #endif
     //int numArgs[NUM_HALS] = {0};
 #ifndef MULTILAN_FEATURE
@@ -137,7 +139,7 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
     PPlatformPort platPort, trunkPort;
     PVlanTrunkState vlanState;
     List trunkPorts = {0};
-    ListIterator portIter, matchIter;
+    ListIterator portIter;
     PListItem item;
     
     MNET_DEBUG("swfab_configVlan, net %d, numMembers %d, add: %hhu\n" COMMA net->inst COMMA members->numMembers COMMA add)
@@ -281,7 +283,8 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
 		}
     }    
 #endif
-    saveVlanState(vlanState);    
+    saveVlanState(vlanState);
+    return 0;
 }
 
 void printPlatport(PPlatformPort port) {
@@ -335,7 +338,6 @@ int swfab_removeVlan(PL2Net net, PMemberControl members) {
 int swfab_create(PL2Net net, PMemberControl members) {
     
     int i, j;
-    PNetInterface iface;
     SWFabHALArg args[members->numMembers];
     PMember memberAry[members->numMembers];
     HALArgMemberMap argMap;

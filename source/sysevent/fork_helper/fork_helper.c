@@ -354,8 +354,11 @@ static pid_t _eval(char *const prog, char *argv[], pid_t *pid)
 {
    pid_t   local_pid = -1;
    /*RDKB-7133, CID-33339, CID-33010, initializing before use*/
-   struct sigaction ignore ={0}, saveintr={0}, savequit={0};
-   sigset_t         chldmask= {0}, savemask= {0};
+   struct sigaction ignore , saveintr, savequit;
+   sigset_t         chldmask= {{0}}, savemask= {{0}};
+   memset( &ignore, 0, sizeof(ignore));
+   memset( &saveintr, 0, sizeof(saveintr));
+   memset( &savequit, 0, sizeof(savequit));
    int    rc = 0;;
 
    *pid = -1;

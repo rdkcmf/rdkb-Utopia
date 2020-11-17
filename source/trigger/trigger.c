@@ -218,7 +218,7 @@ static int stop_forwarding(const int id)
 static int start_forwarding(const int id)
 {
    int idx = id-1;
-   char rule[MAX_QUERY];
+   char rule[MAX_QUERY+150];
    char ref_tuple[MAX_QUERY];
    char dnat[256];
    int  rc;
@@ -439,7 +439,7 @@ static int update_trigger_entry(int id, struct in_addr host)
       } else {
          int i;
          for (i=high_trigger ; i< id ; i++) {
-            memset(&(trigger_info[i]), 0, sizeof(trigger_info));
+            memset(&(trigger_info[i]), 0, sizeof(trigger_info_t));
          }
          high_trigger = id;
       }

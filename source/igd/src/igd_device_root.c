@@ -139,16 +139,16 @@ LOCAL INT32 _igd_root_device_desc_file(INOUT FILE *fp,IN const CHAR *uuid)
 		fprintf(fp, "</specVersion>\n");
 		fprintf(fp, "<device>\n");
 			fprintf(fp, "<deviceType>urn:schemas-upnp-org:device:InternetGatewayDevice:1</deviceType>\n");
-			fprintf(fp, "<friendlyName>%s</friendlyName>\n",ROOT_FRIENDLY_NAME);
+			fprintf(fp, "<friendlyName>%s</friendlyName>\n",(char *)ROOT_FRIENDLY_NAME);
 			fprintf(fp, "<manufacturer>%s</manufacturer>\n",MANUFACTURER);
 			fprintf(fp, "<manufacturerURL>%s</manufacturerURL>\n",MANUFACTURER_URL);
-			fprintf(fp, "<modelDescription>%s</modelDescription>\n",MODULE_DESCRIPTION);
-			fprintf(fp, "<modelName>%s</modelName>\n",MODULE_NAME);
-			fprintf(fp, "<modelNumber>%s</modelNumber>\n",MODULE_NUMBER);
+			fprintf(fp, "<modelDescription>%s</modelDescription>\n",(char *)MODULE_DESCRIPTION);
+			fprintf(fp, "<modelName>%s</modelName>\n",(char *)MODULE_NAME);
+			fprintf(fp, "<modelNumber>%s</modelNumber>\n",(char *)MODULE_NUMBER);
 			fprintf(fp, "<modelURL>%s</modelURL>\n",MODULE_URL);
 			fprintf(fp, "<serialNumber>%s</serialNumber>\n",IGD_pii_get_serial_number());
 			fprintf(fp, "<UDN>%s</UDN>\n", uuid);
-			fprintf(fp, "<UPC>%s</UPC>\n",UPC);
+			fprintf(fp, "<UPC>%s</UPC>\n",(char *)UPC);
 			fprintf(fp, "<serviceList>\n");
 	return 0;
 }
@@ -166,14 +166,11 @@ LOCAL INT32 _igd_root_device_desc_file(INOUT FILE *fp,IN const CHAR *uuid)
 LOCAL INT32 _igd_root_device_init(VOID)
 {
 	INT32 wan_index=1;
-	INT32 lan_index=1;
 	struct upnp_device *wan_device=NULL;
-	struct upnp_device *lan_device=NULL;
 	struct upnp_device *next_device=NULL;
 	struct device_and_service_index igd_index;
 	CHAR device_udn[UPNP_UUID_LEN_BY_VENDER];
 	INT32 wan_device_number = 0;
-	INT32 lan_device_number = 0;
 	FILE *fp=NULL;
 //    CHAR ip_address[IP_ADDRESS_LEN] = {'\0'};
     //UtopiaContext utctx;

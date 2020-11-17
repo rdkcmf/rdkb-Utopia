@@ -60,9 +60,9 @@ char* miInterfaceStrings[] = {"sw_5"};
 #endif
 
 const char* const multinet_component_id = "ccsp.multinet";
-static void* 	  bus_handle = NULL;
 
 #if defined(_COSA_INTEL_XB3_ARM_) || defined(INTEL_PUMA7)
+static void*      bus_handle = NULL;
 #define CCSP_SUBSYS 	"eRT."
 #define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
 
@@ -83,10 +83,10 @@ int dbusInit( void )
 								               Ansc_AllocateMemory_Callback, 
 								               Ansc_FreeMemory_Callback);
 		#else
-			ret = CCSP_Message_Bus_Init(multinet_component_id, 
+			ret = CCSP_Message_Bus_Init((char *)multinet_component_id, 
 								        pCfg, 
 								        &bus_handle, 
-								        Ansc_AllocateMemory_Callback, 
+								        (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback, 
 								        Ansc_FreeMemory_Callback);
 		#endif /* DBUS_INIT_SYNC_MODE */
 	}
@@ -158,8 +158,10 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 		  i,
 		  rc;
     int   HomeIsolation_en = 0;
+#if defined(MULTILAN_FEATURE)
     int   iterator = 0;
     bool  skipMocaIsoInterface = false;
+#endif
 
 	/* dbus init based on bus handle value */
 	if(bus_handle == NULL)
@@ -224,7 +226,7 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 						MNET_DEBUG("%s, interface token %s\n" COMMA __FUNCTION__ COMMA ifToken )
 #if defined(MULTILAN_FEATURE)
 						for (iterator = 0; iterator < sizeof(miInterfaceStrings)/sizeof(*miInterfaceStrings); ++iterator) {
-							if(0 == strncmp(miInterfaceStrings[iterator], ifToken, sizeof(miInterfaceStrings[iterator])))
+							if(0 == strncmp(miInterfaceStrings[iterator], ifToken, strlen(miInterfaceStrings[iterator])))
 							{
 								MNET_DEBUG("%s, interface token %s matches MoCA Isolation %s skipping\n" COMMA __FUNCTION__ COMMA ifToken COMMA miInterfaceStrings[iterator])
 								skipMocaIsoInterface = true;
@@ -272,8 +274,6 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 int nv_get_bridge(int l2netInst, PL2Net net) 
 {
     char cmdBuff[512] = {0};
-	int  rc;
-	char *pStr = NULL;
 
 /* Use to get psm value via dbus instead of psmcli util */
 #if !defined(_COSA_INTEL_XB3_ARM_) && !defined(INTEL_PUMA7)
@@ -310,7 +310,8 @@ int nv_get_bridge(int l2netInst, PL2Net net)
         pclose(psmcliOut);
     }
 #else
-
+    int  rc;
+    char *pStr = NULL;
 	/* dbus init based on bus handle value */
  	if(bus_handle == NULL)
 	dbusInit( );
@@ -381,15 +382,12 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 
 int nv_get_primary_l2_inst(void) 
 {
-    int rc;
-    char *pStr = NULL;
     int primary_l2_inst = 0;
 
 /* Use to get psm value via dbus instead of psmcli util */
 #if !defined(_COSA_INTEL_XB3_ARM_) && !defined(INTEL_PUMA7)
     char cmdBuff[512] = {0};
     char valBuff[80] = {0};
-    char tmpBuf[15] = {0};
     FILE* psmcliOut = NULL;
 
     snprintf(cmdBuff, sizeof(cmdBuff), "psmcli get %s", MNET_NV_PRIMARY_L2_INST_KEY);
@@ -404,6 +402,8 @@ int nv_get_primary_l2_inst(void)
         pclose(psmcliOut);
     }
 #else
+    int rc;
+    char *pStr = NULL;
     /* dbus init based on bus handle value */
     if(bus_handle == NULL)
     dbusInit( );

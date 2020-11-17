@@ -309,9 +309,9 @@ PPlatformPort plat_mapFromString(char* portIdString) {
 
 PEntityPathDeps* depArray  = 
 (PEntityPathDeps[3]) {
-        (EntityPathDeps[3]){ {0}, {0}, {0} },
-        (EntityPathDeps[2]){ {0}, {0} },
-        (EntityPathDeps[1]){ {0} }
+        (EntityPathDeps[3]){{ {0}, 0, NULL }},
+        (EntityPathDeps[2]){{ {0}, 0, NULL }},
+        (EntityPathDeps[1]){{ {0}, 0, NULL }}
     };
 
 

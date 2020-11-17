@@ -161,8 +161,10 @@ static int wan_dhcp_restart(struct serv_wan *sw);
 static int wan_dhcp_release(struct serv_wan *sw);
 static int wan_dhcp_renew(struct serv_wan *sw);
 
+#if !defined(_WAN_MANAGER_ENABLED_)
 static int wan_static_start(struct serv_wan *sw);
 static int wan_static_stop(struct serv_wan *sw);
+#endif
 
 static int wan_static_start_v6(struct serv_wan *sw);
 static int wan_static_stop_v6(struct serv_wan *sw);
@@ -353,11 +355,10 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
 
 static int dhcp_start(struct serv_wan *sw)
 {
-    char l_cErouter_Mode[16] = {0}, l_cWan_if_name[16] = {0}, l_cDhcpv6c_Enabled[8] = {0}, cEthWanMode[8] = {0} ;
-    int l_iErouter_Mode, err;
+    char l_cErouter_Mode[16] = {0}, l_cWan_if_name[16] = {0}, cEthWanMode[8] = {0} ;
+    int err = 0;
 
     syscfg_get(NULL, "last_erouter_mode", l_cErouter_Mode, sizeof(l_cErouter_Mode));
-    l_iErouter_Mode = atoi(l_cErouter_Mode);
 
     syscfg_get(NULL, "wan_physical_ifname", l_cWan_if_name, sizeof(l_cWan_if_name));
 
@@ -501,7 +502,7 @@ static int route_deconfig_v6(const char *ifname)
 int checkFileExists(const char *fname)
 {
     FILE *file;
-    if (file = fopen(fname, "r"))
+    if ((file = fopen(fname, "r")))
     {
         fclose(file);
         return 1;
@@ -734,7 +735,7 @@ static int wan_start(struct serv_wan *sw)
                    if (sw->rtmod == WAN_RTMOD_IPV6) 
                         sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
 
-                   system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
+                   v_secure_system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
 #ifdef DSLITE_FEATURE_SUPPORT
                  wait_till_dhcpv6_client_reply(sw);
 #endif
@@ -793,10 +794,8 @@ static int wan_start(struct serv_wan *sw)
 
     if (access(POSTD_START_FILE, F_OK) != 0)
     {
-            char postd_cmd[128] = {0};
-            snprintf(postd_cmd,sizeof(postd_cmd),"touch %s ; execute_dir /etc/utopia/post.d/",POSTD_START_FILE);
             fprintf(stderr, "[%s] Restarting post.d from service_wan\n", __FUNCTION__);
-            system(postd_cmd);
+            v_secure_system("touch " POSTD_START_FILE " ; execute_dir /etc/utopia/post.d/");
     }
 
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "started", 0);
@@ -835,35 +834,32 @@ static int wan_start(struct serv_wan *sw)
         kill(pid, SIGKILL);	
 #endif
 	
-    system("sh /etc/network_response.sh &");
+    v_secure_system("sh /etc/network_response.sh &");
 
     ret = checkFileExists(WAN_STARTED);
     printf("Check wan started ret is %d\n",ret);
     if ( 0 == ret )
     {
-	system("touch /var/wan_started");
+	v_secure_system("touch /var/wan_started");
 	print_uptime("boot_to_wan_uptime",NULL);
     }
     else
     {
-	char  str[100] = {0};
         printf("%s wan_service-status is started again, upload logs\n",__FUNCTION__);
         t2_event_d("RF_ERROR_wan_restart", 1);
-	sprintf(str,"/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false ");
-	system(str);
+        v_secure_system("/rdklogger/uploadRDKBLogs.sh '' HTTP '' false ");
     }
     get_dateanduptime(buffer,&uptime);
 	print_uptime("Waninit_complete", NULL);
 	OnboardLog("Wan_init_complete:%d\n",uptime);
         t2_event_d("btime_waninit_split", uptime);	
     /* RDKB-24991 to handle snmpv3 based on wan-status event */
-    system("sh /lib/rdk/postwanstatusevent.sh &");
+    v_secure_system("sh /lib/rdk/postwanstatusevent.sh &");
     return 0;
 }
 
 static int wan_stop(struct serv_wan *sw)
 {
-    char val[64];
     char status[16];
     char buf[16] = {0};
 
@@ -922,7 +918,7 @@ static int wan_stop(struct serv_wan *sw)
     if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS) {
        if (sw->prot == WAN_PROT_DHCP) {
                fprintf(stderr, "Disabling DHCPv6 Client\n");
-               system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");
+               v_secure_system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");
        } else if (sw->prot == WAN_PROT_STATIC) {
                if (wan_static_stop_v6(sw) != 0) {
                        fprintf(stderr, "%s: wan_static_stop_v6 error\n", __FUNCTION__);
@@ -965,23 +961,21 @@ static int wan_stop(struct serv_wan *sw)
     }
 #endif  /*_PLATFORM_IPQ_ && _WAN_MANAGER_ENABLED_*/
 
-    system("rm -rf /tmp/ipv4_renew_dnsserver_restart");
-    system("rm -rf /tmp/ipv6_renew_dnsserver_restart");
+    v_secure_system("rm -rf /tmp/ipv4_renew_dnsserver_restart");
+    v_secure_system("rm -rf /tmp/ipv6_renew_dnsserver_restart");
     printf("%s wan_service-status is stopped, take log back up\n",__FUNCTION__);
     t2_event_d("RF_ERROR_Wan_down", 1);
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopped", 0);
 #if defined (_XB6_PRODUCT_REQ_)
-    system("sh /etc/network_response.sh OnlyForNoRf &");
+    v_secure_system("sh /etc/network_response.sh OnlyForNoRf &");
 #endif
-	char  str[100] = {0};
-	sprintf(str,"/rdklogger/backupLogs.sh false \"\" wan-stopped");
-    system(str);
+    v_secure_system("/rdklogger/backupLogs.sh false '' wan-stopped");
     return 0;
 }
 
 static int wan_restart(struct serv_wan *sw)
 {
-    int err;
+    int err = 0;
 
     sysevent_set(sw->sefd, sw->setok, "wan-restarting", "1", 0);
 
@@ -1074,14 +1068,14 @@ static int wan_iface_up(struct serv_wan *sw)
     if(0 == strncmp(sw->ifname,ER_NETDEVNAME,strlen(ER_NETDEVNAME)))
     {
         avalanche_pp_local_dev_addr_ioctl_params_t pp_gwErtMacAddr;
-        NETUTILS_GET_MACADDR(ER_NETDEVNAME, &pp_gwErtMacAddr.u.mac_addr);
+        NETUTILS_GET_MACADDR(ER_NETDEVNAME, (macaddr_t *)&pp_gwErtMacAddr.u.mac_addr);
         pp_gwErtMacAddr.op_type = ADD_ADDR;
         pp_gwErtMacAddr.addr_type = GW_MAC_ADDR;
         SendIoctlToPpDev(PP_DRIVER_SET_LOCAL_DEV_ADDR,&pp_gwErtMacAddr);
     }
     {// send IOCTL for l2sd0
         avalanche_pp_local_dev_addr_ioctl_params_t pp_gwL2Sd0MacAddr;
-        NETUTILS_GET_MACADDR("l2sd0", &pp_gwL2Sd0MacAddr.u.mac_addr);
+        NETUTILS_GET_MACADDR("l2sd0", (macaddr_t *)&pp_gwL2Sd0MacAddr.u.mac_addr);
         pp_gwL2Sd0MacAddr.op_type = ADD_ADDR;
         pp_gwL2Sd0MacAddr.addr_type = RND_MAC_ADDR;
         SendIoctlToPpDev(PP_DRIVER_SET_LOCAL_DEV_ADDR,&pp_gwL2Sd0MacAddr);
@@ -1101,7 +1095,7 @@ static int wan_iface_down(struct serv_wan *sw)
     if(0 == strncmp(sw->ifname,ER_NETDEVNAME,strlen(ER_NETDEVNAME)))
     {
         avalanche_pp_local_dev_addr_ioctl_params_t pp_gwErtMacAddr;
-        NETUTILS_GET_MACADDR(ER_NETDEVNAME, &pp_gwErtMacAddr.u.mac_addr);
+        NETUTILS_GET_MACADDR(ER_NETDEVNAME, (macaddr_t *)&pp_gwErtMacAddr.u.mac_addr);
         pp_gwErtMacAddr.op_type = FLUSH_LIST;
         pp_gwErtMacAddr.addr_type = GW_MAC_ADDR;
         SendIoctlToPpDev(PP_DRIVER_SET_LOCAL_DEV_ADDR,&pp_gwErtMacAddr);
@@ -1114,10 +1108,15 @@ static int wan_iface_down(struct serv_wan *sw)
 static int wan_addr_set(struct serv_wan *sw)
 {
     char val[64];
-    char state[16];
+#if !defined(_COSA_BCM_MIPS_)
     char mischandler_ready[10] ={0};
-    int timo,count=0;
-    FILE *fp;
+#endif
+#if !defined(_PLATFORM_IPQ_) && !defined(_WAN_MANAGER_ENABLED_) && !defined(_PROPOSED_BUG_FIX_)
+    char state[16];
+    int timo = 0;
+#endif
+    int count=0;
+    //FILE *fp;
     char ipaddr[16];
     char lanstatus[10] = {0};
     char brmode[4] = {0};
@@ -1244,7 +1243,6 @@ static int wan_addr_set(struct serv_wan *sw)
 
     sysevent_get(sw->sefd, sw->setok,"bridge_mode", brmode, sizeof(brmode));
     sysevent_get(sw->sefd, sw->setok,"lan-status", lanstatus, sizeof(lanstatus));
-    int bridgeMode = atoi(brmode);
 
     if (strcmp(val, "ready") != 0 && strlen(ipaddr) && strcmp(ipaddr, "0.0.0.0") != 0) {
         fprintf(stderr, "%s: start-misc: %s current_lan_ipaddr %s\n", __FUNCTION__, val, ipaddr);
@@ -1271,7 +1269,7 @@ static int wan_addr_set(struct serv_wan *sw)
     		//only for first time
     #if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
     		fprintf(stderr, "[%s] ready is set from misc handler. Doing gw_lan_refresh\n", PROG_NAME);
-    		system("firewall && gw_lan_refresh");
+    		v_secure_system("firewall && gw_lan_refresh");
     #endif
     		sysevent_set(sw->sefd, sw->setok, "misc-ready-from-mischandler", "false", 0);
     	}
@@ -1472,12 +1470,12 @@ static int wan_dhcp_renew(struct serv_wan *sw)
     return 0;
 }
 
+#if !defined(_WAN_MANAGER_ENABLED_)
 static int resolv_static_config(struct serv_wan *sw)
 {
     FILE *fp = NULL;
     char wan_domain[64] = {0};
-    char name_server[3][32] = {0};
-    char v6_name_server[32] = {0};
+    char name_server[3][32] = {{0}};
     int i = 0;
     char name_str[16] = {0};
 
@@ -1527,7 +1525,7 @@ static int wan_static_start(struct serv_wan *sw)
     char wan_default_gw[16] = {0};
 
     if(resolv_static_config(sw) != 0) {
-        fprintf(stderr, "%s: Config resolv file failed!\n");
+        fprintf(stderr, "%s: Config resolv file failed!\n", __FUNCTION__);
     }
 
     /*get static config*/
@@ -1582,6 +1580,7 @@ static int wan_static_stop(struct serv_wan *sw)
 
     return 0;
 }
+#endif
 
 static int wan_static_start_v6(struct serv_wan *sw)
 {

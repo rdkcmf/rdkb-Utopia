@@ -192,7 +192,6 @@ static PlatformPort brWanPort = {(void*)"lbr0", ENTITY_NP, halList + HAL_LINUX, 
 
 
 int plat_addImplicitMembers(PL2Net nv_net, PMember memberBuf) {
-    
     *memberBuf = armEntityMember;
     return 1;
 }
@@ -263,8 +262,8 @@ PEntityPathDeps* depArray  =
             {{1,3},1,(PPlatformPort[4]){&npLinkPort}}, 
             {{1,4},1,(PPlatformPort[3]){&npLinkPort}} 
         },
-        (EntityPathDeps[2]){ {0}, {0} },
-        (EntityPathDeps[1]){ {0} }
+        (EntityPathDeps[2]){ {{0}, 0, NULL} },
+        (EntityPathDeps[1]){ {{0}, 0 ,NULL} }
     };
 
 

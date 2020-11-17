@@ -25,6 +25,7 @@
 //char rpcServerIp[16] = "192.168.254.254";
 #define DEVICE_PROPS_FILE   "/etc/device.properties"
 
+
 int ExecuteCommand(char *cmnd)
 {
 	CLIENT *clnt = NULL;
@@ -93,12 +94,12 @@ main (int argc, char *argv[],char **args)
         while(fscanf(l_fFp,"%s", props) != EOF)
         {
             char *property = NULL;
-            if(property = strstr(props, "ARM_ARPING_IP="))
+            if((property = strstr(props, "ARM_ARPING_IP=")))
             {
                 property = property + strlen("ARM_ARPING_IP=");
                 strncpy(l_cArmArpingIP, property, (strlen(props) - strlen("ARM_ARPING_IP=")));
             }
-            if(property = strstr(props, "ATOM_ARPING_IP="))
+            if((property = strstr(props, "ATOM_ARPING_IP=")))
             {
                 property = property + strlen("ATOM_ARPING_IP=");
                 strncpy(l_cAtomArpingIP, property, (strlen(props) - strlen("ATOM_ARPING_IP=")));

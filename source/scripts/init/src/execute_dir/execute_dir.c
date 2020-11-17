@@ -142,7 +142,7 @@ static void start_execute_dir(char *dir)
 
    cur = head;
    while (NULL != cur) {
-      char command[512];
+      char command[1026];
       snprintf(command, sizeof(command), "%s/%s", dir, cur->name);
       system(command);
       prev = cur;
@@ -173,7 +173,7 @@ static void stop_execute_dir(char *dir, char *param)
 
    cur = head;
    while (NULL != cur) {
-      char command[512];
+      char command[1026];
       snprintf(command, sizeof(command), "%s/%s %s", dir, cur->name, param);
       system(command);
       prev = cur;

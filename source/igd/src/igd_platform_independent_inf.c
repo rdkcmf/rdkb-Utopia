@@ -99,12 +99,12 @@
 #include <utctx/utctx_api.h>
 #include <utapi/utapi.h>
 #include <ccsp_syslog.h>
+#include "syscfg/syscfg.h"
 
 #include "pal_log.h"
 #include "igd_platform_independent_inf.h"
 
-
-
+int Utopia_UpdateDynPortMapping_WithoutFirewallRestart (int index, portMapDyn_t *pmap);
 /************************************************************
  * Function: IGD_pii_get_serial_number
  *
@@ -756,7 +756,7 @@ IGD_pii_get_NAT_RSIP_status( IN INT32 WanDeviceIndex,
     UtopiaContext ctx;
 
     if (Utopia_Init(&ctx)) {
-        Utopia_GetRouteNAT(&ctx, &natEnable);
+        Utopia_GetRouteNAT(&ctx, (napt_mode_t *)&natEnable);
         Utopia_Free(&ctx, 0);
     }
 
@@ -1587,7 +1587,7 @@ INT32 IGD_pii_get_lan_reserved_addr_list(IN INT32 LanDeviceIndex, OUT CHAR *rese
             }
             PAL_LOG("igd_platform", "debug", "%s: index [%d], name [%s], host_ip [%d], mac [%s]", __FUNCTION__, i, dhcp_static_hosts[i].client_name, dhcp_static_hosts[i].host_ip, dhcp_static_hosts[i].macaddr);
             snprintf(ipaddr, sizeof(ipaddr), "%d.%d.%d.%d", 
-                     octet1, octet2, octet3, dhcp_static_hosts[i].host_ip);
+                     octet1, octet2, octet3, (int)dhcp_static_hosts[i].host_ip);
             strncat(reserved_list, ipaddr, max_list_sz);
         }
     }

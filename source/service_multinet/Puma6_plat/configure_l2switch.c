@@ -45,6 +45,8 @@
 #define BRLAN3_NETID		4
 #define BRLAN3_WIFI_PORT 	"ath5"
 
+void addVlan(int, int, char*);
+
 void configure_l2switch_brlan0()
 {
     MNET_DEBUG("Inside configure_l2switch_brlan0 fn")

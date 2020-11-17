@@ -77,7 +77,6 @@
 #include "pal_upnp.h"
 #include "pal_def.h"
 #include "pal_log.h"
-#include "igd_platform_independent_inf.h"
 #include "igd_utility.h"
 
 #define WANETHERNETLINKCONFIG_SERVICE_ID "urn:upnp-org:serviceId:WANEthLinkC1"
@@ -87,6 +86,10 @@
 #define WANETHLINKCFG_MAX_EVENT_NUM 1
 
 LOCAL INT32 _igd_get_EthernetLinkStatus (INOUT struct action_event *event);
+
+INT32 IGD_pii_get_ethernet_link_status(IN INT32 WanDeviceIndex,
+                                                    IN INT32 WanConnectionDeviceIndex,
+                                                    OUT CHAR *EthernetLinkStatus);
 
 LOCAL struct upnp_action WANEthernetLinkConfig_actions[] =
 {
@@ -198,7 +201,7 @@ struct upnp_service* IGD_service_WANEthernetLinkConfigInit(IN VOID* input_index_
 		_igd_service_WANEthernetLinkConfig_destroy(WANEthernetLinkConfig_service);
 		return NULL;
 	}
-	strncpy(WANEthernetLinkConfig_service->type, WANETHERNETLINKCONFIG_SERVICE_TYPE, strlen(WANETHERNETLINKCONFIG_SERVICE_TYPE));
+	strncpy(WANEthernetLinkConfig_service->type, WANETHERNETLINKCONFIG_SERVICE_TYPE, strlen(WANETHERNETLINKCONFIG_SERVICE_TYPE)+1);
 	
 	WANEthernetLinkConfig_service->serviceID=(CHAR *)calloc(1,strlen(WANETHERNETLINKCONFIG_SERVICE_ID)+1);
 	if(WANEthernetLinkConfig_service->serviceID==NULL)
@@ -207,7 +210,7 @@ struct upnp_service* IGD_service_WANEthernetLinkConfigInit(IN VOID* input_index_
 		_igd_service_WANEthernetLinkConfig_destroy(WANEthernetLinkConfig_service);
 		return NULL;
 	}
-	strncpy((CHAR *)WANEthernetLinkConfig_service->serviceID, WANETHERNETLINKCONFIG_SERVICE_ID, strlen(WANETHERNETLINKCONFIG_SERVICE_ID));
+	strncpy((CHAR *)WANEthernetLinkConfig_service->serviceID, WANETHERNETLINKCONFIG_SERVICE_ID, strlen(WANETHERNETLINKCONFIG_SERVICE_ID)+1);
 
 	WANEthernetLinkConfig_service->actions = WANEthernetLinkConfig_actions;
 
@@ -228,9 +231,9 @@ struct upnp_service* IGD_service_WANEthernetLinkConfigInit(IN VOID* input_index_
         _igd_service_WANEthernetLinkConfig_destroy(WANEthernetLinkConfig_service);
         return NULL;
     }
-    for(i=0; WANEthernetLinkConfig_variables_name[i]!= NULL; i++)
+    for(i=0; WANEthernetLinkConfig_variables_name[i]!= NULL; i++){
         WANEthernetLinkConfig_service->event_variables[i].name = WANEthernetLinkConfig_variables_name[i];
-	
+	}
 	WANEthernetLinkConfig_service->private=(struct device_and_service_index *)calloc(1,sizeof(struct device_and_service_index));
 	if(WANEthernetLinkConfig_service->private==NULL)
 	{

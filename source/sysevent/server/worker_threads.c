@@ -85,6 +85,7 @@ Author: mark enright
 
 #include "ulog/ulog.h"
 
+
 static const char *emptystr = "";
 
 /*
@@ -442,7 +443,6 @@ static int handle_close_connection_request(const int fd, const token_t who)
  */
 static int handle_ping_request(const int fd, const token_t who, se_ping_msg *msg)
 {
-
    // prepare the reply message
    se_buffer reply_msg_buffer;
 
@@ -609,7 +609,7 @@ static int handle_get_request_data(const int fd, const token_t who, se_get_msg *
                         SE_string2size(subject_str) + value_str_size  - sizeof(void *);
 
    if (reply_msg_size >= bin_size) {
-      sysevent_free(&value_buf, __FILE__, __LINE__);
+      sysevent_free((void **)&value_buf, __FILE__, __LINE__);
       rc = ERR_MSG_TOO_LONG;
    }
 
@@ -617,7 +617,7 @@ static int handle_get_request_data(const int fd, const token_t who, se_get_msg *
    char  *reply_msg_buffer = sysevent_malloc(bin_size, __FILE__, __LINE__);
    if (!reply_msg_buffer)
    {
-       sysevent_free(&value_buf, __FILE__, __LINE__);
+       sysevent_free((void **)&value_buf, __FILE__, __LINE__);
        return -1;
    }
 
@@ -625,8 +625,8 @@ static int handle_get_request_data(const int fd, const token_t who, se_get_msg *
                                                        bin_size, 
                                                        SE_MSG_GET_DATA_REPLY, TOKEN_NULL);
    if (NULL == reply_msg_body) {
-        sysevent_free(&value_buf, __FILE__, __LINE__);
-         sysevent_free(&reply_msg_buffer, __FILE__, __LINE__);
+        sysevent_free((void **)&value_buf, __FILE__, __LINE__);
+         sysevent_free((void **)&reply_msg_buffer, __FILE__, __LINE__);
       return(ERR_UNABLE_TO_PREPARE_MSG);
    } else {
       if (!rc) {
@@ -652,11 +652,11 @@ static int handle_get_request_data(const int fd, const token_t who, se_get_msg *
       }
 
       reply_msg_body->status = htonl(rc);
-      sysevent_free(&value_buf, __FILE__, __LINE__);
+      sysevent_free((void **)&value_buf, __FILE__, __LINE__);
 
       int rc                 = SE_msg_send_data(fd, reply_msg_buffer,bin_size);
       if (0 != rc) {
-           sysevent_free(&reply_msg_buffer, __FILE__, __LINE__);
+           sysevent_free((void **)&reply_msg_buffer, __FILE__, __LINE__);
          return(ERR_UNABLE_TO_SEND);
       } else {
          SE_INC_LOG(MESSAGES,
@@ -668,7 +668,7 @@ static int handle_get_request_data(const int fd, const token_t who, se_get_msg *
              SE_print_message_hdr(reply_msg_buffer);
          )
          debug_num_gets++;
-          sysevent_free(&reply_msg_buffer, __FILE__, __LINE__);
+          sysevent_free((void **)&reply_msg_buffer, __FILE__, __LINE__);
          return(0);
       }
    }
@@ -770,7 +770,7 @@ static int handle_set_request_data(const int fd, const token_t who, se_set_msg *
    char *inmsg_data_ptr = (char *) &(msg->data);
    subject_str          = SE_msg_get_string(inmsg_data_ptr, &subject_bytes);
    inmsg_data_ptr      += subject_bytes;   
-   value_str            =  SE_msg_get_data(inmsg_data_ptr, &value_bytes);
+   value_str            =  (char *)SE_msg_get_data(inmsg_data_ptr, &value_bytes);
 
    // value is allowed to be 0
    if (NULL == subject_str || 0 >= subject_bytes) {
@@ -1266,7 +1266,7 @@ static int handle_set_async_action_request(const int fd, const token_t who, se_s
          )
       }
    }
-   sysevent_free(&args, __FILE__, __LINE__);
+   sysevent_free((void **)&args, __FILE__, __LINE__);
 
    se_buffer               reply_msg_buffer;
    se_set_async_reply_msg *reply_msg_body;
@@ -1428,16 +1428,12 @@ static int handle_remove_async_request(const int fd, const token_t who, se_remov
  */
 static int handle_send_notification_msg(const int local_fd, const token_t who, se_send_notification_msg *msg)
 {
-   int   rc            = 0;
    int   trigger_id;
    int   action_id;
 
    // extract the trigger_id and action_id
    trigger_id = ntohl((msg->async_id).trigger_id);
    action_id  = ntohl((msg->async_id).action_id);
-   if (0 == trigger_id || 0 == action_id) {
-      rc = ERR_UNKNOWN_ASYNC_ID;
-   }
 
    // extract the subject and value from the message data
    int   subject_bytes;
@@ -1456,22 +1452,20 @@ static int handle_send_notification_msg(const int local_fd, const token_t who, s
    // However some clients might not be able to handle a NULL so we
    // will send an empty string
    if (NULL == value_str) {
-      value_str = emptystr;
+      value_str = (char *)emptystr;
    }
    if (NULL == subject_str) {
-      subject_str = emptystr;
+      subject_str = (char *)emptystr;
    }
 
    token_t id = ntohl(msg->token_id);
-   action_flag_t action_flags = ntohl(msg->flags); // not currently used
 
    int fd = CLI_MGR_id2fd(id);
    if (0 > fd) {
       SE_INC_LOG(INFO,
          printf("Dead Peer %x Detected while attempting notification.Cleaning up %d %d\n", (unsigned int)id, trigger_id, action_id);
       )
-      int rc;
-      rc = DATA_MGR_remove_async_notification(trigger_id, action_id, id);
+      DATA_MGR_remove_async_notification(trigger_id, action_id, id);
       return(0);
    }
 
@@ -1547,16 +1541,12 @@ static int handle_send_notification_msg(const int local_fd, const token_t who, s
 
 static int handle_send_notification_msg_data(const int local_fd, const token_t who, se_send_notification_msg *msg)
 {
-   int   rc            = 0;
    int   trigger_id;
    int   action_id;
 
    // extract the trigger_id and action_id
    trigger_id = ntohl((msg->async_id).trigger_id);
    action_id  = ntohl((msg->async_id).action_id);
-   if (0 == trigger_id || 0 == action_id) {
-      rc = ERR_UNKNOWN_ASYNC_ID;
-   }
 
    // extract the subject and value from the message data
    int   subject_bytes;
@@ -1568,29 +1558,27 @@ static int handle_send_notification_msg_data(const int local_fd, const token_t w
    data_ptr      = (char *)&(msg->data);
    subject_str   = SE_msg_get_string(data_ptr, &subject_bytes);
    data_ptr += subject_bytes;
-   value_str     =  SE_msg_get_data(data_ptr, &value_bytes);
+   value_str     =  (char *)SE_msg_get_data(data_ptr, &value_bytes);
 
    // it is possible for the value to be NULL. This would occur if the
    // tuple were unset.
    // However some clients might not be able to handle a NULL so we
    // will send an empty string
    if (NULL == value_str) {
-      value_str = emptystr;
+      value_str = (char *)emptystr;
    }
    if (NULL == subject_str) {
-      subject_str = emptystr;
+      subject_str = (char *)emptystr;
    }
 
    token_t id = ntohl(msg->token_id);
-   action_flag_t action_flags = ntohl(msg->flags); // not currently used
 
    int fd = CLI_MGR_id2fd(id);
    if (0 > fd) {
       SE_INC_LOG(INFO,
          printf("Dead Peer %x Detected while attempting notification.Cleaning up %d %d\n", (unsigned int)id, trigger_id, action_id);
       )
-      int rc;
-      rc = DATA_MGR_remove_async_notification(trigger_id, action_id, id);
+      DATA_MGR_remove_async_notification(trigger_id, action_id, id);
       return(0);
    }
 
@@ -1615,7 +1603,7 @@ static int handle_send_notification_msg_data(const int local_fd, const token_t w
    if (NULL ==
       (send_msg_body = (se_notification_msg *)
              SE_msg_prepare(send_msg_buffer, bin_size, SE_MSG_NOTIFICATION_DATA, TOKEN_NULL)) ) {
-       sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+       sysevent_free((void **)&send_msg_buffer, __FILE__, __LINE__);
      return(ERR_MSG_TOO_LONG);
    }
 
@@ -1631,7 +1619,7 @@ static int handle_send_notification_msg_data(const int local_fd, const token_t w
                                       remaining_buf_bytes,
                                       subject_str);
    if (0 == strsize) {
-       sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+       sysevent_free((void **)&send_msg_buffer, __FILE__, __LINE__);
       return(ERR_CANNOT_SET_STRING);
    }
    remaining_buf_bytes -= strsize;
@@ -1641,7 +1629,7 @@ static int handle_send_notification_msg_data(const int local_fd, const token_t w
                                       value_str,
                                       valbytes);
    if (0 == strsize) {
-      sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+      sysevent_free((void **)&send_msg_buffer, __FILE__, __LINE__);
       return(ERR_CANNOT_SET_STRING);
    }
 
@@ -1669,7 +1657,7 @@ static int handle_send_notification_msg_data(const int local_fd, const token_t w
       )
    }
 
-  sysevent_free(&send_msg_buffer, __FILE__, __LINE__);
+  sysevent_free((void **)&send_msg_buffer, __FILE__, __LINE__);
    return(0);
 }
 
@@ -1746,11 +1734,11 @@ static blocked_exec_link_t * make_blocked_exec_link(const int trigger_id, const 
    // TRIGGER_MGR_get_cloned_action will allocate memory within the trigger_action_t
    // It must be freed using TRIGGER_MGR_free_cloned_action
    if (0 != TRIGGER_MGR_get_cloned_action(trigger_id, action_id, &(link->action)) ) {
-      sysevent_free(&(link->name), __FILE__, __LINE__);
+      sysevent_free((void **)&(link->name), __FILE__, __LINE__);
       link->name = NULL;
-      sysevent_free(&(link->value), __FILE__, __LINE__);
+      sysevent_free((void **)&(link->value), __FILE__, __LINE__);
       link->value = NULL;
-      sysevent_free(&link, __FILE__, __LINE__);
+      sysevent_free((void **)&link, __FILE__, __LINE__);
       return(NULL);
    }
 
@@ -1766,12 +1754,12 @@ static blocked_exec_link_t * make_blocked_exec_link(const int trigger_id, const 
  */
 static void free_blocked_exec_link(blocked_exec_link_t * link)
 {
-   sysevent_free(&(link->name), __FILE__, __LINE__);
+   sysevent_free((void **)&(link->name), __FILE__, __LINE__);
    link->name = NULL;
-   sysevent_free(&(link->value), __FILE__, __LINE__);
+   sysevent_free((void **)&(link->value), __FILE__, __LINE__);
    link->value = NULL;
    TRIGGER_MGR_free_cloned_action(&(link->action));
-   sysevent_free(&link, __FILE__, __LINE__);
+   sysevent_free((void **)&link, __FILE__, __LINE__);
 }
 
 /*
@@ -1959,10 +1947,10 @@ static int handle_run_executable_msg(const int local_fd, const token_t who, se_r
    // it is possible for the value to be NULL. This would occur if the
    // tuple were unset.
    if (NULL == subject_str) {
-      subject_str = emptystr;
+      subject_str = (char *)emptystr;
    }
    if (NULL == value_str) {
-      value_str = emptystr;
+      value_str = (char *)emptystr;
    }
 
   blocked_exec_link_t * link = make_blocked_exec_link(trigger_id, action_id, wait, subject_str, value_str);
@@ -2164,8 +2152,8 @@ static serial_msg_link_t * get_next_to_execute_serially(serial_msg_link_t * link
                   printf("handle_execute_serially frees unrequired serial_msg_list_t at %p\n", cur->bucket->list);
                )
                // free the data because it had been allocated by Trigger Mgr
-               sysevent_free(&(cur->bucket->list), __FILE__, __LINE__);
-               sysevent_free(&(cur->bucket), __FILE__, __LINE__);
+               sysevent_free((void **)&(cur->bucket->list), __FILE__, __LINE__);
+               sysevent_free((void **)&(cur->bucket), __FILE__, __LINE__);
             }
             // link to ourself and we are done
             // the thread currently running this asyncid serially will run this serial msg next
@@ -2323,8 +2311,8 @@ static int handle_execute_serially(const int local_fd, const token_t who, se_run
       
          if (NULL != tlink) {
       // free the data because it had been allocated by Trigger Mgr
-            sysevent_free(&(tlink->list), __FILE__, __LINE__);
-            sysevent_free(&tlink, __FILE__, __LINE__);
+            sysevent_free((void **)&(tlink->list), __FILE__, __LINE__);
+            sysevent_free((void **)&tlink, __FILE__, __LINE__);
          }
       } else {
          /*
@@ -2350,8 +2338,8 @@ static int handle_execute_serially(const int local_fd, const token_t who, se_run
          pthread_mutex_unlock(&global_serial_msgs_mutex);
 
          // free the data because it had been allocated by Trigger Mgr
-         sysevent_free(&(link->list), __FILE__, __LINE__);
-         sysevent_free(&link, __FILE__, __LINE__);
+         sysevent_free((void **)&(link->list), __FILE__, __LINE__);
+         sysevent_free((void **)&link, __FILE__, __LINE__);
 
          // make link NULL so we exit the loop
          link = NULL;
@@ -2385,12 +2373,12 @@ static int handle_messagedata_from_client(const int fd)
     * The multi threaded nature of syseventd requires us to ensure that the fd hasn't
     * been reused already by the main thread
     */ 
-   if (TOKEN_INVALID == CLI_MGR_fd2id) {
+   if (TOKEN_INVALID == (int)CLI_MGR_fd2id) {
       int id = thread_get_id(worker_data_key);
       SE_INC_LOG(ERROR,
         printf("Thread %d: fd %d represents a stale client. Handled correctly\n", id, fd);
       )
-      sysevent_free(&msg, __FILE__, __LINE__);
+      sysevent_free((void **)&msg, __FILE__, __LINE__);
       return(ERR_UNKNOWN_CLIENT);
    }
 
@@ -2530,7 +2518,7 @@ static int handle_messagedata_from_client(const int fd)
          rc = ERR_UNHANDLED_CASE_STATEMENT;
          break;
    }
-   sysevent_free(&msg, __FILE__, __LINE__);
+   sysevent_free((void **)&msg, __FILE__, __LINE__);
    return rc;
 }
 
@@ -2554,7 +2542,7 @@ static int handle_message_from_client(const int fd)
     * The multi threaded nature of syseventd requires us to ensure that the fd hasn't
     * been reused already by the main thread
     */ 
-   if (TOKEN_INVALID == CLI_MGR_fd2id) {
+   if (TOKEN_INVALID == (int)CLI_MGR_fd2id) {
       int id = thread_get_id(worker_data_key);
       SE_INC_LOG(ERROR,
         printf("Thread %d: fd %d represents a stale client. Handled correctly\n", id, fd);
@@ -2856,7 +2844,7 @@ static int handle_messagedata_from_trigger_thread(int fd)
          rc = ERR_UNHANDLED_CASE_STATEMENT;
          break;
    }
-    sysevent_free(&msg, __FILE__, __LINE__);
+    sysevent_free((void **)&msg, __FILE__, __LINE__);
    return(rc);
 }
 

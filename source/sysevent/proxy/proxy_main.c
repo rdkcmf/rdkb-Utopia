@@ -579,7 +579,7 @@ int main (int argc, char** argv)
 #endif
    if (0 == inet_aton(argv[1], &syseventd_in_addr)) {
 #ifndef NO_IPV6
-   if (0 == inet_pton(AF_INET6, argv[1], &syseventd_in_addr)) {
+   if (0 == inet_pton(AF_INET6, argv[1], &syseventd_in6_addr)) {
 #endif
       /*
        * sit in a loop waiting for the remote sysevent daemon name to become resolvable

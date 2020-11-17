@@ -182,15 +182,14 @@ static int handle_set(char *target, char *value)
    if (0 > ( fd = server_connect(server_host, server_port, &token))) {
       return(-1);
    }
-
+#if 0
    char *valp;
    if (NULL == value || 0 == strcasecmp ("NULL", value)) {
       valp = NULL;
    } else {
       valp = value;
    }
-
-
+#endif
    int rc;
    rc = sysevent_set(fd, token, target, value,0);
 
@@ -255,14 +254,14 @@ static int handle_setunique(char *target, char *value)
       puts("");
       return(-1);
    }
-
+#if 0
    char *valp;
    if (NULL == value || 0 == strcasecmp ("NULL", value)) {
       valp = NULL;
    } else {
       valp = value;
    }
-
+#endif
    se_buffer return_buffer;
    int  rc;
    rc = sysevent_set_unique(fd, token, target, value, return_buffer, sizeof(return_buffer));
@@ -567,7 +566,6 @@ static int handle_notification_data(char *subject)
    char *val_buf = malloc(bin_size);
    int  name_size;
    int  val_size;
-   int i;
    // in case you cant tell this is just example code
    while (val_buf) 
    {

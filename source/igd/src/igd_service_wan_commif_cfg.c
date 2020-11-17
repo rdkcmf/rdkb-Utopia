@@ -74,8 +74,8 @@
 #include "pal_upnp.h"
 #include "pal_def.h"
 #include "pal_log.h"
-#include "igd_platform_independent_inf.h"
 #include "igd_utility.h"
+#include "igd_platform_independent_inf.h"
 
 #define WANCOMMONINTERFACECONFIG_SERVICE_ID "urn:upnp-org:serviceId:WANCommonIFC1"
 #define WANCOMMONINTERFACECONFIG_SERVICE_TYPE "urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1"
@@ -101,6 +101,7 @@ LOCAL INT32 _igd_get_TotalBytesSent (IN struct action_event *event);
 LOCAL INT32 _igd_get_TotalBytesReceived (IN struct action_event *event);
 LOCAL INT32 _igd_get_TotalPacketsSent (IN struct action_event *event);
 LOCAL INT32 _igd_get_TotalPacketsReceived (IN struct action_event *event);
+
 
 LOCAL struct upnp_action WANCommonInterfaceConfig_actions[] =
 {
@@ -229,7 +230,7 @@ struct upnp_service* IGD_service_WANCommonInterfaceConfigInit(IN VOID* input_ind
 		_igd_service_WANCommonInterfaceConfig_destroy(WANCommonInterfaceConfig_service);
 		return NULL;
 	}
-	strncpy(WANCommonInterfaceConfig_service->type, WANCOMMONINTERFACECONFIG_SERVICE_TYPE, strlen(WANCOMMONINTERFACECONFIG_SERVICE_TYPE));
+	strncpy(WANCommonInterfaceConfig_service->type, WANCOMMONINTERFACECONFIG_SERVICE_TYPE, strlen(WANCOMMONINTERFACECONFIG_SERVICE_TYPE)+1);
 	
 	WANCommonInterfaceConfig_service->serviceID=(CHAR *)calloc(1,strlen(WANCOMMONINTERFACECONFIG_SERVICE_ID)+1);
 	if(WANCommonInterfaceConfig_service->serviceID==NULL)
@@ -238,7 +239,7 @@ struct upnp_service* IGD_service_WANCommonInterfaceConfigInit(IN VOID* input_ind
 		_igd_service_WANCommonInterfaceConfig_destroy(WANCommonInterfaceConfig_service);
 		return NULL;
 	}
-	strncpy((CHAR *)WANCommonInterfaceConfig_service->serviceID, WANCOMMONINTERFACECONFIG_SERVICE_ID, strlen(WANCOMMONINTERFACECONFIG_SERVICE_ID));
+	strncpy((CHAR *)WANCommonInterfaceConfig_service->serviceID, WANCOMMONINTERFACECONFIG_SERVICE_ID, strlen(WANCOMMONINTERFACECONFIG_SERVICE_ID)+1);
 
 	WANCommonInterfaceConfig_service->actions = WANCommonInterfaceConfig_actions;
 

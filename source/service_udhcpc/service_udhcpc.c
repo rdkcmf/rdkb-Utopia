@@ -144,9 +144,12 @@ static int send_dhcp_data_to_wanmanager (ipc_dhcpv4_data_t *dhcpv4_data);
 #endif
 
 void compare_and_delete_old_dns(udhcpc_script_t *pinfo);
+int read_cmd_output(char *cmd, char *output_buf, int size_buf);
+int set_dns_sysevents(udhcpc_script_t *pinfo);
+int set_router_sysevents(udhcpc_script_t *pinfo);
 
 struct dns_server{
- char data[BUFSIZE];
+ char data[BUFSIZE+30];
 
 };
 
@@ -404,7 +407,7 @@ int update_dns_tofile(udhcpc_script_t *pinfo)
 {
     char dns[256];
     char *tok = NULL;
-    char buf[128];
+    char buf[256];
     char val[64];
     int result = -1;
 
@@ -437,7 +440,7 @@ int update_dns_tofile(udhcpc_script_t *pinfo)
                         printf ("\n [date -u] cmd failed\n");            
                     }
 
-                    result = read_cmd_output("cat /proc/uptime | awk '{ print $1 }' | cut -d\"\.\" -f1",uptime,sizeof(uptime));
+                    result = read_cmd_output("cat /proc/uptime | awk '{ print $1 }' | cut -d\".\" -f1",uptime,sizeof(uptime));
                     if (0 == result)
                     {
                         printf ("\nuptime  %s tok : %s\n",uptime,tok);
@@ -467,7 +470,6 @@ int add_route(udhcpc_script_t *pinfo)
     char router[256];
     char *tok = NULL;
     char buf[128];
-    char val[32];
     int metric = 0;
 
     if (!pinfo)
@@ -531,10 +533,10 @@ int set_wan_sysevents()
         char lease_exp[128];
         char buf[128];
         sysevent_set(sysevent_fd, sysevent_token, "wan_lease_time", lease, 0);        
-        result = read_cmd_output("date \+\"\%Y\.\%m\.\%d-\%T\"",lease_date,sizeof(lease_date));
+        result = read_cmd_output("date +\"\%Y.\%m.\%d-\%T\"",lease_date,sizeof(lease_date));
         if (0 == result)
         {
-            snprintf(buf,sizeof(buf),"date -d\"%s:%s\" \+\"%%Y\.%%m\.%%d-%%T %%Z\"",lease_date,lease);
+            snprintf(buf,sizeof(buf),"date -d\"%s:%s\" +\"%%Y.%%m.%%d-%%T %%Z\"",lease_date,lease);
             result = read_cmd_output(buf,lease_exp,sizeof(lease_exp));
             if (0 == result)
             {                
@@ -549,10 +551,10 @@ int set_wan_sysevents()
         char lease_renew[128];
         char buf[128];
         sysevent_set(sysevent_fd, sysevent_token, "wan_renew_time", opt58, 0);        
-        result = read_cmd_output("date \+\"\%Y\.\%m\.\%d-\%T\"",lease_date,sizeof(lease_date));
+        result = read_cmd_output("date +\"\%Y.\%m.\%d-\%T\"",lease_date,sizeof(lease_date));
         if (0 == result)
         {
-            snprintf(buf,sizeof(buf),"date -d\"%s:0x%s\" \+\"%%Y\.%%m\.%%d-%%T %%Z\"",lease_date,opt58);
+            snprintf(buf,sizeof(buf),"date -d\"%s:0x%s\" +\"%%Y.%%m.%%d-%%T %%Z\"",lease_date,opt58);
             result = read_cmd_output(buf,lease_renew,sizeof(lease_renew));
             if (0 == result)
             {                
@@ -567,10 +569,10 @@ int set_wan_sysevents()
         char lease_bind[128];
         char buf[128];
         sysevent_set(sysevent_fd, sysevent_token, "wan_rebind_time", opt59, 0);        
-        result = read_cmd_output("date \+\"\%Y\.\%m\.\%d-\%T\"",lease_date,sizeof(lease_date));
+        result = read_cmd_output("date +\"\%Y.\%m.\%d-\%T\"",lease_date,sizeof(lease_date));
         if (0 == result)
         {
-            snprintf(buf,sizeof(buf),"date -d\"%s:0x%s\" \+\"%%Y\.%%m\.%%d-%%T %%Z\"",lease_date,opt59);
+            snprintf(buf,sizeof(buf),"date -d\"%s:0x%s\" +\"%%Y.%%m.%%d-%%T %%Z\"",lease_date,opt59);
             result = read_cmd_output(buf,lease_bind,sizeof(lease_bind));
             if (0 == result)
             {                
@@ -633,10 +635,10 @@ void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
   char*  buffer = NULL;
   char *tok = NULL;
   char dns[256]={0};
-  size_t read = 0;
+  int read = 0;
   size_t size = BUFSIZE;
   char INTERFACE[BUFSIZE]={0};
-  char dns_server_no_query[BUFSIZE]={0};
+  char dns_server_no_query[BUFSIZE+30]={0};
   char dns_servers_number[BUFSIZE]={0};
   int dns_server_no;
   int i;
@@ -654,11 +656,11 @@ void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
   struct dns_server* dns_server_list = malloc(sizeof(struct dns_server) * dns_server_no);
   for(i=0;i<dns_server_no;i++)
   {
-     char nameserver_ip_query[BUFSIZE]={0};
+     char nameserver_ip_query[BUFSIZE+30]={0};
      char nameserver_ip[BUFSIZE]={0};
      snprintf(nameserver_ip_query, sizeof(nameserver_ip_query), "ipv4_%s_dns_%d", INTERFACE,i);
      sysevent_get(sysevent_fd, sysevent_token, nameserver_ip_query , nameserver_ip, sizeof(nameserver_ip));
-     snprintf(dns_server_list[i].data ,BUFSIZE,"nameserver %s",nameserver_ip);
+     snprintf(dns_server_list[i].data , sizeof(dns_server_list[i].data),"nameserver %s",nameserver_ip);
   }
 
   snprintf(dns,sizeof(dns),"%s",pinfo->dns);
@@ -702,12 +704,11 @@ void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
       char* search_domain = NULL;
       char* search_domain_altrnte = NULL;
       int search_ipv4_dns = 0;
-      char  ipv4_dns_query[BUFSIZE] = {0};
 
       for(i=0;i<dns_server_no;i++)
       {
               char* ipv4_dns_match = NULL;
-              ipv4_dns_match = strstr(buffer,dns_server_list[i].data) || strstr(buffer,"nameserver 127.0.0.1");
+              ipv4_dns_match = (char *)(strstr(buffer,dns_server_list[i].data) || strstr(buffer,"nameserver 127.0.0.1"));
               if(ipv4_dns_match !=NULL)
               {
                       search_ipv4_dns=1;
@@ -753,7 +754,6 @@ void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
       perror("Error in opening resolv_temp.conf file in read mode");
       exit(1);
     }
-
       while((read = getline(&buffer, &size, fIN)) != -1)
       {
 
@@ -889,11 +889,10 @@ int handle_wan(udhcpc_script_t *pinfo)
     }
     return ret;
 #else
-    char buf[128];
+    char buf[300];
     char *mask = getenv("mask");
     char *ip = getenv("ip");
     char router[256];
-    int result = -1;
 
     if (!pinfo)
         return -1;
@@ -937,9 +936,8 @@ int handle_wan(udhcpc_script_t *pinfo)
 
     if (pinfo->box_type && strcmp("XB3",pinfo->box_type))
     {
-        if (router && strlen(router) > 0)
+        if (strlen(router) > 0)
         {
-            int metric = 0;
             if (!pinfo->broot_is_nfs)
             {
                 if (pinfo->ip_util_exist)
@@ -1014,11 +1012,11 @@ int handle_wan(udhcpc_script_t *pinfo)
                 update_resolveconf(pinfo);
 
                 FILE *fIn=NULL;
-                if(fIn = fopen("/tmp/ipv4_renew_dnsserver_restart","r"))
+                if((fIn = fopen("/tmp/ipv4_renew_dnsserver_restart","r")))
                 {
                         fclose(fIn);
                         /*As there is a change in resolv.conf restarting dhcp-server (dnsmasq)*/
-                        printf("\nAs there is a change in resolv.conf restarting dhcp-server (dnsmasq)\n",__FUNCTION__);
+                        printf("\n %s As there is a change in resolv.conf restarting dhcp-server (dnsmasq)\n",__FUNCTION__);
                         sysevent_set(sysevent_fd, sysevent_token, "dhcp_server-stop","", 0);
                         sysevent_set(sysevent_fd, sysevent_token, "dhcp_server-start","", 0);
                 }
@@ -1029,7 +1027,7 @@ int handle_wan(udhcpc_script_t *pinfo)
         }
         else
         {
-                printf("\nNot Adding new IPV4 DNS Config to resolv.conf\n",__FUNCTION__);
+                printf("\n %s Not Adding new IPV4 DNS Config to resolv.conf\n",__FUNCTION__);
         }
         dns_changed=false; 
         sysevent_set(sysevent_fd, sysevent_token, "dhcp_domain",getenv("domain"), 0);
@@ -1063,7 +1061,7 @@ bool root_is_nfs()
     int result = -1;
     char out[128];
     memset(out,0,sizeof(out));
-    result = read_cmd_output("sed -n 's/^[^ ]* \([^ ]*\) \([^ ]*\) .*$/\1 \2/p' /proc/mounts | grep \"^/ \\(nfs\\|smbfs\\|ncp\\|coda\\)$\"",out,128);
+    result = read_cmd_output("sed -n 's/^[^ ]* \([^ ]*) \([^ ]*) .*$/\1 \2/p' /proc/mounts | grep \"^/ \\(nfs\\|smbfs\\|ncp\\|coda\\)$\"",out,128);
     if ((0 == result) && (strlen(out) > 0))
         return true;
     return false;

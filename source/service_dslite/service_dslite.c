@@ -35,6 +35,7 @@
 #include <event2/dns.h>
 #include <event2/util.h>
 #include <event2/event.h>
+#include "time.h"
 
 #define PROG_NAME       "SERVICE-DSLITE"
 #define ER_NETDEVNAME   "erouter0"
@@ -413,7 +414,7 @@ static int dslite_start(struct serv_dslite *sd)
         memset(buf, 0, sizeof(buf));
         memset(val, 0, sizeof(val));
         syscfg_set(NULL, "dslite_aftr_resolved_1", resolved_ipv6);
-        sprintf(buf, "%u", time(NULL));
+        sprintf(buf, "%lu", time(NULL));
         syscfg_set(NULL, "dslite_dns_time_1", buf);
         sprintf(val, "%u", dnsttl);
         syscfg_set(NULL, "dslite_dns_ttl_1", val);
@@ -547,7 +548,6 @@ static int dslite_stop(struct serv_dslite *sd)
     char local_addr[64];
     char val[64];
     char buf[64];
-    char rule[256] = {0};
     char return_buffer[256] = {0};
 
     SEM_WAIT
@@ -694,6 +694,7 @@ static int dslite_clear_status(struct serv_dslite *sd)
     syscfg_unset(NULL,  "dslite_aftr_resolved_1");
     syscfg_unset(NULL,  "dslite_dns_time_1");
     syscfg_unset(NULL,  "dslite_dns_ttl_1");
+    return 0;
 }
 
 static void usage(void)

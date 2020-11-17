@@ -42,11 +42,10 @@
 #include "utapi_util.h"
 #include "utapi_wlan.h"
 #include "DM_TR181.h"
-
+#include <arpa/inet.h>
 
 int Utopia_Get_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *str_handle)
 {
-    int iVal = -1;
     char tokenBuf[64] = {'\0'};
     char tokenVal[64] = {'\0'};
     if(!str_handle){
@@ -83,10 +82,8 @@ int Utopia_Get_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *st
 
 int Utopia_Set_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *str_handle)
 {
-    int iVal = -1;
     char tokenBuf[64] = {'\0'};
     char tokenVal[64] = {'\0'};
-    char cmd[128] = {'\0'};
     if (!pCtx || !str_handle) {
 	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
@@ -99,11 +96,11 @@ int Utopia_Set_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *st
     sprintf(ulog_msg, "%s: Set Enable key & val = %s, %u", __FUNCTION__, tokenBuf, deviceDnsRelay->Enable);
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     if(deviceDnsRelay->Enable == FALSE){
-        sprintf(ulog_msg, "%s: Enable is FALSE \n", __FUNCTION__, tokenBuf);
+        sprintf(ulog_msg, "%s: Enable is FALSE \n", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         Utopia_RawSet(pCtx, NULL, tokenBuf, "false");
     }else{
-        sprintf(ulog_msg, "%s: Enable is TRUE \n", __FUNCTION__, tokenBuf);
+        sprintf(ulog_msg, "%s: Enable is TRUE \n", __FUNCTION__);
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         Utopia_RawSet(pCtx, NULL, tokenBuf, "true");
     }
@@ -112,10 +109,10 @@ int Utopia_Set_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *st
     sprintf(tokenBuf, "tr_dns_relay_forwarding_server_%d", index);
     tokenBuf[strlen(tokenBuf)] = '\0';
     sprintf(tokenVal, "%d.%d.%d.%d", 
-                      (deviceDnsRelay->DNSServer.Value) & 0xFF,
-                      (deviceDnsRelay->DNSServer.Value >> 8)  & 0xFF,
-                      (deviceDnsRelay->DNSServer.Value >> 16) & 0xFF,
-                      (deviceDnsRelay->DNSServer.Value >> 24) & 0xFF );
+                      (int)(deviceDnsRelay->DNSServer.Value) & 0xFF,
+                      (int)(deviceDnsRelay->DNSServer.Value >> 8)  & 0xFF,
+                      (int)(deviceDnsRelay->DNSServer.Value >> 16) & 0xFF,
+                      (int)(deviceDnsRelay->DNSServer.Value >> 24) & 0xFF );
     tokenVal[strlen(tokenVal)] = '\0';
     Utopia_RawSet(pCtx, NULL, tokenBuf, tokenVal);
 

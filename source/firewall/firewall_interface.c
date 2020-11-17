@@ -162,5 +162,4 @@ void ethwan_mso_gui_acess_rules(FILE *filter_fp,FILE *mangle_fp)
 {
     FIREWALL_DEBUG("Entering ethwan_mso_gui_acess_rules\n");
     FIREWALL_DEBUG("Exiting ethwan_mso_gui_acess_rules\n");
-    return 0;
 }

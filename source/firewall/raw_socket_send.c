@@ -172,7 +172,6 @@ unsigned short ComputeChecksum( void *data, unsigned long length )
 {
 	unsigned short	*tempUshort 	  = NULL,
 					 UshortForPadding = 0;
-	unsigned char	*tempUchar		  = NULL;
 	unsigned long	 checksum		  = 0;
 
 	/*
@@ -230,7 +229,7 @@ unsigned short ComputeChecksum( void *data, unsigned long length )
 void *CreateIPHeader(int family, char *srcIp, char *dstIp, unsigned int dataSize)
 {
     if(family == AF_INET6){
-        struct ip6_hdr *ipv6Hdr = (struct ip6hdr *)malloc(sizeof(struct ip6_hdr));
+        struct ip6_hdr *ipv6Hdr = malloc(sizeof(struct ip6_hdr));
         if(ipv6Hdr == NULL)
             return NULL;
         memset(ipv6Hdr, 0, sizeof(struct ip6_hdr));

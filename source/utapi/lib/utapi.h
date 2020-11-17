@@ -568,6 +568,8 @@ typedef struct qosPolicy {
 int Utopia_GetQoSDefinedPolicyList (int *out_count, qosDefinedPolicy_t const **out_qoslist);
 int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos);
 int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos);
+int Utopia_get_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsigned char *pComments);
+int Utopia_set_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsigned char *pComments);
 
 /*
  * Log Settings

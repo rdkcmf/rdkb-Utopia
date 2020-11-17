@@ -139,13 +139,13 @@ int saveVlanState(PVlanTrunkState vidState) {
     }
     if (vidState->trunksDirty)
         ep_set_trunkPort_vidMembers(vidState->vid, portMemberNameList, numPorts);
-    
+    return 0;
 }
 
 int loadVlanState(PVlanTrunkState vidState){
     int entities[MAX_ENTITIES];
     int numEntities = sizeof(entities)/sizeof(*entities);
-    int i, j;
+    int i, j = 0;
     MNET_DEBUG("loadVlanState, entry.\n")
     ep_get_entity_vidMembers(vidState->vid, entities, &numEntities);
     MNET_DEBUG("loadVlanState, ep_get_entity_vidMembers returned %d entities\n" COMMA numEntities)
@@ -202,7 +202,7 @@ int loadVlanState(PVlanTrunkState vidState){
         newPort->dirty = 0;
     }
     vidState->trunksDirty = 0;
-    
+    return 0;
 }
 
 //TODO optimize so that exec calls don't have to load the whole tree every time.
@@ -372,7 +372,6 @@ int refTrunkPort(PVlanTrunkState vidState, PPlatformPort port, PEntityPath path)
     ListIterator iter;
     PListItem item;
     PTrunkPort curPort;
-    PEntityPath newPath;
     MNET_DEBUG("refTrunkPort, entry\n")
     initIterator(&vidState->trunkPorts,&iter);
     while ((item = getNext(&iter))) {

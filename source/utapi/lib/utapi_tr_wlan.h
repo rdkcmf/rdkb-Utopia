@@ -453,7 +453,8 @@ int Utopia_GetWifiSSIDEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pEn
 
 int Utopia_GetIndexedWifiSSIDCfg(UtopiaContext *ctx, unsigned long ulIndex, void *cfg);
 int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg);
-int Utopia_GetWifiSSIDSinfo(unsigned long ulIndex, void *sInfo);
+int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo);
+int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo);
 int Utopia_GetIndexedWifiSSIDDInfo(UtopiaContext *ctx, unsigned long ulIndex, void *dInfo);
 int Utopia_GetWifiSSIDDinfo(unsigned long ulInstanceNum, void *dInfo);
 

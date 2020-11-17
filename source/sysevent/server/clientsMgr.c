@@ -164,7 +164,6 @@ static int expand_clients_table(void)
          if (NULL == global_clients.clients) {
             return(ERR_ALLOC_MEM);
          } else {
-            int clisize = sizeof(a_client_t);
             init_a_client(&(global_clients.clients[global_clients.num_cur_clients]));
             global_clients.max_cur_clients++;
          }
@@ -175,7 +174,6 @@ static int expand_clients_table(void)
            return(ERR_ALLOC_MEM);
         }
 
-        int clisize = sizeof(a_client_t);
         int i;
         int previous_num = global_clients.max_cur_clients;
         for (i = 0; i<NUM_CLIENTS_IN_ALLOCATED_BLOCK; i++) {
@@ -656,7 +654,7 @@ int CLI_MGR_deinit_clients_table()
 
    global_clients.num_cur_clients = 0;
    global_clients.max_cur_clients = 0;
-   sysevent_free(&(global_clients.clients), __FILE__, __LINE__);
+   sysevent_free((void **)&(global_clients.clients), __FILE__, __LINE__);
    global_clients.clients         = NULL;
    // reset next id to give to client
    global_next_id = TOKEN_START;

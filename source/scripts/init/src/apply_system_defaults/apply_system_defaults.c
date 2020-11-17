@@ -49,6 +49,7 @@
 #include <arpa/inet.h>
 #include <syscfg/syscfg.h>
 #include "sysevent/sysevent.h"
+#include "time.h"
 #if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_) || defined(_SR300_PRODUCT_REQ_)
 #include "platform_hal.h"
 #endif
@@ -267,7 +268,6 @@ static int handle_version(char* name, char* value) {
 }
 
 static int check_version(void) {
-   int handled = 0;
    FILE *fp = fopen(default_file, "r");
    if (NULL == fp) {
       printf("[utopia] no system default file (%s) found\n", default_file);
@@ -297,7 +297,6 @@ static int check_version(void) {
             printf("[utopia] [error] set_defaults failed to set syscfg (%s)\n", line);
          } else { 
             if ( handle_version(trim(name), trim(value)) ) {
-                handled = 1;
                 break;
             }
          }
@@ -505,7 +504,6 @@ static int parse_command_line(int argc, char **argv)
 
 char * json_file_parse( char *path )
 {
-	cJSON 		*json 		= NULL;
 	FILE	 	*fileRead 	= NULL;
 	char		*data 		= NULL;
 	int 		 len 		= 0;
@@ -569,7 +567,7 @@ int IsValuePresentinSyscfgDB( char *param )
 	int  ret;
 
 	//check whether passed param with value is already existing or not
-	memset( buf, sizeof( buf ), 0 );
+	memset( buf, 0, sizeof( buf ));
 	ret = syscfg_get( NULL, param, buf, sizeof(buf));
 
 	if( ( ret != 0 ) || ( buf[ 0 ] == '\0' ) )
@@ -585,14 +583,14 @@ int set_syscfg_partner_values(char *pValue,char *param)
 	if ((syscfg_set(NULL, param, pValue) != 0)) 
 	{
         	APPLY_PRINT("set_syscfg_partner_values : syscfg_set failed\n");
-		return ;
+		return 1;
 	}
 	else 
 	{
        	 	if (syscfg_commit() != 0) 
 		{
 			APPLY_PRINT("set_syscfg_partner_values : syscfg_commit failed\n");
-			return ;
+			return 1;
 		}
 		return 0;
 	}
@@ -686,14 +684,15 @@ int validatePartnerId ( char *PartnerID )
       	sprintf(PartnerID,"%s","unknown");
         return 0;
       }
-   }  
+   }
+   return 0;
 }
 
 static int get_PartnerID( char *PartnerID)
 {
 	char buf[PARTNER_ID_LEN];
 	memset(buf, 0, sizeof(buf));
-	int isValidPartner = 0;
+	//int isValidPartner = 0;
 
 	/* 
 	  *  Check whether /nvram/.partner_ID file is available or not. 
@@ -708,7 +707,7 @@ static int get_PartnerID( char *PartnerID)
 		if( ( 0 == getFactoryPartnerId( PartnerID ) ) && ( PartnerID [ 0 ] != '\0' ) )
 		{
 			APPLY_PRINT("%s - PartnerID from HAL: %s\n",__FUNCTION__,PartnerID );
-			isValidPartner = validatePartnerId ( PartnerID );
+			validatePartnerId ( PartnerID );
 		}
 		else
 		{
@@ -762,7 +761,7 @@ static int get_PartnerID( char *PartnerID)
 			sprintf( PartnerID, "%s", fileContent );
 
 			APPLY_PRINT("%s - PartnerID from File: %s\n",__FUNCTION__,PartnerID );
-			isValidPartner = validatePartnerId ( PartnerID );
+			validatePartnerId ( PartnerID );
 		}
 		system("rm -rf /nvram/.partner_ID");
 	}
@@ -781,6 +780,7 @@ static int get_PartnerID( char *PartnerID)
 
 	APPLY_PRINT("[GET-PARTNERID] Current_PartnerID:%s\n", PartnerID );
 	
+	return 0;	
 }
 
 void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram_json, bool *do_compare)
@@ -818,7 +818,7 @@ void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram
                 printf ("\n READ version ######## etc: major %d minor %d \n",etc_major, etc_minor);
             }
             /* Check if version exists inside properties object */
-            version_nvram_key = cJSON_GetObjectItem(properties_nvram,"version");
+            version_nvram_key = (cJSON *)cJSON_GetObjectItem(properties_nvram,"version");
             if(version_nvram_key)
             {
                 version_nvram = cJSON_GetObjectItem(properties_nvram,"version")->valuestring;
@@ -1373,7 +1373,6 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
       cJSON *param = subitem_etc->child;
       while( param )
       {
-         cJSON *newParamObj = cJSON_CreateObject();
          key = param->string;
          cJSON * value_obj = cJSON_GetObjectItem(subitem_etc, key);
          if (value_obj)
@@ -1470,6 +1469,9 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
    return 0;
 }
 
+#ifdef RETRY_COUNT
+#undef RETRY_COUNT
+#endif
 #define RETRY_COUNT 3
 
 int apply_partnerId_default_values(char *data, char *PartnerID)
@@ -1544,7 +1546,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 		if( !json ) 
 		{
 			APPLY_PRINT(  "%s-%d : json file parser error\n", __FUNCTION__,__LINE__ );
-			return ;
+			return -1;
 		} 
 		else
 		{
@@ -1600,7 +1602,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
                                                                 pclose(fp);
                                                     }
  
-                                                    if (DefaultPassword[0] != NULL)
+                                                    if (DefaultPassword[0] != '\0')
                                                         {
                                                                 set_syscfg_partner_values(DefaultPassword,"user_password_3");
                                                         }
@@ -1866,7 +1868,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
                                         if ( paramObjVal != NULL )
                                         {
 					  initialForwardedMark = paramObjVal->valuestring; 
-					  if (initialForwardedMark[0] != NULL)
+					  if (initialForwardedMark[0] != '\0')
 					  {
 						set_syscfg_partner_values(initialForwardedMark,"DSCP_InitialForwardedMark");
 						initialForwardedMark = NULL;
@@ -1881,7 +1883,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
                                         if ( paramObjVal != NULL )
                                         {
 					  initialOutputMark = paramObjVal->valuestring; 
-					  if (initialOutputMark[0] != NULL)
+					  if (initialOutputMark[0] != '\0')
 					  {
 						set_syscfg_partner_values(initialOutputMark,"DSCP_InitialOutputMark");
 						initialOutputMark = NULL;
@@ -1896,7 +1898,7 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
                                         if ( paramObjVal != NULL )
                                         {
 					   startupipmode = paramObjVal->valuestring;
-					   if(startupipmode[0]!=NULL)
+					   if(startupipmode[0]!='\0')
 					   {
 					            set_syscfg_partner_values(startupipmode,"StartupIPMode");
 					            startupipmode = NULL;
@@ -1911,7 +1913,7 @@ paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDK
 if ( paramObjVal != NULL )
 {
    pridhcpoption = paramObjVal->valuestring;
-   if(pridhcpoption[0]!=NULL)
+   if(pridhcpoption[0]!='\0')
        {
             set_syscfg_partner_values(pridhcpoption,"IPv4PrimaryDhcpServerOptions");
             pridhcpoption = NULL;
@@ -1926,7 +1928,7 @@ paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDK
 if ( paramObjVal != NULL )
 {
    secdhcpoption = paramObjVal->valuestring;
-   if(secdhcpoption[0]!=NULL)
+   if(secdhcpoption[0]!='\0')
        {
             set_syscfg_partner_values(secdhcpoption,"IPv4SecondaryDhcpServerOptions");
             secdhcpoption = NULL;
@@ -1941,7 +1943,7 @@ paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDK
 if ( paramObjVal != NULL )
 {
    pridhcpoption = paramObjVal->valuestring;
-   if(pridhcpoption[0]!=NULL)
+   if(pridhcpoption[0]!='\0')
        {
             set_syscfg_partner_values(pridhcpoption,"IPv6PrimaryDhcpServerOptions");
             pridhcpoption = NULL;
@@ -1956,7 +1958,7 @@ paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDK
 if ( paramObjVal != NULL )
 {
    secdhcpoption = paramObjVal->valuestring;
-   if(secdhcpoption[0]!=NULL)
+   if(secdhcpoption[0]!='\0')
        {
             set_syscfg_partner_values(secdhcpoption,"IPv6SecondaryDhcpServerOptions");
             secdhcpoption = NULL;
@@ -2050,7 +2052,7 @@ if ( paramObjVal != NULL )
              alwaysJson = cJSON_Parse( data );
              if( !alwaysJson ) 
              {
-                error_ptr = cJSON_GetErrorPtr();
+                error_ptr = (char *)cJSON_GetErrorPtr();
                 if (error_ptr != NULL)
                 {
                    APPLY_PRINT(  "%s-%d : json file parser error at %s\n", __FUNCTION__,__LINE__, error_ptr);
@@ -2059,7 +2061,7 @@ if ( paramObjVal != NULL )
                 {
                    APPLY_PRINT(  "%s-%d : json file parser error\n", __FUNCTION__,__LINE__ );
                 }
-                return;
+                return -1;
              } 
              else
              {
@@ -2118,8 +2120,9 @@ if ( paramObjVal != NULL )
        }
     } //For Loop
 
+    return 0;
 }
-
+#if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_)
 static void getPartnerIdWithRetry(char* buf, char* PartnerID)
 {
         int i;
@@ -2154,6 +2157,7 @@ static void getPartnerIdWithRetry(char* buf, char* PartnerID)
         }
         return;
 }
+#endif
 
 /*
  * main()
@@ -2162,7 +2166,7 @@ int main( int argc, char **argv )
 {
    char *ptr_etc_json = NULL, *ptr_nvram_json = NULL, *ptr_nvram_bs_json = NULL, *db_val = NULL;
    char  cmd[512] = {0};
-   char  PartnerID[ PARTNER_ID_LEN ]  = { 0 };
+   char  PartnerID[ PARTNER_ID_LEN+255 ]  = { 0 };
    int   isNeedToApplyPartnersDefault = 1;
    int   isMigrationReq = 0;
    int   rc;

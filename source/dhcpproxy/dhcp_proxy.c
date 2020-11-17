@@ -254,6 +254,7 @@ int main(int argc, char** argv)
             break;
          case 'f':
             g_lease_file = optarg;
+            break;
          default:
             usage(argv[0]);
             break;
@@ -489,7 +490,7 @@ struct dhcp_lease *dhcp_process_msg(struct dhcp_msg *recv_msg, size_t recv_msg_s
          if (recv_msg->hdr.xid != lease->last_xid)
          {
             // xid mismatch, discard
-            printf("XID mismatch, expect 0x%08x, find 0x%08x, discard message.\n");
+            printf("XID mismatch, expect 0x%08x, find 0x%08x, discard message.\n", lease->last_xid, recv_msg->hdr.xid);
             return NULL;
          }
       }

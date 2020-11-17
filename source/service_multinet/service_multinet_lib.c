@@ -39,6 +39,7 @@
 #include "service_multinet_ep.h"
 #include "service_multinet_handler.h"
 #include "service_multinet_plat.h"
+#include <unistd.h>
 #ifdef MULTILAN_FEATURE
 #include "syscfg/syscfg.h"
 #include <net/if.h>
@@ -110,7 +111,6 @@ static int isMemberEqual(PMember a, PMember b);
  * Otherwise, ifName would be same as port name */
 int getIfName(char *ifName, char *port)
 {
-    int i = 0;
     char line[MAX_BUF_SIZE] = {0};
     char *buff = NULL;
     char *token = NULL;
@@ -159,7 +159,7 @@ int getIfName(char *ifName, char *port)
                 if(token2 == NULL)
                 {
                         MNET_DEBUG("ERROR: Null pointer\n");
-                        close(file);
+                        fclose(file);
                         return STATUS_NOK;
                 }
                 if((c = strchr(token2, '\n')))
@@ -169,7 +169,7 @@ int getIfName(char *ifName, char *port)
                 }
                 strncpy(ifName, token2, MAX_IFNAME_SIZE);
                 MNET_DEBUG("%s inner: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
-                close(file);
+                fclose(file);
                 return STATUS_OK;
             }
         }
@@ -177,19 +177,22 @@ int getIfName(char *ifName, char *port)
     /* port is switch port */
     strncpy(ifName, port, MAX_IFNAME_SIZE);
     MNET_DEBUG("%s outer: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
-    close(file);
+    fclose(file);
     return STATUS_OK;
 }
 #endif
 
 //TODO Move these to a common lib
+#ifndef MULTILAN_FEATURE
 static int nethelper_bridgeCreate(char* brname) {
     
     char cmdBuff[80];
     snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s; ifconfig %s up", brname, brname);
     MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff)
     system(cmdBuff);
+    return 0;
 }
+#endif
 #ifdef MULTILAN_FEATURE
 /* nethelper_bridgeCreateUniqueMac
  *
@@ -255,7 +258,7 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
     }
     else
     {
-        MNET_DEBUG("Couldn't get %s from syscfg" BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY);
+        MNET_DEBUG("Couldn't get %s from syscfg" COMMA BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY);
     }
 
     /* Workaround, Linux will not generate a link-local address if no switch ports connected */
@@ -290,12 +293,13 @@ static int nethelper_bridgeDestroy(char* brname) {
     char cmdBuff[80];
     snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s down; brctl delbr %s", brname, brname);
     system(cmdBuff);
+    return 0;
 }
 #if defined(MOCA_HOME_ISOLATION)
 void ConfigureMoCABridge(L2Net l2net)
 {
     char cmdBuff[512];
-    snprintf(cmdBuff, sizeof(cmdBuff), "ip link set %s allmulticast on; ifconfig %s %s;ip link set %d up",l2net.name, l2net.name, MOCA_BRIDGE_IP,l2net.name);
+    snprintf(cmdBuff, sizeof(cmdBuff), "ip link set %s allmulticast on; ifconfig %s %s;ip link set %s up",l2net.name, l2net.name, MOCA_BRIDGE_IP,l2net.name);
     system(cmdBuff);
     system("echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts");
     system("sysctl -w net.ipv4.conf.all.arp_announce=3");
@@ -472,6 +476,7 @@ int multinet_bridgeDown(PL2Net network){
     
     ep_clear(network);
     ep_rem_active_net(network);
+    return 0;
 }
 int multinet_bridgeDownInst(int l2netInst){
     L2Net l2net;
@@ -479,6 +484,7 @@ int multinet_bridgeDownInst(int l2netInst){
         nv_get_bridge(l2netInst, &l2net);
         multinet_bridgeDown(&l2net);
     }
+    return 0;
 }
 
 int multinet_Sync(PL2Net network, PMember members, int numMembers){
@@ -568,7 +574,7 @@ int multinet_Sync(PL2Net network, PMember members, int numMembers){
     
     //Sync name TODO Deferred!
     
-    
+    return 0;
 }
 int multinet_SyncInst(int l2netInst){
     L2Net nv_net;
@@ -653,9 +659,10 @@ int multinet_ifStatusUpdate(PL2Net network, PMember interface, IF_STATUS status)
     
     ev_set_netStatus(network, check_status(live_members, numLiveMembers));
     MNET_DEBUG("multinet_ifStatusUpdate: exit\n")
+    return 0;
 }
 int multinet_ifStatusUpdate_ids(int l2netInst, char* ifname, char* ifType, char* status, char* tagging){ 
-    IFType type = {0};
+    IFType type = {{0},NULL};
     NetInterface iface = {0};
     Member member = {0};
     L2Net net = {0};
@@ -666,7 +673,7 @@ int multinet_ifStatusUpdate_ids(int l2netInst, char* ifname, char* ifType, char*
     member.interface = &iface;
     
     nv_get_bridge(l2netInst, &net);
-    ev_string_to_status(status, &ifStatus);
+    ev_string_to_status(status, (SERVICE_STATUS *)&ifStatus);
     
     
     member.bTagging = strcmp("tag", tagging) ? 0 : 1;
@@ -700,23 +707,24 @@ static int add_members(PL2Net network, PMember interfaceBuf, int numMembers)
     create_and_register_if(network, interfaceBuf, numMembers);
     
     //add vlans for ready members
-    add_vlan_for_members(network, interfaceBuf, numMembers);                                
+    add_vlan_for_members(network, interfaceBuf, numMembers);
+    return 0;
 }
 
 static int remove_members(PL2Net network, PMember live_members, int numLiveMembers) 
 {
     unregister_if(network, live_members, numLiveMembers);
-    remove_vlan_for_members(network, live_members, numLiveMembers);    
+    remove_vlan_for_members(network, live_members, numLiveMembers);
+    return 0; 
 }
 
 static SERVICE_STATUS check_status(PMember live_members, int numLiveMembers) {
     int i;
     
-    int all = 1, none=1;
+    int all = 1;
     
     for (i = 0; i < numLiveMembers; ++i ) {
         if ((live_members[i].interface->map == NULL) || !live_members[i].interface->dynamic || live_members[i].bReady) {
-            none = 0;
         } else {
             all = 0;
         }

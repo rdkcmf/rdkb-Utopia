@@ -365,8 +365,7 @@ LOCAL INT32 _igd_get_DefaultConnectionService (IN struct action_event *event)
 	return(event->request->error_code);
 }
 
-const static char *defaultConnService = "uuid:%s:WANConnectionDevice:1,urn:upnp-org:serviceId:WANIPConn1";
-const static char *l3fwd = "layer3forwarding";
+static const char *defaultConnService = "uuid:%s:WANConnectionDevice:1,urn:upnp-org:serviceId:WANIPConn1";
 
 LOCAL VOID l3fwding_conn_service_init(IN struct upnp_service  *ps)
 {
@@ -374,7 +373,7 @@ LOCAL VOID l3fwding_conn_service_init(IN struct upnp_service  *ps)
     CHAR baseUuid[UPNP_UUID_LEN_BY_VENDER] = {0};
 
     if (NULL == ps){
-        PAL_LOG(l3fwd, 1, "layer3forwarding service is NULL");
+        PAL_LOG("layer3forwarding", 1, "layer3forwarding service is NULL");
         return;
     }
 

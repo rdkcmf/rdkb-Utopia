@@ -222,7 +222,7 @@ int pid_of(const char *name, const char *keyword)
     struct dirent *d;
     int pid;
     FILE *fp;
-    char path[257];
+    char path[275];
     char line[257];
     char *cp;
     int n, i;

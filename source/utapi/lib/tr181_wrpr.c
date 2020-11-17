@@ -242,7 +242,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     ptr = head = NULL;
     
     memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, deviceMocaIntfDyn->NodeID, MOCA_MAC_NODE);
+    sprintf (buf, "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, (int)deviceMocaIntfDyn->NodeID, MOCA_MAC_NODE);
     system(buf);
     
     retVal = file_parse(MOCA_MAC_NODE, &head);

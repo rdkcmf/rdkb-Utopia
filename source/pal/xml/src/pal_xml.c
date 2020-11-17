@@ -60,7 +60,7 @@
 #include <upnp/ixml.h>
 #include "pal_xml.h"
 #include <stdlib.h>
-
+#include <string.h>
 
 #ifdef PAL_DEBUG
 #define pal_debug(fmt, args...) fprintf(stdout, "Debug[%s,%3d]: "fmt, __FILE__,__LINE__, ##args)

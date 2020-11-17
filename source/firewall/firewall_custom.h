@@ -52,6 +52,30 @@ void do_device_based_pp_disabled_ip_appendrule(FILE *fp, const char *ins_num, co
 int do_parcon_mgmt_lan2wan_pc_site_appendrule(FILE *fp);
 void do_parcon_mgmt_lan2wan_pc_site_insertrule(FILE *fp, int index, char *nstdPort);
 void firewall_log( char* fmt, ...);
+void update_rabid_features_status();
+void do_forwardPorts(FILE *filter_fp);
+void do_snmp_IpAccessTable(FILE *filt_fp, int family);
+void do_ssh_IpAccessTable(FILE *filt_fp, const char *port, int family, const char *interface);
+void do_tr69_whitelistTable(FILE *filt_fp, int family);
+void filterPortMap(FILE *filt_fp);
+void do_openPorts(FILE *filter_fp);
+int prepare_xconf_rules(FILE *mangle_fp);
+int do_self_heal_rules_v6(FILE *mangle_fp);
+int do_qos_output_marking_v6(FILE *mangle_fp);
+int do_hub4_mapt_rules_v6(FILE *filter_fp);
+int do_hub4_bfd_rules_v6(FILE *filter_fp, FILE *mangle_fp);
+int do_hub4_dns_rule_v6(FILE* mangle_fp);
+int do_hub4_voice_rules_v6(FILE *filter_fp, FILE *mangle_fp);
+int do_self_heal_rules_v4(FILE *mangle_fp);
+int do_qos_output_marking_v4(FILE *mangle_fp);
+int do_hub4_mapt_rules_v4(FILE *nat_fp, FILE *filter_fp);
+int do_hub4_bfd_rules_v4(FILE *nat_fp, FILE *filter_fp, FILE *mangle_fp);
+int do_hub4_voice_rules_v4(FILE *filter_fp);
+int isInSelfHealMode ();
+char *get_lan_ipaddr();
+char *get_current_wan_ifname();
+void ethwan_mso_gui_acess_rules(FILE *filter_fp,FILE *mangle_fp);
+void do_OpenVideoAnalyticsPort (FILE *filter_fp);
 
 #ifdef FW_DEBUG
 #define COMMA ,

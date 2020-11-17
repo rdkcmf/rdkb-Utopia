@@ -244,7 +244,6 @@ int getHex(char *hex_val, unsigned char *hexVal, int hexLen)
 int getHexGeneric(char *hex_val, unsigned char *hexVal, int hexLen)
 {
     char byte[3];
-    char str[MAX_HEX_LEN+1] = {'\0'};
     int i, index, val;
 
     if (hex_val == NULL){

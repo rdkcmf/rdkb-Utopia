@@ -44,6 +44,7 @@
 #include "utapi_util.h"
 #include "utapi_tr_dhcp.h"
 #include "DM_TR181.h"
+#include <arpa/inet.h>
 
 #ifdef SKY_RDKB
 #define DNSMASQ_LEASE_CONFIG_FILE "/nvram/dnsmasq.leases"
@@ -94,7 +95,7 @@ int Utopia_GetDhcpV4ServerPoolEntry(UtopiaContext *ctx, unsigned long ulIndex, v
     if((NULL == ctx) || (NULL == pEntry)){
         return ERR_INVALID_ARGS;
     }
-    char insNum[STR_SZ] = {'\0'};
+    /*char insNum[STR_SZ] = {'\0'};*/
     unsigned long ulInstanceNum = 0;
 #ifdef _DEBUG_
     sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
@@ -114,6 +115,7 @@ int Utopia_GetDhcpV4ServerPoolEntry(UtopiaContext *ctx, unsigned long ulIndex, v
 #endif
    Utopia_GetDhcpV4ServerPoolCfg(ctx, &(pEntry_t->Cfg));
    Utopia_GetDhcpV4ServerPoolInfo(ctx, ulInstanceNum, &(pEntry_t->Info));
+   return SUCCESS;
 }
 
 int Utopia_GetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
@@ -124,7 +126,7 @@ int Utopia_GetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
     char propagate_ns[STR_SZ] = {'\0'};
     char block_nat_redir[STR_SZ] = {'\0'};
     char prefixIP[IPADDR_SZ] = {'\0'};
-    char completeIP[IPADDR_SZ] = {'\0'};
+    char completeIP[IPADDR_SZ+90] = {'\0'};
 
     bool_t propagate_wan_dns = FALSE;
     lanSetting_t lan;
@@ -369,12 +371,12 @@ int Utopia_ValidateLanDhcpPoolRange(UtopiaContext *ctx, const unsigned long mina
 
 int Utopia_SetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
 {
-    int iVal = -1;
     int rc = -1;
-    char strVal[STR_SZ] = {'\0'};
-    char completeIP[IPADDR_SZ] = {'\0'};
+    struct in_addr addrVal;
+    /*char strVal[STR_SZ] = {'\0'};*/
+    /*char completeIP[IPADDR_SZ] = {'\0'};*/
 
-    lanSetting_t lan;
+    /*lanSetting_t lan;*/
     dhcpServerInfo_t dhcps;
     if((NULL == ctx) || (NULL == pCfg)){
         return ERR_INVALID_ARGS;
@@ -429,25 +431,32 @@ int Utopia_SetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
     rc = Utopia_ValidateLanDhcpPoolRange(ctx, cfg_t->MinAddress.Value, cfg_t->MaxAddress.Value);
     if (rc != SUCCESS)
         return rc;
-
-    strncpy(dhcps.DHCPIPAddressStart, inet_ntoa(cfg_t->MinAddress.Value), sizeof(dhcps.DHCPIPAddressStart)-1);
-    strncpy(dhcps.DHCPIPAddressEnd, inet_ntoa(cfg_t->MaxAddress.Value), sizeof(dhcps.DHCPIPAddressEnd)-1);
-    dhcps.DHCPMaxUsers = ntohl(cfg_t->MaxAddress.Value) - ntohl(cfg_t->MinAddress) + 1;
+    addrVal.s_addr = cfg_t->MinAddress.Value;
+    strncpy(dhcps.DHCPIPAddressStart, inet_ntoa(addrVal), sizeof(dhcps.DHCPIPAddressStart)-1);
+    addrVal.s_addr = cfg_t->MaxAddress.Value;
+    strncpy(dhcps.DHCPIPAddressEnd, inet_ntoa(addrVal), sizeof(dhcps.DHCPIPAddressEnd)-1);
+    dhcps.DHCPMaxUsers = ntohl(cfg_t->MaxAddress.Value) - ntohl(cfg_t->MinAddress.Value) + 1;
 #endif
 
     sprintf(dhcps.DHCPClientLeaseTime,"%d",cfg_t->LeaseTime);
    
     dhcps.StaticNameServerEnabled = cfg_t->DNSServersEnabled;
-    if(cfg_t->DNSServers[0].Value > 0) 
-        strcpy(dhcps.StaticNameServer1,inet_ntoa(cfg_t->DNSServers[0].Value));
+    if(cfg_t->DNSServers[0].Value > 0){
+        addrVal.s_addr = cfg_t->DNSServers[0].Value;
+        strcpy(dhcps.StaticNameServer1,inet_ntoa(addrVal));
+    }
     else
         strcpy(dhcps.StaticNameServer1,"");
-    if(cfg_t->DNSServers[1].Value > 0)
-        strcpy(dhcps.StaticNameServer2,inet_ntoa(cfg_t->DNSServers[1].Value));
+    if(cfg_t->DNSServers[1].Value > 0){
+        addrVal.s_addr = cfg_t->DNSServers[1].Value;
+        strcpy(dhcps.StaticNameServer2,inet_ntoa(addrVal));
+    }
     else
         strcpy(dhcps.StaticNameServer2,"");
-    if(cfg_t->DNSServers[2].Value > 0)
-        strcpy(dhcps.StaticNameServer3,inet_ntoa(cfg_t->DNSServers[2].Value));
+    if(cfg_t->DNSServers[2].Value > 0){
+        addrVal.s_addr = cfg_t->DNSServers[2].Value;
+        strcpy(dhcps.StaticNameServer3,inet_ntoa(addrVal));
+    }
     else
         strcpy(dhcps.StaticNameServer3,"");
 
@@ -501,7 +510,6 @@ int Utopia_GetDhcpV4SPool_NumOfStaticAddress(UtopiaContext *ctx,unsigned long ul
 
 int Utopia_GetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInstanceNumber,unsigned long ulIndex, void *pSAddr)
 {
-    char strVal[STR_SZ] = {'\0'};
     if((NULL == ctx) || (NULL == pSAddr)){
         return ERR_INVALID_ARGS;
     }
@@ -512,11 +520,11 @@ int Utopia_GetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
 #endif
   
    dhcpV4ServerPoolStaticAddress_t *pSAddr_t = (dhcpV4ServerPoolStaticAddress_t *)pSAddr; 
-   if(0 != Utopia_GetIndexedInt(ctx,UtopiaValue_DHCP_StaticHost_InsNum,ulIndex + 1, &pSAddr_t->InstanceNumber)) {
+   if(0 != Utopia_GetIndexedInt(ctx,UtopiaValue_DHCP_StaticHost_InsNum,ulIndex + 1, (int *)&pSAddr_t->InstanceNumber)) {
        pSAddr_t->InstanceNumber = 0;
        strcpy(pSAddr_t->Alias,"");
    } else {
-        Utopia_GetIndexed(ctx,UtopiaValue_DHCP_StaticHost_Alias,ulIndex + 1,  &pSAddr_t->Alias, sizeof(pSAddr_t->Alias));
+        Utopia_GetIndexed(ctx,UtopiaValue_DHCP_StaticHost_Alias,ulIndex + 1,  (char *)&pSAddr_t->Alias, sizeof(pSAddr_t->Alias));
         if (pSAddr_t->InstanceNumber > MAX_NUM_INSTANCES) {
             sprintf(ulog_msg, "%s: Error: pSAddr_t->InstanceNumber greater than MAX_NUM_INSTANCES(%d) !!!", __FUNCTION__, MAX_NUM_INSTANCES);
             ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
@@ -532,7 +540,6 @@ int Utopia_GetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
 
 int Utopia_GetDhcpV4SPool_SAddressByInsNum(UtopiaContext *ctx, unsigned long ulClientInstanceNumber, void *pSAddr)
 {
-    char strVal[STR_SZ] = {'\0'}; 
     unsigned long ulIndex = 0;
     if((NULL == ctx) || (NULL == pSAddr)){
         return ERR_INVALID_ARGS;
@@ -643,10 +650,10 @@ int Utopia_AddDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
     char strVal[STR_SZ] = {'\0'}; 
     char macAddress[32] = {'\0'}; 
     char tbuf[BUF_SZ] = {'\0'}; 
-    int ip[4] = {0,0,0,0};
+    /*int ip[4] = {0,0,0,0};*/
     unsigned long ulIndex = 0;
     int count = 0;
-    
+    struct in_addr addrVal;
     if((NULL == ctx) || (NULL == pSAddr)){
         return ERR_INVALID_ARGS;
     }
@@ -658,8 +665,8 @@ int Utopia_AddDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
     dhcpV4ServerPoolStaticAddress_t *pSAddr_t = (dhcpV4ServerPoolStaticAddress_t *)pSAddr; 
     if((0 == pSAddr_t->InstanceNumber)||is_mac_addr_invalid(pSAddr_t->Chaddr)||is_ipv4_addr_invalid(pSAddr_t->Yiaddr.Value))
         return ERR_INVALID_ARGS;
-
-     strcpy(strVal,inet_ntoa(pSAddr_t->Yiaddr.Value));
+     addrVal.s_addr = pSAddr_t->Yiaddr.Value;
+     strcpy(strVal,inet_ntoa(addrVal));
 
 #ifdef SKY_RDKB
      /* RM15984: "Add Device with Reserved IP" functionality is not working as expected.
@@ -728,8 +735,8 @@ int Utopia_DelDhcp4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInstan
        for(;ulIndex <= count; ulIndex++)
        {
           Utopia_GetDhcpV4SPool_SAddressByIndex(ctx,ulIndex,&sAddr);
-          Utopia_GetIndexedInt(ctx,UtopiaValue_DHCP_StaticHost_InsNum,ulIndex + 1, &sAddr.InstanceNumber);
-          Utopia_GetIndexed(ctx,UtopiaValue_DHCP_StaticHost_Alias,ulIndex + 1,  &sAddr.Alias, sizeof(sAddr.Alias));
+          Utopia_GetIndexedInt(ctx,UtopiaValue_DHCP_StaticHost_InsNum,ulIndex + 1, (int *)&sAddr.InstanceNumber);
+          Utopia_GetIndexed(ctx,UtopiaValue_DHCP_StaticHost_Alias,ulIndex + 1,  (char *)&sAddr.Alias, sizeof(sAddr.Alias));
 
           g_IndexMapStaticAddr[sAddr.InstanceNumber] = ulIndex - 1;
 
@@ -744,12 +751,12 @@ int Utopia_DelDhcp4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInstan
 
 int Utopia_SetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInstanceNumber, void *pSAddr)
 {
-    int count = 0;
     unsigned long ulIndex = 0;
     char strVal[STR_SZ] = {'\0'}; 
     char macAddress[32] = {'\0'}; 
     char tbuf[BUF_SZ] = {'\0'}; 
-    int ip[4] = {0,0,0,0};
+    /*int ip[4] = {0,0,0,0};*/
+    struct in_addr addrVal;
 
     if(NULL == ctx){
         return ERR_INVALID_ARGS;
@@ -765,8 +772,8 @@ int Utopia_SetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
         return ERR_INVALID_ARGS;
     ulIndex = g_IndexMapStaticAddr[pSAddr_t->InstanceNumber];
     Utopia_UnsetIndexed(ctx, UtopiaValue_DHCP_StaticHost, ulIndex + 1);
-
-    strcpy(strVal,inet_ntoa(pSAddr_t->Yiaddr.Value));
+    addrVal.s_addr = pSAddr_t->Yiaddr.Value;
+    strcpy(strVal,inet_ntoa(addrVal));
     /*sscanf(strVal,"%d.%d.%d.%d", ip,ip+1,ip+2,ip+3);*/
     /* Retrieve MAC address properly */
     sprintf(macAddress,"%02x:%02x:%02x:%02x:%02x:%02x",pSAddr_t->Chaddr[0],pSAddr_t->Chaddr[1],pSAddr_t->Chaddr[2],pSAddr_t->Chaddr[3],pSAddr_t->Chaddr[4],pSAddr_t->Chaddr[5]);
@@ -803,11 +810,10 @@ int Utopia_SetDhcpV4SPool_SAddress_Values(UtopiaContext *ctx, unsigned long ulPo
 int Utopia_GetDhcpV4SPool_SAddressByIndex(UtopiaContext *ctx, unsigned long ulIndex, dhcpV4ServerPoolStaticAddress_t *pSAddr_t)
 {
     char strVal[BUF_SZ] = {'\0'};
-    char temp[STR_SZ] = {'\0'};
-    char ipAddr[IPADDR_SZ] = {'\0'};
+    /*char temp[STR_SZ] = {'\0'};*/
+    /*char ipAddr[IPADDR_SZ] = {'\0'};*/
     char *p, *n ;
-    int rc = -1;
-    int ip[4] = {0,0,0,0};
+    /*int ip[4] = {0,0,0,0};*/
     int mac[6] = {0,0,0,0,0,0};
     DHCPMap_t dhcp_static_hosts;
 #ifdef _DEBUG_

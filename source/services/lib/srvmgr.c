@@ -508,7 +508,7 @@ int sm_unregister (const char* srv_name)
    sysevent_port = SE_SERVER_WELL_KNOWN_PORT;
    sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
 
-   char async_name[256];
+   char async_name[270];
    char async_id_str[256];
    char trigger_str[256];
    char action_str[256];

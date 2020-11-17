@@ -38,7 +38,7 @@
 #include "utapi.h"
 #include "utapi_util.h"
 #include "utapi_security.h"
-
+#include "strings.h"
 
 int Utopia_GetEmailNotificationSetting(UtopiaContext *ctx, email_notification_t *pSetting)
 {
@@ -70,11 +70,11 @@ int Utopia_SetEmailNotificationSetting(UtopiaContext *ctx, const email_notificat
     }
 
     UTOPIA_SETBOOL(ctx, UtopiaValue_Security_EmailEnabled, pSetting->bEnabled);
-    UTOPIA_SET(ctx, UtopiaValue_Security_EmailSendTo, pSetting->send_to);
-    UTOPIA_SET(ctx, UtopiaValue_Security_EmailServer, pSetting->server);
-    UTOPIA_SET(ctx, UtopiaValue_Security_EmailUsername, pSetting->username);
-    UTOPIA_SET(ctx, UtopiaValue_Security_EmailPassword, pSetting->password);
-    UTOPIA_SET(ctx, UtopiaValue_Security_EmailFromAddr, pSetting->from_addr);
+    UTOPIA_SET(ctx, UtopiaValue_Security_EmailSendTo, (char *)pSetting->send_to);
+    UTOPIA_SET(ctx, UtopiaValue_Security_EmailServer, (char *)pSetting->server);
+    UTOPIA_SET(ctx, UtopiaValue_Security_EmailUsername, (char *)pSetting->username);
+    UTOPIA_SET(ctx, UtopiaValue_Security_EmailPassword, (char *)pSetting->password);
+    UTOPIA_SET(ctx, UtopiaValue_Security_EmailFromAddr, (char *)pSetting->from_addr);
     UTOPIA_SETBOOL(ctx, UtopiaValue_Security_SendLogs, pSetting->bSendLogs);
     UTOPIA_SETBOOL(ctx, UtopiaValue_Security_FirewallBreach, pSetting->bFirewallBreach);
     UTOPIA_SETBOOL(ctx, UtopiaValue_Security_ParentalControlBreach, pSetting->bParentalControlBreach);

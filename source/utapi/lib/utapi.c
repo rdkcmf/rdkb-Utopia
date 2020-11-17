@@ -680,8 +680,7 @@ int Utopia_GetARPCacheEntries (UtopiaContext *ctx, int *count, arpHost_t **out_h
     arpHost_t *hosts = NULL;
 
     unlink(ARP_CACHE_FILE);
-    snprintf(line, sizeof(line), "ip neigh show > %s", ARP_CACHE_FILE);
-    system(line);
+    v_secure_system("ip neigh show > %s", ARP_CACHE_FILE);
 
     FILE *fp = fopen(ARP_CACHE_FILE, "r");
     if (fp) {
@@ -720,10 +719,8 @@ int Utopia_GetWLANClients (UtopiaContext *ctx, int *count, char **out_maclist)
     char *maclist = NULL;
 
     unlink(WLAN_CLIENTLIST_TMP);
-    snprintf(line, sizeof(line), "wlancfg eth0 clientlist > %s", WLAN_CLIENTLIST_TMP);
-    system(line);
-    snprintf(line, sizeof(line), "wlancfg eth1 clientlist >> %s", WLAN_CLIENTLIST_TMP);
-    system(line);
+    v_secure_system("wlancfg eth0 clientlist > %s", WLAN_CLIENTLIST_TMP);
+    v_secure_system("wlancfg eth1 clientlist >> %s", WLAN_CLIENTLIST_TMP);
 
     FILE *fp = fopen(WLAN_CLIENTLIST_TMP, "r");
     if (fp) {
@@ -1479,7 +1476,7 @@ int Utopia_UpdateDDNSService (UtopiaContext *ctx)
 
 int Utopia_GetDDNSService (UtopiaContext *ctx, ddnsService_t *ddns)
 {
-    bzero(ddns, sizeof(ddns));
+    bzero(ddns, sizeof(ddnsService_t));
 
     Utopia_GetBool(ctx, UtopiaValue_DDNS_Enable, &ddns->enabled);
     if (TRUE == ddns->enabled) {
@@ -1550,7 +1547,7 @@ int Utopia_SetRouteNAT (UtopiaContext *ctx, napt_mode_t enable)
 
 int Utopia_GetRouteNAT (UtopiaContext *ctx, napt_mode_t *enable)
 {
-    Utopia_GetInt(ctx, UtopiaValue_NATEnabled, enable);
+    Utopia_GetInt(ctx, UtopiaValue_NATEnabled, (int *)enable);
     return SUCCESS;
 }
 
@@ -1813,7 +1810,6 @@ int Utopia_GetStaticRouteTable (int *count, routeStatic_t **out_sroute)
     int i;
     int j;
     routeStatic_t *sroute;
-    char cmd[512];
     char line_buf[512];
     int line_count;
     token_t se_token;
@@ -1830,9 +1826,8 @@ int Utopia_GetStaticRouteTable (int *count, routeStatic_t **out_sroute)
     
     *count = 0;
     
-    snprintf(cmd, sizeof(cmd), "route -en | grep -v \"^127.0.0\" > %s", ROUTE_TABLE_TMP_FILE);
-    system(cmd);
-    
+    v_secure_system("route -en | grep -v '^127.0.0' > " ROUTE_TABLE_TMP_FILE);
+ 
     FILE *fp = fopen(ROUTE_TABLE_TMP_FILE, "r");
     
     if (!fp) {
@@ -2147,8 +2142,8 @@ static int s_getportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap
     Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_ExternalPort, index, &portmap->external_port);
     Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_InternalPort, index, &portmap->internal_port);
 //    Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_ToIp, index, &portmap->dest_ip);
-    Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIp, index, &portmap->dest_ip, IPADDR_SZ);
-    Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIpV6, index, &portmap->dest_ipv6, IPADDR_SZ);
+    Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIp, index, (char *)&portmap->dest_ip, IPADDR_SZ);
+    Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIpV6, index, (char *)&portmap->dest_ipv6, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_SPF_Protocol, index, s_tokenbuf, sizeof(s_tokenbuf));
     portmap->protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
     
@@ -2522,7 +2517,8 @@ static int s_add_portmapdyn (int index, portMapDyn_t *pmap)
         return ERR_SYSEVENT_CONN;
     }
 
-    char value[1024], param[128], unique[128];
+    char value[1024], param[128];
+    /*char unique[128];*/
     time(&pmap->last_updated);
     snprintf(value, sizeof(value), "%s,%s,%d,%s,%d,%s,%d,%ld,%s", 
                                (TRUE == pmap->enabled) ? "enabled" : "disabled",
@@ -2613,8 +2609,8 @@ static int s_get_portmapdyn (int index, portMapDyn_t *portmap)
         return ERR_SYSEVENT_CONN;
     }
 
-    char buf[1024], param[128], unique[128] = {0}, *p, *next;
-
+    char buf[1024], param[128], *p, *next;
+    /*char unique[128] = {0};*/
     snprintf(param, sizeof(param), "portmap_dyn_%d", index);
 #if 0
     sysevent_get(se_fd, se_token, param, unique, sizeof(unique));
@@ -2725,6 +2721,8 @@ static int s_find_portmapdyn (const char *external_host, int external_port, prot
     return 0;
 }
 
+//unused function
+#if 0
 static int s_firewall_restart ()
 {
     token_t  se_token;
@@ -2746,6 +2744,7 @@ static int s_firewall_restart ()
     ulog(ULOG_CONFIG, UL_UTAPI, "firewall hold off done");
     return UT_SUCCESS;
 }
+#endif
 
 /*
  * Returns 
@@ -3046,9 +3045,9 @@ static int s_getportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *por
     Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_InternalPort, index, &portmap->internal_port);
     Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_InternalPortRangeSize, index, &portmap->internal_port_range_size);
     //Utopia_GetIndexedInt(ctx, UtopiaValue_PFR_ToIp, index, &portmap->dest_ip);
-    Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIp, index, &portmap->dest_ip, IPADDR_SZ);
-    Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIpV6, index, &portmap->dest_ipv6, IPADDR_SZ);
-    Utopia_GetIndexed(ctx, UtopiaValue_PFR_PublicIp, index, &portmap->public_ip, IPADDR_SZ);
+    Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIp, index, (char *)&portmap->dest_ip, IPADDR_SZ);
+    Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIpV6, index, (char *)&portmap->dest_ipv6, IPADDR_SZ);
+    Utopia_GetIndexed(ctx, UtopiaValue_PFR_PublicIp, index, (char *)&portmap->public_ip, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_Protocol, index, s_tokenbuf, sizeof(s_tokenbuf));
     portmap->protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
 
@@ -3446,7 +3445,6 @@ static int s_getporttrigger (UtopiaContext *ctx, int index, portRangeTrig_t *map
 static int s_setporttrigger (UtopiaContext *ctx, int index, portRangeTrig_t *map)
 {
     char *p, port_range[32];
-	boolean_t TempprevRuleEnabledState;
 
     UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PRT_Enabled, index, map->enabled);
     UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_PRT_PrevRuleEnabledState, index, map->prevRuleEnabledState);
@@ -3713,7 +3711,7 @@ int _check_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int n
     int end_port;
     int i;
     char port_range[32];
-    boolean_t enabled;
+    /*boolean_t enabled;*/
     char *last;
     char rule_id = 0;
     int (*get_ruleid_func)(UtopiaContext *ctx, int index);
@@ -3763,7 +3761,7 @@ int _check_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int n
 int _check_single_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int new_end, int new_protocol, UtopiaValue utopia[5], int is_trigger){
     int count;
     int i;
-    boolean_t enabled;
+    /*boolean_t enabled;*/
     int protocol;
     int port;
     char rule_id = 0;
@@ -4463,7 +4461,6 @@ static int s_deleteiap (UtopiaContext *ctx, int index)
  */
 int Utopia_GetNetworkServicesList (const char **out_list)
 {
-    out_list = g_NetworkServices;
     return UT_SUCCESS;
 }
 
@@ -5132,10 +5129,7 @@ int Utopia_GetLogSettings (UtopiaContext *ctx, boolean_t *log_enabled, char *log
 
 int Utopia_RestoreFactoryDefaults (void)
 {
-    char cmd[512];
-
-    snprintf(cmd, sizeof(cmd), "syscfg_format -d %s", CONFIG_MTD_DEVICE);
-    system(cmd);
+    v_secure_system("syscfg_format -d %s", CONFIG_MTD_DEVICE);
 
     return SUCCESS;
 }
@@ -5332,9 +5326,8 @@ int Utopia_RestoreConfiguration (char *config_fname)
             ulog_errorf(ULOG_CONFIG, UL_UTAPI, "restore: written config size didn't match: expected %d, real %d", config_sz, sz);
         }
  
-        snprintf(cmd, sizeof(cmd), "syscfg_format -d %s -f %s", CONFIG_MTD_DEVICE, CFG_RESTORE_TMP_FILE);
+        v_secure_system("syscfg_format -d %s -f %s", CONFIG_MTD_DEVICE, CFG_RESTORE_TMP_FILE);
         ulogf(ULOG_CONFIG, UL_UTAPI, "restore: running cmd [%s]", cmd);
-        system(cmd);
         free(buf);
     } else {
         ulog_errorf(ULOG_CONFIG, UL_UTAPI, "restore: couldn't open config file %s", config_fname);
@@ -5369,7 +5362,7 @@ int Utopia_AcquireFirmwareUpgradeLock (int *lock_fd)
     
     // Return an error if someone else has the lock
     if (fcntl(fd, F_SETLK, &fl) == -1) {
-        fclose(fd); /*RDKB-7128, CID-32972, free unused resources before exit*/
+        close(fd); /*RDKB-7128, CID-32972, free unused resources before exit*/
         return ERR_FW_UPGRADE_LOCK_CONFLICT;
     }
     
@@ -5470,7 +5463,6 @@ int Utopia_IsFirmwareUpgradeAllowed (UtopiaContext *ctx, int http_port)
 
 int Utopia_FirmwareUpgrade (UtopiaContext *ctx, char *firmware_file)
 {
-    char cmd[512];
     struct stat fstat;
 
     // Unused
@@ -5488,9 +5480,8 @@ int Utopia_FirmwareUpgrade (UtopiaContext *ctx, char *firmware_file)
         // TODO: use a sysevent mutex to check if we are alreadying rebooting
         ulogf(ULOG_CONFIG, UL_UTAPI, "upgrade firmware using file %s", firmware_file);
         
-        snprintf(cmd, sizeof(cmd), "%s %s > %s 2>&1",
-                 IMAGE_WRITER, firmware_file, IMAGE_WRITER_OUTPUT);
-        exit_status = system(cmd);
+        exit_status = v_secure_system("/usr/sbin/image_writer %s > %s 2>&1",
+                               firmware_file, IMAGE_WRITER_OUTPUT);
         
         // Release the firmware upgrade lock
         Utopia_ReleaseFirmwareUpgradeLock(fw_upgrade_lock_fd);
@@ -5505,7 +5496,7 @@ int Utopia_FirmwareUpgrade (UtopiaContext *ctx, char *firmware_file)
 }
 
 int Utopia_Reboot (void) {
-    int exit_status = system("/sbin/reboot");
+    int exit_status = v_secure_system("/sbin/reboot");
     return (exit_status == 0) ? SUCCESS : ERR_REBOOT_FAILED;
 }
 
@@ -5919,6 +5910,7 @@ static boolean_t s_parse_dhcp_log_msg (dhcpclientlog_t *dhcp_data, char *dhcp_lo
             if (spaces_seen >= 3) {
                 break;
             }
+            break;
         default:
             dhcp_data->timestamp[i] = dhcp_log_msg[i];
             break;
@@ -6109,16 +6101,10 @@ int Utopia_GetIncomingTrafficLog (UtopiaContext *ctx, int *count, logentry_t **i
 {
     // Unused
     (void) ctx;
-    
     if (NULL == count || NULL == ilog) {
         return ERR_INVALID_ARGS;
     }
-    
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "grep \"%s\" %s | tac | head -n %d > %s",
-             INCOMING_LOG_PREFIX_REGEX, LOG_SOURCE, MAX_INCOMING_LOG_ENTRIES_TO_DISPLAY, INCOMING_LOG_TMP_FILE);
-    system(cmd);
-    
+    v_secure_system("grep  'UTOPIA: FW.WAN2(LAN|SELF) ACCEPT' " LOG_SOURCE " | tac | head -n %d > " INCOMING_LOG_TMP_FILE, MAX_INCOMING_LOG_ENTRIES_TO_DISPLAY);
     *count = s_populate_log_entry_array(ilog, INCOMING_LOG_TMP_FILE, FALSE, FALSE);
     
     // If there was an error, return the error code
@@ -6143,11 +6129,7 @@ int Utopia_GetOutgoingTrafficLog (UtopiaContext *ctx, int *count, logentry_t **o
         return ERR_INVALID_ARGS;
     }
     
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "grep \"%s\" %s | tac | head -n %d > %s",
-             OUTGOING_LOG_PREFIX_REGEX, LOG_SOURCE, MAX_OUTGOING_LOG_ENTRIES_TO_DISPLAY, OUTGOING_LOG_TMP_FILE);
-    system(cmd);
-    
+    v_secure_system("grep 'UTOPIA: FW.LAN2WAN ACCEPT' " LOG_SOURCE " | tac | head -n %d > " OUTGOING_LOG_TMP_FILE, MAX_OUTGOING_LOG_ENTRIES_TO_DISPLAY);
     *count = s_populate_log_entry_array(olog, OUTGOING_LOG_TMP_FILE, TRUE, TRUE);
     
     // If there was an error, return the error code
@@ -6167,12 +6149,8 @@ int Utopia_GetSecurityLog (UtopiaContext *ctx, int *count, logentry_t **slog)
 {
     // Unused
     (void) ctx;
-    
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "grep \"%s\" %s | tac | head -n %d > %s",
-             SECURITY_LOG_PREFIX_REGEX, LOG_SOURCE, MAX_SECURITY_LOG_ENTRIES_TO_DISPLAY, SECURITY_LOG_TMP_FILE);
-    system(cmd);
-    
+   
+    v_secure_system("grep 'UTOPIA: FW.WAN(2SELF|ATTACK) DROP' " LOG_SOURCE " | tac | head -n %d > " SECURITY_LOG_TMP_FILE , MAX_SECURITY_LOG_ENTRIES_TO_DISPLAY);
     *count = s_populate_log_entry_array(slog, SECURITY_LOG_TMP_FILE, FALSE, TRUE);
     
     // If there was an error, return the error code
@@ -6197,12 +6175,8 @@ int Utopia_GetDHCPClientLog (UtopiaContext *ctx)
     
     int count;
     dhcpclientlog_t *dlog;
-    char cmd[512];
     
-    snprintf(cmd, sizeof(cmd), "grep \"%s\" %s | tac | head -n %d > %s",
-             DHCP_LOG_PREFIX_REGEX, LOG_SOURCE, MAX_DHCP_LOG_ENTRIES_TO_DISPLAY, DHCP_LOG_TMP_FILE);
-    system(cmd);
-    
+	v_secure_system("grep 'DHCP(DISCOVER|OFFER|REQUEST|ACK|NAK|DECLINE|RELEASE|INFORM)' " LOG_SOURCE " | tac | head -n %d > " DHCP_LOG_TMP_FILE , MAX_DHCP_LOG_ENTRIES_TO_DISPLAY);
     count = s_populate_dhcp_log_array(&dlog, DHCP_LOG_TMP_FILE);
     
     // If there was an error, return the error code
@@ -6388,7 +6362,7 @@ int Utopia_DiagPingTestStart (char *dest, int packet_size, int num_ping)
     
     char *argv[7];
     char packet_size_buf[16];
-    char num_ping_buf[8];
+    char num_ping_buf[16];
     char header_buf[256];
     
     // Convert the packet size into a string stored in packet_size_buf
@@ -6907,18 +6881,15 @@ int Utopia_Get_Mac_MgWan(UtopiaContext *ctx,  char *val)
 
 int Utopia_GetEthAssocDevices(int unitId, int portId ,unsigned char *macAddrList,int *numMacAddr)
 {
-    char cmd[BUF_SZ];
     char line[LINE_SZ];
     char tok[] = "=";
     char *mac = NULL;
-    char *name = NULL;
     unsigned char hexMac[MAC_SZ] = {'\0'};
     int index = 0;
     FILE *fp = NULL;
     int numAssocDev = 0;
 
-    sprintf(cmd,"switchcfg -a %d \"l2 show\" | grep Learned | grep \"DestPort(s): %d\" | cut -d'|' -f3 | awk '{print $1$2}' > %s", unitId, portId, ETHERNET_ASSOC_DEVICE_FILE);
-    system(cmd);
+    v_secure_system("switchcfg -a %d 'l2 show' | grep Learned | grep 'DestPort(s): %d' | cut -d'|' -f3 | awk '{print $1$2}' > " ETHERNET_ASSOC_DEVICE_FILE , unitId, portId);
     if((fp = fopen(ETHERNET_ASSOC_DEVICE_FILE, "r"))== NULL ) {
         sprintf(ulog_msg, "%s: Error in File Open !!!", __FUNCTION__);
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
@@ -6929,7 +6900,7 @@ int Utopia_GetEthAssocDevices(int unitId, int portId ,unsigned char *macAddrList
         if(line[0] == ' ' || line[0] == '\n')
             continue;
         if(strstr(line, "MAC") != NULL){
-            name = strtok(line,tok);
+            strtok(line,tok);
             mac = strtok(NULL,tok);
         }else{
             continue;
@@ -7028,7 +6999,7 @@ int Utopia_SetLanMngmAlias(UtopiaContext *ctx, const char *val){
     if( val == NULL )
         return ERR_INVALID_VALUE;
     
-    if(Utopia_RawSet(ctx, NULL, UTOPIA_LANMNG_ALISA, val)){
+    if(Utopia_RawSet(ctx, NULL, UTOPIA_LANMNG_ALISA, (char *)val)){
         return SUCCESS;
     }else
         return ERR_INVALID_VALUE;
@@ -7260,7 +7231,7 @@ int Utopia_set_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsign
 				return(ERR_INVALID_VALUE);
 			Utopia_UnsetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1);
 			snprintf(buffer, sizeof(buffer),"%d+%s",index1,comments2);
-			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr2, buffer);
+			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr2, (char *)buffer);
 			Utopia_SetIndexed(ctx, UtopiaValue_USGv2_Lan_Clients, index1, macStr2);
 			Utopia_UnsetIndexed(ctx, UtopiaValue_USGv2_Lan_Clients, count);
 		}
@@ -7271,11 +7242,11 @@ int Utopia_set_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsign
 		if(index1 <= 0){/*a new one*/
 			Utopia_SetIndexed(ctx, UtopiaValue_USGv2_Lan_Clients, count+1, macStr1);
 			snprintf(buffer, sizeof(buffer),"%d+%s",count+1,pComments);
-			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, buffer);
+			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, (char *)buffer);
 			Utopia_SetInt(ctx, UtopiaValue_USGv2_Lan_Clients_Count, count+1);
 		}else{
 			snprintf(buffer, sizeof(buffer),"%d+%s",index1,pComments);
-			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, buffer);
+			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, (char *)buffer);
 		}
 	}
 	
@@ -7332,10 +7303,9 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 			isNatReady	 = FALSE,
 			isNatRedirectionBlocked = FALSE,
 			rc = 0;
-	char 	external_ip[ 64 ],
+	char 	external_ip[ 67 ],
 			external_dest_port[ 64 ],
-			str[ 512 ],
-			port_modifier[ 10 ],
+			port_modifier[ 18 ],
 			event_string[ 64 ],
 			natip4[ 64 ],
 			fromip[ 64 ],
@@ -7343,7 +7313,7 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 			toip[ 64 ],
 			dport[ 16 ],
 			lan_ipaddr[ 64 ],
-			lan_3_octets[ 32 ],
+			lan_3_octets[ 70 ],
 			*p,
 			lan_netmask[ 32 ],
 			ciptableOprationCode = 'D';
@@ -7458,48 +7428,33 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 	{
 		if ( isNatReady ) 
 		{
-			memset( str, 0, sizeof( str ) );
-			snprintf(str, sizeof(str), 
-				"iptables -t nat -%c prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+			v_secure_system("iptables -t nat -%c prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
 				ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
-			system( str );
 		}
 
 		if ( !isNatRedirectionBlocked ) 
 		{
 			if (0 == strcmp("none", fromip)) 
 			{
-				memset( str, 0, sizeof( str ) );
-				snprintf(str, sizeof(str),
-					"iptables -t nat -%c prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+				v_secure_system("iptables -t nat -%c prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
 					ciptableOprationCode,lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
-				system( str );
 
 				if ( isNatReady )
 				{
-					memset( str, 0, sizeof( str ) );
-					snprintf(str, sizeof(str),
-						"iptables -t nat -%c prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
+					v_secure_system("iptables -t nat -%c prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
 						ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
-					system( str );
 				}
 
-				memset( str, 0, sizeof( str ) );
-				snprintf(str, sizeof(str),
-					"iptables -t nat -%c postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
+				v_secure_system("iptables -t nat -%c postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
 					ciptableOprationCode,lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
-				system( str );
 			}
 		}
 
 		/*  it will applicable during router mode */
 		if( 0 == isBridgeMode )
 		{
-			memset( str, 0, sizeof( str ) );
-			snprintf(str, sizeof(str),
-				"iptables -t filter -%c wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+			v_secure_system("iptables -t filter -%c wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
 				ciptableOprationCode,external_ip, toip, dport);
-			system( str );
 		}
 	}
 
@@ -7509,48 +7464,33 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 	 {
 		if (isNatReady) 
 		{
-		   memset( str, 0, sizeof( str ) );
-           snprintf(str, sizeof(str),
-                   "iptables -t nat -%c prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+           v_secure_system("iptables -t nat -%c prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
                    ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
-		   system( str );
         }
 
         if ( !isNatRedirectionBlocked ) 
 		{
            if (0 == strcmp("none", fromip)) 
 		   {
-			  memset( str, 0, sizeof( str ) );
-              snprintf(str, sizeof(str),
-                "iptables -t nat -%c prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+              v_secure_system("iptables -t nat -%c prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
                 ciptableOprationCode,lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
-			  system( str );
 
               if ( isNatReady ) 
 			  {
-				 memset( str, 0, sizeof( str ) );
-                 snprintf(str, sizeof(str),
-                   "iptables -t nat -%c prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
+                 v_secure_system("iptables -t nat -%c prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
                    ciptableOprationCode,natip4, external_dest_port, external_ip, toip, port_modifier);
-				 system( str );
               }
 
-			  memset( str, 0, sizeof( str ) );
-              snprintf(str, sizeof(str),
-                    "iptables -t nat -%c postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
+              v_secure_system("iptables -t nat -%c postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
                       ciptableOprationCode,lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
-			  system( str );
            }
         }
 
 		/*  it will applicable during router mode */
 		if( 0 == isBridgeMode )
 		{
-			memset( str, 0, sizeof( str ) );
-			snprintf(str, sizeof(str),
-					"iptables -t filter -%c wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
+		v_secure_system("iptables -t filter -%c wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
 						ciptableOprationCode,external_ip, toip, dport);
-			system( str );
 		}
      }
  

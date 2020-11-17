@@ -14,6 +14,7 @@ pthread_t tid[2];
 bool isStarted = false;
 bool isConnected = false;
 static char rpcServerIp[16]={0} ;
+static CLIENT *clnt;
 
 bool getIsconnectedStatus()
 {
@@ -69,7 +70,7 @@ void startRPCThread()
 		clnt_destroy(clnt);
 		isConnected  = false;
 		clnt = NULL;
-		err = pthread_create(&tid, NULL, &connectRPC, NULL);
+		err = pthread_create(&tid, NULL, (void *)&connectRPC, NULL);
 
 		if (err != 0)
 		    printf("\nstartRPCThread:can't create thread :[%s]", strerror(err));

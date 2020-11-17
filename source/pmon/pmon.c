@@ -66,6 +66,8 @@ static void pmon_usage ()
  * Returns 1 - if given string just has digit chars [0-9]
  *         0 - otherwise
  */
+//unused function
+#if 0
 static int str_isdigit (const char *str)
 {
     int i = 0, sz = strlen(str);
@@ -76,6 +78,7 @@ static int str_isdigit (const char *str)
     }
     return 1;
 }
+#endif
 
 static void str_trim (char **p)
 {
@@ -91,7 +94,7 @@ static void str_trim (char **p)
  */
 static int find_process (const char *proc_name,const char *pidfile)
 {
-    struct dirent *pentry;
+    //struct dirent *pentry;
     char fname[64], buf[256], *name , pidFname[64] = {0}, pid[16] = {0};
     char *pos;
 

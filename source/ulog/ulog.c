@@ -47,11 +47,14 @@
 #include <string.h>
 #include <syslog.h>
 #include "ulog.h"
+#include "unistd.h"
+#include "time.h"
 
 #define ULOG_FILE   "/var/log/messages"
 #define ULOG_IDENT  "UTOPIA"
 
-static _sys_Log_Info sys_Log_Info = {"", 0, LOG_INFO, 1, NULL};
+static _sys_Log_Info sys_Log_Info = {"", 0, LOG_INFO, 1, 0, NULL};
+int gettimeofday(struct timeval *tv , void *tz ) ;
 
 typedef struct ucomp {
     char *name;
@@ -246,7 +249,7 @@ int ulog_runcmdf (UCOMP comp, USUBCOMP sub, const char *fmt, ...)
 
 void ulog_sys_Init(int prior, unsigned int enable)
 {
-    char    name[ULOG_STR_SIZE];
+    char    name[80];
     int     ret;
 
     //ulog_GetGlobalPrior();
@@ -283,26 +286,26 @@ int ulog_GetProcId(size_t size, char *name, pid_t *pid)
     if(size == 0 || !name || !pid)
         return -1;
     name[0] = '\0';
-    pid = getpid();
+    pid = (pid_t *)getpid();
     printf("After getpid,  pid = %d  \n", *pid);
 
-    sprintf(file_name, "/proc/%d/stat", *pid);
-    stream = fopen(file_name, "r");
+    sprintf((char *)file_name, "/proc/%d/stat", *pid);
+    stream = fopen((const char *)file_name, "r");
     printf("After fopen /proc/pid/stat  file  \n");
     if (stream == NULL)
     {
         return -1;
     }
-    retStr = fgets(buf, sizeof(buf), stream);
+    retStr = fgets((char *)buf, sizeof(buf), stream);
     if (retStr == NULL)
     {
 	fclose(stream);
         return -1;
     }
-    sscanf(buf, "%*d (%s", str);
-    len = strlen(str);
+    sscanf((const char *)buf, "%*d (%s", (char *)str);
+    len = strlen((const char *)str);
     str[len - 1] = '\0';
-    strncpy(name, str, size - 1);
+    strncpy(name, (const char *)str, size - 1);
     name[size - 1] = '\0';
 
     fclose(stream);
@@ -367,7 +370,7 @@ void ulog_SetEnable(unsigned int enable)
 
 void ulog_sys(int prior, const char* fileName, int line, const char* fmt, ...)
 {
-    char *buf[ULOG_STR_SIZE] = {'\0'}; 
+    char buf[ULOG_STR_SIZE] = {'\0'}; 
     struct timeval tv;
     time_t curtime;
     va_list ap;
@@ -377,15 +380,15 @@ void ulog_sys(int prior, const char* fileName, int line, const char* fmt, ...)
     if(sys_Log_Info.stream != NULL && sys_Log_Info.enable == 1)
         fprintf(sys_Log_Info.stream, "%s", buf);*/
 
-    memset(buf, 0, ULOG_STR_SIZE);
+    memset(buf, 0, sizeof(buf));
     gettimeofday(&tv, NULL);
     curtime=tv.tv_sec;
 
-    strftime(buf,30,"%Y-%m-%d  %T.",localtime(&curtime));
+    strftime(buf,30,"%Y-%m-%d  %T.",(const void *)localtime(&curtime));
 
     snprintf(sfmt, sizeof(sfmt), "%s, %s:%d, %s", buf, fileName, line, fmt);
 
-    va_start(ap, sfmt);
+    va_start(ap, fmt);
     vsyslog(prior, sfmt, ap);
     va_end(ap);
 }

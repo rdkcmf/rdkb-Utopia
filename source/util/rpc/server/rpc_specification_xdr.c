@@ -8,9 +8,6 @@
 bool_t
 xdr_rpc_CommandBuf (XDR *xdrs, rpc_CommandBuf *objp)
 {
-	register int32_t *buf;
-
-	int i;
 	 if (!xdr_vector (xdrs, (char *)objp->buffer, 4096,
 		sizeof (char), (xdrproc_t) xdr_char))
 		 return FALSE;

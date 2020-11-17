@@ -193,13 +193,13 @@ struct upnp_device *IGD_wan_connection_device_init (IN VOID* input_index_struct,
         WAN_CONNECTION_DEVICE_FRIENDLY_NAME,
         MANUFACTURER,
         MANUFACTURER_URL,
-        MODULE_DESCRIPTION,
-        MODULE_NAME,
-        MODULE_NUMBER,
+        (char *)MODULE_DESCRIPTION,
+        (char *)MODULE_NAME,
+        (char *)MODULE_NUMBER,
         MODULE_URL,
         IGD_pii_get_serial_number(),
         udn,
-        UPC
+        (char *)UPC
         );
     /*init services*/
     for (i=0; i<wan_ppp_service_number+wan_ip_service_number; i++)

@@ -107,14 +107,12 @@ MNET_DEBUG(" CMD : %s \n" COMMA cmdBuf)
 
     if (offset) 
         system(cmdBuf);
+    return 0;
 }
 
 
 //Not used currently
 int linuxIfInit(PSWFabHALArg args, int numArgs, BOOL up) {
-    char cmdBuf[512];
-    int offset = 0; 
-    int i;
     
     
     

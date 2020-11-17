@@ -54,6 +54,7 @@
 #include <signal.h>
 #include "util.h"
 #include <telemetry_busmessage_sender.h>
+#include "syscfg/syscfg.h"
 #ifdef _HUB4_PRODUCT_REQ_
 #include "utapi.h"
 #include "utapi_util.h"
@@ -131,10 +132,10 @@ static int dbusInit( void )
                                            Ansc_AllocateMemory_Callback,
                                            Ansc_FreeMemory_Callback);
         #else
-        ret = CCSP_Message_Bus_Init(service_routed_component_id,
+        ret = CCSP_Message_Bus_Init((char *)service_routed_component_id,
                                     pCfg,
                                     &bus_handle,
-                                    Ansc_AllocateMemory_Callback,
+                                    (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback,
                                     Ansc_FreeMemory_Callback);
         #endif /* DBUS_INIT_SYNC_MODE */
     }
@@ -284,14 +285,14 @@ static int is_daemon_running(const char *pid_file, const char *prog)
 static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
 {
     char active_insts[32] = {0};
-    char lan_pd_if[128] = {0};
     char *p = NULL;
     int i = 0;
-    char if_name[16] = {0};
-    char buf[64] = {0};
 
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
 
+    char lan_pd_if[128] = {0};
+    char if_name[16] = {0};
+    char buf[64] = {0};
     syscfg_get(NULL, "lan_pd_interfaces", lan_pd_if, sizeof(lan_pd_if));
     if (lan_pd_if[0] == '\0') {
         *num = 0;
@@ -484,7 +485,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         syscfg_commit();
     }
     FILE *fp = NULL;
-    char rtmod[16], static_rt_cnt[16], ra_en[16], dh6s_en[16];
+    char rtmod[16], ra_en[16], dh6s_en[16];
     char ra_interval[8] = {0};
     char name_servs[1024] = {0};
     char dnssl[2560] = {0};
@@ -498,14 +499,17 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char m_flag[16], o_flag[16];
     char rec[256], val[512];
     char buf[6];
-    char rfCpEnable[6] = {0};
-    char rfCpMode[6] = {0};
     FILE *responsefd = NULL;
     char *networkResponse = "/var/tmp/networkresponse.txt";
     int iresCode = 0;
     char responseCode[10];
-    int inCaptivePortal = 0,inRfCaptivePortal=0,inWifiCp=0;
-    int nopt, i = 0, j = 0; /*RDKB-12965 & CID:-34147*/
+    int inCaptivePortal = 0,inWifiCp=0;
+#if defined (_XB6_PROD_REQ_)
+    int inRfCaptivePortal = 0;
+    char rfCpMode[6] = {0};
+    char rfCpEnable[6] = {0};
+#endif
+    int nopt, j = 0; /*RDKB-12965 & CID:-34147*/
     char lan_if[IFNAMSIZ];
     char *start, *tok, *sp;
     static const char *zebra_conf_base = \
@@ -515,9 +519,12 @@ static int gen_zebra_conf(int sefd, token_t setok)
         "!log stdout\n"
         "log file /var/log/zebra.log errors\n"
         "table 255\n";
+#if defined(MULTILAN_FEATURE) || defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
+    int i = 0;
     unsigned int l2_insts[4] = {0};
     unsigned int enabled_iface_num = 0;
     char evt_name[64] = {0};
+#endif
     int  StaticDNSServersEnabled = 0;
 #ifdef _HUB4_PRODUCT_REQ_
     char lan_addr_prefix[64] = {0};
@@ -977,7 +984,6 @@ char cmd[100];
 char out[100];
 char interface_name[32] = {0};
 char *token = NULL; 
-char s[2] = ",";
 char *pt;
 char pref_rx[16];
 int pref_len = 0;
@@ -1273,8 +1279,10 @@ static int rip_restart(struct serv_routed *sr)
 
 static int serv_routed_start(struct serv_routed *sr)
 {
-    char status[16], enable[16], rtmod[16];
+#ifndef _HUB4_PRODUCT_REQ_
+    char rtmod[16];
     char prefix[64];
+#endif
 
     /* state check */
     if (!serv_can_start(sr->sefd, sr->setok, "routed"))
@@ -1367,7 +1375,6 @@ static int serv_routed_restart(struct serv_routed *sr)
 static int serv_routed_init(struct serv_routed *sr)
 {
     char wan_st[16], lan_st[16];
-    char buf[16];
 
     memset(sr, 0, sizeof(struct serv_routed));
 

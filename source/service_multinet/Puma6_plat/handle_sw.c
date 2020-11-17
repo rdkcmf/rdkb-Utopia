@@ -388,7 +388,8 @@ void handle_sw_init()
 void addVlan(int net_id, int vlan_id, char *ports_add)
 {
 	char val[20] = {0}, sysevent_cmd[50] = {0};
-	char cmdBuff[80] = {0}, l_cVlan_Id[8] = {0};
+	/*char cmdBuff[80] = {0};*/
+	char l_cVlan_Id[8] = {0};
 	char vidPorts[50] = {0}, ext_vidPorts[50] = {0}, atom_vidPorts[50] = {0}, l_cExt_Vids[16] = {0};
 	int arm_venable = 0, i2e_venable = 0, e2i_venable = 0;
 	int atom_venable = 0, atom_port = 0, ext_port = 0;
@@ -636,6 +637,7 @@ void delVlan(int net_id, int vlan_id, char *ports_add)
 int restore_ext_sw(char* argv[], int argc)
 {
 	printf("Inside restore_ext_sw function\n");
+	return 0;
 }
 
 void setMulticastMac()

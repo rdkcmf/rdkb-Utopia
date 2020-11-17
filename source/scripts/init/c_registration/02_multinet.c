@@ -36,6 +36,8 @@
 #include <stdio.h>
 #include "srvmgr.h"
 #include "syscfg/syscfg.h"
+#include <string.h>
+#include <stdlib.h>
 
 const char* SERVICE_NAME            = "multinet";
 

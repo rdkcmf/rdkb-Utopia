@@ -984,7 +984,7 @@ static int s_UtopiaEvent_Get(UtopiaContext* pUtopiaCtx, char* pszKey, char* pszV
 {
     /* Initialize the event handle if it's not yet been happened */
     if (pUtopiaCtx->iEventHandle == 0 &&
-        ((pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT, UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME, &pUtopiaCtx->uiEventToken)) == 0))
+        ((pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT, UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME, (token_t *)&pUtopiaCtx->uiEventToken)) == 0))
     {
         return 0;
     }
@@ -997,7 +997,7 @@ static int s_UtopiaEvent_Set(UtopiaContext* pUtopiaCtx, char* pszKey, char* pszV
 {
     /* Initialize the event handle if it's not yet been happened */
     if (pUtopiaCtx->iEventHandle == 0 &&
-        ((pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT, UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME, &pUtopiaCtx->uiEventToken)) == 0))
+        ((pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT, UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME, (token_t *)&pUtopiaCtx->uiEventToken)) == 0))
     {
         return 0;
     }
@@ -1117,7 +1117,7 @@ static void s_UtopiaEvent_Trigger(UtopiaContext* pUtopiaCtx)
     /* Initialize the event handle if we need to if it's not yet happened */
     if (pUtopiaCtx->bfEvents != Utopia_Event__NONE__ &&
         pUtopiaCtx->iEventHandle == 0 &&
-        ((pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT, UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME, &pUtopiaCtx->uiEventToken)) == 0))
+        ((pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT, UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME, (token_t *)&pUtopiaCtx->uiEventToken)) == 0))
     {
         return;
     }
@@ -1984,7 +1984,7 @@ void Utopia_Free(UtopiaContext* pUtopiaCtx, int fCommit)
             {
                 pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT,
                                                          UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME,
-                                                         &pUtopiaCtx->uiEventToken);
+                                                         (token_t *)&pUtopiaCtx->uiEventToken);
             }
 
             SysEvent_Trigger(pUtopiaCtx->iEventHandle, pUtopiaCtx->uiEventToken, Utopia_ToKey(UtopiaValue_LAN_Restarting), 0);

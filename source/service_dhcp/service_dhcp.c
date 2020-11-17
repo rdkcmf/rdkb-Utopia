@@ -82,10 +82,10 @@ int dbusInit( void )
                                            Ansc_AllocateMemory_Callback,
                                            Ansc_FreeMemory_Callback);
         #else
-        ret = CCSP_Message_Bus_Init(g_cComponent_id,
+        ret = CCSP_Message_Bus_Init((char *)g_cComponent_id,
                                     pCfg,
                                     &g_vBus_handle,
-                                    Ansc_AllocateMemory_Callback,
+                                    (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback,
                                     Ansc_FreeMemory_Callback);
         #endif /* DBUS_INIT_SYNC_MODE */
     }
@@ -106,7 +106,7 @@ void print_with_uptime(const char* input)
     struct tm * l_sTimeInfo;
     time_t l_sNowTime;
     int l_iDays, l_iHours, l_iMins, l_iSec;
-    char l_cLocalTime[32] = {0};
+    char l_cLocalTime[42] = {0};
 
     sysinfo(&l_sSysInfo);
     time(&l_sNowTime);

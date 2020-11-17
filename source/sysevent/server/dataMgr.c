@@ -69,6 +69,7 @@
 #include "syseventd.h"
 #include <unistd.h>
 #include "dataMgr.h"
+#include <stdlib.h>
 #ifdef USE_SYSCFG
 #include <syscfg/syscfg.h>
 #endif
@@ -135,11 +136,11 @@ static int free_data_element_t(data_element_t *element)
       return(0);
    }
    if (NULL != element->name) {
-      sysevent_free(&(element->name), __FILE__, __LINE__);
+      sysevent_free((void **)&(element->name), __FILE__, __LINE__);
    }
 
    if (NULL != element->value) {
-      sysevent_free(&(element->value), __FILE__, __LINE__);
+      sysevent_free((void **)&(element->value), __FILE__, __LINE__);
    }
    init_data_element_t(element);
    return(0);
@@ -178,7 +179,7 @@ static int free_data_elements(void)
          free_data_element_t(&((global_data_elements.elements)[i]));
       }
    }
-   sysevent_free(&(global_data_elements.elements), __FILE__, __LINE__);
+   sysevent_free((void **)&(global_data_elements.elements), __FILE__, __LINE__);
    SE_INC_LOG(MUTEX,
       int id = thread_get_id(worker_data_key);
       printf("Thread %d Releasing mutex: data_elements\n", id);
@@ -246,7 +247,6 @@ static int free_data_elements(void)
 static data_element_t *find_existing_data_element(const char *name, int *empty_slot)
 {
    int             first_empty_entry = -1;
-   data_element_t *de_ptr            = NULL;
 
    *empty_slot = -1;
 
@@ -717,7 +717,7 @@ static char **substitute_runtime_arguments(char **in_argv)
           * before reassigning the value
           */
         if (NULL != in_argv[i]) {
-            sysevent_free (&(in_argv[i]), __FILE__, __LINE__);
+            sysevent_free ((void **)&(in_argv[i]), __FILE__, __LINE__);
          }
 
          if (NULL == value) {
@@ -745,7 +745,7 @@ static char **substitute_runtime_arguments(char **in_argv)
          /*
           * We know that the current in_argv had been malloced, so free it
           */
-         sysevent_free (&pre_substitute_str, __FILE__, __LINE__);
+         sysevent_free ((void **)&pre_substitute_str, __FILE__, __LINE__);
       }
 #endif        // USE_SYSCFG
 
@@ -1036,7 +1036,7 @@ int DATA_MGR_set(char *name, char *value, int source, int tid)
       }
    } else if (NULL == local_value && NULL != element->value) {
       changed = 1; 
-       sysevent_free(&(element->value), __FILE__, __LINE__);
+       sysevent_free((void **)&(element->value), __FILE__, __LINE__);
    } else if (NULL != local_value && NULL == element->value) {
       changed = 1;
       element->value = sysevent_strdup(local_value, __FILE__, __LINE__);
@@ -1052,7 +1052,7 @@ int DATA_MGR_set(char *name, char *value, int source, int tid)
       changed = strcasecmp(local_value, element->value);
       if (changed) {
           if (strlen(local_value) > strlen(element->value)) {
-             sysevent_free(&(element->value), __FILE__,__LINE__);
+             sysevent_free((void **)&(element->value), __FILE__,__LINE__);
              element->value = sysevent_strdup(local_value, __FILE__, __LINE__);
          } else {
             sprintf(element->value, "%s", local_value);
@@ -1204,7 +1204,7 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
       }
    } else if (NULL == local_value && NULL != element->value) {
       changed = 1; 
-       sysevent_free(&(element->value), __FILE__, __LINE__);
+       sysevent_free((void **)&(element->value), __FILE__, __LINE__);
         
        if (0 == fileret)
        {
@@ -1251,7 +1251,7 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
        }
       if (changed) {
           if (val_length != element->value_length) {
-             sysevent_free(&(element->value), __FILE__,__LINE__);
+             sysevent_free((void **)&(element->value), __FILE__,__LINE__);
              if (0 == fileret)
              {
                  snprintf(buf,sizeof(buf),"echo fname %s: freed prev .changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);

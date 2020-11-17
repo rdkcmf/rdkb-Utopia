@@ -66,8 +66,8 @@
 #include <time.h>
 #include <pthread.h>
 #include <fcntl.h>
-
 #include "libsysevent_internal.h"
+#include <stdlib.h>
 
 // how many times does library attempt to connect to a non blocking socket returning EINPROGRESS
 #define NUM_CONNECT_ATTEMPTS 10   
@@ -757,7 +757,7 @@ int SE_print_message(char* inmsg, int type)
          char *data            = (char *)&(msg->data);
          char *subject         = SE_msg_get_string(data, &subject_size);
          data += subject_size;
-         char *value           =  SE_msg_get_data(data, &value_size);
+         SE_msg_get_data(data, &value_size);
 
          printf("|------------ SE_MSG_GET_DATA_REPLY ----------|\n");
          printf("| status        : 0x%x\n", ntohl(msg->status));
@@ -796,7 +796,7 @@ int SE_print_message(char* inmsg, int type)
          char *data            = (char *)&(msg->data);
          char *subject         = SE_msg_get_string(data, &subject_size);
          data += subject_size;
-         char *value           =  SE_msg_get_data(data, &value_size);
+         SE_msg_get_data(data, &value_size);
 
          printf("|-------------- SE_MSG_SET_DATA --------------|\n");
          printf("| source        : %d\n", msg->source);
@@ -2914,13 +2914,12 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
    // extract the subject and value from the return message data
    int   subject_bytes;
    int   value_bytes;
-   char *subject_str;
    char *value_str;
    char *reply_data_ptr;
 
    // we ignore the subject field, but future enhancements could use it
    reply_data_ptr  = (char *)&(reply_msg_body->data);
-   subject_str     = SE_msg_get_string(reply_data_ptr, &subject_bytes);
+   SE_msg_get_string(reply_data_ptr, &subject_bytes);
    reply_data_ptr += subject_bytes;
    value_str       =  SE_msg_get_string(reply_data_ptr, &value_bytes);
 
@@ -3045,13 +3044,12 @@ int sysevent_get_data(const int fd, const token_t token, const char *inbuf, char
    // extract the subject and value from the return message data
    int   subject_bytes;
    int   value_bytes;
-   char *subject_str;
    char *value_str;
    char *reply_data_ptr;
 
    // we ignore the subject field, but future enhancements could use it
    reply_data_ptr  = (char *)&(reply_msg_body->data);
-   subject_str     = SE_msg_get_string(reply_data_ptr, &subject_bytes);
+   SE_msg_get_string(reply_data_ptr, &subject_bytes);
    reply_data_ptr += subject_bytes;
    value_str       =  SE_msg_get_data(reply_data_ptr, &value_bytes);
 
@@ -3091,7 +3089,6 @@ static int sysevent_set_private (const int fd, const token_t token, const char *
    se_buffer     send_msg_buffer;
    se_set_msg   *send_msg_body;
    int           subbytes;
-   int           valbytes;
 
    if (NULL == name || 0 == (subbytes = strlen(name)) ) {
       return(ERR_BAD_BUFFER);
@@ -3100,7 +3097,6 @@ static int sysevent_set_private (const int fd, const token_t token, const char *
       return(ERR_NOT_CONNECTED);
    }
 
-   valbytes = (NULL == value ? 0 : strlen(value));
 
    // calculate the size of the se_set_msg once it has been populated
    unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_set_msg) +
@@ -3188,7 +3184,6 @@ static int sysevent_set_data_private (const int fd, const token_t token, const c
    char *send_msg_buffer =  NULL;
    se_set_msg   *send_msg_body;
    int           subbytes;
-   int           valbytes;
    int fileread = access("/tmp/sysevent_debug", F_OK);
 
    if (NULL == name || 0 == (subbytes = strlen(name)) ) {
@@ -3198,7 +3193,6 @@ static int sysevent_set_data_private (const int fd, const token_t token, const c
       return(ERR_NOT_CONNECTED);
    }
 
-   valbytes = (NULL == value ? 0 : value_length);
 
    // calculate the size of the se_set_msg once it has been populated
    unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_set_msg) +
@@ -3376,7 +3370,6 @@ int sysevent_set_unique (const int fd, const token_t token, const char *name, co
    se_buffer            send_msg_buffer;
    se_set_unique_msg   *send_msg_body;
    int                  subbytes;
-   int                  valbytes;
 
    if (NULL == name || 0 == (subbytes = strlen(name)) ) {
       return(ERR_BAD_BUFFER);
@@ -3385,7 +3378,6 @@ int sysevent_set_unique (const int fd, const token_t token, const char *name, co
       return(ERR_NOT_CONNECTED);
    }
 
-   valbytes = (NULL == value ? 0 : strlen(value));
 
    // calculate the size of the se_set_unique_msg once it has been populated
    unsigned int send_msg_size = sizeof(se_msg_hdr) + sizeof(se_set_unique_msg) +

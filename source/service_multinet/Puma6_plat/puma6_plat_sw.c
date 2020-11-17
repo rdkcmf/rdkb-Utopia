@@ -43,10 +43,12 @@
 #include <string.h>
 extern int sysevent_fd_interactive;
 extern token_t sysevent_token_interactive;
-static unsigned char bLibInited = 0;
+void delVlan(int net_id, int vlan_id, char *ports_add);
+void addVlan(int, int, char*);
 
 #define DEVICE_PROPS_FILE   "/etc/device.properties"
-  
+//unused function
+#if 0  
 static int psm_get_record(const char *name, char *val, int size)
 {
     FILE *fp;
@@ -63,12 +65,15 @@ static int psm_get_record(const char *name, char *val, int size)
     pclose(fp);
     return 0;
 }
+#endif
 
 int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up) 
 {
     int i;
     PSwPortState portState;
-    char cmdBuff[128];
+#if !defined(_COSA_INTEL_XB3_ARM_)
+    char cmdBuff[150];
+#endif
     char ifname[80];
     char temp_ifname[80];
     memset(ifname, 0, 80);
@@ -104,23 +109,27 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
     MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
     system(cmdBuff);
 #endif
+    return 0;
 }
 
 int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) 
 {
     int i;
-    char cmdBuff[128];
+#if !defined(_COSA_INTEL_XB3_ARM_)
+    char cmdBuff[150];
+#endif
     char portID[80];
     memset(portID, 0, 80);
 
     for (i = 0; i < numArgs; ++i ) 
-	{ 
-    	strcat(portID, (char*)args[i].portID);
-        if (args[i].vidParams.tagging)
-        	strcat(portID, "-t");
-
-		if (i < (numArgs - 1))
+    { 
+        strcat(portID, (char*)args[i].portID);
+        if (args[i].vidParams.tagging){
+            strcat(portID, "-t");
+        }
+        if (i < (numArgs - 1)){
             strcat(portID, " ");
+        }
     }
   
 #if defined(_COSA_INTEL_XB3_ARM_)
@@ -131,7 +140,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     }
     else
     {
-        MNET_DEBUG("Deleting ATOM ports\n" COMMA portID)
+        MNET_DEBUG("Deleting ATOM ports:%s\n" COMMA portID)
 		delVlan(args[0].hints.network->inst, args[0].vidParams.vid, portID);
     }
 #else 
@@ -142,6 +151,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
     system(cmdBuff);
 #endif
+    return 0;
 }
 
 int stringIDIntSw (void* portID, char* stringbuf, int bufSize) {
@@ -171,7 +181,9 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
 {
     int i;
     PSwPortState portState;
-    char cmdBuff[128];
+#if !defined(_COSA_INTEL_XB3_ARM_)
+    char cmdBuff[150];
+#endif
     char ifname[80];
     
     for (i = 0; i < numArgs; ++i ) 
@@ -199,4 +211,5 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
     	system(cmdBuff);
 #endif
 	}
+	return 0;
 }

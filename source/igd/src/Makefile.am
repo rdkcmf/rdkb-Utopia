@@ -33,7 +33,8 @@ IGD_CPPFLAGS = 	-I$(top_srcdir)/source/pal/upnp/include \
 		-I$(top_srcdir)/source/pal/include \
 		-I$(top_srcdir)/source/pal/log/include \
 		-I$(top_srcdir)/source/igd/src/inc \
-		-I$(top_srcdir)/source/include
+		-I$(top_srcdir)/source/include \
+		-I$(top_srcdir)/source/include/utapi
 
 IGD_SOURCES = igd_service_wan_ethlink_cfg.c igd_device_root.c igd_utility.c igd_device_lan.c igd_service_wan_commif_cfg.c igd_action_port_mapping.c igd_device_wan_connect.c igd_device_wan.c igd_platform_independent_inf.c igd_service_lanhostconfigmgmt.c igd_service_wan_connect.c igd_service_layer3_fwd.c
 

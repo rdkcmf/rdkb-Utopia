@@ -1206,7 +1206,8 @@ static int _syscfg_unset (const char *ns, const char *name, int nolock)
 
 static int _syscfg_getall (char *buf, int bufsz)
 {
-    int i, len = bufsz;
+    int i;
+    unsigned int len = bufsz;
     syscfg_shm_ctx *ctx = syscfg_ctx;
     shmoff_t entry;
 
@@ -1241,7 +1242,7 @@ static int shm_cb_init (syscfg_shm_ctx *ctx, int shmid, store_info_t store_info)
 {
     shm_cb *cb = &(ctx->cb);
 
-    memset(cb, 0, sizeof(cb));
+    memset(cb, 0, sizeof(shm_cb));
 
     cb->magic = SYSCFG_SHM_MAGIC;
     cb->version = (SYSCFG_SHM_VERSION_MAJOR << 4) | (SYSCFG_SHM_VERSION_MINOR);
@@ -1570,10 +1571,8 @@ static int make_mm_items (syscfg_shm_ctx *ctx, shm_free_table *ft)
         return 0;
     }
 
-    mm_item *p_mm_item;
     for(ct=0; (ct < ft->mf) && ((ctx->mm.db_cur + ft->size) < ctx->mm.db_end); ct++) {
         item = ctx->mm.db_cur;
-        p_mm_item = MM_ITEM(ctx,item);
         MM_ITEM_SIZE(ctx, item) = ft->size;
         MM_ITEM_NEXT(ctx, item) = ft->head;
         ctx->mm.db_cur += ft->size;
@@ -1748,8 +1747,6 @@ int commit_to_file (const char *fname)
     int fd;
     int i, ct;
     char buf[2*MAX_ITEM_SZ];
-    char tmpFile[32];
-    char str[128];
     int ret=0;
     syscfg_shm_ctx *ctx = syscfg_ctx;
 

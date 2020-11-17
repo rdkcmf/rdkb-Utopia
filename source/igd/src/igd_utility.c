@@ -162,6 +162,7 @@ LOCAL VOID *_timer_loop_run_once(IN VOID *arg)
             temp_node = copy_timer_function_list;
         }
     }
+    return NULL;
 }
 
 /************************************************************
@@ -239,6 +240,7 @@ LOCAL VOID *_timer_loop_cycle(VOID *arg)
             temp_node_copy = copy_timer_function_list;
         }
     }
+    return NULL;
 }
 
 /************************************************************
@@ -457,7 +459,7 @@ BOOL chkPortMappingClient(char* client)
 
     if (!Utopia_Init(&Ctx))
     {
-        printf(("%s Error initializing context\n", __FUNCTION__));
+        printf("%s Error initializing context\n", __FUNCTION__);
         return FALSE;
     }
 

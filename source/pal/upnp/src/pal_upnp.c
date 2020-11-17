@@ -61,19 +61,14 @@
 #include <upnp/upnp.h>
 #include "pal_upnp.h" 
 #include <upnp/upnptools.h>
+#include <stdio.h>
+#include <string.h>
 
 #ifdef PAL_DEBUG
 #define pal_debug(fmt, args...) fprintf(stdout, "Debug[%s,%3d]: "fmt, __FILE__,__LINE__, ##args)
 #else
 #define pal_debug(fmt, args...)
 #endif
-
-LOCAL int _upnp_addto_action( IN int response,
-             INOUT IXML_Document ** ActionDoc,
-             IN const char *ActionName,
-             IN const char *ServType,
-             IN const char *ArgName,
-             IN const char *ArgValue );
 
 struct _pal_error_string{
     INT32 rc;                     /* error code */

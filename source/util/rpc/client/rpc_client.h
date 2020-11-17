@@ -45,7 +45,7 @@
 
 #include <stdio.h>
 #include <rpc/rpc.h>
-static CLIENT *clnt;
+//static CLIENT *clnt;
 
 /**
  * @brief Function to initialise rpc client
@@ -64,4 +64,5 @@ int initRPC(char* mainArgv);
  *
  */
 CLIENT* getClientInstance();
+bool isRPCConnectionLoss(char* errString);
 #endif

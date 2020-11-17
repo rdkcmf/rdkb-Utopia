@@ -84,6 +84,8 @@ void ulog_SetGlobalPrior(int prior);
 int ulog_GetProcId(size_t size, char *name, pid_t *pid);
 void ulog_SetEnable(unsigned int enable);
 void ulog_sys(int prior, const char* fileName, int line, const char* format, ...);
+int ulog_GetPrior(void);
+void ulog_SetPrior(int prior);
 
 typedef enum {
     ULOG_SYSTEM,

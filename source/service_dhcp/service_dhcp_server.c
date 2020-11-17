@@ -29,6 +29,8 @@
 #include "errno.h"
 #include "dhcp_server_functions.h"
 #include "print_uptime.h"
+#include "util.h"
+#include "service_dhcp_server.h"
 
 #define THIS        "/usr/bin/service_dhcp"
 #define BIN			"dnsmasq"
@@ -60,7 +62,7 @@ extern void copy_file(char *, char *);
 extern void remove_file(char *);
 extern void print_file(char *);
 extern void get_device_props();
-
+extern void executeCmd(char *);
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 
@@ -79,7 +81,7 @@ void getRFC_Value(const char* dnsOption)
         syscfg_get(NULL, "DNSStrictOrder", l_DnsStrictOrderStatus, sizeof(l_DnsStrictOrderStatus));
         result = strcmp (status,l_DnsStrictOrderStatus);
         if (result == 0){
-            strncpy(dnsOption,dnsSet, strlen(dnsSet));
+            strncpy((char *)dnsOption,dnsSet, strlen(dnsSet));
             fprintf(stdout, "DNSMASQ getRFC_Value %s %s %d\n",status,l_DnsStrictOrderStatus,sizeof(l_DnsStrictOrderStatus));
             fprintf(stderr, "Starting dnsmasq with additional dns strict order option: %s\n",l_DnsStrictOrderStatus);
         }
@@ -295,7 +297,7 @@ int dhcp_server_start (char *input)
             l_cToken = strtok(l_cBuf, " ");
             while (l_cToken != NULL)
             {
-                if (!strncmp(l_cToken, l_cCurrent_PID, (sizeof(l_cToken))))
+                if (!strncmp(l_cToken, l_cCurrent_PID, strlen(l_cToken)))
                 {
                     l_bPid_Present = TRUE;
                     break;
@@ -593,7 +595,7 @@ int service_dhcp_init()
 
 void lan_status_change(char *input)
 {
-	char l_cLan_Status[16] = {0}, l_cDhcp_Server_Enabled[8] = {0}, l_cSystemCmd[255] = {0};
+	char l_cLan_Status[16] = {0}, l_cDhcp_Server_Enabled[8] = {0};
 	int l_iSystem_Res;
 
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan-status", l_cLan_Status, sizeof(l_cLan_Status));

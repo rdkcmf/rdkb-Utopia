@@ -40,6 +40,7 @@
 #include <string.h>
 #include <telemetry_busmessage_sender.h>
 
+
 token_t sysevent_token_interactive;
 int sysevent_fd_interactive;
 
@@ -51,7 +52,6 @@ char* statusStrings[] = {
 };
 
 int ev_init(void) {
-    int retcode;
     MNET_DEBUG("Sysevent open\n")
     sysevent_fd_interactive = sysevent_open("127.0.0.1", SE_SERVER_WELL_KNOWN_PORT, SE_VERSION, "multinet_ev", &sysevent_token_interactive);
     return sysevent_fd_interactive ? 0 : -1;
@@ -138,10 +138,9 @@ int ev_register_ifstatus(PL2Net net, PMember member, char* ifStatusEventName, ch
     char valString[80];
     char* params[4];
     async_id_t asyncID;
-    int i;
     
     MNET_DEBUG("Enter ev_register_ifstatus\n")
-    snprintf(eventName, sizeof(eventName), ifStatusEventName);
+    snprintf(eventName, sizeof(eventName), "%s",ifStatusEventName);
     MNET_DEBUG("ev_register_ifstatus: eventName=%s\n" COMMA eventName)
     if(!isDaemon) {
         snprintf(netIDString, sizeof(netIDString), "%d", net->inst);
@@ -182,7 +181,7 @@ int ev_register_ifstatus(PL2Net net, PMember member, char* ifStatusEventName, ch
                      valString,
                      sizeof(valString));
         MNET_DEBUG("ev_register_ifstatus: returned from get current status after registration\n")
-        ev_string_to_status(valString, readyFlag);
+        ev_string_to_status(valString, (SERVICE_STATUS *)readyFlag);
     }
     
     return 0;
@@ -201,6 +200,7 @@ int ev_unregister_ifstatus(PL2Net net, char* ifStatusEventName) {
     
     sysevent_rmcallback(sysevent_fd_interactive, sysevent_token_interactive,
         asyncID);
+    return 0;
 }
 
 int ev_firewall_restart(void) {
@@ -209,6 +209,7 @@ int ev_firewall_restart(void) {
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive,
                  "firewall-restart", "", 0);
     t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
+    return 0;
 }
 
 int ev_string_to_status(char* stringStatus, SERVICE_STATUS* status) {
@@ -225,6 +226,7 @@ int ev_string_to_status(char* stringStatus, SERVICE_STATUS* status) {
         MNET_DEBUG("ev_string_to_status: about to set status(%p) to %d\n" COMMA status COMMA STATUS_STOPPED)
         *status = STATUS_STOPPED;
     }
+    return 0;
 }
 
 int ev_set_name(PL2Net net) {

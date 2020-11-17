@@ -55,7 +55,7 @@ int handlerInit() {
     mnet_plugin_init(&handlers);
 #endif
     
-    
+    return 0;    
 }
 
 int create_and_register_if(PL2Net net, PMember members, int numMembers){
@@ -79,11 +79,12 @@ int create_and_register_if(PL2Net net, PMember members, int numMembers){
         MNET_DEBUG("Check for registering ifstatus for %s, net %d\n" COMMA memberControl.member[i].interface->name COMMA net->inst)
         if (memberControl.member[i].interface->dynamic) {
             MNET_DEBUG("Registering for ifstatus on %s, net %d\n" COMMA memberControl.member[i].interface->name COMMA net->inst)
-            ev_register_ifstatus(net, memberControl.member + i, memberControl.member[i].interface->eventName, memberControl.member[i].interface->eventName, &memberControl.member[i].bReady);
+            ev_register_ifstatus(net, memberControl.member + i, memberControl.member[i].interface->eventName, memberControl.member[i].interface->eventName, (BOOL *)&memberControl.member[i].bReady);
         }
     }
     
     MNET_DEBUG("Returning create_and_register_if for %d\n" COMMA net->inst)
+    return 0;
 }
 
 int unregister_if(PL2Net net, PMember members, int numMembers) {
@@ -105,6 +106,7 @@ int unregister_if(PL2Net net, PMember members, int numMembers) {
             ev_unregister_ifstatus(net, memberControl.member[i].interface->eventName);
         }
     }
+    return 0;
 }
     
 
@@ -121,6 +123,7 @@ int add_vlan_for_members(PL2Net net, PMember members, int numMembers) {
     for (i = 0; i < numHandlers /*&& members->remaining*/; ++i) {
         handlerList[i].add_vlan_for_members(net, &memberControl); 
     }
+    return 0;
 }
 
 int remove_vlan_for_members(PL2Net net, PMember members, int numMembers) {
@@ -135,4 +138,5 @@ int remove_vlan_for_members(PL2Net net, PMember members, int numMembers) {
     for (i = 0; i < numHandlers /*&& members->remaining*/; ++i) {
         handlerList[i].remove_vlan_for_members(net, &memberControl); 
     }
+    return 0;
 }

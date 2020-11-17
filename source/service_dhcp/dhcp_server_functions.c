@@ -72,6 +72,7 @@ extern char g_cMig_Check[8];
 extern void subnet(char *ipv4Addr, char *ipv4Subnet, char *subnet);
 extern void copy_file(char *, char *);
 extern void remove_file(char *);
+extern unsigned int mask2cidr(char *subnetMask);
 
 static unsigned int isValidSubnetMask(char *subnetMask);
 
@@ -85,7 +86,7 @@ static unsigned int isValidSubnetMask(char *subnetMask)
     int l_iIpAddrOctets[4] = {-1, -1, -1, -1};
 	char *ptr = subnetMask;
 	char dotCount = 0;
-	char idx = 0;
+	unsigned char idx = 0;
 
 	if (!ptr)
 		return 0;
@@ -241,10 +242,10 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	char l_cDhcp_End[16] = {0}, l_cDhcp_Num[16]  = {0};
 	char l_cLanSubnet[16] = {0}, l_cIpSubnet[16] = {0};
 
-	int l_iNetMask_Last_Oct = 0, l_iStartAddr_Last_Oct = 0, l_iEndAddr_Last_Oct;
+	int  l_iStartAddr_Last_Oct = 0, l_iEndAddr_Last_Oct;
 	int l_iStartIpValid = 0, l_iEndIpValid = 0;
-	int l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct, l_iLast_Ip;
-	int l_idhcp_num, l_iCIDR;
+	int l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct;
+	int l_iCIDR;
 	
 	struct sockaddr_in l_sSocAddr;
 
@@ -264,7 +265,6 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	subnet(l_cLanIPAddress, l_cLanNetMask, l_cLanSubnet);
 
 	sscanf(l_cLanNetMask, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
-	l_iNetMask_Last_Oct = l_iLastOct;
 
 	syscfg_get(NULL, "dhcp_start", l_cDhcp_Start, sizeof(l_cDhcp_Start));
 	fprintf(stderr, "dhcp_start:%s\n", l_cDhcp_Start);
@@ -441,6 +441,7 @@ void prepare_dhcp_options_wan_dns()
 	char l_cLocalDhcpOpt[32] = {0}, l_cPropagate_Ns[8] = {0}, l_cWan_Dhcp_Dns[255] = {0}; 
 	char *l_cToken = NULL, l_cNs[255] = {""};
 	FILE *l_fLocalDhcpOpt = NULL;
+	char pL_cNs[256];
 	
 	sprintf(l_cLocalDhcpOpt, "/tmp/dhcp_options%d", getpid());
     l_fLocalDhcpOpt = fopen(l_cLocalDhcpOpt, "a+"); //It will create a file and open
@@ -467,7 +468,8 @@ void prepare_dhcp_options_wan_dns()
 			{
 				if (0 != l_cNs[0])
 				{
-					sprintf(l_cNs, "%s,%s", l_cNs, l_cToken);
+					sprintf(pL_cNs, "%s,%s", l_cNs, l_cToken);
+					strncpy(l_cNs, pL_cNs, strlen(pL_cNs));
 				}
 				else
 				{
@@ -706,7 +708,9 @@ int prepare_dhcp_conf (char *input)
     char l_cNetwork_Res[8] = {0}, l_cLocalDhcpConf[32] = {0};
     char l_cLanIPAddress[16] = {0}, l_cLanNetMask[16] = {0}, l_cLan_if_name[16] = {0};
     char l_cCaptivePortalEn[8] = {0}, l_cRedirect_Flag[8] = {0}, l_cMigCase[8] = {0};
+#if defined (_XB6_PRODUCT_REQ_)
     char l_cRfCPFeatureEnabled[8] = {0}, l_cRfCPEnabled[8] = {0};
+#endif
     char l_cWifi_Not_Configured[8] = {0}, l_cWifi_Res_Mig[8] = {0};
     char l_cIotEnabled[16] = {0}, l_cIotIfName[16] = {0}, l_cIotStartAddr[16] = {0};
    	char l_cIotEndAddr[16] = {0}, l_cIotNetMask[16] = {0};
@@ -1078,10 +1082,6 @@ int prepare_dhcp_conf (char *input)
 
 	//Log Level is not used but still retaining the code
 	syscfg_get(NULL, "log_level", l_cLog_Level, sizeof(l_cLog_Level));
-	if (0 == l_cLog_Level[0])
-	{
-		strncmp(l_cLog_Level, "1", 1);
-	}
 
 	if ((NULL != input) && (!strncmp(input, "dns_only", 8)))
 	{
@@ -1392,7 +1392,8 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 		 l_cDhcpNs_3[ 128 ] 				 = { 0 },
                  l_cLocalNs[ 128 ]                               = { 0 },
                  l_cWan_Dhcp_Dns[ 256 ]                          = { 0 },
-		 l_cDhcpNs_OptionString[ 1024 ] 	 = { 0 };
+		 l_cDhcpNs_OptionString[ 1024 ] 	 = { 0 },
+		 l_cDhcpNs_OptionString_new[ 1424 ];
 
     // Static LAN DNS
 	syscfg_get(NULL, "dhcp_nameserver_1", l_cDhcpNs_1, sizeof(l_cDhcpNs_1));
@@ -1406,14 +1407,15 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 		( 0 != strcmp( l_cDhcpNs_1, "0.0.0.0" ) ) 
 	  )
 	{
-		sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_1 );
+		sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_1 );
 	}
 
 	if( ( '\0' != l_cDhcpNs_2[ 0 ] ) && \
 		( 0 != strcmp( l_cDhcpNs_2, "0.0.0.0" ) ) 
 	  )
 	{
-		sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_2 );
+		memset(l_cDhcpNs_OptionString_new, 0 ,sizeof(l_cDhcpNs_OptionString_new));
+		sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_2 );
 	}
 
 	
@@ -1421,7 +1423,8 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 		( 0 != strcmp( l_cDhcpNs_3, "0.0.0.0" ) ) 
 	  )
 	{
-		sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_3 );
+		memset(l_cDhcpNs_OptionString_new, 0 ,sizeof(l_cDhcpNs_OptionString_new));
+		sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_3 );
 	}
 
         char l_cSecWebUI_Enabled[8] = {0};
@@ -1429,13 +1432,16 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
         if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
         {
                 check_and_get_wan_dhcp_dns( l_cWan_Dhcp_Dns );
-                if ( '\0' != l_cWan_Dhcp_Dns[ 0 ] )
-                    sprintf( l_cDhcpNs_OptionString, "%s,%s,%s", l_cDhcpNs_OptionString, l_cLocalNs, l_cWan_Dhcp_Dns );
-                else
-                    sprintf( l_cDhcpNs_OptionString, "%s,%s", l_cDhcpNs_OptionString, l_cLocalNs );
+                memset(l_cDhcpNs_OptionString_new, 0 ,sizeof(l_cDhcpNs_OptionString_new));
+                if ( '\0' != l_cWan_Dhcp_Dns[ 0 ] ){
+                    sprintf( l_cDhcpNs_OptionString_new, "%s,%s,%s", l_cDhcpNs_OptionString, l_cLocalNs, l_cWan_Dhcp_Dns );
+                }    
+                else{
+                    sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cLocalNs );
+                }
         }
         // Copy custom dns servers
-	sprintf( pDhcpNs_OptionString, "%s", l_cDhcpNs_OptionString );
+	sprintf( pDhcpNs_OptionString, "%s", l_cDhcpNs_OptionString_new );
 }
 
 void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns )
@@ -1464,8 +1470,7 @@ void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns )
 
 void prepare_static_dns_urls(FILE *fp_local_dhcp_conf)
 {
-	char  l_cUrl[ 128 ]   		= { 0 },
-		  l_cLine[ 128 ]  		= { 0 };
+	char  l_cLine[ 128 ]  		= { 0 };
 	FILE *l_fStaticDns_Urls 	= NULL;
 	
 	fprintf( stderr, "%s\n", __FUNCTION__ );

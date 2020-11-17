@@ -96,7 +96,7 @@ int Utopia_GetUserEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pUserEn
    userCfg_t *pUserEntry_t = (userCfg_t *)pUserEntry;
 
    /* Do we have an InstanceNumber already ? */
-   if(0 != Utopia_GetIndexedInt(ctx,UtopiaValue_UserIndx_InsNum,(ulIndex + 1), &(pUserEntry_t->InstanceNumber))) {
+   if(0 != Utopia_GetIndexedInt(ctx,UtopiaValue_UserIndx_InsNum,(ulIndex + 1), (int *)&(pUserEntry_t->InstanceNumber))) {
        pUserEntry_t->InstanceNumber = 0;
    } else {
        g_IndexMapUser[pUserEntry_t->InstanceNumber] = ulIndex;
@@ -162,7 +162,7 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
     int count = 0;
     unsigned long ulIndex = 0;
     userCfg_t userCfg;
-    char buf[STR_SZ] = {'\0'};
+    char buf[STR_SZ+8] = {'\0'};
 
     if(NULL == ctx){
         return ERR_INVALID_ARGS;
@@ -196,7 +196,7 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
        for(;ulIndex <= count; ulIndex++)
        {
           Utopia_GetUserByIndex(ctx,ulIndex,&userCfg);
-          Utopia_GetIndexedInt(ctx,UtopiaValue_UserIndx_InsNum,(ulIndex + 1), &userCfg.InstanceNumber);
+          Utopia_GetIndexedInt(ctx,UtopiaValue_UserIndx_InsNum,(ulIndex + 1), (int *)&userCfg.InstanceNumber);
           Utopia_SetIndexedInt(ctx,UtopiaValue_UserIndx_InsNum,ulIndex, userCfg.InstanceNumber);
 
           g_IndexMapUser[userCfg.InstanceNumber] = (ulIndex - 1);
@@ -276,7 +276,7 @@ int Utopia_GetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     Utopia_GetIndexedInt(ctx,UtopiaValue_User_RemoteAccess,(ulIndex + 1),&iVal);
     pUserCfg_t->RemoteAccessCapable = (0 == iVal) ? FALSE : TRUE;
 
-    Utopia_GetIndexedInt(ctx,UtopiaValue_User_Access_Permissions,(ulIndex + 1),&(pUserCfg_t->AccessPermissions));
+    Utopia_GetIndexedInt(ctx,UtopiaValue_User_Access_Permissions,(ulIndex + 1),(int *)&(pUserCfg_t->AccessPermissions));
     Utopia_GetIndexed(ctx,UtopiaValue_HashPassword,(ulIndex + 1),pUserCfg_t->HashedPassword,sizeof(pUserCfg_t->HashedPassword));
 
     return SUCCESS;
