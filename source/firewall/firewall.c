@@ -13594,7 +13594,7 @@ static int service_start ()
       	FIREWALL_DEBUG("starting %s service\n" COMMA service_name);
    /*  ipv4 */
    prepare_ipv4_firewall(filename1);
-   system("iptables-restore -c  < /tmp/.ipt");
+   system("iptables-restore -c  < /tmp/.ipt 2> /tmp/.ipv4table_error");
 
    //if (!isFirewallEnabled) {
    //   unlink(filename1);
@@ -13602,7 +13602,7 @@ static int service_start ()
 
    /* ipv6 */
    prepare_ipv6_firewall(filename2);
-   system("ip6tables-restore < /tmp/.ipt_v6");
+   system("ip6tables-restore < /tmp/.ipt_v6 2> /tmp/.ipv6table_error");
 
    #ifdef _PLATFORM_RASPBERRYPI_
        /* Apply Mac Filtering rules for RPI-Device */
