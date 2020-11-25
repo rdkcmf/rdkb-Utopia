@@ -784,7 +784,7 @@ void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram
     cJSON *properties_nvram = NULL;
     char *version_etc = NULL;
     char *version_nvram = NULL;
-    char *version_nvram_key = NULL;
+    cJSON *version_nvram_key = NULL;
   
     if (!do_compare || !root_etc_json || !root_nvram_json)
         return;
@@ -1270,28 +1270,61 @@ int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *P
 int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,char *PartnerID)
 {
    APPLY_PRINT("%s\n", __FUNCTION__);
-  
+
    cJSON * root_nvram_bs_json = cJSON_Parse(partner_nvram_bs_obj);
-   cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);
+
+   /* The below block of code identifies any unknown/wrong objects in nvram/bootstrap.json and removes them */
+   if (!root_nvram_bs_json)
+   {
+      APPLY_PRINT("json parse error for bootstrap.json\n");
+      char  cmd[256] = {0};
+      snprintf(cmd, sizeof(cmd), "rm %s", BOOTSTRAP_INFO_FILE);
+      APPLY_PRINT("%s\n",cmd);
+      system(cmd);
+      char *ptr_nvram_json = json_file_parse( PARTNERS_INFO_FILE );
+      init_bootstrap_json( ptr_nvram_json, partner_etc_obj, PartnerID );
+      free(ptr_nvram_json);
+      return -1;
+   }
+
+   cJSON *root_nvram_bs_json_copy=cJSON_Parse(partner_nvram_bs_obj);
+   cJSON *current_element = NULL;
+   bool jsonChanged = false;
+   cJSON_ArrayForEach(current_element, root_nvram_bs_json_copy)
+   {
+      char *current_key = current_element->string;
+      /* if the key is not properties and not partnerID, then remove that object */
+      if (strcmp(current_key, "properties") && strcmp(current_key, PartnerID))
+      {
+         jsonChanged = true;
+         cJSON_DeleteItemFromObject(root_nvram_bs_json, current_key);
+         printf("Remove unknown object: %s\n", current_key);
+      }
+   }
+   if (jsonChanged)
+   {
+      char *out = cJSON_Print(root_nvram_bs_json);
+      writeToJson(out, BOOTSTRAP_INFO_FILE);
+      out = NULL;
+   }
+   /* The above code block can be removed in future when we ae sure there will be no unknown objects in bootstrap.json */
 
    /* Check if version exists or has changed.
       If the function returns "true" proceed for comparison
       else there is no change. Just return
    */
    bool do_compare = false;
+   cJSON * root_etc_json = cJSON_Parse(partner_etc_obj);
    ValidateAndUpdatePartnerVersionParam(root_etc_json, root_nvram_bs_json, &do_compare);
-   if (!do_compare)
+   if (!do_compare && !jsonChanged)
       return -1;
    printf("versions are different...\n");
-
    char* ptr_nvram_bs_json = NULL;
    ptr_nvram_bs_json = json_file_parse( BOOTSTRAP_INFO_FILE );
    root_nvram_bs_json=cJSON_Parse(ptr_nvram_bs_json);
    root_etc_json = cJSON_Parse(partner_etc_obj);
-
    cJSON * subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
    cJSON * subitem_nvram_bs = cJSON_GetObjectItem(root_nvram_bs_json,PartnerID);
-
    char *key=NULL, *value=NULL;
    if( subitem_etc )
    {
@@ -1318,7 +1351,7 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
             cJSON_AddStringToObject(newParamObj, "ActiveValue", value);
             cJSON_AddStringToObject(newParamObj, "UpdateTime", "-");
             cJSON_AddStringToObject(newParamObj, "UpdateSource", "-");
-            cJSON_AddItemToObject(root_nvram_bs_json, key, newParamObj);
+            cJSON_AddItemToObject(subitem_nvram_bs, key, newParamObj);
 
             addInSysCfgdDB(key, value);
 
