@@ -98,7 +98,13 @@ do_start() {
     fi
 
     CM_IP=""
-    CM_IP=`ifconfig ${CMINTERFACE} | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+    if ([ "$BOX_TYPE" = "rpi" ]) ;then
+        #for Raspberry-pi, use the ipv4 address as default for ssh
+        CM_IP=`ifconfig ${CMINTERFACE} | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+    else
+        #for other devices, use the ipv6 address for ssh, if available
+        CM_IP=`ifconfig ${CMINTERFACE} | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+    fi
 
    # start a ssh daemon
    # echo "[utopia] Starting SSH daemon" > /dev/console
