@@ -33,6 +33,10 @@
    limitations under the License.
 **********************************************************************/
 
+/* _GNU_SOURCE is needed for strchrnul() and program_invocation_short_name */
+
+//#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -55,6 +59,8 @@
 #include "syscfg_lib.h"   // internal interface
 #include "syscfg.h"       // external interface used by users
 #include "safec_lib_common.h"
+
+//#define VERBOSE_DEBUG
 
 /*
  * Global data structures
@@ -85,17 +91,37 @@ int backup_file (const char *bkupFile, const char *localFile);
  */
 int syscfg_get (const char *ns, const char *name, char *out_val, int outbufsz)
 {
+    char *val;
+    size_t len;
+
     if (0 == syscfg_initialized || NULL == name || NULL == out_val) {
+        if (out_val != NULL) {
+            out_val[0] = 0;
+        }
         return -1;
     }
 
-    char *val = _syscfg_get(ns, name);
-    if (val) {
-        strncpy(out_val, val, outbufsz-1);
-        out_val[outbufsz-1] = '\0';
-        return 0;
+    val = _syscfg_get(ns, name);
+
+    if (val == NULL) {
+        out_val[0] = 0;
+        return -1;
     }
-    return -1;
+
+    len = strlen(val);
+
+    if (len >= outbufsz) {
+        memcpy(out_val, val, outbufsz - 1);
+        out_val[outbufsz - 1] = 0;
+#if defined (VERBOSE_DEBUG)
+        fprintf(stderr, "syscfg_get: %s outbufsz too small (%d < %d) (%s: lr %p)\n", name, outbufsz, (int) len + 1, program_invocation_short_name, __builtin_extract_return_addr (__builtin_return_address (0)));
+#endif
+    }
+    else {
+        memcpy(out_val, val, len + 1);
+    }
+
+    return 0;
 }
 
 /*
