@@ -290,7 +290,7 @@ service_start ()
 	#RF WANLinkHeal should be true and BOX_TYPE should be plaftorm specfic
 	#In CISCOXB3 platform, does not have WAN_TYPE paramenter in /etc/device.properties file, So added MODEL_NUM Check along with WAN_TYPE.
 	if [ "x$rfc_ethwan_status" == "xfalse" ] || [ "$rfc_ethwan_status" == "" ]; then
-		if [ "x$WAN_TYPE" == "xDOCSIS" ] || [ "x$MODEL_NUM" == "xDPC3941" ]; then
+		if [ "x$WAN_TYPE" == "xDOCSIS" ] || [ "x$MODEL_NUM" == "xDPC3941" ] || [ "x$MODEL_NUM" == "xDPC3941B" ] || [ "x$MODEL_NUM" == "xDPC3939B" ]; then
 			if [ "x$rfc_wanlinkheal_status" == "xtrue" ]; then
 				if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xXB6" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 					echo_t "RFC WANLinkHeal Feature is Enabled"
