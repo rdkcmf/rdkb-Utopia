@@ -253,22 +253,6 @@ int syscfg_is_match (const char *ns, const char *name, char *value, unsigned int
 int syscfg_getsz (long int *used_sz, long int *max_sz);
 
 /*
- * Procedure     : syscfg_commit
- * Purpose       : commits current stats of syscfg hash table data
- *                 to persistent store
- * Parameters    :   
- *   None
- * Return Values :
- *    0 - success
- *    ERR_IO_xxx - various IO errors dependening on the failure
- * Notes         :
- *    WARNING: will overwrite persistent store
- *    Persistent store location specified during syscfg_create() is cached 
- *    in syscfg shared memory and used as the target for commit
- */
-char *syscfg_parse(const char *str, char **name, char **value);
-
-/*
  * Procedure     : syscfg_format
  * Purpose       : SYSCFG persistent storage format
  * Parameters    :
