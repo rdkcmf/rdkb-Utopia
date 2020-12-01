@@ -717,6 +717,9 @@ int prepare_dhcp_conf (char *input)
 		 l_cWan_Dhcp_Dns [ 256 ]             = { 0 };
         char l_cSecWebUI_Enabled[8] = {0};
         char l_cWan_Check[16] = {0};
+        char l_statDns_Enabled[ 32 ] = { 0 };
+        char l_cDhcpNs_1[ 128 ] = { 0 }, l_cDhcpNs_2[ 128 ] = { 0 };
+        
 
 
 	int l_iMkdir_Res, l_iRet_Val;
@@ -757,16 +760,38 @@ int prepare_dhcp_conf (char *input)
         }
         else
         {
-            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
-            syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
-            syscfg_commit();
+            syscfg_get(NULL, "dhcp_nameserver_enabled", l_statDns_Enabled, sizeof(l_statDns_Enabled));
+            syscfg_get(NULL, "dhcp_nameserver_1", l_cDhcpNs_1, sizeof(l_cDhcpNs_1));
+            syscfg_get(NULL, "dhcp_nameserver_2", l_cDhcpNs_2, sizeof(l_cDhcpNs_2));
+            if( ( '\0' != l_statDns_Enabled[ 0 ] ) && ( 1 == atoi( l_statDns_Enabled ) ) )
+            {
+                if( ( '\0' == l_cDhcpNs_1[ 0 ] ) || ( 0 == strcmp( l_cDhcpNs_1, "0.0.0.0" ) ) )
+                {
+                    if( ( '\0' == l_cDhcpNs_2[ 0 ] ) || ( 0 == strcmp( l_cDhcpNs_2, "0.0.0.0" ) ) )
+                    {
+                        syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
+                        syscfg_commit();
+                    }
+                }
+            }
         }
     }
     else
     {
-        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
-        syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
-        syscfg_commit();
+        syscfg_get(NULL, "dhcp_nameserver_enabled", l_statDns_Enabled, sizeof(l_statDns_Enabled));
+        syscfg_get(NULL, "dhcp_nameserver_1", l_cDhcpNs_1, sizeof(l_cDhcpNs_1));
+        syscfg_get(NULL, "dhcp_nameserver_2", l_cDhcpNs_2, sizeof(l_cDhcpNs_2));
+        if( ( '\0' != l_statDns_Enabled[ 0 ] ) && ( 1 == atoi( l_statDns_Enabled ) ) )
+        {
+            if( ( '\0' == l_cDhcpNs_1[ 0 ] ) || ( 0 == strcmp( l_cDhcpNs_1, "0.0.0.0" ) ) )
+            {
+                if( ( '\0' == l_cDhcpNs_2[ 0 ] ) || ( 0 == strcmp( l_cDhcpNs_2, "0.0.0.0" ) ) )
+                {
+                    syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
+                    syscfg_commit();
+                }
+             }
+         }
     }
     syscfg_get(NULL, "lan_ipaddr", l_cLanIPAddress, sizeof(l_cLanIPAddress));
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));

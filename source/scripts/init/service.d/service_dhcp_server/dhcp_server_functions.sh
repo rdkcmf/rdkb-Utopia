@@ -702,8 +702,17 @@ prepare_dhcp_conf () {
        syscfg set dhcp_nameserver_enabled 1
        syscfg commit
    else
-       syscfg set dhcp_nameserver_enabled 0
-       syscfg commit
+       NAMESERVERENABLED=`syscfg get dhcp_nameserver_enabled`
+       NAMESERVER1=`syscfg get dhcp_nameserver_1`
+       NAMESERVER2=`syscfg get dhcp_nameserver_2`
+       if [ "1" = "$NAMESERVERENABLED" ] ; then
+           if [ "0.0.0.0" == "$NAMESERVER1" ] || [ "" == "$NAMESERVER1" ] ; then
+               if [ "0.0.0.0" == "$NAMESERVER2" ]  || [ "" == "$NAMESERVER2" ]; then
+                   syscfg set dhcp_nameserver_enabled 0
+                   syscfg commit
+               fi
+           fi
+       fi
    fi
    LAN_IFNAME=`syscfg get lan_ifname`
    NAMESERVERENABLED=`syscfg get dhcp_nameserver_enabled`
