@@ -948,6 +948,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #ifndef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
 char cmd[100];
 char out[100];
+char interface_name[32] = {0};
 char *token = NULL; 
 char s[2] = ",";
 char *pt;
@@ -968,33 +969,64 @@ if(!strncmp(out,"true",strlen(out)))
 	pt = out;
 	while((token = strtok_r(pt, ",", &pt)))
 	{
-        fprintf(fp, "interface %s\n", token);
-        fprintf(fp, "   no ipv6 nd suppress-ra\n");
+
+        	memset(interface_name,0,sizeof(interface_name));
+                #ifdef _COSA_INTEL_XB3_ARM_
+                char LnFIfName[32] = {0} , LnFBrName[32] = {0} ;
+                syscfg_get( NULL, "iot_ifname", LnFIfName, sizeof(LnFIfName));
+                if( (LnFIfName[0] != '\0' ) && ( strlen(LnFIfName) != 0 ) )
+                {
+                        if (strcmp((const char*)token,LnFIfName) == 0 )
+                        {
+                                syscfg_get( NULL, "iot_brname", LnFBrName, sizeof(LnFBrName));
+                                if( (LnFBrName[0] != '\0' ) && ( strlen(LnFBrName) != 0 ) )
+                                {
+                                        strncpy(interface_name,LnFBrName,sizeof(interface_name)-1);
+                                }
+                                else
+                                {
+                                	strncpy(interface_name,token,sizeof(interface_name)-1);
+                                }
+                        }
+                        else
+                        {
+                        	strncpy(interface_name,token,sizeof(interface_name)-1);
+                        }
+                }
+                else
+                {
+                        strncpy(interface_name,token,sizeof(interface_name)-1);
+                }
+                #else
+                        strncpy(interface_name,token,sizeof(interface_name)-1);
+                #endif 
+        	fprintf(fp, "interface %s\n", interface_name);
+        	fprintf(fp, "   no ipv6 nd suppress-ra\n");
 		memset(cmd,0,sizeof(cmd));
-		sprintf(cmd, "%s%s",token,"_ipaddr_v6");
+		sprintf(cmd, "%s%s",interface_name,"_ipaddr_v6");
 		memset(prefix,0,sizeof(prefix));
 		sysevent_get(sefd, setok, cmd, prefix, sizeof(prefix));
-        if (strlen(prefix) != 0)
-            fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+        	if (strlen(prefix) != 0)
+            		fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
 
-        fprintf(fp, "   ipv6 nd ra-interval 3\n");
-        fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+        	fprintf(fp, "   ipv6 nd ra-interval 3\n");
+        	fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
 
-        syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
-        if (strcmp(m_flag, "1") == 0)
-            fprintf(fp, "   ipv6 nd managed-config-flag\n");
+        	syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
+        	if (strcmp(m_flag, "1") == 0)
+            		fprintf(fp, "   ipv6 nd managed-config-flag\n");
 
-        syscfg_get(NULL, "router_other_flag", o_flag, sizeof(o_flag));
-        if (strcmp(o_flag, "1") == 0)
-            fprintf(fp, "   ipv6 nd other-config-flag\n");
+        	syscfg_get(NULL, "router_other_flag", o_flag, sizeof(o_flag));
+        	if (strcmp(o_flag, "1") == 0)
+            		fprintf(fp, "   ipv6 nd other-config-flag\n");
 
-        syscfg_get(NULL, "dhcpv6s_enable", dh6s_en, sizeof(dh6s_en));
-        if (strcmp(dh6s_en, "1") == 0)
-            fprintf(fp, "   ipv6 nd other-config-flag\n");
+        	syscfg_get(NULL, "dhcpv6s_enable", dh6s_en, sizeof(dh6s_en));
+        	if (strcmp(dh6s_en, "1") == 0)
+            		fprintf(fp, "   ipv6 nd other-config-flag\n");
 
-        fprintf(fp, "   ipv6 nd router-preference medium\n");
-    	if(inCaptivePortal != 1)
-        {
+        	fprintf(fp, "   ipv6 nd router-preference medium\n");
+    		if(inCaptivePortal != 1)
+        	{
                         /* Static DNS Enabled case */
                         if( 1 == StaticDNSServersEnabled )
                         {
@@ -1032,7 +1064,7 @@ if(!strncmp(out,"true",strlen(out)))
                         }
          }
 
-	fprintf(fp, "interface %s\n", token);
+	fprintf(fp, "interface %s\n", interface_name);
     	fprintf(fp, "   ip irdp multicast\n");
 	}
 	memset(out,0,sizeof(out));
