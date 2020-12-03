@@ -184,13 +184,6 @@ service_start ()
 
          echo "service_forwarding : Triggering RDKB_FIREWALL_RESTART before bridge starting"
          sysevent set firewall-restart
-         wait_till_state bridge starting
-         MANUFACTURE=`cat /etc/device.properties | grep MANUFACTURE | cut -f2 -d=`
-
-         if [ "$MANUFACTURE" = "Technicolor" ]; then	
-	     echo "service_fowarding : Start webgui.sh"
-	     sh /etc/webgui.sh
-         fi
       else
          ulog forwarding status "starting wan"
 	if [ $RPI_SPECIFIC = "rpi" ] ; then
