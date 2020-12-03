@@ -369,6 +369,14 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
         MNET_DEBUG("nv fetch complete for %d. Name: %s, Vid: %d\n" COMMA l2netInst COMMA l2net.name COMMA l2net.vid)
         multinet_bridgeUp(&l2net, bFirewallRestart);
         MNET_DEBUG("multinet_bridgeUp for %d complete. \n" COMMA l2netInst)
+#if defined(MULTILAN_FEATURE)
+        if (1 == l2netInst)
+        {
+           MNET_DEBUG("brlan0 up: disabling multicast_snooping\n")
+           system("echo 0 > /sys/devices/virtual/net/brlan0/bridge/multicast_snooping");
+        }
+
+#endif
 		// For brlan1 case create a temp file so that cosa_start_rem.sh execution can continue.
         if (2 == l2netInst)
         {
