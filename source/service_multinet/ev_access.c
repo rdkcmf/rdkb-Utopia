@@ -38,6 +38,7 @@
 #include "sysevent/sysevent.h"
 #include <stdio.h>
 #include <string.h>
+#include <telemetry_busmessage_sender.h>
 
 token_t sysevent_token_interactive;
 int sysevent_fd_interactive;
@@ -207,6 +208,7 @@ int ev_firewall_restart(void) {
     MNET_DEBUG("ev_firewall_restart Triggering RDKB_FIREWALL_RESTART\n")
     sysevent_set(sysevent_fd_interactive, sysevent_token_interactive,
                  "firewall-restart", "", 0);
+    t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 }
 
 int ev_string_to_status(char* stringStatus, SERVICE_STATUS* status) {

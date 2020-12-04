@@ -42,6 +42,8 @@ INIT_DIR=/etc/utopia/registration.d
 BINPATH="/usr/bin"
 CCSPPATH="/usr/ccsp"
 
+ls /tmp/pam_initialized* > /tmp/pam_init_status
+
 echo_t "*******************************************************************"
 echo_t "*                                                                  "
 echo_t "* Copyright 2014 Cisco Systems, Inc.                               "

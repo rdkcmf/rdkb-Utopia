@@ -19,6 +19,7 @@
 ##########################################################################
 
 source /etc/utopia/service.d/log_capture_path.sh
+source /lib/rdk/t2Shared_api.sh
 iot_ipaddress=`syscfg get iot_ipaddr`
 iot_interface=`syscfg get iot_ifname`
 if [ $iot_interface == "l2sd0.106" ]; then
@@ -76,6 +77,7 @@ restartServices()
   sysevent set dhcp_server-restart lan_not_restart
 
   echo_t "iotservice : Triggering RDKB_FIREWALL_RESTART"
+  t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
   sysevent set firewall-restart
 }
 

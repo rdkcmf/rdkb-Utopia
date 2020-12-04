@@ -31,8 +31,9 @@ trigger_CPPFLAGS = -I$(top_srcdir)/source/pal/upnp/include \
                    -I$(top_srcdir)/source/pal/include \
                    -I$(top_srcdir)/source/pal/log/include \
                    -I$(top_srcdir)/source/ulog \
-                   -I$(top_srcdir)/source/include
-
+                   -I$(top_srcdir)/source/include \
+		   -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 \
+		   -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
 trigger_SOURCES = trigger.c
 
 trigger_LDFLAGS =  -lpthread -lz -lnetfilter_queue -lnfnetlink
@@ -40,4 +41,5 @@ trigger_LDFLAGS =  -lpthread -lz -lnetfilter_queue -lnfnetlink
 trigger_LDADD = $(top_builddir)/source/services/lib/libsrvmgr.la \
              $(top_builddir)/source/sysevent/lib/libsysevent.la \
              $(top_builddir)/source/ulog/libulog.la \
-             $(top_builddir)/source/syscfg/lib/libsyscfg.la
+             $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+	     -ltelemetry_msgsender

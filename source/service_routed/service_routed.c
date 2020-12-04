@@ -53,6 +53,7 @@
 #include <net/if.h>
 #include <signal.h>
 #include "util.h"
+#include <telemetry_busmessage_sender.h>
 #ifdef _HUB4_PRODUCT_REQ_
 #include "utapi.h"
 #include "utapi_util.h"
@@ -110,6 +111,7 @@ static int fw_restart(struct serv_routed *sr)
         sysevent_set(sr->sefd, sr->setok, "parcon_nfq_status", "started", 0);
     }
     printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
+    t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
     sysevent_set(sr->sefd, sr->setok, "firewall-restart", NULL, 0);
     return 0;
 }

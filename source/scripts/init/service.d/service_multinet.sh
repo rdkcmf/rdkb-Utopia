@@ -76,6 +76,7 @@ source /etc/utopia/service.d/interface_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 #source /etc/utopia/service.d/service_wan/ppp_helpers.sh
+source /lib/rdk/t2Shared_api.sh
 
 
 #source /etc/utopia/service.d/psm_functions.sh
@@ -151,6 +152,7 @@ start_net () {
     
     if [ x1 = x$2 ]; then
         echo "MultinetService Triggering RDKB_FIREWALL_RESTART"
+	t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
         sysevent set firewall-restart
     fi
     

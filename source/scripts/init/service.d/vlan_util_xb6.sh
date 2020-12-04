@@ -20,6 +20,7 @@
 ################################################################################
 source /etc/utopia/service.d/log_capture_path.sh
 source /etc/device.properties
+source /lib/rdk/t2Shared_api.sh
 
 #Configure LAN bridges for XB6 using vlan_util (which calls vlan_hal)
 VLAN_UTIL="vlan_util"
@@ -115,6 +116,7 @@ check_qtn_ready(){
         while [ ! -f "$qtn_ready_file" ] ; do
                 if [ $iter == 20 ]; then
                         echo_t "QTN driver is not ready yet..."
+			t2CountNotify "WIFI_ERROR_QTN_driver_not_loaded"
                         sleep $iter
 						breakCounter=$((breakCounter+1))
                 else
@@ -1064,6 +1066,7 @@ then
  
     #Restart the firewall after the network is set up
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=start"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart    
 elif [ $MODE = "lnf-start" ]
 then
@@ -1073,6 +1076,7 @@ then
     ifconfig $BRIDGE_NAME 192.168.106.254
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstart"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 elif [ $MODE = "meshethbhaul-start" ]
 then
@@ -1086,6 +1090,7 @@ elif [ $MODE = "lnf-stop" ]
 then
     update_instances stop
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 elif [ $MODE = "meshbhaul-start" ]
 then
@@ -1095,6 +1100,7 @@ then
     ifconfig $BRIDGE_NAME 192.168.245.254
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=MeshBhaulstart"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ]
 then
@@ -1117,6 +1123,7 @@ then
     sync_group_settings
     #Restart the firewall after the network is set up
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=restart"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 else
     echo "Syntax: $0 [start | stop | restart]"
@@ -1314,6 +1321,7 @@ then
  
     #Restart the firewall after the network is set up
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=start"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart    
 elif [ $MODE = "lnf-start" ]
 then
@@ -1323,6 +1331,7 @@ then
     ifconfig $BRIDGE_NAME 192.168.106.254
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstart"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 elif [ $MODE = "meshethbhaul-start" ]
 then
@@ -1335,6 +1344,7 @@ then
 elif [ $MODE = "lnf-stop" ]
 then
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=Lnfstop"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 elif [ $MODE = "meshbhaul-start" ]
 then
@@ -1347,6 +1357,7 @@ then
     setup_pod_ethbhaul
     #Restart the firewall after setting up LnF
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=MeshBhaulstart"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 elif [ "$MODE" = "stop" ]
 then
@@ -1374,6 +1385,7 @@ then
     sync_group_settings
     #Restart the firewall after the network is set up
     echo_t "VLAN XB6 : Triggering RDKB_FIREWALL_RESTART from mode=restart"
+    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
     $SYSEVENT set firewall-restart
 else
     echo "Syntax: $0 [start | stop | restart]"

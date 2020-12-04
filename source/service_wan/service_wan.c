@@ -65,6 +65,7 @@
 #include <sys/sysinfo.h>
 #include <time.h>
 #include <sys/time.h>
+#include <telemetry_busmessage_sender.h>
 #if PUMA6_OR_NEWER_SOC_TYPE
 #include "asm-arm/arch-avalanche/generic/avalanche_pp_api.h"
 #include "netutils.h"
@@ -805,6 +806,7 @@ static int wan_start(struct serv_wan *sw)
 /*XB6 brlan0 comes up earlier so ned to find the way to restart the firewall
  IPv6 not yet supported so we can't restart in service routed  because of missing zebra.conf*/
         printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
+        t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
         sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
     uptime = 0;
      memset(buffer,0,sizeof(buffer));
@@ -844,13 +846,14 @@ static int wan_start(struct serv_wan *sw)
     {
 	char  str[100] = {0};
         printf("%s wan_service-status is started again, upload logs\n",__FUNCTION__);
+        t2_event_d("RF_ERROR_wan_restart", 1);
 	sprintf(str,"/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false ");
 	system(str);
     }
     get_dateanduptime(buffer,&uptime);
 	print_uptime("Waninit_complete", NULL);
 	OnboardLog("Wan_init_complete:%d\n",uptime);
-	
+        t2_event_d("btime_waninit_split", uptime);	
     /* RDKB-24991 to handle snmpv3 based on wan-status event */
     system("sh /lib/rdk/postwanstatusevent.sh &");
     return 0;
@@ -963,6 +966,7 @@ static int wan_stop(struct serv_wan *sw)
     system("rm -rf /tmp/ipv4_renew_dnsserver_restart");
     system("rm -rf /tmp/ipv6_renew_dnsserver_restart");
     printf("%s wan_service-status is stopped, take log back up\n",__FUNCTION__);
+    t2_event_d("RF_ERROR_Wan_down", 1);
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopped", 0);
 #if defined (_XB6_PRODUCT_REQ_)
     system("sh /etc/network_response.sh OnlyForNoRf &");
@@ -1333,6 +1337,7 @@ static int wan_addr_unset(struct serv_wan *sw)
 #endif /*_WAN_MANAGER_ENABLED_*/
 
     printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
+    t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
     sysevent_set(sw->sefd, sw->setok, "firewall-restart", NULL, 0);
     int uptime = 0;
     char buffer[64] = {0};

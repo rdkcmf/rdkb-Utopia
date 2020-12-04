@@ -39,7 +39,7 @@
 # This script is used to manage the ipv4 interface instances
 #------------------------------------------------------------------
 
-
+source /lib/rdk/t2Shared_api.sh
 #dynamic data structures
 #
 #
@@ -474,7 +474,9 @@ resync_tsip () {
     IPV4_SUBNET=`sysevent get ipv4-tsip_Subnet`
     IPV4_GATEWAY=`sysevent get ipv4-tsip_Gateway`
     echo "From Command line True Static IP Enable:$1, IP:${IPV4_ADDR}, SUBNET:${IPV4_SUBNET}, GATEWAY:${IPV4_GATEWAY}"
-
+    if [ "$1" = "1" ] ; then
+	t2CountNotify "SYS_INFO_StaticIP_setMso" 
+    fi
     #delete the original true static ip first
     if [ x != x$NV_TSIP_IP -a x != x$NV_TSIP_SUBNET ]; then
         MASKBITS=`mask2cidr $NV_TSIP_SUBNET`
