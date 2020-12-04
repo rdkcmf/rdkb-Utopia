@@ -5,6 +5,7 @@
  */
 
 #include "rpc_specification.h"
+#include "errno.h"
 
 struct rpc_CommandBuf output;
 #define TEMP_BUF_LEN 255
@@ -36,8 +37,12 @@ executecommand_1_svc(rpc_CommandBuf *argp, struct svc_req *rqstp)
 		}
 		pclose ( cmd );
 		return &output;
-	} 
+	}
+	else
+	{
+	RPC_PRINT("command failed %s , error (errno %d) %s \n",cmdBuf, errno, strerror(errno)); 
 	return 	NULL;
+	}
 }
 
 
