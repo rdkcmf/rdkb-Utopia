@@ -38,6 +38,7 @@
 # This script is used to manage the ipv4 interface instances
 #------------------------------------------------------------------
 
+source /lib/rdk/t2Shared_api.sh
 
 #dynamic data structures
 #
@@ -115,7 +116,8 @@ handle_l2_status () {
             apply_config $1
             if [ 0 = $? ]; then
                 sysevent set ${SERVICE_NAME}_${1}-status $L3_UP_STATUS
-				echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART" 
+		echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART"
+		t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
 				sysevent set firewall-restart
                 if [ "$BOX_TYPE" != "HUB4" ]; then
 				uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
@@ -510,7 +512,10 @@ resync_tsip () {
     IPV4_SUBNET=`sysevent get ipv4-tsip_Subnet`
     IPV4_GATEWAY=`sysevent get ipv4-tsip_Gateway`
     echo_t "From Command line True Static IP Enable:$1, IP:${IPV4_ADDR}, SUBNET:${IPV4_SUBNET}, GATEWAY:${IPV4_GATEWAY}"
-
+    if [ "$1" = "1" ] ; then
+	t2CountNotify "SYS_INFO_StaticIP_setMso" 
+    fi
+       
     #delete the original true static ip first
     if [ x != x$NV_TSIP_IP -a x != x$NV_TSIP_SUBNET ]; then
         MASKBITS=`mask2cidr $NV_TSIP_SUBNET`

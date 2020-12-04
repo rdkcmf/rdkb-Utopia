@@ -41,6 +41,7 @@ source /etc/utopia/service.d/log_capture_path.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 #source /etc/utopia/service.d/service_lan/lan_hooks.sh
 #source /etc/utopia/service.d/brcm_ethernet_helper.sh
+source /lib/rdk/t2Shared_api.sh
 
 SERVICE_NAME="lan"
 
@@ -682,6 +683,7 @@ service_start ()
          sysevent set ${SERVICE_NAME}-status started
 #song:         add_docsis_bridge
          echo_t "service_lan : Triggering RDKB_FIREWALL_RESTART"
+	 t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
          sysevent set firewall-restart
       fi
 	  #rongwei added

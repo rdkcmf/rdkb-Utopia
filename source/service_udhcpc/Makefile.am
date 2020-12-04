@@ -18,7 +18,7 @@
 ##########################################################################
 bin_PROGRAMS = service_udhcpc
 
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils $(CPPFLAGS) -I$(top_srcdir)/source/util/print_uptime
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils $(CPPFLAGS) -I$(top_srcdir)/source/util/print_uptime -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
 
 AM_LDFLAGS =  -lpthread -lz
 
@@ -29,4 +29,5 @@ service_udhcpc_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                     $(top_builddir)/source/sysevent/lib/libsysevent.la \
                     $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                     $(top_builddir)/source/ulog/libulog.la \
-                    $(top_builddir)/source/util/print_uptime/libprint_uptime.la
+                    $(top_builddir)/source/util/print_uptime/libprint_uptime.la \
+		    -ltelemetry_msgsender

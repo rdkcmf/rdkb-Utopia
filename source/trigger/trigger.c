@@ -50,6 +50,7 @@
 #include "ulog.h"
 #include "syscfg/syscfg.h"
 #include "sysevent/sysevent.h"
+#include <telemetry_busmessage_sender.h>
 
 #define TRIGGER_QUEUE 22 // the netfilter queue THIS MUST BE UNIQUE IN THE SYSTEM
 static struct nfq_handle*   nfq_h;
@@ -453,6 +454,7 @@ static int update_trigger_entry(int id, struct in_addr host)
          (trigger_info[idx]).quanta = (trigger_info[idx]).lifetime;
          start_forwarding(idx+1); // trigger id is idx+1
          printf("%s Triggering RDKB_FIREWALL_RESTART active\n",__FUNCTION__);
+         t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
          sysevent_set(sysevent_fd, sysevent_token, "firewall-restart", NULL, 0);
          restart_firewall = 0;
          return(0);
@@ -555,6 +557,7 @@ static int update_trigger_entry(int id, struct in_addr host)
       (trigger_info[idx]).active     = 1;
       start_forwarding(idx+1);  // trigger id is idx+1
       printf("%s Triggering RDKB_FIREWALL_RESTART end\n",__FUNCTION__);
+      t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
       sysevent_set(sysevent_fd, sysevent_token, "firewall-restart", NULL, 0);
       restart_firewall = 0;
       return(0);
@@ -694,7 +697,8 @@ static int main_loop(int queue_fd)
 
       if (-1 >= rc) {
          if (restart_firewall) {
-            printf("%s Triggering RDKB_FIREWALL_RESTART intial\n",__FUNCTION__); 
+            printf("%s Triggering RDKB_FIREWALL_RESTART intial\n",__FUNCTION__);
+            t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
             sysevent_set(sysevent_fd, sysevent_token, "firewall-restart", NULL, 0);
             restart_firewall = 0;
          }
@@ -708,7 +712,8 @@ static int main_loop(int queue_fd)
       }
 
       if (restart_firewall) { 
-         printf("%s Triggering RDKB_FIREWALL_RESTART end\n",__FUNCTION__); 
+         printf("%s Triggering RDKB_FIREWALL_RESTART end\n",__FUNCTION__);
+         t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
          sysevent_set(sysevent_fd, sysevent_token, "firewall-restart", NULL, 0);
          restart_firewall = 0;
       }
@@ -818,6 +823,7 @@ static void terminate_signal_handler (int signum)
       }
    }
    printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
+   t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
    sysevent_set(sysevent_fd, sysevent_token, "firewall-restart", NULL, 0);
 
    ulogf(ULOG_FIREWALL, UL_TRIGGER, "Received signal %d. Terminating", signum);

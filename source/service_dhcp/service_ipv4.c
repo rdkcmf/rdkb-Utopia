@@ -25,6 +25,7 @@
 #include "syscfg/syscfg.h"
 #include "lan_handler.h"
 #include "print_uptime.h"
+#include <telemetry_busmessage_sender.h>
 
 #define THIS            "/usr/bin/service_dhcp"
 #define LAN_IF_NAME     "brlan0"
@@ -686,6 +687,7 @@ void load_static_l3 (int l3_inst)
 	     		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "up", 0);
 		
 		       fprintf(stderr, "service_ipv4 : Triggering RDKB_FIREWALL_RESTART\n");
+                       t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);	
 
 			if (4 == l3_inst)

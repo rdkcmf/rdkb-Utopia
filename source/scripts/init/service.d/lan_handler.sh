@@ -43,6 +43,7 @@
 
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
+source /lib/rdk/t2Shared_api.sh
 
 . /etc/device.properties
 IOT_SERVICE_PATH="/etc/utopia/service.d"
@@ -122,6 +123,9 @@ find_active_brg_instances(){
 
 #service_init 
 echo_t "RDKB_SYSTEM_BOOT_UP_LOG : lan_handler called with $1 $2"
+if [ "$1" = "lan-stop" ] && [ "$2" = "NULL" ] ; then
+    t2CountNotify "RF_ERROR_LAN_stop"
+fi
 #echo "lan_handler called with $1 $2" > /dev/console
 
 case "$1" in
@@ -236,6 +240,7 @@ case "$1" in
 		echo_t "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started
 		echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART"
+		t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
                 sysevent set firewall-restart
             fi
 
@@ -279,7 +284,8 @@ case "$1" in
             sysevent set multinet-up 9
         fi
 
-        echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
+        echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler"
+	t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
         sysevent set firewall-restart 
 	if [ -e "/usr/bin/print_uptime" ]; then
 	    /usr/bin/print_uptime "Laninit_complete"
@@ -289,6 +295,7 @@ case "$1" in
 	if [ -e "/usr/bin/onboarding_log" ]; then
 	    /usr/bin/onboarding_log "Lan_init_complete:$uptime"
 	fi
+	t2ValNotify "btime_laninit_split" "$uptime"
      ;;
    
    ipv4-resync)

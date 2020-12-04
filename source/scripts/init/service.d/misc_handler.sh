@@ -33,6 +33,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #######################################################################
+source /lib/rdk/t2Shared_api.sh
 
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 
@@ -53,7 +54,7 @@ if [ "$LAN_WAN_READY" != "ready" ]
 then
 
     echo "[`date +'%Y-%m-%d:%H:%M:%S:%6N'`] RDKB_SELFHEAL : RDKB Firewall Recovery" >> $SELFHEALFILE
-
+    t2CountNotify "SYS_SH_FirewallRecovered"
     ipaddr=`sysevent get current_lan_ipaddr`
     index=4
     if [ x$ipaddr = x ]

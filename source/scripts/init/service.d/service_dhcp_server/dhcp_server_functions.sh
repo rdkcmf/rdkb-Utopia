@@ -38,7 +38,8 @@ if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
 fi
-        
+
+source /lib/rdk/t2Shared_api.sh
 
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
@@ -810,6 +811,7 @@ then
         then
             CAPTIVE_PORTAL_MODE="true"
             echo "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE"
+	    t2CountNotify "SYS_INFO_CaptivePortal"
             if [ -e "/nvram/reverted" ]
             then
                 echo "DHCP SERVER : Removing reverted flag"

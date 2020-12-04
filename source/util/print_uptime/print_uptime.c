@@ -21,6 +21,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <telemetry_busmessage_sender.h>
 #include "safec_lib_common.h"
 
 #define DEVICE_PROPS_FILE	"/etc/device.properties"
@@ -87,6 +88,41 @@ void print_uptime(char *uptimeLog, char *bootfile)
 	sysinfo(&l_sSysInfo);
 	time(&l_sNowTime);
 	l_sTimeInfo = localtime(&l_sNowTime);
+
+	/* telemetry 2.0 starts */
+	if(strstr(uptimeLog, "boot_to_ETH_uptime"))
+	{
+	    t2_event_d("btime_eth_split", l_sSysInfo.uptime);
+	}
+	else if(strstr(uptimeLog, "boot_to_meshagent_uptime"))
+	{
+	    t2_event_d("btime_mesh_split", l_sSysInfo.uptime);
+	}
+	else if(strstr(uptimeLog, "boot_to_MOCA_uptime"))
+	{
+	    t2_event_d("btime_moca_split", l_sSysInfo.uptime);
+	}
+	else if(strstr(uptimeLog, "boot_to_snmp_subagent_v2_uptime"))
+	{
+	    t2_event_d("bootuptime_SNMPV2Ready_split", l_sSysInfo.uptime);
+	}
+	else if(strstr(uptimeLog, "boot_to_wan_uptime"))
+	{
+	    t2_event_d("btime_wanup_spit", l_sSysInfo.uptime);
+	}
+	else if(strstr(uptimeLog, "boot_to_WEBPA_READY_uptime"))
+	{
+	    t2_event_d("btime_webpa_split", l_sSysInfo.uptime);
+	}
+	else if(strstr(uptimeLog, "boot_to_WIFI_uptime"))
+	{
+	    t2_event_d("bootuptime_wifi_split", l_sSysInfo.uptime);
+	}
+	else if(strstr(uptimeLog, "boot_to_XHOME_uptime"))
+	{
+	    t2_event_d("btime_xhome_split", l_sSysInfo.uptime);
+	}
+	/* telemetry 2.0 ends */
 
 	sprintf(l_cLocalTime, "%02d:%02d:%02d",l_sTimeInfo->tm_hour, l_sTimeInfo->tm_min, l_sTimeInfo->tm_sec);
 

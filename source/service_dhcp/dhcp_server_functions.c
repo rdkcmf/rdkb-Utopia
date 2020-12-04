@@ -31,6 +31,7 @@
 #include "lan_handler.h"
 #include "util.h"
 #include "dhcp_server_functions.h"
+#include <telemetry_busmessage_sender.h>
 
 #define HOSTS_FILE              "/etc/hosts"
 #define HOSTNAME_FILE           "/etc/hostname"
@@ -973,6 +974,7 @@ int prepare_dhcp_conf (char *input)
               else
               {    
                      fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
+                     t2_event_d("SYS_INFO_CaptivePortal", 1);
                      if (access("/nvram/reverted", F_OK) == 0) //If file is present
                      {
                        fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");
@@ -992,6 +994,7 @@ int prepare_dhcp_conf (char *input)
            {
               l_bCaptivePortal_Mode = TRUE;
               fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
+              t2_event_d("SYS_INFO_CaptivePortal", 1);
               if (access("/nvram/reverted", F_OK) == 0) //If file is present
               {
                  fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");

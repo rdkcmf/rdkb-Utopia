@@ -48,6 +48,7 @@ hotspot_down_notification="false"
 source /etc/utopia/service.d/ut_plat.sh
 source /etc/utopia/service.d/log_capture_path.sh
 . /etc/device.properties
+source /lib/rdk/t2Shared_api.sh
 THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
 if [ "$BOX_TYPE" = "XF3" ] ; then
@@ -792,6 +793,7 @@ case "$1" in
             fi
             $GRE_ARP_PROC -q $ARP_NFQUEUE  > /dev/null &
             echo "handle_gre : Triggering RDKB_FIREWALL_RESTART"
+	    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
             sysevent set firewall-restart > /dev/null
             if [ "$BOX_TYPE" = "XF3" ] ; then
                sleep 15
@@ -1046,6 +1048,7 @@ case "$1" in
         
         if [ x = x$start ]; then
           echo "handle_gre : Triggering RDKB_FIREWALL_RESTART in update bridges"
+	  t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
             sysevent set firewall-restart
         fi
     ;;

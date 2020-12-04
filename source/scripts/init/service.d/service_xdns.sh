@@ -39,6 +39,7 @@
 
 export LOG4C_RCPATH=/etc
 
+source /lib/rdk/t2Shared_api.sh
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
 
@@ -51,6 +52,7 @@ SERVICE_NAME="CcspXdnsSsp"
 service_restart ()
 {
    echo "restarting CcspXdnsSsp, on WAN re/start"
+   t2CountNotify "SYS_ERROR_Xdns_restart"
    if [ "x$BOX_TYPE" = "xXB3" ]; then
           kill -9 `pidof $SERVICE_NAME` > /dev/null 2>&1
 	  cd /usr/ccsp/xdns

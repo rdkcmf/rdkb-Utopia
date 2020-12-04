@@ -53,6 +53,7 @@
 #include <syscfg/syscfg.h>
 #include <utctx/utctx.h>
 #include <utctx/utctx_api.h>
+#include <telemetry_busmessage_sender.h>
 #include "utapi.h"
 #include "utapi_product.h"
 #include "utapi_util.h"
@@ -2735,6 +2736,7 @@ static int s_firewall_restart ()
     ulog(ULOG_CONFIG, UL_UTAPI, "restarting firewall...");
 
     printf("%s Triggering RDKB_FIREWALL_RESTART\n",__FUNCTION__);
+    t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
     int rc = sysevent_set(se_fd, se_token, "firewall-restart", NULL, 0);
 
     ulogf(ULOG_CONFIG, UL_UTAPI, "firewall restart mesg sent, (rc %d)", rc);

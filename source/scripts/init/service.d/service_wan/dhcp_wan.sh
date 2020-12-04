@@ -56,6 +56,7 @@
 
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
+source /lib/rdk/t2Shared_api.sh
 
 DESIRED_WAN_STATE=`sysevent get desired_ipv4_wan_state`
 CURRENT_WAN_STATE=`sysevent get current_ipv4_wan_state`
@@ -68,6 +69,7 @@ bring_wan_down() {
    sysevent set current_wan_ipaddr 0.0.0.0
    sysevent set current_wan_subnet 0.0.0.0
    echo "dhcp_wan : Triggering RDKB_FIREWALL_RESTART from WAN down"
+   t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
    sysevent set firewall-restart
    ulog dhcp_wan status "$PID setting current_wan_state down"
    sysevent set current_ipv4_wan_state down
@@ -115,6 +117,7 @@ bring_wan_up() {
        firewall
    else
        echo "dhcp_wan : Triggering RDKB_FIREWALL_RESTART from WAN up"
+       t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"       
        sysevent set firewall-restart
    fi
    

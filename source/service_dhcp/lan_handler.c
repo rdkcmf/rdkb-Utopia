@@ -27,6 +27,7 @@
 #include "util.h"
 #include <sys/time.h>
 #include "print_uptime.h"
+#include <telemetry_busmessage_sender.h>
 #ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
 #include "cimplog.h"
 #define LOGGING_MODULE "Utopia"
@@ -403,6 +404,7 @@ void ipv4_status(int l3_inst, char *status)
 			fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status\n");
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
 			fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART\n");
+                        t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
 			get_dateanduptime(buffer,&uptime);
 			OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
@@ -472,11 +474,13 @@ void ipv4_status(int l3_inst, char *status)
 		}
     }
     fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler\n");
+    t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
     get_dateanduptime(buffer,&uptime);
     OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
     print_uptime("Laninit_complete", NULL);
     OnboardLog("Lan_init_complete:%d\n", uptime);
+    t2_event_d("btime_laninit_split", uptime);
 }
 
 void lan_restart()

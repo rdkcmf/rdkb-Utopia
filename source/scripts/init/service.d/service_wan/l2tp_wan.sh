@@ -54,6 +54,7 @@
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
 source /etc/utopia/service.d/service_wan/ppp_helpers.sh
+source /lib/rdk/t2Shared_api.sh
 
 DESIRED_WAN_STATE=`sysevent get desired_ipv4_wan_state`
 CURRENT_WAN_STATE=`sysevent get current_ipv4_wan_state`
@@ -117,6 +118,7 @@ register_firewall_hooks() {
    NAME=`sysevent setunique NatFirewallRule " -A PREROUTING -i $WAN_IFNAME -s $WAN_SERVER_IPADDR -p udp -m udp --sport 1701 -j RETURN"`
    sysevent set ${SELF_NAME}_nat_fw_2 "$NAME"
    echo "l2tp_wan : Triggering RDKB_FIREWALL_RESTART in Register FW hooks"
+   t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
    sysevent set firewall-restart
 }
 
@@ -202,6 +204,7 @@ bring_wan_down() {
    sysevent set current_wan_ipaddr 0.0.0.0
    sysevent set current_wan_subnet 0.0.0.0
    echo "l2tp_wan : Triggering RDKB_FIREWALL_RESTART from WAN down"
+   t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
    sysevent set firewall-restart
 }
 

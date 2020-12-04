@@ -732,6 +732,7 @@ static int get_PartnerID( char *PartnerID)
 				sprintf( PartnerID, "%s", "comcast" );
 #endif
 				APPLY_PRINT("%s - Failed Get factoryPartnerId so set it PartnerID as: %s\n", __FUNCTION__, PartnerID );
+
 			}
 		}
 	}
