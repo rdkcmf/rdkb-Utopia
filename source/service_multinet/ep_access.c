@@ -49,25 +49,37 @@
 #endif
 
 #if defined (INTEL_PUMA7)
+
 //Check if network interface is really connected to this bridge
+//Returns 1 if the interface is not connected to the bridge, 0 if it is
 int ep_check_if_really_bridged(PL2Net net, char *ifname){
     char *cmd[MAX_CMD_LEN];
-    char ifnamebuf[MAX_IFNAME_SIZE];
+    char ifnamebuf[MAX_IFNAME_SIZE]; //Used to return the real interface name
+    char *dash = NULL;
+    char temp_ifname[MAX_IFNAME_SIZE] = {0}; //Used to store a copy of ifname that we can modify
 
-    char *dash;
-    char temp_ifname[MAX_IFNAME_SIZE] = {0};
+    //Make a copy of ifname, because we must not modify ifname
+    strncpy(temp_ifname, ifname, MAX_IFNAME_SIZE);
 
-    if(!strstr(ifname, "sw_") ||
-        (STATUS_OK != getIfName(ifnamebuf, ifname)))
-    {
-        /* If port is not sw_x or getIfName() returns failure then use port name as the interface name */
-        strncpy(ifnamebuf, ifname, MAX_IFNAME_SIZE);
-    }
-
-    //If name is x-t, strip off -t and change name to x.[vlan id]
-    if ((dash = strchr(ifnamebuf, '-'))){
+    //If name is x-t, strip off -t
+    if ((dash = strstr(temp_ifname, "-t")) != NULL){
         *dash = '\0';
     }
+
+    if(!strstr(temp_ifname, "sw_") ||
+        (STATUS_OK != getIfName(ifnamebuf, temp_ifname)))
+    {
+        /* If port is not sw_x or getIfName() returns failure then use port name as the interface name */
+        strncpy(ifnamebuf, temp_ifname, MAX_IFNAME_SIZE);
+    }
+
+    //Now add the .[vlandid] suffix
+    if (dash != NULL){
+        int length = strnlen(ifnamebuf, MAX_IFNAME_SIZE);
+        snprintf( (ifnamebuf + length), (MAX_IFNAME_SIZE - length), ".%d", net->vid);
+    }
+
+    MNET_DEBUG("Checking if port %s [real name %s] is really connected to the bridge\n" COMMA ifname COMMA ifnamebuf);
 
     snprintf(cmd, MAX_CMD_LEN, "/sys/class/net/%s/brif/%s", net->name, ifnamebuf);
     if (access(cmd, F_OK) == -1) {
@@ -86,26 +98,31 @@ int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
     char iflistbuf[512];
     char netmemberskey[32];
     char* ifToken, *dash;
-    
     int curNumMembers = 0;
-    
+    char *saveptr1;
+ 
     snprintf(netmemberskey, sizeof(netmemberskey), MNET_EP_ALLMEMBERS_KEY_FORMAT(net->inst));
     
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive, netmemberskey, iflistbuf, sizeof(iflistbuf));
-    
+    MNET_DEBUG("%s: multinet_%d-allMembers value [%s]\n" COMMA __FUNCTION__ COMMA net->inst COMMA iflistbuf);
+ 
     //Token holds a complete single interface string
-    ifToken = strtok(iflistbuf, " ");
-    while(ifToken) { //FIXME: check for memberList overflow
-        
-        sscanf(ifToken, MNET_EP_MEMBER_FORMAT( ifnamebuf ,live_members[curNumMembers].interface->type->name, &live_members[curNumMembers].bReady));
-        
+    for (ifToken = strtok_r(iflistbuf, " ", &saveptr1); ifToken != NULL; ifToken = strtok_r(NULL, " ", &saveptr1))
+    {
+        MNET_DEBUG("%s: Token [%s]\n" COMMA __FUNCTION__ COMMA ifToken);
+ 
+        sscanf(ifToken, MNET_EP_MEMBER_FORMAT(ifnamebuf, live_members[curNumMembers].interface->type->name, &live_members[curNumMembers].bReady));
+ 
 #ifdef MULTILAN_FEATURE
 #if defined (INTEL_PUMA7)
         //If the interface is ready, verify that it's really connected to this bridge
+        MNET_DEBUG("%s: Check whether [%s] (ready %d) is connected\n" COMMA __FUNCTION__ COMMA ifnamebuf COMMA live_members[curNumMembers].bReady);
         if (live_members[curNumMembers].bReady && ep_check_if_really_bridged(net, ifnamebuf)){
-            MNET_DEBUG("Port %s NOT really connected to bridge %s!\n" COMMA ifnamebuf COMMA net->name);
-            ifToken = strtok(NULL, " ");
+            MNET_DEBUG("Port %s NOT really connected to bridge %s\n" COMMA ifnamebuf COMMA net->name);
             continue;
+        }
+        else {
+            MNET_DEBUG("Port %s is already connected to bridge %s\n" COMMA ifnamebuf COMMA net->name);
         }
 #endif
 #endif
@@ -113,14 +130,14 @@ int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
         if ((dash = strchr(ifnamebuf, '-'))){
             *dash = '\0';
             live_members[curNumMembers].bTagging = 1;
+            MNET_DEBUG("Port %s is tagged\n" COMMA ifnamebuf);
         } else {
             live_members[curNumMembers].bTagging = 0;
         }
         live_members[curNumMembers].interface->map = NULL;
         strcpy(live_members[curNumMembers++].interface->name, ifnamebuf);
-             
-        ifToken = strtok(NULL, " ");
     }
+    MNET_DEBUG("%s: Done tokenizing multinet_%d-allMembers\n" COMMA __FUNCTION__ COMMA net->inst);
 
     return curNumMembers; // TODO, check nv_* to make sure returning number
     

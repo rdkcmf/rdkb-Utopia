@@ -117,6 +117,7 @@ int getIfName(char *ifName, char *port)
     char *token1 = NULL;
     char *token2 = NULL;
     char *c;
+    char *saveptr1, *saveptr2;
     FILE *file = NULL;
 
     if((STATUS_NOK == access(LAN_CONFIG_FILE, F_OK )))
@@ -148,13 +149,13 @@ int getIfName(char *ifName, char *port)
         }
 
         buff = line;
-        while((token = strtok_r(buff, " ", &buff)))
+        for(token = strtok_r(buff, " ", &saveptr1); token != NULL; token = strtok_r(NULL, " ", &saveptr1))
         {
             /* Parse parameters and get values, e.g. token="LogicalPort=1", token1="LogicalPort", token2="1" */
-            token1 = strtok(token, "=");
+            token1 = strtok_r(token, "=", &saveptr2);
             if(!strcmp(token1, BASE_IF_NAME_KEY))
             {
-                token2 = strtok(NULL, "=");
+                token2 = strtok_r(NULL, "=", &saveptr2);
                 if(token2 == NULL)
                 {
                         MNET_DEBUG("ERROR: Null pointer\n");
@@ -167,15 +168,15 @@ int getIfName(char *ifName, char *port)
                         *c = '\0';
                 }
                 strncpy(ifName, token2, MAX_IFNAME_SIZE);
-                MNET_DEBUG("%s: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
+                MNET_DEBUG("%s inner: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
                 close(file);
                 return STATUS_OK;
             }
         }
     }
     /* port is switch port */
-    strncpy(ifName, port, sizeof(MAX_IFNAME_SIZE));
-    MNET_DEBUG("%s: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
+    strncpy(ifName, port, MAX_IFNAME_SIZE);
+    MNET_DEBUG("%s outer: ifName=%s, portName=%s\n" COMMA __func__ COMMA ifName COMMA port);
     close(file);
     return STATUS_OK;
 }
