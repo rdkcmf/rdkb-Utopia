@@ -39,8 +39,15 @@
 
 const char* SERVICE_NAME            = "sshd";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_sshd.sh";
+/*
+ * The wan-status event is needed for Arris XB6 and Commscope XB7 platforms. The specific code which
+ * takes the action has been added in the service_sshd.sh.
+ */
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "bridge-status|/etc/utopia/service.d/service_sshd.sh",
+#if defined(_ARRIS_XB6_PRODUCT_REQ_)
+                                        "wan-status|/etc/utopia/service.d/service_sshd.sh",
+#endif
                                         NULL 
                                       };
 

@@ -45,6 +45,8 @@ source /etc/device.properties
 
 if [ "$BOX_TYPE" = "HUB4" ]; then
    CMINTERFACE="erouter0"
+elif ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
+   CMINTERFACE="erouter0"
 else
    if [ -f "/nvram/ETHWAN_ENABLE" ];then
    	CMINTERFACE="erouter0"
@@ -70,6 +72,12 @@ get_listen_params() {
     CM_IP4=`ip -4 addr show dev wan0 scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
     #Get IPv6 address of wan0
     CM_IP6=`ip -6 addr show dev wan0 scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
+        CM_IP4=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    fi
+    if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
+        CM_IP6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    fi
     if [ "$CM_IP4" != "" ] ; then
         LISTEN_PARAMS="-p [${CM_IP4}]:22"
     fi
@@ -79,6 +87,9 @@ get_listen_params() {
     #If there is no ipv4 or ipv6 address to listen on, bind to local address only
     if [ "$LISTEN_PARAMS" = "" ] ; then
         LISTEN_PARAMS="-p [127.0.0.1]:22"
+        if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
+            echo_t "utopia: dropbear not started with valid erouter0 IPv4 or IPv6 address $LISTEN_PARAMS"
+        fi
     fi
 }
 
@@ -95,6 +106,7 @@ do_start() {
 
     if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
     	get_listen_params
+            CMINTERFACE="erouter0"
     fi
 
     CM_IP=""
@@ -123,7 +135,22 @@ do_start() {
    getConfigFile $DROPBEAR_PARAMS_2
 
    if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
-   	dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 $LISTEN_PARAMS 2>/dev/null -P $PID_FILE
+   	dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 $LISTEN_PARAMS -P $PID_FILE 2>/dev/null
+    if [ "$LISTEN_PARAMS" = "" ] ; then
+        echo_t "[utopia]: dropbear was not started for erouter0 interface with valid params."
+    fi
+    CM_IP4=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    if [ -n "$CM_IP4" ]; then
+      echo_t "[utopia]: dropbear was started on erouter0 IPv4 $CM_IP4 interface."
+    else
+      echo_t "utopia: dropbear could not be started on erouter0 IPv4 interface."
+    fi
+    CM_IP6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    if [ -n "$CM_IP6" ]; then
+      echo_t "[utopia]: dropbear was started on erouter0 IPv6 $CM_IP6 interface."
+    else
+      echo_t "utopia: dropbear could not be started on erouter0 IPv6 interface."
+    fi
    else
    	dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
    fi
@@ -166,20 +193,42 @@ service_start() {
     echo_t "[utopia] starting ${SERVICE_NAME} service"
 	ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service"
 
+   if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
+      CMINTERFACE=erouter0
+      ifconfig $CMINTERFACE | grep Global
+      ret=$?
+      while [ $ret -ne 0 ]; do
+        sleep 20
+        ifconfig $CMINTERFACE | grep Global
+        ret=$?
+        if [ $? -eq 0 ] ; then
+            echo_t "[utopia] erouter0 interface got an address for ${SERVICE_NAME} service."
+            echo_t "[utopia] erouter0 interface is online"
+            break
+        fi
+      done
+   fi
 	#SSH_ENABLE=`syscfg get mgmt_wan_sshaccess`
-#	CURRENT_WAN_STATE=`sysevent get wan-status`
+	CURRENT_WAN_STATE=`sysevent get wan-status`
 
 	#if [ "$SSH_ENABLE" = "0" ]; then
 
-		if [ ! -f "$PID_FILE" ] ; then
+   if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
+        if [ -n "$CURRENT_WAN_STATE" -a "started" = "$CURRENT_WAN_STATE" ]; then
+            rm -f $PID_FILE 2>/dev/null
+            do_start
+        fi
+   else
+	    if [ ! -f "$PID_FILE" ] ; then
 			#while [ "started" != "$CURRENT_WAN_STATE" ]
 			#do
 				#sleep 1
 				#CURRENT_WAN_STATE=`sysevent get wan-status`
 			#done
 
-		do_start
+	    	do_start
 		fi
+   fi
 		$PMON setproc ssh dropbear $PID_FILE "/etc/utopia/service.d/service_sshd.sh sshd-restart"
 
 		sysevent set ${SERVICE_NAME}-errinfo
@@ -241,6 +290,7 @@ service_bridge_status ()
 
 echo_t "[utopia] ${SERVICE_NAME} $1 received"
 
+CURRENT_WAN_STATUS=`sysevent get wan-status`
 case "$1" in
   ${SERVICE_NAME}-start)
       service_start
@@ -255,7 +305,17 @@ case "$1" in
    # lan-status)
       #service_lanwan_status
       #;;
- # wan-status)
+ wan-status)
+   if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]) ;then
+      echo_t "utopia: Need to handle the wan-status event."
+      if [ -n "$CURRENT_WAN_STATUS" ]; then
+        if [ "started" = "$CURRENT_WAN_STATUS" ]; then
+            service_stop
+            service_start
+        fi
+      fi
+   fi
+    ;;
  #     service_wan_status
  #    ;;
   bridge-status)
