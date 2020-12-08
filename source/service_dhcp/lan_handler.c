@@ -455,6 +455,18 @@ void ipv4_status(int l3_inst, char *status)
 
 		if (!strncmp(l_cLan_Status, "started", 7))
 		{
+			char bridge_mode[16] = {0};
+			static int isBridgeMode;
+			sysevent_get(g_iSyseventfd, g_tSysevent_token, "bridge_mode", bridge_mode, sizeof(bridge_mode));
+			isBridgeMode        = (0 == strcmp("0", bridge_mode)) ? 0 : 1;
+			if(!isBridgeMode)
+			{
+			    fprintf(stderr, "LAN HANDLER : Device in Router mode and lan-status: stopped\n");
+			}
+			else
+			{
+			    fprintf(stderr, "LAN HANDLER : Device in Bridge mode and lan-status: stopped\n");
+			}
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "stopped", 0);
 		}
     }

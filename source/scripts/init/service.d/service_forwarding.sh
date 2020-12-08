@@ -100,6 +100,7 @@ service_start ()
       sysevent set ${SERVICE_NAME}-status starting 
       sysevent set ${SERVICE_NAME}-errinfo 
 	  LANRESTART_STATUS=`sysevent get lan_restarted`
+	  echo "service_start : Check Lan Restart Status"
       service_init
 
       # if we are in bridge mode then make sure that the wan, lan are down

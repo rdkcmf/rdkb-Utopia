@@ -132,9 +132,11 @@ case "$1" in
       service_stop
       ;;
    ${SERVICE_NAME}-restart)
+      echo "service_init : setting lan-restarting to 1"
       sysevent set lan-restarting 1
       service_stop
       service_start
+      echo "service_init : setting lan-restarting to 0"
       sysevent set lan-restarting 0
       ;;
    erouter_mode-updated)
@@ -266,6 +268,7 @@ case "$1" in
             if [ x"started" = x`sysevent get lan-status` ]; then
 				#kill `pidof CcspHomeSecurity`
                 sysevent set lan-status stopped
+		echo_t "LAN HANDLER : setting lan status stopped"
                 #sysevent set desired_moca_link_state down
             fi
         fi
@@ -416,6 +419,7 @@ case "$1" in
         SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
         LAN_IFNAME=`sysevent get ipv4_${LAN_INST}-ifname`
 	    LAN_RESTARTED=`sysevent get lan_restarted`
+            echo_t "LAN_RESTART : Check Lan Restart Status"
 
         if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] || [ x"true" = x$LAN_RESTARTED ]; then
             if [ "$SYSEVT_lan_ipaddr_v6_prev" != "" ]; then
