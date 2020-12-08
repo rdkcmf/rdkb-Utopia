@@ -776,9 +776,11 @@ case "$1" in
       service_stop
       ;;
    ${SERVICE_NAME}-restart)
+      echo "service_init : setting lan-restarting to 1"
       sysevent set lan-restarting 1
       service_stop
       service_start
+      echo "service_init : setting lan-restarting to 0"
       sysevent set lan-restarting 0
       ;;
    docsis-initialized)

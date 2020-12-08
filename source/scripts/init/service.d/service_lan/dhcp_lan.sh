@@ -155,6 +155,7 @@ do_release_dhcp() {
       LAN_STATE=`sysevent get lan-status`
       if [ "$LAN_STATE" = "started" ] ; then
          sysevent set lan-status stopped
+         ulog dhcp_link status "setting lan status stopped"
       fi
    if [ -f "$UDHCPC_PID_FILE" ] ; then
       kill -SIGUSR2 `cat $UDHCPC_PID_FILE`
@@ -233,6 +234,7 @@ case "$1" in
             sysevent set lan_dhcp_lease
 #            sysevent set lan_dhcp_dns
             sysevent set lan-status stopped
+	    ulog dhcp_link status "setting lan status stopped"
             exit 0
          fi
          ;;
@@ -250,6 +252,7 @@ case "$1" in
          ulog dhcp_link status "$PID lan dhcp lease has expired"
          rm -f $LOG_FILE
          sysevent set lan-status stopped
+	 ulog dhcp_link status "setting lan status stopped"
 #         sysevent set dhcpc_ntp_server1
 #         sysevent set dhcpc_ntp_server2
 #         sysevent set dhcpc_ntp_server3
