@@ -40,7 +40,6 @@
 
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
-extern char g_cBox_Type[8];
 
 extern void executeCmd(char *);
 extern unsigned int mask2cidr(char *subnetMask);
@@ -759,33 +758,12 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 
 		if (((0 == net_status[0]) || (!strncmp(net_status, "stopped", 7))) && (0 != input))
 		{
-			char l_cBridge_Mode[8] = {0};
-			sysevent_get(g_iSyseventfd, g_tSysevent_token, 
-						 "bridge_mode", l_cBridge_Mode, 
-						 sizeof(l_cBridge_Mode));
-
-			get_device_props();
-			if ((!strncmp(g_cBox_Type, "XB3", 3)) && (!strncmp(l_cBridge_Mode, "0", 1)))
-			{
-                fprintf(stderr, "In Router mode:%s initialization is done here and ", LAN_IF_NAME);
-				fprintf(stderr, "%s initialization is done in cosa_start_rem.sh\n", XHS_IF_NAME);
-
-                if (4 == l3_inst) //brlan0 case
-                {
-                    snprintf(l_cL2Inst, sizeof(l_cL2Inst), "%d", l2_inst);
-                    sysevent_set(g_iSyseventfd, g_tSysevent_token, "multinet-up", l_cL2Inst, 0);
-                }
-			}
-            else
-			{
-                fprintf(stderr, "In bridge mode or Non-XB3 cases:start %s initialization\n", 
-						XHS_IF_NAME);
-
-				snprintf(l_cL2Inst, sizeof(l_cL2Inst), "%d", l2_inst);
-				sysevent_set(g_iSyseventfd, g_tSysevent_token, "multinet-up", l_cL2Inst, 0);
-			}
-        }
-    }
+			/* Changes made to improve XHome and wan uptime*/
+			fprintf(stderr, "Setting multinet-up event for %s and %s\n",LAN_IF_NAME, XHS_IF_NAME);
+			snprintf(l_cL2Inst, sizeof(l_cL2Inst), "%d", l2_inst);
+			sysevent_set(g_iSyseventfd, g_tSysevent_token, "multinet-up", l_cL2Inst, 0);
+		}
+	}
 }
 
 // This function should only be called when an instance needs to be brought 
