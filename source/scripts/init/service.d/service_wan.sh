@@ -80,7 +80,7 @@ SERVICE_NAME=wan
 
 case "$1" in
     ${SERVICE_NAME}-start)
-        service_wan start
+        nice -n -5 service_wan start
         ;;
     ${SERVICE_NAME}-stop)
         service_wan stop
