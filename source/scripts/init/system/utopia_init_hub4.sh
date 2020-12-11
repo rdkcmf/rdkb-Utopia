@@ -333,12 +333,10 @@ echo "*** HTTPS root certificate for TR69 ***"
 if [ ! -f /etc/cacert.pem ]; then
 	echo "HTTPS root certificate for TR69 is missing..."
 
-else
-	echo "Copying HTTPS root certificate for TR69"
-	if [ -f /nvram/cacert.pem ]; then
-		rm -f /nvram/cacert.pem
-	fi
-	cp -f /etc/cacert.pem /nvram/
+fi
+if [ -f /nvram/cacert.pem ]; then
+        echo "Remove HTTPS root certificate for TR69 if available in NVRAM to prevent updating cert"
+	rm -f /nvram/cacert.pem
 fi
 
 # update max number of msg in queue based on system maximum queue memory.
