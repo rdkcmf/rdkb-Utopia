@@ -28,6 +28,7 @@
 #include "syscfg/syscfg.h"
 #include "errno.h"
 #include "dhcp_server_functions.h"
+#include "print_uptime.h"
 
 #define THIS        "/usr/bin/service_dhcp"
 #define BIN			"dnsmasq"
@@ -408,7 +409,7 @@ int dhcp_server_start (char *input)
 		} else  {
                         close(fd);
                 }
-		system("print_uptime \"boot_to_ETH_uptime\"");
+		print_uptime("boot_to_ETH_uptime",NULL);
        	
 		print_with_uptime("LAN initization is complete notify SSID broadcast");
 		snprintf(l_cRpc_Cmd, sizeof(l_cRpc_Cmd), "rpcclient %s \"/bin/touch /tmp/.advertise_ssids\"", g_cAtom_Arping_IP);
@@ -430,7 +431,7 @@ int dhcp_server_start (char *input)
             {
                 close(fd);
             }
-            system("print_uptime \"boot_to_XHOME_uptime\"");
+            print_uptime("boot_to_XHOME_uptime",NULL);
         }
     }   
     else

@@ -75,6 +75,7 @@
 #else
 #define OnboardLog(...)
 #endif
+#include "print_uptime.h"
 
 #define RESOLVE_CONF_BIN_FULL_PATH  "/sbin/resolvconf"
 #define IP_UTIL_BIN_FULL_PATH "/sbin/ip.iproute2"
@@ -758,14 +759,9 @@ int handle_wan(udhcpc_script_t *pinfo)
 
     if (pinfo->wan_type && !strcmp(pinfo->wan_type,"EPON"))
     {
-        memset(buf,0,sizeof(buf));
-        result = read_cmd_output("cat /proc/uptime | awk '{ print $1 }' | cut -d\"\.\" -f1",buf,sizeof(buf));
-        if (result == 0)
-        {
-            printf("\nWan_init_complete:%s\n",buf);
-        } 
+	print_uptime("Waninit_complete", NULL);
         system("touch /tmp/wan_ready");
-        system("print_uptime \"boot_to_wan_uptime\"");
+        print_uptime("boot_to_wan_uptime",NULL);
     }
     else
     {

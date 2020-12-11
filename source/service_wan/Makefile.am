@@ -18,7 +18,7 @@
 ##########################################################################
 bin_PROGRAMS = service_wan
 
-AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/util/print_uptime 
 
 AM_LDFLAGS =  -lpthread -lz -lsecure_wrapper
 
@@ -28,4 +28,7 @@ service_wan_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                     $(top_builddir)/source/services/lib/libsrvmgr.la \
                     $(top_builddir)/source/sysevent/lib/libsysevent.la \
                     $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                    $(top_builddir)/source/ulog/libulog.la
+                    $(top_builddir)/source/ulog/libulog.la \
+		    $(top_builddir)/source/util/print_uptime/libprint_uptime.la 
+
+service_wan_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/util/print_uptime
