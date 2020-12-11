@@ -281,8 +281,11 @@ case "$1" in
 
         echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler" 
         sysevent set firewall-restart 
+	if [ -e "/usr/bin/print_uptime" ]; then
+	    /usr/bin/print_uptime "Laninit_complete"
+	fi
+
         uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
-	echo_t "Lan_init_complete:$uptime"
 	if [ -e "/usr/bin/onboarding_log" ]; then
 	    /usr/bin/onboarding_log "Lan_init_complete:$uptime"
 	fi
@@ -303,8 +306,10 @@ case "$1" in
    ;;
    
    pnm-status | bring-lan)
+	if [ -e "/usr/bin/print_uptime" ]; then
+            /usr/bin/print_uptime "Lan_init_start"
+        fi
         uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
-	echo_t "Lan_init_start:$uptime"
 	if [ -e "/usr/bin/onboarding_log" ]; then
 	    /usr/bin/onboarding_log "Lan_init_start:$uptime"
 	fi

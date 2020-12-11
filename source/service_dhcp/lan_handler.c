@@ -26,6 +26,7 @@
 #include "lan_handler.h"
 #include "util.h"
 #include <sys/time.h>
+#include "print_uptime.h"
 #ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
 #include "cimplog.h"
 #define LOGGING_MODULE "Utopia"
@@ -80,7 +81,7 @@ void bring_lan_up()
 	int uptime = 0;
 	char buffer[64]= { 0 };
 	get_dateanduptime(buffer,&uptime);
-    fprintf(stderr, "%s Lan_init_start:%d\n",buffer,uptime);
+	print_uptime("Lan_init_start", NULL);
     OnboardLog("Lan_init_start:%d\n",uptime);
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_handler_async", 
 				 l_cAsyncId, sizeof(l_cAsyncId));
@@ -474,7 +475,7 @@ void ipv4_status(int l3_inst, char *status)
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
     get_dateanduptime(buffer,&uptime);
     OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
-    fprintf(stderr, "%s Lan_init_complete:%d\n",buffer,uptime);
+    print_uptime("Laninit_complete", NULL);
     OnboardLog("Lan_init_complete:%d\n", uptime);
 }
 

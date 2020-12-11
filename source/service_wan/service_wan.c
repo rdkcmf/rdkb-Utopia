@@ -77,6 +77,7 @@
 #define OnboardLog(...)
 #endif
 #include "secure_wrapper.h"
+#include "print_uptime.h"
 
 #if defined (_PROPOSED_BUG_FIX_)
 #include <syslog.h>
@@ -629,7 +630,7 @@ static int wan_start(struct serv_wan *sw)
     FILE *fp;
     char line[64] = {0}, *cp;
     get_dateanduptime(buffer,&uptime);
-	printf("%s Wan_init_start:%d\n",buffer,uptime);
+    print_uptime("Wan_init_start", NULL);
     OnboardLog("Wan_init_start:%d\n",uptime);
 
 #if defined (INTEL_PUMA7)
@@ -837,7 +838,7 @@ static int wan_start(struct serv_wan *sw)
     if ( 0 == ret )
     {
 	system("touch /var/wan_started");
-	system("print_uptime \"boot_to_wan_uptime\"");
+	print_uptime("boot_to_wan_uptime",NULL);
     }
     else
     {
@@ -847,7 +848,7 @@ static int wan_start(struct serv_wan *sw)
 	system(str);
     }
     get_dateanduptime(buffer,&uptime);
-	printf("%s Wan_init_complete:%d\n",buffer,uptime);
+	print_uptime("Waninit_complete", NULL);
 	OnboardLog("Wan_init_complete:%d\n",uptime);
 	
     /* RDKB-24991 to handle snmpv3 based on wan-status event */

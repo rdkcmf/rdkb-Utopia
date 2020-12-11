@@ -24,6 +24,7 @@
 #include "sysevent/sysevent.h"
 #include "syscfg/syscfg.h"
 #include "lan_handler.h"
+#include "print_uptime.h"
 
 #define THIS            "/usr/bin/service_dhcp"
 #define LAN_IF_NAME     "brlan0"
@@ -701,7 +702,7 @@ void load_static_l3 (int l3_inst)
                         {
                                 close(fd);
                         }
-                        system("print_uptime \"boot_to_MOCA_uptime\"");
+                        print_uptime("boot_to_MOCA_uptime",NULL);
                 }
             }
         }

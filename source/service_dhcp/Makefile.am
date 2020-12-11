@@ -23,6 +23,7 @@ AM_LDFLAGS =  -lpthread -lz -lccsp_common $(DBUS_LIBS)
 service_dhcp_CPPFLAGS = -I$(top_srcdir)/include \
 						-I$(top_srcdir)/source/include \
 						-I$(top_srcdir)/source/util/utils \
+                                                -I$(top_srcdir)/source/util/print_uptime \
 						-I$(top_srcdir)/source/service_dhcp/include \
 						$(DBUS_CFLAGS)
 
@@ -31,5 +32,6 @@ service_dhcp_SOURCES = service_dhcp.c lan_handler.c \
                        service_ipv4.c
 
 service_dhcp_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
-        		     $(top_builddir)/source/sysevent/lib/libsysevent.la \
-					 $(top_builddir)/source/syscfg/lib/libsyscfg.la
+		     $(top_builddir)/source/sysevent/lib/libsysevent.la \
+		     $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                     $(top_builddir)/source/util/print_uptime/libprint_uptime.la 
