@@ -578,17 +578,12 @@ hotspot_down() {
     sysevent get gre_primary_async
     
     #bridgeFQDM=`psmcli get $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES`	
-	BRIDGE_INST_1=`psmcli get $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES`
-	BRIDGE_INST_2=`psmcli get $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES`
-	BRIDGE_INST_5=`psmcli get $HS_PSM_BASE.${inst}.interface.5.$GRE_PSM_BRIDGES`
-#TCCBR doesnot support BRIDGE_INST_3 and BRIDGE_INST_4, skip this after completing RDKB-20382
-	if [ "$BOX_TYPE" = "TCCBR" ]; then
-		bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_5"
-	else
-		BRIDGE_INST_3=`psmcli get $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES`
-		BRIDGE_INST_4=`psmcli get $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES`
-		bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4,$BRIDGE_INST_5"
-	fi
+    BRIDGE_INST_1=`psmcli get $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES`
+    BRIDGE_INST_2=`psmcli get $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES`
+    BRIDGE_INST_3=`psmcli get $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES`
+    BRIDGE_INST_4=`psmcli get $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES`
+    BRIDGE_INST_5=`psmcli get $HS_PSM_BASE.${inst}.interface.5.$GRE_PSM_BRIDGES`
+    bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4,$BRIDGE_INST_5"
 	
     remove_bridge_config ${inst} "`sysevent get gre_${inst}_current_bridges`"
 
@@ -626,8 +621,9 @@ hotspot_up() {
     #eval `psmcli get -e bridgeFQDM $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
 #TCCBR doesnot support BRIDGE_INST_3 and BRIDGE_INST_4, skip this after completing RDKB-20382
 	if [ "$BOX_TYPE" = "TCCBR" ]; then
-		eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_5 $HS_PSM_BASE.${inst}.interface.5.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
-                bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_5"
+		eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES BRIDGE_INST_5 $HS_PSM_BASE.${inst}.interface.5.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
+
+                bridgeFQDM="$BRIDGE_INST_1,$BRIDGE_INST_2,$BRIDGE_INST_3,$BRIDGE_INST_4,$BRIDGE_INST_5"
 	else
 		eval `psmcli get -e BRIDGE_INST_1 $HS_PSM_BASE.${inst}.interface.1.$GRE_PSM_BRIDGES BRIDGE_INST_2 $HS_PSM_BASE.${inst}.interface.2.$GRE_PSM_BRIDGES BRIDGE_INST_3 $HS_PSM_BASE.${inst}.interface.3.$GRE_PSM_BRIDGES BRIDGE_INST_4 $HS_PSM_BASE.${inst}.interface.4.$GRE_PSM_BRIDGES BRIDGE_INST_5 $HS_PSM_BASE.${inst}.interface.5.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
 
