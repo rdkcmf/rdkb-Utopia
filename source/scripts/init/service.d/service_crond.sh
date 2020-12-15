@@ -171,9 +171,6 @@ service_start ()
 
           #To monitor all wifi interface dhd dump in every 15minutes
           echo "*/15 * * * * /etc/sky/monitor_dhd_dump.sh" >> $CRONTAB_FILE
-
-	  #To monitor CcspTelemetry in every 15minutes
-          echo "*/15 * * * * /lib/rdk/dca_utility.sh" >> $CRONTAB_FILE
       fi
 
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
