@@ -37,8 +37,6 @@
 RESOLV_CONF=/etc/resolv.conf
 RESOLV_CONF_TMP="/tmp/resolv_tmp.conf"
 
-source /etc/device.properties
-
 #-----------------------------------------------------------------
 # set the resolv.conf file
 #-----------------------------------------------------------------
@@ -54,33 +52,11 @@ prepare_resolv_conf () {
        sed -i '/domain/d' "$RESOLV_CONF_TMP"
    fi
 
-   if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-	if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
-       	    sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
-   	fi
-
-	if [ "0.0.0.0" != "$NAMESERVER2" ] && [ "" != "$NAMESERVER2" ]; then
-            sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
-   	fi
-   else
        
-       if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
-           #Removing IPV4 old DNS Config.
-           interface=`sysevent get wan_ifname`
-           get_dns_number=`sysevent get ipv4_${interface}_dns_number`
-           sed -i '/domain/d' "$RESOLV_CONF_TMP"
-           sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
-                if [ "$get_dns_number" != "" ]; then
-                        counter=0;
-                        while [ $counter -lt $get_dns_number ]; do
-                        get_old_dns_server=`sysevent get ipv4_${interface}_dns_$counter`
-                        ipv4_dns_server="nameserver $get_old_dns_server"
-                        sed -i "/$ipv4_dns_server/d" "$RESOLV_CONF_TMP"
-                        let counter=counter+1
-                        done
-                fi
-       fi
+   if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
+   	sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
    fi
+
    N=""
    while read line; do
    N="${N}$line
@@ -90,29 +66,30 @@ prepare_resolv_conf () {
    rm -rf $RESOLV_CONF_TMP
 
    
-     
+   if [ x"1" = x`syscfg get staticdns_enable` ];then
+   
+         WAN_DNS=
+         if [ "" != "$WAN_DOMAIN" ] ; then
+            echo "search $WAN_DOMAIN" >> $RESOLV_CONF
+         fi
+         if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
+            echo "nameserver $NAMESERVER1" >> $RESOLV_CONF
+            WAN_DNS=`echo $WAN_DNS $NAMESERVER1`
+         fi
+         if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
+            echo "nameserver $NAMESERVER2" >> $RESOLV_CONF
+            WAN_DNS=`echo $WAN_DNS $NAMESERVER2`
+         fi
+         if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
+            echo "nameserver $NAMESERVER3" >> $RESOLV_CONF
+            WAN_DNS=`echo $WAN_DNS $NAMESERVER3`
+         fi
 
-   WAN_DNS=
-   if [ "" != "$WAN_DOMAIN" ] ; then
-      echo "search $WAN_DOMAIN" >> $RESOLV_CONF
-   fi
-   if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
-      echo "nameserver $NAMESERVER1" >> $RESOLV_CONF
-      WAN_DNS=`echo $WAN_DNS $NAMESERVER1`
-   fi
-   if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
-      echo "nameserver $NAMESERVER2" >> $RESOLV_CONF
-      WAN_DNS=`echo $WAN_DNS $NAMESERVER2`
-   fi
-   if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
-      echo "nameserver $NAMESERVER3" >> $RESOLV_CONF
-      WAN_DNS=`echo $WAN_DNS $NAMESERVER3`
+         sysevent set wan_dhcp_dns "${WAN_DNS}"
+         sysevent set dhcp_server-restart
+
    fi
 
-   sysevent set wan_dhcp_dns "${WAN_DNS}"
-   sysevent set dhcp_server-restart
-
-   echo $IPv6_NAMESERVERS >> $RESOLV_CONF
 }
 
 prepare_resolv_conf
