@@ -87,18 +87,27 @@ int backup_file (const char *bkupFile, const char *localFile);
  *   out_val  - buffer to store output value string
  *   outbufsz  - output buffer size
  * Return Values :
- *    0 on success, -1 on error
+ *    0 - success
+ *    ERR_xxx - various errors codes dependening on the failure
  */
 int syscfg_get (const char *ns, const char *name, char *out_val, int outbufsz)
 {
     char *val;
     size_t len;
 
-    if (0 == syscfg_initialized || NULL == name || NULL == out_val) {
+    if (NULL == name || NULL == out_val) {
         if (out_val != NULL) {
             out_val[0] = 0;
         }
         return -1;
+    }
+
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            out_val[0] = 0;
+            return rc;
+        }
     }
 
     val = _syscfg_get(ns, name);
@@ -140,8 +149,11 @@ int syscfg_get (const char *ns, const char *name, char *out_val, int outbufsz)
  */
 int syscfg_set (const char *ns, const char *name, const char *value)
 {
-    if (0 == syscfg_initialized || NULL == syscfg_ctx) {
-        return ERR_NOT_INITIALIZED;
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            return rc;
+        }
     }
     if (NULL == name || NULL == value) {
         return ERR_INVALID_PARAM;
@@ -165,8 +177,11 @@ int syscfg_set (const char *ns, const char *name, const char *value)
  */
 int syscfg_getall (char *buf, int bufsz, int *outsz)
 {
-    if (0 == syscfg_initialized) {
-        return ERR_NOT_INITIALIZED;
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            return rc;
+        }
     }
     if (NULL == buf) {
         return ERR_INVALID_PARAM;
@@ -191,8 +206,11 @@ int syscfg_getall (char *buf, int bufsz, int *outsz)
  */
 int syscfg_unset (const char *ns, const char *name)
 {
-    if (0 == syscfg_initialized) {
-        return ERR_NOT_INITIALIZED;
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            return rc;
+        }
     }
     if (NULL == name) {
         return ERR_INVALID_PARAM;
@@ -210,11 +228,19 @@ int syscfg_unset (const char *ns, const char *name)
  *   value  - value string to be matched
  *   out_match  - 1 is match, 0 if not
  * Return Values :
- *    0 on success, -1 on error
+ *    0 - success
+ *    ERR_xxx - various errors codes dependening on the failure
  */
 int syscfg_is_match (const char *ns, const char *name, char *value, unsigned int *out_match)
 {
-    if (0 == syscfg_initialized || NULL == name || NULL == value || NULL == out_match) {
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            return rc;
+        }
+    }
+
+    if (NULL == name || NULL == value || NULL == out_match) {
         return -1;
     }
 
@@ -241,8 +267,11 @@ int syscfg_is_match (const char *ns, const char *name, char *value, unsigned int
  */
 int syscfg_getsz (long int *used_sz, long int *max_sz)
 {
-    if (0 == syscfg_initialized) {
-        return ERR_NOT_INITIALIZED;
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            return rc;
+        }
     }
 
     return _syscfg_getsz(used_sz, max_sz);
@@ -262,15 +291,20 @@ int syscfg_getsz (long int *used_sz, long int *max_sz)
  *    Persistent store location specified during syscfg_create() is cached 
  *    in syscfg shared memory and used as the target for commit
  */
-int syscfg_commit ()
+int syscfg_commit (void)
 {
-    syscfg_shm_ctx *ctx = syscfg_ctx;
+    syscfg_shm_ctx *ctx;
     int rc;
 
-    if (0 == syscfg_initialized || NULL == ctx) {
-        return ERR_NOT_INITIALIZED;
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            return rc;
+        }
     }
   
+    ctx = syscfg_ctx;
+
     write_lock(ctx);
     commit_lock(ctx);
 
@@ -299,8 +333,15 @@ int syscfg_commit ()
  *   syscfg destroy should happen only during system shutdown.
  *   *NEVER* call this API in any other scenario!!
  */
-void syscfg_destroy ()
+void syscfg_destroy (void)
 {
+    if (syscfg_initialized == 0) {
+        int rc = syscfg_init();
+        if (rc != 0) {
+            return;
+        }
+    }
+
     if (syscfg_initialized) {
         _syscfg_destroy();
         syscfg_initialized = 0;
@@ -448,19 +489,20 @@ int syscfg_check (const char *mtd_device)
  *    ERR_INVALID_PARAM - invalid arguments
  *    ERR_IO_FAILURE - syscfg file unavailable
  * Notes         :
- *    When both file and mtd_device specified, file based storage takes
- *    precedence 
  */
-int syscfg_init ()
+int syscfg_init (void)
 {
-    ulog_init();
+    syscfg_shm_ctx *ctx;
+    int rc;
 
     if (syscfg_initialized) {
         return 0;
     }
 
-    syscfg_shm_ctx *ctx = NULL;
-    int rc = syscfg_shm_init(&ctx);
+    ulog_init();
+
+    ctx = NULL;
+    rc = syscfg_shm_init(&ctx);
     if (rc || NULL == ctx) {
 	ulog_LOG_Dbg("Error initializing shared memor");
         return rc;
@@ -861,7 +903,7 @@ static int make_ht_entry (const char *name, const char *value, shmoff_t *out_off
     return rc;
 }
 
-static void _syscfg_destroy ()
+static void _syscfg_destroy (void)
 {
     
     syscfg_shm_destroy(syscfg_ctx);
@@ -1259,7 +1301,7 @@ static void *syscfg_shm_create (store_info_t *store_info, int *out_shmid)
     return ctx;
 }
 
-static int syscfg_shm_getid ()
+static int syscfg_shm_getid (void)
 {
     key_t key;
 
