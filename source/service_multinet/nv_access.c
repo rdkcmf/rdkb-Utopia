@@ -40,6 +40,7 @@
 #include "ccsp_psm_helper.h"
 #include <ccsp_base_api.h>
 #include "ccsp_memory.h"
+#include <stdbool.h>
 #endif /* _COSA_INTEL_XB3_ARM_ */
 #ifdef MULTILAN_FEATURE
 char* typeStrings[] = {
@@ -50,7 +51,13 @@ char* typeStrings[] = {
     "SW", "Gre", "Link", "Eth", "WiFi"
 };
 #endif
-
+#if defined(MOCA_HOME_ISOLATION) && defined(MULTILAN_FEATURE)
+#if defined(INTEL_PUMA7)
+char* miInterfaceStrings[] = {"sw_5","nmoca0"};
+#elif defined(_COSA_INTEL_XB3_ARM_)
+char* miInterfaceStrings[] = {"sw_5"};
+#endif
+#endif
 
 const char* const multinet_component_id = "ccsp.multinet";
 static void* 	  bus_handle = NULL;
@@ -151,6 +158,8 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 		  i,
 		  rc;
     int   HomeIsolation_en = 0;
+    int   iterator = 0;
+    bool  skipMocaIsoInterface = false;
 
 	/* dbus init based on bus handle value */
 	if(bus_handle == NULL)
@@ -213,7 +222,20 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 					{
 						
 						MNET_DEBUG("%s, interface token %s\n" COMMA __FUNCTION__ COMMA ifToken )
+#if defined(MULTILAN_FEATURE)
+						for (iterator = 0; iterator < sizeof(miInterfaceStrings)/sizeof(*miInterfaceStrings); ++iterator) {
+							if(0 == strncmp(miInterfaceStrings[iterator], ifToken, sizeof(miInterfaceStrings[iterator])))
+							{
+								MNET_DEBUG("%s, interface token %s matches MoCA Isolation %s skipping\n" COMMA __FUNCTION__ COMMA ifToken COMMA miInterfaceStrings[iterator])
+								skipMocaIsoInterface = true;
+								break;
+							}
+						}
+
+						if(true != skipMocaIsoInterface)
+#else
 						if(0 != strcmp(ifToken,"sw_5"))
+#endif
 						{
 						strcpy(memberList[actualNumMembers].interface->name, ifToken);
 						MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
