@@ -289,7 +289,17 @@ void ConfigureMoCABridge(L2Net l2net)
     system("echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts");
     system("sysctl -w net.ipv4.conf.all.arp_announce=3");
     system("ip rule add from all iif brlan10 lookup all_lans");
+
+#if defined(MULTILAN_FEATURE)
+    system("echo 0 > /proc/sys/net/ipv4/conf/brlan10/rp_filter");
+#if defined(INTEL_PUMA7)
+    system("ip rule add from 169.254.0.0/16 iif brlan0 lookup moca");
+#else
     system("ip rule add from all iif brlan0 lookup moca");
+#endif
+#else
+    system("ip rule add from all iif brlan0 lookup moca");
+#endif
 
 }
 #endif
@@ -374,6 +384,8 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
         {
            MNET_DEBUG("brlan0 up: disabling multicast_snooping\n")
            system("echo 0 > /sys/devices/virtual/net/brlan0/bridge/multicast_snooping");
+           system("echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter");
+           system("echo 0 > /proc/sys/net/ipv4/conf/brlan0/rp_filter");
         }
 
 #endif
