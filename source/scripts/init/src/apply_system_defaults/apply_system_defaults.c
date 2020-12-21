@@ -1082,6 +1082,14 @@ void addInSysCfgdDB(char * key, char * value)
          IsPSMMigrationNeeded = 1;
       }
    }
+   if ( 0 == strcmp ( key, "Device.X_RDK_WebConfig.SupplementaryServiceUrls.Telemetry") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "TELEMETRY_INIT_URL" ) )
+      {
+         set_syscfg_partner_values( value,"TELEMETRY_INIT_URL" );
+         IsPSMMigrationNeeded = 1;
+      }
+   }
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") )
    {
       if ( 0 == IsValuePresentinSyscfgDB( "IPv6SecondaryDhcpServerOptions" ) )
@@ -1151,6 +1159,11 @@ void updateSysCfgdDB(char * key, char * value)
    if ( 0 == strcmp ( key, "Device.X_RDK_WebConfig.URL") )
    {
          set_syscfg_partner_values( value,"WebConfig_url" );
+         IsPSMMigrationNeeded = 1;
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDK_WebConfig.SupplementaryServiceUrls.Telemetry") )
+   {
+         set_syscfg_partner_values( value,"telemetry_url" );
          IsPSMMigrationNeeded = 1;
    }
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
@@ -1735,6 +1748,23 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 						else
 						{
 							APPLY_PRINT("%s - webconfigurl Value is NULL\n", __FUNCTION__ );
+						}
+					}
+
+					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDK_WebConfig.SupplementaryServiceUrls.Telemetry"), "ActiveValue");
+					if ( paramObjVal != NULL )
+					{
+						char *telemetryurl = NULL;
+						telemetryurl = paramObjVal->valuestring;
+
+						if (telemetryurl != NULL)
+						{
+							set_syscfg_partner_values(telemetryurl,"TELEMETRY_INIT_URL");
+							telemetryurl = NULL;
+						}
+						else
+						{
+							APPLY_PRINT("%s - telemetryurl Value is NULL\n", __FUNCTION__ );
 						}
 					}
 
