@@ -62,12 +62,6 @@ TR69TLVFILE="/nvram/TLVData.bin"
 REVERTFLAG="/nvram/reverted"
 MAINT_START="/nvram/.FirmwareUpgradeStartTime"
 MAINT_END="/nvram/.FirmwareUpgradeEndTime"
-# determine the distro type (GAP or GNP)
-if [ -n "$(grep TPG /etc/drg_version.txt)" ]; then
-    distro=GAP
-else
-    distro=GNP
-fi
 
 echo_t "*******************************************************************"
 echo_t "*                                                                  "
@@ -130,36 +124,6 @@ fi
 #MODULE_PATH=/lib/modules/`uname -r`/
 #insmod $MODULE_PATH/drivers/net/erouter_ni.ko netdevname=erouter0
 
-#if [ "$distro" = "GAP" ]; then
-#    #
-#    # ---- GAP: boot sequence (TPG)
-#    #
-#
-#    sh /etc/rcS.d/11platform-init.sh
-#
-#    echo_t "*******************************************************************"
-#    echo_t "*                                                                  "
-#    echo_t "* Booting Cisco DRG `getFlashValue model -d`                       "
-#    echo_t "* Hardware ID: `getFlashValue hwid -d` Hardware Version: `getFlashValue hwversion -d`"
-#    echo_t "* Unit Serial Number: `getFlashValue unitsn`                       "
-#    echo_t "* Board Serial Number: `getFlashValue boardsn`                     "
-#    echo_t "* Manufacture Date: `getFlashValue mfgdate -d`                     "
-#    echo_t "* Software Version: `cat /etc/drg_version.txt`                     "
-#    echo_t "*                                                                  "
-#    echo_t "*******************************************************************"
-#
-#else
-#    #
-#    # ---- GNP: boot sequence (CNS)
-#    #
-#
-#    echo_t "*******************************************************************"
-#    echo_t "* Software Version: `cat /etc/drg_version.txt`                     "
-#    echo_t "*******************************************************************"
-#
-#    insmod /lib/modules/`uname -r`/kernel/drivers/wifi/wl.ko
-#    cp /etc/utopia/service.d/nvram.dat /tmp
-#fi
 echo_t "Starting log module.."
 /usr/sbin/log_start.sh
 
