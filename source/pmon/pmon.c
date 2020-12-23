@@ -210,6 +210,7 @@ int main (int argc, char *argv[])
 {
     FILE *fp;
     char buf[512], *p_buf;
+    char buf2[512];
     char *proc_name, *pid_file, *restart_cmd;
 
     if (1 == argc) {
@@ -220,6 +221,8 @@ int main (int argc, char *argv[])
         return 1;
     }
     while((p_buf = fgets(buf, sizeof(buf), fp))) {
+        size_t len = strlen(buf);
+        memcpy(buf2, buf, len + 1);
         str_trim(&p_buf);
         proc_name = strsep(&p_buf, " \t\n");
         str_trim(&p_buf);
@@ -228,7 +231,9 @@ int main (int argc, char *argv[])
         restart_cmd = strsep(&p_buf, "\n");
         if (NULL == proc_name || NULL == pid_file || NULL == restart_cmd || 
             0 == strlen(proc_name) || 0 == strlen(pid_file) || 0 == strlen(restart_cmd)) {
-            printf("pmon: skip malformed config line '%s'\n", buf);
+            if ((len > 0) && (buf2[len - 1] == '\n'))
+                buf2[len - 1] = 0;
+            printf("pmon: skip malformed config line '%s'\n", buf2);
             continue;
         }
         printf("%s: proc_name '%s', pid_file '%s', restart_cmd '%s'\n", __FUNCTION__, proc_name, pid_file, restart_cmd);
