@@ -172,8 +172,6 @@ fi
 echo_t "Starting log module.."
 /fss/gw/usr/sbin/log_start.sh
 
-echo_t "[utopia][init] Starting udev.."
-
 # Spawn telnet daemon only for production images
 #if [ $debug_build -ne 0 ]; then
     #echo_t "[utopia][init] Starting telnetd"
