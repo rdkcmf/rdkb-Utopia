@@ -82,7 +82,7 @@ static int str_isdigit (const char *str)
 
 static void str_trim (char **p)
 {
-    if (NULL == p)
+    if ((p == NULL) || (*p == NULL))
         return;
     while (**p == ' ' || **p == '\t') {
         (*p)++;
