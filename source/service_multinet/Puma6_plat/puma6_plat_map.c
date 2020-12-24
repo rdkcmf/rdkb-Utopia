@@ -201,7 +201,7 @@ int plat_addImplicitMembers(PL2Net nv_net, PMember memberBuf) {
  * Integrators may utilize any approach to expedite mapping, such as port naming conventions.
  */
 int mapToPlat(PNetInterface iface) {
-    int portIndex;
+    int portIndex=0;
     if (!strcmp("WiFi", iface->type->name)) {
         sscanf(iface->name, "ath%d", &portIndex);
         iface->map = wifiPortList + portIndex;
@@ -209,8 +209,11 @@ int mapToPlat(PNetInterface iface) {
         if (!strcmp("l2sd0", iface->name))
             iface->map = &npLinkPort;
     }*/ else if (!strcmp("SW", iface->type->name)) {
-        sscanf(iface->name, "sw_%d", &portIndex);
-        iface->map = accessSwPortList + (portIndex - 1);
+	if ( 1 == sscanf(iface->name, "sw_%d", &portIndex) ||
+	     1 == sscanf(iface->name, "eth%d", &portIndex) )
+	    iface->map = accessSwPortList + (portIndex - 1);
+	else
+	    iface->map = NULL;
     } else if (!strcmp("Moca", iface->type->name)) {
         
     } else if (!strcmp("Gre", iface->type->name)) {
