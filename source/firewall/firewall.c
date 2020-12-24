@@ -5172,7 +5172,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
    // RG-IP: erouter0
 #if defined(CONFIG_CCSP_WAN_MGMT)
    rc = syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
-#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS) && !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
+#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS) && !defined(_PLATFORM_TURRIS_)
    tmpQuery[0] = '\0';
    ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
    if(ret == 0)
