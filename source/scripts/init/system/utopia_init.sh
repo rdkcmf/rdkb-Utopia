@@ -108,11 +108,24 @@ fi
 
 echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 
+
 if [ "$BOX_TYPE" = "XB3" ];then
     RESERVED_PORTS="58081"
     sysctl -w net.ipv4.ip_local_reserved_ports="$RESERVED_PORTS"
 
 fi
+
+# Do not accept ICMP redirects and source routed packets (prevent MITM attacks)
+
+if [ "$BOX_TYPE" = "XB3" ];then
+    conf_file="/etc/traffic-filter.conf"
+    if [ -e $conf_file ] 
+    then
+        echo_t "Setup sysctl config from file \"$conf_file\" "
+        sysctl -p $conf_file
+    fi
+fi
+
 #RDKB-9061 Fix
 #echo 4096 > /proc/sys/net/ipv6/neigh/default/gc_thresh1
 #echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
