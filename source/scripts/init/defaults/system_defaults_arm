@@ -1324,3 +1324,7 @@ $ddns_server_retryinterval_4=660
 $ddns_server_checkinterval_5=0
 $ddns_server_maxretries_5=10
 $ddns_server_retryinterval_5=660
+
+#Control firmware update exclusion
+$AutoExcludedEnabled=false
+$AutoExcludedURL=https://xconf.xcal.tv/xconf/swu/stb
