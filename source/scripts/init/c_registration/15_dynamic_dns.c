@@ -32,15 +32,15 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 **********************************************************************/
-#if !defined(DDNS_BROADBANDFORUM)
+#if defined(DDNS_BROADBANDFORUM)
 #include <stdio.h>
 #include "srvmgr.h"
 
-const char* SERVICE_NAME            = "ddns";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ddns.sh";
+const char* SERVICE_NAME            = "dynamic_dns";
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_dynamic_dns.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-                                        "wan-status|/etc/utopia/service.d/service_ddns.sh",
-                                        "current_wan_ipaddr|/etc/utopia/service.d/service_ddns.sh",
+                                        "wan-status|/etc/utopia/service.d/service_dynamic_dns.sh",
+                                        "current_wan_ipaddr|/etc/utopia/service.d/service_dynamic_dns.sh",
                                         NULL
                                       };
 
@@ -54,7 +54,7 @@ void srv_unregister(void) {
 #endif
 int main(int argc, char **argv)
 {
-#if !defined(DDNS_BROADBANDFORUM)
+#if defined(DDNS_BROADBANDFORUM)
    cmd_type_t choice = parse_cmd_line(argc, argv);
    
    switch(choice) {
@@ -75,4 +75,3 @@ int main(int argc, char **argv)
 #endif
    return(0);
 }
-
