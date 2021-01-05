@@ -191,8 +191,8 @@ do_unregister()
 
 	for ct in $(seq 1 $COUNT)
 	do
-		FEATURE=$(sysevent get pmon_feature_"$ct")
-		if [ "$FEATURE" = "$1" ]
+		feature=$(sysevent get pmon_feature_"$ct")
+		if [ "$feature" = "$1" ]
 		then
 			sysevent set pmon_feature_"$ct"
 			sysevent set pmon_proc_"$feature"
