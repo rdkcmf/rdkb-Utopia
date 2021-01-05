@@ -434,7 +434,9 @@ static int dhcp_start(struct serv_wan *sw)
      }
     #endif
 #else
+    #if !defined (_HUB4_PRODUCT_REQ_)
         err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+    #endif
 #endif
 
     }
