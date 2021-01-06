@@ -1150,3 +1150,7 @@ $AutoExcludedURL=https://xconf.xcal.tv/xconf/swu/stb
 
 #HWSelfTest Enable(Default =false)
 $hwHealthTest=false
+
+#TDK Enable default value
+$TDKEnable=false
+
