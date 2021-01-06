@@ -44,6 +44,7 @@ source /etc/device.properties
 prepare_hostname () {
    HOSTNAME=`syscfg get hostname`
    LAN_IPADDR=`sysevent get current_lan_ipaddr`
+   SYSEVT_lan_ipaddr_v6=`sysevent get lan_ipaddr_v6`
    LOCDOMAIN_NAME=`syscfg get SecureWebUI_LocalFqdn`
    SECUREWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
 
@@ -69,7 +70,12 @@ prepare_hostname () {
    echo "::1             localhost" >> $HOSTS_FILE
    if [ "$SECUREWEBUI_ENABLED" = "true" ]; then
        if [ ! -z $LOCDOMAIN_NAME ]; then
-           echo "$LAN_IPADDR""         ""$LOCDOMAIN_NAME"  >> $HOSTS_FILE
+           if [ ! -z $LAN_IPADDR ]; then
+               echo "$LAN_IPADDR""         ""$LOCDOMAIN_NAME"  >> $HOSTS_FILE
+           fi
+           if [ ! -z $SYSEVT_lan_ipaddr_v6 ]; then
+               echo "$SYSEVT_lan_ipaddr_v6""         ""$LOCDOMAIN_NAME"  >> $HOSTS_FILE
+           fi
        fi
    fi
 
