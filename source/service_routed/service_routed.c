@@ -450,6 +450,33 @@ static int gen_zebra_conf(int sefd, token_t setok)
     {
         syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
         syscfg_commit();
+         
+        FILE *fptr = NULL;
+        char loc_domain[128] = {0};
+        char loc_ip6[256] = {0};
+        sysevent_get(sefd, setok, "lan_ipaddr_v6", loc_ip6, sizeof(loc_ip6));
+        syscfg_get(NULL, "SecureWebUI_LocalFqdn", loc_domain, sizeof(loc_domain));
+        FILE *ptr;
+        char buff[10];
+        if ((ptr=v_secure_popen("r", "grep %s /etc/hosts",loc_ip6))!=NULL)
+        if (NULL != ptr)
+        {
+            if (NULL == fgets(buff, 9, ptr)) {
+                fptr =fopen("/etc/hosts", "a");
+                if (fptr != NULL)
+                {
+                    if ( loc_ip6 != NULL)
+                    {
+                        if (loc_domain != NULL)
+                        {
+                            fprintf(fptr, "%s      %s\n",loc_ip6,loc_domain);
+                        }
+                    }
+                    fclose(fptr);
+                }
+            }
+            v_secure_pclose(ptr);
+        }
     }
     else
     {
