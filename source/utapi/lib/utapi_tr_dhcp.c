@@ -293,19 +293,35 @@ int Utopia_GetDhcpV4ServerPoolInfo(UtopiaContext *ctx, unsigned long ulInstanceN
         return ERR_SYSEVENT_CONN;
     }
 
+    memset(dhcp_status,0,sizeof(dhcp_status));
     /* Get DHCP Server Status */
     sysevent_get(se_fd, se_token, "dhcp_server-status", dhcp_status, sizeof(dhcp_status));
+    Utopia_GetInt(ctx, UtopiaValue_DHCP_ServerEnabled, &iVal);
 
     if (0 == strcmp(dhcp_status, "started")) {
         info_t->Status = DHCP_SERVER_POOL_STATUS_Enabled;
     }else if (0 == strcmp(dhcp_status, "error")) {
-        Utopia_GetInt(ctx, UtopiaValue_DHCP_ServerEnabled, &iVal);
         if(iVal)
             info_t->Status = DHCP_SERVER_POOL_STATUS_Error_Misconfigured; /*It is enabled but still is stopped */
         else
             info_t->Status = DHCP_SERVER_POOL_STATUS_Disabled; /* It is disabled */
     } else {
         info_t->Status = DHCP_SERVER_POOL_STATUS_Error;
+	if (0 == strcmp(dhcp_status, "stopped"))
+        {
+	    info_t->Status = DHCP_SERVER_POOL_STATUS_Disabled; /* It is disabled */
+	}
+	if (0 == strlen(dhcp_status))
+	{
+	    if(iVal)
+	    {
+	        info_t->Status = DHCP_SERVER_POOL_STATUS_Enabled;
+            }   
+	    else
+	    {
+	        info_t->Status = DHCP_SERVER_POOL_STATUS_Disabled; /* It is disabled */
+	    }
+	}
     }
 
     return SUCCESS;
