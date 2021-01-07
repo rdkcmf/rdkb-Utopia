@@ -900,6 +900,7 @@ $Advsecurity_Softflowd=0
 $Adv_PCActivate=0
 $Adv_PPActivate=0
 $Advsecurity_LoggingPeriod=1440
+$Advsecurity_LogLevel=2
 $Advsecurity_LookupTimeout=350
 $Adv_PrivProtRFCEnable=1
 $Adv_PCRFCEnable=1
