@@ -348,7 +348,7 @@ static int set_syscfg_defaults (void)
          // this is an empty line
       } else if ('$' == line[0]) {
          if (0 !=  parse_line(line, &name, &value)) {
-            printf("[utopia] [error] set_defaults failed to set syscfg (%s)\n", line);
+            printf("[utopia] [error] set_syscfg_defaults failed to set syscfg (%s)\n", line);
          } else { 
             set_syscfg(trim(name), trim(value));
          }
@@ -356,7 +356,7 @@ static int set_syscfg_defaults (void)
          // this is a sysevent line
       } else {
          // this is a malformed line
-         printf("[utopia] set_defaults found a malformed line (%s)\n", line);
+         printf("[utopia] set_syscfg_defaults found a malformed line (%s)\n", line);
       }
    }
    fclose(fp); 
@@ -400,7 +400,7 @@ static int set_sysevent_defaults (void)
          // this is a syscfg line
       } else if ('@' == line[0]) {
          if (0 !=  parse_line(line, &name, &value)) {
-            printf("[utopia] set_defaults failed to set sysevent (%s)\n", line);
+            printf("[utopia] set_sysevent_defaults failed to set sysevent (%s)\n", line);
          } else { 
             char *val = trim(value);
             char *flagstr;
@@ -420,7 +420,7 @@ static int set_sysevent_defaults (void)
          }
       } else {
          // this is a malformed line
-         printf("[utopia] set_defaults found a malformed line (%s)\n", line);
+         printf("[utopia] set_sysevent_defaults found a malformed line (%s)\n", line);
       }
    }
    fclose(fp); 
@@ -584,14 +584,14 @@ int set_syscfg_partner_values(char *pValue,char *param)
 {
 	if ((syscfg_set(NULL, param, pValue) != 0)) 
 	{
-        	APPLY_PRINT("setPartnerId : syscfg_set failed\n");
+        	APPLY_PRINT("set_syscfg_partner_values : syscfg_set failed\n");
 		return ;
 	}
 	else 
 	{
        	 	if (syscfg_commit() != 0) 
 		{
-			APPLY_PRINT("setPartnerId : syscfg_commit failed\n");
+			APPLY_PRINT("set_syscfg_partner_values : syscfg_commit failed\n");
 			return ;
 		}
 		return 0;
@@ -1452,10 +1452,13 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
    return 0;
 }
 
+#define RETRY_COUNT 3
+
 int apply_partnerId_default_values(char *data, char *PartnerID)
 {
 	cJSON 	*partnerObj 	= NULL;
 	cJSON 	*json 			= NULL;
+	cJSON	*paramObjVal	= NULL;
 	char 	*userName 		= NULL, 
 		    *defaultAdminIP = NULL,	 
 		    *passWord 		= NULL,	 
@@ -1468,8 +1471,15 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
         *startupipmode = NULL,
         *pridhcpoption = NULL,
         *secdhcpoption = NULL;
-	int	    isNeedToApplyPartnersDefault = 1;
-	int	    isNeedToApplyPartnersPSMDefault = 0;	
+    int	    isNeedToApplyPartnersDefault = 1;
+    int	    isNeedToApplyPartnersPSMDefault = 0;
+    char    ntpServer1[64]     = {0};
+    char    *jsonNTPServer1    = NULL;
+    cJSON   *alwaysPartnerObj  = NULL;
+    cJSON   *alwaysJson        = NULL;
+    cJSON   *alwaysParamObjVal = NULL;
+    char    *error_ptr         = NULL;
+    int     iterator           = 0;
 
 	/*
 	  * Case 1:
@@ -1521,7 +1531,6 @@ int apply_partnerId_default_values(char *data, char *PartnerID)
 		else
 		{
 			int isThisComcastPartner = 0;
-			cJSON *paramObjVal = NULL;
 			//Check whether this is comcast partner or not
 			if( 0 == strcmp( "comcast", PartnerID ) )
 			{
@@ -1990,8 +1999,85 @@ if ( paramObjVal != NULL )
 			}
 		}
 	}
+
+    //Objects that always need to be checked
+    // RDKB-28869 With Two Box Solutions NTP is now critical. JSON NTP Server 1 value must always be added if nothing exists for XBs to come online
+    for (iterator = 0; iterator <= RETRY_COUNT; iterator++)
+    {
+       if (   ( 0 == syscfg_get(NULL, "ntp_server1", ntpServer1, sizeof(ntpServer1)))
+           || (RETRY_COUNT == iterator)
+       )
+       {
+          if(   (0 == strncmp(ntpServer1, "no_ntp_address", sizeof(ntpServer1)))
+             || (0 == strnlen(ntpServer1, sizeof(ntpServer1)))
+          )
+          {
+             alwaysJson = cJSON_Parse( data );
+             if( !alwaysJson ) 
+             {
+                error_ptr = cJSON_GetErrorPtr();
+                if (error_ptr != NULL)
+                {
+                   APPLY_PRINT(  "%s-%d : json file parser error at %s\n", __FUNCTION__,__LINE__, error_ptr);
+                }
+                else
+                {
+                   APPLY_PRINT(  "%s-%d : json file parser error\n", __FUNCTION__,__LINE__ );
+                }
+                return;
+             } 
+             else
+             {
+                APPLY_PRINT("%s - Applying  %s default ntp_server1 configuration\n", __FUNCTION__, PartnerID );
+                alwaysPartnerObj = cJSON_GetObjectItem( alwaysJson, PartnerID );
+
+                if(NULL != alwaysPartnerObj)
+                {
+                   /* NTP Server1 is blank set JSON value */
+                   alwaysParamObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( alwaysPartnerObj, "Device.Time.NTPServer1"), "ActiveValue");
+
+                   if ( alwaysParamObjVal != NULL )
+                   {
+                      jsonNTPServer1 = alwaysParamObjVal->valuestring;
+
+                      if(jsonNTPServer1 != NULL)
+                      {
+                         set_syscfg_partner_values(jsonNTPServer1,"ntp_server1");
+                         APPLY_PRINT(" %s ntp_server1 set to json value:%s\n", __FUNCTION__, jsonNTPServer1);
+                         jsonNTPServer1 = NULL;
+                      }
+                      else
+                      {
+                         APPLY_PRINT("%s - jsonNTPServer1 Value is NULL\n", __FUNCTION__ );
+                      }
+                   } //if ( alwaysParamObjVal != NULL )
+                   else
+                   {
+                      APPLY_PRINT("%s - alwaysParamObjVal Object is NULL\n", __FUNCTION__ );
+                   }
+                } //if(NULL == alwaysPartnerObj)
+                else
+                {
+                   APPLY_PRINT("%s - alwaysPartnerObj Object is NULL\n", __FUNCTION__ );
+                }
+             } //if( !alwaysJson )
+          }
+          else
+          {
+             APPLY_PRINT(" %s ntp_server1 not default\n", __FUNCTION__);
+          }
+
+          break;
+       }
+       else
+       {
+          APPLY_PRINT("%s syscfg_get %d for ntp_server1 failed!\n", __FUNCTION__, iterator+1);
+          sleep(1);
+       }
+    } //For Loop
+
 }
-#define RETRY_COUNT 3
+
 static void getPartnerIdWithRetry(char* buf, char* PartnerID)
 {
         int i;
