@@ -114,24 +114,22 @@ service_start ()
 # Setting Time status as disabled
       syscfg set ntp_status 1
       sysevent set ${SERVICE_NAME}-status "stopped"
-      if [ "x`pidof $BIN`" = "x" ]
-      then
-		if [ "x$MULTI_CORE" = "xyes" ] && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]
-		then
-			echo_t "SERVICE_NTPD : NTPD is not running, starting in Server mode" >> $NTPD_LOG_NAME
-			cp $NTP_CONF $NTP_CONF_TMP
-			echo "interface ignore wildcard" >> $NTP_CONF_TMP
-			echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
+      if [ "x`pidof $BIN`" = "x" ]; then
+          if [ "x$MULTI_CORE" = "xyes" ] && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
+             echo_t "SERVICE_NTPD : NTPD is not running, starting in Server mode" >> $NTPD_LOG_NAME
+             cp $NTP_CONF $NTP_CONF_TMP
+             echo "interface ignore wildcard" >> $NTP_CONF_TMP
+             echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
 
-			if [ "x$BOX_TYPE" = "xXB3" ]; then
-				ntpd -c $NTP_CONF_TMP -l $NTPD_LOG_NAME
-			else
-				systemctl start ntpd.service
-			fi
-		fi
+             if [ "x$BOX_TYPE" = "xXB3" ]; then
+                ntpd -c $NTP_CONF_TMP -l $NTPD_LOG_NAME
+             else
+                systemctl start ntpd.service
+             fi
+          fi
       fi
-      return 0
 
+      return 0
    fi
 
 # Setting Time status as Unsynchronized
@@ -150,7 +148,7 @@ service_start ()
        # Start NTP Config Creation with Multiple Server Setup
        echo_t "SERVICE_NTPD : Creating NTP config with New NTP Enabled" >> $NTPD_LOG_NAME
        if [ "x$SYSCFG_ntp_server1" != "x" ] && [ "x$SYSCFG_ntp_server1" != "xno_ntp_address" ]; then
-           echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
+           echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server2" != "x" ] && [ "x$SYSCFG_ntp_server2" != "xno_ntp_address" ]; then
@@ -171,180 +169,168 @@ service_start ()
        fi
 
        if [ "x$VALID_SERVER" = "x" ]; then
-           echo_t "SERVICE_NTPD : NTP SERVERS 1-5 not available, not starting ntpd" >> $NTPD_LOG_NAME
-           return 0
+           if [ -f "/nvram/ETHWAN_ENABLE" ]; then
+              echo_t "SERVICE_NTPD : NTP SERVERS 1-5 not available, using the default ntp server." >> $NTPD_LOG_NAME
+              SYSCFG_ntp_server1="time1.google.com"
+           else
+              echo_t "SERVICE_NTPD : NTP SERVERS 1-5 not available, not starting ntpd" >> $NTPD_LOG_NAME
+              return 0
+           fi
        fi
    else
 
-       if [ "x$SYSCFG_ntp_server1" = "x" ] || [ "x$SYSCFG_ntp_server1" = "xno_ntp_address" ]; then
-	   if [ "x$PARTNER_ID" = "x" ]; then
-		echo_t "SERVICE_NTPD : PARTNER_ID is null, using the default ntp server." >> $NTPD_LOG_NAME
-		SYSCFG_ntp_server1="time.xfinity.com"
-	   else
-		echo_t "SERVICE_NTPD : NTP SERVER 1 not available, not starting ntpd" >> $NTPD_LOG_NAME
-		return 0
-           fi
+       PARTNER_ID=`syscfg get PartnerID`
 
+       if [ "x$SYSCFG_ntp_server1" = "x" ] || [ "x$SYSCFG_ntp_server1" = "xno_ntp_address" ]; then
+           if [ "x$PARTNER_ID" = "x" ]; then
+               echo_t "SERVICE_NTPD : NTP SERVER 1 not available & PARTNER_ID is null, using the default ntp server." >> $NTPD_LOG_NAME
+               SYSCFG_ntp_server1="time1.google.com"
+           else
+               if [ -f "/nvram/ETHWAN_ENABLE" ]; then
+                  echo_t "SERVICE_NTPD : NTP SERVER 1 not available, using the default ntp server." >> $NTPD_LOG_NAME
+                  SYSCFG_ntp_server1="time1.google.com"
+               else
+                  echo_t "SERVICE_NTPD : NTP SERVER 1 not available, not starting ntpd" >> $NTPD_LOG_NAME
+                  return 0
+               fi
+           fi
        fi
 
-	SYSCFG_ntp_server1=`echo $SYSCFG_ntp_server1 | cut -d ":" -f 1`
-	# Start NTP Config Creation with Legacy Single Server Setup
-	echo_t "SERVICE_NTPD : Creating NTP config" >> $NTPD_LOG_NAME
-	if [ -f "/nvram/ETHWAN_ENABLE" ];then
-            if [ "$BOX_TYPE" = "HUB4" ]; then
-            PARTER_ID=`syscfg get PartnerID`
-            if [ "$PARTER_ID" = "sky-italia" ]; then
-                echo "server ntp1.it.isp.sky true" >> $NTP_CONF_TMP # adding SKY Italy NTP server
-                echo "server ntp2.it.isp.sky" >> $NTP_CONF_TMP # adding SKY NTP server for fallback case.
-                echo "server time1.google.com" >> $NTP_CONF_TMP # adding Google public NTP server for fallback case.
-            else
-                echo "server ntp1.isp.sky.com true" >> $NTP_CONF_TMP # adding SKY UK NTP server
-                echo "server time1.google.com" >> $NTP_CONF_TMP # adding Google public NTP server for fallback case.
-            fi
-            else
-                echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
-                echo "server time1.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-                echo "server time2.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-                echo "server time3.google.com" >> $NTP_CONF_TMP # adding open source NTP server URL for fallback case.
-            fi
-        else
-	    echo "server $SYSCFG_ntp_server1" >> $NTP_CONF_TMP
-	fi
+       # Start NTP Config Creation with Legacy Single Server Setup
+       echo_t "SERVICE_NTPD : Creating NTP config" >> $NTPD_LOG_NAME
+
+       echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
+
    fi # if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
 
-	# Continue with Rest of NTP Config Creation
-	if [ "x$SOURCE_PING_INTF" == "x" ]
-	then
-		MASK=ifconfig $SOURCE_PING_INTF | sed -rn '2s/ .*:(.*)$/\1/p'
-	else
-		MASK="255.255.255.0"
-	fi
+   # Continue with Rest of NTP Config Creation
+   if [ "x$SOURCE_PING_INTF" == "x" ]; then
+       MASK=ifconfig $SOURCE_PING_INTF | sed -rn '2s/ .*:(.*)$/\1/p'
+   else
+       MASK="255.255.255.0"
+   fi
+
+   WAN_IP=""
+   QUICK_SYNC_WAN_IP=""
 	
-	WAN_IP=""
-	QUICK_SYNC_WAN_IP=""
-	
-	if [ "$NTPD_INTERFACE" == "erouter0" ]; then
-		sleep 30
-		if [ -f "/nvram/ETHWAN_ENABLE" ];then
-			# Quick Sync doesn't allow NIC Rules in Configuration File So Need to Pass IP on Command Line
-			# but need NIC Rule for NTPD Daemon Mode
-			erouter_wait QUICK_SYNC_WAN_IP quickSync
-			erouter_wait WAN_IP
-		else
-			erouter_wait WAN_IP
-		fi
-	else
-		PROVISIONED_TYPE=""
-		PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
-		
-		if [ "$PROVISIONED_TYPE" == "IPV4" ]; then
-			WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
-		else
-			WAN_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
-		fi
-	fi
-	
-	if [ -f "/nvram/ETHWAN_ENABLE" ];then
-		# Quick Sync doesn't allow NIC Rules in Configuration File So create Quick Sync Version Prior to writing NIC rules.
-		echo_t "SERVICE_NTPD : Creating NTP Quick Sync Conf file: $NTP_CONF_QUICK_SYNC" >> $NTPD_LOG_NAME
-		cp $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC  
-	fi #if [ -f "/nvram/ETHWAN_ENABLE" ];then
+   if [ "$NTPD_INTERFACE" == "erouter0" ]; then
+       sleep 30
+       # With Newer Kernels Devices are seeing more 0x41 Kernel Errors. Online resources state the gap is too large to sync.
+       # Recommendation is to run ntpdate or a quick sync before daemon. 
+       erouter_wait QUICK_SYNC_WAN_IP quickSync
+       erouter_wait WAN_IP
+   else
+       PROVISIONED_TYPE=""
+       PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
 
-	if [ "x$BOX_TYPE" != "xHUB4" ]  && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ] ; then
-		echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
-	fi
-	echo "restrict default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
-	echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
-	echo "restrict 127.0.0.1" >> $NTP_CONF_TMP
-	echo "restrict -6 ::1" >> $NTP_CONF_TMP
-	echo "interface ignore wildcard" >> $NTP_CONF_TMP
+       if [ "$PROVISIONED_TYPE" == "IPV4" ]; then
+           WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+       else
+           WAN_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+       fi
+   fi
 
-   	if [ "$WAN_IP" != "" ]
-        then
-		echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
-        fi  
+   if [ "$QUICK_SYNC_WAN_IP" != "" ]; then
+       # Quick Sync doesn't allow NIC Rules in Configuration File So create Quick Sync Version Prior to writing NIC rules.
+       echo_t "SERVICE_NTPD : Creating NTP Quick Sync Conf file: $NTP_CONF_QUICK_SYNC" >> $NTPD_LOG_NAME
+       cp $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC  
+   fi #if [ "$QUICK_SYNC_WAN_IP" != "" ]; then
 
-        if [ "x$BOX_TYPE" = "xHUB4" ]; then
-        # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
-            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
-            if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
-                CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
-                if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
-                    echo "interface listen $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
-                fi
-            fi
-        fi
+   if [ "x$BOX_TYPE" != "xHUB4" ]  && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ] ; then
+       echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
+   fi
 
-    if [ "x$MULTI_CORE" = "xyes" ]  && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]
-    then
-	   echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
-    fi
+   echo "restrict default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
+   echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
+   echo "restrict 127.0.0.1" >> $NTP_CONF_TMP
+   echo "restrict -6 ::1" >> $NTP_CONF_TMP
+   echo "interface ignore wildcard" >> $NTP_CONF_TMP
 
-	if [ "x$BOX_TYPE" = "xXB3" ]; then
-		kill -9 `pidof $BIN` > /dev/null 2>&1
-		echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
-		ntpd -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -g
-	else
-		systemctl stop ntpd.service
-		if [ -f "/nvram/ETHWAN_ENABLE" ];then
-                echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
-                killall ntpd ### This to ensure there is no instance of NTPD running because of multiple wan-start events
-                sleep 5
-                if [ -n "$QUICK_SYNC_WAN_IP" ]; then
-                	# Try and Force Quick Sync to Run on a single interface
-                	echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-                    if [ "x$BOX_TYPE" = "xHUB4" ]; then
-                        if [ $EROUTER_IPV6_UP -eq 1 ];then
-                            ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
-                        else
-                            ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -4 -l $NTPD_LOG_NAME & sleep 60 # We have only v4 IP. Restrict to v4.
-                        fi
-                    else
-                        ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
-                    fi
-                else
-                	echo_t "SERVICE_NTPD : Quick Sync Failed No Erouter0 IP Address" >> $NTPD_LOG_NAME
-                fi
-                echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
-                killall ntpd
-                sysevent set ntp_time_sync 1
-		fi
+   if [ "$WAN_IP" != "" ]; then
+       echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
+   fi  
 
-		echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
-		systemctl start ntpd.service
-                if [ "x$BOX_TYPE" = "xHUB4" ]; then
-		    sysevent set firewall-restart
-                fi
-	fi
+   if [ "x$BOX_TYPE" = "xHUB4" ]; then
+       # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
+       CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
 
-    ret_val=$?
-    if [ "$ret_val" -ne 0 ]
-    then
+       if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
+           CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
+           if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
+               echo "interface listen $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
+           fi
+       fi
+   fi
+
+   if [ "x$MULTI_CORE" = "xyes" ]  && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
+       echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
+   fi
+
+   if [ "x$BOX_TYPE" = "xXB3" ]; then
+       kill -9 `pidof $BIN` > /dev/null 2>&1
+       echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
+       $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -gd
+   else
+       systemctl stop $BIN
+
+       echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
+       killall $BIN ### This to ensure there is no instance of NTPD running because of multiple wan-start events
+       sleep 5
+
+       if [ -n "$QUICK_SYNC_WAN_IP" ]; then
+           # Try and Force Quick Sync to Run on a single interface
+           echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
+           if [ "x$BOX_TYPE" = "xHUB4" ]; then
+               if [ $EROUTER_IPV6_UP -eq 1 ]; then
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+               else
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -4 -l $NTPD_LOG_NAME & sleep 120 # We have only v4 IP. Restrict to v4.
+               fi
+           else
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+           fi
+       else
+           echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
+       fi
+
+       echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
+       killall $BIN
+       sysevent set ntp_time_sync 1
+
+       echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
+       systemctl start $BIN
+
+       if [ "x$BOX_TYPE" = "xHUB4" ]; then
+           sysevent set firewall-restart
+       fi
+   fi
+
+   ret_val=$?
+   if [ "$ret_val" -ne 0 ]; then
        echo_t "SERVICE_NTPD : NTP failed to start, retrying" >> $NTPD_LOG_NAME
-	   if [ "x$BOX_TYPE" = "xXB3" ]; then
-		echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
-	   	ntpd -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -g
-	   else
+       if [ "x$BOX_TYPE" = "xXB3" ]; then
+           echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
+           $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -gd
+       else
+           echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
+           killall $BIN ### This to ensure there is no instance of NTPD running because of multiple wan-start events
+           sleep 5
 
-		if [ -f "/nvram/ETHWAN_ENABLE" ];then
-                echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
-                killall ntpd ### This to ensure there is no instance of NTPD running because of multiple wan-start events
-                sleep 5
-                if [ -n "$QUICK_SYNC_WAN_IP" ]; then
-                	# Try and Force Quick Sync to Run on a single interface
-                	echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-                	ntpd -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 60 # it will ensure that quick sync will exit in 60 seconds and NTP daemon will start and sync the time
-                else
-                	echo_t "SERVICE_NTPD : Quick Sync Failed No Erouter0 IP Address" >> $NTPD_LOG_NAME
-                fi
-                echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
-                killall ntpd
-		fi
+           if [ -n "$QUICK_SYNC_WAN_IP" ]; then
+               # Try and Force Quick Sync to Run on a single interface
+               echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+           else
+               echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
+           fi
 
-		echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
-	   	systemctl start ntpd.service
-	   fi
-    fi
+           echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
+           killall $BIN
+
+           echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
+           systemctl start $BIN
+       fi
+   fi
 
    echo_t "SERVICE_NTPD : ntpd started , setting the status as started" >> $NTPD_LOG_NAME
    sysevent set ${SERVICE_NAME}-status "started"
@@ -354,11 +340,9 @@ service_start ()
 #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
    DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
    if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
-	  FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
-	  syscfg set device_first_use_date "$FIRSTUSEDATE"
+       FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
+       syscfg set device_first_use_date "$FIRSTUSEDATE"
    fi
-
-
 
 }
 
@@ -367,7 +351,7 @@ service_stop ()
    if [ "x$BOX_TYPE" = "xXB3" ]; then
    	kill -9 `pidof $BIN` > /dev/null 2>&1
    else
-   	systemctl stop ntpd.service
+   	systemctl stop $BIN
    fi
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
