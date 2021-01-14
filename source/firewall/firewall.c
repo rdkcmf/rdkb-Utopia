@@ -14140,6 +14140,7 @@ v6GPFirewallRuleNext:
 
       // Basic RPF check on the egress & ingress traffic
       char prefix[129];
+      prefix[0] = 0;
       sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", prefix, sizeof(prefix));
       if ( '\0' != prefix[0] ) {
          //fprintf(fp, "-A FORWARD ! -s %s -i %s -m limit --limit 10/sec -j LOG --log-level %d --log-prefix \"UTOPIA: FW. IPv6 FORWARD anti-spoofing\"\n", prefix, lan_ifname,syslog_level);
@@ -14205,7 +14206,7 @@ v6GPFirewallRuleNext:
                     else
                        EvoStreamEnable = FALSE;
 		} 
-		memset(lan_prefix,0,sizeof(lan_prefix));
+		lan_prefix[0] = 0;
                 sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", lan_prefix, sizeof(lan_prefix));
 		for(cnt = 0;cnt < inf_num;cnt++)
 		{
@@ -14213,9 +14214,8 @@ v6GPFirewallRuleNext:
 			{
 		    		if(strcmp(iot_ifName,Interface[cnt]) != 0) // not to add forward rule for LnF
 				{	
-					memset(inf_prefix,0,sizeof(inf_prefix));
-					memset(inf_sysevent,0,sizeof(inf_sysevent));
         				snprintf(inf_sysevent, sizeof(inf_sysevent), "%s_ipaddr_v6",Interface[cnt]);
+					inf_prefix[0] = 0;
                 			sysevent_get(sysevent_fd, sysevent_token, inf_sysevent, inf_prefix, sizeof(inf_prefix));
 					if((inf_prefix[0] != '\0') && (lan_prefix[0] != '\0'))
 					{
