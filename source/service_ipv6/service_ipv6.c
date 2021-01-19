@@ -1283,6 +1283,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     ia_pd_t             ia_pd;
     char                evt_val[64] = {0};
     int                 ret = 0;
+    int                 colon_count = 0;
     char                bridge_mode[4] = {0};
     FILE *ifd=NULL;
     char *HwAdrrPath = "/sys/class/net/brlan0/address";
@@ -1375,6 +1376,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
 
                 fprintf(fp, "       pool %s%s - %s%s\n", prefix_value, dhcpv6s_pool_cfg.prefix_range_begin,
                         prefix_value, dhcpv6s_pool_cfg.prefix_range_end);
+                colon_count = count;
             }
 #endif
             /*lease time*/
@@ -1427,8 +1429,8 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
                 memset( HwAddr, 0, sizeof( HwAddr ) );
                 memset( dummyAddr, 0, sizeof( dummyAddr ) );
                 strncpy(dummyAddr,prefix_value,sizeof(prefix_value));
-                strcat(dummyAddr,":123");
-                dummyAddr[sizeof(dummyAddr)-1] = '\0';
+                
+		dummyAddr[sizeof(dummyAddr)-1] = '\0';
                 if( ( ifd = fopen( HwAdrrPath, "r" ) ) != NULL )
                         {
                                 if( fgets( HwAddr, sizeof( HwAddr ), ifd ) != NULL )
@@ -1442,8 +1444,20 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
                         fprintf(fp, "client duid 01:02:03:04:05:06\n");
 
                 fprintf(fp, "   {\n");
-                fprintf(fp, "   address %s\n",dummyAddr);
-                fprintf(fp, "   prefix %s:/64\n",prefix_value);
+		if (colon_count == 5)
+                {
+                	strcat(dummyAddr,":123");
+			dummyAddr[sizeof(dummyAddr)-1] = '\0';
+			fprintf(fp, "   address %s\n",dummyAddr);
+			fprintf(fp, "   prefix %s:/64\n",prefix_value);
+                }
+                else
+		{
+                	strcat(dummyAddr,"123");
+			dummyAddr[sizeof(dummyAddr)-1] = '\0';
+			fprintf(fp, "   address %s\n",dummyAddr);
+			fprintf(fp, "   prefix %s/64\n",prefix_value);
+		}
                 fprintf(fp, "   }\n");
             }
         }
