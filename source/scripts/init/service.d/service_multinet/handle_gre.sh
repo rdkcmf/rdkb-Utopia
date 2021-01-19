@@ -408,6 +408,10 @@ update_bridge_config () {
             queue=`expr $queue + 1`
             continue
         fi
+        #changed the queue value for nf queue issue
+        if [ $br = "brpublic" ] || [ $br = "brpub" ]; then
+           queue=45                               
+        fi
         br_snoop_rule="`sysevent setunique GeneralPurposeFirewallRule " -A FORWARD -o $br -p udp --dport=67:68 -j NFQUEUE --queue-bypass --queue-num $queue"`"
         sysevent set gre_${inst}_${br}_snoop_rule "$br_snoop_rule"
   if [ "$BOX_TYPE" = "XF3" ] ; then
