@@ -497,12 +497,14 @@ setup_pod_ethbhaul() {
 
 #Remove ethernet backhaul related vlans for nsgmii1.100
 remove_pod_ethbhaul() {
-    ifconfig ethsw101 down
-    ifconfig ethsw106 down
-    ifconfig ethsw1060 down
-    vconfig rem ethsw101
-    vconfig rem ethsw106
-    vconfig rem ethsw1060
+    if [ -d "/sys/class/net/ethsw1060" ] || [ -d "/sys/class/net/ethsw101" ] || [ -d "/sys/class/net/ethsw106" ]; then
+        ifconfig ethsw101 down
+        ifconfig ethsw106 down
+        ifconfig ethsw1060 down
+        vconfig rem ethsw101
+        vconfig rem ethsw106
+        vconfig rem ethsw1060
+    fi
 }
 
 #Returns a space-separated list of interfaces that should be in this group in the current operating mode
