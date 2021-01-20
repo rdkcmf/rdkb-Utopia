@@ -436,6 +436,9 @@ fi
        rm -rf $L2
    fi
 
+   #Remove hwselftest.results file if present
+   rm -f /nvram/hwselftest.results
+
    if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
    	# Remove onboard files
    	rm -f /nvram/.device_onboarded
