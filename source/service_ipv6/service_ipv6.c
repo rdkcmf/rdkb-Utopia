@@ -1284,6 +1284,8 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     char                evt_val[64] = {0};
     int                 ret = 0;
     char                bridge_mode[4] = {0};
+    FILE *ifd=NULL;
+    char *HwAdrrPath = "/sys/class/net/brlan0/address";
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-divided", evt_val, sizeof(evt_val));
     if (strcmp(evt_val, "ready")) {
@@ -1412,6 +1414,36 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
                     fprintf(fp, "       valid-lifetime %s\n", ia_pd.vldtm);
                 } 
 
+                fprintf(fp, "   }\n");
+                printf("%s Fixed prefix_value: %s\n", __func__, prefix_value);
+                /*
+                client duid B4:2A:0E:11:06:9B
+                {
+                address 2603:3024:18bf:2000:1::123
+                prefix 2603:3024:18bf:2000::/64
+                } */
+                char dummyAddr[128];
+                char HwAddr[24];
+                memset( HwAddr, 0, sizeof( HwAddr ) );
+                memset( dummyAddr, 0, sizeof( dummyAddr ) );
+                strncpy(dummyAddr,prefix_value,sizeof(prefix_value));
+                strcat(dummyAddr,":123");
+                dummyAddr[sizeof(dummyAddr)-1] = '\0';
+                if( ( ifd = fopen( HwAdrrPath, "r" ) ) != NULL )
+                        {
+                                if( fgets( HwAddr, sizeof( HwAddr ), ifd ) != NULL )
+                                {
+                                        fprintf(fp, "client duid %s\n",HwAddr);
+                                }
+                                fclose(ifd);
+                                ifd = NULL;
+                        }
+                        else
+                        fprintf(fp, "client duid 01:02:03:04:05:06\n");
+
+                fprintf(fp, "   {\n");
+                fprintf(fp, "   address %s\n",dummyAddr);
+                fprintf(fp, "   prefix %s:/64\n",prefix_value);
                 fprintf(fp, "   }\n");
             }
         }
