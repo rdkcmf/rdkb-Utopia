@@ -722,12 +722,12 @@ else
       	fi
 	  #Last reboot reason set as "PCD-reboot"  if the file /nvram/pcd_reboot_reason.txt is present
       elif [ -f "/nvram/pcd_reboot_reason.txt" ]; then
-        if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ] ||[ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+#        if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ] ||[ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
          echo_t "[utopia][init] Setting last reboot reason as PCD-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootReason "PCD-reboot"
          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
          rm /nvram/pcd_reboot_reason.txt
-        fi
+#        fi
 #endif
 ##LastRebootReason is set as DOCSIS_SNMP_REBOOT if the file /nvram/CISCO_DOCSIS_SNMP_REBOOT is present
       elif [ -f "/nvram/CISCO_DOCSIS_SNMP_REBOOT" ]; then
