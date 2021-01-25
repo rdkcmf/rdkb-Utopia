@@ -808,6 +808,9 @@ static inline int SET_IPT_PRI_MODULD(char *s){
 
 #define PSM_NAME_SPEEDTEST_SERVER_CAPABILITY "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Server.Capability"
 
+#if defined(FEATURE_SUPPORT_RADIUSGREYLIST) && defined(_COSA_INTEL_XB3_ARM_)
+#define PSM_NAME_RADIUS_GREY_LIST_ENABLED "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RadiusGreyList.Enable"
+#endif
 /* 
  */
 #define REMOTE_ACCESS_IP_RANGE_MAX_RULE 20
@@ -10221,6 +10224,30 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "%s\n", ":PREROUTING ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":POSTROUTING ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
+#if defined(FEATURE_SUPPORT_RADIUSGREYLIST) && defined(_COSA_INTEL_XB3_ARM_)
+    /*
+     *RDKB-33651 :
+     *    If RadiusGrayList is enabled/true, Then open port #3799 in WAN interface to pre route RADIUS disconnect
+     *    request packets to ATOM side
+     */
+     int retPsmGet = CCSP_SUCCESS;
+     char *strValue = NULL;
+     retPsmGet = PSM_VALUE_GET_STRING(PSM_NAME_RADIUS_GREY_LIST_ENABLED, strValue);
+     if(retPsmGet == CCSP_SUCCESS)
+     {
+        if(strValue != NULL && strncmp("1", strValue, 1) == 0)
+        {
+           FIREWALL_DEBUG("Open the port 3799 in WAN interface for RADIUS GreyList Support\n");
+           fprintf(nat_fp, "-A PREROUTING -i erouter0 -p udp --dport 3799 -j DNAT --to 192.168.251.254\n");
+           AnscFreeMemory(strValue);
+           strValue = NULL;
+        }
+        else
+           FIREWALL_DEBUG("PSM_NAME_RADIUS_GREY_LIST_ENABLED val: %s\n" COMMA strValue);
+     }
+     else
+        FIREWALL_DEBUG("PSM GET PSM_NAME_RADIUS_GREY_LIST_ENABLED FAILED\n");
+#endif
 #if defined(_COSA_BCM_MIPS_)
    fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
    fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
