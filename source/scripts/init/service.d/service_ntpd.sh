@@ -144,27 +144,38 @@ service_start ()
 
    rm -rf $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC
 
+   # Add Initial Interface Security Rules
+   echo "restrict default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
+   echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
+   echo "restrict 127.0.0.1" >> $NTP_CONF_TMP
+   echo "restrict -6 ::1" >> $NTP_CONF_TMP
+
    if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
        # Start NTP Config Creation with Multiple Server Setup
        echo_t "SERVICE_NTPD : Creating NTP config with New NTP Enabled" >> $NTPD_LOG_NAME
        if [ "x$SYSCFG_ntp_server1" != "x" ] && [ "x$SYSCFG_ntp_server1" != "xno_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
+           echo "restrict $SYSCFG_ntp_server1 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server2" != "x" ] && [ "x$SYSCFG_ntp_server2" != "xno_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server2" >> $NTP_CONF_TMP
+           echo "restrict $SYSCFG_ntp_server2 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server3" != "x" ] && [ "x$SYSCFG_ntp_server3" != "xno_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server3" >> $NTP_CONF_TMP
+           echo "restrict $SYSCFG_ntp_server3 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server4" != "x" ] && [ "x$SYSCFG_ntp_server4" != "xno_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server4" >> $NTP_CONF_TMP
+           echo "restrict $SYSCFG_ntp_server4 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
        if [ "x$SYSCFG_ntp_server5" != "x" ] && [ "x$SYSCFG_ntp_server5" != "xno_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server5" >> $NTP_CONF_TMP
+           echo "restrict $SYSCFG_ntp_server5 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
 
@@ -200,6 +211,7 @@ service_start ()
        echo_t "SERVICE_NTPD : Creating NTP config" >> $NTPD_LOG_NAME
 
        echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
+       echo "restrict $SYSCFG_ntp_server1 nomodify notrap noquery" >> $NTP_CONF_TMP
 
    fi # if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
 
@@ -210,24 +222,11 @@ service_start ()
        MASK="255.255.255.0"
    fi
 
-   WAN_IP=""
    QUICK_SYNC_WAN_IP=""
 	
    if [ "$NTPD_INTERFACE" == "erouter0" ]; then
        sleep 30
-       # With Newer Kernels Devices are seeing more 0x41 Kernel Errors. Online resources state the gap is too large to sync.
-       # Recommendation is to run ntpdate or a quick sync before daemon. 
        erouter_wait QUICK_SYNC_WAN_IP quickSync
-       erouter_wait WAN_IP
-   else
-       PROVISIONED_TYPE=""
-       PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
-
-       if [ "$PROVISIONED_TYPE" == "IPV4" ]; then
-           WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
-       else
-           WAN_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
-       fi
    fi
 
    if [ "$QUICK_SYNC_WAN_IP" != "" ]; then
@@ -240,15 +239,10 @@ service_start ()
        echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
    fi
 
-   echo "restrict default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
-   echo "restrict -6 default kod nomodify notrap nopeer noquery" >> $NTP_CONF_TMP
-   echo "restrict 127.0.0.1" >> $NTP_CONF_TMP
-   echo "restrict -6 ::1" >> $NTP_CONF_TMP
+   # interface rules can't be written to quick sync conf file so write here after quick sync conf file creation.
    echo "interface ignore wildcard" >> $NTP_CONF_TMP
-
-   if [ "$WAN_IP" != "" ]; then
-       echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
-   fi  
+   echo "interface listen 127.0.0.1" >> $NTP_CONF_TMP
+   echo "interface listen ::1" >> $NTP_CONF_TMP
 
    if [ "x$BOX_TYPE" = "xHUB4" ]; then
        # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
