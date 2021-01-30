@@ -871,6 +871,8 @@ case "$1" in
         if [ x"up" = x$2 ]; then
 	        echo_t "SERVICE DHCP : Got ipv4 status"
             if [ "$BOX_TYPE" = "XB3" ]; then
+		#setting lan_status-dhcp to started for handling dhcp_server-restart in brige mode
+		sysevent set lan_status-dhcp started
 		echo_t "SERVICE DHCP : $1, calling dhcp_server-restart lan_not_restart event"
 		sysevent set dhcp_server-restart lan_not_restart
                 #service_dhcp lan-status started lan_not_restart
