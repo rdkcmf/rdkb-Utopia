@@ -315,7 +315,7 @@ case "$1" in
 		echo_t "THE INSTANT=$INST"
 		echo_t "THE INSTANT=$INST"
         #(use a simpler test than this -- but Hacky, since it assumes everything we want is not XB3!!)if [ "$BOX_TYPE" = "TCCBR" ] || [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] || [ "$BOX_TYPE" = "XB7" -a "$MANUFACTURE" = "Technicolor" ] ; then
-        if [ "$BOX_TYPE" != "XB3" -a "$MANUFACTURE" = "Technicolor" ] ; then
+        if [ "$BOX_TYPE" != "XB3" -a "$MANUFACTURE" = "Technicolor" ] || [ "$BOX_TYPE" = "rpi" ] ; then
                 	COUNTER=1
 			while [ $COUNTER -lt 10 ]; do
 				echo_t "RDKB_SYSTEM_BOOT_UP_LOG : INST returned null , retrying $COUNTER"
@@ -361,8 +361,11 @@ case "$1" in
 	#BRLAN0 ISSUE : Manually invoking lan-start to fix brlan0 failure during intial booting. Root cause for event has to be identified
 	   	if [ "$RPI_SPECIFIC" = "rpi" ]; then
         		        sleep 2
-                                echo_t "Calling lan-start"
-                                eval  '$THIS lan-start NULL'
+                                L3NET=`sysevent get primary_lan_l3net`
+                                if [ "$L3NET" = "" ]; then
+                                     L3NET=4
+                                     sysevent set primary_lan_l3net $L3NET
+                                fi
                 fi
 	elif [ "$BOX_TYPE" = "TCCBR" ]; then
 		if [ "$INST" = "" ]; then
@@ -451,6 +454,14 @@ case "$1" in
    ;;
    
    lan-start)
+        if [ "$RPI_SPECIFIC" = "rpi" ]; then
+             L3Net=`sysevent get primary_lan_l3net`
+             if [ "$L3Net" = "" ]; then
+                  echo_t "RDKB_SYSTEM_BOOT_UP_LOG : L3Net is null \n"
+                  L3Net=4
+                  sysevent set primary_lan_l3net $L3Net
+             fi
+        fi
         # TODO call the restart routine
         sysevent set ipv4-up `sysevent get primary_lan_l3net`
         #router mode  enabled then add all ethbackhaul interfaces
