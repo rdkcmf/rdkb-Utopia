@@ -135,6 +135,13 @@ handle_l2_status () {
                 fi
                fi
             fi
+            if [ "$BOX_TYPE" = "rpi" ]; then
+                 LAN_STATUS=`sysevent get lan-status`
+                 if [ "$LAN_STATUS" = "stopped" ]; then
+                      echo_t "service_ipv4 : Starting lan-status"
+                      sysevent set lan-status started
+                 fi
+            fi
         else
             #Otherwise, announce readiness for provisioning
             # TODO: consider applying dynamic config currently in sysevent
