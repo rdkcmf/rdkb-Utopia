@@ -802,7 +802,15 @@ INT32 IGD_pii_add_portmapping_entry( IN INT32 WanDeviceIndex,
 
     UtopiaContext ctx;
     int rc = 0;
+#ifdef _HUB4_PRODUCT_REQ_
+    char upnpEnabled[16] = {0};
 
+    syscfg_get(NULL, "upnp_igd_enabled", upnpEnabled, sizeof(upnpEnabled));
+    if (0 == strcmp("0", upnpEnabled)) {
+        printf("UPnP Feature is not Enabled \n");
+        return 1;
+    }
+#endif
     if (Utopia_Init(&ctx)) {
         int index;
         portMapDyn_t pmap;
