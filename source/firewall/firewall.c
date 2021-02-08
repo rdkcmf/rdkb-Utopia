@@ -6089,10 +6089,19 @@ static int do_mgmt_override(FILE *nat_fp)
 
 static int remote_access_set_proto(FILE *filt_fp, FILE *nat_fp, const char *port, const char *src, int family, const char *interface)
 {
+	char IPv6[INET6_ADDRSTRLEN] = "0";
+	memset(IPv6, 0, INET6_ADDRSTRLEN);
+	sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", IPv6, sizeof(IPv6));
+	
          FIREWALL_DEBUG("Entering remote_access_set_proto\n");    
     if (family == AF_INET) {
         fprintf(filt_fp, "-A wan2self_mgmt -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port);
-    } else {
+    } else { 
+#if defined(_COSA_BCM_MIPS_) //Fix  for XF3-5627
+		if(0 == strcmp("80", port)) {
+		fprintf(filt_fp, "-A INPUT -i %s  -p tcp -m tcp --dport %s -d %s -j DROP\n", interface, port, IPv6 );
+		}
+#endif
         fprintf(filt_fp, "-A INPUT -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port);
     }
          FIREWALL_DEBUG("Exiting remote_access_set_proto\n");    
@@ -6189,7 +6198,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     {
 #endif
 #if !defined(_PLATFORM_RASPBERRYPI_)
-       remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
+	   remote_access_set_proto(filter_fp, nat_fp, "80", srcaddr, family, ecm_wan_ifname);
        remote_access_set_proto(filter_fp, nat_fp, "443", srcaddr, family, ecm_wan_ifname);
 #endif
 #if defined(_ENABLE_EPON_SUPPORT_)
@@ -11472,6 +11481,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if defined(_COSA_BCM_MIPS_)
    fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
    fprintf(nat_fp, "-A PREROUTING -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
+   
 #endif
 #if defined (_XB6_PRODUCT_REQ_)
    fprintf(nat_fp, "%s\n", ":prerouting_noRFCP_redirect - [0:0]");
@@ -11513,7 +11523,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
      
    syscfg_set(NULL, "HTTP_Server_IP", lan_ipaddr);
    fprintf(nat_fp, "-A prerouting_redirect -p tcp --dport 80 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
-  
 
    //IPv4[0] = '\0';
    syscfg_set(NULL, "HTTPS_Server_IP", lan_ipaddr);
