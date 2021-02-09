@@ -63,7 +63,10 @@ FILE* g_fArmConsoleLog = NULL;
 int g_iSyseventfd;
 token_t g_tSysevent_token;
 char g_cDhcp_Lease_Time[8] = {0}, g_cTime_File[64] = {0};
-char g_cBox_Type[8] = {0}, g_cXdns_Enabled[8] = {0};
+char g_cBox_Type[8] = {0};
+#ifdef XDNS_ENABLE
+char g_cXdns_Enabled[8] = {0};
+#endif
 char g_cMfg_Name[8] = {0}, g_cAtom_Arping_IP[16] = {0};
 char g_cMig_Check[8] = {0};
 
@@ -137,11 +140,13 @@ void get_device_props()
                 property = property + strlen("BOX_TYPE=");
                 strncpy(g_cBox_Type, property, (strlen(props) - strlen("BOX_TYPE=")));
             }
-			if(NULL != (property = strstr(props, "XDNS_ENABLE=")))
+#ifdef XDNS_ENABLE
+            if(NULL != (property = strstr(props, "XDNS_ENABLE=")))
             {
                 property = property + strlen("XDNS_ENABLE=");
                 strncpy(g_cXdns_Enabled, property, (strlen(props) - strlen("XDNS_ENABLE=")));
             }
+#endif
             if(NULL != (property = strstr(props, "MIG_CHECK=")))
             {
                 property = property + strlen("MIG_CHECK=");

@@ -67,7 +67,10 @@ extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 
 extern char g_cDhcp_Lease_Time[8], g_cTime_File[64];
-extern char g_cBox_Type[8], g_cXdns_Enabled[8];
+extern char g_cBox_Type[8];
+#ifdef XDNS_ENABLE
+extern char g_cXdns_Enabled[8];
+#endif
 extern char g_cAtom_Arping_IP[16];
 
 
@@ -92,14 +95,17 @@ void getRFC_Value(const char* dnsOption)
 }
 int dnsmasq_server_start()
 {
-    char l_cXdnsRefacCodeEnable[8] = {0};
     char l_cSystemCmd[255] = {0};
 
     getRFC_Value (dnsOption);
     fprintf(stdout, "Adding DNSMASQ Option: %s\n", dnsOption);
     strtok(dnsOption,"\n");
+
+#ifdef XDNS_ENABLE
     if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
     {
+        char l_cXdnsRefacCodeEnable[8] = {0};
+
         syscfg_get(NULL, "XDNS_RefacCodeEnable", l_cXdnsRefacCodeEnable, sizeof(l_cXdnsRefacCodeEnable));
         if (!strncmp(l_cXdnsRefacCodeEnable, "1", 1)){
                 sprintf(l_cSystemCmd, "%s -u nobody -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s --xdns-refac-code",
@@ -110,6 +116,7 @@ int dnsmasq_server_start()
         }
     }
     else //If XDNS is not enabled 
+#endif
     {
         sprintf(l_cSystemCmd, "%s -u nobody -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
     }
