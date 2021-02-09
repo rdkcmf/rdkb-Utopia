@@ -159,8 +159,8 @@ service_stop()
               sleep 1
            fi
         fi
-  	   echo_t "SERVICE_DHCP6C : Killing `cat $DHCPV6_PID_FILE`"
-    	   kill -9 `cat $DHCPV6_PID_FILE`
+  	   echo_t "SERVICE_DHCP6C : Sending SIGTERM to`cat $DHCPV6_PID_FILE`"
+    	   kill -TERM `cat $DHCPV6_PID_FILE`
    	   rm -f $DHCPV6_PID_FILE
         if [ "$DSLITE_DHCP_OPTION_ENABLED" = "true" ] && [ "$DSLite_Enabled" = "1" ]
         then
