@@ -1741,7 +1741,9 @@ static int prepare_globals_from_configuration(void)
    isCmDiagEnabled   = (0 == strcmp("1", cmdiag_enabled)) ? 1 : 0;
 
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
-   /* get true static IP info */
+   /* get true static IP info */   
+   if(isBridgeMode)
+   {
    sysevent_get(sysevent_fd, sysevent_token, "wan_staticip-status", wan_staticip_status, sizeof(wan_staticip_status));
    isWanStaticIPReady = (0 == strcmp("started", wan_staticip_status)) ? 1 : 0; 
    /* Get Ture Static IP Enable/Disable */
@@ -1755,6 +1757,9 @@ static int prepare_globals_from_configuration(void)
           Ansc_FreeMemory_Callback(pStr);
        }   
    }
+   }
+   else
+    isWanStaticIPReady = 0;
    /* get value from PSM */
    if(bus_handle != NULL && isWanStaticIPReady)
    {
@@ -1831,6 +1836,10 @@ static int prepare_globals_from_configuration(void)
    }else if(isWanReady && isNatEnabled == 2 && isWanStaticIPReady ){
        isNatReady = 1;
        strcpy(natip4, current_wan_static_ipaddr); 
+   }else if(isWanReady && isNatEnabled == 2 && isWanStaticIPReady == 0 ){
+       /* RDKB-34155 When True static IP configured device moved to bridge mode */
+       strcpy(natip4, current_wan_ipaddr);
+       isNatReady = 1;  
    }else 
        isNatReady = 0;
 
