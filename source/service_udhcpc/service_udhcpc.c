@@ -77,7 +77,7 @@
 #define OnboardLog(...)
 #endif
 
-#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_RDKB_WAN_MANAGER
 #include "ipc_msg.h"
 #endif
 
@@ -108,7 +108,7 @@ typedef struct udhcpc_script_t
     bool broot_is_nfs;
 }udhcpc_script_t;
 
-#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_RDKB_WAN_MANAGER
 #define DHCP_INTERFACE_NAME "interface"
 #define DHCP_IP_ADDRESS "ip"
 #define DHCP_SUBNET "subnet"
@@ -235,7 +235,38 @@ void dump_dhcp_offer()
 
 int handle_defconfig(udhcpc_script_t *pinfo)
 {
-#ifndef _HUB4_PRODUCT_REQ_
+    int ret = 0;    
+#ifdef FEATURE_RDKB_WAN_MANAGER
+    /**
+     * This argument is used when udhcpc starts, and when a leases is lost.
+     */
+    if (pinfo == NULL)
+    {
+        OnboardLog("[%s][%d] Invalid argument error!!! \n", __FUNCTION__,__LINE__);
+        return -1;
+    }
+
+    OnboardLog("[%s][%d] Received [%s] event from udhcpc \n", __FUNCTION__,__LINE__,pinfo->input_option);
+    ipc_dhcpv4_data_t data;
+    memset (&data, 0, sizeof(data));
+
+    ret = get_and_fill_env_data (&data, pinfo);
+    if (ret != 0)
+    {
+         OnboardLog("[%s][%d] Failed to get dhcpv4 data from enviornment \n", __FUNCTION__,__LINE__);
+         return -1;
+    }
+
+    /**
+     * Send data to the WanManager.
+     */
+    ret = send_dhcp_data_to_wanmanager(&data);
+    if (ret != 0)
+    {
+         OnboardLog("[%s][%d] Failed to send dhcpv4 data to wanmanager \n", __FUNCTION__,__LINE__);
+         return -1;
+    }    
+#else
     char buf[128];
     if (!pinfo)
         return -1;
@@ -261,7 +292,7 @@ int handle_defconfig(udhcpc_script_t *pinfo)
         }    
     }
 #endif
-    return 0;
+    return ret;
 }
 
 int save_dhcp_offer(udhcpc_script_t *pinfo)
@@ -766,7 +797,7 @@ int update_resolveconf(udhcpc_script_t *pinfo)
     return 0;
 }
 
-#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_RDKB_WAN_MANAGER
 int handle_leasefail(udhcpc_script_t *pinfo)
 {
     /**
@@ -802,11 +833,11 @@ int handle_leasefail(udhcpc_script_t *pinfo)
 
     return ret;
 }
-#endif //_HUB4_PRODUCT_REQ_
+#endif //FEATURE_RDKB_WAN_MANAGER
 
 int handle_wan(udhcpc_script_t *pinfo)
 {
-#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_RDKB_WAN_MANAGER
     /**
      * This argument is used when state moves to bound/renew.
      */
@@ -1085,7 +1116,7 @@ int init_udhcpc_script_info(udhcpc_script_t *pinfo, char *option)
     }
     return 0;
 }
-#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_RDKB_WAN_MANAGER
 static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_t* pinfo)
 {
     if (dhcpv4_data == NULL || pinfo == NULL)
@@ -1260,6 +1291,14 @@ static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_
         dhcpv4_data->isExpired = 1;
         dhcpv4_data->addressAssigned = 0;
     }
+    else if ((strcmp(pinfo->input_option, "deconfig") == 0))
+    {
+        /**
+         * Send an expired event since there is no reply from DHCP server.
+         */
+        dhcpv4_data->isExpired = 1;
+        dhcpv4_data->addressAssigned = 0;
+    }
 
     return 0;
 }
@@ -1346,7 +1385,7 @@ int main(int argc, char *argv[])
     {    
         handle_wan(&info);
     }
-#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_RDKB_WAN_MANAGER
     else if( !strcmp (argv[1], "leasefail"))
     {
         /**
