@@ -36,8 +36,13 @@
 #ifndef _SYSCFG_H_
 #define _SYSCFG_H_
 
-#define SYSCFG_SZ (50 * (1024))       /* max file size - 50kb */
+// Changing sysconfig size to 100kb for non XB3 devices
 
+#ifdef _COSA_INTEL_XB3_ARM_
+	#define SYSCFG_SZ (50 * (1024))       /* max file size - 50kb */
+#else
+	#define SYSCFG_SZ (100 * (1024))       /* max file size - 100kb */
+#endif
 #define NS_SEP "::"
 #define NS_SEP_SZ 2
 
