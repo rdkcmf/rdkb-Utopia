@@ -1285,6 +1285,8 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     int                 ret = 0;
     int                 colon_count = 0;
     char                bridge_mode[4] = {0};
+    unsigned long T1 = 0;
+    unsigned long T2 = 0;
     FILE *ifd=NULL;
     char *HwAdrrPath = "/sys/class/net/brlan0/address";
 
@@ -1410,8 +1412,14 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
                 fprintf(fp, "       pd-length %d\n", pd_pool.pd_length);
 
                 if (ret == 0 ) {
-                    fprintf(fp, "       T1 %s\n", ia_pd.t1);
-                    fprintf(fp, "       T2 %s\n", ia_pd.t2);
+                    //fprintf(fp, "       T1 %s\n", ia_pd.t1);
+                    //fprintf(fp, "       T2 %s\n", ia_pd.t2);
+                    T1 = atol(ia_pd.pretm);
+                    T2 = T1;
+                    T1 = T1/2;
+                    T2 = (unsigned long)(T2 * 80.0 /100);
+                    fprintf(fp, "       T1 %u\n", T1);
+                    fprintf(fp, "       T2 %u\n", T2);
                     fprintf(fp, "       prefered-lifetime %s\n", ia_pd.pretm);
                     fprintf(fp, "       valid-lifetime %s\n", ia_pd.vldtm);
                 } 
