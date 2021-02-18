@@ -133,6 +133,15 @@ update_ddns_server() {
    password_error_easydns="NO_AUTH"       
    token_error_easydns=""
 
+   #changeip.com
+   register_success_changeip="Successful Update"
+   update_success_changeip="Successful Update"
+   hostname_error_changeip="Hostname pattern does not exist"
+   username_error_changeip="badauth"
+   password_error_changeip="badauth"
+   token_error_changeip=""
+   service_changeip_com="changeip"
+
    #Set Return status
    ps | grep ez-ipupdate | grep -v grep
    if [ $? -eq 0 ];then
@@ -189,30 +198,42 @@ update_ddns_server() {
               EXTRA_PARAMS="${EXTRA_PARAMS} --address=${WanIpAddress}"
               UPDATE_UTIL="/usr/bin/ez-ipupdate"
          elif [ "$ddns_service_x" == "easydns" ]; then
-              EXTRA_PARAMS="-o /var/tmp/ipupdate.${ddns_service_name_mod}"
+              EXTRA_PARAMS="--interface erouter0"
+              EXTRA_PARAMS="${EXTRA_PARAMS} -o /var/tmp/ipupdate.${ddns_service_name_mod}"
               EXTRA_PARAMS="${EXTRA_PARAMS} --url https://${ddns_username_x}:${ddns_password_x_mod}@api.cp.easydns.com/dyn/generic.php"
               EXTRA_PARAMS="${EXTRA_PARAMS}?hostname=${ddns_hostname_x}"
               EXTRA_PARAMS="${EXTRA_PARAMS}&myip=${WanIpAddress} --trace-ascii $GENERAL_FILE"
+         elif [ "$ddns_service_x" == "changeip" ]; then
+              EXTRA_PARAMS="--interface erouter0"
+              EXTRA_PARAMS="${EXTRA_PARAMS} -o /var/tmp/ipupdate.${ddns_service_name_mod}"
+              EXTRA_PARAMS="${EXTRA_PARAMS} --url http://nic.changeip.com/nic/update"
+              EXTRA_PARAMS="${EXTRA_PARAMS}?u=${ddns_username_x}"
+              EXTRA_PARAMS="${EXTRA_PARAMS}&p=${ddns_password_x_mod}"
+              EXTRA_PARAMS="${EXTRA_PARAMS}&hostname=${ddns_hostname_x}"
+              EXTRA_PARAMS="${EXTRA_PARAMS}&ip=${WanIpAddress} --trace-ascii $GENERAL_FILE"
               UPDATE_UTIL="/usr/bin/curl"
          elif [ "$ddns_service_x" == "afraid" ]; then
-              EXTRA_PARAMS="-o /var/tmp/ipupdate.${ddns_service_name_mod}"
+              EXTRA_PARAMS="--interface erouter0"
+              EXTRA_PARAMS="${EXTRA_PARAMS} -o /var/tmp/ipupdate.${ddns_service_name_mod}"
               EXTRA_PARAMS="${EXTRA_PARAMS} --user ${ddns_username_x}:${ddns_password_x}"
               EXTRA_PARAMS="${EXTRA_PARAMS} --insecure --url https://freedns.afraid.org/nic/update"
               EXTRA_PARAMS="${EXTRA_PARAMS}?hostname=${ddns_hostname_x}"
               EXTRA_PARAMS="${EXTRA_PARAMS}&myip=${WanIpAddress} --trace-ascii $GENERAL_FILE"
               UPDATE_UTIL="/usr/bin/curl"
           elif [ "$ddns_service_x" == "no-ip" ]; then
-              EXTRA_PARAMS="-o /var/tmp/ipupdate.${ddns_service_name_mod}"
+              EXTRA_PARAMS="--interface erouter0"
+              EXTRA_PARAMS="${EXTRA_PARAMS} -o /var/tmp/ipupdate.${ddns_service_name_mod}"
               EXTRA_PARAMS="${EXTRA_PARAMS} --url http://${ddns_username_x}:${ddns_password_x_mod}@dynupdate.no-ip.com/nic/update"
               EXTRA_PARAMS="${EXTRA_PARAMS}?hostname=${ddns_hostname_x}"
               EXTRA_PARAMS="${EXTRA_PARAMS}&myip=${WanIpAddress} --trace-ascii $GENERAL_FILE"
               UPDATE_UTIL="/usr/bin/curl"
           elif [ "$ddns_service_x" == "duckdns" ]; then
-              EXTRA_PARAMS="-o /var/tmp/ipupdate.${ddns_service_name_mod}"
-              EXTRA_PARAMS="${EXTRA_PARAMS} --url https://www.duckdns.org/update"
+              EXTRA_PARAMS="--interface erouter0"
+              EXTRA_PARAMS="${EXTRA_PARAMS} -o /var/tmp/ipupdate.${ddns_service_name_mod} -g"
+              EXTRA_PARAMS="${EXTRA_PARAMS} --insecure --url https://www.duckdns.org/update"
               EXTRA_PARAMS="${EXTRA_PARAMS}?domains=${ddns_hostname_x}"
-              EXTRA_PARAMS="${EXTRA_PARAMS}&token=${ddns_password_x}"
-              EXTRA_PARAMS="${EXTRA_PARAMS}&verbose=true --trace-ascii $GENERAL_FILE"
+              EXTRA_PARAMS="${EXTRA_PARAMS}&token=${ddns_username_x}"
+              EXTRA_PARAMS="${EXTRA_PARAMS}&ip=${WanIpAddress}&verbose=true --trace-ascii $GENERAL_FILE"
               UPDATE_UTIL="/usr/bin/curl"
         fi
 
@@ -242,7 +263,6 @@ update_ddns_server() {
               fi
 
               if [ "$ddns_service_x" == "dyndns" ]; then
-                  echo "${UPDATE_UTIL} ${EXTRA_PARAMS} > $OUTPUT_FILE 2>&1"
                   ${UPDATE_UTIL} "${EXTRA_PARAMS}" > "$OUTPUT_FILE" 2>&1
                   RET_CODE=$?
 
@@ -298,7 +318,6 @@ update_ddns_server() {
                   fi
               else
 
-                   echo "${UPDATE_UTIL} ${EXTRA_PARAMS} > $OUTPUT_FILE 2>&1"
                    ${UPDATE_UTIL} "${EXTRA_PARAMS}" > $OUTPUT_FILE 2>&1
                    RET_CODE=$?
 
@@ -440,6 +459,15 @@ update_ddns_server() {
                        fi
                    fi
 
+                   return_str_name="KO"
+                   grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                   if [ "0" = "$?" ]; then
+                       syscfg set ddns_client_Status $CLIENT_ERROR
+                       syscfg set ddns_host_status_1 $HOST_ERROR
+                       syscfg set ddns_client_Lasterror $AUTHENTICATION_ERROR
+                       syscfg commit
+                   fi
+
                    return_str_name="general_error_${ddns_service_name_mod}"
                    return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
@@ -458,6 +486,10 @@ update_ddns_server() {
               fi #end of the provider classify
          fi #end of the un-supported provider
 
+         # Empty the trace file after populating required data
+         if [ -f "$GENERAL_FILE" ]; then
+            cat /dev/null  > $GENERAL_FILE
+         fi
    fi #end of "[ "1" = "$ddns_enable_x" ]"
           
 
@@ -538,10 +570,17 @@ do_start() {
    ulog ddns status "$PID ddns update required status is $UPDATE_NEEDED"
    if [ "1" = "$UPDATE_NEEDED" ] ; then
       sysevent set ddns_return_status success
-      syscfg set ddns_client_Status 1
-      syscfg set ddns_host_status_1 2
+      syscfg set ddns_client_Status $CLIENT_CONNECTING
+      syscfg set ddns_host_status_1 $HOST_UPDATING
       syscfg commit
+      # ----------------------------------------------------------------------
+      # If updating_ddns_server.txt exists then a query to the DDNS server is
+      # already in progress. Wait for it to complete.
+      # ----------------------------------------------------------------------
+      while [ -f "/var/tmp/updating_ddns_server.txt" ]; do sleep 2; done
+      touch "/var/tmp/updating_ddns_server.txt"
       update_ddns_server "$CURRENT_WAN_IPADDR"
+      rm "/var/tmp/updating_ddns_server.txt"
 
    else
       # if no update needed, consider it as ddns "success"
@@ -561,13 +600,14 @@ do_start() {
 
 
 update_ddns_if_needed () {
-   WAN_IPADDR=`sysevent get current_wan_ipaddr`
+   WAN_LAST_IPADDR=$SYSCFG_wan_last_ipaddr
+   CURRENT_WAN_IPADDR=`sysevent get current_wan_ipaddr`
    CURRENT_STATE=`sysevent get wan-status`
    if [ "started" != "$CURRENT_STATE" ] ; then
-      WAN_IPADDR="0.0.0.0"
+      CURRENT_WAN_IPADDR="0.0.0.0"
    fi
 
-   case "$WAN_IPADDR" in
+   case "$CURRENT_WAN_IPADDR" in
       0.0.0.0)
         ulog ddns status "$PID wan state is down. No ddns update possible"
            sysevent set ddns_return_status
@@ -580,8 +620,10 @@ update_ddns_if_needed () {
          if [ "" = "$PRIORERROR" ] || [ "success" = "$PRIORERROR" ] ; then
             # if the wan ip address changed, then the system requires a few secs to stabilize
             # eg. firewall needs to be reset. Give it a few secs to do so
-            sleep 5
-            ulog ddns status "$PID Current wan ip address is $WAN_IPADDR. Continuing"
+            if [ "$WAN_LAST_IPADDR" != "$CURRENT_WAN_IPADDR" ] ; then
+                sleep 5
+                ulog ddns status "$PID Current wan ip address is $CURRENT_WAN_IPADDR. Continuing"
+            fi
             do_start
          else
             syscfg set ddns_client_Status $CLIENT_ERROR
@@ -681,14 +723,18 @@ service_start ()
       exit 0
    fi
 
+   syscfg set ddns_client_Status $CLIENT_CONNECTING
+   syscfg set ddns_host_status_1 $HOST_UPDATE_NEEDED
+   syscfg commit
    update_ddns_if_needed
 }
 
 service_stop ()
 {
-    syscfg set ddns_client_Status $CLIENT_UPDATED
-    syscfg set ddns_host_status_1 $HOST_REGISTERED
-    syscfg commit
+    ulog ddns status "$PID ddns status update is not required"
+    #syscfg set ddns_client_Status $CLIENT_UPDATED
+    #syscfg set ddns_host_status_1 $HOST_REGISTERED
+    #syscfg commit
 }
 
 
