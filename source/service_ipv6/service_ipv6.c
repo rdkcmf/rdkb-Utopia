@@ -411,7 +411,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
     
     if(iana == NULL || iapd == NULL)
         return -1;
-#ifdef _CBR_PRODUCT_REQ_ 
+#if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) 
 	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_T1_SYSEVENT_NAME, action, sizeof(action));
 	if(action[0]!='\0')
 	{
