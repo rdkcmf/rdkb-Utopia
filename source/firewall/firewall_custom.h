@@ -39,7 +39,9 @@
 
 #include <stdio.h>
 #include<stdlib.h>
-#include <pthread.h> 
+#include <pthread.h>
+#include <time.h>
+#include <stdarg.h>
 #include "ccsp_custom.h"
 extern FILE *firewallfp;
 #define FW_DEBUG 1
@@ -49,15 +51,11 @@ void do_device_based_pp_disabled_appendrule(FILE *fp, const char *ins_num, const
 void do_device_based_pp_disabled_ip_appendrule(FILE *fp, const char *ins_num, const char *ipAddr);
 int do_parcon_mgmt_lan2wan_pc_site_appendrule(FILE *fp);
 void do_parcon_mgmt_lan2wan_pc_site_insertrule(FILE *fp, int index, char *nstdPort);
+void firewall_log( char* fmt, ...);
 
 #ifdef FW_DEBUG
 #define COMMA ,
-#define FIREWALL_DEBUG(x) \
-if(firewallfp != NULL){ \
-fprintf(firewallfp, x);\
-fflush(firewallfp);}\
-else \
-printf(" FILE Pointer is NULL \n"); 
+#define FIREWALL_DEBUG(x) firewall_log(x);
 #else 
 #define FIREWALL_DEBUG(x)
 #endif

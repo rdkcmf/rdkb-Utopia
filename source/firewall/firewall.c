@@ -865,6 +865,27 @@ int greDscp = 44; // Default initialized to 44
 static int do_block_ports(FILE *filter_fp);
 static int isInRFCaptivePortal();
 
+#define LOG_BUFF_SIZE 512
+void firewall_log( char* fmt, ...)
+{
+    time_t now_time;
+    struct tm *lc_time;
+    char buff[LOG_BUFF_SIZE] = "";
+    va_list args;
+    int time_size;
+
+    if(firewallfp == NULL)
+        return;
+    va_start(args, fmt);
+    time(&now_time);
+    lc_time=localtime(&now_time);
+    time_size = strftime(buff, LOG_BUFF_SIZE,"%y%m%d-%X ", lc_time);
+    strncat(buff,fmt, (LOG_BUFF_SIZE - time_size -1));
+    vfprintf(firewallfp, buff, args);
+    va_end(args);
+    return;
+}
+
 #ifdef _HUB4_PRODUCT_REQ_
 static int IsValidIPv4Addr(char* ip_addr_string)
 {
