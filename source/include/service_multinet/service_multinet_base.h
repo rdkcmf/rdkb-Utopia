@@ -53,42 +53,17 @@ typedef  unsigned char BOOL;
 #include <stdlib.h>
 
 extern FILE *mnetfp;
-
+void multinet_log( char* fmt, ...);
 #define MULTINET_DEBUG 1
 
-#if 0
 
 #ifdef MULTINET_DEBUG
 //Usage: MNET_DEBUG("format" COMMA ARG COMMA ARG)
 #define COMMA ,
-#define MNET_DEBUG(x) printf("----------MNET_DEBUG:" x); fflush(stdout);
-//#define MNET_DEBUG(x)
+#define MNET_DEBUG(x) multinet_log(x);
 #define MNET_DBG_CMD(x) x;
-//#define MNET_DBG_CMD(x)
 #else 
 #define MNET_DEBUG(x)
-//#define MNET_DEBUG(x)
-#define MNET_DBG_CMD(x)
-#endif
-
-#endif
-
-
-#ifdef MULTINET_DEBUG
-//Usage: MNET_DEBUG("format" COMMA ARG COMMA ARG)
-#define COMMA ,
-#define MNET_DEBUG(x) \
-if(mnetfp != NULL){ \
-fprintf(mnetfp, x);}\
-else \
-printf(" FILE Pointer is NULL \n"); 
-
-//#define MNET_DEBUG(x)
-#define MNET_DBG_CMD(x) x;
-//#define MNET_DBG_CMD(x)
-#else 
-#define MNET_DEBUG(x)
-//#define MNET_DEBUG(x)
 #define MNET_DBG_CMD(x)
 #endif
 
