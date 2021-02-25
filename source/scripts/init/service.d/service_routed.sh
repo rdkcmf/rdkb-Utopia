@@ -64,12 +64,7 @@ case "$1" in
        if [ "$status" == "started" ]; then
            service_routed start
        elif [ "$status" == "stopped" ]; then
-           #if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-           	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-            	service_routed radv-restart
-           #else
-           #	service_routed stop
-           #fi
+           service_routed stop
        fi
        ;;
    lan-status)

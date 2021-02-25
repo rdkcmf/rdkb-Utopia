@@ -249,7 +249,6 @@ static int daemon_stop(const char *pid_file, const char *prog)
     return 0;
 }
 
-#ifdef _HUB4_PRODUCT_REQ_
 /* SKYH4-1765: checks the daemon running status */
 static int is_daemon_running(const char *pid_file, const char *prog)
 {
@@ -278,7 +277,6 @@ static int is_daemon_running(const char *pid_file, const char *prog)
 
     return 0;
 }
-#endif
 
 #ifdef MULTILAN_FEATURE
 static int get_active_lanif(int sefd, token_t setok, unsigned int *insts, unsigned int *num)
@@ -1188,7 +1186,6 @@ static int radv_start(struct serv_routed *sr)
 
 static int radv_stop(struct serv_routed *sr)
 {
-#ifdef _HUB4_PRODUCT_REQ_
     /*
      * SKYH4-1765: we do not want to restart the zebra if it is already running,
      * since restarting zebra will clear the current zebra counter.
@@ -1197,7 +1194,6 @@ static int radv_stop(struct serv_routed *sr)
     {
         return 0;
     }
-#endif
     return daemon_stop(ZEBRA_PID_FILE, "zebra");
 }
 
@@ -1348,8 +1344,8 @@ static int serv_routed_stop(struct serv_routed *sr)
     if (rip_stop(sr) != 0)
         fprintf(stderr, "%s: rip_stop error\n", __FUNCTION__);
 
-    if (radv_stop(sr) != 0)
-        fprintf(stderr, "%s: radv_stop error\n", __FUNCTION__);
+    if (radv_restart(sr) != 0)
+        fprintf(stderr, "%s: radv_restart error\n", __FUNCTION__);
 
     if (fw_restart(sr) != 0)
         fprintf(stderr, "%s: fw_restart error\n", __FUNCTION__);
