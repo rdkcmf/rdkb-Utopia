@@ -464,6 +464,11 @@ fi
     # Remove webconfig_db.bin on factory reset on all RDKB platforms
     rm -f /nvram/webconfig_db.bin
    fi
+   if [ -f /etc/AKER_ENABLE ]; then      	
+      # Remove on factory reset, Aker schedule pcs.bin and pcs.bin.md5 on all RDKB platforms 
+      rm -f /nvram/pcs.bin
+      rm -f /nvram/pcs.bin.md5
+   fi
    touch $SYSCFG_NEW_FILE
    touch $SYSCFG_BKUP_FILE
    touch $SYSCFG_FILE
