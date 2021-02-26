@@ -10838,6 +10838,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #ifdef INTEL_PUMA7
    // Accept Vonage packets --  ARRISXB6-3881
    fprintf(filter_fp, "-A wan2self -p udp -m udp --dport 10000:20000 -j ACCEPT\n");
+   // Accept Teams packets --  INTCS-114
+   fprintf(filter_fp, "-A wan2self -s 52.112.0.0/12 -m conntrack --ctstate NEW -j ACCEPT\n");
 #endif
    //fprintf(filter_fp, "-A wan2self -j wan2self_mgmt\n");
    fprintf(filter_fp, "-A wan2self -j xlog_drop_wan2self\n");
