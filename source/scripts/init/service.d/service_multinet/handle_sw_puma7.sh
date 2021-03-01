@@ -152,61 +152,60 @@ deconfigure_port()
 
 #Argument: "up" or "down"
 configure_all_switch_ports() {
-    case "$1" in
-    up)
-        #Configure first port which will ensure mapping file is created
-        swctl -l 3 -c 4 -p 0
+case "$1" in
+     up)
+         #Configure first port which will ensure mapping file is created
+         swctl -l 3 -c 4 -p 0
 
-        #Iterate through static switch mapping file (lan.cfg) and configure every port
-        if [ -f "$LAN_CONFIG_FILE" ]; then
-            cat $LAN_CONFIG_FILE | while read LINE; do
-                if [[ "$LINE" =~ .*"#".* ]]; then
-                    continue;
-                fi
-                LINE_SWPORT=`echo $LINE | egrep Type=SW`
-                if [ ! -z "$LINE_SWPORT" ]; then
-                    extract_from_lan_config $LINE_SWPORT 
-                    configure_port
-                fi
-            done
-        else
-            #If lan.cfg is not available then iterate through switch mapping file and configure every port
+         #Iterate through switch mapping file and configure every port
+         if [ "$USE_BACK_COMPABILITY" = "" ]; then
+             cat $SWITCH_MAP_FILE | while read LINE; do
+                 LINE_SWPORT=`echo $LINE | egrep Type=SW`
+                 if [ ! -z "$LINE_SWPORT" ]; then
+                     extract_from_lan_config $LINE_SWPORT 
+                     configure_port
+                 fi
+             done
+         else
+             cat $SWITCH_MAP_FILE | while read LINE; do
+                 extract_from_map_line $LINE
+                 get_auto_vlan $LOGICAL_PORT
+                 get_port_if_name $LOGICAL_PORT
+                 configure_port
+             done
+         fi
+     ;;
+     down)
+         #Configure first port which will ensure mapping file is created
+         swctl -l 3 -c 4 -p 0
+
+         #Iterate through switch mapping file and configure every port
+         if [ "$USE_BACK_COMPABILITY" = "" ]; then
+             cat $SWITCH_MAP_FILE | while read LINE; do
+                 if [[ "$LINE" =~ .*"#".* ]]; then
+                     continue;
+                 fi
+                 LINE_SWPORT=`echo $LINE | egrep Type=SW`
+                 if [ ! -z "$LINE_SWPORT" ]; then
+                     extract_from_lan_config $LINE_SWPORT 
+                     deconfigure_port
+                 fi
+             done
+         else
             cat $SWITCH_MAP_FILE | while read LINE; do
                 extract_from_map_line $LINE
-                get_auto_vlan $LOGICAL_PORT
-                get_port_if_name $LOGICAL_PORT
-                configure_port
-            done
-        fi
-    ;;
-    down)
-        #Configure first port which will ensure mapping file is created
-        swctl -l 3 -c 4 -p 0
-
-        #Iterate through static switch mapping file (lan.cfg) and deconfigure ports
-        if [ -f "$LAN_CONFIG_FILE" ]; then
-            cat $LAN_CONFIG_FILE | while read LINE; do
-                if [[ "$LINE" =~ .*"#".* ]]; then
-                    continue;
-                fi
-                LINE_SWPORT=`echo $LINE | egrep Type=SW`
-                if [ ! -z "$LINE_SWPORT" ]; then
-                    extract_from_lan_config $LINE_SWPORT 
-                    deconfigure_port
-                fi
-            done
-        else
-            #If lan.cfg is not available then iterate through switch mapping file and deconfigure ports
-            cat $SWITCH_MAP_FILE | while read LINE; do
-                extract_from_map_line $LINE
-                get_auto_vlan $LOGICAL_PORT
-                get_port_if_name $LOGICAL_PORT
-                deconfigure_port
-            done
-        fi
-    ;;
-    esac
-}
+                 get_auto_vlan $LOGICAL_PORT
+                 get_port_if_name $LOGICAL_PORT
+                 deconfigure_port
+             done
+         fi
+     ;;
+     esac
+ }
+ 
+ if [ ! -f "$LAN_CONFIG_FILE" ]; then
+     USE_BACK_COMPABILITY=1
+ fi
 MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
 if [ "$MULTILAN_FEATURE" = "1" ]; then
 	case "$1" in

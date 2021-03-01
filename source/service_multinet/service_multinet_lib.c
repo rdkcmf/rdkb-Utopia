@@ -71,7 +71,8 @@
 
 #if defined (INTEL_PUMA7) || defined(MULTILAN_FEATURE)
 //Intel Proposed RDKB Bug Fix
-#define LAN_PORT_MAP_FILE "/etc/lan.cfg"
+#define LAN_CONFIG_FILE "/etc/lan.cfg"
+#define LAN_PORT_MAP_FILE "/var/tmp/map/mapping_table.txt"
 #define BASE_IF_NAME_KEY "BaseInterface"
 #define SW_TYPE_KEY "Type=SW"
 #endif
@@ -116,7 +117,16 @@ int getIfName(char *ifName, char *port)
     char *token1 = NULL;
     char *token2 = NULL;
     char *c;
-    FILE *file = fopen(LAN_PORT_MAP_FILE, "r");
+    FILE *file = NULL;
+
+    if((STATUS_NOK == access(LAN_CONFIG_FILE, F_OK )))
+    {
+        /* Use backward compatibility method*/
+        MNET_DEBUG("Static conf file %s is not available, try backward compatibility\n" COMMA LAN_CONFIG_FILE);
+        return STATUS_NOK;
+    }
+
+    file = fopen(LAN_PORT_MAP_FILE, "r");
     if(!file)
     {
         MNET_DEBUG("ERROR: failed to open file %s\n" COMMA LAN_PORT_MAP_FILE);
