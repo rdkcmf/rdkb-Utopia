@@ -8986,6 +8986,7 @@ static int do_wan2lan_disabled(FILE *fp)
    FIREWALL_DEBUG("Entering do_wan2lan_disabled\n"); 
    char str[MAX_QUERY];
 #ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_MAPT
    char mapt_config_value[BUFLEN_8] = {0};
    /* Check sysevent fd availabe at this point. */
    if (sysevent_fd < 0)
@@ -9008,6 +9009,7 @@ static int do_wan2lan_disabled(FILE *fp)
          fprintf(fp, "%s\n", str);
       }
    }
+#endif //FEATURE_MAPT
 #else
    /*
     * if the wan is currently unavailable, then drop any packets from wan to lan
