@@ -286,6 +286,9 @@ fi
 	rm -f /nvram/DISABLE_ONBOARD_LOGGING
    	rm -rf /nvram2/onboardlogs
    fi
+   if [ -d /nvram/lxy/ ]; then
+	rm -rf /nvram/lxy
+   fi
 
    #Needs to increment factory reset count during PIN method
    #If GUI FR reboot reason will come as factory-reset and reboot counter should be 1. so we don't need to increment
