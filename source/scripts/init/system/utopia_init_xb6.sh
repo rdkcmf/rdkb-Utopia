@@ -300,40 +300,22 @@ CheckAndReCreateDB()
 	fi 
 }
 
-if [ -f $SYSCFG_BKUP_FILE ]; then
-        echo "[utopia][init] Starting syscfg using file store ($SYSCFG_BKUP_FILE)"
-        if [ -d $SYSCFG_PERSISTENT_PATH ] && [ ! -f $SYSCFG_NEW_FILE ]; then
-                cp $SYSCFG_BKUP_FILE $SYSCFG_NEW_FILE
-        fi
-        cp $SYSCFG_BKUP_FILE $SYSCFG_FILE
+echo "[utopia][init] Starting syscfg using file store ($SYSCFG_NEW_FILE)"
+if [ -f $SYSCFG_NEW_FILE ]; then
+        cp $SYSCFG_NEW_FILE $SYSCFG_FILE
         syscfg_create -f $SYSCFG_FILE
         if [ $? != 0 ]; then
              CheckAndReCreateDB
         fi
-elif [ -s $SYSCFG_NEW_FILE ]; then
-       echo "[utopia][init] Starting syscfg using file store ($SYSCFG_NEW_FILE)"
-       SECURE_SYSCFG=`grep UpdateNvram $SYSCFG_NEW_FILE | cut -f2 -d=`
-       echo "[utopia][init] UpdateNvram:$SECURE_SYSCFG"
-       if [ "$SECURE_SYSCFG" = "false"  ]; then
-             cp $SYSCFG_NEW_FILE $SYSCFG_FILE
-       else
-             cp $SYSCFG_NEW_FILE $SYSCFG_BKUP_FILE
-             cp $SYSCFG_NEW_FILE $SYSCFG_FILE
-       fi
-       syscfg_create -f $SYSCFG_FILE
-       if [ $? != 0 ]; then
-            CheckAndReCreateDB
-       fi    
 else
          echo -n > $SYSCFG_FILE
-         echo -n > $SYSCFG_BKUP_FILE
          echo -n > $SYSCFG_NEW_FILE
    syscfg_create -f $SYSCFG_FILE
    if [ $? != 0 ]; then
         CheckAndReCreateDB
    fi
    #>>zqiu
-   echo "[utopia][init] need to reset wifi when ($SYSCFG_BKUP_FILE) and ($SYSCFG_NEW_FILE) files are not available"
+   echo "[utopia][init] need to reset wifi when ($SYSCFG_NEW_FILE) file is not available"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
    syscfg commit
    #<<zqiu
@@ -353,9 +335,7 @@ if [ -f $SYSCFG_NEW_BKUP_FILE ]; then
 	rm -rf $SYSCFG_NEW_BKUP_FILE
 fi
 if [ -f $SYSCFG_BKUP_FILE ]; then
-     if [ "$MODEL_NUM" != "TG4482A" ]; then
           rm -rf $SYSCFG_BKUP_FILE
-     fi 
 fi
 
 SYSCFG_LAN_DOMAIN=`syscfg get lan_domain` 
@@ -456,7 +436,6 @@ fi
        rm -rf $L2
    fi
 
-   echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_BKUP_FILE)"
    if [ -f /etc/ONBOARD_LOGGING_ENABLE ]; then
    	# Remove onboard files
    	rm -f /nvram/.device_onboarded
@@ -476,9 +455,6 @@ fi
    echo "[utopia][init] Retarting syscfg using file store ($SYSCFG_NEW_FILE)"
    touch $SYSCFG_NEW_FILE
    touch $SYSCFG_FILE
-   if [ "$MODEL_NUM" = "TG4482A" ]; then
-         touch $SYSCFG_BKUP_FILE
-   fi
    syscfg_create -f $SYSCFG_FILE
    syscfg_oldDB=$?
    if [ $syscfg_oldDB -ne 0 ];then

@@ -28,7 +28,7 @@ FACTORY_RESET_RGWIFI=y
 FACTORY_RESET_WIFI=w
 SYSCFG_MOUNT=/nvram
 PUNIT_RESET_DURATION=0;
-if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+if [ "$BOX_TYPE" = "XB3" ]; then
 SYSCFG_FILE="/nvram/syscfg.db"
 else
 SYSCFG_FILE="/opt/secure/data/syscfg.db"
