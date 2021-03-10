@@ -648,10 +648,6 @@ fi
 
 # Check and set factory-reset as reboot reason
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
-   echo "[utopia][init] Detected last reboot reason as factory-reset"
-   if [ -e "/usr/bin/onboarding_log" ]; then
-       /usr/bin/onboarding_log "[utopia][init] Detected last reboot reason as factory-reset"
-   fi
 
    if [ "$MODEL_NUM" = "TG3482G" ]; then
 	rm -f /nvram/mesh_enabled
@@ -662,6 +658,20 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
    # Enable AUTOWAN by default for XB7, change is made here so that it will take effect only after FR
       syscfg set selected_wan_mode "0"
    fi
+   if [ -f /nvram/WPS_Factory_Reset ]; then
+       echo "[utopia][init] Detected last reboot reason as WPS-Factory-Reset"
+       if [ -e "/usr/bin/onboarding_log" ]; then
+          /usr/bin/onboarding_log "[utopia][init] Detected last reboot reason as WPS-Factory-Reset"
+       fi
+       syscfg set X_RDKCENTRAL-COM_LastRebootReason "WPS-Factory-Reset"
+       syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+       rm -f /nvram/WPS_Factory_Reset
+    else
+       echo "[utopia][init] Detected last reboot reason as factory-reset"
+       if [ -e "/usr/bin/onboarding_log" ]; then
+          /usr/bin/onboarding_log "[utopia][init] Detected last reboot reason as factory-reset"
+       fi
+    fi
 elif [ "$PUNIT_RESET_DURATION" -gt "0" ]; then
    echo "[utopia][init] Detected last reboot reason as pin-reset"
    if [ -e "/usr/bin/onboarding_log" ]; then
