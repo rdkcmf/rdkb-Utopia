@@ -197,6 +197,7 @@ SYSCFG_OLDBKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
 PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"  
+HOTSPOT_BLOB="/nvram/hotspot_blob"
 
 #syscfg_check -d $MTD_DEVICE
 #if [ $? = 0 ]; then
@@ -355,6 +356,11 @@ fi
       rm -f /nvram/pcs.bin
       rm -f /nvram/pcs.bin.md5
    fi
+   
+    if [ -f "$HOTSPOT_BLOB" ];then
+      rm -f "$HOTSPOT_BLOB"
+   fi
+
      touch /nvram/.apply_partner_defaults   
    #>>zqiu
    create_wifi_default

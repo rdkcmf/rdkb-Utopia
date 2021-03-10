@@ -239,6 +239,7 @@ PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
 
+HOTSPOT_BLOB="/nvram/hotspot_blob"
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
        if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
                echo "$SYSCFG_PERSISTENT_PATH path not available creating directory and touching $SYSCFG_NEW_FILE file"
@@ -430,6 +431,11 @@ fi
       rm -f /nvram/pcs.bin
       rm -f /nvram/pcs.bin.md5
    fi
+
+    if [ -f "$HOTSPOT_BLOB" ];then
+      rm -f "$HOTSPOT_BLOB"
+   fi
+
    # Remove lxy L2 dir
    LOG_FILE=/rdklogs/logs/lxy.log
    echo_t "[FR] Removing lxy L2 Dir" >> $LOG_FILE

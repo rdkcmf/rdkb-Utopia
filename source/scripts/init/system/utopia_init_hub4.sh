@@ -124,6 +124,7 @@ PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
 FR_COUNT_FILE=/nvram/.factory_reset_count
+HOTSPOT_BLOB="/nvram/hotspot_blob"
 
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
     if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
@@ -277,6 +278,10 @@ fi
 	/bin/sh -c '/usr/bin/lxyinit.sh /etc/lxybundl.bz2 /nvram/lxy'
    fi
 
+    if [ -f "$HOTSPOT_BLOB" ];then
+      rm -f "$HOTSPOT_BLOB"
+   fi
+   
    #Needs to increment factory reset count during PIN method
    #If GUI FR reboot reason will come as factory-reset and reboot counter should be 1. so we don't need to increment
    if [ "$rebCounter" != "1" ] ; then

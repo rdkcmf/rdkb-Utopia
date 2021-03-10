@@ -249,6 +249,7 @@ PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
 FACTORY_RESET_REASON=false
+HOTSPOT_BLOB="/nvram/hotspot_blob"
 
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
        if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
@@ -424,6 +425,10 @@ fi
    rm -f /opt/secure/RFC/tr181store.json
    if [ -f /nvram/.CMchange_reboot_count ];then
       rm -f /nvram/.CMchange_reboot_count
+   fi
+
+    if [ -f "$HOTSPOT_BLOB" ];then
+      rm -f "$HOTSPOT_BLOB"
    fi
 
    # Remove lxy L2 dir
