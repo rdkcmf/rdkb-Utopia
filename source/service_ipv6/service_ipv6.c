@@ -30,9 +30,8 @@
  * I prefer daemon, so that we can write state machine clearly.
  */
 #include <stdio.h>
-#include "syscfg/syscfg.h"
 #include <arpa/inet.h>
-#include "ctype.h"
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -42,9 +41,11 @@
 #include <signal.h>
 #include "util.h"
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "autoconf.h"
 #include "secure_wrapper.h"
-#include <sys/stat.h>
+#include <syscfg/syscfg.h>
+#include <sysevent/sysevent.h>
 #include "safec_lib_common.h"
 
 #ifdef MULTILAN_FEATURE
@@ -777,7 +778,7 @@ static int divide_ipv6_prefix(struct serv_ipv6 *si6)
     int                 bit_boundary = 0;
     unsigned long long  sub_prefix, tmp_prefix; //64 bits
     char                iface_prefix[INET6_ADDRSTRLEN]; //for iface prefix str
-    char                evt_name[80];
+    char                evt_name[128];
     char                evt_val[64];
     char                iface_name[64];
     int                 used_sub_prefix_num = 0; 
