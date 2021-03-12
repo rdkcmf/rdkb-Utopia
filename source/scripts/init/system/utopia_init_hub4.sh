@@ -288,6 +288,7 @@ fi
    fi
    if [ -d /nvram/lxy/ ]; then
 	rm -rf /nvram/lxy
+	/bin/sh -c '/usr/bin/lxyinit.sh /etc/lxybundl.bz2 /nvram/lxy'
    fi
 
    #Needs to increment factory reset count during PIN method
