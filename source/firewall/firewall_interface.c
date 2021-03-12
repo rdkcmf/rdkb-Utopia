@@ -82,6 +82,16 @@ void do_forwardPorts(FILE *filter_fp)
     FIREWALL_DEBUG("Exiting do_forwardPorts\n");
 }
 
+/*
+ * Add Video Analytics to allow only from lan interface
+ */
+__attribute__((weak))
+void do_OpenVideoAnalyticsPort (FILE *filter_fp)
+{
+    FIREWALL_DEBUG("Entering do_OpenVideoAnalyticsPort\n");
+    FIREWALL_DEBUG("Exiting do_OpenVideoAnalyticsPort\n");
+}
+
 /*              
  ==========================================================================
                             WhilteListing IPs

@@ -11819,6 +11819,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "%s\n", ":SNMP_FILTER - [0:0]");
    //Adding 10163 port to suport SNMPv3 SHA-256
    fprintf(filter_fp, "-A INPUT -p udp -m udp --match multiport --dports 10161,10163 -j SNMP_FILTER\n");
+   
+   // Video Analytics Firewall rule to allow port 58081 only from LAN interface
+   do_OpenVideoAnalyticsPort (filter_fp);
        
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
@@ -12903,6 +12906,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A INPUT -p udp -m udp --match multiport --dports 10161,10163 -j SNMP_FILTER\n");
    fprintf(filter_fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
    fprintf(filter_fp, "-A SNMPDROPLOG -j DROP\n");
+
+   // Video Analytics Firewall rule to allow port 58081 only from LAN interface
+   do_OpenVideoAnalyticsPort (filter_fp);
 #if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
    do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
 #else
@@ -13622,6 +13628,9 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-A INPUT -p udp -m udp --match multiport --dports 10161,10163 -j SNMP_FILTER\n");
    fprintf(fp, "-A SNMPDROPLOG -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SNMP Connection Blocked:\"\n",syslog_level);
    fprintf(fp, "-A SNMPDROPLOG -j DROP\n");
+
+   // Video Analytics Firewall rule to allow port 58081 only from LAN interface
+   do_OpenVideoAnalyticsPort (fp);
 
    if (!isFirewallEnabled || isBridgeMode || !isWanServiceReady) {
        if(isBridgeMode || isWanServiceReady)
