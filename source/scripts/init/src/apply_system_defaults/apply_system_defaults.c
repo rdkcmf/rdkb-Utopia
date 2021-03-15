@@ -2077,8 +2077,15 @@ if ( paramObjVal != NULL )
 
                       if(jsonNTPServer1 != NULL)
                       {
-                         set_syscfg_partner_values(jsonNTPServer1,"ntp_server1");
-                         APPLY_PRINT(" %s ntp_server1 set to json value:%s\n", __FUNCTION__, jsonNTPServer1);
+                         if(0 != strnlen(jsonNTPServer1, sizeof(jsonNTPServer1)))
+                         {
+                            set_syscfg_partner_values(jsonNTPServer1,"ntp_server1");
+                            APPLY_PRINT(" %s ntp_server1 set to json value:%s\n", __FUNCTION__, jsonNTPServer1);
+                         }
+                         else
+                         {
+                            APPLY_PRINT(" %s ntp_server1 NOT SET as json value from parse was EMPTY String\n", __FUNCTION__);
+                         }
                          jsonNTPServer1 = NULL;
                       }
                       else
