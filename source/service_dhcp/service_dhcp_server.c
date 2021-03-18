@@ -190,6 +190,8 @@ int dhcp_server_start (char *input)
 	char l_cCurrent_PID[8] = {0}, l_cRpc_Cmd[64] = {0};
 	char l_cCommand[128] = {0}, l_cBuf[128] = {0};
     char l_cBridge_Mode[8] = {0};
+    char l_cDhcp_Server_Prog[16] = {0};
+    int dhcp_server_progress_count = 0;
 
 	BOOL l_bRestart = FALSE, l_bFiles_Diff = FALSE, l_bPid_Present = FALSE;
 	FILE *l_fFp = NULL;
@@ -227,7 +229,16 @@ int dhcp_server_start (char *input)
 		return 0;
 	}
    
-	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", "inprogress", 0);
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", l_cDhcp_Server_Prog, sizeof(l_cDhcp_Server_Prog));
+    while((!(strncmp(l_cDhcp_Server_Prog, "inprogress", 10))) && (dhcp_server_progress_count < 5))
+    {
+        fprintf(stderr, "SERVICE DHCP : dhcp_server-progress is inprogress , waiting... \n");
+        sleep(2);
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", l_cDhcp_Server_Prog, sizeof(l_cDhcp_Server_Prog));
+        dhcp_server_progress_count++;
+    }
+
+    sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", "inprogress", 0);
 	fprintf(stderr, "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start \n");
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-errinfo", "", 0);
    
@@ -307,6 +318,7 @@ int dhcp_server_start (char *input)
 	if (FALSE == l_bRestart)
 	{
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", "started", 0);
+        sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", "completed", 0);
 		remove_file("/var/tmp/lan_not_restart");
 		return 0;
 	}
@@ -330,6 +342,7 @@ int dhcp_server_start (char *input)
             fprintf(stderr, "%s command didnt execute successfully\n", l_cSystemCmd);
         }
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", "stopped", 0);
+        sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", "completed", 0);
 		remove_file("/var/tmp/lan_not_restart");
         return 0;
     }
