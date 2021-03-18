@@ -484,7 +484,7 @@ int add_route(udhcpc_script_t *pinfo)
         }
         else
         {
-            snprintf(buf,sizeof(buf),"route add default gw %s dev %s metric %d 2>/dev/null",tok,metric);
+            snprintf(buf,sizeof(buf),"route add default gw %s dev %s metric %d 2>/dev/null",tok,getenv("interface"),metric);
         }
         printf("\n %s router:%s buf: %s\n",__FUNCTION__,router,buf);
         system(buf);
