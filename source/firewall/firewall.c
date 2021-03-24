@@ -15013,7 +15013,11 @@ static int service_start ()
    }
 
    if(ppFlushNeeded == 1) {
+#if defined (INTEL_PUMA7)
+       system("conntrack -F");
+#else
        system("echo flush_all_sessions > /proc/net/ti_pp");
+#endif
        sysevent_set(sysevent_fd, sysevent_token, "pp_flush", "0", 0);
    }
 
