@@ -751,7 +751,7 @@ else
                      echo_t "[utopia][init] Setting last reboot reason as Software_upgrade_Watchdog_Reboot"
                      syscfg set X_RDKCENTRAL-COM_LastRebootReason "Software_upgrade_Watchdog_Reboot"
                      syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-	         elif [ "$Punit_status" = "RESET_ORIGIN_ATOM_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_ATOM" ];then
+	         elif ( [ "$rebootCounter" = "0" ] ) && ( [ "$Punit_status" = "RESET_ORIGIN_ATOM_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_ATOM" ] );then
 	             syscfg set X_RDKCENTRAL-COM_LastRebootReason $Punit_status
 	             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 		     if [ -e "/usr/bin/onboarding_log" ]; then
