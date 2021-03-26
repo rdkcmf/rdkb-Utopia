@@ -269,6 +269,9 @@ fi
 	rm -f /nvram/DISABLE_ONBOARD_LOGGING
    	rm -rf /nvram2/onboardlogs
    fi
+   if [ -f /nvram/ETH_WAN_PORT_RECLAIMED ];then
+        rm -f /nvram/ETH_WAN_PORT_RECLAIMED
+   fi
    if [ -d /nvram/lxy/ ]; then
 	rm -rf /nvram/lxy
 	/bin/sh -c '/usr/bin/lxyinit.sh /etc/lxybundl.bz2 /nvram/lxy'
@@ -386,6 +389,11 @@ if [ -s /nvram/.secure_mount_failure ]; then
      fi
 fi
 
+eth_wan_enable=`cat /nvram/bbhm_cur_cfg.xml | grep dmsb.wanagent.if.2.Enable | cut -d ">" -f 2 | cut -d "<" -f 1`
+if [ "$eth_wan_enable" == "FALSE" ]
+then
+    touch /nvram/ETH_WAN_PORT_RECLAIMED
+fi
 
 # Get the syscfg value which indicates whether unit is activated or not.
 # This value is set from network_response.sh based on the return code received.
