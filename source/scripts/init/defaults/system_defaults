@@ -903,6 +903,7 @@ $Advsecurity_LoggingPeriod=1440
 $Advsecurity_LookupTimeout=350
 $Adv_PrivProtRFCEnable=1
 $Adv_PCRFCEnable=1
+$Adv_DFICMPv6RFCEnable=1
 
 #Firewall log settings
 $FW_LOG_FILE_PATH=/nvram2/log/firewall
