@@ -83,7 +83,7 @@ else
     debug_build=0
 fi
 
-firmware_name=`cat /version.txt | grep ^imagename: | cut -d ":" -f 2`
+firmware_name=$(sed -n 's/^imagename[:=]"\?\([^"]*\)"\?/\1/p' /version.txt)
 utc_time=`date -u`
 echo "[$utc_time] [utopia][init] DEVICE_INIT:$firmware_name"
 if [ -e "/usr/bin/onboarding_log" ]; then
