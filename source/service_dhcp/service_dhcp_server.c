@@ -329,6 +329,17 @@ int dhcp_server_start (char *input)
    	system("killall `basename dnsmasq`");
 	remove_file(PID_FILE);
 
+        /* Kill dnsmasq if its not stopped properly */
+	sprintf(l_cCommand, "pidof dnsmasq");  
+        memset (l_cBuf, '\0',  sizeof(l_cBuf));
+    	copy_command_output(l_cCommand, l_cBuf, sizeof(l_cBuf));
+	l_cBuf[strlen(l_cBuf)] = '\0';
+
+	if ('\0' != l_cBuf[0] && 0 != l_cBuf[0])
+        {
+            fprintf(stderr, "kill dnsmasq with SIGKILL if its still running \n");
+            system("kill -KILL `pidof dnsmasq`");
+        }
     sysevent_get(g_iSyseventfd, g_tSysevent_token,
                          "bridge_mode", l_cBridge_Mode,
                          sizeof(l_cBridge_Mode));
@@ -612,6 +623,7 @@ void lan_status_change(char *input)
         prepare_dhcp_conf("dns_only");
 
         fprintf(stderr, "SERVICE DHCP : Start dhcp-server from lan status change");
+           
 	    l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
     	if (0 == l_iSystem_Res)
 	    {

@@ -490,6 +490,12 @@ dhcp_server_start ()
    sysevent set dns-status stopped
    killall `basename $SERVER`
    rm -f $PID_FILE
+   
+   #Send SIGKILL to dnsmasq process if its not killed properly with SIGTERM
+   if [ ! -z `pidof dnsmasq` ] ; then
+         echo_t "SERVICE DHCP : dnsmasq process killed with SIGKILL "
+         kill -KILL `pidof $SERVER`
+   fi
 
    InterfaceInConf=""
    Bridge_Mode_t=`sysevent get bridge_mode`
