@@ -54,13 +54,10 @@ SERVICE_FEATURE="bbhm"
 PMON=/etc/utopia/service.d/pmon.sh
 PID_FILE=/var/run/dropbear.pid
 
-cosa_start() {
-    COSA_APP_PATH="/usr/ccsp"
-    COSA_APP="cosa_start.sh"
-    
-    cd $COSA_APP_PATH
-    #chmod 777 $COSA_APP    
-    sh $COSA_APP start &
+cosa_start ()
+{
+    cd /usr/ccsp
+    ./cosa_start.sh &
 }
 
 #----------------------------------------------------------------------------------------
