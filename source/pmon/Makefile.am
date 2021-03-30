@@ -36,4 +36,5 @@ pmon_LDFLAGS =  -lpthread -lz
 pmon_LDADD = $(top_builddir)/source/services/lib/libsrvmgr.la \
              $(top_builddir)/source/sysevent/lib/libsysevent.la \
              $(top_builddir)/source/ulog/libulog.la \
-             $(top_builddir)/source/syscfg/lib/libsyscfg.la
+             $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+             -ltelemetry_msgsender
