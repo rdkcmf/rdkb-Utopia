@@ -804,6 +804,9 @@ $moca_maximum_tx_power=10
 $moca_phy_rate=235
 $moca_beacon_pwr_level=9
 
+#Enable moca bridge
+$ipv6_moca_bridge=true
+
 # CCSP Defaults
 $dhcpv6s00::serverenable=1
 $dhcpv6s00::servertype=1
