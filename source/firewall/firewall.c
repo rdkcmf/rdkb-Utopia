@@ -14177,9 +14177,10 @@ v6GPFirewallRuleNext:
 				}
 			}	
 		      fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", Interface[cnt], wan6_ifname);
+#ifndef _HUB4_PRODUCT_REQ_
 		      fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", Interface[cnt], ecm_wan_ifname);
 		      fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", Interface[cnt], emta_wan_ifname);
-
+#endif
 		}
 	  }
 
@@ -14273,9 +14274,10 @@ v6GPFirewallRuleNext:
 		for(cnt = 0;cnt < inf_num;cnt++)
 		{
 		      fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, Interface[cnt]);
+#ifndef _HUB4_PRODUCT_REQ_
 		      fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", ecm_wan_ifname, Interface[cnt]);
 		      fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", emta_wan_ifname, Interface[cnt]);
-
+#endif
 		}
 	  }
       //in IPv6, the DMZ and port forwarding just overwrite the wan2lan rule.
