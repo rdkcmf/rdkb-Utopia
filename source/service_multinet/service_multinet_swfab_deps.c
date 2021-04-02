@@ -102,7 +102,10 @@ int saveVlanState(PVlanTrunkState vidState) {
         numPorts = 0;
         buffOffset = 0;
         initIterator(&curEntity->memberPorts,&portIter);
-        while ((portItem = getNext(&portIter))) {
+        while ((portItem = getNext(&portIter)) 
+                && (buffOffset < sizeof(portMemberBuff))
+                && (numPorts != MAX_ADD_PORTS))
+        {
             curPort = (PPlatformPort) portItem->data;
             portMemberNameList[numPorts] = portMemberBuff + buffOffset;
             buffOffset += curPort->hal->stringID(curPort->portID, portMemberNameList[numPorts++], sizeof(portMemberBuff) - buffOffset);
