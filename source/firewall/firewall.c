@@ -6479,8 +6479,10 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
         if(strcmp(httpsport, "443") != 0)
             strcat(httpsport, ",443");
     }
-
-
+    if ( ( bEthWANEnable ) && (family == AF_INET6) )
+    {
+          ethwan_mso_gui_acess_rules(filter_fp,NULL);           
+    }
     //remote management is only available on eCM interface if it is enabled
 #ifdef _COSA_INTEL_XB3_ARM_ 
    if(family == AF_INET)
@@ -13422,7 +13424,8 @@ int prepare_ipv6_firewall(const char *fw_file)
 
   	if ( bEthWANEnable )
   	{
-          do_ipv6_UIoverWAN_filter(mangle_fp);           
+          do_ipv6_UIoverWAN_filter(mangle_fp);
+      	  ethwan_mso_gui_acess_rules(NULL,mangle_fp);                      
   	}
 	do_ipv6_filter_table(filter_fp);
 	

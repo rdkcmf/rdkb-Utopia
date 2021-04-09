@@ -141,3 +141,16 @@ void update_rabid_features_status()
     FIREWALL_DEBUG("Entering update_rabid_features_status \n");
     FIREWALL_DEBUG("Exiting update_rabid_features_status \n");
 }
+
+/*              
+ ==========================================================================
+                Ethwan MSO GUI acess Markings
+ ==========================================================================
+ */             
+__attribute__((weak))
+void ethwan_mso_gui_acess_rules(FILE *filter_fp,FILE *mangle_fp)
+{
+    FIREWALL_DEBUG("Entering ethwan_mso_gui_acess_rules\n");
+    FIREWALL_DEBUG("Exiting ethwan_mso_gui_acess_rules\n");
+    return 0;
+}
