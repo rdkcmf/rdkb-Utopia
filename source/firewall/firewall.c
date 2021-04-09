@@ -5707,7 +5707,11 @@ static int do_lan2self(FILE *fp)
 #else
    if(isWanReady)
 #endif //NAT46_KERNEL_SUPPORT
+#else //Hub4 NON-MAPT
+   if(isWanReady)
 #endif //FEATURE_MAPT
+#else
+   if(isWanReady)
 #endif //_HUB4_PRODUCT_REQ_
        do_lan2self_by_wanip(fp, AF_INET);
 
@@ -11612,6 +11616,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        // This breaks emta DNS routing on XF3. We may need some special rule here.
        fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
    }
+#else //Hub4 NON-MAPT
+   fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan_todmz\n", current_wan_ifname);
+   fprintf(nat_fp, "-A POSTROUTING -j postrouting_ephemeral\n");
+// This breaks emta DNS routing on XF3. We may need some special rule here.
+   fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
 #endif //FEATURE_MAPT
 #else // NON _HUB4_PRODUCT_REQ_
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan_todmz\n", current_wan_ifname);
