@@ -113,7 +113,7 @@ fi
 else
    cat $LOCAL_CONF_FILE > $CONF_FILE
    rm -f $LOCAL_CONF_FILE
-   if [ "$BOX_TYPE" == "HUB4" ]; then
+   if [ "$BOX_TYPE" == "HUB4" ] || [ "$BOX_TYPE" == "SR300" ]; then
        $BIN $CONF_FILE &
    else 
        $BIN -c $CONF_FILE &

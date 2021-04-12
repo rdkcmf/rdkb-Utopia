@@ -44,7 +44,7 @@ source /lib/rdk/t2Shared_api.sh
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
 DHCP_OPTIONS_FILE=/var/dhcp_options
-if [ "$BOX_TYPE" = "HUB4" ]; then
+if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ]; then
 LOCAL_DHCP_CONF=/tmp/dnsmasq.conf
 LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options
@@ -947,7 +947,7 @@ fi
 	  prepare_dhcp_options_wan_dns	
    fi
    
-   if [ "x$BOX_TYPE" != "xHUB4" ]; then
+   if [ "x$BOX_TYPE" != "xHUB4" ] && [ "x$BOX_TYPE" != "xSR300" ]; then
       nameserver=`grep "nameserver" $RESOLV_CONF | awk '{print $2}'|grep -v ":"|tr '\n' ','| sed -e 's/,$//'`
       if [ "" != "$nameserver" ]; then
          echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
@@ -1096,7 +1096,7 @@ fi
 			   echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
 
-       elif [ "$BOX_TYPE" = "HUB4" ]; then
+       elif [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ]; then
            echo "interface=brlan6" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
 
@@ -1118,7 +1118,7 @@ fi
                            echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
                    fi
 
-           if [ "$BOX_TYPE" = "HUB4" ]; then
+           if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ]; then
 
                #SKYH4-952: Sky selfheal support.
                #For Sky selfheal mode, prepare redirection IP for DSN redirection.
