@@ -263,7 +263,7 @@ service_start ()
    if [ "x$BOX_TYPE" = "xXB3" ]; then
        kill -9 `pidof $BIN` > /dev/null 2>&1
        echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
-       $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -gd
+       $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -g
    else
        systemctl stop $BIN
 
@@ -276,12 +276,12 @@ service_start ()
            echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
            if [ "x$BOX_TYPE" = "xHUB4" ]; then
                if [ $EROUTER_IPV6_UP -eq 1 ]; then
-                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
                else
-                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -4 -l $NTPD_LOG_NAME & sleep 120 # We have only v4 IP. Restrict to v4.
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -4 -l $NTPD_LOG_NAME & sleep 120 # We have only v4 IP. Restrict to v4.
                fi
            else
-               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
            fi
        else
            echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
@@ -304,7 +304,7 @@ service_start ()
        echo_t "SERVICE_NTPD : NTP failed to start, retrying" >> $NTPD_LOG_NAME
        if [ "x$BOX_TYPE" = "xXB3" ]; then
            echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
-           $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -gd
+           $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -g
        else
            echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
            killall $BIN ### This to ensure there is no instance of NTPD running because of multiple wan-start events
@@ -313,7 +313,7 @@ service_start ()
            if [ -n "$QUICK_SYNC_WAN_IP" ]; then
                # Try and Force Quick Sync to Run on a single interface
                echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gdq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
            else
                echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
            fi
