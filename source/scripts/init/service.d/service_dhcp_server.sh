@@ -412,6 +412,13 @@ dhcp_server_start ()
       fi
    fi
 
+    dhcp_inprogress_wait_count=0
+    while [ x"`sysevent get dhcp_server-progress`" == "xinprogress" ] && [ $dhcp_inprogress_wait_count -lt 5 ]; do
+          echo_t "SERVICE DHCP : dhcp_server-progress is inprogress , waiting..."
+          sleep 2
+          dhcp_inprogress_wait_count=$((dhcp_inprogress_wait_count+1))
+    done
+
    sysevent set dhcp_server-progress inprogress
    echo_t "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start"
    sysevent set ${SERVICE_NAME}-errinfo
@@ -475,6 +482,7 @@ dhcp_server_start ()
    killall -HUP `basename $SERVER`
    if [ "0" = "$RESTART" ] ; then
          sysevent set dhcp_server-status started
+         sysevent set dhcp_server-progress completed
          rm -f /var/tmp/lan_not_restart
          return 0
    fi
@@ -492,6 +500,7 @@ dhcp_server_start ()
         echo "dnsmasq.conf interface info not found"
         $PMON unsetproc dhcp_server
         sysevent set dhcp_server-status stopped
+        sysevent set dhcp_server-progress completed
         rm -f /var/tmp/lan_not_restart
         return 0
    fi
@@ -771,6 +780,7 @@ case "$1" in
       dhcp_server_start
       ;;
    ${SERVICE_NAME}-stop)
+      echo_t "SERVICE DHCP : Got stop with $2.. Call dhcp_server_stop"
       dhcp_server_stop
       ;;
    ${SERVICE_NAME}-restart)
