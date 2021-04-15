@@ -2369,6 +2369,15 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
    int  count;
    char *tmp = NULL;
            FIREWALL_DEBUG("Entering do_single_port_forwarding\n");       
+#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_MAPT
+   BOOL isBothProtocol = FALSE;
+#endif
+#endif
+
+#ifdef FEATURE_MAPT
+   BOOL isFeatureDisabled = TRUE;
+#endif
    query[0] = '\0';
    rc = syscfg_get(NULL, "SinglePortForwardCount", query, sizeof(query)); 
    if (0 != rc || '\0' == query[0]) {
@@ -2382,6 +2391,13 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          count = MAX_SYSCFG_ENTRIES;
       }
    }
+#ifdef FEATURE_MAPT
+   {
+       FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA TRUE);
+       isFeatureDisabled = FALSE;
+   }
+#endif
+
    for (idx=1 ; idx<=count ; idx++) {
       namespace[0] = '\0';
       snprintf(query, sizeof(query), "SinglePortForward_%d", idx);
@@ -2390,6 +2406,9 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          continue;
       }
    
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:Index %d\n" COMMA idx);
+#endif
       // is the rule enabled
       query[0] = '\0';
       rc = syscfg_get(namespace, "enabled", query, sizeof(query));
@@ -2398,6 +2417,9 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       } else if ( (0 == strcmp("0", query)) || (0 == strcasecmp("false", query)) ) {
         continue;
       }
+#ifdef FEATURE_MAPT
+        FIREWALL_DEBUG("PortMapping:Enable %s\n" COMMA query);
+#endif
    
       // what is the ip address to forward to
       char toip[40];
@@ -2418,6 +2440,13 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
             continue;
         }
       }
+#ifdef FEATURE_MAPT
+      if(iptype == AF_INET){
+          FIREWALL_DEBUG("PortMapping:Internal Client %s\n" COMMA toip);
+      } else {
+          FIREWALL_DEBUG("PortMapping:Internal Client IPv6 %s\n" COMMA toipv6);
+      }
+#endif
 
       // what is the destination port for the protocol we are forwarding
       char external_port[10];
@@ -2427,6 +2456,10 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          continue;
       }
 
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:External Port %s\n" COMMA external_port);
+#endif
+
       // what is the forwarded destination port for the protocol
       char internal_port[10];
       internal_port[0] = '\0';
@@ -2434,6 +2467,10 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       if (0 != rc || '\0' == internal_port[0]) {
          snprintf(internal_port, sizeof(internal_port), "%s", external_port);
       }
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:Internal Port %s\n" COMMA internal_port);
+#endif
+
       char port_modifier[10];
       if ('\0' == internal_port[0] || 0 == strcmp(internal_port, external_port) || 0 == strcmp(internal_port, "0") ) {
         port_modifier[0] = '\0';
@@ -2448,6 +2485,10 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       if (0 != rc || '\0' == prot[0]) {
          snprintf(prot, sizeof(prot), "%s", "both");
       }
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:Protocol %s\n" COMMA prot);
+#endif
 
       //PortForwarding in IPv6 is to overwrite the Firewall wan2lan rules
       if(iptype == AF_INET6) {
@@ -2634,6 +2675,12 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif
    }
 SinglePortForwardNext:
+#ifdef FEATURE_MAPT
+     if(isFeatureDisabled == TRUE)
+     {
+         FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA FALSE);
+     }
+#endif
            FIREWALL_DEBUG("Exiting do_single_port_forwarding\n");       
    return(0);
 }
@@ -2657,6 +2704,15 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 
    char str[MAX_QUERY];
    int count;
+#ifdef _HUB4_PRODUCT_REQ_
+#ifdef FEATURE_MAPT
+   BOOL isBothProtocol = FALSE;
+#endif
+#endif
+   
+#ifdef FEATURE_MAPT
+   BOOL isFeatureDisabled = TRUE;
+#endif
    query[0] = '\0';
            FIREWALL_DEBUG("Entering do_port_range_forwarding\n");       
    rc = syscfg_get(NULL, "PortRangeForwardCount", query, sizeof(query));
@@ -2671,6 +2727,10 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          count = MAX_SYSCFG_ENTRIES;
       }
    }
+#ifdef FEATURE_MAPT
+   FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA TRUE);
+   isFeatureDisabled = FALSE;
+#endif
 
    for (idx=1 ; idx<=count ; idx++) {
       namespace[0] = '\0';
@@ -2679,7 +2739,11 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
       if (0 != rc || '\0' == namespace[0]) {
          continue;
       }
-   
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:Index %d\n" COMMA idx);
+#endif
+
       // is the rule enabled
       query[0] = '\0';
       rc = syscfg_get(namespace, "enabled", query, sizeof(query));
@@ -2688,7 +2752,11 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
       } else if ( (0 == strcmp("0", query)) || (0 == strcasecmp("false", query)) ) {
         continue;
       }
-       
+
+#ifdef FEATURE_MAPT
+        FIREWALL_DEBUG("PortMapping:Feature %s\n" COMMA query);
+#endif
+
       // what is the ip address to forward to
       char toip[40];
       toip[0] = '\0';
@@ -2705,6 +2773,9 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
           if ( 0 != rc || '\0' == toip[0] || strcmp("255.255.255.255", toip) == 0 ) {
              continue;
           }
+#ifdef FEATURE_MAPT
+          FIREWALL_DEBUG("PortMapping:Internal Client %s\n" COMMA toip);
+#endif
 
           rc = syscfg_get(namespace, "public_ip", public_ip, sizeof(public_ip));
           /* In older version public ip field is not exist.
@@ -2757,6 +2828,9 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
           if (0 != rc || toipv6[0] == '\0' || strcmp("x", toipv6) == 0 || strcmp("0", toipv6) == 0) {
              continue;
           }
+#ifdef FEATURE_MAPT
+          FIREWALL_DEBUG("PortMapping:Internal Client IPv6 %s\n" COMMA toipv6);
+#endif
       }
 
       // what is the destination port for the protocol we are forwarding
@@ -2774,6 +2848,11 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
             continue;
          }
       }
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:External Port %s\n" COMMA sdport);
+      FIREWALL_DEBUG("PortMapping:External Port End Range %s\n" COMMA edport);
+#endif
 
       // how long is the port range
       int s = atoi(sdport);
@@ -2793,6 +2872,10 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          if (internal_port < 0) internal_port = 0;
       }
 
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:Internal Port %s\n" COMMA internal_port);
+#endif
+
       // what is the last port of the destination range
       char rangesize[10] = "";
       int internal_port_range_size = 0;
@@ -2809,6 +2892,10 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
       if (0 != rc || '\0' == prot[0]) {
          snprintf(prot, sizeof(prot), "%s", "both");
       }
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortMapping:Protocol %s\n" COMMA prot);
+#endif
 
       char target_internal_port[40] = "";
       char match_internal_port[40] = "";
@@ -2968,7 +3055,14 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 
    }
 PortRangeForwardNext:
-           FIREWALL_DEBUG("Exiting do_port_range_forwarding\n");       
+#ifdef FEATURE_MAPT
+      if (isFeatureDisabled == TRUE)
+      {
+          FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA FALSE);
+      }
+#endif
+          FIREWALL_DEBUG("Exiting do_port_range_forwarding\n");
+
    return(0);
 }
 
@@ -8091,6 +8185,10 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
    char query[MAX_QUERY];
 
    int count;
+#ifdef FEATURE_MAPT
+   BOOL isFeatureDisabled = TRUE;
+#endif
+
 
    query[0] = '\0';
    rc = syscfg_get(NULL, "PortRangeTriggerCount", query, sizeof(query));
@@ -8106,6 +8204,11 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
       }
    }
 
+#ifdef FEATURE_MAPT
+   FIREWALL_DEBUG("PortTriggers:Feature Enable %d\n" COMMA TRUE);
+   isFeatureDisabled = FALSE;
+#endif
+
    for (idx=1 ; idx<=count ; idx++) {
       namespace[0] = '\0';
       snprintf(query, sizeof(query), "PortRangeTrigger_%d", idx);
@@ -8113,6 +8216,9 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
       if (0 != rc || '\0' == namespace[0]) {
          continue;
       }
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortTriggers:Index %d\n" COMMA idx);
+#endif
   
       // is the rule enabled
       query[0] = '\0';
@@ -8126,6 +8232,10 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
          isTriggerMonitorRestartNeeded = 1;
 #endif
       }
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortTriggers:Enable %s\n" COMMA query);
+#endif
 
       // what is the trigger id
       char id[10];
@@ -8142,6 +8252,10 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
       if (0 != rc || '\0' == prot[0]) {
          snprintf(prot, sizeof(prot), "%s", "both");
       }
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortTriggers:Trigger Protocol %s\n" COMMA prot);
+#endif
 
       // what is the triggering port range
       char portrange[30];
@@ -8164,6 +8278,11 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
          }
       }
 
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortTriggers:Trigger Port Start %s\n" COMMA sdport);
+      FIREWALL_DEBUG("PortTriggers:Trigger Port End %s\n" COMMA edport);
+#endif
+
 #ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
       // what is the forward protocol
       char fprot[10];
@@ -8172,6 +8291,10 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
       if (0 != rc || '\0' == fprot[0]) {
          snprintf(fprot, sizeof(fprot), "%s", "both");
       }
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortTriggers:Forward Protocol %s\n" COMMA fprot);
+#endif
 
       // what is the forwarding port range
       char sfport[10];
@@ -8192,6 +8315,12 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
             }
          }
       }
+
+#ifdef FEATURE_MAPT
+      FIREWALL_DEBUG("PortTriggers:Forward Port Start %s\n" COMMA sfport);
+      FIREWALL_DEBUG("PortTriggers:Forward Port End %s\n" COMMA efport);
+#endif
+
 #endif
 
       if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) {
@@ -8275,6 +8404,12 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
    }
 
 end_do_prepare_port_range_triggers:
+#ifdef FEATURE_MAPT
+   if (isFeatureDisabled == TRUE)
+   {
+       FIREWALL_DEBUG("PortTriggers:Feature Enable %d\n" COMMA FALSE);
+   }
+#endif
    FIREWALL_DEBUG("Exiting do_prepare_port_range_triggers\n"); 
    return(0);
 }
