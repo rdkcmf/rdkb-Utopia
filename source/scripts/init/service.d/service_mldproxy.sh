@@ -64,7 +64,12 @@ do_start_mldproxy () {
 
    cat $LOCAL_CONF_FILE > $CONF_FILE
    rm -f $LOCAL_CONF_FILE 
-   $BIN -c $CONF_FILE -f
+   mld=`which mldproxy`
+   if [ -z "$mld" ]; then	   
+	   echo " mldproxy not found "
+   else
+	   $BIN -c $CONF_FILE -f
+   fi
 }
 
 service_init ()

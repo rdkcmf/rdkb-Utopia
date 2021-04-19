@@ -48,7 +48,12 @@ LAN_ST=`sysevent get lan-status`
 BR_MD=`sysevent get bridge_mode`
 RG_MD=`syscfg get last_erouter_mode`
 
-/etc/utopia/service.d/cosa_misc.sh&
+if [ -f /etc/utopia/service.d/cosa_misc.sh ];then
+	echo "running cosa_misc.sh script"
+	/etc/utopia/service.d/cosa_misc.sh&
+else
+	echo "cosa_misc.sh is not found"
+fi
 /etc/utopia/service.d/service_igd.sh snmp_subagent-status
 #unit in bridge mode
 if [ "$BR_MD" != "0" -o "$RG_MD" = "0" ]; then
