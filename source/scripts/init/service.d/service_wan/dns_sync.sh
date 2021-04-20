@@ -57,15 +57,32 @@ do
 done
 
 # Synch the available DNS entries and wait until all entries are available.
-DNS_STR=`cat $RESOLV_CONF | grep nameserver | grep -v 127.0.0.1`
-echo "$DNS_STR" > $TMP_RESOLV_FILE
+#DNS_STR=`cat $RESOLV_CONF | grep nameserver | grep -v 127.0.0.1`
+#echo "$DNS_STR" > $TMP_RESOLV_FILE
 
-DNS_STR_V4=`cat $RESOLV_CONF | grep nameserver | grep -v 127.0.0.1 | grep "\." | cut -d" " -f2`
+DNS_STR_IPV4=`cat $RESOLV_CONF | grep nameserver | grep -v 127.0.0.1 | grep "\."`
+DNS_STR_IPV6=`cat $RESOLV_CONF  | grep nameserver | grep -v 127.0.0.1 | grep "\:"`
+
+if [ "$DNS_STR_IPV4" != "" ];then
+    echo "$DNS_STR_IPV4" > $TMP_RESOLV_FILE
+else
+    > $TMP_RESOLV_FILE
+fi
+
+if [ "$DNS_STR_IPV6" != "" ];then
+    echo "$DNS_STR_IPV6" >> $TMP_RESOLV_FILE
+fi
+
+
+DNS_STR_V4=`echo $DNS_STR_IPV4 | cut -d" " -f2`
 if [ "$DNS_STR_V4" == "" ]
 then
 	echo "No IPv4 DNS entries available add default as lan IP"
 	echo "$LAN_IP" >> $TMP_RESOLV_FILE
 fi
+
+echo "TMP_RESOLV_FILE = $TMP_RESOLV_FILE"
+cat $TMP_RESOLV_FILE
 
 GetConfigFile $PEER_COMM_ID
 scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
