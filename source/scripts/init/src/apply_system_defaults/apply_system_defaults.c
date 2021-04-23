@@ -49,7 +49,7 @@
 #include <arpa/inet.h>
 #include <syscfg/syscfg.h>
 #include "sysevent/sysevent.h"
-#if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_) || defined(_SR300_PRODUCT_REQ_)
 #include "platform_hal.h"
 #endif
 #include "cJSON.h"
@@ -638,7 +638,7 @@ static int getFactoryPartnerId
 		char*                       pValue
 	)
 {
-#if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_) || defined(_SR300_PRODUCT_REQ_)
 	if(0 == platform_hal_getFactoryPartnerId(pValue))
 	{
 		APPLY_PRINT("%s - %s\n",__FUNCTION__,pValue);
@@ -728,6 +728,10 @@ static int get_PartnerID( char *PartnerID)
 				sprintf( PartnerID, "%s", "unknown" );
 #elif defined (_RDK_REF_PLATFORM_)
                                 sprintf( PartnerID, "%s", "RDKM");
+#elif defined (_SR300_PRODUCT_REQ_) /* Default fall back option for ADA devices SKYH4-4946 */
+				sprintf( PartnerID, "%s", "sky-uk");
+#elif defined (_HUB4_PRODUCT_REQ_) /* Default fall back option for HUB4 devices SKYH4-4946 */
+			        sprintf( PartnerID, "%s", "sky-italia");
 #else
 				sprintf( PartnerID, "%s", "comcast" );
 #endif
@@ -2261,7 +2265,7 @@ int main( int argc, char **argv )
 	else
 	{
 
-#if !defined (_XB6_PRODUCT_REQ_) && !defined(_HUB4_PRODUCT_REQ_)
+#if !defined (_XB6_PRODUCT_REQ_) && !defined(_HUB4_PRODUCT_REQ_) && !defined(_SR300_PRODUCT_REQ_)
 		//Partner ID is null so need to set default partner ID as "comcast"
 		memset( PartnerID, 0, sizeof( PartnerID ) );
 #if defined (_RDK_REF_PLATFORM_)
