@@ -84,6 +84,8 @@ ap_addr() {
                 r=$l;l=""
             fi
         fi
+    else
+        let m=$m+1
     fi
     let s=256-$m
     let r=$r/$s*$s
@@ -305,6 +307,10 @@ case "$1" in
             AP_ADDR="`ap_addr $LAN_IP $LAN_SUB`"
             psmcli set dmsb.atom.l3net.${LAN_INST}.$IPV4_NV_IP $AP_ADDR dmsb.atom.l3net.${LAN_INST}.$IPV4_NV_SUBNET $LAN_SUB
             ccsp_bus_client_tool eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool 'true' 'true'
+            if [ "$BOX_TYPE" = "XB3" ]; then
+                rpcclient $ATOM_ARPING_IP "sh /usr/ccsp/wifi/br0_ip.sh $AP_ADDR $LAN_SUB"
+            fi
+
         fi
    ;;
    multinet-resync)
