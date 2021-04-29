@@ -41,6 +41,7 @@
 #include <fcntl.h>
 #include "autoconf.h"
 #include "secure_wrapper.h"
+#include <sys/stat.h>
 
 #ifdef MULTILAN_FEATURE
 #include "ccsp_psm_helper.h"
@@ -1289,6 +1290,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     unsigned long T2 = 0;
     FILE *ifd=NULL;
     char *HwAdrrPath = "/sys/class/net/brlan0/address";
+    struct stat check_ConfigFile;
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-divided", evt_val, sizeof(evt_val));
     if (strcmp(evt_val, "ready")) {
@@ -1527,7 +1529,15 @@ OPTIONS:
     }
 
     fclose(fp);
-
+    if (stat(DHCPV6S_CONF_FILE, &check_ConfigFile) == -1) {
+  	v_secure_system("sysevent set dibbler_server_conf-status ");
+    }
+    else if (check_ConfigFile.st_size == 0) {
+  	v_secure_system("sysevent set dibbler_server_conf-status empty");
+    }
+    else {
+	v_secure_system("sysevent set dibbler_server_conf-status ready");
+    }     
     return 0;
 }
 
