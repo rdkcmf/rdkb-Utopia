@@ -5284,8 +5284,8 @@ static int do_wan_nat_lan_clients(FILE *fp)
   /*RDKB-28433: [EWAN] Internet is not working when gateway IP is changed.*/
 #ifdef FEATURE_MAPT
   if (!isMAPTReady)
-  {
 #endif //FEATURE_MAPT
+#endif /*_HUB4_PRODUCT_REQ_*/
      if(!IS_EMPTY_STRING(natip4))
      {
          snprintf(str, sizeof(str),
@@ -5300,22 +5300,6 @@ static int do_wan_nat_lan_clients(FILE *fp)
                "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s", natip4);
 
      }
-
-#ifdef FEATURE_MAPT
-  }
-#endif //FEATURE_MAPT
-#else
-  snprintf(str, sizeof(str),
-           "-A postrouting_towan -s 10.0.0.0/24  -j SNAT --to-source %s", natip4);
-  fprintf(fp, "%s\n", str);
-  memset(str, 0, sizeof(str));
-  snprintf(str, sizeof(str),
-           "-A postrouting_towan -s 192.168.0.0/16  -j SNAT --to-source %s", natip4);
-  fprintf(fp, "%s\n", str);
-  memset(str, 0, sizeof(str));
-  snprintf(str, sizeof(str),
-           "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s", natip4);
-#endif /*_HUB4_PRODUCT_REQ_*/
   }
   else
   {
