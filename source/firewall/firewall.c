@@ -11319,7 +11319,15 @@ static int prepare_multinet_disabled_ipv4_firewall(FILE *filter_fp) {
     return 0;
 }
 #endif
-
+static void do_ipv4_UIoverWAN_filter(FILE* fp) {
+ FIREWALL_DEBUG("Inside do_ipv4_UIoverWAN_filter \n"); 
+      if(strlen(current_wan_ipaddr)>0)
+      {
+        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,current_wan_ipaddr);
+        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,current_wan_ipaddr);
+      }
+        FIREWALL_DEBUG("Exiting do_ipv4_UIoverWAN_filter \n"); 
+}
 /*
  *  Procedure     : prepare_subtables
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -11407,6 +11415,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_trigger\n");
 #endif
 #endif
+   if(bEthWANEnable)
+   {
+       do_ipv4_UIoverWAN_filter(mangle_fp);
+   }
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_lan2lan\n");
@@ -13111,7 +13123,17 @@ static char * ifnames[] = { wan6_ifname };
 static char * ifnames[] = { wan6_ifname, ecm_wan_ifname, emta_wan_ifname};
 #endif /* * _HUB4_PRODUCT_REQ_ */
 static int numifs = sizeof(ifnames) / sizeof(*ifnames);
-
+/*----*/
+static void do_ipv6_UIoverWAN_filter(FILE* fp) {
+ FIREWALL_DEBUG("Inside do_ipv6_UIoverWAN_filter \n"); 
+ if(strlen(current_wan_ipv6[0]) > 0)
+      {
+        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,current_wan_ipv6);
+        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,current_wan_ipv6);
+      }
+        FIREWALL_DEBUG("Exiting do_ipv6_UIoverWAN_filter \n"); 
+}
+/*-----*/
 static void do_ipv6_sn_filter(FILE* fp) {
  FIREWALL_DEBUG("Inside do_ipv6_sn_filter \n"); 
     int i;
@@ -13379,7 +13401,11 @@ int prepare_ipv6_firewall(const char *fw_file)
 #if !defined(_PLATFORM_IPQ_)
 	do_ipv6_nat_table(nat_fp);
 #endif
-	
+
+  	if ( bEthWANEnable )
+  	{
+          do_ipv6_UIoverWAN_filter(mangle_fp);           
+  	}
 	do_ipv6_filter_table(filter_fp);
 	
 	do_parental_control(filter_fp,nat_fp, 6);
@@ -15362,3 +15388,4 @@ void add_dslite_mss_clamping(FILE *fp)
     FIREWALL_DEBUG("Exiting add_dslite_mss_clamping\n");
 }
 #endif
+
