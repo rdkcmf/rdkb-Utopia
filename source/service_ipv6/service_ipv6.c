@@ -1530,13 +1530,13 @@ OPTIONS:
 
     fclose(fp);
     if (stat(DHCPV6S_CONF_FILE, &check_ConfigFile) == -1) {
-  	v_secure_system("sysevent set dibbler_server_conf-status ");
+	sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "", 0);
     }
     else if (check_ConfigFile.st_size == 0) {
-  	v_secure_system("sysevent set dibbler_server_conf-status empty");
+	sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "empty", 0);
     }
     else {
-	v_secure_system("sysevent set dibbler_server_conf-status ready");
+	sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "ready", 0);
     }     
     return 0;
 }
