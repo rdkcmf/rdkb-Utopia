@@ -1298,7 +1298,7 @@ int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *P
       cJSON_AddItemToObject(root_nvram_bs_json, PartnerID, newPartnerObj);
 
       char *out = cJSON_Print(root_nvram_bs_json);
-      APPLY_PRINT("out1 = %s\n", out);
+      //APPLY_PRINT("out1 = %s\n", out);
       writeToJson(out, BOOTSTRAP_INFO_FILE);
       out = NULL;
    }
