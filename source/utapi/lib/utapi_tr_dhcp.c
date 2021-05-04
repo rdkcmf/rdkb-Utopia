@@ -363,7 +363,7 @@ int Utopia_ValidateLanDhcpPoolRange(UtopiaContext *ctx, const unsigned long mina
         return ERR_INVALID_PORT_RANGE;
     }
 
-    if (minaddr > maxaddr)
+    if (ntohl(minaddr) > ntohl(maxaddr))
         return ERR_INVALID_PORT_RANGE;
 
     return SUCCESS;
