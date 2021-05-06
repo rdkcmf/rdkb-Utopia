@@ -116,6 +116,10 @@ service_start ()
       if [ ! -f "/nvram/syscfg_clean" ]; then
         echo "0 2 * * *   /usr/ccsp/tad/syscfg_cleanup.sh" >> $CRONTAB_FILE
       fi
+
+      if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] ; then
+            echo "*/15 * * * *  /usr/ccsp/tad/log_staticIP_client_info.sh" >> $CRONTAB_FILE
+      fi
       
       num1=$RANDOM
       num2=$RANDOM
