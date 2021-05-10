@@ -3388,8 +3388,9 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
    char namespace[MAX_NAMESPACE];
    char query[MAX_QUERY];
    int  rc;
-
+#if defined(CISCO_CONFIG_TRUE_STATIC_IP) || (defined(FEATURE_MAPT) && defined(NAT46_KERNEL_SUPPORT))
    char str[MAX_QUERY];
+#endif
    int count;
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
@@ -10132,8 +10133,10 @@ static int do_multinet_wan2lan_disable(FILE *filter_fp) {
  */
 static int do_wan2lan_disabled(FILE *fp)
 {
-   FIREWALL_DEBUG("Entering do_wan2lan_disabled\n"); 
+   FIREWALL_DEBUG("Entering do_wan2lan_disabled\n");
+#if !defined(_HUB4_PRODUCT_REQ_) || (defined(_HUB4_PRODUCT_REQ_) && defined(FEATURE_MAPT))
    char str[MAX_QUERY];
+#endif
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
    char mapt_config_value[BUFLEN_8] = {0};

@@ -1302,11 +1302,10 @@ static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_
 
 static int send_dhcp_data_to_wanmanager (ipc_dhcpv4_data_t *dhcpv4_data)
 {
-    int ret = 0;
     if ( NULL == dhcpv4_data)
     {
         printf ("[%s-%d] Invalid argument \n", __FUNCTION__,__LINE__);
-        return;
+        return -1;
     }
 
     /**
