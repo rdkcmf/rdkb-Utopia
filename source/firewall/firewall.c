@@ -3218,7 +3218,6 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          {
 #if defined(IVI_KERNEL_SUPPORT)
              char cmdIvictlPf[MAX_QUERY] = {0};
-             char cmdIvictlPf[MAX_QUERY] = {0};
              char udp_protocol[BUFLEN_8] = "010";
  
              snprintf(str, sizeof(str),
