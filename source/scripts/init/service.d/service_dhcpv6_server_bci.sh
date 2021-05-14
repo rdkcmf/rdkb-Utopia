@@ -33,6 +33,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #######################################################################
+source /etc/device.properties
 
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
@@ -261,13 +262,25 @@ service_init
 
 case "$1" in
    ${SERVICE_NAME}-start)
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+      service_ipv6 start
+else
       service_ipv6 dhcpv6s-start
+fi
       ;;
    ${SERVICE_NAME}-stop)
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+      service_ipv6 stop
+else
       service_ipv6 dhcpv6s-stop
+fi
       ;;
    ${SERVICE_NAME}-restart)
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+      service_ipv6 restart
+else
       service_ipv6 dhcpv6s-restart
+fi
       ;;
    #----------------------------------------------------------------------------------
    # Add other event entry points here
@@ -276,9 +289,13 @@ case "$1" in
 #   ipv6_nameserver|ipv6_dnssl)
 #      service_ipv6 dhcpv6s-restart
    dhcpv6_option_changed)
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+      service_ipv6 restart
+else
       service_ipv6 dhcpv6s-restart
+fi
       ;;
-     
+
    *)
       echo "Usage: $SERVICE_NAME [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" > /dev/console
       exit 3

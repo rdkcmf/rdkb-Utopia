@@ -34,7 +34,13 @@
 #define XHS_INST         5
 
 #define IPV4_TSIP_PREFIX    "dmsb.truestaticip"
+
+#ifdef _BWG_PRODUCT_REQ_
+#define IPV4_TSIP_ASNPREFIX "dmsb.truestaticip.Asn."
+#else
 #define IPV4_TSIP_ASNPREFIX "dmsb.truestaticip.Asn"
+#endif
+
 #define IPV4_TSIP_ENABLE    "Enable"
 #define IPV4_TSIP_IP        "Ipaddress"
 #define IPV4_TSIP_SUBNET    "Subnetmask"
@@ -183,10 +189,14 @@ void sync_tsip ()
 	char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
 	char l_cNvTsip_IpSubnet[16] = {0}, l_cNvTsip_Gateway[16] = {0};
 	char l_cSubnet[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cPsm_Parameter[255] = {0};
-    char *l_cpPsm_Get = NULL;
-		
-	int l_iNv_Tsip_Enable = 0, l_iCIDR, l_iRet_Val = 0;
-	l_iNv_Tsip_Enable = atoi(l_cNv_Tsip_Enable);
+        char *l_cpPsm_Get = NULL;
+
+        int l_iCIDR, l_iRet_Val = 0;
+
+#if !defined (_BWG_PRODUCT_REQ_)
+        int l_iNv_Tsip_Enable = 0;
+        l_iNv_Tsip_Enable = atoi(l_cNv_Tsip_Enable);
+#endif
 
 	//psm get dmsb.truestaticip.Enable
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_ENABLE);
@@ -286,7 +296,11 @@ void sync_tsip ()
 		   l_cNv_Tsip_Enable, l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cNvTsip_Gateway);
 
     // apply the new original true static ip
+#if defined (_BWG_PRODUCT_REQ_)
+        if (0 != l_cNv_Tsip_Enable[0])
+#else
 	if (0 != l_cNv_Tsip_Enable[0] && 0 != l_iNv_Tsip_Enable)
+#endif
 	{
 		l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
 		subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);

@@ -822,3 +822,9 @@ $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
 
 #echo_t "[utopia][init] started dropbear process"
 #/etc/utopia/service.d/service_sshd.sh sshd-start &
+
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+	echo_t "[utopia][init] started dropbear process"
+	/etc/utopia/service.d/service_sshd.sh sshd-start &
+fi
+

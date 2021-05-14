@@ -662,6 +662,9 @@ static int wait_till_dhcpv6_client_reply(struct serv_wan *sw)
 static int wan_start(struct serv_wan *sw)
 {
     char status[16];
+#if defined (_BWG_PRODUCT_REQ_)
+    char gw_ip[64];
+#endif
     char buf[16] = {0};
 
     int ret;
@@ -826,6 +829,16 @@ static int wan_start(struct serv_wan *sw)
                     return -1;
                 }
             #endif /*_WAN_MANAGER_ENABLED_*/
+
+#if defined (_BWG_PRODUCT_REQ_)
+                /*Adding default gateway */
+                memset(gw_ip, 0 ,sizeof(gw_ip));
+                sysevent_get(sw->sefd, sw->setok, "default_router", gw_ip, sizeof(gw_ip));
+                if (vsystem("route add default gw %s dev %s",gw_ip,sw->ifname)!=0){
+                fprintf(stdout, "%s: adding default route without gateway IP=%s \n", __FUNCTION__,gw_ip);
+                vsystem("route add default dev %s",sw->ifname);
+                }
+#endif
 
                 if (route_config(sw->ifname) != 0) {
                     fprintf(stderr, "%s: route_config error\n", __FUNCTION__);

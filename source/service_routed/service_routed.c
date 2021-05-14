@@ -76,7 +76,13 @@
 #define ZEBRA_PID_FILE  "/var/zebra.pid"
 #define RIPD_PID_FILE   "/var/ripd.pid"
 #define ZEBRA_CONF_FILE "/var/zebra.conf"
+
+#if defined (_BWG_PRODUCT_REQ_) || defined (ARRIS_XB3_PLATFORM_CHANGES)
+#define RIPD_CONF_FILE  "/var/ripd.conf"
+#else
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
+#endif
+
 #define RA_INTERVAL 60
 
 #ifdef _HUB4_PRODUCT_REQ_
@@ -1291,6 +1297,10 @@ static int rip_start(struct serv_routed *sr)
         fprintf(stderr, "%s: RIP not enabled\n", __FUNCTION__);
         return 0;
     }
+
+#if defined (_BWG_PRODUCT_REQ_)
+sleep(45); /*sleep upto update ripd.conf after reboot*/
+#endif
 
     sysevent_set(sr->sefd, sr->setok, "rip-status", "starting", 0);
 

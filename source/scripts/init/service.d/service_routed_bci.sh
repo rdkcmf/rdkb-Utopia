@@ -38,6 +38,7 @@
 # This script is used to start the routing daemons (zebra and ripd)
 # $1 is the calling event (current_wan_state  current_lan_state  ipv6_prefix)
 #------------------------------------------------------------------
+source /etc/device.properties
 
 SERVICE_NAME="routed"
 
@@ -82,6 +83,11 @@ case "$1" in
 #   ipv6_nameserver|ipv6_dnssl)
 #       service_routed radv-restart
 #       ;;
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+   ipv6_prefix|ipv6_nameserver)
+       service_routed radv-restart
+       ;;
+fi
    dhcpv6_option_changed)
        service_routed radv-restart
        ;;
