@@ -799,9 +799,18 @@ then
     then
         if [ "$RF_CP_FEATURE_EN" = "true" ] && [ "$RF_CP_MODE" = "true" ]
         then 
-            noRf=1
-            RF_CAPTIVE_PORTAL="true"
-            CAPTIVE_PORTAL_MODE="true"
+            RF_SIGNAL_STATUS=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_CableRfSignalStatus | grep value | cut -f3 -d : | cut -f2 -d" "`
+            if [ "$RF_SIGNAL_STATUS" = "false" ]
+            then
+               noRf=1
+               RF_CAPTIVE_PORTAL="true"
+               CAPTIVE_PORTAL_MODE="true"
+            else
+               echo "DHCP SERVER : RF Signal status $RF_SIGNAL_STATUS, resetting RF CP"
+               syscfg set rf_captive_portal false
+               syscfg commit
+               noRf=0
+            fi
         fi
     fi
 
