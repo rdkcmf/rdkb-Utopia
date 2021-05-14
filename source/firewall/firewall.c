@@ -8438,15 +8438,15 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 			{
 	                #if defined (INTEL_PUMA7)
 				// Prerouting is bypassed for the Xi devices (Needed only for XB6)
-                                fprintf(nat_fp, "-A prerouting_fromlan ! -s 169.254.0.0/16 -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-                                fprintf(nat_fp, "-A prerouting_fromlan ! -s 169.254.0.0/16 -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                fprintf(nat_fp, "-A prerouting_fromlan -i %s ! -s 169.254.0.0/16 -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
+                                fprintf(nat_fp, "-A prerouting_fromlan -i %s ! -s 169.254.0.0/16 -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
                                 printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
                         #else
 
-                                fprintf(nat_fp, "-A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-                                fprintf(nat_fp, "-A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
+                                fprintf(nat_fp, "-A prerouting_fromlan -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
+                                fprintf(nat_fp, "-A prerouting_fromlan -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
                                 printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
@@ -8469,14 +8469,14 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 			{
 	                #if defined (INTEL_PUMA7)
                                 // Prerouting is bypassed for the Xi devices (Needed only for XB6)
-                                fprintf(nat_fp, "-A PREROUTING ! -s 2603:2000::/20  -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
-			        fprintf(nat_fp, "-A PREROUTING ! -s 2603:2000::/20  -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+                                fprintf(nat_fp, "-A PREROUTING -i %s ! -s 2603:2000::/20  -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
+			        fprintf(nat_fp, "-A PREROUTING -i %s ! -s 2603:2000::/20  -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
 				printf("[XDNS] ip6tables -t nat -A PREROUTING  -s 2603:2000::/20 -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
 				printf("[XDNS] ip6tables -t nat -A PREROUTING  -s 2603:2000::/20 -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
 				printf("### XDNS : Feature Enabled (XDNS ipv6) ### \n");
                         #else
-				fprintf(nat_fp, "-A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
-                                fprintf(nat_fp, "-A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
+				fprintf(nat_fp, "-A PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
+                                fprintf(nat_fp, "-A PREROUTING -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
                                 printf("[XDNS] ip6tables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
                                 printf("[XDNS] ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
                                 printf("### XDNS : Feature Enabled (XDNS ipv6) ### \n");
