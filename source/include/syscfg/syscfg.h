@@ -62,30 +62,19 @@
 #define ERR_IO_FILE_STAT      -22
 #define ERR_IO_FILE_TOO_BIG   -23
 #define ERR_IO_FILE_WRITE     -24
-#define ERR_IO_MTD_OPEN       -30
-#define ERR_IO_MTD_GETINFO    -31
-#define ERR_IO_MTD_INVALID    -32
-#define ERR_IO_MTD_BAD_MAGIC  -33
-#define ERR_IO_MTD_BAD_SZ     -34
-#define ERR_IO_MTD_ERASE      -35
-#define ERR_IO_MTD_READ       -36
-#define ERR_IO_MTD_WRITE      -37
 
 /*
  * Procedure     : syscfg_create
  * Purpose       : Create syscfg shared memory and load entries from persistent storage
  * Parameters    :   
  *   file - filesystem 'file' where syscfg is stored
- *   mtd_device - raw /dev/mtdX device where syscfg is stored
  * Return Values :
  *    0              - success
  *    ERR_INVALID_PARAM - invalid arguments
  *    ERR_IO_FAILURE - syscfg file unavailable
  * Notes         :
- *    When both file and mtd_device specified, file based storage takes
- *    precedence. This should be called early in system bootup
  */
-int syscfg_create(const char *file, long int max_file_sz, const char *mtd_device);
+int syscfg_create(const char *file, long int max_file_sz);
 
 /*
  * Procedure     : syscfg_init
@@ -258,34 +247,5 @@ int syscfg_is_match (const char *ns, const char *name, char *value, unsigned int
  *    ERR_xxx - various errors codes dependening on the failure
  */
 int syscfg_getsz (long int *used_sz, long int *max_sz);
-
-/*
- * Procedure     : syscfg_format
- * Purpose       : SYSCFG persistent storage format
- * Parameters    :
- *   mtd_device - raw /dev/mtdX device where syscfg is stored
- *   file - filesystem 'file' to seed syscfg values (optional)
- * Return Values :
- *    0              - success
- *    ERR_INVALID_PARAM - invalid arguments
- *    ERR_IO_FAILURE - syscfg file unavailable
- * Notes :
- *    WARNING: will overwrite persistent store
- *    seed file is optional, without it only the mtd header is placed
- *    at the beginning of mtd device
- */
-int syscfg_format (const char *mtd_device, const char *seed_file);
-
-/*
- * Procedure     : syscfg_check
- * Purpose       : Checks if given flash partition is valid syscfg partition
- * Parameters    :   
- *   mtd_device  - flash mtd partition (like /dev/mtd3)
- * Return Values :
- *    0 - valid syscfg partition
- *    ERR... - error/invalid syscfg partition
- * Notes         :
- */
-int syscfg_check (const char *mtd_device);
 
 #endif /* _SYSCFG_H_ */

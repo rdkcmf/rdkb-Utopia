@@ -55,7 +55,6 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include <ulog/ulog.h>
-#include "syscfg_mtd.h"   // MTD IO friend sub-class
 #include "syscfg_lib.h"   // internal interface
 #include "syscfg.h"       // external interface used by users
 #include "safec_lib_common.h"
@@ -351,11 +350,8 @@ int syscfg_commit (void)
     write_lock(ctx);
     commit_lock(ctx);
 
-    if (STORE_MTD_DEVICE == ctx->cb.store_type) {
-        rc = commit_to_mtd(ctx->cb.store_path);
-    } else {
-        rc = commit_to_file(ctx->cb.store_path);
-    }
+    rc = commit_to_file(ctx->cb.store_path);
+
     commit_unlock(ctx);
     write_unlock(ctx);
 
@@ -396,18 +392,15 @@ void syscfg_destroy (void)
  * Purpose       : SYSCFG initialization from persistent storage
  * Parameters    :   
  *   file - filesystem 'file' where syscfg is stored
- *   mtd_device - raw /dev/mtdX device where syscfg is stored
  * Return Values :
  *    0              - success
  *    ERR_INVALID_PARAM - invalid arguments
  *    ERR_IO_FAILURE - syscfg file unavailable
  * Notes         :
- *    When both file and mtd_device specified, file based storage takes
- *    precedence. This should be called early in system bootup
  */
-int syscfg_create (const char *file, long int max_file_sz, const char *mtd_device)
+int syscfg_create (const char *file, long int max_file_sz)
 {
-    if (NULL == file && NULL == mtd_device) {
+    if (file == NULL) {
         return ERR_INVALID_PARAM;
     }
     ulog_LOG_Info("Enter in function %s \n", __FUNCTION__);
@@ -415,21 +408,11 @@ int syscfg_create (const char *file, long int max_file_sz, const char *mtd_devic
     store_info_t store_info;
     int rc, shmid = -1;
 
-    if (file) {
-        store_info.type = STORE_FILE;
-	/* CID 135542: BUFFER_SIZE_WARNING */
-        strncpy(store_info.path, file, sizeof(store_info.path)-1);
-	store_info.path[sizeof(store_info.path)-1] = '\0';
-        store_info.max_size = (max_file_sz > 0) ? max_file_sz : DEFAULT_MAX_FILE_SZ;
-        store_info.hdr_size = 0;
-    } else {
-        store_info.type = STORE_MTD_DEVICE;
-	/* CID 135542: BUFFER_SIZE_WARNING */
-        strncpy(store_info.path, mtd_device, sizeof(store_info.path)-1);
-	store_info.path[sizeof(store_info.path)-1] = '\0';
-        store_info.max_size = mtd_get_devicesize();
-        store_info.hdr_size = mtd_get_hdrsize();
-    }
+    store_info.type = STORE_FILE;
+    strncpy(store_info.path, file, sizeof(store_info.path)-1);
+    store_info.path[sizeof(store_info.path)-1] = '\0';
+    store_info.max_size = (max_file_sz > 0) ? max_file_sz : DEFAULT_MAX_FILE_SZ;
+    store_info.hdr_size = 0;
 
     ulog_LOG_Info("creating shared memory with store type %d, path %s, size %ld, hdr size %d \n", store_info.type, store_info.path, store_info.max_size, store_info.hdr_size);
 
@@ -442,11 +425,8 @@ int syscfg_create (const char *file, long int max_file_sz, const char *mtd_devic
     // ready for operation
     syscfg_initialized = 1;
 
-    if (STORE_MTD_DEVICE == store_info.type) {
-        rc = load_from_mtd(store_info.path);
-    } else {
-        rc = load_from_file(store_info.path);
-    }
+    rc = load_from_file(store_info.path);
+
     if (0 != rc) {
         ulog_LOG_Err("Error loading from store");
     }
@@ -479,47 +459,6 @@ int syscfg_commit_lock() {
 int syscfg_commit_unlock() {
     syscfg_shm_ctx *ctx = syscfg_ctx;
     return commit_unlock(ctx);
-}
-
-/*
- * Procedure     : syscfg_format
- * Purpose       : SYSCFG persistent storage format
- * Parameters    :   
- *   mtd_device - raw /dev/mtdX device where syscfg is stored
- *   file - filesystem 'file' to seed syscfg values (optional)
- * Return Values :
- *    0              - success
- *    ERR_INVALID_PARAM - invalid arguments
- *    ERR_IO_FAILURE - syscfg file unavailable
- * Notes :
- *    seed file is optional, without it only the mtd header is placed
- *    at the beginning of mtd device
- */
-int syscfg_format (const char *mtd_device, const char *seed_file)
-{
-    if (NULL == mtd_device) {
-        return ERR_INVALID_PARAM;
-    }
-
-    return mtd_write_from_file(mtd_device, seed_file);
-}
-
-/*
- * Procedure     : syscfg_check
- * Purpose       : Checks if given flash partition is valid syscfg partition
- * Parameters    :
- *   mtd_device  - flash mtd partition (like /dev/mtd3)
- * Return Values :
- *    0 - valid syscfg partition
- *    ERR... - error/invalid syscfg partition
- * Notes         :
- */
-int syscfg_check (const char *mtd_device)
-{
-    if (NULL == mtd_device) {
-        return ERR_INVALID_PARAM;
-    }
-    return mtd_hdr_check(mtd_device);
 }
 
 /*

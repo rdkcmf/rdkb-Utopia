@@ -199,24 +199,6 @@ PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"  
 HOTSPOT_BLOB="/nvram/hotspot_blob"
 
-#syscfg_check -d $MTD_DEVICE
-#if [ $? = 0 ]; then
-#   echo "[utopia][init] Starting syscfg subsystem using flash partition $MTD_DEVICE"
-#   /sbin/syscfg_create -d $MTD_DEVICE
-#else
-#   echo "[utopia][init] Formating flash partition $MTD_DEVICE for syscfg use"
-#   syscfg_format -d $MTD_DEVICE
-#   if [ $? = 0 ]; then
-#      echo "[utopia][init] Starting syscfg subsystem using flash partition $MTD_DEVICE with default settings"
-#      /sbin/syscfg_create -d $MTD_DEVICE
-#   else
-#      echo "[utopia][init] FAILURE: formatting flash partition $MTD_DEVICE for syscfg use"
-#      echo "[utopia][init] Starting syscfg with default settings using file store ($SYSCFG_FILE)"
-#      echo "" > $SYSCFG_FILE
-#      /sbin/syscfg_create -f $SYSCFG_FILE
-#   fi
-#fi
-
 CheckAndReCreateDB()
 {
 	NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
@@ -311,15 +293,7 @@ fi
 # Remove log file first because it need get log file path from syscfg   
    /fss/gw/usr/sbin/log_handle.sh reset
    echo -e "\n" | syscfg_destroy 
-#   umount $SYSCFG_MOUNT
-#   SYSDATA_MTD=`grep SysData /proc/mtd | awk -F: '{print $1}'`
-#   if [ -n $SYSDATA_MTD ]; then
-#      echo "[utopia][init] wiping system data flash"
-#      flash_eraseall -j /dev/$SYSDATA_MTD
-#      echo "[utopia][init] remounting system data flash"
-#      mount -t jffs2 mtd:SysData $SYSCFG_MOUNT
-#      echo -n > $SYSCFG_FILE
-#   fi  
+
    rm -f /nvram/partners_defaults.json
    rm -f /nvram/bootstrap.json
    rm -f /opt/secure/RFC/tr181store.json

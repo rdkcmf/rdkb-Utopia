@@ -26,7 +26,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 lib_LTLIBRARIES = libsyscfg.la
 
-libsyscfg_la_SOURCES = syscfg_lib.c syscfg_mtd.c
+libsyscfg_la_SOURCES = syscfg_lib.c
 
 libsyscfg_la_CPPFLAGS = -I$(top_srcdir)/source/include
 

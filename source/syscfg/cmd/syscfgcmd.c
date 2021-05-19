@@ -49,77 +49,14 @@ typedef enum {
     CMD_UNKNOWN,
 } cmd_t;
 
-static inline void syscfg_format_usage()
-{
-    printf("Usage: syscfg_format -d mtd-device [-f file] \n");
-}
-
 static inline void syscfg_create_usage()
 {
-    printf("Usage: syscfg_create {-f file | -d mtd-device} \n");
+    printf("Usage: syscfg_create -f file\n");
 }
 
 static inline void syscfg_usage()
 {
     printf("Usage: syscfg [show | set [ns] name value | get [ns] name | unset [ns] name | \n       ismatch [ns] name value | commit]\n");
-}
-
-static void print_check_error(int rc, const char *mtd_device)
-{
-    if (0 == rc) {
-        return;
-    }
-    switch (rc) {
-    case ERR_IO_MTD_BAD_MAGIC:
-        fprintf(stderr, "Error: mtd device %s not a valid syscfg store\n", mtd_device);
-        break; 
-    case ERR_IO_MTD_INVALID:
-        fprintf(stderr, "Error: %s not a valid flash partition\n", mtd_device);
-        break; 
-    case ERR_IO_MTD_BAD_SZ:
-        fprintf(stderr, "Error: %s has invalid syscfg mtd size\n", mtd_device);
-        break; 
-    case ERR_IO_MTD_OPEN:
-    case ERR_IO_MTD_GETINFO:
-    case ERR_IO_MTD_READ:
-        fprintf(stderr, "Error: accessing flash partition %s\n", mtd_device);
-        break; 
-    }
-}
-
-static void print_format_error(int rc, const char *mtd_device, const char *seed_file)
-{
-    if (0 == rc) {
-        return;
-    }
-    switch (rc) {
-    case ERR_IO_MTD_BAD_MAGIC:
-        fprintf(stderr, "Error: mtd device %s not a valid syscfg store\n", mtd_device);
-        break; 
-    case ERR_IO_FILE_TOO_BIG:
-        fprintf(stderr, "Error: seed file too big to fit flash parition\n");
-        break; 
-    case ERR_IO_MTD_INVALID:
-        fprintf(stderr, "Error: %s not a valid flash partition\n", mtd_device);
-        break; 
-    case ERR_IO_MTD_BAD_SZ:
-        fprintf(stderr, "Error: %s has invalid syscfg mtd size\n", mtd_device);
-        break; 
-    case ERR_IO_MTD_OPEN:
-    case ERR_IO_MTD_GETINFO:
-    case ERR_IO_MTD_WRITE:
-    case ERR_IO_MTD_ERASE:
-        fprintf(stderr, "Error: formating flash partition %s\n", mtd_device);
-        break; 
-    case ERR_IO_FILE_OPEN:
-    case ERR_IO_FILE_STAT:
-        if (seed_file) {
-            fprintf(stderr, "Error: reading seed file %s\n", seed_file);
-        } else {
-            fprintf(stderr, "Error: internal error handling tmp file\n");
-        }
-        break; 
-    }
 }
 
 static void print_commit_error (int rc)
@@ -128,20 +65,8 @@ static void print_commit_error (int rc)
         return;
     }
     switch (rc) {
-    case ERR_IO_MTD_BAD_MAGIC:
-        fprintf(stderr, "Error: mtd device not a valid syscfg store\n");
-        break; 
     case ERR_IO_FILE_TOO_BIG:
         fprintf(stderr, "Error: syscfg contents too big to fit flash parition\n");
-        break; 
-    case ERR_IO_MTD_INVALID:
-        fprintf(stderr, "Error: not a valid flash partition\n");
-        break; 
-    case ERR_IO_MTD_OPEN:
-    case ERR_IO_MTD_GETINFO:
-    case ERR_IO_MTD_WRITE:
-    case ERR_IO_MTD_ERASE:
-        fprintf(stderr, "Error: commiting to flash partition\n");
         break; 
     case ERR_IO_FILE_OPEN:
     case ERR_IO_FILE_STAT:
@@ -181,55 +106,13 @@ int main(int argc, char **argv)
     program = strrchr(argv[0], '/');
     program = program ? program+1 : argv[0];
 
-    if (0 == strcmp(program, "syscfg_check")) {
-        if (argc < 3) {
-            printf("Usage: syscfg_check -d mtd-device \n");
-            return 1;
-        }
-
-        if (0 == strcasecmp(argv[1], "-d")) {
-            char *mtd_device = NULL;
-            mtd_device = argv[2];
-            rc = syscfg_check(mtd_device);
-            print_check_error(rc, mtd_device);
-            return rc;
-        } 
-    }
-
-    if (0 == strcmp(program, "syscfg_format")) {
-        if (argc < 3) {
-            goto format_fail;
-        }
-
-        char *seed_file = NULL, *mtd_device = NULL;
-        if (0 != strcasecmp(argv[1], "-d")) {
-            goto format_fail;
-        }
-        mtd_device = argv[2];
-
-        if (argc > 3) {
-            if (0 != strcasecmp(argv[3], "-f")) {
-                goto format_fail;
-            } 
-            seed_file = argv[4];
-        } 
-        rc = syscfg_format(mtd_device, seed_file);
-        print_format_error(rc, mtd_device, seed_file);
-        return rc;
-    format_fail:
-        syscfg_format_usage();
-        return 1;
-    }
-
     if (0 == strcmp(program, "syscfg_create")) {
         if (argc < 3) {
             syscfg_create_usage();
             return 1;
         }
         if (0 == strcasecmp(argv[1], "-f")) {
-            rc = syscfg_create(argv[2], 0, NULL);
-        } else if (0 == strcasecmp(argv[1], "-d")) {
-            rc = syscfg_create(NULL, 0, argv[2]);
+            rc = syscfg_create(argv[2], 0);
         } else {
             syscfg_create_usage();
             return 1;
