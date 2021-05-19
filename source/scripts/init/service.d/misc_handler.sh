@@ -85,12 +85,12 @@ then
 	#l2sd0 interface only applicable for XB3 box.TCXB6-5310
 	if [ "$BOX_TYPE" = "XB3" ]; then
 	    BRLAN0_MAC=`ifconfig l2sd0 | grep HWaddr | awk '{print $5}'`
-	    ((nfq_handler 4 $BRLAN0_MAC &)&)
-	    ((nfq_handler 6 $BRLAN0_MAC &)&)
+	    ( ( nfq_handler 4 $BRLAN0_MAC & ) & )
+	    ( ( nfq_handler 6 $BRLAN0_MAC & ) & )
 	else
 	    #dont pass mac address for XB6 box_type, nfq_handler internally will take brlan0 mac.
-	    ((nfq_handler 4 &)&)
-	    ((nfq_handler 6 &)&)
+	    ( ( nfq_handler 4 & ) & )
+	    ( ( nfq_handler 6 & ) & )
 	fi
 	sysevent set parcon_nfq_status started
     fi

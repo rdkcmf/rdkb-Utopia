@@ -231,7 +231,7 @@ update_dns_policy_route() {
         fi
 
         ip rule show | grep "from all to $s lookup erouter"
-        if [ $? eq 0 ]; then
+        if [ $? -eq 0 ]; then
             echo "==@== removing 'to $s' from policy route" >> /tmp/dns.policy.route.log
             ip rule del to $s table erouter
         fi

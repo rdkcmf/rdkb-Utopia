@@ -182,7 +182,7 @@ service_start ()
    fi
 
    ulog ${SERVICE_NAME} status "updated time" 
-   if [ -n $SYSCFG_InternetAccessPolicyCount ] && [ "0" != "$SYSCFG_InternetAccessPolicyCount" ] ; then
+   if [ -n "$SYSCFG_InternetAccessPolicyCount" ] && [ "0" != "$SYSCFG_InternetAccessPolicyCount" ] ; then
       # if there is an Internet Access Policy then we need to give the firewall a chance to react to the 
       # new known time
        echo "service_ntpclient : Triggering RDKB_FIREWALL_RESTART"
@@ -192,7 +192,7 @@ service_start ()
    sysevent set ${SERVICE_NAME}-status "started"
    syscfg set ntp_status 3
 
-   /* Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych */
+   # Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
    DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
    if [ "0" = "$DEVICEFIRSTUSEDATE" ] ; then
       FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`

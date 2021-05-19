@@ -640,10 +640,10 @@ cause_file="/sys/bus/acpi/devices/INT34DB:00/reset_cause"
 type_file="/sys/bus/acpi/devices/INT34DB:00/reset_type"
 COLD_REBOOT=false
 if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]; then
-   if [ -e $cause_file && -e $type_file ];then
+   if [ -e $cause_file ] && [ -e $type_file ];then
       value_c=$(cat $cause_file)
       value_t=$(cat $type_file)
-      if [ "$value_t" == "0" && "$value_c" == "0" ];then
+      if [ "$value_t" = "0" ] && [ "$value_c" = "0" ];then
          COLD_REBOOT=true
       fi
    fi

@@ -245,7 +245,7 @@ update_ddns_server() {
 
                   if [ "0" != "$RET_CODE" ]; then
                       # we clear the wan_last_ipaddr to force us to retry once the error is cleared
-                      if [ -n $SYSCFG_wan_last_ipaddr ] ; then
+                      if [ -n "$SYSCFG_wan_last_ipaddr" ] ; then
                           echo "$PID unset syscfg wan_last_ipaddr"
                           syscfg unset wan_last_ipaddr
                           syscfg commit
@@ -307,7 +307,7 @@ update_ddns_server() {
                            sysevent set ${SERVICE_NAME}-status started
 
                            # we clear the wan_last_ipaddr to force us to retry once the error is cleared
-                           if [ -n $SYSCFG_wan_last_ipaddr ] ; then
+                           if [ -n "$SYSCFG_wan_last_ipaddr" ] ; then
                                ulog ddns status "$PID unset syscfg wan_last_ipaddr"
                                syscfg unset wan_last_ipaddr
                                syscfg commit
@@ -330,7 +330,7 @@ update_ddns_server() {
                            syscfg commit
 
                            # we clear the wan_last_ipaddr to force us to retry once the error is cleared
-                           if [ -n $SYSCFG_wan_last_ipaddr ] ; then
+                           if [ -n "$SYSCFG_wan_last_ipaddr" ] ; then
                                ulog ddns status "$PID unset syscfg wan_last_ipaddr"
                                syscfg unset wan_last_ipaddr
                                syscfg commit
@@ -346,7 +346,7 @@ update_ddns_server() {
                            syscfg set ddns_client_Lasterror $CONNECTION_ERROR
                            syscfg commit
                            # we clear the wan_last_ipaddr to force us to retry once the error is cleared
-                           if [ -n $SYSCFG_wan_last_ipaddr ] ; then
+                           if [ -n "$SYSCFG_wan_last_ipaddr" ] ; then
                                ulog ddns status "$PID unset syscfg wan_last_ipaddr"
                                syscfg unset wan_last_ipaddr
                                syscfg commit

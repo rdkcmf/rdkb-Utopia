@@ -93,7 +93,7 @@ bring_wan_down() {
    sysevent set pppd_current_wan_ipaddr
    sysevent set pppd_current_wan_subnet
    sysevent set pppd_current_wan_ifname
-   sysevent set current_wan)ipaddr 0.0.0.0
+   sysevent set current_wan_ipaddr 0.0.0.0
    sysevent set current_wan_subnet 0.0.0.0
    echo "telstra_wan : Triggering RDKB_FIREWALL_RESTART"
    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"

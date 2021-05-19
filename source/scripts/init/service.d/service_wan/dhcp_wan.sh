@@ -109,8 +109,8 @@ bring_wan_up() {
 
        if [ x"$STARTED_FLG" != x"started" ]; then
            BRLAN0_MAC=`ifconfig l2sd0 | grep HWaddr | awk '{print $5}'`
-           ((nfq_handler 4 $BRLAN0_MAC &)&)
-           ((nfq_handler 6 $BRLAN0_MAC &)&)
+           ( ( nfq_handler 4 $BRLAN0_MAC & ) & )
+           ( ( nfq_handler 6 $BRLAN0_MAC & ) & )
            sysevent set parcon_nfq_status started
        fi
 

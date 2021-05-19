@@ -54,13 +54,13 @@ HTTPV6_GET_QUEUE_END=`sysevent get parcon_httpv6get_end`
 
 for i in $(seq $DNS_RESPONSE_QUEUE_START $DNS_RESPONSE_QUEUE_END); do
     echo "starting nfq_handler for dns response $i"
-    ((nfq_handler $i dns_response &)&)
+    ( ( nfq_handler $i dns_response & ) & )
     sleep 1
 done
 
 for i in $(seq $DNSV6_RESPONSE_QUEUE_START $DNSV6_RESPONSE_QUEUE_END); do
     echo "starting nfq_handler for dns response $i"
-    ((nfq_handler $i dnsv6_response &)&)
+    ( ( nfq_handler $i dnsv6_response & ) & )
     sleep 1
 done
 
@@ -68,15 +68,12 @@ BRLAN0_MAC=`ifconfig brlan0 | grep HWaddr | awk '{print $5}'`
 
 for i in $(seq $HTTP_GET_QUEUE_START $HTTP_GET_QUEUE_END); do
     echo "starting nfq_handler for http get $i"
-    ((nfq_handler $i http_get $BRLAN0_MAC &)&)
+    ( ( nfq_handler $i http_get $BRLAN0_MAC & ) & )
     sleep 1
 done
 
 for i in $(seq $HTTPV6_GET_QUEUE_START $HTTPV6_GET_QUEUE_END); do
     echo "starting nfq_handler for http get $i"
-    ((nfq_handler $i httpv6_get $BRLAN0_MAC &)&)
+    ( ( nfq_handler $i httpv6_get $BRLAN0_MAC & ) & )
     sleep 1
 done
-
-
-
