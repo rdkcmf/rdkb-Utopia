@@ -267,7 +267,7 @@ do_start()
    ifconfig $SYSCFG_lan_ifname hw ether `get_mac $SYSCFG_wan_physical_ifname` 
 
    # bridge_mode 1 is dhcp, bridge_mode 2 is static, bridge_mode 3 is full-static
-   if [ [ "2" = "$SYSCFG_bridge_mode" ] || [ "3" = "$SYSCFG_bridge_mode" ] ] && [ -n "$SYSCFG_bridge_ipaddr" ] && [ -n "$SYSCFG_bridge_netmask" ] && [ -n "$SYSCFG_bridge_default_gateway" ]; then
+   if ( [ "2" = "$SYSCFG_bridge_mode" ] || [ "3" = "$SYSCFG_bridge_mode" ] ) && [ -n "$SYSCFG_bridge_ipaddr" ] && [ -n "$SYSCFG_bridge_netmask" ] && [ -n "$SYSCFG_bridge_default_gateway" ]; then
       RESOLV_CONF="/etc/resolv.conf"
       echo -n  > $RESOLV_CONF
       if [ -n "$SYSCFG_bridge_domain" ] ; then
