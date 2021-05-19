@@ -11485,7 +11485,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "%s\n", ":PREROUTING ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":POSTROUTING ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
-#if defined(FEATURE_SUPPORT_RADIUSGREYLIST) && (defined(_COSA_INTEL_XB3_ARM_) || defined(_XB6_PRODUCT_REQ_))
+#if defined(FEATURE_SUPPORT_RADIUSGREYLIST) && (defined(_COSA_INTEL_XB3_ARM_) || defined(_XB6_PRODUCT_REQ_) && !defined(_XB7_PRODUCT_REQ_))
     /*
      *RDKB-33651 :
      *    If RadiusGrayList is enabled/true, Then open port #3799 in WAN interface to pre route RADIUS disconnect
@@ -11505,12 +11505,14 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if (defined(_XB6_PRODUCT_REQ_) && !defined(_XB7_PRODUCT_REQ_))
 	   fprintf(nat_fp, "-A PREROUTING -i erouter0 -p udp --dport 3799 -j DNAT --to 192.168.147.100\n");
 #endif
-
-           AnscFreeMemory(strValue);
-           strValue = NULL;
         }
         else
            FIREWALL_DEBUG("PSM_NAME_RADIUS_GREY_LIST_ENABLED val: %s\n" COMMA strValue);
+	
+	if (strValue) {
+	 	AnscFreeMemory(strValue);
+         	strValue = NULL;
+	}
      }
      else
         FIREWALL_DEBUG("PSM GET PSM_NAME_RADIUS_GREY_LIST_ENABLED FAILED\n");
@@ -12176,6 +12178,28 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "-A general_input -i lan0 ! -s 192.168.100.3 -d 192.168.100.1 -j xlog_drop_lan2self\n");
        fprintf(filter_fp, "-A general_input -i brlan0 ! -s 192.168.100.3 -d 192.168.100.1 -j xlog_drop_lan2self\n");
    }
+ 
+#if defined(FEATURE_SUPPORT_RADIUSGREYLIST) && (defined (_XB7_PRODUCT_REQ_) && defined (_COSA_BCM_ARM_))
+     int RPsmGet = CCSP_SUCCESS;
+     char *strvalue = NULL;
+     RPsmGet = PSM_VALUE_GET_STRING(PSM_NAME_RADIUS_GREY_LIST_ENABLED, strvalue);
+
+	if(RPsmGet == CCSP_SUCCESS) {
+		if(strvalue != NULL && strncmp("1", strvalue, 1) == 0) {
+    			FIREWALL_DEBUG("To Accept the das packet on xb7 RADIUS GreyList Support\n");
+    			fprintf(filter_fp, "-A general_input -i erouter0 -p udp -m udp --dport 3799 -j ACCEPT\n");
+		}
+	 	else
+           		FIREWALL_DEBUG("PSM_NAME_RADIUS_GREY_LIST_ENABLED val: %s\n" COMMA strvalue);
+
+		if(strvalue) {
+			AnscFreeMemory(strvalue);
+                        strvalue = NULL;
+		}
+     	}
+     	else
+		FIREWALL_DEBUG("PSM GET PSM_NAME_RADIUS_GREY_LIST_ENABLED FAILED\n");
+#endif
 
    //open port for DHCP
    if(!isBridgeMode) {
