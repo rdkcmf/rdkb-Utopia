@@ -149,7 +149,7 @@ bring_wan_up() {
       sysevent set pppd_current_wan_ifname
       prepare_pppoe
       do_start_wan_monitor
-      sysevent set wan_start_time `cat /proc/uptime | cut -d'.' -f1`
+      sysevent set wan_start_time $(cut -d. -f1 /proc/uptime)
    fi
 }
 

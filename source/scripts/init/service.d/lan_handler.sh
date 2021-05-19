@@ -250,7 +250,7 @@ case "$1" in
             
             #firewall_nfq_handler.sh &
 
-            sysevent set lan_start_time `cat /proc/uptime | cut -d'.' -f1`
+            sysevent set lan_start_time $(cut -d. -f1 /proc/uptime)
                         
             if [ "4" = $INST ];then
                 sysevent set ipv4_4_status_configured 1
@@ -293,7 +293,7 @@ case "$1" in
 	    /usr/bin/print_uptime "Laninit_complete"
 	fi
 
-        uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
+        uptime=$(cut -d. -f1 /proc/uptime)
 	if [ -e "/usr/bin/onboarding_log" ]; then
 	    /usr/bin/onboarding_log "Lan_init_complete:$uptime"
 	fi
@@ -322,7 +322,7 @@ case "$1" in
 	if [ -e "/usr/bin/print_uptime" ]; then
             /usr/bin/print_uptime "Lan_init_start"
         fi
-        uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`
+        uptime=$(cut -d. -f1 /proc/uptime)
 	if [ -e "/usr/bin/onboarding_log" ]; then
 	    /usr/bin/onboarding_log "Lan_init_start:$uptime"
 	fi

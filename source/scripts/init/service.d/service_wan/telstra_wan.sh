@@ -109,7 +109,7 @@ bring_wan_up() {
    do_start_wan_monitor
 #   bringing up the wan now happens in wmon.c
 #   echo 1 > /proc/sys/net/ipv4/ip_forward
-   sysevent set wan_start_time `cat /proc/uptime | cut -d'.' -f1`
+   sysevent set wan_start_time $(cut -d. -f1 /proc/uptime)
 }
 
 # --------------------------------------------------------

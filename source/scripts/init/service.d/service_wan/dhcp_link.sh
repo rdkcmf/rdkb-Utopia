@@ -196,7 +196,7 @@ do_renew_dhcp() {
         WAN_STATE=`sysevent get current_wan_state`
         if [ "$WAN_STATE" = "administrative_down" ] ; then
            sysevent set current_wan_state up
-           sysevent set wan_start_time `cat /proc/uptime | cut -d',' -f1`
+           sysevent set wan_start_time $(cut -d. -f1 /proc/uptime)
         fi
     else
         ulog dhcp_link status "restarting dhcp client on wan"

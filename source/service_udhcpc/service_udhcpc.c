@@ -440,7 +440,7 @@ int update_dns_tofile(udhcpc_script_t *pinfo)
                         printf ("\n [date -u] cmd failed\n");            
                     }
 
-                    result = read_cmd_output("cat /proc/uptime | awk '{ print $1 }' | cut -d\".\" -f1",uptime,sizeof(uptime));
+                    result = read_cmd_output("cut -d. -f1 /proc/uptime", uptime, sizeof(uptime));
                     if (0 == result)
                     {
                         printf ("\nuptime  %s tok : %s\n",uptime,tok);

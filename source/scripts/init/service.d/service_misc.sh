@@ -41,7 +41,7 @@ echo "* Licensed under the Apache License, Version 2.0                   "
 echo "*                                                                  "
 echo "*******************************************************************"
 cd /etc/utopia/service.d
-UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+UPTIME=$(cut -d. -f1 /proc/uptime)
 #. /etc/config
 LAN_ST=`sysevent get lan-status`
 #WAN_ST=`sysevent get wan-status`

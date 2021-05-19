@@ -126,7 +126,7 @@ bring_wan_up() {
    sysevent set current_ipv4_wan_state up
    sysevent set current_wan_state up
    sysevent set wan-status started
-   sysevent set wan_start_time `cat /proc/uptime | cut -d'.' -f1`
+   sysevent set wan_start_time $(cut -d. -f1 /proc/uptime)
    #start ntp time sync
    if [ x"1" = x`syscfg get ntp_enabled` ] ; then
        dmcli eRT setv Device.Time.Enable bool 1 &
