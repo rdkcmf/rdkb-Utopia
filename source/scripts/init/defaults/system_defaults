@@ -1129,7 +1129,7 @@ $EnableOCSPStapling=false
 $EnableOCSPCA=false
 
 #Use XPKI certificate
-UseXPKI_Enable=false
+$UseXPKI_Enable=false
 
 # Dynamic DNS
 $dynamic_dns_enable=0
