@@ -202,7 +202,12 @@ create_tunnel () {
     # TODO: sequence number
     
     # TODO: use assigned lower layer instead
-    WAN_IF=`sysevent get current_wan_ifname`
+    MAPT_CONFIG=`sysevent get mapt_config_flag`
+    if [ "$MAPT_CONFIG" = "set" ]; then
+      WAN_IF=map0
+    else
+      WAN_IF=`sysevent get current_wan_ifname`
+    fi
     echo_t  "WAN_IF:$WAN_IF"
     update_bridge_frag_config $inst $1
     

@@ -1348,7 +1348,6 @@ BOOL isMAPTSet(void)
  */
 static int do_wan_nat_lan_clients_mapt(FILE *fp)
 {
-    char str[MAX_QUERY] = {0};
     unsigned int mapt_config_ratio = 0;
     char mapt_config_ratio_str[64] = {0};
 
@@ -1375,9 +1374,7 @@ static int do_wan_nat_lan_clients_mapt(FILE *fp)
                 if (mapt_config_ratio == 1)
                 {
 		    fprintf(fp, "-A postrouting_towan -s 10.0.0.0/8  -j SNAT --to-source %s\n", mapt_ip_address);
-                    memset(str, 0, sizeof(str));
 		    fprintf(fp, "-A postrouting_towan -s 192.168.0.0/16  -j SNAT --to-source %s\n", mapt_ip_address);
-                    memset(str, 0, sizeof(str));
                     fprintf(fp, "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s\n", mapt_ip_address);
                 }
             }
@@ -3063,7 +3060,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 
           continue;
       }
-      
+
 #if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       if (isMAPTReady == TRUE )
       {
@@ -12668,7 +12665,6 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(mangle_fp, "-A PREROUTING -i %s -p udp -m conntrack --ctstate NEW -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n",ecm_wan_ifname);
    fprintf(mangle_fp, "-A PREROUTING -i %s -p udp -m conntrack --ctstate NEW -m limit --limit 200/sec --limit-burst 100 -j ACCEPT\n",emta_wan_ifname);
 #endif
-   fprintf(mangle_fp, "%s\n", "COMMIT");
 
    /*
     * nat
@@ -12678,7 +12674,18 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(nat_fp, "%s\n", ":POSTROUTING ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
    fprintf(nat_fp, "%s\n", ":postrouting_towan - [0:0]");
+#if defined (FEATURE_SUPPORT_MAPT_NAT46)
+   if (isMAPTReady)
+   {
+       fprintf(nat_fp, "-A POSTROUTING -o %s -j %s\n", NAT46_INTERFACE, MAPT_NAT_IPV4_POST_ROUTING_TABLE);
+   }
+   else
+   {
+#endif
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
+#if defined (FEATURE_SUPPORT_MAPT_NAT46)
+   }
+#endif
 #if defined(_COSA_BCM_MIPS_)
    if(isBridgeMode) {       
        fprintf(nat_fp, "-A PREROUTING -d %s/32 -i %s -p tcp -j DNAT --to-destination %s\n", BRIDGE_MODE_IP_ADDRESS, current_wan_ifname, lan0_ipaddr);
@@ -12687,14 +12694,18 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    do_port_forwarding(nat_fp, NULL);
    do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
-#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+#if defined (FEATURE_MAPT)
    if (isMAPTReady)
    {
        do_wan_nat_lan_clients_mapt(nat_fp);
    }
 #endif  //FEATURE_MAPT
+#if defined (FEATURE_SUPPORT_MAPT_NAT46)
+       do_mapt_rules_v4(nat_fp, filter_fp, mangle_fp);
+#endif
   
    fprintf(nat_fp, "%s\n", "COMMIT");
+   fprintf(mangle_fp, "%s\n", "COMMIT");
 
    /*
     * filter
@@ -12714,6 +12725,19 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
  
    if (isBridgeMode)
    {
+#if defined (FEATURE_SUPPORT_MAPT_NAT46)
+       if (isMAPTReady)
+       {
+           fprintf(filter_fp, "-I INPUT -i %s -p gre -j ACCEPT\n", NAT46_INTERFACE);
+
+           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", ETH_MESH_BRIDGE, NAT46_INTERFACE);
+           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", NAT46_INTERFACE, ETH_MESH_BRIDGE);
+           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", XHS_BRIDGE, NAT46_INTERFACE);
+           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", NAT46_INTERFACE, XHS_BRIDGE);
+           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", LNF_BRIDGE, NAT46_INTERFACE);
+           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", NAT46_INTERFACE, LNF_BRIDGE);
+       }
+#endif
        fprintf(filter_fp, "%s\n", ":general_input - [0:0]");
        fprintf(filter_fp, "%s\n", ":general_output - [0:0]");
        fprintf(filter_fp, "%s\n", ":general_forward - [0:0]");
@@ -13572,6 +13596,13 @@ static void do_ipv6_filter_table(FILE *fp){
        if(isComcastImage) {
           do_tr69_whitelistTable(fp, AF_INET6);
        }
+#if defined (FEATURE_SUPPORT_MAPT_NAT46)
+      if (isMAPTReady)
+      {
+         fprintf(fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", wan6_ifname, NAT46_INTERFACE);
+         fprintf(fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", NAT46_INTERFACE, wan6_ifname);
+      }
+#endif
        goto end_of_ipv6_firewall;
    }
 
