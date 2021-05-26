@@ -2245,24 +2245,22 @@ static int prepare_globals_from_configuration(void)
 
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
    /* get true static IP info */   
-   if(isBridgeMode)
-   {
    sysevent_get(sysevent_fd, sysevent_token, "wan_staticip-status", wan_staticip_status, sizeof(wan_staticip_status));
    isWanStaticIPReady = (0 == strcmp("started", wan_staticip_status)) ? 1 : 0; 
    /* Get Ture Static IP Enable/Disable */
    if(bus_handle != NULL && isWanStaticIPReady){
        isWanStaticIPReady = 0;
+       if(isBridgeMode == 0)
+       {
        rc = PSM_VALUE_GET_STRING(PSM_NAME_TRUE_STATIC_IP_ENABLE, pStr);
        if(rc == CCSP_SUCCESS && pStr != NULL){
           if(strcmp("1", pStr) == 0){
               isWanStaticIPReady = 1;
           }
           Ansc_FreeMemory_Callback(pStr);
+       }
        }   
    }
-   }
-   else
-    isWanStaticIPReady = 0;
    /* get value from PSM */
    if(bus_handle != NULL && isWanStaticIPReady)
    {
