@@ -6500,6 +6500,10 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     {
           ethwan_mso_gui_acess_rules(filter_fp,NULL);           
     }
+#if defined(_COSA_BCM_MIPS_) // RDKB-35063
+if(family == AF_INET6)
+	ethwan_mso_gui_acess_rules(filter_fp,NULL);
+#endif
     //remote management is only available on eCM interface if it is enabled
 #ifdef _COSA_INTEL_XB3_ARM_ 
    if(family == AF_INET)
@@ -13499,6 +13503,10 @@ int prepare_ipv6_firewall(const char *fw_file)
           do_ipv6_UIoverWAN_filter(mangle_fp);
       	  ethwan_mso_gui_acess_rules(NULL,mangle_fp);                      
   	}
+#if defined(_COSA_BCM_MIPS_) // RDKB-35063
+	ethwan_mso_gui_acess_rules(NULL,mangle_fp);
+#endif
+	
 	do_ipv6_filter_table(filter_fp);
 	
 	do_parental_control(filter_fp,nat_fp, 6);
