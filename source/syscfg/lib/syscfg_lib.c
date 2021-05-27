@@ -868,7 +868,7 @@ static char* _syscfg_get (const char *ns, const char *name)
     rw_lock(ctx);
 
     if (ns) {
-        snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
+        snprintf(name_p, sizeof(name_p), "%s" NS_SEP "%s", ns, name);
     } else {
         snprintf(name_p, sizeof(name_p), "%s", name);
     }
@@ -976,7 +976,7 @@ static int _syscfg_set (const char *ns, const char *name, const char *value, int
     }
 
     if (ns) {
-        snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
+        snprintf(name_p, sizeof(name_p), "%s" NS_SEP "%s", ns, name);
     } else {
 	/*CID 135370 : BUFFER_SIZE_WARNING */
         strncpy(name_p, name, sizeof(name_p)-1);
@@ -1056,7 +1056,7 @@ static int _syscfg_unset (const char *ns, const char *name, int nolock)
     }
 
     if (ns) {
-        snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
+        snprintf(name_p, sizeof(name_p), "%s" NS_SEP "%s", ns, name);
     } else {
 	/* CID 135546 : BUFFER_SIZE_WARNING */
         strncpy(name_p, name, sizeof(name_p)-1);

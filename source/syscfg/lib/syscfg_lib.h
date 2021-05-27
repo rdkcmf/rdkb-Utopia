@@ -39,6 +39,7 @@
 #define SYSCFG_HASH_TABLE_SZ 128      // number of buckets in hash table
 #define MAX_NAME_LEN         128      // max name len including namespace
                                       //      size eg "cisco-org:lan0:dhcp:ipaddr"
+#define NS_SEP "::"
 
 #define SYSCFG_SHM_FILE "/tmp/syscfg.shmid"
 

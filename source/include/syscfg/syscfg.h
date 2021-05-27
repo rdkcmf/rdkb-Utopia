@@ -43,9 +43,6 @@
 	#define SYSCFG_SZ (100 * (1024))       /* max file size - 100kb */
 #endif
 
-#define NS_SEP "::"
-#define NS_SEP_SZ 2
-
 #define ERR_INVALID_PARAM     -1
 #define ERR_NOT_INITIALIZED   -2
 #define ERR_MEM_ALLOC         -3
