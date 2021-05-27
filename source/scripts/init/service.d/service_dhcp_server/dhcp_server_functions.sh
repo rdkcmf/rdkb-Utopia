@@ -1156,7 +1156,7 @@ fi
    fi
 
 	if [ "1" == "$NAMESERVERENABLED" ]; then
-		prepare_static_dns_urls
+		prepare_static_dns_urls $LOCAL_DHCP_CONF
 	fi
 
    cat $LOCAL_DHCP_CONF > $DHCP_CONF
