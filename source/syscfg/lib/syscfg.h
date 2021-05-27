@@ -36,6 +36,8 @@
 #ifndef _SYSCFG_H_
 #define _SYSCFG_H_
 
+#include <stddef.h>
+
 // Changing sysconfig size to 100kb for non XB3 devices
 
 #ifdef _COSA_INTEL_XB3_ARM_
@@ -166,7 +168,48 @@ int syscfg_getall(char *buf, int count, int *outsz);
  *    Only changes syscfg hash table, persistent store contents
  *    not changed until 'commit' operation
  */
-int syscfg_set(const char *ns, const char *name, const char *value);
+
+int syscfg_set_ns             (const char *ns, const char *name, const char *value);
+int syscfg_set_ns_commit      (const char *ns, const char *name, const char *value);
+int syscfg_set_ns_u           (const char *ns, const char *name, unsigned long value);
+int syscfg_set_ns_u_commit    (const char *ns, const char *name, unsigned long value);
+
+int syscfg_set_nns            (const char *name, const char *value);
+int syscfg_set_nns_commit     (const char *name, const char *value);
+int syscfg_set_nns_u          (const char *name, unsigned long value);
+int syscfg_set_nns_u_commit   (const char *name, unsigned long value);
+
+static inline int syscfg_set (const char *ns, const char *name, const char *value)
+{
+    if (ns)
+        return syscfg_set_ns (ns, name, value);
+    else
+        return syscfg_set_nns (name, value);
+}
+
+static inline int syscfg_set_commit (const char *ns, const char *name, const char *value)
+{
+    if (ns)
+        return syscfg_set_ns_commit (ns, name, value);
+    else
+        return syscfg_set_nns_commit (name, value);
+}
+
+static inline int syscfg_set_u (const char *ns, const char *name, unsigned long value)
+{
+    if (ns)
+        return syscfg_set_ns_u (ns, name, value);
+    else
+        return syscfg_set_nns_u (name, value);
+}
+
+static inline int syscfg_set_u_commit (const char *ns, const char *name, unsigned long value)
+{
+    if (ns)
+        return syscfg_set_ns_u_commit (ns, name, value);
+    else
+        return syscfg_set_nns_u_commit (name, value);
+}
 
 /*
  * Procedure     : syscfg_unset

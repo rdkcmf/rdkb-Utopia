@@ -147,7 +147,7 @@ int syscfg_get (const char *ns, const char *name, char *out_val, int outbufsz)
  *    Only changes syscfg hash table, persistent store contents
  *    not changed until 'commit' operation
  */
-int syscfg_set (const char *ns, const char *name, const char *value)
+int syscfg_set_ns (const char *ns, const char *name, const char *value)
 {
     if (syscfg_initialized == 0) {
         int rc = syscfg_init();
@@ -160,6 +160,49 @@ int syscfg_set (const char *ns, const char *name, const char *value)
     }
 
     return _syscfg_set(ns, name, value, 0);
+}
+
+int syscfg_set_ns_commit (const char *ns, const char *name, const char *value)
+{
+    int result = syscfg_set_ns (ns, name, value);
+    if (result == 0)
+        result = syscfg_commit();
+    return result;
+}
+
+int syscfg_set_ns_u (const char *ns, const char *name, unsigned long value)
+{
+    char buf[sizeof(long)*3];
+    sprintf (buf, "%lu", value);
+    return syscfg_set_ns (ns, name, buf);
+}
+
+int syscfg_set_ns_u_commit (const char *ns, const char *name, unsigned long value)
+{
+    int result = syscfg_set_ns_u (ns, name, value);
+    if (result == 0)
+        result = syscfg_commit();
+    return result;
+}
+
+int syscfg_set_nns (const char *name, const char *value)
+{
+    return syscfg_set_ns (NULL, name, value);
+}
+
+int syscfg_set_nns_commit (const char *name, const char *value)
+{
+    return syscfg_set_ns_commit (NULL, name, value);
+}
+
+int syscfg_set_nns_u (const char *name, unsigned long value)
+{
+    return syscfg_set_ns_u (NULL, name, value);
+}
+
+int syscfg_set_nns_u_commit (const char *name, unsigned long value)
+{
+    return syscfg_set_ns_u_commit (NULL, name, value);
 }
 
 /*
