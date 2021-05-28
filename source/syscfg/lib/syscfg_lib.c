@@ -615,28 +615,6 @@ static inline int write_unlock (syscfg_shm_ctx *ctx)
     return pthread_mutex_unlock(&ctx->cb.write_lock);
 }
 
-static int rw_lock (syscfg_shm_ctx *ctx)
-{
-    int rc = read_lock(ctx);
-    if (0 == rc) {
-        rc = write_lock(ctx);
-        if (0 == rc) {
-            return 0; // all success
-        } else {
-            // write lock failed, rollback read lock
-            read_unlock(ctx);
-        }
-    }
-    return -1;
-}
-
-static int rw_unlock (syscfg_shm_ctx *ctx)
-{
-    read_unlock(ctx);
-    write_unlock(ctx);
-    return 0;
-}
-
 static inline int commit_lock (syscfg_shm_ctx *ctx)
 {
     int err = pthread_mutex_lock(&ctx->cb.commit_lock);
@@ -771,28 +749,6 @@ static inline int write_unlock (syscfg_shm_ctx *ctx)
     return unlock_sysv_sem((ctx)->cb.semid, WRITE_SEM_NUM);
 }
 
-static int rw_lock (syscfg_shm_ctx *ctx)
-{
-    int rc = read_lock(ctx);
-    if (0 == rc) {
-        rc = write_lock(ctx);
-        if (0 == rc) {
-            return 0; // all success
-        } else {
-            // write lock failed, rollback read lock
-            read_unlock(ctx);
-        }
-    }
-    return -1;
-}
-
-static int rw_unlock (syscfg_shm_ctx *ctx)
-{
-    read_unlock(ctx);
-    write_unlock(ctx);
-    return 0;
-}
-
 static inline int commit_lock (syscfg_shm_ctx *ctx)
 {
     return lock_sysv_sem((ctx)->cb.semid, COMMIT_SEM_NUM);
@@ -814,6 +770,28 @@ static int lock_destroy (syscfg_shm_ctx *ctx)
 }
 
 #endif
+
+static int rw_lock (syscfg_shm_ctx *ctx)
+{
+    int rc = read_lock(ctx);
+    if (0 == rc) {
+        rc = write_lock(ctx);
+        if (0 == rc) {
+            return 0; // all success
+        } else {
+            // write lock failed, rollback read lock
+            read_unlock(ctx);
+        }
+    }
+    return -1;
+}
+
+static int rw_unlock (syscfg_shm_ctx *ctx)
+{
+    read_unlock(ctx);
+    write_unlock(ctx);
+    return 0;
+}
 
 
 /******************************************************************************
