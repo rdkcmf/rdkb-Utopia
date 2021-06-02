@@ -82,7 +82,7 @@ void bring_lan_up()
 	int uptime = 0;
 	char buffer[64]= { 0 };
 	get_dateanduptime(buffer,&uptime);
-	print_uptime("Lan_init_start", NULL);
+	print_uptime("Lan_init_start", NULL, NULL);
     OnboardLog("Lan_init_start:%d\n",uptime);
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_handler_async", 
 				 l_cAsyncId, sizeof(l_cAsyncId));
@@ -478,7 +478,7 @@ void ipv4_status(int l3_inst, char *status)
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
     get_dateanduptime(buffer,&uptime);
     OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
-    print_uptime("Laninit_complete", NULL);
+    print_uptime("Laninit_complete", NULL, NULL);
     OnboardLog("Lan_init_complete:%d\n", uptime);
     t2_event_d("btime_laninit_split", uptime);
 }

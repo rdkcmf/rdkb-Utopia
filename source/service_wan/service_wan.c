@@ -634,7 +634,7 @@ static int wan_start(struct serv_wan *sw)
     FILE *fp;
     char line[64] = {0}, *cp;
     get_dateanduptime(buffer,&uptime);
-    print_uptime("Wan_init_start", NULL);
+    print_uptime("Wan_init_start", NULL, NULL);
     OnboardLog("Wan_init_start:%d\n",uptime);
 
 #if defined (INTEL_PUMA7)
@@ -841,7 +841,7 @@ static int wan_start(struct serv_wan *sw)
     if ( 0 == ret )
     {
 	v_secure_system("touch /var/wan_started");
-	print_uptime("boot_to_wan_uptime",NULL);
+	print_uptime("boot_to_wan_uptime",NULL, NULL);
     }
     else
     {
@@ -850,7 +850,7 @@ static int wan_start(struct serv_wan *sw)
         v_secure_system("/rdklogger/uploadRDKBLogs.sh '' HTTP '' false ");
     }
     get_dateanduptime(buffer,&uptime);
-	print_uptime("Waninit_complete", NULL);
+	print_uptime("Waninit_complete", NULL, NULL);
 	OnboardLog("Wan_init_complete:%d\n",uptime);
         t2_event_d("btime_waninit_split", uptime);	
     /* RDKB-24991 to handle snmpv3 based on wan-status event */

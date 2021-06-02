@@ -17,6 +17,7 @@
   limitations under the License.
 **************************************************************************/
 #include <stdio.h>
+#include <unistd.h>
 #include "print_uptime.h"
 
 // This function returns 
@@ -29,6 +30,20 @@ int main(int argc, char *argv[])
 		printf("Insufficient number of args return\n");
 		return 0;
 	}
-	print_uptime(argv[1], argv[2]);
+	int opt;
+	char *uptime = NULL;
+	while((opt = getopt(argc, argv, "u:")) != -1)
+	{
+		switch(opt)
+		{
+			case 'u':
+				uptime = optarg;
+				break;
+			case '?':
+				printf("unknown option %c\n",opt);
+				break;
+		}
+	}
+	print_uptime(argv[optind], argv[optind+1], uptime);
 	return 1;
 }

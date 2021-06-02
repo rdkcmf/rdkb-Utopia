@@ -424,7 +424,7 @@ int dhcp_server_start (char *input)
 		} else  {
                         close(fd);
                 }
-		print_uptime("boot_to_ETH_uptime",NULL);
+		print_uptime("boot_to_ETH_uptime",NULL, NULL);
        	
 		print_with_uptime("LAN initization is complete notify SSID broadcast");
 		snprintf(l_cRpc_Cmd, sizeof(l_cRpc_Cmd), "rpcclient %s \"/bin/touch /tmp/.advertise_ssids\"", g_cAtom_Arping_IP);
@@ -446,7 +446,7 @@ int dhcp_server_start (char *input)
             {
                 close(fd);
             }
-            print_uptime("boot_to_XHOME_uptime",NULL);
+            print_uptime("boot_to_XHOME_uptime",NULL, NULL);
         }
     }   
     else

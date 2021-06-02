@@ -705,7 +705,7 @@ void load_static_l3 (int l3_inst)
                         {
                                 close(fd);
                         }
-                        print_uptime("boot_to_MOCA_uptime",NULL);
+                        print_uptime("boot_to_MOCA_uptime",NULL, NULL);
                 }
             }
         }

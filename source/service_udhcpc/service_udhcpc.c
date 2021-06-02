@@ -919,9 +919,9 @@ int handle_wan(udhcpc_script_t *pinfo)
 
     if (pinfo->wan_type && !strcmp(pinfo->wan_type,"EPON"))
     {
-	print_uptime("Waninit_complete", NULL);
+	print_uptime("Waninit_complete", NULL, NULL);
         system("touch /tmp/wan_ready");
-        print_uptime("boot_to_wan_uptime",NULL);
+        print_uptime("boot_to_wan_uptime",NULL, NULL);
     }
     else
     {

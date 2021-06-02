@@ -17,5 +17,5 @@
   limitations under the License.
 **************************************************************************/
 
-void print_uptime(char *uptimeLog, char *bootfile);
+void print_uptime(char *uptimeLog, char *bootfile, char *uptime);
 

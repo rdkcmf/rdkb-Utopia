@@ -62,7 +62,7 @@ int getValueFromDeviceProperties(char *value, int size,char *name)
 	return ret;
 }
 
-void print_uptime(char *uptimeLog, char *bootfile)
+void print_uptime(char *uptimeLog, char *bootfile, char *uptime)
 {
 #if defined(_COSA_INTEL_USG_ATOM_)
 	char cmd[256]={0};
@@ -71,11 +71,25 @@ void print_uptime(char *uptimeLog, char *bootfile)
 	{
 		if(bootfile != NULL)
 		{
-			snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s %s\" &", armArpingIp, uptimeLog, bootfile);
+			if(uptime != NULL)
+			{
+				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s %s -u %s\" &", armArpingIp, uptimeLog, bootfile, uptime);
+			}
+			else
+			{
+				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s %s\" &", armArpingIp, uptimeLog, bootfile);
+			}
 		}
 		else
 		{
-			snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s\" &", armArpingIp, uptimeLog);
+			if(uptime != NULL)
+			{
+				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s -u %s\" &", armArpingIp, uptimeLog, uptime);
+			}
+			else
+			{
+				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s\" &", armArpingIp, uptimeLog);
+			}
 		}
 		system(cmd);
 	}
@@ -85,6 +99,7 @@ void print_uptime(char *uptimeLog, char *bootfile)
     	time_t l_sNowTime;
     	char l_cLocalTime[32] = {0};
     	FILE *l_fBootLogFile = NULL;
+		long lUptime = 0;
 	char l_cLine[128] = {0};
 	char BOOT_TIME_LOG_FILE[32] = "/rdklogs/logs/BootTime.log";
 	errno_t rc = -1;
@@ -93,38 +108,47 @@ void print_uptime(char *uptimeLog, char *bootfile)
 	time(&l_sNowTime);
 	l_sTimeInfo = localtime(&l_sNowTime);
 
+	if(uptime != NULL)
+	{
+		lUptime = atol(uptime);
+	}
+	else
+	{
+		lUptime = l_sSysInfo.uptime;
+	}
+  
 	/* telemetry 2.0 starts */
 	if(strstr(uptimeLog, "boot_to_ETH_uptime"))
 	{
-	    t2_event_d("btime_eth_split", l_sSysInfo.uptime);
+	    t2_event_d("btime_eth_split", lUptime);
 	}
 	else if(strstr(uptimeLog, "boot_to_meshagent_uptime"))
 	{
-	    t2_event_d("btime_mesh_split", l_sSysInfo.uptime);
+	    t2_event_d("btime_mesh_split", lUptime);
 	}
 	else if(strstr(uptimeLog, "boot_to_MOCA_uptime"))
 	{
-	    t2_event_d("btime_moca_split", l_sSysInfo.uptime);
+	    t2_event_d("btime_moca_split", lUptime);
 	}
 	else if(strstr(uptimeLog, "boot_to_snmp_subagent_v2_uptime"))
 	{
-	    t2_event_d("bootuptime_SNMPV2Ready_split", l_sSysInfo.uptime);
+	    t2_event_d("bootuptime_SNMPV2Ready_split", lUptime);
 	}
 	else if(strstr(uptimeLog, "boot_to_wan_uptime"))
 	{
-	    t2_event_d("btime_wanup_spit", l_sSysInfo.uptime);
+	    t2_event_d("btime_wanup_spit", lUptime);
 	}
 	else if(strstr(uptimeLog, "boot_to_WEBPA_READY_uptime"))
 	{
-	    t2_event_d("btime_webpa_split", l_sSysInfo.uptime);
+	    t2_event_d("btime_webpa_split", lUptime);
 	}
 	else if(strstr(uptimeLog, "boot_to_WIFI_uptime"))
 	{
-	    t2_event_d("bootuptime_wifi_split", l_sSysInfo.uptime);
+	    t2_event_d("bootuptime_wifi_split", lUptime);
 	}
 	else if(strstr(uptimeLog, "boot_to_XHOME_uptime"))
 	{
-	    t2_event_d("btime_xhome_split", l_sSysInfo.uptime);
+	    t2_event_d("btime_xhome_split", lUptime);
 	}
 	/* telemetry 2.0 ends */
 
@@ -153,12 +177,12 @@ void print_uptime(char *uptimeLog, char *bootfile)
 				return;
 			}
 		}
-		fprintf(l_fBootLogFile, "%s [BootUpTime] %s=%ld\n", l_cLocalTime, uptimeLog,l_sSysInfo.uptime);
+		fprintf(l_fBootLogFile, "%s [BootUpTime] %s=%ld\n", l_cLocalTime, uptimeLog,lUptime);
 		fclose(l_fBootLogFile);
 	}
 	else //fopen of bootlog file failed atleast write on the console
 	{
-		printf("%s [BootUpTime] %s=%ld\n", l_cLocalTime, uptimeLog,l_sSysInfo.uptime);
+		printf("%s [BootUpTime] %s=%ld\n", l_cLocalTime, uptimeLog,lUptime);
 	}
 #endif
 }
