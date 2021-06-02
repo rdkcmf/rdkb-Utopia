@@ -74,6 +74,8 @@
 #define MAX_CMD_SIZE 256
 #define GRE_CLAMP_MTU 1400
 
+#define ETHWAN_DEF_INTF_NAME "nsgmii0"
+
 /* Wrap the system_wrapper() call, setting the default SIGCHLD handler before calling,
  * and restoring the old handler after the call.  Needed so that system_wrapper() will 
  * return success or failure. 
@@ -184,7 +186,17 @@ int portHelper(char *bridge, char *port, int tagging, int vid, BOOL up)
         (STATUS_OK != getIfName(temp_ifname, port)))
     {
         /* If port is not sw_x or getIfName() returns failure then use port name as the interface name */
+
         strncpy(temp_ifname, port, sizeof(temp_ifname));
+    }
+
+
+    if ( (true == ethWanEnableState) && (strncmp(temp_ifname,ETHWAN_DEF_INTF_NAME,sizeof(ETHWAN_DEF_INTF_NAME)) == 0 ) )
+    {
+        
+        MNET_DEBUG("EthWan Enabled, not adding/deleting ethwan port\n");
+        return result;
+  
     }
 
     if (up)
