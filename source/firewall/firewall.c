@@ -469,6 +469,7 @@ NOT_DEF:
 
 #if defined(NAT46_KERNEL_SUPPORT)
 #define NAT46_INTERFACE "map0"
+#define NAT46_CLAMP_MSS  1440
 #endif //IVI_KERNEL_SUPPORT
 BOOL isMAPTSet(void);
 static int do_wan_nat_lan_clients_mapt(FILE *fp);
@@ -998,10 +999,11 @@ END:
  *  Parameters    :
  *     nat_fp     : An open file that will be used for iptables nat rules set.
  *     filter_fp  : An open file that will be used for iptables filter rules set.
+ *     mangle_fp  : An open file that will be used for iptables mangle rules set.
  *  Return Values :
  *     0               : done
  */
-int do_mapt_rules_v4(FILE *nat_fp, FILE *filter_fp)
+int do_mapt_rules_v4(FILE *nat_fp, FILE *filter_fp, FILE *mangle_fp)
 {
     int ret = RET_OK;
     unsigned int mapt_config_ratio = 0;
@@ -1078,6 +1080,12 @@ int do_mapt_rules_v4(FILE *nat_fp, FILE *filter_fp)
 #elif defined(NAT46_KERNEL_SUPPORT)
     fprintf(nat_fp, "-A POSTROUTING -o %s -j %s\n", NAT46_INTERFACE, MAPT_NAT_IPV4_POST_ROUTING_TABLE);
 #endif
+
+#ifdef NAT46_KERNEL_SUPPORT
+    // TCP MSS RULE - SKYH4-5123 - To improve IPv4 Downstream traffic performance
+    fprintf(mangle_fp, "-A FORWARD -p tcp --tcp-flags SYN,RST SYN -o %s -j TCPMSS --set-mss %d\n", NAT46_INTERFACE, NAT46_CLAMP_MSS);
+#endif //NAT46_KERNEL_SUPPORT
+
     if (mapt_config_ratio == 1) //config all
     {
         /* Set rule. */
@@ -12750,7 +12758,7 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    do_hub4_bfd_rules_v4(nat_fp, filter_fp, mangle_fp);
 #endif //HUB4_BFD_FEATURE_ENABLED
 #ifdef FEATURE_MAPT
-   do_mapt_rules_v4(nat_fp, filter_fp);
+   do_mapt_rules_v4(nat_fp, filter_fp, mangle_fp);
 #endif //FEATURE_MAPT
 
 #ifdef HUB4_QOS_MARK_ENABLED
