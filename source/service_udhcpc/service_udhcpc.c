@@ -901,10 +901,16 @@ int handle_wan(udhcpc_script_t *pinfo)
         snprintf(router,sizeof(router),"%s",pinfo->router);
 
     save_dhcp_offer(pinfo);
+    char *broadcast_ip = NULL;
+    broadcast_ip = getenv("broadcast");
     if (pinfo->ip_util_exist)
     {
         memset(buf,0,sizeof(buf));
-        snprintf(buf,sizeof(buf),"ip addr add dev %s %s/%s broadcast %s",getenv("interface"),getenv("ip"),getenv("mask"),getenv("broadcast"));
+	if(broadcast_ip){
+        	snprintf(buf,sizeof(buf),"ip addr add dev %s %s/%s broadcast %s",getenv("interface"),getenv("ip"),getenv("mask"),broadcast_ip);
+	}else{
+		snprintf(buf,sizeof(buf),"ip addr add dev %s %s/%s",getenv("interface"),getenv("ip"),getenv("mask"));
+	}
         system(buf);        
         if (mask && ip)
         {
@@ -915,20 +921,23 @@ int handle_wan(udhcpc_script_t *pinfo)
         sysevent_set(sysevent_fd, sysevent_token, "current_ipv4_link_state", "up", 0);
         // sysevent_set(sysevent_fd, sysevent_token, "wan_service-status", "started", 0);
         //sysevent_set(sysevent_fd, sysevent_token, "wan-status", "started", 0);
-    }    
+	if (pinfo->wan_type && !strcmp(pinfo->wan_type,"EPON"))
+	{
+	     print_uptime("Waninit_complete", NULL, NULL);
+             system("touch /tmp/wan_ready");
+             print_uptime("boot_to_wan_uptime",NULL, NULL);
+    	}
 
-    if (pinfo->wan_type && !strcmp(pinfo->wan_type,"EPON"))
-    {
-	print_uptime("Waninit_complete", NULL, NULL);
-        system("touch /tmp/wan_ready");
-        print_uptime("boot_to_wan_uptime",NULL, NULL);
-    }
-    else
-    {
+    }else{
         if (ip)
         {
-            snprintf(buf,sizeof(buf),"/sbin/ifconfig %s %s broadcast %s netmask %s",
-                    getenv("interface"),ip,getenv("broadcast"),getenv("subnet"));
+            if(broadcast_ip){
+            	snprintf(buf,sizeof(buf),"/sbin/ifconfig %s %s broadcast %s netmask %s",
+                    	getenv("interface"),ip,broadcast_ip,getenv("subnet"));
+	    }else{
+                snprintf(buf,sizeof(buf),"/sbin/ifconfig %s %s netmask %s",
+                        getenv("interface"),ip,getenv("subnet"));
+            }
             system(buf);
             printf("\n %s router:%s buf: %s\n",__FUNCTION__,router,buf);
         }
