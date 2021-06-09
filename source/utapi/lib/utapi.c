@@ -2722,7 +2722,7 @@ static int s_find_portmapdyn (const char *external_host, int external_port, prot
 }
 
 //unused function
-#if 0
+#if _HUB4_PRODUCT_REQ_
 static int s_firewall_restart ()
 {
     token_t  se_token;
@@ -2796,7 +2796,7 @@ int Utopia_AddDynPortMapping (portMapDyn_t *pmap)
         s_set_portmapdyn_count(count+1);
 
 /* Instead  firewall restart we have to add explicit rule */
-#if 0
+#ifdef _HUB4_PRODUCT_REQ_
         s_firewall_restart();
 #else
 		Utopia_IPRule_ephemeral_port_forwarding( pmap, TRUE );
@@ -2841,7 +2841,7 @@ int Utopia_UpdateDynPortMapping (int index, portMapDyn_t *pmap)
     if (UT_SUCCESS == (rc = s_add_portmapdyn(index, pmap))) {
         // note, don't increment count, this is just an "update" to existing entry
 /* Instead firewall restart we have to delete and add explicit rule */
-#if 0
+#if _HUB4_PRODUCT_REQ_
 		s_firewall_restart();
 #else
 		Utopia_IPRule_ephemeral_port_forwarding( pmap, FALSE );
@@ -2875,7 +2875,8 @@ int Utopia_DeleteDynPortMappingIndex (int index)
         s_set_portmapdyn_count(count-1);
 
 /* Instead firewall restart we have to delete explicit rule */
-#if 0
+#if _HUB4_PRODUCT_REQ_
+        ulogf(ULOG_CONFIG, UL_UTAPI, "%s: at rc_del %d", __FUNCTION__, rc_del);
 		s_firewall_restart();
 #else
 		if( UT_SUCCESS == rc_del ) 
@@ -2972,7 +2973,9 @@ int Utopia_InvalidateDynPortMappings (void)
 	i, pmap.external_host, pmap.external_port, pmap.internal_host, pmap.internal_port);
 
                 Utopia_DeleteDynPortMappingIndex(i);
-                //s_firewall_restart();
+#ifdef _HUB4_PRODUCT_REQ_
+                s_firewall_restart();
+#endif
             }else
                 s_add_portmapdyn(i, &pmap);    /* decrement leaseDuration every second */
         }
