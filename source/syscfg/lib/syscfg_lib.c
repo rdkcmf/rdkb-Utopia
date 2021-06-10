@@ -513,7 +513,6 @@ int syscfg_check (const char *mtd_device)
 int syscfg_init ()
 {
     ulog_init();
-    ulog_LOG_Dbg("entering syscfg_init");
 
     if (syscfg_initialized) {
         return 0;
