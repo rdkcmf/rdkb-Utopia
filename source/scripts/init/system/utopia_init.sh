@@ -362,7 +362,7 @@ if [ "1" = "$SYSCFG_PARTNER_FR" ]; then
 fi
 # Remove log file first because it need get log file path from syscfg   
    /usr/sbin/log_handle.sh reset
-   echo -e "\n" | syscfg_destroy 
+   syscfg_destroy -f
 #   umount $SYSCFG_MOUNT
 #   SYSDATA_MTD=`grep SysData /proc/mtd | awk -F: '{print $1}'`
 #   if [ -n $SYSDATA_MTD ]; then
