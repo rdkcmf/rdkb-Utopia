@@ -11399,6 +11399,9 @@ static void do_ipv4_UIoverWAN_filter(FILE* fp) {
         fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,current_wan_ipaddr);
         fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,current_wan_ipaddr);
       }
+
+        fprintf(fp, "-A PREROUTING -i %s -d 192.168.100.1 -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname);
+        fprintf(fp, "-A PREROUTING -i %s -d 192.168.100.1 -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname);
         FIREWALL_DEBUG("Exiting do_ipv4_UIoverWAN_filter \n"); 
 }
 /*
