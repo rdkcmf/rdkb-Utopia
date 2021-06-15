@@ -282,7 +282,12 @@ fi
     if [ -f "$HOTSPOT_BLOB" ];then
       rm -f "$HOTSPOT_BLOB"
    fi
-   
+  
+   if [ -f /etc/WEBCONFIG_ENABLE ]; then
+      #Remove webconfig_db.bin on factory reset on all RDKB platforms
+      rm -f /nvram/webconfig_db.bin
+   fi
+
    #Needs to increment factory reset count during PIN method
    #If GUI FR reboot reason will come as factory-reset and reboot counter should be 1. so we don't need to increment
    if [ "$rebCounter" != "1" ] ; then
