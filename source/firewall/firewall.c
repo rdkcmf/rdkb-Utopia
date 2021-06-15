@@ -508,11 +508,9 @@ static int do_blockfragippktsv6(FILE *fp);
 static int do_portscanprotectv6(FILE *fp);
 static int do_ipflooddetectv6(FILE *fp);
 
-#if !(defined(_COSA_INTEL_XB3_ARM_) || defined(_COSA_BCM_MIPS_))
-    int prepare_rabid_rules(FILE *filter_fp, FILE *mangle_fp, ip_ver_t ver);
-#else
-    int prepare_rabid_rules(FILE *filter_fp, ip_ver_t ver);
-#endif
+
+int prepare_rabid_rules(FILE *filter_fp, FILE *mangle_fp, ip_ver_t ver);
+int prepare_rabid_rules_v2020Q3B(FILE *filter_fp, FILE *mangle_fp, ip_ver_t ver);
 int prepare_rabid_rules_for_mapt(FILE *filter_fp, ip_ver_t ver);
 
 int firewall_lib_init(void *bus_handle, int sysevent_fd, token_t sysevent_token);
@@ -11201,7 +11199,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if !(defined(_COSA_INTEL_XB3_ARM_) || defined(_COSA_BCM_MIPS_))
     prepare_rabid_rules(filter_fp, mangle_fp, IP_V4);
 #else
-    prepare_rabid_rules(filter_fp, IP_V4);
+    prepare_rabid_rules_v2020Q3B(filter_fp, mangle_fp, IP_V4);
 #endif
 
 #ifdef INTEL_PUMA7
@@ -13029,9 +13027,10 @@ int prepare_ipv6_firewall(const char *fw_file)
 	
 	do_ipv6_filter_table(filter_fp);
 #if !(defined(_COSA_INTEL_XB3_ARM_) || defined(_COSA_BCM_MIPS_))
-     prepare_rabid_rules(filter_fp, mangle_fp, IP_V6);
+        prepare_rabid_rules(filter_fp, mangle_fp, IP_V6);
+#else
+        prepare_rabid_rules_v2020Q3B(filter_fp, mangle_fp, IP_V6);
 #endif
-	
 	do_parental_control(filter_fp,nat_fp, 6);
         prepare_lnf_internet_rules(mangle_fp,6);
         if (isContainerEnabled) {
@@ -13159,10 +13158,6 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, ":lan2wan_pc_site - [0:0]\n");
    fprintf(fp, ":lan2wan_pc_service - [0:0]\n");
    fprintf(fp, ":wan2lan - [0:0]\n");
-
-#if (defined(_COSA_INTEL_XB3_ARM_) || defined(_COSA_BCM_MIPS_))
-    prepare_rabid_rules(fp, IP_V6);
-#endif
 
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef HUB4_BFD_FEATURE_ENABLED

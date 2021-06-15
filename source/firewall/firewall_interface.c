@@ -147,7 +147,7 @@ int prepare_rabid_rules(FILE *filter_fp, FILE *mangle_fp, ip_ver_t ver)
 }
 #else
 __attribute__((weak))
-int prepare_rabid_rules(FILE *filter_fp, ip_ver_t ver)
+int prepare_rabid_rules_v2020Q3B(FILE *filter_fp, FILE *mangle_fp, ip_ver_t ver)
 {
     FIREWALL_DEBUG("Entering prepare_rabid_rules \n");
     FIREWALL_DEBUG("Exiting prepare_rabid_rules \n");
