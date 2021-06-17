@@ -893,6 +893,31 @@ void firewall_log( char* fmt, ...)
     return;
 }
 
+static int IsValidIPv6Addr(char* ip_addr_string)
+{
+    int ret = 1;
+    unsigned char buf[sizeof(struct in6_addr)];
+	
+	if(ip_addr_string == NULL)
+		return 0;
+	
+    if(!inet_pton(AF_INET6, ip_addr_string, buf))
+    {
+        return 0;
+    }
+
+    /* Here non valid IPv6 address are
+     * 1) 0:0:0:0:0:0:0:0 
+     * 2) ::
+     */
+    if( (0 == strcmp("0:0:0:0:0:0:0:0", ip_addr_string)) ||
+        (0 == strcmp("::", ip_addr_string)))
+    {
+        ret = 0;
+    }
+	return ret;
+}
+
 #ifdef _HUB4_PRODUCT_REQ_
 static int IsValidIPv4Addr(char* ip_addr_string)
 {
@@ -13293,9 +13318,8 @@ static void do_ipv6_nat_table(FILE* fp)
 {
     char IPv6[INET6_ADDRSTRLEN] = "0";
     fprintf(fp, "*nat\n");
-	
-   fprintf(fp, "%s\n", ":prerouting_devices - [0:0]");
-   fprintf(fp, "%s\n", ":prerouting_redirect - [0:0]");
+	fprintf(fp, "%s\n", ":prerouting_devices - [0:0]");
+	fprintf(fp, "%s\n", ":prerouting_redirect - [0:0]");
 
 #ifdef MULTILAN_FEATURE
    prepare_multinet_prerouting_nat_v6(fp);
@@ -13345,13 +13369,15 @@ static void do_ipv6_nat_table(FILE* fp)
    //RDKB-19893
    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
    if(isDmzEnabled) {
-       int rc;
+	   int rc;
        char ipv6host[64] = {'\0'};
-
-       rc = syscfg_get(NULL, "dmz_dst_ip_addrv6", ipv6host, sizeof(ipv6host));
-       if(rc == 0 && ipv6host[0] != '\0' && strcmp(ipv6host, "x") != 0 && strlen(current_wan_ipv6[0]) > 0) {
-           fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s \n", wan6_ifname, (char *)current_wan_ipv6, ipv6host);
-       }
+	   
+       if (!syscfg_get(NULL, "dmz_dst_ip_addrv6", ipv6host, sizeof(ipv6host))) {
+			rc = IsValidIPv6Addr(ipv6host);
+			  if(rc != 0 && strlen(current_wan_ipv6[0]) > 0) {
+				  fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s \n", wan6_ifname, (char *)current_wan_ipv6, ipv6host);
+			}
+		}
    }
     FIREWALL_DEBUG("Exiting do_ipv6_nat_table \n");
 }
@@ -14361,14 +14387,16 @@ v6GPFirewallRuleNext:
 	  }
       //in IPv6, the DMZ and port forwarding just overwrite the wan2lan rule.
       if(isDmzEnabled) {
-          int rc;
+		  int rc;
           char ipv6host[64] = {'\0'};
 
-          rc = syscfg_get(NULL, "dmz_dst_ip_addrv6", ipv6host, sizeof(ipv6host));
-          if(rc == 0 && ipv6host[0] != '\0' && strcmp(ipv6host, "x") != 0) {
-              fprintf(fp, "-A wan2lan -d %s -j ACCEPT\n", ipv6host);
-          }
-      }
+          if (!syscfg_get(NULL, "dmz_dst_ip_addrv6", ipv6host, sizeof(ipv6host))) {
+			  rc = IsValidIPv6Addr(ipv6host);
+			  if(rc != 0){
+				  fprintf(fp, "-A wan2lan -d %s -j ACCEPT\n", ipv6host);
+			  }
+			}
+		}
 
       do_single_port_forwarding(NULL, NULL, AF_INET6, fp);
       do_port_range_forwarding(NULL, NULL, AF_INET6, fp);
