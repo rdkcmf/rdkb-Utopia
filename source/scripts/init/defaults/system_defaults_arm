@@ -1132,9 +1132,6 @@ $V3Support=false
 #ForwardSSH is enabled by default
 $ForwardSSH=true
 
-#mTlsDCMUpload is disabled by default.
-$mTlsDCMUpload_Enable=false
-
 #mTlsLogUpload is disabled by default.
 $mTlsLogUpload_Enable=false
 
