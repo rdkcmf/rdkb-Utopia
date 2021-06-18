@@ -275,6 +275,7 @@ fi
    fi
    if [ -d /nvram/lxy/ ]; then
 	rm -rf /nvram/lxy
+        rm -rf /nvram/certs
 	/bin/sh -c '/usr/bin/lxyinit.sh /etc/lxybundl.bz2 /nvram/lxy'
    fi
 
