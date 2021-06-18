@@ -506,7 +506,8 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 	    if (NULL != (l_cRemoveHttp = strstr(l_cRedirect_Url, "http://")))
     	{   
         	l_cRemoveHttp = l_cRemoveHttp + strlen("http://");
-	        strncpy(l_cRedirect_Url, l_cRemoveHttp, sizeof(l_cRedirect_Url));
+		/*CID - 135387 BUFFER_SIZE_WARNING */
+		memmove(l_cRedirect_Url, l_cRemoveHttp, strlen(l_cRemoveHttp)+1);
     	}
         else if (NULL != (l_cRemoveHttp = strstr(l_cRedirect_Url, "https://")))
         {
@@ -711,7 +712,7 @@ int prepare_dhcp_conf (char *input)
 #if defined (_XB6_PRODUCT_REQ_)
     char l_cRfCPFeatureEnabled[8] = {0}, l_cRfCPEnabled[8] = {0};
 #endif
-    char l_cWifi_Not_Configured[8] = {0}, l_cWifi_Res_Mig[8] = {0};
+    char l_cWifi_Not_Configured[8] = {0};
     char l_cIotEnabled[16] = {0}, l_cIotIfName[16] = {0}, l_cIotStartAddr[16] = {0};
    	char l_cIotEndAddr[16] = {0}, l_cIotNetMask[16] = {0};
 	char l_cPropagate_Dom[8] = {0}, l_cLan_Domain[32] = {0}, l_cLog_Level[8] = {0};
@@ -737,6 +738,7 @@ int prepare_dhcp_conf (char *input)
     BOOL l_bCaptivePortal_Mode = FALSE;
 	BOOL l_bCaptive_Check = FALSE;
 	BOOL l_bMig_Case = TRUE,
+	     l_bWifi_Res_Mig = FALSE,
 		 l_bDhcpNs_Enabled = FALSE,
 		 l_bIsValidWanDHCPNs = FALSE;
 
@@ -928,8 +930,16 @@ int prepare_dhcp_conf (char *input)
 		}
     	if (CCSP_SUCCESS == l_iRet_Val && l_cpPsm_Get != NULL)
 		{
-			strncpy(l_cWifi_Res_Mig, l_cpPsm_Get, sizeof(l_cWifi_Res_Mig));
-			fprintf(stderr, "DHCP SERVER : WiFiRestored_AfterMigration is %s\n", l_cWifi_Res_Mig);
+			/*CID - 137902 BUFFER_SIZE_WARNING */
+			if(!strncmp(l_cpPsm_Get, "true", 4))
+                        {
+                           l_bWifi_Res_Mig = TRUE;
+                        }
+                        else
+                        {
+                           l_bWifi_Res_Mig = FALSE;
+                        }
+			fprintf(stderr, "DHCP SERVER : WiFiRestored_AfterMigration is %d\n", l_bWifi_Res_Mig);
     	    Ansc_FreeMemory_Callback(l_cpPsm_Get);
 	    	l_cpPsm_Get = NULL;
 		}	
@@ -939,9 +949,9 @@ int prepare_dhcp_conf (char *input)
 					l_iRet_Val, PSM_NAME_WIFI_RES_MIG);
 		}
 	
-		if ((!strncmp(l_cMigCase, "true", 4)) && (!strncmp(l_cWifi_Res_Mig, "true", 4)))
+		if (l_bMig_Case && l_bWifi_Res_Mig)
 		{
-	    	fprintf(stderr, "DHCP SERVER : WiFi restored case setting MIGRATION_CASE variable to false\n");
+	    	    fprintf(stderr, "DHCP SERVER : WiFi restored case setting MIGRATION_CASE variable to false\n");
 		    l_bMig_Case = FALSE;
 		}
 	}
@@ -1400,8 +1410,8 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 		 l_cDhcpNs_3[ 128 ] 				 = { 0 },
                  l_cLocalNs[ 128 ]                               = { 0 },
                  l_cWan_Dhcp_Dns[ 256 ]                          = { 0 },
-		 l_cDhcpNs_OptionString[ 1024 ] 	 = { 0 },
-		 l_cDhcpNs_OptionString_new[ 1424 ];
+		 l_cDhcpNs_OptionString[ 1024 ] 	         = { 0 },
+		 l_cDhcpNs_OptionString_new[ 1424 ]              = { 0 }; //CID 177296 : Uninitialized scalar variable
 
     // Static LAN DNS
 	syscfg_get(NULL, "dhcp_nameserver_1", l_cDhcpNs_1, sizeof(l_cDhcpNs_1));

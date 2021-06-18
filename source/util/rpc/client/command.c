@@ -31,7 +31,8 @@ int ExecuteCommand(char *cmnd)
 	CLIENT *clnt = NULL;
 	struct rpc_CommandBuf commandBuf;
 	struct rpc_CommandBuf *output = NULL;
-	strcpy(commandBuf.buffer,cmnd);
+	strncpy(commandBuf.buffer,cmnd,sizeof(commandBuf.buffer)-1);
+	commandBuf.buffer[sizeof(commandBuf.buffer)-1] = '\0';
 	char* errStr;
 	/*bool isconnected = getIsconnectedStatus();
 	if(!isconnected) {	
@@ -62,7 +63,9 @@ int ExeSysCmd(char *cmnd)
 {
 	CLIENT *clnt = NULL;
         struct rpc_CommandBuf commandBuf;
-	strcpy(commandBuf.buffer,cmnd);
+	/* CID 135428: Unbounded source buffer*/
+	strncpy(commandBuf.buffer,cmnd,sizeof(commandBuf.buffer)-1);
+	commandBuf.buffer[sizeof(commandBuf.buffer)-1] = '\0';
         char* errStr;	
 	int *output = NULL;
 
@@ -86,29 +89,28 @@ main (int argc, char *argv[],char **args)
     int iRet;
    
     FILE *l_fFp = fopen(DEVICE_PROPS_FILE, "r");
-    char l_cArmArpingIP[64] = {""};
-    char l_cAtomArpingIP[64] = {""};
-    if (NULL != l_fFp)
-    {
-        char props[255] = {""};
-        while(fscanf(l_fFp,"%s", props) != EOF)
-        {
-            char *property = NULL;
-            if((property = strstr(props, "ARM_ARPING_IP=")))
-            {
-                property = property + strlen("ARM_ARPING_IP=");
-                strncpy(l_cArmArpingIP, property, (strlen(props) - strlen("ARM_ARPING_IP=")));
-            }
-            if((property = strstr(props, "ATOM_ARPING_IP=")))
-            {
-                property = property + strlen("ATOM_ARPING_IP=");
-                strncpy(l_cAtomArpingIP, property, (strlen(props) - strlen("ATOM_ARPING_IP=")));
-            }
-        }
-    }
-    else
+    /*CID 68716 : Dereference after null check*/
+    if (NULL == l_fFp)
     {
         printf("Failed to open device.properties file:%s\n", DEVICE_PROPS_FILE);
+        exit(0);
+    }
+    char l_cArmArpingIP[64] = {""};
+    char l_cAtomArpingIP[64] = {""};
+    char props[255] = {""};
+    while(fscanf(l_fFp,"%s", props) != EOF)
+    {
+         char *property = NULL;
+         if((property = strstr(props, "ARM_ARPING_IP=")))
+         {
+             property = property + strlen("ARM_ARPING_IP=");
+             strncpy(l_cArmArpingIP, property, (strlen(props) - strlen("ARM_ARPING_IP=")));
+         }
+         if((property = strstr(props, "ATOM_ARPING_IP=")))
+         {
+             property = property + strlen("ATOM_ARPING_IP=");
+             strncpy(l_cAtomArpingIP, property, (strlen(props) - strlen("ATOM_ARPING_IP=")));
+         }
     }
     fclose(l_fFp);
 

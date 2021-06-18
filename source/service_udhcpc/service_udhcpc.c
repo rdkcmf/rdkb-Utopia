@@ -892,7 +892,7 @@ int handle_wan(udhcpc_script_t *pinfo)
     char buf[300];
     char *mask = getenv("mask");
     char *ip = getenv("ip");
-    char router[256];
+    char router[256] = {'\0'}; //CID 162896: Uninitialized scalar variable
 
     if (!pinfo)
         return -1;

@@ -510,7 +510,9 @@ void lan_restart()
     l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
    	if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
 	{
-        strncpy(l_cPsmGetLanIp, l_cpPsm_Get, sizeof(l_cPsmGetLanIp));
+	    /*CID 135444 : BUFFER_SIZE_WARNING */
+            strncpy(l_cPsmGetLanIp, l_cpPsm_Get, sizeof(l_cPsmGetLanIp)-1);
+	    l_cPsmGetLanIp[sizeof(l_cPsmGetLanIp)-1] = '\0';
 	}
 	else
 	{
@@ -524,7 +526,9 @@ void lan_restart()
     l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
    	if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
 	{
-        strncpy(l_cPsmGetLanSubNet, l_cpPsm_Get, sizeof(l_cPsmGetLanSubNet));
+        /* CID 163349 : BUFFER_SIZE */
+        strncpy(l_cPsmGetLanSubNet, l_cpPsm_Get, sizeof(l_cPsmGetLanSubNet)-1);
+	l_cPsmGetLanSubNet[sizeof(l_cPsmGetLanSubNet)-1] = '\0';
 	}
 	else
 	{

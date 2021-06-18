@@ -95,7 +95,9 @@ INT32 PAL_get_if_IpAddress(IN const CHAR *ifName, INOUT CHAR IpAddress[IP_ADDRES
 
   	if(fd >= 0 )
   	{
-    	strncpy(ifr.ifr_name, ifName, IF_NAME_LEN);
+	/*CID 135600 : BUFFER_SIZE_WARNING */
+        strncpy(ifr.ifr_name, ifName, sizeof(ifr.ifr_name)-1);
+	ifr.ifr_name[sizeof(ifr.ifr_name)-1] = '\0';
     	ifr.ifr_addr.sa_family = AF_INET;
     	if(ioctl(fd, SIOCGIFADDR, &ifr) == 0)
     	{
@@ -136,7 +138,9 @@ INT32 PAL_get_if_MacAddress(IN const CHAR *ifName, INOUT CHAR MacAddress[MAC_ADD
   
   	if(fd >= 0 )
   	{
-    	strncpy(ifr.ifr_name, ifName, IF_NAME_LEN);
+	/* CID 135636 : BUFFER_SIZE_WARNING */
+        strncpy(ifr.ifr_name, ifName, sizeof(ifr.ifr_name)-1);
+	ifr.ifr_name[sizeof(ifr.ifr_name)-1] = '\0';
     	ifr.ifr_addr.sa_family = AF_INET;
     	if(ioctl(fd, SIOCGIFHWADDR, &ifr) == 0)
     	{

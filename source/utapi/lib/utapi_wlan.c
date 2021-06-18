@@ -508,7 +508,9 @@ int Utopia_GetWifiMacFilters (UtopiaContext *ctx, wifiMacFilterInfo_t *info)
         int count = 0;
         char *p = maclist;
         while (count < MAX_MACFILTERS && (n = strsep(&p, " "))) {
-            strncpy(info->client_mac_list[count], n, MACADDR_SZ);
+	    /*CID 135348 : BUFFER_SIZE_WARNING */
+            strncpy(info->client_mac_list[count], n, sizeof(info->client_mac_list[count])-1);
+	    info->client_mac_list[count][sizeof(info->client_mac_list[count])-1] = '\0';
             count++;
         }
         info->client_count = count;

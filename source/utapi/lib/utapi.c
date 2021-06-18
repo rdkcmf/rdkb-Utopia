@@ -555,7 +555,9 @@ int Utopia_GetDHCPServerStaticHosts (UtopiaContext *ctx, int *count, DHCPMap_t *
                     if (NULL == (n = chop_str(p, ','))) {
                         continue;
                     }
-                    strncpy((*dhcpMap)[i].macaddr, p, MACADDR_SZ);
+		    /* CID 163243 : BUFFER_SIZE_WARNING */
+                    strncpy((*dhcpMap)[i].macaddr, p, sizeof((*dhcpMap)[i].macaddr)-1);
+		    (*dhcpMap)[i].macaddr[sizeof((*dhcpMap)[i].macaddr)-1] = '\0';
 
                     p = n;
                     if (NULL == (n = chop_str(p, ','))) {
@@ -568,7 +570,9 @@ int Utopia_GetDHCPServerStaticHosts (UtopiaContext *ctx, int *count, DHCPMap_t *
                     }
                     (*dhcpMap)[i].host_ip = atoi(p);
                     */
-                    strncpy((*dhcpMap)[i].host_ip, p, IPADDR_SZ);
+		    /* CID 135354 : BUFFER_SIZE_WARNING */
+                    strncpy((*dhcpMap)[i].host_ip, p, sizeof((*dhcpMap)[i].host_ip)-1);
+		    (*dhcpMap)[i].host_ip[sizeof((*dhcpMap)[i].host_ip)-1] = '\0';
                       
                     p = n;
                     strncpy((*dhcpMap)[i].client_name, p, TOKEN_SZ);
@@ -957,7 +961,9 @@ static void s_getWANDHCPConnectionInfo (UtopiaContext *ctx, int se_fd, token_t s
 
         token = strtok_r(dns, " ", &saveptr);
         while (token && count < NUM_DNS_ENTRIES) {
-            strncpy(wan->dns[count], token, IPHOSTNAME_SZ);
+	    /* CID 135639 : BUFFER_SIZE_WARNING */
+            strncpy(wan->dns[count], token, sizeof(wan->dns[count])-1);
+	    wan->dns[count][sizeof(wan->dns[count])-1] = '\0';
             token = strtok_r(NULL, " ", &saveptr);
             count++;
         }
@@ -982,7 +988,9 @@ static void s_getWANPPPConnectionInfo (UtopiaContext *ctx, int se_fd, token_t se
 
         token = strtok_r(dns, " ", &saveptr);
         while (token && count < NUM_DNS_ENTRIES) {
-            strncpy(wan->dns[count], token, IPHOSTNAME_SZ);
+	    /*CID 135367 : BUFFER_SIZE_WARNING */
+            strncpy(wan->dns[count], token, sizeof(wan->dns[count])-1);
+	    wan->dns[count][sizeof(wan->dns[count])-1] = '\0';
             token = strtok_r(NULL, " ", &saveptr);
             count++;
         }
@@ -1141,7 +1149,9 @@ static void s_getBridgeDHCPConnectionInfo (int se_fd, token_t se_token, bridgeCo
 
         token = strtok_r(dns, " ", &saveptr);
         while (token && count < NUM_DNS_ENTRIES) {
-            strncpy(bridge->dns[count], token, IPHOSTNAME_SZ);
+	    /* CID 135301 : BUFFER_SIZE_WARNING */
+            strncpy(bridge->dns[count], token, sizeof(bridge->dns[count])-1);
+	    bridge->dns[count][sizeof(bridge->dns[count])-1] = '\0';
             token = strtok_r(NULL, " ", &saveptr);
             count++;
         }
@@ -2676,7 +2686,9 @@ static int s_get_portmapdyn (int index, portMapDyn_t *portmap)
     p = next;
 
     // last entry doesn't have delimiter, nothing to chop; use as-is
-    strncpy(portmap->name, p, NAME_SZ);
+     /* CID 135651: BUFFER_SIZE_WARNING */
+    strncpy(portmap->name, p, sizeof(portmap->name)-1);
+    portmap->name[sizeof(portmap->name)-1] = '\0';
 
     ulog_debugf(ULOG_CONFIG, UL_UTAPI, "enabled %d ext host %s ext port %d int host %s int port %d lease %d name %s last update %ld",
                 portmap->enabled,
@@ -3902,8 +3914,11 @@ int Utopia_GetDMZSettings (UtopiaContext *ctx, dmz_t *out_dmz)
         } else if (strchr(src_addr_range, '-')) {
             char *end_addr = chop_str(src_addr_range, '-');
             if (end_addr) {
-                strncpy(out_dmz->source_ip_start, src_addr_range, IPADDR_SZ);
-                strncpy(out_dmz->source_ip_end, end_addr, IPADDR_SZ);
+		/*CID 135357 and 162723 : BUFFER_SIZE_WARNING */
+                strncpy(out_dmz->source_ip_start, src_addr_range, sizeof(out_dmz->source_ip_start)-1);
+		out_dmz->source_ip_start[sizeof(out_dmz->source_ip_start)-1] = '\0';
+                strncpy(out_dmz->source_ip_end, end_addr, sizeof(out_dmz->source_ip_end)-1);
+		out_dmz->source_ip_end[sizeof(out_dmz->source_ip_end)-1] = '\0';
             }
         }
     }
@@ -4018,7 +4033,9 @@ static int s_getiap (UtopiaContext *ctx, int index, iap_entry_t *iap)
         iap->tod.all_day = FALSE;
         iap->tod.day = atoi(buf);
         if ((stop_time = chop_str(sched, ' '))) {
-            strncpy(iap->tod.start_time, sched, HH_MM_SZ);
+	    /* CID 135580 : BUFFER_SIZE_WARNING */
+            strncpy(iap->tod.start_time, sched, sizeof(iap->tod.start_time)-1);
+	    iap->tod.start_time[sizeof(iap->tod.start_time)-1] = '\0';
             strncpy(iap->tod.stop_time, stop_time, HH_MM_SZ);
         }
     }
@@ -4681,7 +4698,9 @@ int Utopia_GetQoSDefinedPolicyList (int *out_count, qosDefinedPolicy_t const **o
                 continue;
             }
             strncpy(g_qosDefinedPolicyList[count].name, name, NAME_SZ);
-            strncpy(g_qosDefinedPolicyList[count].friendly_name, friendly, TOKEN_SZ);
+	    /* CID 135506 : BUFFER_SIZE_WARNING */
+            strncpy(g_qosDefinedPolicyList[count].friendly_name, friendly, sizeof(g_qosDefinedPolicyList[count].friendly_name)-1);
+	    g_qosDefinedPolicyList[count].friendly_name[sizeof(g_qosDefinedPolicyList[count].friendly_name)-1] = '\0';
             if (0 == strcasecmp("game", type)) {
                 g_qosDefinedPolicyList[count].type = QOS_GAME;
             } else {
@@ -6327,7 +6346,6 @@ static int s_has_lock_been_acquired(const char *lock_filename,
     
     // Retrieve the info associated with the lock file
     fcntl(lock_fd, F_GETLK, &fl);
-    close(lock_fd);
     
     // If a process is holding the lock,
     if (fl.l_pid > 0) {
@@ -6343,7 +6361,9 @@ static int s_has_lock_been_acquired(const char *lock_filename,
             fcntl(lock_fd, F_SETLK, &fl);
         }
     }
-    
+ 
+    /* CID 67333: Use after close */
+    close(lock_fd);
     return has_been_acquired;
 }
 
@@ -6703,7 +6723,11 @@ int Utopia_Set_DeviceTime_NTPServer(UtopiaContext *ctx, char *server, int index)
       strncpy(tmp_server, "no_ntp_address", UTOPIA_TR181_PARAM_SIZE);
   }
   else
-      strncpy(tmp_server, server, UTOPIA_TR181_PARAM_SIZE);
+  {
+      /*CID 135262 :BUFFER_SIZE_WARNING */
+      strncpy(tmp_server, server, sizeof(tmp_server)-1);
+      tmp_server[sizeof(tmp_server)-1] = '\0';
+  }
 
 
   switch(index)

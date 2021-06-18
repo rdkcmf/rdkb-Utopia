@@ -507,6 +507,12 @@ int sm_unregister (const char* srv_name)
    snprintf(sysevent_ip, sizeof(sysevent_ip), "127.0.0.1");
    sysevent_port = SE_SERVER_WELL_KNOWN_PORT;
    sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
+   /*CID 57568: Improper use of negative value*/
+   if (sysevent_fd < 0)
+   {
+       ulogf(ULOG_SERVICE, UL_INFO, "sysevent_fd can't be negative\n");
+       return (-1);
+   }
 
    char async_name[270];
    char async_id_str[256];
@@ -655,6 +661,12 @@ int sm_register (const char* srv_name, const char* default_handler, const char**
    snprintf(sysevent_ip, sizeof(sysevent_ip), "127.0.0.1");
    sysevent_port = SE_SERVER_WELL_KNOWN_PORT;
    sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
+   /*CID 56644: Improper use of negative value*/
+   if (sysevent_fd < 0)
+   {
+       ulogf(ULOG_SERVICE, UL_INFO, "sysevent_fd can't be negative\n");
+       return (-1);
+   }
 
    char default_str[1024];
    if (NULL != default_handler) {

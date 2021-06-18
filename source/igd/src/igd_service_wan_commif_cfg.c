@@ -230,7 +230,9 @@ struct upnp_service* IGD_service_WANCommonInterfaceConfigInit(IN VOID* input_ind
 		_igd_service_WANCommonInterfaceConfig_destroy(WANCommonInterfaceConfig_service);
 		return NULL;
 	}
+	/* CID 135556 : BUFFER_SIZE_WARNING */
 	strncpy(WANCommonInterfaceConfig_service->type, WANCOMMONINTERFACECONFIG_SERVICE_TYPE, strlen(WANCOMMONINTERFACECONFIG_SERVICE_TYPE)+1);
+	WANCommonInterfaceConfig_service->type[strlen(WANCOMMONINTERFACECONFIG_SERVICE_TYPE)] = '\0';
 	
 	WANCommonInterfaceConfig_service->serviceID=(CHAR *)calloc(1,strlen(WANCOMMONINTERFACECONFIG_SERVICE_ID)+1);
 	if(WANCommonInterfaceConfig_service->serviceID==NULL)

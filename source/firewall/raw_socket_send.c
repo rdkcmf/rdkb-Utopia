@@ -426,7 +426,9 @@ void send_tcp_pkt(char *interface,int family, char *srcMac, char *dstMac, char *
     bzero(&inf_request, sizeof(inf_request));
 
     /* First Get the Interface Index  */
-    strncpy((char *)inf_request.ifr_name, interface, IFNAMSIZ);
+    /*CID 135235 : BUFFER_SIZE_WARNING */
+    strncpy((char *)inf_request.ifr_name, interface, sizeof(inf_request.ifr_name)-1);
+    inf_request.ifr_name[sizeof(inf_request.ifr_name)-1] = '\0';
     if(-1 == (ioctl(raw, SIOCGIFINDEX, &inf_request)))
     {
         printf("Error getting Interface index !\n");

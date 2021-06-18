@@ -229,7 +229,9 @@ void s_get_interface_mac (char *ifname, char *out_buf, int bufsz)
     bzero(&ifr, sizeof(struct ifreq));
     if ((fd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW)) >= 0) {
         ifr.ifr_addr.sa_family = AF_INET;
-        strncpy(ifr.ifr_name, ifname, 16);
+	/* CID 135369 : BUFFER_SIZE_WARNING */
+        strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)-1);
+	ifr.ifr_name[sizeof(ifr.ifr_name)-1] = '\0';
         if (ioctl(fd, SIOCGIFHWADDR, &ifr) == 0) {
             snprintf(out_buf, bufsz, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n",
                     (unsigned char)ifr.ifr_hwaddr.sa_data[0],

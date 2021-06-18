@@ -1985,6 +1985,12 @@ void Utopia_Free(UtopiaContext* pUtopiaCtx, int fCommit)
                 pUtopiaCtx->iEventHandle = SysEvent_Open(UTCTX_EVENT_ADDRESS, UTCTX_EVENT_PORT,
                                                          UTCTX_EVENT_VERSION, UTCTX_EVENT_NAME,
                                                          (token_t *)&pUtopiaCtx->uiEventToken);
+		/* CID 58554 : Improper use of negative value */
+		if (pUtopiaCtx->iEventHandle < 0)
+		{
+		    UTCTX_LOG_DBG1("%s: EventHandle can't be negative\n",__FUNCTION__);
+	            return;
+	        }
             }
 
             SysEvent_Trigger(pUtopiaCtx->iEventHandle, pUtopiaCtx->uiEventToken, Utopia_ToKey(UtopiaValue_LAN_Restarting), 0);

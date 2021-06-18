@@ -91,6 +91,7 @@ int dhcp_create_socket(int port, const char* device_name)
 {
    int sock;
    struct sockaddr_in serv_addr;
+   memset(serv_addr.sin_zero, '\0', sizeof(serv_addr.sin_zero)); //CID 163232: Uninitialized scalar variable
    const int flag_one = 0x00; /*RDKB-7146, CID-33246, initialize before use*/
 
    sock = socket(AF_INET, SOCK_DGRAM, 0);

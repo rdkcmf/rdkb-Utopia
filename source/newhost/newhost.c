@@ -228,6 +228,8 @@ int main(int argc, char **argv)
    if (0 > sysevent_fd) {
       printf("Unable to register with sysevent daemon at %s %u.\n", sysevent_ip, sysevent_port);
       rc = -2;
+      /* CID 72342: Improper use of negative value */
+      return(rc);
    }
    switch(t_type) {
       case(1):    // NEWHOST

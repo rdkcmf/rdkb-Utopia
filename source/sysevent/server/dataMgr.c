@@ -1363,7 +1363,8 @@ char *DATA_MGR_set_unique(char *name, char *value, char *uname_buf, int *buf_siz
    }
 
    if (NULL == value) {
-      local_value = NULL;
+      /*CID 56546 : Explicit null dereferenced */
+      return(NULL);
    } else {
       // just in case the parameter value is a static string
       // we will copy it to an automatic string. Otherwise

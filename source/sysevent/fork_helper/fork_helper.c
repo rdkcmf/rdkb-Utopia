@@ -651,6 +651,8 @@ static int get_args_and_eval(int fd)
 
    char *prog;
    prog = buffer;
+   /* CID 135555 : String not null terminated */
+   prog[bytes_read] = '\0';
    
    char *buffer_ptr = buffer+strlen(prog)+1;
 

@@ -943,12 +943,21 @@ int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
 	 
 	 fseek( fileRead, 0, SEEK_END );
 	 len = ftell( fileRead );
+	 /* CID 59376: Argument cannot be negative */
+	 if(len < 0)
+         {
+            APPLY_PRINT("len can't be negative value\n");
+            fclose( fileRead );
+            return -1;
+         }
 	 fseek( fileRead, 0, SEEK_SET );
 	 data = ( char* )malloc( sizeof(char) * (len + 1) );
 	 if (data != NULL) 
 	 {
 		memset( data, 0, ( sizeof(char) * (len + 1) ));
 	 	fread( data, 1, len, fileRead );
+		/*CID 135511 String not null terminated */
+		data[len] = '\0';
 	 }
 	 else 
 	 {

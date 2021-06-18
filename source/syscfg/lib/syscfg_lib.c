@@ -311,7 +311,9 @@ int syscfg_create (const char *file, long int max_file_sz, const char *mtd_devic
         store_info.hdr_size = 0;
     } else {
         store_info.type = STORE_MTD_DEVICE;
-        strncpy(store_info.path, mtd_device, sizeof(store_info.path));
+	/* CID 135542: BUFFER_SIZE_WARNING */
+        strncpy(store_info.path, mtd_device, sizeof(store_info.path)-1);
+	store_info.path[sizeof(store_info.path)-1] = '\0';
         store_info.max_size = mtd_get_devicesize();
         store_info.hdr_size = mtd_get_hdrsize();
     }
@@ -975,7 +977,9 @@ static int _syscfg_set (const char *ns, const char *name, const char *value, int
     if (ns) {
         snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
     } else {
-        strncpy(name_p, name, sizeof(name_p));
+	/*CID 135370 : BUFFER_SIZE_WARNING */
+        strncpy(name_p, name, sizeof(name_p)-1);
+	name_p[sizeof(name_p)-1] = '\0';
     }
 
 
@@ -1054,7 +1058,9 @@ static int _syscfg_unset (const char *ns, const char *name, int nolock)
     if (ns) {
         snprintf(name_p, sizeof(name_p), "%s%s%s", ns, NS_SEP, name);
     } else {
-        strncpy(name_p, name, sizeof(name_p));
+	/* CID 135546 : BUFFER_SIZE_WARNING */
+        strncpy(name_p, name, sizeof(name_p)-1);
+	name_p[sizeof(name_p)-1] = '\0';
     }
 
 
@@ -1140,7 +1146,9 @@ static int shm_cb_init (syscfg_shm_ctx *ctx, int shmid, store_info_t store_info)
     cb->size = SYSCFG_SHM_SIZE;
     cb->shmid = shmid;
     cb->store_type = store_info.type;
-    strncpy(cb->store_path, store_info.path, SYSCFG_STORE_PATH_SZ);
+    /* CID 135644 : BUFFER_SIZE_WARNING */
+    strncpy(cb->store_path, store_info.path, sizeof(cb->store_path)-1);
+    cb->store_path[sizeof(cb->store_path)-1] = '\0';
     cb->max_store_size = store_info.max_size;
     cb->used_store_size = store_info.hdr_size;
 
@@ -1539,6 +1547,8 @@ int load_from_file (const char *fname)
     }
 
     buf = inbuf;
+    /*CID 135472 String not null terminated */
+    buf[count] = '\0';
     do {
         buf = syscfg_parse(buf, &name, &value);
         if (name && value) {

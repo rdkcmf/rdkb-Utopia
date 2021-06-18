@@ -237,7 +237,9 @@ void sync_tsip ()
 	{
 		if (l_cpPsm_Get != NULL)
 	    {
-    	    strncpy(l_cNvTsip_IpSubnet, l_cpPsm_Get, sizeof(l_cNvTsip_IpSubnet));
+            /* CID 162994: BUFFER_SIZE_WARNING */
+            strncpy(l_cNvTsip_IpSubnet, l_cpPsm_Get, sizeof(l_cNvTsip_IpSubnet)-1);
+	    l_cNvTsip_IpSubnet[sizeof(l_cNvTsip_IpSubnet)-1] = '\0';
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}
@@ -261,7 +263,9 @@ void sync_tsip ()
 	{
 		if (l_cpPsm_Get != NULL)
 	    {
-    	    strncpy(l_cNvTsip_Gateway, l_cpPsm_Get, sizeof(l_cNvTsip_Gateway));
+            /* CID 135638 : BUFFER_SIZE_WARNING */
+    	    strncpy(l_cNvTsip_Gateway, l_cpPsm_Get, sizeof(l_cNvTsip_Gateway)-1);
+	    l_cNvTsip_Gateway[sizeof(l_cNvTsip_Gateway)-1] = '\0';
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}
@@ -364,8 +368,10 @@ void sync_tsip_asn ()
 				{
 					if (l_cpPsm_Get != NULL)
 					{
-		            	strncpy(l_cNv_Tsip_Asn_Ip, l_cpPsm_Get, sizeof(l_cNv_Tsip_Asn_Ip));
-    		            Ansc_FreeMemory_Callback(l_cpPsm_Get);
+				/*CID 163592 : BUFFER_SIZE */
+				strncpy(l_cNv_Tsip_Asn_Ip, l_cpPsm_Get, sizeof(l_cNv_Tsip_Asn_Ip)-1);
+				l_cNv_Tsip_Asn_Ip[sizeof(l_cNv_Tsip_Asn_Ip)-1] = '\0';
+                                Ansc_FreeMemory_Callback(l_cpPsm_Get);
         		        l_cpPsm_Get = NULL; 
 	            	}
 					else
@@ -634,17 +640,19 @@ void load_static_l3 (int l3_inst)
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.l3net.%d.V4Addr", l3_inst);
 	l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     if (CCSP_SUCCESS == l_iRet_Val)
-	{	
-		if(l_cpPsm_Get != NULL)
-    	{    
-        	strncpy(l_cStatic_V4_Addr, l_cpPsm_Get, sizeof(l_cStatic_V4_Addr));
-    	    Ansc_FreeMemory_Callback(l_cpPsm_Get);
-        	l_cpPsm_Get = NULL;
-		}
-		else
-		{
+    {
+	if(l_cpPsm_Get != NULL)
+        {
+                /*CID 135418 : BUFFER_SIZE_WARNING */
+                strncpy(l_cStatic_V4_Addr, l_cpPsm_Get, sizeof(l_cStatic_V4_Addr)-1);
+                l_cStatic_V4_Addr[sizeof(l_cStatic_V4_Addr)-1] = '\0';
+                Ansc_FreeMemory_Callback(l_cpPsm_Get);
+                l_cpPsm_Get = NULL;
+	}
+	else
+	{
 			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
-		}		
+	}
     }    
     else 
     {    
@@ -656,8 +664,10 @@ void load_static_l3 (int l3_inst)
     if (CCSP_SUCCESS == l_iRet_Val)
 	{	
 		if (l_cpPsm_Get != NULL)
-	    { 
-    	    strncpy(l_cStatic_V4_Subnet, l_cpPsm_Get, sizeof(l_cStatic_V4_Subnet));
+	    {
+            /*CID 135418 : BUFFER_SIZE_WARNING */
+            strncpy(l_cStatic_V4_Subnet, l_cpPsm_Get, sizeof(l_cStatic_V4_Subnet)-1);
+	    l_cStatic_V4_Subnet[sizeof(l_cStatic_V4_Subnet)-1] = '\0';
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}

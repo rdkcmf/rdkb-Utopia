@@ -203,7 +203,9 @@ int Utopia_GetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
             strcpy(dhcps.DHCPClientLeaseTime,"24h");/*Default Value */
         }
         memset(strVal,0,STR_SZ);
-        strncpy(strVal, dhcps.DHCPClientLeaseTime, strlen(dhcps.DHCPClientLeaseTime));
+	/* CID 135591 : Destination buffer too small */
+        strncpy(strVal, dhcps.DHCPClientLeaseTime, sizeof(strVal)-1);
+	strVal[sizeof(strVal)-1] = '\0';
 
         /* lease time default is 24h, otherwise convert to minutes */
         if ( strVal[strlen(strVal)-1] == 'd'){/*added by soyou to support day*/
@@ -816,6 +818,7 @@ int Utopia_GetDhcpV4SPool_SAddressByIndex(UtopiaContext *ctx, unsigned long ulIn
     /*int ip[4] = {0,0,0,0};*/
     int mac[6] = {0,0,0,0,0,0};
     DHCPMap_t dhcp_static_hosts;
+    memset(&dhcp_static_hosts, 0x0, sizeof(dhcp_static_hosts)); //CID 162783: Uninitialized scalar variable
 #ifdef _DEBUG_
     sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
@@ -824,7 +827,9 @@ int Utopia_GetDhcpV4SPool_SAddressByIndex(UtopiaContext *ctx, unsigned long ulIn
     if (Utopia_GetIndexed(ctx, UtopiaValue_DHCP_StaticHost, ulIndex + 1, strVal, BUF_SZ)) {
         p = strVal;
         if (NULL != (n = chop_str(p, ','))) {
-            strncpy(dhcp_static_hosts.macaddr, p, MACADDR_SZ);
+	    /*CID 162894 :BUFFER_SIZE_WARNING */
+            strncpy(dhcp_static_hosts.macaddr, p, sizeof(dhcp_static_hosts.macaddr)-1);
+	    dhcp_static_hosts.macaddr[sizeof(dhcp_static_hosts.macaddr)-1] = '\0';
         }
         p = n;
         if (NULL != (n = chop_str(p, ','))) {
@@ -833,10 +838,14 @@ int Utopia_GetDhcpV4SPool_SAddressByIndex(UtopiaContext *ctx, unsigned long ulIn
                 dhcp_static_hosts.host_ip = atoi(p);
             }
             */
-            strncpy(dhcp_static_hosts.host_ip, p, IPADDR_SZ);
+	    /* CID:135654 BUFFER_SIZE_WARNING */
+            strncpy(dhcp_static_hosts.host_ip, p, sizeof(dhcp_static_hosts.host_ip)-1);
+	    dhcp_static_hosts.host_ip[sizeof(dhcp_static_hosts.host_ip)-1] = '\0';
         }
         p = n;
-        strncpy(dhcp_static_hosts.client_name, p, TOKEN_SZ);
+        /*CID 69969 : Dereference after null check */
+	if(p != NULL)
+           strncpy(dhcp_static_hosts.client_name, p, TOKEN_SZ);
 
         /* Correct the Host IP */
         /*
@@ -858,7 +867,8 @@ int Utopia_GetDhcpV4SPool_SAddressByIndex(UtopiaContext *ctx, unsigned long ulIn
         pSAddr_t->Chaddr[5] = mac[5];
 
         pSAddr_t->Yiaddr.Value = inet_addr(dhcp_static_hosts.host_ip);
-        strcpy(pSAddr_t->DeviceName,dhcp_static_hosts.client_name);
+	if(dhcp_static_hosts.client_name != NULL)
+           strcpy(pSAddr_t->DeviceName,dhcp_static_hosts.client_name);
 	Utopia_get_lan_host_comments(ctx,pSAddr_t->Chaddr, pSAddr_t->comments);
         return SUCCESS;
     }

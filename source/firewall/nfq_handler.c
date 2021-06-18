@@ -458,6 +458,11 @@ static void getIFMac(char *interface, char *mac){
     int ret = -1;
     do{
         s = socket(PF_INET, SOCK_DGRAM, 0);
+	/* CID 65152: Argument cannot be negative */
+	if(s < 0) {
+	   printf("return value of socket can't be negative\n");
+	   return;
+        }
         memset(&buffer, 0x00, sizeof(buffer));
         strcpy(buffer.ifr_name, interface);
         ret = ioctl(s, SIOCGIFHWADDR, &buffer);
@@ -499,7 +504,15 @@ int main(int argc, char *argv[])
 #endif
 
    if(argc == 3)
-       strncpy(srcMac, argv[2], sizeof(srcMac));
+   {
+       /* CID 135501 : BUFFER_SIZE_WARNING */
+       if (strlen(argv[2]) >= sizeof(srcMac))
+       {
+           fprintf(stderr, "nfq_handler: maxium length of srcMac %s\n", __FUNCTION__);
+           exit(1);
+       }
+       strcpy(srcMac, argv[2]);
+   }
    else{
        /* In ARES/XB3 brlan0 has not been created when program started
         * Get Mac by self */

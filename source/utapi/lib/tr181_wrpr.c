@@ -142,8 +142,9 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
     }
     for(; ptr; ptr=ptr->next){
 	if(!strcasecmp(ptr->param_name, "HighestVersion")){
-	    strncpy(deviceMocaIntfStatic->HighestVersion, ptr->param_val, strlen(ptr->param_val));
-            deviceMocaIntfStatic->HighestVersion[strlen(ptr->param_val)] = '\0';
+		/* CID 135359: Destination buffer too small */
+	    strncpy(deviceMocaIntfStatic->HighestVersion, ptr->param_val, sizeof(deviceMocaIntfStatic->HighestVersion)-1);
+            deviceMocaIntfStatic->HighestVersion[sizeof(deviceMocaIntfStatic->HighestVersion)-1] = '\0';
 	}else if(!strcasecmp(ptr->param_name, "TxBcastPowerReduction[TxPowerControlReduction]")){
 	    deviceMocaIntfStatic->TxBcastPowerReduction = atoi(ptr->param_val);
 	}else if(!strcasecmp(ptr->param_name, "PacketAggregationCapability")){
@@ -294,8 +295,9 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
 	}else if(!strcasecmp(ptr->param_name, "PrivacyEnabled")){
 	    deviceMocaIntfDyn->PrivacyEnabled = (!strncasecmp(ptr->param_val, "false", 5))? FALSE : TRUE ;
 	}else if(!strcasecmp(ptr->param_name, "CurrentVersion")){
-	    strncpy(deviceMocaIntfDyn->CurrentVersion, ptr->param_val, strlen(ptr->param_val));
-            deviceMocaIntfDyn->CurrentVersion[strlen(ptr->param_val)] = '\0';
+	    /* CID 135279: Destination buffer too small */
+	    strncpy(deviceMocaIntfDyn->CurrentVersion, ptr->param_val, sizeof(deviceMocaIntfDyn->CurrentVersion)-1);
+            deviceMocaIntfDyn->CurrentVersion[sizeof(deviceMocaIntfDyn->CurrentVersion)-1] = '\0';
         }
     }
     free_paramList(head);
@@ -406,8 +408,9 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
 	}else if(!strcasecmp(ptr->param_name, "NodeID")){
 	    mocaIntfAssociatedevice->NodeID =  atoi(ptr->param_val);
 	}else if(!strcasecmp(ptr->param_name, "HighestVersion")){
-	    strncpy(mocaIntfAssociatedevice->HighestVersion, ptr->param_val, strlen(ptr->param_val));
-            mocaIntfAssociatedevice->HighestVersion[strlen(ptr->param_val)] = '\0';
+            /* CID 135330: Destination buffer too small */
+	    strncpy(mocaIntfAssociatedevice->HighestVersion, ptr->param_val, sizeof(mocaIntfAssociatedevice->HighestVersion)-1);
+            mocaIntfAssociatedevice->HighestVersion[sizeof(mocaIntfAssociatedevice->HighestVersion)-1] = '\0';
 	}else if(!strcasecmp(ptr->param_name, "PreferredNC")){
 	    mocaIntfAssociatedevice->PreferredNC = (!strncasecmp(ptr->param_val, "false", 5))? FALSE : TRUE ;
 	}else if(!strcasecmp(ptr->param_name, "MaxIngressBW[PHYTxRate]")){

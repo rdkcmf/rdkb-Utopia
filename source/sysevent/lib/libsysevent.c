@@ -438,11 +438,12 @@ int SE_msg_add_string(char *msg, unsigned int size, const char *str)
 
 int SE_msg_add_data(char *msg, unsigned int size, const char *data, const int data_length)
 {
-   if (NULL == msg) {
+   if (NULL == msg || NULL == data) {
       return (0);
    }
-   int aligned_size      = (NULL == data ? 0 : data_length);
-   unsigned int msg_increase_size = (NULL == data ? 0 : data_length);
+   /*CID 160986 Dereference after null check */
+   int aligned_size      =  data_length;
+   unsigned int msg_increase_size = data_length;
 
    if  ( msg_increase_size > size ) {
       return(0);

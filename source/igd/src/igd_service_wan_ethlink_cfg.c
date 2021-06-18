@@ -201,7 +201,9 @@ struct upnp_service* IGD_service_WANEthernetLinkConfigInit(IN VOID* input_index_
 		_igd_service_WANEthernetLinkConfig_destroy(WANEthernetLinkConfig_service);
 		return NULL;
 	}
+	/* CID 135634 : BUFFER_SIZE_WARNING */
 	strncpy(WANEthernetLinkConfig_service->type, WANETHERNETLINKCONFIG_SERVICE_TYPE, strlen(WANETHERNETLINKCONFIG_SERVICE_TYPE)+1);
+	WANEthernetLinkConfig_service->type[strlen(WANETHERNETLINKCONFIG_SERVICE_TYPE)] = '\0';
 	
 	WANEthernetLinkConfig_service->serviceID=(CHAR *)calloc(1,strlen(WANETHERNETLINKCONFIG_SERVICE_ID)+1);
 	if(WANEthernetLinkConfig_service->serviceID==NULL)

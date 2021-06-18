@@ -902,13 +902,12 @@ void firewall_log( char* fmt, ...)
 
 static int IsValidIPv6Addr(char* ip_addr_string)
 {
-    int ret = 1;
-    unsigned char buf[sizeof(struct in6_addr)];
+    struct in6_addr addr;
 	
-	if(ip_addr_string == NULL)
-		return 0;
+    if(ip_addr_string == NULL)
+        return 0;
 	
-    if(!inet_pton(AF_INET6, ip_addr_string, buf))
+    if(!inet_pton(AF_INET6, ip_addr_string, &addr))
     {
         return 0;
     }
@@ -920,9 +919,9 @@ static int IsValidIPv6Addr(char* ip_addr_string)
     if( (0 == strcmp("0:0:0:0:0:0:0:0", ip_addr_string)) ||
         (0 == strcmp("::", ip_addr_string)))
     {
-        ret = 0;
+        return 0;
     }
-	return ret;
+	return 1;
 }
 
 #ifdef DSLITE_FEATURE_SUPPORT
@@ -1922,7 +1921,8 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num, unsigned int 
 
     int    i = 0;
     //FIREWALL_DEBUG("Entering get_ip6address\n");
-    if (!ifname && !ipArry && !p_num)
+    /* CID 124927 and 74863 : Dereference after null check */
+    if (!ifname || !ipArry || !p_num)
         return -1;
     fp = fopen(_PROCNET_IFINET6, "r");
     if (!fp)
@@ -7798,12 +7798,13 @@ static char *convert_url_to_hex_fmt(const char *url, char *dnsHexUrl)
     char *p = s1, *tok;
     int i, len;
     FIREWALL_DEBUG("Entering convert_url_to_hex_fm\n"); 
-    if(strlen(url) > 255) {
+    /* CID 135652 -BUFFER_SIZE_WARNING */
+    if(strlen(url) >= sizeof(s1)) {
         fprintf(stderr, "firewall: %s - maxium length of url is 255\n", __FUNCTION__);
         return NULL;
     }
+    strcpy(s1, url);
 
-    strncpy(s1, url, sizeof(s1));
     *dnsHexUrl = '\0';
 
     while ((tok = strsep(&p, ".")) != NULL) {
@@ -8627,7 +8628,9 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
 
                 if(pch != NULL)
                 {
-                    strncpy(nstdPort, urlType == IPv6_URL ? pch+2 : pch+1, sizeof(nstdPort));
+		    /* CID 135335 :BUFFER_SIZE_WARNING */
+                    strncpy(nstdPort, urlType == IPv6_URL ? pch+2 : pch+1, sizeof(nstdPort)-1);
+		    nstdPort[sizeof(nstdPort)-1] = '\0';
                     if(urlType == IPv6_URL)
                         *(pch+1) = '\0';
                     else
@@ -14716,8 +14719,10 @@ fw_shm_mutex fw_shm_mutex_init(char *mutexName) {
 	errno = 0;
 	fw_shm_mutex firewallMutex;
 	memset(&firewallMutex,0,sizeof firewallMutex);
-	strncpy(firewallMutex.fw_mutex, mutexName,sizeof(firewallMutex.fw_mutex));
-	
+	/* CID 135273 : BUFFER_SIZE_WARNING */
+	strncpy(firewallMutex.fw_mutex, mutexName,sizeof(firewallMutex.fw_mutex)-1);
+        firewallMutex.fw_mutex[sizeof(firewallMutex.fw_mutex)-1] = '\0';
+
 	firewallMutex.fw_shm_fd= shm_open(mutexName, O_RDWR, 0660);
 
 	 if (errno == ENOENT) 
