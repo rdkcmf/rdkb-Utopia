@@ -65,9 +65,9 @@ EVENTLOG=$(grep -e "eventlog" /etc/syslog.conf | awk '{print $2}')
 #    rm $SYSTEMLOG
 #else
     SYSTEMLOG_DIR=${SYSTEMLOG%/*}
-    if [ ! -d $SYSTEMLOG_DIR ]
+    if [ ! -d "$SYSTEMLOG_DIR" ]
     then
-        mkdir -p $SYSTEMLOG_DIR
+        mkdir -p "$SYSTEMLOG_DIR"
     fi
 #fi
 
@@ -77,10 +77,10 @@ EVENTLOG=$(grep -e "eventlog" /etc/syslog.conf | awk '{print $2}')
 #    rm $EVENTLOG
 #else
     EVENTLOG_DIR=${EVENTLOG%/*}
-    if [ ! -d $EVENTLOG_DIR ]
+    if [ ! -d "$EVENTLOG_DIR" ]
     then
 	echo "mkdir -p $EVENTLOG_DIR"
-        mkdir -p $EVENTLOG_DIR
+        mkdir -p "$EVENTLOG_DIR"
     fi
 #fi
 

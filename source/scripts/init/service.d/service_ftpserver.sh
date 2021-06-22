@@ -41,11 +41,11 @@
 source /etc/utopia/service.d/ulog_functions.sh
 
 SERVICE_NAME="ftpserver"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 service_init ()
 {
-    eval `utctx_cmd get current_lan_ipaddr`
+    eval "`utctx_cmd get current_lan_ipaddr`"
     LAN_IPADDR=$SYSCFG_current_lan_ipaddr
 }
 
@@ -64,7 +64,7 @@ service_start()
 
    # start a ftp daemon
    # echo "[utopia] Starting FTP daemon" > /dev/console
-   tinyftp -d -s $LAN_IPADDR -p 21 -c $DIR_NAME &
+   tinyftp -d -s "$LAN_IPADDR" -p 21 -c $DIR_NAME &
 
    sysevent set ${SERVICE_NAME}-errinfo
    sysevent set ${SERVICE_NAME}-status "started"
@@ -96,13 +96,13 @@ service_lanwan_status ()
 service_init
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

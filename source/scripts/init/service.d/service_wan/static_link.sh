@@ -88,14 +88,14 @@ do_start_static() {
    if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) || ( "0.0.0.0" != "$NAMESERVER3"  &&  "" != "$NAMESERVER3" ) ]] ; then
        	   #Removing IPV4 old DNS Config.
            interface=`sysevent get wan_ifname`
-           get_dns_number=`sysevent get ipv4_${interface}_dns_number`
+           get_dns_number=`sysevent get ipv4_"${interface}"_dns_number`
            sed -i '/domain/d' "$RESOLV_CONF_TMP"
            sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
                 if [ "$get_dns_number" != "" ]; then
-                        echo "Removing old DNS IPV4 SERVER configuration from resolv.conf " >> $CONSOLEFILE
+                        echo "Removing old DNS IPV4 SERVER configuration from resolv.conf " >> "$CONSOLEFILE"
                         counter=0;
-                        while [ $counter -lt $get_dns_number ]; do
-                        get_old_dns_server=`sysevent get ipv4_${interface}_dns_$counter`
+                        while [ $counter -lt "$get_dns_number" ]; do
+                        get_old_dns_server=`sysevent get ipv4_"${interface}"_dns_$counter`
                         ipv4_dns_server="nameserver $get_old_dns_server"
                         sed -i "/$ipv4_dns_server/d" "$RESOLV_CONF_TMP"
                         let counter=counter+1
@@ -107,7 +107,7 @@ do_start_static() {
            #Removing IPV6 old DNS Config.
            dns=`sysevent get wan6_ns`
            if [ "$dns" != "" ]; then
-                echo "Removing old DNS IPV6 SERVER configuration from resolv.conf " >> $CONSOLEFILE
+                echo "Removing old DNS IPV6 SERVER configuration from resolv.conf " >> "$CONSOLEFILE"
                         for i in $dns; do
                                 dns_server="nameserver $i"
                                 sed -i "/$dns_server/d" "$RESOLV_CONF_TMP"
@@ -125,7 +125,7 @@ do_start_static() {
 
    if [ "" != "$WAN_DOMAIN" ] ; then
       echo "search $WAN_DOMAIN" >> $RESOLV_CONF
-      sysevent set dhcp_domain $WAN_DOMAIN
+      sysevent set dhcp_domain "$WAN_DOMAIN"
    fi
 
    if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
@@ -141,14 +141,14 @@ do_start_static() {
       echo "nameserver $NAMESERVER_V6" >> $RESOLV_CONF
    fi
 
-   ip -4 addr add  $WAN_IPADDR/$WAN_NETMASK broadcast + dev $WAN_IFNAME
-   ip -4 link set $WAN_IFNAME up
-   ip -4 route add table erouter default dev $WAN_IFNAME via $WAN_DEFAULT_GATEWAY
-   ip rule add from $WAN_IPADDR lookup erouter
-   sysevent set default_router $WAN_DEFAULT_GATEWAY
+   ip -4 addr add  "$WAN_IPADDR"/"$WAN_NETMASK" broadcast + dev "$WAN_IFNAME"
+   ip -4 link set "$WAN_IFNAME" up
+   ip -4 route add table erouter default dev "$WAN_IFNAME" via "$WAN_DEFAULT_GATEWAY"
+   ip rule add from "$WAN_IPADDR" lookup erouter
+   sysevent set default_router "$WAN_DEFAULT_GATEWAY"
 
-   sysevent set ipv4_wan_ipaddr $WAN_IPADDR
-   sysevent set ipv4_wan_subnet $WAN_NETMASK
+   sysevent set ipv4_wan_ipaddr "$WAN_IPADDR"
+   sysevent set ipv4_wan_subnet "$WAN_NETMASK"
    ulog static_wan status "$PID setting current_ipv4_link_state up"
    sysevent set current_ipv4_link_state up
    sysevent set dhcp_server-restart
@@ -165,7 +165,7 @@ do_stop_static() {
    sysevent set ipv4_wan_subnet 0.0.0.0
    sysevent set default_router
    OLDIP=`ip addr show dev erouter0 label erouter0 | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
-   ip rule del from $OLDIP lookup erouter
+   ip rule del from "$OLDIP" lookup erouter
    ulog static_wan status "$PID setting current_ipv4_link_state down"
    sysevent set current_ipv4_link_state down
 }

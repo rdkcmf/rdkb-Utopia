@@ -95,7 +95,7 @@ LAN_IFNAME=`syscfg get lan_ifname`
 service_init ()
 {
    FOO=`utctx_cmd get hostname`
-   eval $FOO
+   eval "$FOO"
 
   if [ -z "$SYSCFG_hostname" ] ; then
      SYSCFG_hostname="Utopia"
@@ -110,7 +110,7 @@ service_init ()
 do_stop_dhcp() {
    ulog dhcp_link status "stopping dhcp client on lan"
    if [ -f "$UDHCPC_PID_FILE" ] ; then
-      kill -USR2 `cat $UDHCPC_PID_FILE` && kill `cat $UDHCPC_PID_FILE`
+      kill -USR2 "`cat $UDHCPC_PID_FILE`" && kill "`cat $UDHCPC_PID_FILE`"
       rm -f $UDHCPC_PID_FILE
    else
       killall -USR2 udhcpc && killall udhcpc
@@ -130,17 +130,17 @@ do_start_dhcp() {
       else
          WAN_UDHCPC_PID_OMIT=""
       fi
-      UDHCP_PID=`pidof udhcpc $WAN_UDHCPC_PID_OMIT`
+      UDHCP_PID=`pidof udhcpc "$WAN_UDHCPC_PID_OMIT"`
 
       service_init
       if [ ! -f "$UDHCPC_PID_FILE" ] ; then
          ulog dhcp_link status "starting dhcp client on lan ($LAN_IFNAME)"
-         udhcpc -S -b -i $LAN_IFNAME -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT $UDHCPC_OPTIONS
+         udhcpc -S -b -i "$LAN_IFNAME" -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT "$UDHCPC_OPTIONS"
       elif [ ! "${UDPCP_PID}" ] ; then
          ulog dhcp_link status "dhcp client `cat $UDHCPC_PID_FILE` died"
          do_stop_dhcp
          ulog dhcp_link status "starting dhcp client on lan ($LAN_IFNAME)"
-         udhcpc -S -b -i $LAN_IFNAME -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT $UDHCPC_OPTIONS
+         udhcpc -S -b -i "$LAN_IFNAME" -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT "$UDHCPC_OPTIONS"
       else
          ulog dhcp_link status "dhcp client is already active on lan ($LAN_IFNAME) as `cat $UDHCPC_PID_FILE`"
       fi
@@ -159,8 +159,8 @@ do_release_dhcp() {
          ulog dhcp_link status "setting lan status stopped"
       fi
    if [ -f "$UDHCPC_PID_FILE" ] ; then
-      kill -SIGUSR2 `cat $UDHCPC_PID_FILE`
-      ip -4 addr flush dev $LAN_IFNAME
+      kill -SIGUSR2 "`cat $UDHCPC_PID_FILE`"
+      ip -4 addr flush dev "$LAN_IFNAME"
    fi
 }
 
@@ -170,7 +170,7 @@ do_release_dhcp() {
 do_renew_dhcp() {
     ulog dhcp_link status "renewing dhcp lease on lan"
     if [ -f "$UDHCPC_PID_FILE" ] ; then
-        kill -SIGUSR1 `cat $UDHCPC_PID_FILE`
+        kill -SIGUSR1 "`cat $UDHCPC_PID_FILE`"
 #        LAN_STATE=`sysevent get lan-status`
 #        if [ "$LAN_STATE" = "administrative_down" ] ; then
 #           sysevent set current_wan_state up
@@ -179,7 +179,7 @@ do_renew_dhcp() {
     else
         ulog dhcp_link status "restarting dhcp client on lan"
         service_init
-        udhcpc -S -b -i $LAN_IFNAME -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT $UDHCPC_OPTIONS
+        udhcpc -S -b -i "$LAN_IFNAME" -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT $UDHCPC_OPTIONS
     fi
 }
 
@@ -301,16 +301,16 @@ case "$1" in
       echo "vendorspecific: $vendorspecific"  >> $LOG_FILE
 
       if [ -n "$lease" ] ; then
-         sysevent set lan_dhcp_lease $lease 
+         sysevent set lan_dhcp_lease "$lease" 
       fi
       if [ -n "$subnet" ] ; then
-         sysevent set ipv4_lan_subnet $subnet 
+         sysevent set ipv4_lan_subnet "$subnet" 
       fi
 
       # did the assigned ip address change
-      OLDIP=`/sbin/ip addr show dev $interface  | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
+      OLDIP=`/sbin/ip addr show dev "$interface"  | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
       if [ "$OLDIP" != "$ip" ] ; then
-         RESULT=`arping -q -c 2 -w 3 -D -I $interface $ip`
+         RESULT=`arping -q -c 2 -w 3 -D -I "$interface" "$ip"`
          if [ "" != "$RESULT" ] &&  [ "0" != "$RESULT" ] ; then
             echo "[utopia][lan dhcp client script] duplicate address detected $ip on $interface." > /dev/console
             echo "[utopia][lan dhcp client script] ignoring duplicate ... hoping for the best" > /dev/console
@@ -318,10 +318,10 @@ case "$1" in
 
          # remove the old ip address and put in the new one
          # ip addr flush is too harsh since it also removes ipv6 addrs
-         /sbin/ip -4 link set dev $interface down
-         /sbin/ip -4 addr show dev $interface | grep "inet " | awk '{system("/sbin/ip addr del " $2 " dev $interface")}'
-         /sbin/ip -4 addr add $ip$NETMASK $BROADCAST dev $interface 
-         /sbin/ip -4 link set dev $interface up
+         /sbin/ip -4 link set dev "$interface" down
+         /sbin/ip -4 addr show dev "$interface" | grep "inet " | awk '{system("/sbin/ip addr del " $2 " dev $interface")}'
+         /sbin/ip -4 addr add "$ip""$NETMASK" "$BROADCAST" dev "$interface" 
+         /sbin/ip -4 link set dev "$interface" up
       fi
 
       # if the gateway router has changed then we need to flush routing cache
@@ -333,8 +333,8 @@ case "$1" in
                :
             done
             for i in $router ; do
-               ip -4 route add default dev $interface via $i      
-               sysevent set default_router $i 
+               ip -4 route add default dev "$interface" via "$i"      
+               sysevent set default_router "$i" 
             done
             ip -4 route flush cache
          fi
@@ -360,7 +360,7 @@ case "$1" in
 #      fi
 
 
-      sysevent set current_lan_ipaddr $ip
+      sysevent set current_lan_ipaddr "$ip"
 #      if [ "1" = "$RESTART_DHCP_SERVER" ] ; then
 #         sysevent set dhcp_server-restart
 #      fi

@@ -60,7 +60,7 @@ pmounts=`egrep "^mtd|^/dev/[sh]d[:alpha:]" /proc/mounts | grep "rw," | cut -d' '
 # Attempt to unmount the filesystems
 for mount in $pmounts
 do
-    fuser -km $mount
+    fuser -km "$mount"
     echo "unmount $mount..." > /dev/console
-    umount $mount
+    umount "$mount"
 done

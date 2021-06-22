@@ -103,7 +103,7 @@ prepare_extra_commandline_params () {
       EXTRA_PARAMS="$EXTRA_PARAMS --server $SYSCFG_ddns_server"
    fi
 
-   echo $EXTRA_PARAMS
+   echo "$EXTRA_PARAMS"
 }
 
 #---------------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ update_ddns_server() {
       fi
 
       # set a sysevent tuple to indicate a 10 minute backoff time
-      sysevent set ddns_failure_time `get_current_time`
+      sysevent set ddns_failure_time "`get_current_time`"
 
       grep -q "error connecting" $OUTPUT_FILE
       if [ "0" = "$?" ]; then
@@ -200,7 +200,7 @@ do_start() {
    UPDATE_NEEDED=0
 
    # 1. Our wan ip address has changed
-   if [ -z $SYSCFG_wan_last_ipaddr ] ; then
+   if [ -z "$SYSCFG_wan_last_ipaddr" ] ; then
       WAN_LAST_IPADDR=0.0.0.0
    else
       WAN_LAST_IPADDR=$SYSCFG_wan_last_ipaddr
@@ -230,8 +230,8 @@ do_start() {
          # we need to give ntp client a chance to update the time
          sleep 5
          CURRENT_TIME=`get_current_time`
-         DELTA_DAYS=`delta_days $SYSCFG_ddns_last_update  $CURRENT_TIME`
-         DIFF=`expr $SYSCFG_ddns_update_days - $DELTA_DAYS`
+         DELTA_DAYS=`delta_days "$SYSCFG_ddns_last_update"  "$CURRENT_TIME"`
+         DIFF=`expr "$SYSCFG_ddns_update_days" - "$DELTA_DAYS"`
          if [ "$DIFF" -le 0 ] ; then
             UPDATE_NEEDED=1
             ulog ddns status "$PID ddns update required due to no update in $SYSCFG_ddns_update_days days"
@@ -243,7 +243,7 @@ do_start() {
    LAST_FAIL_TIME=`sysevent get ddns_failure_time`
    if [ "" != "$LAST_FAIL_TIME" ] ; then
       NOW=`get_current_time`
-      DELTA=`delta_mins $LAST_FAIL_TIME $NOW`
+      DELTA=`delta_mins "$LAST_FAIL_TIME" "$NOW"`
       if [ -n "$DELTA" ] ; then
          if [ "3" -gt "$DELTA" ] ; then
             # we need to back off for 10 minutes between updates
@@ -321,7 +321,7 @@ service_init ()
 {
     #FOO=`utctx_cmd get ddns_enable wan_last_ipaddr ddns_last_update ddns_update_days ddns_hostname ddns_username ddns_password ddns_service ddns_mx ddns_mx_backup ddns_wildcard ddns_server`
     FOO=`utctx_cmd get ddns_enable wan_last_ipaddr ddns_last_update ddns_update_days ddns_mx ddns_mx_backup ddns_wildcard `
-    eval $FOO
+    eval "$FOO"
 }
 
 #----------------------------------------------------------------------
@@ -350,13 +350,13 @@ service_stop ()
 service_init
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

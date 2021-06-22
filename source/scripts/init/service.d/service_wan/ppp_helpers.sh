@@ -323,5 +323,5 @@ do_stop_wan_monitor() {
 #------------------------------------------------------------------
 do_start_wan_monitor() {
    do_stop_wan_monitor
-   /sbin/wmon $LAN_IFNAME
+   /sbin/wmon "$LAN_IFNAME"
 }

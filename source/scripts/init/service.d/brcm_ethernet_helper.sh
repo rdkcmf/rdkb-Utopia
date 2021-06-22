@@ -77,7 +77,7 @@ enable_vlan_mode_on_ethernet_switch ()
    CURRENT=`et robord 0x34 0x00`
    HIGHBITS=`echo "$CURRENT" | awk '{print substr($0,3,2)}'`
    LOWBITS=`echo "$CURRENT" | awk '{print substr($0,6,1)}'`
-   et robowr 0x34 0x00 0x${HIGHBITS}e${LOWBITS}
+   et robowr 0x34 0x00 0x"${HIGHBITS}"e"${LOWBITS}"
 }
 
 disable_vlan_mode_on_ethernet_switch ()
@@ -85,7 +85,7 @@ disable_vlan_mode_on_ethernet_switch ()
    CURRENT=`et robord 0x34 0x00`
    HIGHBITS=`echo "$CURRENT" | awk '{print substr($0,3,2)}'`
    LOWBITS=`echo "$CURRENT" | awk '{print substr($0,6,1)}'`
-   et robowr 0x34 0x00 0x${HIGHBITS}0${LOWBITS}
+   et robowr 0x34 0x00 0x"${HIGHBITS}"0"${LOWBITS}"
 }
 
 #------------------------------------------------------------------------
@@ -121,14 +121,14 @@ enable_port_qos_on_ethernet_switch ()
    CURRENT=`et robord 0x30 0x00`
    HIGHBITS=`echo "$CURRENT" | awk '{print substr($0,3,2)}'`
    LOWBITS=`echo "$CURRENT" | awk '{print substr($0,6,1)}'`
-   et robowr 0x30 0x00 0x${HIGHBITS}4${LOWBITS}
+   et robowr 0x30 0x00 0x"${HIGHBITS}"4"${LOWBITS}"
 }
 disable_port_qos_on_ethernet_switch ()
 {
    CURRENT=`et robord 0x30 0x00`
    HIGHBITS=`echo "$CURRENT" | awk '{print substr($0,3,2)}'`
    LOWBITS=`echo "$CURRENT" | awk '{print substr($0,6,1)}'`
-   et robowr 0x30 0x00 0x${HIGHBITS}0${LOWBITS}
+   et robowr 0x30 0x00 0x"${HIGHBITS}"0"${LOWBITS}"
 
    et robowr 0x30 0x80 0x00
    et robowr 0x30 0x62 0x0000
@@ -144,7 +144,7 @@ disable_port_qos_on_ethernet_switch ()
 #------------------------------------------------------------------------
 set_vlan_on_ethernet_port ()
 {
-   get_ethernet_port $1
+   get_ethernet_port "$1"
    if [ "0" = "$PORT" ] ; then
       return 0
    fi
@@ -156,7 +156,7 @@ set_vlan_on_ethernet_port ()
    # The priority bits are bit 13:15 of the $TAG (bit 12 is 0)
    PRIO=`echo "$TAG" | awk '{print substr($0,3,1)}'`
 
-   et robowr 0x34 $PORT 0x${PRIO}`printf "%03x" $2`
+   et robowr 0x34 $PORT 0x"${PRIO}""`printf "%03x" "$2"`"
 }
 
 #------------------------------------------------------------------------
@@ -165,7 +165,7 @@ set_vlan_on_ethernet_port ()
 #------------------------------------------------------------------------
 set_prio_on_ethernet_port ()
 {
-   get_ethernet_port $1
+   get_ethernet_port "$1"
    if [ "0" = "$PORT" ] ; then
       return 0
    fi
@@ -176,7 +176,7 @@ set_prio_on_ethernet_port ()
    # The vlan id is bits 0:11
    VLAN=`echo "$TAG" | awk '{print substr($0,4,4)}'`
 
-   et robowr 0x34 $PORT 0x`printf "%01x" $2`${VLAN}
+   et robowr 0x34 $PORT 0x"`printf "%01x" "$2"`""${VLAN}"
 }
 
 #------------------------------------------------------------------------

@@ -57,18 +57,18 @@ byoi_bridge_mode=`sysevent get byoi_bridge_mode`
 #Main handler functions--------------------------------------------
 handle_bridge_ipv4_ipaddr_change () {
 
-   if [ x"0" = x$SYSCFG_byoi_enabled ] || [ x"1" != x$byoi_bridge_mode ] || [ x"0" != x$SYSCFG_bridge_mode ]; then
+   if [ x"0" = x"$SYSCFG_byoi_enabled" ] || [ x"1" != x"$byoi_bridge_mode" ] || [ x"0" != x"$SYSCFG_bridge_mode" ]; then
       exit 0
    fi
 
    stop_dhcp_proxy
 
    bridge_ipv4_ipaddr=`sysevent get bridge_ipv4_ipaddr`
-   if [ x"0.0.0.0" = x$bridge_ipv4_ipaddr ]; then
+   if [ x"0.0.0.0" = x"$bridge_ipv4_ipaddr" ]; then
       exit 0
    fi
 
-   is_private $bridge_ipv4_ipaddr
+   is_private "$bridge_ipv4_ipaddr"
 
    if [ "0" = $? ]; then
       ulog byoi info "Public ip detected on wan interface. Switching to router mode" 
@@ -78,7 +78,7 @@ handle_bridge_ipv4_ipaddr_change () {
       sysevent set forwarding-restart
    else
       ulog byoi info "Private ip detected on bridge interface. Starting dhcp proxy" 
-      start_dhcp_proxy $bridge_ipv4_ipaddr
+      start_dhcp_proxy "$bridge_ipv4_ipaddr"
    fi
 }
 
@@ -86,16 +86,16 @@ handle_current_wan_ipaddr_change () {
    current_hsd_mode=`sysevent get current_hsd_mode`
    current_wan_ipaddr=`sysevent get current_wan_ipaddr`
    echo "current wan ipaddr change. $current_hsd_mode : $current_wan_ipaddr---------------"
-   if [ "1" != $SYSCFG_byoi_enabled ] || [ "1" != $SYSCFG_autobridge_enabled ] || [ "dhcp" != $SYSCFG_wan_proto ]; then
+   if [ "1" != "$SYSCFG_byoi_enabled" ] || [ "1" != "$SYSCFG_autobridge_enabled" ] || [ "dhcp" != "$SYSCFG_wan_proto" ]; then
       return 0
    fi
 
-   if [ x"byoi" != x$current_hsd_mode ] ; then
+   if [ x"byoi" != x"$current_hsd_mode" ] ; then
       sysevent set dhcp_server-restart
       return 0
    fi
 
-   is_private $current_wan_ipaddr
+   is_private "$current_wan_ipaddr"
 
    if [ 1 = $? ] ; then
       echo "Private lan ip detected on wan interface. switching to byoi bridge mode" 
@@ -118,7 +118,7 @@ handle_current_hsd_mode () {
    current_hsd_mode=`sysevent get current_hsd_mode`
    echo "handle current hsd called------------------"
    
-   if [ x"unknown" = x$current_hsd_mode ]; then
+   if [ x"unknown" = x"$current_hsd_mode" ]; then
 #      sysevent set wan-restart
       echo "returning out of current_hsd_mode, it is unknown" > /dev/console
       return
@@ -126,8 +126,8 @@ handle_current_hsd_mode () {
 
    wan_status=`sysevent get wan-status`
    bridge_status=`sysevent get bridge-status`
-   if [ x`sysevent get operating_byoi_mode` = x$current_hsd_mode ]; then
-      if [ x"started" = x$wan_status ] || [ x"started" = x$bridge_status ]; then
+   if [ x"`sysevent get operating_byoi_mode`" = x"$current_hsd_mode" ]; then
+      if [ x"started" = x"$wan_status" ] || [ x"started" = x"$bridge_status" ]; then
          echo "returning out of current_hsd_mode due to match with operating_byoi_mode" > /dev/console
          return
       fi
@@ -143,12 +143,12 @@ handle_current_hsd_mode () {
    wan_restarting=`sysevent get wan-restarting`
 
    echo "current_hsd_mode changed, ws:$wan_status; wr: $wan_restarting -----------------" > /dev/console
-   if [ x"stopping" != x$wan_status -o x"1" != x"$wan_restarting" ] ; then
+   if [ x"stopping" != x"$wan_status" -o x"1" != x"$wan_restarting" ] ; then
       echo "Restarting wan" > /dev/console
       sysevent set wan-restart
    fi
 
-   sysevent set operating_byoi_mode $current_hsd_mode
+   sysevent set operating_byoi_mode "$current_hsd_mode"
    echo "exiting current_hsd_mode handler ------------------"
 }
 
@@ -179,7 +179,7 @@ service_init ()
     
     FOO=`utctx_cmd get byoi_enabled bridge_mode primary_wan_proto last_configured_hsd_mode last_provisioned_hsd_mode autobridge_enabled wan_proto`
 
-    eval $FOO
+    eval "$FOO"
 }
 
 #-------------------------------------------------------------------------------------------
@@ -204,7 +204,7 @@ service_start ()
       sysevent set ${SERVICE_NAME}-errinfo 
 
       validate_hsd_mode
-      sysevent set desired_hsd_mode $desired_hsd_mode
+      sysevent set desired_hsd_mode "$desired_hsd_mode"
 
 #-----------old code----------
 #      primary_HSD_allowed=`sysevent get primary_HSD_allowed`
@@ -265,13 +265,13 @@ service_stop ()
 service_init 
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

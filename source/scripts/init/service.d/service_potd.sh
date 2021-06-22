@@ -42,7 +42,7 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/device.properties
 
 SERVICE_NAME="potd"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 POTD=/usr/sbin/sa_potd
 
@@ -77,13 +77,13 @@ service_stop() {
 }
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

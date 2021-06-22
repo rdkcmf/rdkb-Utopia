@@ -74,7 +74,7 @@ echo "[utopia][init] Tweaking network parameters" > /dev/console
 
 KERNEL_VERSION=`uname -r | cut -c 1`
 
-if [ $KERNEL_VERSION -lt 4 ] ; then
+if [ "$KERNEL_VERSION" -lt 4 ] ; then
 	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
 	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_syn_sent
 	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_generic_timeout
@@ -166,11 +166,11 @@ fi
 #fi
 
 changeFilePermissions() {
-       if [ -e $1 ]; then
-               filepermission=$(stat -c %a $1)
-               if [ $filepermission -ne $2 ]
+       if [ -e "$1" ]; then
+               filepermission=$(stat -c %a "$1")
+               if [ "$filepermission" -ne "$2" ]
                then
-                       chmod $2 $1
+                       chmod "$2" "$1"
                        echo "[utopia][init] Modified File Permission to $2 for file - $1"
                fi
        else
@@ -343,7 +343,7 @@ fi
        L2="$(grep '^L2=' /etc/lxy.conf | sed -e 's/L2=//')"
    fi
    if [ -d "$L2" ]; then
-       rm -rf $L2
+       rm -rf "$L2"
    fi
 
      touch /nvram/.apply_partner_defaults   
@@ -475,19 +475,19 @@ ecm_wan_ifname=`syscfg get ecm_wan_ifname`
 wan_ifname=`sysevent get wan_ifname`
 
 #disable telnet / ssh ports
-iptables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
-iptables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
-iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
-iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+iptables -A INPUT -i "$lan_ifname" -p tcp --dport 23 -j DROP
+iptables -A INPUT -i "$lan_ifname" -p tcp --dport 22 -j DROP
+iptables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 23 -j DROP
+iptables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 22 -j DROP
 
-ip6tables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
-ip6tables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
-ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
-ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+ip6tables -A INPUT -i "$lan_ifname" -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i "$lan_ifname" -p tcp --dport 22 -j DROP
+ip6tables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 22 -j DROP
 
 #protect from IPv6 NS flooding
-ip6tables -t mangle -A PREROUTING -i $ecm_wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
-ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
+ip6tables -t mangle -A PREROUTING -i "$ecm_wan_ifname" -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
+ip6tables -t mangle -A PREROUTING -i "$wan_ifname" -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 
 #/sbin/ulogd -c /etc/ulogd.conf -d
 
@@ -545,7 +545,7 @@ ip rule add from all iif l2sd0.4090 lookup erouter
 
 # RDKB-15951 : Dedicated l2sd0 vlan for Mesh Bhaul
 vconfig add l2sd0 1060
-if [ $BOX_TYPE == "XB3" ];then
+if [ "$BOX_TYPE" == "XB3" ];then
         $UTOPIA_PATH/service_multinet_exec add_meshbhaul_vlan &
 else
         $SWITCH_HANDLER addVlan 0 1060 sw_6
@@ -657,7 +657,7 @@ else
                      syscfg set X_RDKCENTRAL-COM_LastRebootReason "Software_upgrade_Watchdog_Reboot"
                      syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 	         elif ( [ "$rebootCounter" = "0" ] ) && ( [ "$Punit_status" = "RESET_ORIGIN_ATOM_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_DOCSIS_WATCHDOG" ] || [ "$Punit_status" = "RESET_ORIGIN_ATOM" ] );then
-	             syscfg set X_RDKCENTRAL-COM_LastRebootReason $Punit_status
+	             syscfg set X_RDKCENTRAL-COM_LastRebootReason "$Punit_status"
 	             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 		     if [ -e "/usr/bin/onboarding_log" ]; then
 		         /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as $Punit_status"
@@ -685,10 +685,10 @@ if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
             ##after untar the new bbhm current config is overrriden/corrupted at times.
             ##Hence we are storing a backup and replacing it to current config upon such cases
             a=`md5sum /nvram/bbhm_cur_cfg.xml-temp`
-            a=$(echo $a | cut -f 1 -d " ")
+            a=$(echo "$a" | cut -f 1 -d " ")
             b=`md5sum $PSM_CUR_XML_CONFIG_FILE_NAME`
-            b=$(echo $b | cut -f 1 -d " ")
-            if [[ $a != $b ]]; then
+            b=$(echo "$b" | cut -f 1 -d " ")
+            if [[ $a != "$b" ]]; then
                cp /nvram/bbhm_cur_cfg.xml-temp $PSM_CUR_XML_CONFIG_FILE_NAME
             fi
             rm -f /nvram/bbhm_cur_cfg.xml-temp

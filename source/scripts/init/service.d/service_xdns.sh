@@ -67,12 +67,12 @@ service_restart ()
 # Entry
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_restart
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_restart
       ;;
   resolvconf_updated)

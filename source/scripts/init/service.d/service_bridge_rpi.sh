@@ -62,17 +62,17 @@ unregister_dhcp_client_handlers() {
    # ulog bridge status "$PID unregister_dhcp_client_handlers"
    asyncid1=`sysevent get ${SERVICE_NAME}_async_id_1`;
    if [ -n "$asyncid1" ] ; then
-      sysevent rm_async $asyncid1
+      sysevent rm_async "$asyncid1"
       sysevent set ${SERVICE_NAME}_async_id_1
    fi
    asyncid2=`sysevent get ${SERVICE_NAME}_async_id_2`;
    if [ -n "$asyncid2" ] ; then
-      sysevent rm_async $asyncid2
+      sysevent rm_async "$asyncid2"
       sysevent set ${SERVICE_NAME}_async_id_2
    fi
    asyncid3=`sysevent get ${SERVICE_NAME}_async_id_3`;
    if [ -n "$asyncid3" ] ; then
-      sysevent rm_async $asyncid3
+      sysevent rm_async "$asyncid3"
       sysevent set ${SERVICE_NAME}_async_id_3
    fi
 }
@@ -85,17 +85,17 @@ register_dhcp_client_handlers() {
    # instantiate a request to be notified when the dhcp_client-restart changes
    # make it an event (TUPLE_FLAG_EVENT = $TUPLE_FLAG_EVENT)
    asyncid1=`sysevent async dhcp_client-restart "$HANDLER"`;
-   sysevent setoptions dhcp_client-restart $TUPLE_FLAG_EVENT
+   sysevent setoptions dhcp_client-restart "$TUPLE_FLAG_EVENT"
    sysevent set ${SERVICE_NAME}_async_id_1 "$asyncid1"
 
    # instantiate a request to be notified when the dhcp_client-release / renew changes
    # make it an event (TUPLE_FLAG_EVENT = $TUPLE_FLAG_EVENT)
    asyncid2=`sysevent async dhcp_client-release "$HANDLER"`;
-   sysevent setoptions dhcp_client-release $TUPLE_FLAG_EVENT
+   sysevent setoptions dhcp_client-release "$TUPLE_FLAG_EVENT"
    sysevent set ${SERVICE_NAME}_async_id_2 "$asyncid2"
 
    asyncid3=`sysevent async dhcp_client-renew "$HANDLER"`;
-   sysevent setoptions dhcp_client-renew $TUPLE_FLAG_EVENT
+   sysevent setoptions dhcp_client-renew "$TUPLE_FLAG_EVENT"
    sysevent set ${SERVICE_NAME}_async_id_3 "$asyncid3"
 }
 
@@ -108,9 +108,9 @@ register_dhcp_client_handlers() {
 #   $2  : the name of the interface to enslave it to
 #--------------------------------------------------------------
 enslave_a_interface() {
-   ip link set $1 up
-   ip link set $1 allmulticast on
-   brctl addif $2 $1
+   ip link set "$1" up
+   ip link set "$1" allmulticast on
+   brctl addif "$2" "$1"
 }
 
 #--------------------------------------------------------------
@@ -126,7 +126,7 @@ bringup_ethernet_interfaces() {
 teardown_ethernet_interfaces() {
    for loop in $SYSCFG_lan_ethernet_physical_ifnames
    do
-      ip link set $loop down
+      ip link set "$loop" down
    done
 }
 
@@ -143,14 +143,14 @@ bringup_wireless_interfaces() {
        do
            MAC=`syscfg get "macwifi0${WIFI_IF_INDEX}bssid1"`
            
-           ifconfig $loop hw ether $MAC
-           ip link set $loop allmulticast on
+           ifconfig "$loop" hw ether "$MAC"
+           ip link set "$loop" allmulticast on
            ulog lan status "setting $loop hw address to $MAC"
            WL_STATE=`syscfg get wl$(($WIFI_IF_INDEX-1))_state`
 
            ulog lan status "wlancfg $loop $WL_STATE"
-           wlancfg $loop $WL_STATE
-           wlancfg $loop $WL_STATE
+           wlancfg "$loop" "$WL_STATE"
+           wlancfg "$loop" "$WL_STATE"
            WIFI_IF_INDEX=`expr $WIFI_IF_INDEX + 1`
       done
    fi
@@ -162,8 +162,8 @@ bringup_wireless_interfaces() {
 teardown_wireless_interfaces() {
    for loop in $SYSCFG_lan_wl_physical_ifnames
    do
-      wlancfg $loop down
-      ip link set $loop down
+      wlancfg "$loop" down
+      ip link set "$loop" down
    done
 
    teardown_wireless_daemons
@@ -194,13 +194,13 @@ add_ebtable_rule()
     #prod_model=`awk -F'[-=]' '/^VERSION/ {print $2}' /etc/versions`
 
     cmdiag_if=`syscfg get cmdiag_ifname`
-    cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
+    cmdiag_if_mac=`ip link show "$cmdiag_if" | awk '/link/ {print $2}'`
     cmdiag_ip="192.168.100.1"
     wan_if=`syscfg get wan_physical_ifname`
 
 
     wan_if=`syscfg get wan_physical_ifname` #erouter0
-    subnet_wan=`ip route show | awk '/'$wan_if'/ {print $1}' | tail -1` 
+    subnet_wan=`ip route show | awk '/'"$wan_if"'/ {print $1}' | tail -1` 
 
      echo "###############################################"
      echo "cmdiag_if=$cmdiag_if"
@@ -210,17 +210,17 @@ add_ebtable_rule()
      echo "###############################################"
 
     echo "ip route del $subnet_wan dev $wan_if"
-    ip route del $subnet_wan dev $wan_if
+    ip route del "$subnet_wan" dev "$wan_if"
 
     echo "ip route add $subnet_wan dev $cmdiag_if" #proto kernel scope link src $cmdiag_ip"
-    ip route add $subnet_wan dev $cmdiag_if #proto kernel scope link src $cmdiag_ip
+    ip route add "$subnet_wan" dev "$cmdiag_if" #proto kernel scope link src $cmdiag_ip
 
     dst_ip="10.0.0.1" # RT-10-580 @ XB3 
     echo "ip addr add $dst_ip/24 dev $cmdiag_if"
-    ip addr add $dst_ip/24 dev $cmdiag_if
+    ip addr add $dst_ip/24 dev "$cmdiag_if"
 
     echo "ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac"
-    ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination "$cmdiag_if_mac"
 
     echo 2 > /proc/sys/net/ipv4/conf/wlan0/arp_announce
     echo "echo 2 > /proc/sys/net/ipv4/conf/wlan0/arp_announce"
@@ -234,20 +234,20 @@ del_ebtable_rule()
 {
     prod_model=`awk -F'[-=]' '/^VERSION/ {print $2}' /etc/versions`
     cmdiag_if=`syscfg get cmdiag_ifname`
-    cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
+    cmdiag_if_mac=`ip link show "$cmdiag_if" | awk '/link/ {print $2}'`
     
     wan_if=`syscfg get wan_physical_ifname`
     wan_ip=`sysevent get ipv4_wan_ipaddr`
-    subnet_wan=`ip route show | grep $cmdiag_if | grep -v 192.168.100. | grep -v 10.0.0 | awk '/'$cmdiag_if'/ {print $1}'`
+    subnet_wan=`ip route show | grep "$cmdiag_if" | grep -v 192.168.100. | grep -v 10.0.0 | awk '/'"$cmdiag_if"'/ {print $1}'`
 
-    ip route del $subnet_wan dev $cmdiag_if
-    ip route add $subnet_wan dev $wan_if proto kernel scope link src $wan_ip
+    ip route del "$subnet_wan" dev "$cmdiag_if"
+    ip route add "$subnet_wan" dev "$wan_if" proto kernel scope link src "$wan_ip"
 
 
 
     dst_ip="10.0.0.1" # RT-10-580 @ XB3 PRD
-    ip addr del $dst_ip/24 dev $cmdiag_if
-    ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    ip addr del $dst_ip/24 dev "$cmdiag_if"
+    ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination "$cmdiag_if_mac"
     #echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
     echo 0 > /proc/sys/net/ipv4/conf/wlan0/arp_announce
     echo "echo 0 > /proc/sys/net/ipv4/conf/wlan0/arp_announce"
@@ -269,24 +269,24 @@ do_start()
    bringup_ethernet_interfaces
    bringup_wireless_interfaces
    
-   brctl addbr $SYSCFG_lan_ifname
-   brctl setfd $SYSCFG_lan_ifname 0
+   brctl addbr "$SYSCFG_lan_ifname"
+   brctl setfd "$SYSCFG_lan_ifname" 0
    #brctl stp $SYSCFG_lan_ifname on
-   brctl stp $SYSCFG_lan_ifname off
+   brctl stp "$SYSCFG_lan_ifname" off
 
 
    # enslave interfaces to the bridge
-   enslave_a_interface $SYSCFG_wan_physical_ifname $SYSCFG_lan_ifname
+   enslave_a_interface "$SYSCFG_wan_physical_ifname" "$SYSCFG_lan_ifname"
    for loop in $LAN_IFNAMES
    do
-      enslave_a_interface $loop $SYSCFG_lan_ifname
+      enslave_a_interface "$loop" "$SYSCFG_lan_ifname"
    done
 
    # bring up the bridge
-   ip link set $SYSCFG_lan_ifname up 
-   ip link set $SYSCFG_lan_ifname allmulticast on
+   ip link set "$SYSCFG_lan_ifname" up 
+   ip link set "$SYSCFG_lan_ifname" allmulticast on
 
-   ifconfig $SYSCFG_lan_ifname hw ether `get_mac $SYSCFG_wan_physical_ifname` 
+   ifconfig "$SYSCFG_lan_ifname" hw ether "`get_mac "$SYSCFG_wan_physical_ifname"`" 
 
    # bridge_mode 1 is dhcp, bridge_mode 2 is static
    if [ "2" = "$SYSCFG_bridge_mode" ] && [ -n "$SYSCFG_bridge_ipaddr" ] && [ -n "$SYSCFG_bridge_netmask" ] && [ -n "$SYSCFG_bridge_default_gateway" ]; then
@@ -304,15 +304,15 @@ do_start()
       if [ -n "$SYSCFG_bridge_nameserver3" ]  && [ "0.0.0.0" !=  "$SYSCFG_bridge_nameserver3" ] ; then
          echo "nameserver $SYSCFG_bridge_nameserver3" >> $RESOLV_CONF
       fi
-      ip -4 addr add  $SYSCFG_bridge_ipaddr/$SYSCFG_bridge_netmask broadcast + dev $SYSCFG_lan_ifname
-      ip -4 route add default dev $SYSCFG_lan_ifname via $SYSCFG_bridge_default_gateway
+      ip -4 addr add  "$SYSCFG_bridge_ipaddr"/"$SYSCFG_bridge_netmask" broadcast + dev "$SYSCFG_lan_ifname"
+      ip -4 route add default dev "$SYSCFG_lan_ifname" via "$SYSCFG_bridge_default_gateway"
       # set sysevent tuple showing current state
-      sysevent set bridge_ipv4_ipaddr $SYSCFG_bridge_ipaddr
-      sysevent set bridge_ipv4_subnet $SYSCFG_bridge_netmask
-      sysevent set bridge_default_router $SYSCFG_bridge_default_gateway
+      sysevent set bridge_ipv4_ipaddr "$SYSCFG_bridge_ipaddr"
+      sysevent set bridge_ipv4_subnet "$SYSCFG_bridge_netmask"
+      sysevent set bridge_default_router "$SYSCFG_bridge_default_gateway"
 
    else
-      udhcpc -S -b -i $SYSCFG_lan_ifname -h $SYSCFG_hostname -p $UDHCPC_PID_FILE  --arping -s $UDHCPC_SCRIPT 
+      udhcpc -S -b -i "$SYSCFG_lan_ifname" -h "$SYSCFG_hostname" -p $UDHCPC_PID_FILE  --arping -s $UDHCPC_SCRIPT 
       register_dhcp_client_handlers
    fi
 
@@ -337,8 +337,8 @@ do_stop()
    sysevent set dns-stop
 
    unregister_dhcp_client_handlers
-   ip link set $SYSCFG_lan_ifname down
-   ip addr flush dev $SYSCFG_lan_ifname
+   ip link set "$SYSCFG_lan_ifname" down
+   ip addr flush dev "$SYSCFG_lan_ifname"
 
    teardown_wireless_interfaces
    teardown_ethernet_interfaces
@@ -346,21 +346,21 @@ do_stop()
    # remove interfaces from the bridge
    for loop in $LAN_IFNAMES
    do
-      ip link set $loop down
-      brctl delif $SYSCFG_lan_ifname $loop
+      ip link set "$loop" down
+      brctl delif "$SYSCFG_lan_ifname" "$loop"
    done
-   ip link set $SYSCFG_wan_physical_ifname down
+   ip link set "$SYSCFG_wan_physical_ifname" down
 
-   ip link set $SYSCFG_lan_ifname down
+   ip link set "$SYSCFG_lan_ifname" down
 
-   brctl delbr $SYSCFG_lan_ifname
+   brctl delbr "$SYSCFG_lan_ifname"
 }
 
 do_start_multi()
 {
 # TODO: add brport to defaults
 PRI_L2=`sysevent get primary_lan_l2net`
-sysevent set multinet-start $PRI_L2
+sysevent set multinet-start "$PRI_L2"
 /etc/utopia/service.d/ebtable_rules.sh
 # set brport enabled
 # set resync for primary l2net
@@ -391,7 +391,7 @@ service_init ()
 
    SYSCFG_FAILED='false'
    FOO=`utctx_cmd get bridge_mode lan_ifname lan_ethernet_physical_ifnames lan_wl_physical_ifnames wan_physical_ifname bridge_ipaddr bridge_netmask bridge_default_gateway bridge_nameserver1 bridge_nameserver2 bridge_nameserver3 bridge_domain hostname`
-   eval $FOO
+   eval "$FOO"
   if [ $SYSCFG_FAILED = 'true' ] ; then
      ulog bridge status "$PID utctx failed to get some configuration data"
      ulog bridge status "$PID BRIDGE CANNOT BE CONTROLLED"
@@ -421,28 +421,28 @@ virtual_interface()
 
     if [ "$1" = "enable" ] ; then
         echo "ip link add $CMDIAG_IF type veth peer name l${CMDIAG_IF}"
-        ip link add $CMDIAG_IF type veth peer name l${CMDIAG_IF}
+        ip link add "$CMDIAG_IF" type veth peer name l"${CMDIAG_IF}"
 
         echo 1 > /proc/sys/net/ipv6/conf/llan0/disable_ipv6
 
         echo "ifconfig $CMDIAG_IF hw ether `cat /sys/class/net/lan0/address`"
-        ifconfig $CMDIAG_IF hw ether `cat /sys/class/net/${CMDIAG_IF}/address`
+        ifconfig "$CMDIAG_IF" hw ether "`cat /sys/class/net/${CMDIAG_IF}/address`"
       
         virtual_interface_ebtables_rules enable
 
         echo "ifconfig l${CMDIAG_IF} promisc up"
-        ifconfig l${CMDIAG_IF} promisc up
+        ifconfig l"${CMDIAG_IF}" promisc up
 
         echo "ifconfig $CMDIAG_IF $LAN_IP netmask $LAN_NETMASK up"
-        ifconfig $CMDIAG_IF $LAN_IP netmask $LAN_NETMASK up
+        ifconfig "$CMDIAG_IF" "$LAN_IP" netmask "$LAN_NETMASK" up
 
         if [ "$LAN_IP" != "$dst_ip" ]; then
-                ifconfig $CMDIAG_IF $dst_ip netmask $LAN_NETMASK up
+                ifconfig "$CMDIAG_IF" $dst_ip netmask "$LAN_NETMASK" up
         fi
     else
-        ifconfig $CMDIAG_IF down
-        ifconfig l${CMDIAG_IF} down
-        ip link del $CMDIAG_IF
+        ifconfig "$CMDIAG_IF" down
+        ifconfig l"${CMDIAG_IF}" down
+        ip link del "$CMDIAG_IF"
         virtual_interface_ebtables_rules disable
     fi
 }
@@ -450,7 +450,7 @@ virtual_interface()
 virtual_interface_ebtables_rules ()
 {
     CMDIAG_IF=`syscfg get cmdiag_ifname`
-    CMDIAG_MAC=`cat /sys/class/net/${CMDIAG_IF}/address`   
+    CMDIAG_MAC=`cat /sys/class/net/"${CMDIAG_IF}"/address`   
     EROUTER_MAC=`cat /sys/class/net/erouter0/address`
     BRIDGE_NAME=`syscfg get lan_ifname`
     LAN_IP=`syscfg get lan_ipaddr`
@@ -465,7 +465,7 @@ virtual_interface_ebtables_rules ()
         ebtables -I FORWARD -j BRIDGE_FORWARD_FILTER
 
         echo "ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o erouter0 -j DROP"
-        ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o erouter0 -j DROP
+        ebtables -A BRIDGE_FORWARD_FILTER -s "$CMDIAG_MAC" -o erouter0 -j DROP
 
         echo "ebtables -A BRIDGE_FORWARD_FILTER -j RETURN"
         ebtables -A BRIDGE_FORWARD_FILTER -j RETURN
@@ -480,7 +480,7 @@ virtual_interface_ebtables_rules ()
 
         echo "ebtables -t nat -A BRIDGE_REDIRECT --logical-in $BRIDGE_NAME -p ipv4 --ip-dst $LAN_IP 
               -j dnat --to-destination $CMDIAG_MAC"
-        ebtables -t nat -A BRIDGE_REDIRECT --logical-in $BRIDGE_NAME -p ipv4 --ip-dst $LAN_IP -j dnat --to-destination $CMDIAG_MAC
+        ebtables -t nat -A BRIDGE_REDIRECT --logical-in "$BRIDGE_NAME" -p ipv4 --ip-dst "$LAN_IP" -j dnat --to-destination "$CMDIAG_MAC"
 
         #echo "ebtables -t nat -A BRIDGE_REDIRECT --logical-in $BRIDGE_NAME -p ipv4 --ip-dst $LAN_IP 
          #    -j forward --forward-dev l$CMDIAG_IF"
@@ -494,7 +494,7 @@ virtual_interface_ebtables_rules ()
          #DROP target in this BROUTING chain actually broutes the frame(frame has to be routed)
          #--------------------------------------------------------------------------------------
         echo "ebtables -t broute -A BROUTING -i erouter0 -d $EROUTER_MAC -j redirect --redirect-target DROP"
-        ebtables -t broute -A BROUTING -i erouter0 -d $EROUTER_MAC -j redirect --redirect-target DROP
+        ebtables -t broute -A BROUTING -i erouter0 -d "$EROUTER_MAC" -j redirect --redirect-target DROP
 
    else
         echo "ebtables -D FORWARD -j BRIDGE_FORWARD_FILTER"
@@ -519,44 +519,44 @@ add_to_group()
   lan_ethernet_ifname=`syscfg get lan_ethernet_physical_ifnames`
 
   if [  -d "$bridge_dir" ] ;then
-     bridge_status=`cat /sys/class/net/$bridge_name/operstate`
+     bridge_status=`cat /sys/class/net/"$bridge_name"/operstate`
      if [ "$bridge_status" = "down" ] ; then
         echo "brctl addbr $bridge_name"
-        brctl addbr $bridge_name
-        ip link set $bridge_name up
+        brctl addbr "$bridge_name"
+        ip link set "$bridge_name" up
      fi
   else
         echo "brctl addbr $bridge_name"
-        brctl addbr $bridge_name
-        ip link set $bridge_name up
+        brctl addbr "$bridge_name"
+        ip link set "$bridge_name" up
   fi
 
-  ifconfig $lan_ethernet_ifname up
-  brctl addif $bridge_name $lan_ethernet_ifname
+  ifconfig "$lan_ethernet_ifname" up
+  brctl addif "$bridge_name" "$lan_ethernet_ifname"
 
   cmdiag_if=`syscfg get cmdiag_ifname`
   wan_if=`syscfg get wan_physical_ifname`
 
   echo "brctl addif brlan0 l$cmdiag_if"
-  brctl addif brlan0 l$cmdiag_if
+  brctl addif brlan0 l"$cmdiag_if"
 
   echo "brctl addif brlan0 $wan_if"
-  brctl addif brlan0 $wan_if
+  brctl addif brlan0 "$wan_if"
 
   echo "brctl delif $bridge_name wlan0"
-  brctl delif $bridge_name wlan0
+  brctl delif "$bridge_name" wlan0
 
 }
 del_from_group()
 {
   bridge_name=`syscfg get lan_ifname`
-  brctl addif $bridge_name wlan0
+  brctl addif "$bridge_name" wlan0
 
   cmdiag_if=`syscfg get cmdiag_ifname`
   wan_if=`syscfg get wan_physical_ifname`
 
   echo "brctl delif brlan0 l$cmdiag_if $wan_if"
-  brctl delif brlan0 l$cmdiag_if $wan_if
+  brctl delif brlan0 l"$cmdiag_if" "$wan_if"
 }
 
 filter_local_traffic()
@@ -568,7 +568,7 @@ filter_local_traffic()
         ebtables -I OUTPUT -j BRIDGE_OUTPUT_FILTER
 
         echo "ebtables -A BRIDGE_OUTPUT_FILTER --logical-out $BRIDGE_NAME -j DROP"
-        ebtables -A BRIDGE_OUTPUT_FILTER --logical-out $BRIDGE_NAME -j DROP
+        ebtables -A BRIDGE_OUTPUT_FILTER --logical-out "$BRIDGE_NAME" -j DROP
         echo "ebtables -A BRIDGE_OUTPUT_FILTER -o erouter0 -j DROP"
         ebtables -A BRIDGE_OUTPUT_FILTER -o erouter0 -j DROP
 
@@ -589,7 +589,7 @@ routing_rules(){
 
         #Send responses from $BRIDGE_NAME IP to a separate bridge mode route table
         echo "ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE"
-        ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
+        ip rule add from "$LAN_IP" lookup $BRIDGE_MODE_TABLE
 
         #if [ "$LAN_IP" != "$dst_ip" ]; then
         #        echo "ip rule add from $dst_ip lookup $BRIDGE_MODE_TABLE"
@@ -597,11 +597,11 @@ routing_rules(){
         #fi
 
         echo "ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF"
-        ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
+        ip route add table $BRIDGE_MODE_TABLE default dev "$CMDIAG_IF"
 
     else
         echo "ip rule del from $LAN_IP lookup $BRIDGE_MODE_TABLE"
-        ip rule del from $LAN_IP lookup $BRIDGE_MODE_TABLE
+        ip rule del from "$LAN_IP" lookup $BRIDGE_MODE_TABLE
 
         #if [ $LAN_IP != $dst_ip ]; then
         #        ip rule del from $dst_ip lookup $BRIDGE_MODE_TABLE
@@ -713,7 +713,7 @@ LAN_NETMASK=`syscfg get lan_netmask`
 service_init 
 echo "service_bridge.sh called with $1 $2" > /dev/console
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       firewall firewall-stop
       service_start
       if [ ! -f "$POSTD_START_FILE" ];
@@ -724,7 +724,7 @@ case "$1" in
       #gw_lan_refresh
       sysevent set firewall-restart
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
         service_stop
         if [ ! -f "$POSTD_START_FILE" ];
         then
@@ -735,7 +735,7 @@ case "$1" in
         sysevent set firewall-restart
 
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       sysevent set lan-restarting 1
       service_stop
       service_start

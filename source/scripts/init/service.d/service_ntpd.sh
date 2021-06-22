@@ -46,7 +46,7 @@ if [ -f /etc/device.properties ]; then
 fi
 
 SERVICE_NAME="ntpd"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 NTP_CONF=/etc/ntp.conf
 NTP_CONF_TMP=/tmp/ntp.conf
 NTP_CONF_QUICK_SYNC=/tmp/ntp_quick_sync.conf
@@ -71,16 +71,16 @@ erouter_wait ()
        retry=`expr $retry + 1`
 
        #Make sure erouter0 has an IPv4 or IPv6 address before telling NTP to listen on Interface
-       EROUTER_IPv4=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
+       EROUTER_IPv4=`ifconfig -a "$NTPD_INTERFACE" | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
 
        if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ]; then
            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
            if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
-               EROUTER_IPv6=`ifconfig $NTPD_IPV6_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | grep -v 'fdd7' | cut -d '/' -f1 | head -n1`
+               EROUTER_IPv6=`ifconfig "$NTPD_IPV6_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | grep -v 'fdd7' | cut -d '/' -f1 | head -n1`
                EROUTER_IPV6_UP=1
            fi
        else
-           EROUTER_IPv6=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+           EROUTER_IPv6=`ifconfig "$NTPD_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
        fi
 
        if [ -n "$EROUTER_IPv4" ] || [ -n "$EROUTER_IPv6" ]; then
@@ -97,7 +97,7 @@ erouter_wait ()
           break
        fi
        sleep 6
-       if [ $retry -eq $MAX_RETRY ];then
+       if [ "$retry" -eq $MAX_RETRY ];then
           echo_t "SERVICE_NTPD : EROUTER IP not acquired after max etries. Exiting !!!" >> $NTPD_LOG_NAME
           break
        fi
@@ -280,7 +280,7 @@ service_start ()
    fi
 
    if [ "x$BOX_TYPE" = "xXB3" ]; then
-       kill -9 `pidof $BIN` > /dev/null 2>&1
+       kill -9 "`pidof $BIN`" > /dev/null 2>&1
        echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
        $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -g
    else
@@ -295,12 +295,12 @@ service_start ()
            echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
            if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ]; then
                if [ $EROUTER_IPV6_UP -eq 1 ]; then
-                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
                else
-                   $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -4 -l $NTPD_LOG_NAME & sleep 120 # We have only v4 IP. Restrict to v4.
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -4 -l $NTPD_LOG_NAME & sleep 120 # We have only v4 IP. Restrict to v4.
                fi
            else
-               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
            fi
        else
            echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
@@ -332,7 +332,7 @@ service_start ()
            if [ -n "$QUICK_SYNC_WAN_IP" ]; then
                # Try and Force Quick Sync to Run on a single interface
                echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-               $BIN -c $NTP_CONF_QUICK_SYNC --interface $QUICK_SYNC_WAN_IP -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
            else
                echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
            fi
@@ -362,7 +362,7 @@ service_start ()
 service_stop ()
 {
    if [ "x$BOX_TYPE" = "xXB3" ]; then
-   	kill -9 `pidof $BIN` > /dev/null 2>&1
+   	kill -9 "`pidof $BIN`" > /dev/null 2>&1
    else
    	systemctl stop $BIN
    fi
@@ -373,7 +373,7 @@ service_stop ()
 service_init ()
 {
     FOO=`utctx_cmd get ntp_server1 ntp_server2 ntp_server3 ntp_server4 ntp_server5 ntp_enabled new_ntp_enabled`
-    eval $FOO
+    eval "$FOO"
 }
 
 
@@ -381,7 +381,7 @@ service_init ()
 
 while [ -e ${LOCKFILE} ] ; do
     #See if process is still running
-    kill -0 `cat ${LOCKFILE}`
+    kill -0 "`cat ${LOCKFILE}`"
     if [ $? -ne 0 ]
     then
         break
@@ -391,22 +391,22 @@ while [ -e ${LOCKFILE} ] ; do
 done
 
 #make sure the lockfile is removed when we exit and then claim it
-trap "rm -f ${LOCKFILE}; exit" INT TERM EXIT
+trap 'rm -f ${LOCKFILE}; exit' INT TERM EXIT
 echo $$ > ${LOCKFILE}
 
 service_init
 
 CURRENT_WAN_STATUS=`sysevent get wan-status`
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       echo_t "SERVICE_NTPD : ${SERVICE_NAME}-start calling service_start" >> $NTPD_LOG_NAME
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       echo_t "SERVICE_NTPD : ${SERVICE_NAME}-stop called" >> $NTPD_LOG_NAME
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       echo_t "SERVICE_NTPD : ${SERVICE_NAME}-restart called" >> $NTPD_LOG_NAME
       service_stop
       service_start

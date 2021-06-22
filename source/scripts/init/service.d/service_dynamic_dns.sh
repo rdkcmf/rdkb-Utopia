@@ -88,7 +88,7 @@ HOST_DISABLED=5
 
 update_ddns_server() {
    #DDNS_CLIENT_SET_SERVER=Device.DynamicDNS.Server.$DnsServerIdx
-   DnsIdx=`echo ${DDNS_CLIENT_SET_SERVER} | cut -d"." -f4`
+   DnsIdx=`echo "${DDNS_CLIENT_SET_SERVER}" | cut -d"." -f4`
    EXTRA_PARAMS=""
 
    resolve_error="Couldn't resolve host"
@@ -143,8 +143,8 @@ update_ddns_server() {
    WanIpAddress=$1
 
 
-   DDNS_SERVER=`syscfg get ddns_server_servicename_${DnsIdx}`
-   DDNS_SERVER_ENABLE=`syscfg get ddns_server_enable_${DnsIdx}`
+   DDNS_SERVER=`syscfg get ddns_server_servicename_"${DnsIdx}"`
+   DDNS_SERVER_ENABLE=`syscfg get ddns_server_enable_"${DnsIdx}"`
    if [ "$DDNS_ENABLE" == 1 ] && [ "$DDNS_SERVER_ENABLE" == 1 ]; then
       ddns_enable_x=1
    else
@@ -162,8 +162,8 @@ update_ddns_server() {
          ddns_hostname_x=""
          fi
          ddns_stoken_x=""
-         ddns_service_name_mod=`echo ${ddns_service_x} | tr '-' '_'`
-         sysevent set ddns_return_status${DnsIdx} error-connect
+         ddns_service_name_mod=`echo "${ddns_service_x}" | tr '-' '_'`
+         sysevent set ddns_return_status"${DnsIdx}" error-connect
          pwdlen=${#ddns_password_x}
          tmp=""
          ddns_password_x_mod=""
@@ -238,12 +238,12 @@ update_ddns_server() {
 
               cat /dev/null  > $GENERAL_FILE
               if [ -f "/var/tmp/ipupdate.${ddns_service_name_mod}" ]; then
-                  rm /var/tmp/ipupdate.${ddns_service_name_mod}
+                  rm /var/tmp/ipupdate."${ddns_service_name_mod}"
               fi
 
               if [ "$ddns_service_x" == "dyndns" ]; then
                   echo "${UPDATE_UTIL} ${EXTRA_PARAMS} > $OUTPUT_FILE 2>&1"
-                  ${UPDATE_UTIL} ${EXTRA_PARAMS} > $OUTPUT_FILE 2>&1
+                  ${UPDATE_UTIL} "${EXTRA_PARAMS}" > "$OUTPUT_FILE" 2>&1
                   RET_CODE=$?
 
                   if [ "0" != "$RET_CODE" ]; then
@@ -293,20 +293,20 @@ update_ddns_server() {
                       syscfg set ddns_client_Status $CLIENT_UPDATED
                       syscfg set ddns_host_status_1 $HOST_REGISTERED
                       syscfg set ddns_client_Lasterror $NO_ERROR
-                      sysevent set ddns_return_status${DnsIdx} success
+                      sysevent set ddns_return_status"${DnsIdx}" success
                       syscfg commit
                   fi
               else
 
                    echo "${UPDATE_UTIL} ${EXTRA_PARAMS} > $OUTPUT_FILE 2>&1"
-                   ${UPDATE_UTIL} ${EXTRA_PARAMS} > $OUTPUT_FILE 2>&1
+                   ${UPDATE_UTIL} "${EXTRA_PARAMS}" > $OUTPUT_FILE 2>&1
                    RET_CODE=$?
 
                    if [ "0" != "$RET_CODE" ]; then
                        grep -q "$connecting1_error" $GENERAL_FILE
                        if [ "0" = "$?" ]; then
                            sysevent set ddns_return_status error-connect
-                           sysevent set ddns_return_status${DnsIdx} error-connect
+                           sysevent set ddns_return_status"${DnsIdx}" error-connect
                            sysevent set ${SERVICE_NAME}-status started
 
                            # we clear the wan_last_ipaddr to force us to retry once the error is cleared
@@ -316,7 +316,7 @@ update_ddns_server() {
                                syscfg commit
                            fi
 
-                           sysevent set ddns_failure_time `get_current_time`
+                           sysevent set ddns_failure_time "`get_current_time`"
                            sysevent set ddns_return_status error-connect
                            syscfg set ddns_client_Status $CLIENT_ERROR
                            syscfg set ddns_host_status_1 $HOST_ERROR
@@ -360,11 +360,11 @@ update_ddns_server() {
                    fi
 
                    return_str_name="register_success_${ddns_service_name_mod}"
-                   return_str=`eval echo '$'$return_str_name`
+                   return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
-                       grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                       grep -q "$return_str" /var/tmp/ipupdate."${ddns_service_name_mod}"
                        if [ "0" = "$?" ]; then
-                           sysevent set ddns_return_status${DnsIdx} success
+                           sysevent set ddns_return_status"${DnsIdx}" success
                            syscfg set ddns_client_Status $CLIENT_UPDATED
                            syscfg set ddns_host_status_1 $HOST_REGISTERED
                            syscfg set ddns_client_Lasterror $NO_ERROR
@@ -375,11 +375,11 @@ update_ddns_server() {
                    fi
 
                    return_str_name="update_success_${ddns_service_name_mod}"
-                   return_str=`eval echo '$'$return_str_name`
+                   return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
-                       grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                       grep -q "$return_str" /var/tmp/ipupdate."${ddns_service_name_mod}"
                        if [ "0" = "$?" ]; then
-                           sysevent set ddns_return_status${DnsIdx} success
+                           sysevent set ddns_return_status"${DnsIdx}" success
                            syscfg set ddns_client_Status $CLIENT_UPDATED
                            syscfg set ddns_host_status_1 $HOST_REGISTERED
                            syscfg set ddns_client_Lasterror $NO_ERROR
@@ -389,9 +389,9 @@ update_ddns_server() {
                        fi
                    fi
                    return_str_name="token_error_${ddns_service_name_mod}"
-                   return_str=`eval echo '$'$return_str_name`
+                   return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
-                       grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                       grep -q "$return_str" /var/tmp/ipupdate."${ddns_service_name_mod}"
                        if [ "0" = "$?" ]; then
                            syscfg set ddns_client_Status $CLIENT_ERROR
                            syscfg set ddns_host_status_1 $HOST_ERROR
@@ -403,9 +403,9 @@ update_ddns_server() {
                    fi
 
                    return_str_name="hostname_error_${ddns_service_name_mod}"
-                   return_str=`eval echo '$'$return_str_name`
+                   return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
-                       grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                       grep -q "$return_str" /var/tmp/ipupdate."${ddns_service_name_mod}"
                        if [ "0" = "$?" ]; then
                            syscfg set ddns_client_Status $CLIENT_ERROR
                            syscfg set ddns_host_status_1 $HOST_ERROR
@@ -416,9 +416,9 @@ update_ddns_server() {
                    fi
 
                    return_str_name="username_error_${ddns_service_name_mod}"
-                   return_str=`eval echo '$'$return_str_name`
+                   return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
-                       grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                       grep -q "$return_str" /var/tmp/ipupdate."${ddns_service_name_mod}"
                        if [ "0" = "$?" ]; then
                            syscfg set ddns_client_Status $CLIENT_ERROR
                            syscfg set ddns_host_status_1 $HOST_ERROR
@@ -428,9 +428,9 @@ update_ddns_server() {
                        fi
                    fi
                    return_str_name="password_error_${ddns_service_name_mod}"
-                   return_str=`eval echo '$'$return_str_name`
+                   return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
-                       grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                       grep -q "$return_str" /var/tmp/ipupdate."${ddns_service_name_mod}"
                        if [ "0" = "$?" ]; then
                             syscfg set ddns_client_Status $CLIENT_ERROR
                             syscfg set ddns_host_status_1 $HOST_ERROR
@@ -441,9 +441,9 @@ update_ddns_server() {
                    fi
 
                    return_str_name="general_error_${ddns_service_name_mod}"
-                   return_str=`eval echo '$'$return_str_name`
+                   return_str=`eval echo '$'"$return_str_name"`
                    if [ "x" != "x$return_str" ]; then
-                       grep -q "$return_str" /var/tmp/ipupdate.${ddns_service_name_mod}
+                       grep -q "$return_str" /var/tmp/ipupdate."${ddns_service_name_mod}"
                        if [ "0" = "$?" ]; then
                            #sysevent set ddns_return_status error-auth
                            #echo "###### sysevent set ddns_return_status error-auth"
@@ -466,16 +466,16 @@ update_ddns_server() {
    #as success, to trigger the update in update_ddns_if_needed if need.
    ddns_enable_x="$DDNS_ENABLE"
    if [ "1" = "$ddns_enable_x" ]; then
-       tmp_status=`sysevent get ddns_return_status${DnsIdx}`
+       tmp_status=`sysevent get ddns_return_status"${DnsIdx}"`
        if [ "success" = "$tmp_status" ] ; then
            /etc/utopia/service.d/service_ddns/ddns_success.sh
            sysevent set ddns_failure_time 0
-           sysevent set ddns_updated_time `date "+%s"`
-           sysevent set ddns_return_status${DnsIdx} success
+           sysevent set ddns_updated_time "`date "+%s"`"
+           sysevent set ddns_return_status"${DnsIdx}" success
            syscfg set ddns_client_Status $CLIENT_UPDATED
            syscfg set ddns_host_status_1 $HOST_REGISTERED
            syscfg set ddns_client_Lasterror $NO_ERROR
-           syscfg set ddns_host_lastupdate_1 `get_current_time`
+           syscfg set ddns_host_lastupdate_1 "`get_current_time`"
            syscfg commit
            addCron "* * * * *  /etc/utopia/service.d/service_dynamic_dns.sh dynamic_dns-check"
            break
@@ -484,12 +484,12 @@ update_ddns_server() {
 
    #If there is no error-connect for any provider, then delete the $RETRY_SOON_FILENAME.
    RETRY_SOON_NEEDED=0
-   ddns_enable_x=`syscfg get ddns_server_enable_${DnsIdx}`
+   ddns_enable_x=`syscfg get ddns_server_enable_"${DnsIdx}"`
    if [ "1" = "$ddns_enable_x" ]; then
-       tmp_status=`sysevent get ddns_return_status${DnsIdx}`
+       tmp_status=`sysevent get ddns_return_status"${DnsIdx}"`
        if [ "error-connect" = "$tmp_status" ] ; then
            sysevent set ddns_return_status
-           sysevent set ddns_failure_time `date "+%s"`
+           sysevent set ddns_failure_time "`date "+%s"`"
            sysevent set ddns_updated_time
            RETRY_SOON_NEEDED=1
            break
@@ -507,7 +507,7 @@ do_start() {
 
    UPDATE_NEEDED=0
    # 1. Our wan ip address has changed
-   if [ -z $SYSCFG_wan_last_ipaddr ] ; then
+   if [ -z "$SYSCFG_wan_last_ipaddr" ] ; then
       WAN_LAST_IPADDR=0.0.0.0
    else
       WAN_LAST_IPADDR=$SYSCFG_wan_last_ipaddr
@@ -516,7 +516,7 @@ do_start() {
    DnsIdx=`echo ${DDNS_CLIENT_SET_SERVER} | cut -d"." -f4`
    CURRENT_RETURN_STATUS=`sysevent get ddns_return_status${DnsIdx}`
 
-   if [ -z $SYSCFG_wan_last_ipaddr ] ; then
+   if [ -z "$SYSCFG_wan_last_ipaddr" ] ; then
       WAN_LAST_IPADDR=0.0.0.0
    fi
    if ([ -z "$CURRENT_WAN_IPADDR" ] || [ "0.0.0.0" = "$CURRENT_WAN_IPADDR" ]); then
@@ -541,7 +541,7 @@ do_start() {
       syscfg set ddns_client_Status 1
       syscfg set ddns_host_status_1 2
       syscfg commit
-      update_ddns_server $CURRENT_WAN_IPADDR
+      update_ddns_server "$CURRENT_WAN_IPADDR"
 
    else
       # if no update needed, consider it as ddns "success"
@@ -606,11 +606,11 @@ service_check_interval ()
 {
     LAST_UPDATE_TIME=`sysevent get ddns_updated_time`
     CURRENT_TIME=`date "+%s"`
-    DELTA=`expr $CURRENT_TIME - $LAST_UPDATE_TIME`
-    DnsIdx=`echo ${DDNS_CLIENT_SET_SERVER} | cut -d"." -f4`
-    ddns_enable_x=`syscfg get ddns_server_enable_$DnsIdx`
+    DELTA=`expr "$CURRENT_TIME" - "$LAST_UPDATE_TIME"`
+    DnsIdx=`echo "${DDNS_CLIENT_SET_SERVER}" | cut -d"." -f4`
+    ddns_enable_x=`syscfg get ddns_server_enable_"$DnsIdx"`
     if [ "$ddns_enable_x" == "1" ]; then
-        check_interval=`syscfg get ddns_server_checkinterval_${DnsIdx}`
+        check_interval=`syscfg get ddns_server_checkinterval_"${DnsIdx}"`
         if [ "$check_interval" != "0" ] && [ "$check_interval" -le "$DELTA" ]; then
             do_start
         fi
@@ -624,27 +624,27 @@ service_retry ()
 
     FAILURE_TIME=`sysevent get ddns_failure_time`
     CURRENT_TIME=`date "+%s"`
-    DELTA=`expr $CURRENT_TIME - $FAILURE_TIME`
-    DnsIdx=`echo ${DDNS_CLIENT_SET_SERVER} | cut -d"." -f4`
-    ddns_enable_x=`syscfg get ddns_server_enable_$DnsIdx`
+    DELTA=`expr "$CURRENT_TIME" - "$FAILURE_TIME"`
+    DnsIdx=`echo "${DDNS_CLIENT_SET_SERVER}" | cut -d"." -f4`
+    ddns_enable_x=`syscfg get ddns_server_enable_"$DnsIdx"`
     if [ "1" = "$ddns_enable_x" ]; then
-        retry_interval=`syscfg get ddns_server_retryinterval_${DnsIdx}`
+        retry_interval=`syscfg get ddns_server_retryinterval_"${DnsIdx}"`
         if [ "$retry_interval" -le 60 ]; then
             retry_interval=60
         else
             modulus=`expr $retry_interval % 60`
             quotient=`expr $retry_interval / 60`
             if [ "$modulus" -ge 30 ]; then
-                retry_interval=`expr $retry_interval + $modulus`
+                retry_interval=`expr $retry_interval + "$modulus"`
             else
-                retry_interval=`expr $retry_interval - $modulus`
+                retry_interval=`expr "$retry_interval" - "$modulus"`
             fi
         fi
-        max_retries=`syscfg get ddns_server_maxretries_${DnsIdx}`
+        max_retries=`syscfg get ddns_server_maxretries_"${DnsIdx}"`
         SYSCFG_max_retries=`sysevent get ddns_check_maxretries`
         if [ "$FAILURE_TIME" != "0" ] && [ "$retry_interval" -le "$DELTA" ] && [ "$SYSCFG_max_retries" -lt "$max_retries" ]; then
-             SYSCFG_max_retries=`expr $SYSCFG_max_retries + 1`
-             sysevent set ddns_check_maxretries $SYSCFG_max_retries
+             SYSCFG_max_retries=`expr "$SYSCFG_max_retries" + 1`
+             sysevent set ddns_check_maxretries "$SYSCFG_max_retries"
              sysevent set ddns_return_status
              do_start
         fi
@@ -659,7 +659,7 @@ service_retry ()
 service_init ()
 {
     FOO=`utctx_cmd get wan_last_ipaddr`
-    eval $FOO
+    eval "$FOO"
 }
 
 
@@ -696,20 +696,20 @@ service_init
 echo "service_dynamic_dns: $1 $2"
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;
-   ${SERVICE_NAME}-retry)
+   "${SERVICE_NAME}-retry")
       service_retry
       ;;
-   ${SERVICE_NAME}-check)
+   "${SERVICE_NAME}-check")
       service_check_interval
       ;;
    current_wan_ipaddr)

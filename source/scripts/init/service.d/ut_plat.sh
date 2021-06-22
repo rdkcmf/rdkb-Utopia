@@ -150,7 +150,7 @@ subnet() {
 }
 
 isvalid() {
-	if [ $1 -eq 255 ] || [ $1 -eq 254 ] || [ $1 -eq 252 ] || [ $1 -eq 248 ] || [ $1 -eq 240 ] || [ $1 -eq 224 ] || [ $1 -eq 192 ] || [ $1 -eq 128 ] || [ $1 -eq 0 ]; then
+	if [ "$1" -eq 255 ] || [ "$1" -eq 254 ] || [ "$1" -eq 252 ] || [ "$1" -eq 248 ] || [ "$1" -eq 240 ] || [ "$1" -eq 224 ] || [ "$1" -eq 192 ] || [ "$1" -eq 128 ] || [ "$1" -eq 0 ]; then
 		echo 1
 	else
 		echo 0
@@ -161,22 +161,22 @@ calbits()
 {
 	count=0
 	bitfield=$1
-	while [ $bitfield -ne 0 ]; do
-		bitfield_1=`expr $bitfield - 1`
+	while [ "$bitfield" -ne 0 ]; do
+		bitfield_1=`expr "$bitfield" - 1`
 		bitfield=$((bitfield & bitfield_1))
 		let count+=1
 	done
-	echo $count
+	echo "$count"
 }
 
 mask2cidr() {
 	numberofbits=0
 	echo "Mask2cidr called on :${1}:" > /dev/console
-	fields=`echo $1 | sed 's/\./ /g'`
+	fields=`echo "$1" | sed 's/\./ /g'`
 	for field in $fields ; do
 		echo "dec:${field}:" > /dev/console
-		if [ `isvalid $field` -eq 1 ]; then
-			numberofbits=$((numberofbits + `calbits $field`))
+		if [ "`isvalid "$field"`" -eq 1 ]; then
+			numberofbits=$((numberofbits + `calbits "$field"`))
 		else
 			echo "Error: $field is not recognised"; exit 1
 		fi

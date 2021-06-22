@@ -72,7 +72,7 @@ prepare_pppoe() {
    echo "[utopia][pppoe] Configuring pppoe" > /dev/console
 
    # create the pppoe peers file
-   mkdir -p $PPP_PEERS_DIRECTORY
+   mkdir -p "$PPP_PEERS_DIRECTORY"
    prepare_pppd_ip_pre_up_script
    prepare_pppd_ip_up_script
    prepare_pppd_ip_down_script
@@ -81,42 +81,42 @@ prepare_pppoe() {
    prepare_pppd_options
    prepare_pppd_secrets
 
-   echo -n > $PPPOE_PEERS_FILE
+   echo -n > "$PPPOE_PEERS_FILE"
 
-   echo "plugin  rp-pppoe.so" >> $PPPOE_PEERS_FILE
+   echo "plugin  rp-pppoe.so" >> "$PPPOE_PEERS_FILE"
    # Ethernet interface name
    INTERFACE_NAME=`sysevent get wan_ifname`
-   echo "# Ethernet interface name" >> $PPPOE_PEERS_FILE
-   echo "$INTERFACE_NAME" >> $PPPOE_PEERS_FILE
+   echo "# Ethernet interface name" >> "$PPPOE_PEERS_FILE"
+   echo "$INTERFACE_NAME" >> "$PPPOE_PEERS_FILE"
    USER=`syscfg get wan_proto_username`
    DOMAIN=`syscfg get wan_domain`
    if [ "" = "$DOMAIN" ] ; then
-      echo "user $USER" >> $PPPOE_PEERS_FILE
+      echo "user $USER" >> "$PPPOE_PEERS_FILE"
    else
-      echo "user "$DOMAIN"\\\\"$USER  >> $PPPOE_PEERS_FILE
+      echo "user $DOMAIN\\\\$USER"  >> "$PPPOE_PEERS_FILE"
    fi
    # What should be in the second column in /etc/ppp/*-secrets
    REMOTE_NAME=`syscfg get wan_proto_remote_name`
    if [ "" != "$REMOTE_NAME" ] ; then
-      echo "remotename \"$REMOTE_NAME\"" >> $PPPOE_PEERS_FILE
+      echo "remotename \"$REMOTE_NAME\"" >> "$PPPOE_PEERS_FILE"
    fi
    # If needed, specify the service and the access concentrator name
    SERVICE=`syscfg get pppoe_service_name`
    if [ "" != "$SERVICE" ] ; then
-      echo "rp_pppoe_service $SERVICE" >> $PPPOE_PEERS_FILE
+      echo "rp_pppoe_service $SERVICE" >> "$PPPOE_PEERS_FILE"
    fi
    AC_NAME=`syscfg get pppoe_access_concentrator_name`
    if [ "" != "$AC_NAME" ] ; then
-      echo "rp_pppoe_ac $AC_NAME" >> $PPPOE_PEERS_FILE
+      echo "rp_pppoe_ac $AC_NAME" >> "$PPPOE_PEERS_FILE"
    fi
    # The settings below usually don't need to be changed
-   echo "noauth" >> $PPPOE_PEERS_FILE
-   echo "hide-password" >> $PPPOE_PEERS_FILE
-   echo "updetach" >> $PPPOE_PEERS_FILE
-   echo "debug" >> $PPPOE_PEERS_FILE
-   echo "defaultroute" >> $PPPOE_PEERS_FILE
-   echo "noipdefault" >> $PPPOE_PEERS_FILE
-   echo "usepeerdns" >> $PPPOE_PEERS_FILE
+   echo "noauth" >> "$PPPOE_PEERS_FILE"
+   echo "hide-password" >> "$PPPOE_PEERS_FILE"
+   echo "updetach" >> "$PPPOE_PEERS_FILE"
+   echo "debug" >> "$PPPOE_PEERS_FILE"
+   echo "defaultroute" >> "$PPPOE_PEERS_FILE"
+   echo "noipdefault" >> "$PPPOE_PEERS_FILE"
+   echo "usepeerdns" >> "$PPPOE_PEERS_FILE"
 }
 
 # -------------------------------------------------------------

@@ -112,15 +112,15 @@ start_net () {
     ALL_READY=""
     STATUS=`sysevent get ${SERVICE_NAME}_${NETID}-status`
 
-    if [ x$STATUS != x"$STOPPED_STATUS" -a x$STATUS != x ]; then
+    if [ x"$STATUS" != x"$STOPPED_STATUS" -a x"$STATUS" != x ]; then
         return
     fi
 
-    load_net $NETID
+    load_net "$NETID"
     
     # TODO: CHECK FOR ENABLED
     
-    if [ x${DISABLED_STATUS} = x$CURNET_ENABLED ]; then
+    if [ x"${DISABLED_STATUS}" = x"$CURNET_ENABLED" ]; then
         echo "Net $NETID started, but disabled. Exiting."
         return
     fi
@@ -132,7 +132,7 @@ start_net () {
         eval TOADD_${i}=CURNET_MEMBERS_${i}
     done
 
-    config_new_members $NETID
+    config_new_members "$NETID"
     
     ALL_READY="${ALL_NEW_READY}"
     ALL_MEMBERS="${ALL_NEW_MEMBERS}"
@@ -148,9 +148,9 @@ start_net () {
     #    ip link set $NAME up
     #fi
     
-    update_net_status $NETID
+    update_net_status "$NETID"
     
-    if [ x1 = x$2 ]; then
+    if [ x1 = x"$2" ]; then
         echo "MultinetService Triggering RDKB_FIREWALL_RESTART"
 	t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
         sysevent set firewall-restart
@@ -164,17 +164,17 @@ stop_net () {
     sysevent set ${SERVICE_NAME}_${1}-status $STOPPING_STATUS 
     TO_REMOVE=`sysevent get ${SERVICE_NAME}_${1}-allMembers`
     BRIDGING=`sysevent get ${SERVICE_NAME}_${1}-bridging`
-    if [ x1 = x$BRIDGING ]; then
+    if [ x1 = x"$BRIDGING" ]; then
         BRIDGE=`sysevent get ${SERVICE_NAME}_${1}-name`
     fi
     CURNET_VID=`sysevent get ${SERVICE_NAME}_${1}-vid`
     NEW_ALL_MEMBERS=""
 
-    del_old_members $1
+    del_old_members "$1"
     
-    if [ x != x$BRIDGE ]; then
-        ifconfig $BRIDGE down
-        brctl delbr $BRIDGE
+    if [ x != x"$BRIDGE" ]; then
+        ifconfig "$BRIDGE" down
+        brctl delbr "$BRIDGE"
     fi
     
     sysevent set ${SERVICE_NAME}_${1}-status $STOPPED_STATUS
@@ -192,7 +192,7 @@ stop_net () {
 }
 
 if_basename () {
-    echo $1 | cut -d. -f1 | cut -d- -f1 | cut -d: -f2
+    echo "$1" | cut -d. -f1 | cut -d- -f1 | cut -d: -f2
 }
 
 #args: ifname, iftype
@@ -200,13 +200,13 @@ fix_status () {
     IFSTAT="`sysevent get if_$1-status`"
     READYSTAT=`eval echo \\${${2}_READY} | awk '/\<'"$1"'\>/ {print "1"}'`
     
-    if [ x$IF_READY = x$IFSTAT ]; then
-        if [ x = x$READYSTAT ]; then
+    if [ x"$IF_READY" = x"$IFSTAT" ]; then
+        if [ x = x"$READYSTAT" ]; then
             eval ${2}_READY=\"\${${2}_READY} $1\"
         fi
     else 
-        if [ x1 = x$READYSTAT -a x$IF_DOWN = x$IFSTAT ]; then
-            eval ${2}_READY=\"`eval echo \\${${2}_READY} | sed 's/ *\<'$1'\> */ /g'`\"
+        if [ x1 = x"$READYSTAT" -a x"$IF_DOWN" = x"$IFSTAT" ]; then
+            eval ${2}_READY=\""`eval echo \\$"{${2}_READY}" | sed 's/ *\<'"$1"'\> */ /g'`"\"
         fi
     fi
         
@@ -244,15 +244,15 @@ config_new_members () {
         
         #Register for member interface status 
         for j in $CURTYPE_MEMBERS; do 
-            IF_BASE=`if_basename $j`
-            RET=`echo $REGISTERED | awk '/\<'"$IF_BASE"'\>/ {print "1"}'` 
-            if [ x$RET = x ]; then
+            IF_BASE=`if_basename "$j"`
+            RET=`echo "$REGISTERED" | awk '/\<'"$IF_BASE"'\>/ {print "1"}'` 
+            if [ x"$RET" = x ]; then
                 REGISTERED="${REGISTERED} $IF_BASE"
             fi
             eval IF_$IF_BASE=\"\${IF_${IF_BASE}} $j\"
         done
         
-        RETURNED_STATUS=`$CURTYPE_HANDLER create $NETID "${REGISTERED# }"`
+        RETURNED_STATUS=`$CURTYPE_HANDLER create "$NETID" "${REGISTERED# }"`
         
         #DEBUG:
         echo "RDKB_SYSTEM_BOOT_UP_LOG : Handler returned: ${RETURNED_STATUS}"
@@ -320,13 +320,13 @@ config_new_members () {
     echo "RDKB_SYSTEM_BOOT_UP_LOG : ALL_LOCAL: ${ALL_LOCAL}"
 
     #Add bridge if necessary
-    if [ x1 != x`sysevent get ${SERVICE_NAME}_$NETID-bridging` ]; then
-        if [ `echo $ALL_LOCAL | wc -w` -gt 0 ]; then
+    if [ x1 != x"`sysevent get ${SERVICE_NAME}_$NETID-bridging`" ]; then
+        if [ `echo "$ALL_LOCAL" | wc -w` -gt 0 ]; then
             #DEBUG:
             echo "RDKB_SYSTEM_BOOT_UP_LOG : Adding bridge: $CURNET_NAME for netid:${NETID}"
             BRIDGE="$CURNET_NAME"
             NAME="$BRIDGE"
-            brctl addbr $CURNET_NAME
+            brctl addbr "$CURNET_NAME"
             sysevent set ${SERVICE_NAME}_$NETID-name $CURNET_NAME
             sysevent set ${SERVICE_NAME}_$NETID-bridging 1
             BRIDGE_CREATED=1
@@ -334,7 +334,7 @@ config_new_members () {
             #DEBUG:
             echo "RDKB_SYSTEM_BOOT_UP_LOG : Not bridging for netid:${NETID}. Name=$ALL_LOCAL"
             NAME=`sysevent get ${SERVICE_NAME}_$NETID-name`
-            if [ x = x$NAME -o 0 = `expr match "$ALL_LOCAL" ".*$NAME.*"` ]; then
+            if [ x = x"$NAME" -o 0 = `expr match "$ALL_LOCAL" ".*$NAME.*"` ]; then
                 NAME="$ALL_LOCAL"
                 NAME="${NAME/-t/.$CURNET_VID}"
                 sysevent set ${SERVICE_NAME}_$NETID-name $NAME
@@ -355,12 +355,12 @@ config_new_members () {
         for i in $LOCAL_READY; do
             #DEBUG:
             echo "RDKB_SYSTEM_BOOT_UP_LOG : Configuring local interface:$i, with netvid:$CURNET_VID, bridge:\"${BRIDGE}\" for netid:${NETID}"
-            configure_if "add" $i $CURNET_VID $BRIDGE
+            configure_if "add" "$i" "$CURNET_VID" "$BRIDGE"
         done
     fi
     
     if [ x1 = x$BRIDGE_CREATED ]; then
-        ifconfig $BRIDGE up
+        ifconfig "$BRIDGE" up
     fi
 }
 
@@ -373,25 +373,25 @@ del_old_members () {
     #DEBUG:
     echo "RDKB_SYSTEM_BOOT_UP_LOG : del_old_members:${1}, ${TO_REMOVE}"
     for i in $TO_REMOVE; do
-        TYPE=`echo $i | cut -d: -f1`
-        IFNAME=`echo $i | cut -d: -f2`
-        IFBASE=`if_basename $IFNAME`
+        TYPE=`echo "$i" | cut -d: -f1`
+        IFNAME=`echo "$i" | cut -d: -f2`
+        IFBASE=`if_basename "$IFNAME"`
         # TODO more precise regex for type search
-        echo $LOCAL_INTERFACE_TYPES | grep $TYPE > /dev/null
+        echo "$LOCAL_INTERFACE_TYPES" | grep "$TYPE" > /dev/null
         if [ $? = 0 ]; then
             # LOCAL
             #DEBUG:
             echo "remove local:${IFNAME}"
-            configure_if "del" $IFNAME $CURNET_VID $BRIDGE
+            configure_if "del" "$IFNAME" "$CURNET_VID" "$BRIDGE"
         else
             # Remote
             #DEBUG:
             echo "remove remote:${IFNAME}"
             eval CURTYPE_HANDLER=\${${TYPE}_HANDLER}
-            $CURTYPE_HANDLER delVlan $1 $CURNET_VID $IFNAME
+            $CURTYPE_HANDLER delVlan "$1" "$CURNET_VID" "$IFNAME"
         fi
         
-        echo x $NEW_ALL_MEMBERS | grep ${TYPE}:${IFBASE} > /dev/null
+        echo x "$NEW_ALL_MEMBERS" | grep "${TYPE}":"${IFBASE}" > /dev/null
         if [ $? != 0 ]; then
             async="`sysevent get net_${1}_${IFBASE}_async`"
             if [ x != x"$async" ]; then
@@ -414,7 +414,7 @@ update_net_status () {
     LOCAL_READY=0
     
     for i in $ALL_MEMBERS; do
-        echo x $ALL_READY | grep $i > /dev/null
+        echo x "$ALL_READY" | grep "$i" > /dev/null
         if [ $? = 0 ]; then
             ANYREADY=1
         else
@@ -423,7 +423,7 @@ update_net_status () {
     done
     
     for i in $LOCAL_INTERFACE_TYPES; do 
-        echo x $ALL_READY |grep ${i}: > /dev/null
+        echo x "$ALL_READY" |grep "${i}": > /dev/null
         if [ $? = 0 ]; then
             LOCAL_READY=1
         fi
@@ -454,7 +454,7 @@ add_ready () {
     ALL_MEMBERS="`sysevent get ${SERVICE_NAME}_$1-allMembers`"
     ALL_READY="`sysevent get ${SERVICE_NAME}_$1-readyMembers`"
     
-    echo x $ALL_READY | grep $2 > /dev/null
+    echo x "$ALL_READY" | grep "$2" > /dev/null
     if [ $? != 0 ]; then
         ALL_READY="${ALL_READY} $2"
         sysevent set ${SERVICE_NAME}_$1-readyMembers "${ALL_READY}"
@@ -476,8 +476,8 @@ del_ready () {
 # args: ifname, status, netid, iftype
 handle_member_status_update () {
 
-    ALL_MEMBERS="`sysevent get ${SERVICE_NAME}_$3-allMembers`"
-    MEMBERS="`echo $ALL_MEMBERS | awk '{for(i=1;i<=NF;++i)if($i~/'${4}':'${1}'.*\>/)printf "%s ",$i }'`"
+    ALL_MEMBERS="`sysevent get ${SERVICE_NAME}_"$3"-allMembers`"
+    MEMBERS="`echo "$ALL_MEMBERS" | awk '{for(i=1;i<=NF;++i)if($i~/'${4}':'${1}'.*\>/)printf "%s ",$i }'`"
     MEMBERS="${MEMBERS//${4}:/}"
     #for i in $ALL_MEMBERS; do 
     #    if [ 0 != `expr match $i .*\b${1}\b.*` ]; then 
@@ -485,22 +485,22 @@ handle_member_status_update () {
     #    fi
     #done
     
-    if [ x$IF_READY = x$2 ]; then
+    if [ x"$IF_READY" = x"$2" ]; then
         ADDREM=add
     else
         ADDREM=del
     fi
     
-    CURNET_VID=`psmcli get ${NET_IDS_DM}.${3}.${NET_VID}`
+    CURNET_VID=`psmcli get "${NET_IDS_DM}"."${3}"."${NET_VID}"`
     
     BRIDGING=`sysevent get ${SERVICE_NAME}_$3-bridging`
-    if [ x1 = x$BRIDGING ]; then
+    if [ x1 = x"$BRIDGING" ]; then
         BRIDGE=`sysevent get ${SERVICE_NAME}_$3-name`
     fi
-    configure_members "$MEMBERS" $ADDREM $3 $4  
+    configure_members "$MEMBERS" $ADDREM "$3" "$4"  
     
     #Check status of all member interfaces to update net status
-    update_net_status $3
+    update_net_status "$3"
     
     
 }
@@ -510,7 +510,7 @@ handle_member_status_update () {
 #Configure or deconfigure a type's members, without affecting registration status
 configure_members() {
     LOCAL=1
-    echo $REMOTE_INTERFACE_TYPES | grep $4 > /dev/null
+    echo "$REMOTE_INTERFACE_TYPES" | grep "$4" > /dev/null
     if [ $? = 0 ]; then
         LOCAL=0
     fi
@@ -523,16 +523,16 @@ configure_members() {
 
         #Add the evented interface
         for i in $1; do
-            configure_if $ACTION $i $CURNET_VID $BRIDGE
-            $READY_ACT $3 $4:$i
+            configure_if "$ACTION" "$i" "$CURNET_VID" "$BRIDGE"
+            $READY_ACT "$3" "$4":"$i"
         done
     else
         ACTION=${2}Vlan
         
         eval CURTYPE_HANDLER=\${${4}_HANDLER}
-        $CURTYPE_HANDLER $ACTION $3 $CURNET_VID "$1"
+        $CURTYPE_HANDLER "$ACTION" "$3" "$CURNET_VID" "$1"
         for i in $1; do
-            $READY_ACT $3 $4:$i
+            $READY_ACT "$3" "$4":"$i"
         done
         
     fi
@@ -543,49 +543,49 @@ configure_members() {
 configure_if () {
     IF_BASE=${2%.*}
     IF_BASE=${IF_BASE%-t}
-    IF_VLANNUM=`echo $2 | cut -d. -f2 -s`
+    IF_VLANNUM=`echo "$2" | cut -d. -f2 -s`
     
     #Use interface specific vlanID if specified (for translation)
-    if [ x = x$IF_VLANNUM ]; then
-        IF_TAGGED_FLAG=`echo $2 | cut -d- -f2 -s`
-        if [ x != x${IF_TAGGED_FLAG} ]; then
+    if [ x = x"$IF_VLANNUM" ]; then
+        IF_TAGGED_FLAG=`echo "$2" | cut -d- -f2 -s`
+        if [ x != x"${IF_TAGGED_FLAG}" ]; then
             IF_VLANNUM=$3
         fi   
     fi
     
-    if [ x = x${IF_VLANNUM} ]; then
-        if [ x"add" = x$1 ]; then
-            if [ x != x$4 ]; then
-                brctl addif $4 ${IF_BASE}
+    if [ x = x"${IF_VLANNUM}" ]; then
+        if [ x"add" = x"$1" ]; then
+            if [ x != x"$4" ]; then
+                brctl addif "$4" "${IF_BASE}"
             fi
-            ifconfig ${IF_BASE} up
+            ifconfig "${IF_BASE}" up
         else
-            if [ x"del" = x$1 ]; then
+            if [ x"del" = x"$1" ]; then
             #These calls may fail of interface no longer exists, but this allows graceful teardown 
             #in the case they still do.
-                if [ x != x$4 ]; then
-                    brctl delif $4 ${IF_BASE}
+                if [ x != x"$4" ]; then
+                    brctl delif "$4" "${IF_BASE}"
                 fi
             fi
         fi
     else
         IF_FULL=${IF_BASE}.${IF_VLANNUM}
-        if [ x"add" = x$1 ]; then
-            vconfig add $IF_BASE $IF_VLANNUM
-            if [ x != x$4 ]; then
-                echo 1 > /proc/sys/net/ipv6/conf/${IF_FULL}/disable_ipv6
-                brctl addif $4 ${IF_FULL}
+        if [ x"add" = x"$1" ]; then
+            vconfig add "$IF_BASE" "$IF_VLANNUM"
+            if [ x != x"$4" ]; then
+                echo 1 > /proc/sys/net/ipv6/conf/"${IF_FULL}"/disable_ipv6
+                brctl addif "$4" "${IF_FULL}"
             fi
-            ifconfig ${IF_BASE} up
-            ifconfig ${IF_FULL} up
+            ifconfig "${IF_BASE}" up
+            ifconfig "${IF_FULL}" up
         else
-            if [ x"del" = x$1 ]; then
+            if [ x"del" = x"$1" ]; then
             #These calls may fail of interface no longer exists, but this allows graceful teardown 
             #in the case they still do.
-                if [ x != x$4 ]; then
-                    brctl delif $4 ${IF_FULL}
+                if [ x != x"$4" ]; then
+                    brctl delif "$4" "${IF_FULL}"
                 fi
-                vconfig rem ${IF_FULL}
+                vconfig rem "${IF_FULL}"
             fi
         fi
     fi
@@ -600,16 +600,16 @@ sync_members ()
 	echo "RDKB_SYSTEM_BOOT_UP_LOG : sync_members called $1"
 
     STAT=`sysevent get multinet_$1-status`
-    if [ x = x$STAT -o x$STOPPED_STATUS = x$STAT ]; then
+    if [ x = x"$STAT" -o x"$STOPPED_STATUS" = x"$STAT" ]; then
         # There is nothing to do if the current network is not up
 		echo "RDKB_SYSTEM_BOOT_UP_LOG : sync_members before exit"        
         return
     fi
-    load_net $1
+    load_net "$1"
     
-    if [ x${DISABLED_STATUS} = x$CURNET_ENABLED ]; then 
+    if [ x"${DISABLED_STATUS}" = x"$CURNET_ENABLED" ]; then 
         # If the network was disabled, bring it down. NOTE: Enabled networks must be started after being enabled
-        stop_net $1
+        stop_net "$1"
 		echo "RDKB_SYSTEM_BOOT_UP_LOG : sync_members before exit"
         return
     fi
@@ -631,12 +631,12 @@ sync_members ()
         # TODO, fix this grep to more exact regex
             #echo $TO_REMOVE | grep ${i}:${j} > /dev/null
             #expr match "$TO_REMOVE" '.*\b\('${i}:${j}'\)\b.*' > /dev/null
-            RET=`echo $TO_REMOVE | awk '/(\s|^)'"${i}:${j}"'(\s|$)/ {print "1"}'`
-            if [ x$RET = x1 ]; then
+            RET=`echo "$TO_REMOVE" | awk '/(\s|^)'"${i}:${j}"'(\s|$)/ {print "1"}'`
+            if [ x"$RET" = x1 ]; then
                 TO_REMOVE="${TO_REMOVE/${i}:${j}/}"
                 UNCHANGED_MEMBERS="${UNCHANGED_MEMBERS} ${i}:${j}"
             else
-                eval NEW_MEMBERS_$i=\"\${NEW_MEMBERS_${i}} $j\"
+                eval NEW_MEMBERS_$i=\"\${NEW_MEMBERS_${i}} "$j"\"
             fi
             NEW_ALL_MEMBERS="${NEW_ALL_MEMBERS} ${i}:${j}"
         done
@@ -645,18 +645,18 @@ sync_members ()
     
     # Remove old members, remote and local
     
-    del_old_members $1
+    del_old_members "$1"
     
-    if [ x = x$BRIDGE ]; then
-        echo $TO_REMOVE | grep `sysevent get ${SERVICE_NAME}_$1-name` > /dev/null
+    if [ x = x"$BRIDGE" ]; then
+        echo "$TO_REMOVE" | grep `sysevent get ${SERVICE_NAME}_$1-name` > /dev/null
         if [ 0 = $? ]; then
             sysevent set ${SERVICE_NAME}_$1-name
             #l2net name has been deleted. update status to notify other entities.
-            update_net_status $1
+            update_net_status "$1"
         fi
     fi
     
-    config_new_members $1
+    config_new_members "$1"
     
     ALL_READY="${ALL_READY} ${ALL_NEW_READY}"
     ALL_MEMBERS="${NEW_ALL_MEMBERS}"
@@ -666,7 +666,7 @@ sync_members ()
     sysevent set ${SERVICE_NAME}_$NETID-allMembers "${ALL_MEMBERS}"
     sysevent set ${SERVICE_NAME}_$NETID-readyMembers "${ALL_READY}"
     
-    update_net_status $1
+    update_net_status "$1"
     
 }
 
@@ -674,14 +674,14 @@ sync_members ()
 sync_networks ()
 {
     ACTIVE_INST="`sysevent get ${SERVICE_NAME}-instances`"
-    NV_INST="`psmcli getallinst ${NET_IDS_DM}.`"
+    NV_INST="`psmcli getallinst "${NET_IDS_DM}".`"
     
     TO_REM=""
     UNCHANGED=""
     TO_ADD="$NV_INST"
     
     for cur_nv_inst in $ACTIVE_INST; do
-        expr match "$TO_ADD" '.*\b\('$cur_nv_inst'\)\b.*' > /dev/null
+        expr match "$TO_ADD" '.*\b\('"$cur_nv_inst"'\)\b.*' > /dev/null
         if [ 0 = $? ]; then
             #Keeping this active instance
             TO_ADD="`echo $TO_ADD | sed 's/ *\<'$cur_nv_inst'\> */ /'`"
@@ -693,7 +693,7 @@ sync_networks ()
     done
     
     for inst in $TO_REM; do
-        stop_net $inst
+        stop_net "$inst"
         sysevent set ${SERVICE_NAME}_${inst}-status
     done
     
@@ -707,12 +707,12 @@ sync_networks ()
 service_start ()
 {
 #
-    NET_IDS="`psmcli getallinst $NET_IDS_DM.`"
+    NET_IDS="`psmcli getallinst "$NET_IDS_DM".`"
     for i in $NET_IDS; do
-        start_net $i &
+        start_net "$i" &
     done
     
-    sysevent set ${SERVICE_NAME}-instances "$NET_IDS"
+    sysevent set ${SERVICE_NAME}-instances $NET_IDS
 
     wait
 }
@@ -750,17 +750,17 @@ echo "RDKB_SYSTEM_BOOT_UP_LOG : service_multinet called with $1 $2 $3 $4"
 
 #service_init
 case "$1" in
-    ${SERVICE_NAME}-start)
-        if [ x"NULL" = x$2 ]; then
+    "${SERVICE_NAME}-start")
+        if [ x"NULL" = x"$2" ]; then
             service_start
         else
-            start_net $2 1
+            start_net "$2" 1
         fi
         ;;
-    ${SERVICE_NAME}-stop)
+    "${SERVICE_NAME}-stop")
         service_stop
         ;;
-    ${SERVICE_NAME}-restart)
+    "${SERVICE_NAME}-restart")
  #     if [ x"unknown" != x"$SYSEVENT_current_hsd_mode" ]; then
          sysevent set ${SERVICE_NAME}-restarting 1
          service_stop
@@ -771,27 +771,27 @@ case "$1" in
     if_*-status)
         #Params: event name, if status value, netid, iftype
         ENDCHAR=`expr ${#1} - 7`
-        IFNAME=`echo $1 | cut -c 4-$ENDCHAR`
+        IFNAME=`echo "$1" | cut -c 4-"$ENDCHAR"`
         
-        handle_member_status_update $IFNAME $2 $3 $4
+        handle_member_status_update "$IFNAME" "$2" "$3" "$4"
         ;;
-    ${SERVICE_NAME}-up)
+    "${SERVICE_NAME}-up")
         #NETID=`echo $1 | cut -d_ -f2 | cut -d- -f1`
-        start_net $2
+        start_net "$2"
     ;;
-    ${SERVICE_NAME}-down)
+    "${SERVICE_NAME}-down")
         #NETID=`echo $1 | cut -d_ -f2 | cut -d- -f1`
-        stop_net $2
+        stop_net "$2"
     ;;
 
-    ${SERVICE_NAME}-syncMembers)
+    "${SERVICE_NAME}-syncMembers")
         #STARTCHAR=${#SERVICE_NAME}
         #ENDCHAR=`expr ${#1} - 12`
         #NETID=`echo $1 | cut -c $STARTCHAR-$ENDCHAR`
-        sync_members $2
+        sync_members "$2"
         #Params: event name, event value?, 
     ;;
-    ${SERVICE_NAME}-syncNets)
+    "${SERVICE_NAME}-syncNets")
         #Params: none used
         sync_networks
     ;;

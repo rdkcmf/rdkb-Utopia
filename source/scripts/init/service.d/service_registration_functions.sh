@@ -147,16 +147,16 @@ SM_POSTFIX="_async_id"
 sm_save_async() {
    # if the event is a standard event then use a standard event naming convention
    if [ "${1}-start" = "$2" ] || [ "${1}-stop" = "$2" ] || [ "${1}-restart" = "$2" ] ; then
-      sysevent set ${SM_PREFIX}${1}${SM_POSTFIX}_${2} "${2} ${3}"
+      sysevent set ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${2}" "${2} ${3}"
    else
       # if the event is not a standard event then use an indexable naming convention
       SMSA_IDX=1
-      SMSA_TUPLE=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMSA_IDX}`
+      SMSA_TUPLE=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_${SMSA_IDX}`
       until [ -z "$SMSA_TUPLE" ] ; do
          SMSA_IDX=`expr $SMSA_IDX + 1`
-         SMSA_TUPLE=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMSA_IDX}`
+         SMSA_TUPLE=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMSA_IDX}"`
       done
-      sysevent set ${SM_PREFIX}${1}${SM_POSTFIX}_${SMSA_IDX} "${2} ${3}"
+      sysevent set ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMSA_IDX}" "${2} ${3}"
    fi
 }
 
@@ -169,40 +169,40 @@ sm_save_async() {
 sm_rm_event() {
    # if the event is a standard event then use a standard event naming convention
    if [ "${1}-start" = "$2" ] || [ "${1}-stop" = "$2" ] || [ "${1}-restart" = "$2" ] ; then
-      SMRM_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${2}`
+      SMRM_STR=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${2}"`
       if [ -n "$SMRM_STR" ] ; then
-         SMRM_ASYNC=`echo $SMRM_STR | cut -f 2,3 -d ' '`
+         SMRM_ASYNC=`echo "$SMRM_STR" | cut -f 2,3 -d ' '`
          if [ -n "$SMRM_ASYNC" ] ; then
-            sysevent rm_async $SMRM_ASYNC
+            sysevent rm_async "$SMRM_ASYNC"
             ulog srvmgr status "Unregistered $1 from $2"
          fi
-         sysevent set ${SM_PREFIX}${1}${SM_POSTFIX}_${2}
+         sysevent set ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${2}"
       fi
    else
       SMRM_IDX=1
-      SMRM_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMRM_IDX}`
-      SMRM_EVENT=`echo $SMRM_STR | cut -f 1 -d ' ' | sed 's/ //'`
+      SMRM_STR=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_${SMRM_IDX}`
+      SMRM_EVENT=`echo "$SMRM_STR" | cut -f 1 -d ' ' | sed 's/ //'`
       while [ -n "$SMRM_STR" ] && [ "$2" != "$SMRM_EVENT" ] ; do
          SMRM_IDX=`expr $SMRM_IDX + 1`
-         SMRM_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMRM_IDX}`
-         SMRM_EVENT=`echo $SMRM_STR | cut -f 1 -d ' ' | sed 's/ //'`
+         SMRM_STR=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMRM_IDX}"`
+         SMRM_EVENT=`echo "$SMRM_STR" | cut -f 1 -d ' ' | sed 's/ //'`
       done
 
       # we found the async, now remove it and remove the hole in the array
       if [ "$2" = "$SMRM_EVENT" ] ; then
-         SMRM_ASYNC=`echo $SMRM_STR | cut -f 2,3 -d ' '`
+         SMRM_ASYNC=`echo "$SMRM_STR" | cut -f 2,3 -d ' '`
          if [ -n "$SMRM_ASYNC" ] ; then
-            sysevent rm_async $SMRM_ASYNC
+            sysevent rm_async "$SMRM_ASYNC"
             ulog srvmgr status "Unregistered $1 from $2"
          fi
 
-         SMRM_NEXT_IDX=`expr $SMRM_IDX + 1`
-         SMRM_NEXT_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMRM_NEXT_IDX}`
+         SMRM_NEXT_IDX=`expr "$SMRM_IDX" + 1`
+         SMRM_NEXT_STR=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMRM_NEXT_IDX}"`
          until [ -z "$SMRM_NEXT_STR" ] ; do
-            sysevent set ${SM_PREFIX}${1}${SM_POSTFIX}_${SMRM_IDX} "$SMRM_NEXT_STR"
+            sysevent set ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMRM_IDX}" "$SMRM_NEXT_STR"
             SMRM_IDX=$SMRM_NEXT_IDX
-            SMRM_NEXT_IDX=`expr $SMRM_NEXT_IDX + 1`
-            SMRM_NEXT_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMRM_NEXT_IDX}`
+            SMRM_NEXT_IDX=`expr "$SMRM_NEXT_IDX" + 1`
+            SMRM_NEXT_STR=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMRM_NEXT_IDX}"`
          done
       fi
    fi
@@ -290,12 +290,12 @@ sm_register_one_event() {
    SMR_EVENT_STRING=$2
 
    # parse the event string removing extraneous whitespace
-   SMR_EVENT_NAME=`echo $SMR_EVENT_STRING | cut -f 1 -d '|' | sed 's/ //'` 
+   SMR_EVENT_NAME=`echo "$SMR_EVENT_STRING" | cut -f 1 -d '|' | sed 's/ //'` 
    SMR_EVENT_HANDLER=`echo "$SMR_EVENT_STRING" | cut -f 2 -d '|' | sed 's/ //'`
-   SMR_ACTIVATION_FLAGS=`echo $SMR_EVENT_STRING | cut -f 3 -d '|' | sed 's/ //'`
-   SMR_TUPLE_FLAGS=`echo $SMR_EVENT_STRING | cut -f 4 -d '|' | sed 's/ //'`
+   SMR_ACTIVATION_FLAGS=`echo "$SMR_EVENT_STRING" | cut -f 3 -d '|' | sed 's/ //'`
+   SMR_TUPLE_FLAGS=`echo "$SMR_EVENT_STRING" | cut -f 4 -d '|' | sed 's/ //'`
    # dont use sed to remove blanks - there are spaces between parameters
-   SMR_PARAMETERS=`echo $SMR_EVENT_STRING | cut -f 5 -d '|' `
+   SMR_PARAMETERS=`echo "$SMR_EVENT_STRING" | cut -f 5 -d '|' `
    
    if [ -z "$SMR_EVENT_NAME" ] || [ -z "$SMR_EVENT_HANDLER" ] ; then
       return 1
@@ -309,20 +309,20 @@ sm_register_one_event() {
 
    # if this service has already registered for this event, then cancel the previous registration
    # this is probably overkill since we likely already called sm_unregister, but better safe than sorry
-   sm_rm_event ${SMR_SERVICE} ${SMR_EVENT_NAME}
+   sm_rm_event "${SMR_SERVICE}" "${SMR_EVENT_NAME}"
 
 
    # if there are activation flags on the event then respect them   
    if [ -n "$SMR_ACTIVATION_FLAGS" ] && [ "NULL" != "$SMR_ACTIVATION_FLAGS" ] ; then
-      asyncid=`sysevent async_with_flags $SMR_ACTIVATION_FLAGS $SMR_EVENT_NAME $SMR_EVENT_HANDLER $SMR_PARAMETERS`;
+      asyncid=`sysevent async_with_flags "$SMR_ACTIVATION_FLAGS" "$SMR_EVENT_NAME" "$SMR_EVENT_HANDLER" "$SMR_PARAMETERS"`;
    else
-      asyncid=`sysevent async $SMR_EVENT_NAME $SMR_EVENT_HANDLER $SMR_PARAMETERS`;
+      asyncid=`sysevent async "$SMR_EVENT_NAME" "$SMR_EVENT_HANDLER" "$SMR_PARAMETERS"`;
    fi
    if [ -n "$asyncid" ] ; then
       if [ -n "$SMR_TUPLE_FLAGS" ] && [ "NULL" != "$SMR_TUPLE_FLAGS" ] ; then
-         sysevent setoptions $SMR_EVENT_NAME $SMR_TUPLE_FLAGS
+         sysevent setoptions "$SMR_EVENT_NAME" "$SMR_TUPLE_FLAGS"
       fi
-      sm_save_async $SMR_SERVICE $SMR_EVENT_NAME "$asyncid"
+      sm_save_async "$SMR_SERVICE" "$SMR_EVENT_NAME" "$asyncid"
    fi
    ulog srvmgr status "($$) Registered $SMR_SERVICE for $SMR_EVENT_NAME"
 } 
@@ -351,9 +351,9 @@ sm_register_for_default_events() {
    RDE_STOP_STRING="${RDE_SERVICE}-stop|${RDE_HANDLER}|NULL|${TUPLE_FLAG_EVENT}"
    RDE_RESTART_STRING="${RDE_SERVICE}-restart|${RDE_HANDLER}|NULL|${TUPLE_FLAG_EVENT}"
 
-   sm_register_one_event $RDE_SERVICE "$RDE_START_STRING"
-   sm_register_one_event $RDE_SERVICE "$RDE_STOP_STRING"
-   sm_register_one_event $RDE_SERVICE "$RDE_RESTART_STRING"
+   sm_register_one_event "$RDE_SERVICE" "$RDE_START_STRING"
+   sm_register_one_event "$RDE_SERVICE" "$RDE_STOP_STRING"
+   sm_register_one_event "$RDE_SERVICE" "$RDE_RESTART_STRING"
 }
 
 ##################################################################################
@@ -378,14 +378,14 @@ sm_unregister() {
    # remove the default events
    for SMU_EVENT in ${1}-start ${1}-stop ${1}-restart
    do
-      SMU_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMU_EVENT}`
+      SMU_STR=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMU_EVENT}"`
       if [ -n "$SMU_STR" ] ; then
-         SMU_ASYNC=`echo $SMU_STR | cut -f 2,3 -d ' '`
+         SMU_ASYNC=`echo "$SMU_STR" | cut -f 2,3 -d ' '`
          if [ -n "$SMU_ASYNC" ] ; then
-            sysevent rm_async $SMU_ASYNC
+            sysevent rm_async "$SMU_ASYNC"
             ulog srvmgr status "Unregistered $1 from ${SMU_EVENT}"
          fi
-         sysevent set ${SM_PREFIX}${1}${SM_POSTFIX}_${SMU_EVENT}
+         sysevent set ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMU_EVENT}"
       fi
    done
 
@@ -393,19 +393,19 @@ sm_unregister() {
    SMU_IDX=1
    SMU_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMU_IDX}`
    while [ -n "$SMU_STR" ] ; do
-      SMU_EVENT=`echo $SMU_STR | cut -f 1 -d ' '`
-      SMU_ASYNC=`echo $SMU_STR | cut -f 2,3 -d ' '`
+      SMU_EVENT=`echo "$SMU_STR" | cut -f 1 -d ' '`
+      SMU_ASYNC=`echo "$SMU_STR" | cut -f 2,3 -d ' '`
       if [ -n "$SMU_ASYNC" ] ; then
-         sysevent rm_async $SMU_ASYNC
+         sysevent rm_async "$SMU_ASYNC"
          ulog srvmgr status "Unregistered $SMU_SERVICE from $SMU_EVENT"
       fi
-      sysevent set ${SM_PREFIX}${1}${SM_POSTFIX}_${SMU_IDX}
+      sysevent set ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMU_IDX}"
       SMU_IDX=`expr $SMU_IDX + 1`
-      SMU_STR=`sysevent get ${SM_PREFIX}${1}${SM_POSTFIX}_${SMU_IDX}`
+      SMU_STR=`sysevent get ${SM_PREFIX}"${1}"${SM_POSTFIX}_"${SMU_IDX}"`
    done
 
    # register the service status as stopped
-   sysevent set ${SMU_SERVICE}-status stopped
+   sysevent set "${SMU_SERVICE}"-status stopped
 }
 
 #------------------------------------------------------------------
@@ -431,12 +431,12 @@ sm_register() {
    fi
 
    # unregister for any events currently registered to this service
-   sm_unregister $SM_SERVICE
+   sm_unregister "$SM_SERVICE"
 
 
    # register for the default events SERVICE-start, SERVICE-stop, SERVICE-restart
    if [ "NULL" != "$SM_EVENT_HANDLER" ] ; then
-      sm_register_for_default_events $SM_SERVICE $SM_EVENT_HANDLER
+      sm_register_for_default_events "$SM_SERVICE" "$SM_EVENT_HANDLER"
    fi
 
    # register for custom events
@@ -446,7 +446,7 @@ sm_register() {
       for custom in $SM_CUSTOM_EVENTS ; do
          if [ -n "$custom" ] && [ " " != "$custom" ] ; then
             IFS=$SAVEIFS
-            sm_register_one_event $SM_SERVICE "$custom"
+            sm_register_one_event "$SM_SERVICE" "$custom"
             IFS=';'
          fi
       done

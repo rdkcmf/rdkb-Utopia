@@ -68,8 +68,8 @@ get_network () {
 #    the name of the interface to get
 #--------------------------------------------------------------
 get_mac () {
-   OUR_MAC=`ip link show $1 | grep link | awk '{print $2}'`
-   echo $OUR_MAC
+   OUR_MAC=`ip link show "$1" | grep link | awk '{print $2}'`
+   echo "$OUR_MAC"
 }
 
 #--------------------------------------------------------------
@@ -80,20 +80,20 @@ get_mac () {
 #--------------------------------------------------------------
 incr_mac () {                                                    
    COUNTER=$2                                                                
-   LAST_BYTE=`echo $1 | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$6) }'`
-   while [ $COUNTER -gt 0 ]                                                  
+   LAST_BYTE=`echo "$1" | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$6) }'`
+   while [ "$COUNTER" -gt 0 ]                                                  
    do                                                                        
-      T_BYTE=`expr $LAST_BYTE + 1`                                           
+      T_BYTE=`expr "$LAST_BYTE" + 1`                                           
       if [ "255" = "$T_BYTE" ] ; then                                        
          T_BYTE=00                                                           
       fi                                                                     
       LAST_BYTE=$T_BYTE              
-      COUNTER=`expr $COUNTER - 1`    
+      COUNTER=`expr "$COUNTER" - 1`    
    done                                                             
                                                                     
    INCREMENTED_BYTE=`echo $LAST_BYTE | awk '{printf ("%02X", $1) }'`
                                                                                 
-   TRUNCATED_MAC=`echo $1 | \
+   TRUNCATED_MAC=`echo "$1" | \
        awk 'BEGIN { FS = ":" } ; { printf ("%02X:%02X:%02X:%02X:%02X:", "0x"$1, "0x"$2, "0x"$3, "0x"$4, "0x"$5) }'`
    REPLACED_MAC="$TRUNCATED_MAC""$INCREMENTED_BYTE"                             
    echo "$REPLACED_MAC"                                                         
@@ -105,7 +105,7 @@ incr_mac () {
 #     the ipv4 address
 #--------------------------------------------------------------
 convert_v4_2_v6 () {                                                    
-   V6=`echo $1 | awk 'BEGIN { FS = "." } ; { printf ("%02x%02x:%02x%02x", $1, $2, $3, $4) }'`
+   V6=`echo "$1" | awk 'BEGIN { FS = "." } ; { printf ("%02x%02x:%02x%02x", $1, $2, $3, $4) }'`
    echo "$V6"                                                         
 }
 
@@ -118,18 +118,18 @@ convert_v4_2_v6 () {
 #--------------------------------------------------------------
 config_vlan () {
 #   echo "[utopia][interface] configuring vlan $2 on $1" > /dev/console
-   ip link set $1 up
+   ip link set "$1" up
    vconfig set_name_type VLAN_PLUS_VID_NO_PAD
-   vconfig add $1 $2
-   vconfig set_ingress_map vlan$2 0 0
-   vconfig set_ingress_map vlan$2 1 1
-   vconfig set_ingress_map vlan$2 2 2
-   vconfig set_ingress_map vlan$2 3 3
-   vconfig set_ingress_map vlan$2 4 4
-   vconfig set_ingress_map vlan$2 5 5
-   vconfig set_ingress_map vlan$2 6 6
-   vconfig set_ingress_map vlan$2 7 7
-   ip link set vlan$2 mtu 1500
+   vconfig add "$1" "$2"
+   vconfig set_ingress_map vlan"$2" 0 0
+   vconfig set_ingress_map vlan"$2" 1 1
+   vconfig set_ingress_map vlan"$2" 2 2
+   vconfig set_ingress_map vlan"$2" 3 3
+   vconfig set_ingress_map vlan"$2" 4 4
+   vconfig set_ingress_map vlan"$2" 5 5
+   vconfig set_ingress_map vlan"$2" 6 6
+   vconfig set_ingress_map vlan"$2" 7 7
+   ip link set vlan"$2" mtu 1500
 
    # vconfig is not ensuring that a vlan's mac address is unique
    # so we need to do it
@@ -137,20 +137,20 @@ config_vlan () {
    # then we will use that value, otherwise
    # our approach is to consider vlan1 the normal mac
    # and to increment each subsequent vlan mac by 1
-   REPLACEMENT=`sysevent get vlan$2_mac`
+   REPLACEMENT=`sysevent get vlan"$2"_mac`
    if [ "" != "$REPLACEMENT" ] ; then
-       ip link set vlan$2 addr $REPLACEMENT
+       ip link set vlan"$2" addr "$REPLACEMENT"
 #      echo "[utopia] [interface] Setting vlan$2 hw address to $REPLACEMENT" > /dev/console
    else
       if [ "1" != "$2" ] ; then
-         ip link set vlan$2 up
-         INCR_AMOUNT=`expr $2 - 1`
-         OUR_MAC=`get_mac "vlan"$2`
-         REPLACEMENT=`incr_mac $OUR_MAC $INCR_AMOUNT`
-         ip link set vlan$2 down
-         ip link set vlan$2 addr $REPLACEMENT
+         ip link set vlan"$2" up
+         INCR_AMOUNT=`expr "$2" - 1`
+         OUR_MAC=`get_mac "vlan""$2"`
+         REPLACEMENT=`incr_mac "$OUR_MAC" "$INCR_AMOUNT"`
+         ip link set vlan"$2" down
+         ip link set vlan"$2" addr "$REPLACEMENT"
 #         echo "[utopia] [interface] Changing vlan$2 hw address to $REPLACEMENT" > /dev/console
-         `sysevent set vlan$2_mac $REPLACEMENT`
+         `sysevent set vlan"$2"_mac "$REPLACEMENT"`
       fi
    fi
 }
@@ -162,6 +162,6 @@ config_vlan () {
 #--------------------------------------------------------------
 unconfig_vlan () {
 #   echo "[utopia][interface] unconfiguring vlan$1" > /dev/console
-   ip link set vlan$1 down
-   vconfig rem vlan$1
+   ip link set vlan"$1" down
+   vconfig rem vlan"$1"
 }

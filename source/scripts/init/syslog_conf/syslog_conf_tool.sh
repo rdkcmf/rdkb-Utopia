@@ -54,21 +54,21 @@ get_log_level(){
     echo " 8. LOG_DEBUG"
     read log_level
     
-    if [ $log_level -eq 1 ];then
+    if [ "$log_level" -eq 1 ];then
         level="emerg"
-    elif [ $log_level -eq 2 ];then
+    elif [ "$log_level" -eq 2 ];then
         level="alert"
-    elif [ $log_level -eq 3 ];then
+    elif [ "$log_level" -eq 3 ];then
     	level="crit"
-    elif [ $log_level -eq 4 ];then
+    elif [ "$log_level" -eq 4 ];then
         level="err"
-    elif [ $log_level -eq 5 ];then
+    elif [ "$log_level" -eq 5 ];then
     	level="warn"
-    elif [ $log_level -eq 6 ];then
+    elif [ "$log_level" -eq 6 ];then
     	level="notice"
-    elif [ $log_level -eq 7 ];then
+    elif [ "$log_level" -eq 7 ];then
         level="info"
-    elif [ $log_level -eq 8 ];then
+    elif [ "$log_level" -eq 8 ];then
     	level="debug"
     else
     	level="*"
@@ -159,7 +159,7 @@ echo "3. reboot the syslog"
 
 read op
 
-if [ $op -eq 1 ]
+if [ "$op" -eq 1 ]
 then
     echo "Please input the syslog Level"
     echo " 1. LOG_EMERG"
@@ -171,9 +171,9 @@ then
     echo " 7. LOG_INFO"
     echo " 8. LOG_DEBUG"
     read log_level
-    if [ $log_level -ge 1 ] && [ $log_level -lt 9 ]
+    if [ "$log_level" -ge 1 ] && [ "$log_level" -lt 9 ]
     then
-        echo $log_level > $LOG_LEVEL_FILE
+        echo "$log_level" > $LOG_LEVEL_FILE
         echo "Done"
     else
         echo "Wrong Number"
@@ -181,7 +181,7 @@ then
     ask_reboot
 fi
 
-if [ $op -eq 2 ]
+if [ "$op" -eq 2 ]
 then
     echo ""
     echo "" > $LOG_CONF_FILE
@@ -191,7 +191,7 @@ then
     ask_reboot
 fi
 
-if [ $op -eq 3 ]
+if [ "$op" -eq 3 ]
 then
     killall syslogd
     killall klogd

@@ -60,15 +60,15 @@ then
     t2CountNotify "SYS_SH_FirewallRecovered"
     ipaddr=`sysevent get current_lan_ipaddr`
     index=4
-    if [ x$ipaddr = x ]
+    if [ x"$ipaddr" = x ]
     then
         echo " Current IP address is NULL "
-	eval `psmcli get -e CUR_IPV4ADDR ${IPV4_NV_PREFIX}.$index.${IPV4_NV_IP}`
-	if [ x$CUR_IPV4ADDR != x ]
+	eval "`psmcli get -e CUR_IPV4ADDR "${IPV4_NV_PREFIX}".$index."${IPV4_NV_IP}"`"
+	if [ x"$CUR_IPV4ADDR" != x ]
 	then
-	    sysevent set current_lan_ipaddr $CUR_IPV4ADDR
+	    sysevent set current_lan_ipaddr "$CUR_IPV4ADDR"
 	else
-	    sysevent set current_lan_ipaddr `syscfg get lan_ipaddr`
+	    sysevent set current_lan_ipaddr "`syscfg get lan_ipaddr`"
 	fi
     fi
 
@@ -88,8 +88,8 @@ then
 	#l2sd0 interface only applicable for XB3 box.TCXB6-5310
 	if [ "$BOX_TYPE" = "XB3" ]; then
 	    BRLAN0_MAC=`ifconfig l2sd0 | grep HWaddr | awk '{print $5}'`
-	    ( ( nfq_handler 4 $BRLAN0_MAC & ) & )
-	    ( ( nfq_handler 6 $BRLAN0_MAC & ) & )
+	    ( ( nfq_handler 4 "$BRLAN0_MAC" & ) & )
+	    ( ( nfq_handler 6 "$BRLAN0_MAC" & ) & )
 	else
 	    #dont pass mac address for XB6 box_type, nfq_handler internally will take brlan0 mac.
 	    ( ( nfq_handler 4 & ) & )

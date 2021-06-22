@@ -57,7 +57,7 @@
 source /etc/utopia/service.d/ulog_functions.sh
 
 SERVICE_NAME="configrestore"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 FACTORY_DEFAULT_FILE=.factory_default
 RESTORE_CONFIG_FILE=.restore_config
@@ -84,14 +84,14 @@ service_stop ()
 service_usb_insert () 
 {
   MOUNT_PT=`sysevent get usb_device_mount_pt`
-  if [ -z $MOUNT_PT ] ; then
+  if [ -z "$MOUNT_PT" ] ; then
       ulog ${SERVICE_NAME} status "unspecified usb device mount path"
       return
   fi
 
   CHECK_FILE=${MOUNT_PT}/${FACTORY_DEFAULT_FILE}
   ulog ${SERVICE_NAME} status "checking for factory default file $CHECK_FILE"
-  if [ -f $CHECK_FILE ] ; then
+  if [ -f "$CHECK_FILE" ] ; then
       ulog ${SERVICE_NAME} status "restore factory defaults"
       # note, this cmd will do a system reboot
       utcmd factory_reset
@@ -101,10 +101,10 @@ service_usb_insert ()
   CHECK_FILE=${MOUNT_PT}/${RESTORE_CONFIG_FILE}
   ulog ${SERVICE_NAME} status "checking for config restore file $CHECK_FILE"
   # Restore configuration
-  if [ -f $CHECK_FILE ] ; then
+  if [ -f "$CHECK_FILE" ] ; then
       ulog ${SERVICE_NAME} status "restore configuration to $CHECK_FILE "
       # note, this cmd will do a system reboot
-      utcmd cfg_restore $CHECK_FILE
+      utcmd cfg_restore "$CHECK_FILE"
       return
   fi
 }
@@ -136,13 +136,13 @@ service_usb_device_state ()
 # Entry
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       # no-op
       ;;
   usb_device_state)

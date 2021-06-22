@@ -60,7 +60,7 @@
 source /etc/utopia/service.d/ulog_functions.sh
 
 SERVICE_NAME="syslog"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 SOURCE="/etc/utopia/service.d/service_syslog/syslog_rotate_monitor.sh"
 TARGET_DIR="/etc/cron/cron.everyminute"
@@ -135,20 +135,20 @@ fi
 service_init ()
 {
     FOO=`utctx_cmd get log_level log_remote`
-    eval $FOO
+    eval "$FOO"
 }
 
 #--------------------------------------------------------------------------------
 service_init
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

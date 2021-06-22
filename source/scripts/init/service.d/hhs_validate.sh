@@ -41,7 +41,7 @@
 
 CHECK=`psmcli get dmsb.l2net.5.Members.WiFi`
 
-if [ xath5 != x$CHECK ]; then
+if [ xath5 != x"$CHECK" ]; then
     exit 0
 fi
 

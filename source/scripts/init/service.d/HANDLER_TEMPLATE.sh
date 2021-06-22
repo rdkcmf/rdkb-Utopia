@@ -101,7 +101,7 @@ create_conf_file3() {
 
 utctx_cmd set foo::bar=1 foo_foo=2 bar__foo=3 frappo=4
 FOO=`utctx_cmd get foo::bar foo::foo  bar::foo wan_proto frappo`
-eval $FOO
+eval "$FOO"
 
 cat << EOM > $CONF_FILE
 From here on this is interpretation if you want.
@@ -140,7 +140,7 @@ service_init ()
 {
     utctx_cmd set foo::bar=1 foo_foo=2 bar__foo=3 frappo=4
     FOO=`utctx_cmd get foo::bar foo::foo  bar::foo wan_proto frappo`
-    eval $FOO
+    eval "$FOO"
 }
 
 #-------------------------------------------------------------------------------------------
@@ -165,8 +165,8 @@ service_start ()
       sysevent set ${SERVICE_NAME}-errinfo 
       sysevent set ${SERVICE_NAME}-status starting
       create_conf_file
-      create_conf_file2
-      create_conf_file3
+      create_conf_file2 "$@"
+      create_conf_file3 "$@"
       ...
       check_err $? "Couldnt handle start"
       sysevent set ${SERVICE_NAME}-status started
@@ -207,15 +207,15 @@ service_stop ()
 service_init 
 
 case "$1" in
-   ${SERVICE_NAME}-start)
-      service_start
+   "${SERVICE_NAME}-start")
+      service_start "$@"
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
-      service_start
+      service_start "$@"
       ;;
    #----------------------------------------------------------------------------------
    # Add other event entry points here

@@ -54,7 +54,7 @@ service_init ()
 
    SYSCFG_FAILED='false'
    FOO=`utctx_cmd get wan_physical_ifname wan_virtual_ifnum lan_ifname`
-   eval $FOO
+   eval "$FOO"
    if [ $SYSCFG_FAILED = 'true' ] ; then
       ulog system status "$PID utctx failed to get some configuration data required by service-system"
       ulog system status "$PID THE SYSTEM IS NOT SANE"
@@ -87,7 +87,7 @@ service_start ()
       else
          WAN_IFNAME=vlan${SYSCFG_wan_virtual_ifnum}
       fi
-      sysevent set wan_ifname $WAN_IFNAME
+      sysevent set wan_ifname "$WAN_IFNAME"
 
       # Start managed service
       sysevent set managed-start
@@ -130,13 +130,13 @@ service_stop ()
 #------------------------------------------------------------------
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
 #      service_start
       ;;

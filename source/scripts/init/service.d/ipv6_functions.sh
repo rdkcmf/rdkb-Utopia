@@ -41,12 +41,12 @@
 # Ultimate goal: be able to send RA on LAN with the old prefix and preferred lifetime = 0
 save_lan_ipv6_prefix ()
 {
-	echo "save_lan_ipv6_prefix($1)" >> $IPV6_LOG
+	echo "save_lan_ipv6_prefix($1)" >> "$IPV6_LOG"
 	OLD_PREFIX="`sysevent get ipv6_prefix`"
 	if [ ! -z "$OLD_PREFIX" -a "$OLD_PREFIX" != "$1" ]
 	then
-		echo "Saving old prefix $OLD_PREFIX" >> $IPV6_LOG
+		echo "Saving old prefix $OLD_PREFIX" >> "$IPV6_LOG"
 		sysevent set previous_ipv6_prefix "$OLD_PREFIX"
 	fi
-	sysevent set ipv6_prefix $1
+	sysevent set ipv6_prefix "$1"
 }

@@ -27,13 +27,13 @@ fi
 if [ -f /etc/utopia/service.d/device_time_sync_peer_wrapper.sh ]; then
 	source /etc/utopia/service.d/device_time_sync_peer_wrapper.sh
 else
-	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh script called after ntpd status change but EXITING due to no Device Wrapper Function" >> $NTPD_LOG_NAME
+	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh script called after ntpd status change but EXITING due to no Device Wrapper Function" >> "$NTPD_LOG_NAME"
 	return 0
 fi
 
 #Local variables
 SERVICE_NAME="time_sync_peer"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 SLEEP_SEC=1
 START_YEAR=1970
 LOCKFILE="/var/run/time_sync_peer.pid"
@@ -54,7 +54,7 @@ do_time_sync_with_peer() {
                 if [ "$year" -gt $START_YEAR ]; then
                     timeprint=$timestamp
                     #notify time sync event to Peer for system time update
-                    echo_t "Notify system time update of $timeprint to Peer" >> $NTPD_LOG_NAME
+                    echo_t "Notify system time update of $timeprint to Peer" >> "$NTPD_LOG_NAME"
                     device_time_sync_peer
                     sysevent set ${SERVICE_NAME}-status "started"
                     break;
@@ -79,10 +79,10 @@ service_stop ()
 
 service_init ()
 {
-    if [ -f $CRONFILE ]
+    if [ -f "$CRONFILE" ]
     then
     	# Dump existing cron jobs to a file & add new job
-    	crontab -l -c $CRON_SPOOL > $CRONFILE_BK
+    	crontab -l -c "$CRON_SPOOL" > $CRONFILE_BK
 
     	# Check whether specific cron jobs are existing or not
     	existingcron=$(grep "time_sync_peer-restart" $CRONFILE_BK)
@@ -90,10 +90,10 @@ service_init ()
     	if [ -z "$existingcron" ]; then
     		echo "*/30 * * * * sysevent set time_sync_peer-restart" >> $CRONFILE_BK
 
-    		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh setting periodic sync" >> $NTPD_LOG_NAME
-    		crontab $CRONFILE_BK -c $CRON_SPOOL
+    		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh setting periodic sync" >> "$NTPD_LOG_NAME"
+    		crontab $CRONFILE_BK -c "$CRON_SPOOL"
     	else
-    		echo_t "service_time_sync_peer.sh periodic sync already setup" >> $NTPD_LOG_NAME
+    		echo_t "service_time_sync_peer.sh periodic sync already setup" >> "$NTPD_LOG_NAME"
     	fi
 
     	rm -rf $CRONFILE_BK
@@ -103,14 +103,14 @@ service_init ()
 # Entry
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_init
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;
@@ -118,7 +118,7 @@ case "$1" in
       CURRENT_NTPD_STATUS=`sysevent get ntpd-status`
 
       if [ "started" = "$CURRENT_NTPD_STATUS" ] ; then
-         echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh called after ntpd status changed to started" >> $NTPD_LOG_NAME
+         echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh called after ntpd status changed to started" >> "$NTPD_LOG_NAME"
          service_init
          service_start
       fi

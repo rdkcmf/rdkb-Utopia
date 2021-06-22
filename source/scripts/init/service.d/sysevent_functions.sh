@@ -39,8 +39,8 @@
 # should only be called from AP
 sysevent_np() {
    iRouter_ll_ipaddr=`sysevent get iRouter_ll_ipaddr`
-   echo sysevent --ip ${iRouter_ll_ipaddr//'%'/'%%'} --port 36367 $*
-   sysevent --ip ${iRouter_ll_ipaddr//'%'/'%%'} --port 36367 $*
+   echo sysevent --ip "${iRouter_ll_ipaddr//'%'/'%%'}" --port 36367 "$@"
+   sysevent --ip "${iRouter_ll_ipaddr//'%'/'%%'}" --port 36367 "$@"
 }
 
 # sysevent_ap
@@ -48,8 +48,8 @@ sysevent_np() {
 # should only be called from NP
 sysevent_ap() {
    eMG_ll_ipaddr=`sysevent get eMG_ll_ipaddr`
-   echo sysevent --ip ${eMG_ll_ipaddr//'%'/'%%'} --port 36367 $*
-   sysevent --ip ${eMG_ll_ipaddr//'%'/'%%'} --port 36367 $*
+   echo sysevent --ip "${eMG_ll_ipaddr//'%'/'%%'}" --port 36367 "$@"
+   sysevent --ip "${eMG_ll_ipaddr//'%'/'%%'}" --port 36367 "$@"
 }
 
 # register_sysevent_handler
@@ -62,11 +62,11 @@ register_sysevent_handler()
    HANDLER=$3
    FLAG=$4
 
-   asyncid=`sysevent async $EVENT_NAME $HANDLER`
+   asyncid=`sysevent async "$EVENT_NAME" "$HANDLER"`
    if [ -n "$FLAG" ] ; then
-      sysevent setoptions $EVENT_NAME $FLAG
+      sysevent setoptions "$EVENT_NAME" "$FLAG"
    fi
-   sysevent set ${SERVICE_NAME}_${EVENT_NAME}_asyncid "$asyncid"
+   sysevent set "${SERVICE_NAME}"_"${EVENT_NAME}"_asyncid "$asyncid"
 }
 
 # unregister_sysevent_handler
@@ -77,10 +77,10 @@ unregister_sysevent_handler()
    SERVICE_NAME=$1
    EVENT_NAME=$2
 
-   asyncid=`sysevent get ${SERVICE_NAME}_${EVENT_NAME}_asyncid`
+   asyncid=`sysevent get "${SERVICE_NAME}"_"${EVENT_NAME}"_asyncid`
    if [ -n "$asyncid" ] ; then
-      sysevent rm_async $asyncid
-      sysevent set ${SERVICE_NAME}_${EVENT_NAME}_asyncid
+      sysevent rm_async "$asyncid"
+      sysevent set "${SERVICE_NAME}"_"${EVENT_NAME}"_asyncid
    fi
 }
 

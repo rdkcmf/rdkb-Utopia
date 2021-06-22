@@ -49,7 +49,7 @@ LOG_FILE="/tmp/udhcp.log"
 service_init ()
 {
    FOO=`utctx_cmd get lan_ifname hostname`
-   eval $FOO
+   eval "$FOO"
 
   if [ -z "$SYSCFG_hostname" ] ; then
      SYSCFG_hostname="Utopia"
@@ -62,7 +62,7 @@ service_init ()
 do_stop_dhcp() {
    ulog dhcp_link status "stopping dhcp client on bridge"
    if [ -f "$UDHCPC_PID_FILE" ] ; then
-      kill -USR2 `cat $UDHCPC_PID_FILE` && kill `cat $UDHCPC_PID_FILE`
+      kill -USR2 "`cat $UDHCPC_PID_FILE`" && kill "`cat $UDHCPC_PID_FILE`"
       rm -f $UDHCPC_PID_FILE
    else
       killall -USR2 udhcpc && killall udhcpc
@@ -79,12 +79,12 @@ do_start_dhcp() {
       ulog dhcp_link status "starting dhcp client on bridge ($WAN_IFNAME)"
       service_init
 
-      udhcpc -S -b -i $SYSCFG_lan_ifname -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT
+      udhcpc -S -b -i "$SYSCFG_lan_ifname" -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT
    elif [ ! "${UDPCP_PID}" ] ; then
       ulog dhcp_link status "dhcp client `cat $UDHCPC_PID_FILE` died"
       do_stop_dhcp
       ulog dhcp_link status "starting dhcp client on bridge ($SYSCFG_lan_ifname)"
-      udhcpc -S -b -i $SYSCFG_lan_ifname -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT
+      udhcpc -S -b -i "$SYSCFG_lan_ifname" -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT
    else
       ulog dhcp_link status "dhcp client is already active on bridge ($SYSCFG_lan_ifname) as `cat $UDHCPC_PID_FILE`"
    fi
@@ -98,9 +98,9 @@ do_release_dhcp() {
    ulog dhcp_link status "releasing dhcp lease on bridge"
    service_init
    if [ -f "$UDHCPC_PID_FILE" ] ; then
-      kill -SIGUSR2 `cat $UDHCPC_PID_FILE`
+      kill -SIGUSR2 "`cat $UDHCPC_PID_FILE`"
    fi
-   ip -4 addr flush dev $SYSCFG_lan_ifname
+   ip -4 addr flush dev "$SYSCFG_lan_ifname"
 }
 #------------------------------------------------------------------
 # do_renew_dhcp
@@ -108,10 +108,10 @@ do_release_dhcp() {
 do_renew_dhcp() {
    ulog dhcp_link status "renewing dhcp lease on bridge"
     if [ -f "$UDHCPC_PID_FILE" ] ; then
-        kill -SIGUSR1 `cat $UDHCPC_PID_FILE`
+        kill -SIGUSR1 "`cat $UDHCPC_PID_FILE`"
     else
         ulog dhcp_link status "restarting dhcp client on bridge"
-        udhcpc -S -b -i $SYSCFG_lan_ifname -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT
+        udhcpc -S -b -i "$SYSCFG_lan_ifname" -h $SYSCFG_hostname -p $UDHCPC_PID_FILE --arping -s $UDHCPC_SCRIPT
    fi
 }
 
@@ -196,16 +196,16 @@ case "$1" in
       echo "mtu           : $mtuipttl"  >> $LOG_FILE
 
       if [ -n "$lease" ] ; then
-         sysevent set bridge_dhcp_lease $lease 
+         sysevent set bridge_dhcp_lease "$lease" 
       fi
       if [ -n "$subnet" ] ; then
-         sysevent set bridge_ipv4_subnet $subnet 
+         sysevent set bridge_ipv4_subnet "$subnet" 
       fi
 
       # did the assigned ip address change
-      OLDIP=`/sbin/ip addr show dev $interface  | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
+      OLDIP=`/sbin/ip addr show dev "$interface"  | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
       if [ "$OLDIP" != "$ip" ] ; then
-         RESULT=`arping -q -c 2 -w 3 -D -I $interface $ip`
+         RESULT=`arping -q -c 2 -w 3 -D -I "$interface" "$ip"`
          if [ "" != "$RESULT" ] &&  [ "0" != "$RESULT" ] ; then
             echo "[utopia][dhcp client script] duplicate address detected $ip on $interface." > /dev/console
             echo "[utopia][dhcp client script] ignoring duplicate ... hoping for the best" > /dev/console
@@ -213,10 +213,10 @@ case "$1" in
 
          # remove the old ip address and put in the new one
          # ip addr flush is too harsh since it also removes ipv6 addrs
-         /sbin/ip -4 link set dev $interface down
-         /sbin/ip -4 addr show dev $interface | grep "inet " | awk '{system("/sbin/ip addr del " $2 " dev $interface")}'
-         /sbin/ip -4 addr add $ip$NETMASK $BROADCAST dev $interface 
-         /sbin/ip -4 link set dev $interface up
+         /sbin/ip -4 link set dev "$interface" down
+         /sbin/ip -4 addr show dev "$interface" | grep "inet " | awk '{system("/sbin/ip addr del " $2 " dev $interface")}'
+         /sbin/ip -4 addr add "$ip""$NETMASK $BROADCAST" dev "$interface" 
+         /sbin/ip -4 link set dev "$interface" up
       fi
 
       # if the gateway router has changed then we need to flush routing cache
@@ -227,8 +227,8 @@ case "$1" in
                :
             done
             for i in $router ; do
-               ip -4 route add default dev $interface via $i      
-               sysevent set bridge_default_router $i 
+               ip -4 route add default dev "$interface" via "$i"      
+               sysevent set bridge_default_router "$i" 
             done
             ip -4 route flush cache
          fi
@@ -240,7 +240,7 @@ case "$1" in
       sysevent set dhcpc_ntp_server3 
 
       if [ -n "$domain" ] ; then
-         sysevent set dhcp_domain $domain
+         sysevent set dhcp_domain "$domain"
       fi
 
       # Purge all IPv4 DNS servers from existing resolv.conf file
@@ -254,14 +254,14 @@ case "$1" in
            # Removing IPV4 DNS server config to retaing XDNS config entry rather than complete empty over writing of resolv.conf file 
            cp $RESOLV_CONF $RESOLV_CONF_TMP
            interface=`sysevent get wan_ifname`
-           get_dns_number=`sysevent get ipv4_${interface}_dns_number`
+           get_dns_number=`sysevent get ipv4_"${interface}"_dns_number`
            sed -i '/domain/d' "$RESOLV_CONF_TMP"
            sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
                 if [ "$get_dns_number" != "" ]; then
                         echo "Removing old DNS IPV4 SERVER configuration from resolv.conf " >> $LOG_FILE
                         counter=0;
-                        while [ $counter -lt $get_dns_number ]; do
-                        get_old_dns_server=`sysevent get ipv4_${interface}_dns_$counter`
+                        while [ $counter -lt "$get_dns_number" ]; do
+                        get_old_dns_server=`sysevent get ipv4_"${interface}"_dns_$counter`
                         ipv4_dns_server="nameserver $get_old_dns_server"
                         sed -i "/$ipv4_dns_server/d" "$RESOLV_CONF_TMP"
                         let counter=counter+1
@@ -289,25 +289,25 @@ case "$1" in
       NAMESERVER2=`syscfg get nameserver2`
       NAMESERVER3=`syscfg get nameserver3`
       if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
-         echo nameserver $NAMESERVER1 >> $RESOLV_CONF
-         WAN_DNS=`echo $WAN_DNS $NAMESERVER1`
+         echo nameserver "$NAMESERVER1" >> $RESOLV_CONF
+         WAN_DNS=`echo "$WAN_DNS" "$NAMESERVER1"`
       fi
       if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
-         echo nameserver $NAMESERVER2 >> $RESOLV_CONF
-         WAN_DNS=`echo $WAN_DNS $NAMESERVER2`
+         echo nameserver "$NAMESERVER2" >> $RESOLV_CONF
+         WAN_DNS=`echo "$WAN_DNS" "$NAMESERVER2"`
       fi
       if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
-         echo nameserver $NAMESERVER3 >> $RESOLV_CONF
-         WAN_DNS=`echo $WAN_DNS $NAMESERVER3`
+         echo nameserver "$NAMESERVER3" >> $RESOLV_CONF
+         WAN_DNS=`echo "$WAN_DNS" "$NAMESERVER3"`
       fi
 
       if [ -n "$dns" ] ; then
-         WAN_DNS=`echo $WAN_DNS $dns`
+         WAN_DNS=`echo "$WAN_DNS" "$dns"`
       fi
 
       # dns nameservers
       for i in $dns ; do
-         echo nameserver $i >> $RESOLV_CONF
+         echo nameserver "$i" >> $RESOLV_CONF
       done
       # and add an entry so that the router can also use itself as dns resolver
 #      echo "nameserver 127.0.0.1" >> $RESOLV_CONF
@@ -320,17 +320,17 @@ case "$1" in
       for ii in $ntpsrv ; do
          if [ "" = "$NTPSERVER1" ] ; then
             NTPSERVER1=$ii
-            `sysevent set dhcpc_ntp_server1 $NTPSERVER1`
+            `sysevent set dhcpc_ntp_server1 "$NTPSERVER1"`
          elif [ "" = "$NTPSERVER2" ] ; then
             NTPSERVER2=$ii
-            `sysevent set dhcpc_ntp_server2 $NTPSERVER2`
+            `sysevent set dhcpc_ntp_server2 "$NTPSERVER2"`
          else
-            `sysevent set dhcpc_ntp_server3 $ii`
+            `sysevent set dhcpc_ntp_server3 "$ii"`
          fi
       done
 
 
-      sysevent set bridge_ipv4_ipaddr $ip
+      sysevent set bridge_ipv4_ipaddr "$ip"
       ;;
    esac
 

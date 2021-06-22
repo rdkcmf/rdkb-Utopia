@@ -53,4 +53,4 @@ if [ "$OLDSIZE" -gt "$SIZE" ] ; then
    sysevent set syslog_rotated
 fi
 
-sysevent set $SYSEVENT_TUPLE $SIZE
+sysevent set $SYSEVENT_TUPLE "$SIZE"

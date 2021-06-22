@@ -43,12 +43,12 @@ TMP_PASSWORD_FILE=/tmp/.tmp_passwd
 # parameter 2 is a file containing the encrypted password
 update_shadow() {
    TMP_FILE=/tmp/.sed_pw_temp
-   newpw=`cat $2`
+   newpw=`cat "$2"`
    if [ -z "$newpw" ] ; then
       return 0
    fi
 
-   oldpw=`grep $1 $PASSWD_FILE | cut -f 2 -d ':'`
+   oldpw=`grep "$1" $PASSWD_FILE | cut -f 2 -d ':'`
 
    # since the password strings could contain '/' we need to try a couple of
    # sed delimiters
@@ -75,7 +75,7 @@ update_shadow() {
 gen_admin_passwd() {
    SEED_PW=$1
    if [  -z "$SEED_PW" ] ; then
-      SEED_PW=admin
+      SEED_PW="admin"
    fi
 
    SEED_PW=${SEED_PW}_admin
@@ -93,7 +93,7 @@ gen_admin_passwd() {
 gen_root_passwd() {
    SEED_PW=$1
    if [ -z "$SEED_PW" ] ; then
-      SEED_PW=admin
+      SEED_PW="admin"
    fi
 
    SEED_PW=${SEED_PW}_root
@@ -109,10 +109,10 @@ gen_root_passwd() {
 
 case "$1" in
   admin_pw)
-      gen_admin_passwd $2
+      gen_admin_passwd "$2"
       ;;
   root_pw)
-      gen_root_passwd $2
+      gen_root_passwd "$2"
       ;;
   *)
      exit 3

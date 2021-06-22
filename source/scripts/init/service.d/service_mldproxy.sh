@@ -40,7 +40,7 @@
 source /etc/utopia/service.d/ulog_functions.sh
 
 SERVICE_NAME="mldproxy"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 BIN=mldproxy
 CONF_FILE=/tmp/mldproxy.conf
@@ -74,7 +74,7 @@ do_start_mldproxy () {
 
 service_init ()
 {
-   eval `utctx_cmd get mldproxy_enabled lan_ifname`
+   eval "`utctx_cmd get mldproxy_enabled lan_ifname`"
    WAN_IFNAME=`sysevent get current_wan_ifname`
 }
 
@@ -105,13 +105,13 @@ service_stop ()
 service_init
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

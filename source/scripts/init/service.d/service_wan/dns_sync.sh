@@ -47,7 +47,7 @@ fi
 while :
 do
         numOfEntries=`cat $RESOLV_CONF | grep nameserver | grep -v 127.0.0.1 | wc -l`
-        if [ $numOfEntries -gt 2 -o $retries -eq 120 ]
+        if [ "$numOfEntries" -gt 2 -o $retries -eq 120 ]
         then
             break
         fi
@@ -74,7 +74,7 @@ if [ "$DNS_STR_IPV6" != "" ];then
 fi
 
 
-DNS_STR_V4=`echo $DNS_STR_IPV4 | cut -d" " -f2`
+DNS_STR_V4=`echo "$DNS_STR_IPV4" | cut -d" " -f2`
 if [ "$DNS_STR_V4" == "" ]
 then
 	echo "No IPv4 DNS entries available add default as lan IP"
@@ -85,7 +85,7 @@ echo "TMP_RESOLV_FILE = $TMP_RESOLV_FILE"
 cat $TMP_RESOLV_FILE
 
 GetConfigFile $PEER_COMM_ID
-scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
+scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@"$ATOM_INTERFACE_IP":$RESOLV_CONF > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
 	echo "scp is successful at first instance"
@@ -93,7 +93,7 @@ else
 	retries=0
 	while :
 	do
-		scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@$ATOM_INTERFACE_IP:$RESOLV_CONF > /dev/null 2>&1
+		scp -i $PEER_COMM_ID $TMP_RESOLV_FILE $ATOM_USER_NAME@"$ATOM_INTERFACE_IP":$RESOLV_CONF > /dev/null 2>&1
 		if [ $? -eq 0 -o  $retries -gt 4 ]
 		then
 		    if [ $retries -le 4 ]
@@ -102,7 +102,7 @@ else
 			else
 			    echo "scp of resolv.conf failed. trying rpcclient"
 			    FILE_STR=`cat $TMP_RESOLV_FILE`
-			    rpcclient $ATOM_ARPING_IP "echo \"$FILE_STR\" > $RESOLV_CONF"
+			    rpcclient "$ATOM_ARPING_IP" "echo \"$FILE_STR\" > $RESOLV_CONF"
 			fi 
 			break	
 		else

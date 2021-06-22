@@ -100,7 +100,7 @@ service_start()
    elif [ ! -f $DHCPV6_PID_FILE ]
    then
       mkdir -p /tmp/.dibbler-info
-      ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
+      ti_dhcp6c -i "$WAN_INTERFACE_NAME" -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
    fi
 }
 
@@ -108,7 +108,7 @@ service_stop()
 {
    if [ -f $DHCPV6_PID_FILE ]
    then
-      kill `cat $DHCPV6_PID_FILE`
+      kill "`cat $DHCPV6_PID_FILE`"
       rm -f $DHCPV6_PID_FILE
    fi
 }
@@ -177,13 +177,13 @@ service_disable ()
 service_init 
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_enable
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_disable
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_disable
       service_enable
       ;;

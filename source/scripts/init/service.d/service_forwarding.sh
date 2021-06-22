@@ -74,7 +74,7 @@ service_init ()
 {
    SYSCFG_FAILED='false'
    FOO=`utctx_cmd get bridge_mode`
-   eval $FOO
+   eval "$FOO"
    if [ "$SYSCFG_FAILED" = 'true' ] ; then
       ulog forwarding status "$PID utctx failed to get some configuration data required by service-forwarding"
       ulog forwarding status "$PID THE SYSTEM IS NOT SANE"
@@ -259,13 +259,13 @@ service_stop ()
 #------------------------------------------------------------------
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
 #      service_stop
       sysevent set ${SERVICE_NAME}-status restarting
       service_start

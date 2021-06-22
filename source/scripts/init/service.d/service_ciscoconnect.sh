@@ -44,25 +44,25 @@ CC_PSM_BASE=dmsb.CiscoConnect
 
 cc_preproc () 
 {
-    eval `psmcli get -e IP $CC_PSM_BASE.l3net BR $CC_PSM_BASE.l2net ENABLE $CC_PSM_BASE.guestEnabled POOL $CC_PSM_BASE.pool`
+    eval "`psmcli get -e IP $CC_PSM_BASE.l3net BR $CC_PSM_BASE.l2net ENABLE $CC_PSM_BASE.guestEnabled POOL $CC_PSM_BASE.pool`"
     
-    sysevent set ${SERVICE_NAME}_guest_l3net $IP
-    sysevent set ${SERVICE_NAME}_guest_l2net $BR
-    sysevent set ${SERVICE_NAME}_guest_pool $POOL
-    sysevent set ${SERVICE_NAME}_guest_enable $ENABLE
+    sysevent set ${SERVICE_NAME}_guest_l3net "$IP"
+    sysevent set ${SERVICE_NAME}_guest_l2net "$BR"
+    sysevent set ${SERVICE_NAME}_guest_pool "$POOL"
+    sysevent set ${SERVICE_NAME}_guest_enable "$ENABLE"
     
 }
 
 start_guestnet () 
 {
-    sysevent set ipv4-up `sysevent get ${SERVICE_NAME}_guest_l3net`
+    sysevent set ipv4-up "`sysevent get ${SERVICE_NAME}_guest_l3net`"
     sysevent set ciscoconnect-guest_status "started"
 }
 
 stop_guestnet () 
 {
-    sysevent set ipv4-down `sysevent get ${SERVICE_NAME}_guest_l3net`
-    sysevent set multinet-down `sysevent get ${SERVICE_NAME}_guest_l2net`
+    sysevent set ipv4-down "`sysevent get ${SERVICE_NAME}_guest_l3net`"
+    sysevent set multinet-down "`sysevent get ${SERVICE_NAME}_guest_l2net`"
     echo "service_ciscoconnect : Triggering RDKB_FIREWALL_RESTART"
     t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
     sysevent set firewall-restart
@@ -102,22 +102,22 @@ service_restart ()
 service_init
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
      service_start
      ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
      service_stop
      ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
      ENABLED=`psmcli get dmsb.CiscoConnect.guestEnabled`
-     sysevent set ${SERVICE_NAME}_guest_enable $ENABLED
+     sysevent set ${SERVICE_NAME}_guest_enable "$ENABLED"
      
-     if [ x"started" = x`sysevent get ciscoconnect-guest_status` ]; then
+     if [ x"started" = x"`sysevent get ciscoconnect-guest_status`" ]; then
         stop_guestnet
      fi
      
      
-     if [ x1 = x$ENABLED ]; then
+     if [ x1 = x"$ENABLED" ]; then
         start_guestnet
      fi
      ;;

@@ -43,13 +43,13 @@ source /etc/device.properties
 SERVICE_NAME="routed"
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_routed start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_routed stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_routed restart
       ;;
    #----------------------------------------------------------------------------------

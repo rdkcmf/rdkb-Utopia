@@ -72,7 +72,7 @@ echo "[utopia][init] Tweaking network parameters" > /dev/console
 
 KERNEL_VERSION=`uname -r | cut -c 1`
 
-if [ $KERNEL_VERSION -lt 4 ] ; then
+if [ "$KERNEL_VERSION" -lt 4 ] ; then
 	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_udp_timeout_stream
 	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_syn_sent
 	echo "60" > /proc/sys/net/ipv4/netfilter/ip_conntrack_generic_timeout
@@ -446,19 +446,19 @@ ecm_wan_ifname=`syscfg get ecm_wan_ifname`
 wan_ifname=`sysevent get wan_ifname`
 
 #disable telnet / ssh ports
-iptables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
-iptables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
-iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
-iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+iptables -A INPUT -i "$lan_ifname" -p tcp --dport 23 -j DROP
+iptables -A INPUT -i "$lan_ifname" -p tcp --dport 22 -j DROP
+iptables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 23 -j DROP
+iptables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 22 -j DROP
 
-ip6tables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
-ip6tables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
-ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
-ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+ip6tables -A INPUT -i "$lan_ifname" -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i "$lan_ifname" -p tcp --dport 22 -j DROP
+ip6tables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 22 -j DROP
 
 #protect from IPv6 NS flooding
-ip6tables -t mangle -A PREROUTING -i $ecm_wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
-ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
+ip6tables -t mangle -A PREROUTING -i "$ecm_wan_ifname" -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
+ip6tables -t mangle -A PREROUTING -i "$wan_ifname" -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 
 #/fss/gw/sbin/ulogd -c /fss/gw/etc/ulogd.conf -d
 
@@ -530,5 +530,5 @@ fi
 # Remove webconfig_db.bin on factory reset on XB3 platforms,CISCOXB3-6731
 if [ "$BOX_TYPE" = "XB3" ];then
         ATOM_RPC_IP=`grep ATOM_ARPING_IP /etc/device.properties | cut -f 2 -d"="`
-        rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
+        rpcclient "$ATOM_RPC_IP" "rm -f /nvram/webconfig_db.bin"
 fi

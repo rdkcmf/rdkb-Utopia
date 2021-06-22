@@ -45,7 +45,7 @@ case "$1" in
 #  Synchronous calls
     #Args: netid, members
     create)
-        echo ${TYPE}_READY=\"$3\"
+        echo ${TYPE}_READY=\""$3"\"
         ;;
     destroy)
         service_stop

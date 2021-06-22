@@ -116,7 +116,7 @@ if [ "1" = "$PROPAGATE_NS" ] || [ "1" = "$PROPOGATE_DOM" ] || [ "1" = "$SYSCFG_b
          DHCP_SLOW_START_NEEDED=1
       fi
       if [ "1" = "$SYSCFG_byoi_enabled" ] && [ "primary" = "`sysevent get current_hsd_mode`" ] &&
-         [ "$primary_temp_ip_prefix" = ${wan_ipaddr:0:${#primary_temp_ip_prefix}} ] ; then
+         [ "$primary_temp_ip_prefix" = "${wan_ipaddr:0:${#primary_temp_ip_prefix}}" ] ; then
          DHCP_SLOW_START_NEEDED=1
       fi
    fi
@@ -140,10 +140,10 @@ if [ "1" = "$DHCP_SLOW_START_NEEDED" ] ; then
          DHCP_SLOW_START_QUANTA=`expr $DHCP_SLOW_START_QUANTA + 1`
          TIME_FILE=$DHCP_SLOW_START_1_FILE
       elif [ "$DHCP_SLOW_START_QUANTA" -le 15 ] ; then
-         DHCP_SLOW_START_QUANTA=`expr $DHCP_SLOW_START_QUANTA + 5`
+         DHCP_SLOW_START_QUANTA=`expr "$DHCP_SLOW_START_QUANTA" + 5`
          TIME_FILE=$DHCP_SLOW_START_2_FILE
       elif [ "$DHCP_SLOW_START_QUANTA" -le 100 ] ; then
-         DHCP_SLOW_START_QUANTA=`expr $DHCP_SLOW_START_QUANTA \* 2`
+         DHCP_SLOW_START_QUANTA=`expr "$DHCP_SLOW_START_QUANTA" \* 2`
          TIME_FILE=$DHCP_SLOW_START_3_FILE
       else
          DHCP_SLOW_START_QUANTA=$DHCP_LEASE_TIME
@@ -164,7 +164,7 @@ if [ "" = "$DHCP_LEASE_TIME" ] ; then
 fi
 
 isValidSubnetMask () { 
-   echo $1 | grep -w -E -o '^(254|252|248|240|224|192|128)\.0\.0\.0|255\.(254|252|248|240|224|192|128|0)\.0\.0|255\.255\.(254|252|248|240|224|192|128|0)\.0|255\.255\.255\.(254|252|248|240|224|192|128|0)' > /dev/null
+   echo "$1" | grep -w -E -o '^(254|252|248|240|224|192|128)\.0\.0\.0|255\.(254|252|248|240|224|192|128|0)\.0\.0|255\.255\.(254|252|248|240|224|192|128|0)\.0|255\.255\.255\.(254|252|248|240|224|192|128|0)' > /dev/null
    if [ $? -eq 0 ]; then
       echo 1
    else
@@ -204,7 +204,7 @@ isValidLANIP () {
 #   The lan interface netmask
 #--------------------------------------------------------------
 calculate_dhcp_range () {
-	LAN_SUBNET=`subnet $1 $2` 
+	LAN_SUBNET=`subnet "$1" "$2"` 
    	# Do a sanity check to make sure we got start address from DB
    	if [ "$DHCP_START" = "" ]
    	then
@@ -224,7 +224,7 @@ calculate_dhcp_range () {
    	allIpsValid=0
 
    	# Validate starting address
-   	OCTET_NUM=`echo $DHCP_START | grep -o "\." | wc -l`
+   	OCTET_NUM=`echo "$DHCP_START" | grep -o "\." | wc -l`
 
    	# If total "."s are 3, then validate last octet
    	# Last octet should not be:
@@ -241,9 +241,9 @@ calculate_dhcp_range () {
             isStartIpValid=0
         else
         	cnt=`echo "$START_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
-           	START_SUBNET=`subnet $DHCP_START $2`
+           	START_SUBNET=`subnet "$DHCP_START" "$2"`
            	echo "START_SUBNET is: $START_SUBNET, LAN_SUBNET=$LAN_SUBNET"
-           	if [ -z $cnt ];
+           	if [ -z "$cnt" ];
            	then
             	echo "DHCP_SERVER: Last octet of start IP is character"
              	isStartIpValid=0
@@ -273,20 +273,20 @@ calculate_dhcp_range () {
    	then
     	echo "DHCP_SERVER: DHCP START Address:$DHCP_START is not valid re-calculating it"
       	# extract 1st 3 octets of the lan subnet and set the last octet to 2 for the start address
-      	DHCP_START_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-3`
+      	DHCP_START_ADDR=`echo "$LAN_SUBNET" | cut -d"." -f1-3`
 
       	DHCP_START=2
       	DHCP_START_ADDR="$DHCP_START_ADDR"".""$DHCP_START"
 	  	echo "DHCP_SERVER: Start address to syscfg_db $DHCP_START_ADDR"
       	# update syscfg dhcp_start
-      	syscfg set dhcp_start $DHCP_START_ADDR
+      	syscfg set dhcp_start "$DHCP_START_ADDR"
       	syscfg commit
    	fi
 
 
    	# Get the ending address from syscfg DB
    	ENDING_ADDRESS=`syscfg get dhcp_end`
-   	OCTET_NUM=`echo $ENDING_ADDRESS | grep -o "\." | wc -l`
+   	OCTET_NUM=`echo "$ENDING_ADDRESS" | grep -o "\." | wc -l`
         echo "dhcp_end:$ENDING_ADDRESS"
 
    	#
@@ -298,15 +298,15 @@ calculate_dhcp_range () {
    	#
 	if [ "$OCTET_NUM" -eq "3" ]
    	then
-    	END_ADDR_LAST_OCTET=`echo $ENDING_ADDRESS | awk -F '\\.' '{print $NF}'`
+    	END_ADDR_LAST_OCTET=`echo "$ENDING_ADDRESS" | awk -F '\\.' '{print $NF}'`
         if [ "$END_ADDR_LAST_OCTET" = "" ]
         then
             echo "DHCP_SERVER: Last octet of end IP is NULL"
             isEndIpValid=0
         else
         	cnt=`echo "$END_ADDR_LAST_OCTET" | sed -e /\[0-9\]/!d -e /\[\.\,\:\]/d -e /\[a-zA-Z\]/d`
-   			END_SUBNET=`subnet $ENDING_ADDRESS $2`	   	        
-   	       	if [ -z $cnt ];
+   			END_SUBNET=`subnet "$ENDING_ADDRESS" "$2"`	   	        
+   	       	if [ -z "$cnt" ];
            	then
             	echo "DHCP_SERVER: Last octet of end IP is character"
              	isEndIpValid=0
@@ -335,13 +335,13 @@ calculate_dhcp_range () {
     if [ "$isEndIpValid" -eq "0" ]
     then
     	echo "DHCP_SERVER: DHCP END Address:$ENDING_ADDRESS is not valid re-calculating it"
-      	MASKBITS=`mask2cidr $2`
+      	MASKBITS=`mask2cidr "$2"`
       	echo "MASKBITS is: $MASKBITS"
 
       	# extract 1st 3 octets of the lan subnet and set the last octet to 253 for the start address  
       	if [ "$MASKBITS" -eq "24" ]
       	then
-          	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-3`
+          	DHCP_END_ADDR=`echo "$LAN_SUBNET" | cut -d"." -f1-3`
           	DHCP_END=253
           	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
@@ -349,7 +349,7 @@ calculate_dhcp_range () {
       	# extract 1st 2 octets of the lan subnet and set the last remaining to 255.253 for the start address  
       	elif [ "$MASKBITS" -eq "16" ]
       	then
-        	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1-2`
+        	DHCP_END_ADDR=`echo "$LAN_SUBNET" | cut -d"." -f1-2`
           	DHCP_END="255.253"
           	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
@@ -357,7 +357,7 @@ calculate_dhcp_range () {
       	# extract 1st octet of the lan subnet and set the last remaining octets to 255.255.253 for the start address  
       	elif [ "$MASKBITS" -eq "8" ]
       	then
-          	DHCP_END_ADDR=`echo $LAN_SUBNET | cut -d"." -f1`
+          	DHCP_END_ADDR=`echo "$LAN_SUBNET" | cut -d"." -f1`
           	DHCP_END="255.255.253"
           	DHCP_END_ADDR="$DHCP_END_ADDR"".""$DHCP_END"
 
@@ -365,7 +365,7 @@ calculate_dhcp_range () {
       	else
         	echo "DHCP_SERVER: Invalid subnet mask $2"   
       	fi
-      	syscfg set dhcp_end $DHCP_END_ADDR
+      	syscfg set dhcp_end "$DHCP_END_ADDR"
       	syscfg commit
    	fi
 }
@@ -377,9 +377,9 @@ prepare_dhcp_conf_static_hosts() {
    NUM_STATIC_HOSTS=`syscfg get dhcp_num_static_hosts`
    echo -n > $LOCAL_DHCP_STATIC_HOSTS_FILE
 
-   for N in $(seq 1 $NUM_STATIC_HOSTS)
+   for N in $(seq 1 "$NUM_STATIC_HOSTS")
    do
-      HOST_LINE=`syscfg get dhcp_static_host_$N`
+      HOST_LINE=`syscfg get dhcp_static_host_"$N"`
       if [ "none" != "$HOST_LINE" ] ; then
          #MAC=""
          #SAVEIFS=$IFS
@@ -500,13 +500,13 @@ prepare_dhcp_options() {
 #         DHCP_OPTION_STR=$DHCP_OPTION_STR","$NS
 #      fi
 #   fi
-   echo $DHCP_OPTION_STR >> $LOCAL_DHCP_OPTIONS_FILE
+   echo "$DHCP_OPTION_STR" >> $LOCAL_DHCP_OPTIONS_FILE
 
    # if we need to provision a wins server
    # we use netbios-ns instead of option 44
    WINS_SERVER=`syscfg get dhcp_wins_server`
    if [ "" != "$WINS_SERVER" ] && [ "0.0.0.0" != "$WINS_SERVER" ] ; then
-      echo "option:netbios-ns,"$WINS_SERVER >> $LOCAL_DHCP_OPTIONS_FILE
+      echo "option:netbios-ns,$WINS_SERVER" >> $LOCAL_DHCP_OPTIONS_FILE
    fi
 
    cat $LOCAL_DHCP_OPTIONS_FILE > $DHCP_OPTIONS_FILE
@@ -561,20 +561,20 @@ get_dhcp_option_for_brlan0() {
               fi    
               if [ "" = "$DHCP_OPTION_STR" ] ; then
                  if [ "" != "$NS" ] ; then
-                     DHCP_OPTION_STR="dhcp-option=brlan0,6,"$CURR_LAN_IP","$NS
+                     DHCP_OPTION_STR="dhcp-option=brlan0,6,$CURR_LAN_IP,"$NS
                  else
                      DHCP_OPTION_STR="dhcp-option=brlan0,6,"$CURR_LAN_IP
                  fi
               else
                  if [ "" != "$NS" ] ; then
-                     DHCP_OPTION_STR=$DHCP_OPTION_STR","$CURR_LAN_IP","$NS
+                     DHCP_OPTION_STR=$DHCP_OPTION_STR",$CURR_LAN_IP,"$NS
                  else
                      DHCP_OPTION_STR=$DHCP_OPTION_STR","$CURR_LAN_IP
                  fi    
               fi
           fi
 
-	  echo $DHCP_OPTION_STR
+	  echo "$DHCP_OPTION_STR"
 }
 
 prepare_dhcp_options_wan_dns()
@@ -596,7 +596,7 @@ prepare_dhcp_options_wan_dns()
       fi
    fi
 
-   echo $DHCP_OPTION_STR >> $LOCAL_DHCP_OPTIONS_FILE
+   echo "$DHCP_OPTION_STR" >> $LOCAL_DHCP_OPTIONS_FILE
    cat $LOCAL_DHCP_OPTIONS_FILE > $DHCP_OPTIONS_FILE
    rm -f $LOCAL_DHCP_OPTIONS_FILE
 }
@@ -605,13 +605,13 @@ prepare_dhcp_options_wan_dns()
 removehttp()
 {
 	urlToCheck=$1
-	haveHttp=`echo $urlToCheck | grep //`
+	haveHttp=`echo "$urlToCheck" | grep //`
 	if [ "$haveHttp" != "" ]
 	then
-		url=`echo $urlToCheck | cut -f2 -d":" | cut -f3 -d"/"`
-		echo $url
+		url=`echo "$urlToCheck" | cut -f2 -d":" | cut -f3 -d"/"`
+		echo "$url"
 	else
-		echo $urlToCheck
+		echo "$urlToCheck"
 	fi
 		
 }
@@ -633,14 +633,14 @@ prepare_whitelist_urls()
 	Redirection_URL=`syscfg get redirection_url`
 	if [ "$Redirection_URL" != "" ]
 	then
-		Redirection_URL=`removehttp $Redirection_URL`
+		Redirection_URL=`removehttp "$Redirection_URL"`
 	fi
 
 	# CloudPersonalization URL can be get from DML	
 	CloudPersonalization_URL=`syscfg get CloudPersonalizationURL`
 	if [ "$CloudPersonalization_URL" != "" ]
 	then
-		CloudPersonalization_URL=`removehttp $CloudPersonalization_URL`
+		CloudPersonalization_URL=`removehttp "$CloudPersonalization_URL"`
 	fi
 
 	#Check in what mode erouter0 is in : ipv4/ipv6
@@ -663,18 +663,18 @@ prepare_whitelist_urls()
 	then
 
 		if [ "$Redirection_URL" != "" ]; then
-			echo "server=/$Redirection_URL/$nServer4" >> $1
+			echo "server=/$Redirection_URL/$nServer4" >> "$1"
 		fi
 
 		if [ "$CloudPersonalization_URL" != "" ]; then
-			echo "server=/$CloudPersonalization_URL/$nServer4" >> $1
+			echo "server=/$CloudPersonalization_URL/$nServer4" >> "$1"
 		fi
 
         if [ -f $STATIC_URLS_FILE ]; then
          STATIC_URL_LIST=`cat $STATIC_URLS_FILE`
          for whitelisting_url in $STATIC_URL_LIST
          do
-            echo "server=/$whitelisting_url/$nServer4" >> $1
+            echo "server=/$whitelisting_url/$nServer4" >> "$1"
          done
       fi
 
@@ -688,7 +688,7 @@ prepare_static_dns_urls()
      STATIC_DNS_URL_LIST=`cat $STATIC_DNS_URLS_FILE`
      for static_dns_url in $STATIC_DNS_URL_LIST
      do
-        echo "server=/$static_dns_url/" >> $1
+        echo "server=/$static_dns_url/" >> "$1"
      done
   fi
 }
@@ -740,22 +740,22 @@ prepare_dhcp_conf () {
 
    LAN_IPADDR=$1
    LAN_NETMASK=$2
-   if [[ `isValidLANIP $LAN_IPADDR` -eq 0 || `isValidSubnetMask $LAN_NETMASK` -eq 0 ]]; then
+   if [[ `isValidLANIP "$LAN_IPADDR"` -eq 0 || `isValidSubnetMask "$LAN_NETMASK"` -eq 0 ]]; then
        echo "LAN IP Address OR LAN net mask is not in valid format, setting to default. lan_ipaddr:$LAN_IPADDR lan_netmask:$LAN_NETMASK"
        result=$(grep '$lan_ipaddr\|$lan_netmask\|$dhcp_start\|$dhcp_end' $DEFAULT_FILE | awk '/\$lan_ipaddr/ {split($1,ip, "=");} /\$lan_netmask/ {split($1,mask, "=");} /\$dhcp_start/ {split($1,start, "=");} /\$dhcp_end/ {split($1,end, "=");} END {print ip[2], mask[2], start[2], end[2]}')
        OIFS=$IFS
        IFS=' '
-       set -- $result
+       set -- "$result"
        lanIP="$1"
        lanNetMask="$2"
        dhcpStart="$3"
        dhcpEnd="$4"
        IFS=$OIFS
 
-       syscfg set lan_ipaddr $lanIP
-       syscfg set lan_netmask $lanNetMask
-       syscfg set dhcp_start $dhcpStart
-       syscfg set dhcp_end  $dhcpEnd
+       syscfg set lan_ipaddr "$lanIP"
+       syscfg set lan_netmask "$lanNetMask"
+       syscfg set dhcp_start "$dhcpStart"
+       syscfg set dhcp_end  "$dhcpEnd"
        syscfg commit
 
        LAN_IPADDR=$lanIP
@@ -964,9 +964,9 @@ fi
 		   echo_t "DHCP_SERVER : Starting lan-status"
 		   sysevent set lan-status started
 	   fi                                                  
-   fi   
-   if [ "started" = $CURRENT_LAN_STATE ]; then
-      calculate_dhcp_range $LAN_IPADDR $LAN_NETMASK
+   fi 
+   if [ "started" = "$CURRENT_LAN_STATE" ]; then
+      calculate_dhcp_range "$LAN_IPADDR" "$LAN_NETMASK"
       echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
 	  if [ $DHCP_LEASE_TIME == -1 ]; then
 	      echo "$PREFIX""dhcp-range=$DHCP_START_ADDR,$DHCP_END_ADDR,$LAN_NETMASK,infinite" >> $LOCAL_DHCP_CONF
@@ -994,7 +994,7 @@ fi
    if [ "$isBrlan1" != "" ]
    then
       echo_t "DHCP_SERVER : brlan1 availble, creating dnsmasq entry "
-      do_extra_pools $NAMESERVERENABLED $WAN_DHCP_NS
+      do_extra_pools "$NAMESERVERENABLED" "$WAN_DHCP_NS"
    else
        echo_t "DHCP_SERVER : brlan1 not available, cannot enter details in dnsmasq.conf"
    fi
@@ -1004,7 +1004,7 @@ fi
    then
         echo "IOT_LOG : DHCP server configuring for IOT"
         IOT_IFNAME=`syscfg get iot_ifname`
-        if [ $IOT_IFNAME == "l2sd0.106" ]; then
+        if [ "$IOT_IFNAME" == "l2sd0.106" ]; then
          IOT_IFNAME=`syscfg get iot_brname`
         fi
 	IOT_START_ADDR=`syscfg get iot_dhcp_start`
@@ -1018,7 +1018,7 @@ fi
 	  fi
 	  
 	   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
-		   echo "${PREFIX}""dhcp-option="${IOT_IFNAME}",6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+		   echo "${PREFIX}""dhcp-option=${IOT_IFNAME},6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 	   fi
    fi
 
@@ -1194,7 +1194,7 @@ fi
 }
 
 do_extra_pools () {
-    POOLS="`sysevent get ${SERVICE_NAME}_current_pools`"
+    POOLS="`sysevent get "${SERVICE_NAME}"_current_pools`"
     if [ x"$POOLS" = x ]; then
         echo_t "DHCP_SERVER : dhcp_server pools not availble"
     fi
@@ -1207,49 +1207,49 @@ do_extra_pools () {
     
     for i in $POOLS; do 
         #DNS_S1 ${DHCPS_POOL_NVPREFIX}.${i}.${DNS_S1_DM} DNS_S2 ${DHCPS_POOL_NVPREFIX}.${i}.${DNS_S2_DM} DNS_S3 ${DHCPS_POOL_NVPREFIX}.${i}.${DNS_S3_DM}
-        ENABLED=`sysevent get ${SERVICE_NAME}_${i}_enabled`
-        if [ x"TRUE" != x$ENABLED ]; then
+        ENABLED=`sysevent get "${SERVICE_NAME}"_"${i}"_enabled`
+        if [ x"TRUE" != x"$ENABLED" ]; then
             echo_t "DHCP_SERVER : ${SERVICE_NAME}_${i} is not enabled"
             continue;
         fi
         
-        IPV4_INST=`sysevent get ${SERVICE_NAME}_${i}_ipv4inst`
-        if [ x$L3_UP_STATUS != x`sysevent get ipv4_${IPV4_INST}-status` ]; then
+        IPV4_INST=`sysevent get "${SERVICE_NAME}"_"${i}"_ipv4inst`
+        if [ x"$L3_UP_STATUS" != x"`sysevent get ipv4_"${IPV4_INST}"-status`" ]; then
             echo_t "DHCP_SERVER : L3 is not up"
             continue
         fi
         
-        m_DHCP_START_ADDR=`sysevent get ${SERVICE_NAME}_${i}_startaddr`
-        if [ x$m_DHCP_START_ADDR = x ]; then
+        m_DHCP_START_ADDR=`sysevent get "${SERVICE_NAME}"_"${i}"_startaddr`
+        if [ x"$m_DHCP_START_ADDR" = x ]; then
             echo_t "DHCP_SERVER : Start address for pool $i not availble"
         fi
 
-        m_DHCP_END_ADDR=`sysevent get ${SERVICE_NAME}_${i}_endaddr`
-        if [ x$m_DHCP_END_ADDR = x ]; then
+        m_DHCP_END_ADDR=`sysevent get "${SERVICE_NAME}"_"${i}"_endaddr`
+        if [ x"$m_DHCP_END_ADDR" = x ]; then
             echo_t "DHCP_SERVER : End address for pool $i not availble"
         fi
 
-        m_LAN_SUBNET=`sysevent get ${SERVICE_NAME}_${i}_subnet`
-        if [ x$m_LAN_SUBNET = x ]; then
+        m_LAN_SUBNET=`sysevent get "${SERVICE_NAME}"_"${i}"_subnet`
+        if [ x"$m_LAN_SUBNET" = x ]; then
             echo_t "DHCP_SERVER : Subnet not available for pool $i"
         fi
 
-        m_DHCP_LEASE_TIME=`sysevent get ${SERVICE_NAME}_${i}_leasetime`
-        if [ x$m_DHCP_LEASE_TIME = x ]; then
+        m_DHCP_LEASE_TIME=`sysevent get "${SERVICE_NAME}"_"${i}"_leasetime`
+        if [ x"$m_DHCP_LEASE_TIME" = x ]; then
             echo_t "DHCP_SERVER : Leasetime not available for pool $i"
         fi
 
-        IFNAME=`sysevent get ipv4_${IPV4_INST}-ifname`
+        IFNAME=`sysevent get ipv4_"${IPV4_INST}"-ifname`
         
        if [ x"$m_DHCP_START_ADDR" != "x" ] && [ x"$m_DHCP_END_ADDR" != "x" ]
 	then
-		echo "${PREFIX}""interface="${IFNAME} >> $LOCAL_DHCP_CONF
+		echo "${PREFIX}interface=${IFNAME}" >> $LOCAL_DHCP_CONF
 		echo "${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}" >> $LOCAL_DHCP_CONF
 		echo_t "DHCP_SERVER : [BRLAN1] ${PREFIX}""dhcp-range=set:$i,${m_DHCP_START_ADDR},${m_DHCP_END_ADDR},$m_LAN_SUBNET,${m_DHCP_LEASE_TIME}"
 	fi
 
 	   	if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
-			echo "${PREFIX}""dhcp-option="${IFNAME}",6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
+			echo "${PREFIX}""dhcp-option=${IFNAME},6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		fi
     done
 }

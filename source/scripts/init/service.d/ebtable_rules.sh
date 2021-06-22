@@ -39,8 +39,8 @@
 do_block_lan_to_wanip() {
     lan_if=$1
     wan_if=$2
-    wan_addrs=`ip -4 addr show $wan_if | awk -F'[ /]+' '/inet/ {print $3}'`
-    wan_addrs6=`ip -6 addr show $wan_if | awk -F'[ /]+' '/inet/ {print $3}'`
+    wan_addrs=`ip -4 addr show "$wan_if" | awk -F'[ /]+' '/inet/ {print $3}'`
+    wan_addrs6=`ip -6 addr show "$wan_if" | awk -F'[ /]+' '/inet/ {print $3}'`
     echo  "[blocking] $lan_if <-> $wan_if ..."
 
     # for each IPV4 and IPV6 addresses
@@ -53,14 +53,14 @@ do_block_lan_to_wanip() {
     for addr in $wan_addrs; do
         if [ -n "$addr" ]; then
             echo  "  filter traffic from $lan_if to $addr"
-            ebtables -I FORWARD -i $lan_if -p ip --ip-destination $addr -j DROP
+            ebtables -I FORWARD -i "$lan_if" -p ip --ip-destination "$addr" -j DROP
         fi
     done
 
     for addr6 in $wan_addrs6; do
         if [ -n "$addr6" ]; then
             echo  "  filter traffic from $lan_if to $addr6"
-            ebtables -I FORWARD -i $lan_if -p ip6 --ip6-destination $addr6 -j DROP
+            ebtables -I FORWARD -i "$lan_if" -p ip6 --ip6-destination "$addr6" -j DROP
         fi
     done
 }
@@ -76,7 +76,7 @@ block_lan_to_wanip_all() {
 
     for lanif in $lan_ifs; do
         for wanif in $wan_ifs; do
-            do_block_lan_to_wanip $lanif $wanif
+            do_block_lan_to_wanip "$lanif" "$wanif"
         done
     done
 }
@@ -110,13 +110,13 @@ set_ebtable_rules() {
         block_lan_to_wanip_all
         
         ATOM_MAC=`arp 192.168.101.3 | awk '{print $4}'`
-        echo $ATOM_MAC | grep ':'
+        echo "$ATOM_MAC" | grep ':'
         if [ $? != 0 ]; then
             arping -c 1 -I l2sd0.500 192.168.101.3
             ATOM_MAC=`arp 192.168.101.3 | awk '{print $4}'`
         fi
         
-        ebtables -I FORWARD -o lbr0 -s $ATOM_MAC -j DROP
+        ebtables -I FORWARD -o lbr0 -s "$ATOM_MAC" -j DROP
         ebtables -I FORWARD -o lbr0 -p IPv4 --ip-destination 192.168.100.1 -j ACCEPT
         #ebtables -I FORWARD -o lbr0 -p ARP --arp-ip-dst 192.168.100.1 -j DROP
         

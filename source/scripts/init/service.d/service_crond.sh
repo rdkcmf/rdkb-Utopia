@@ -55,7 +55,7 @@ then
 fi
 
 SERVICE_NAME="crond"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 #BOX_TYPE=`cat /etc/device.properties | grep BOX_TYPE  | cut -f2 -d=`
 
 service_start () 
@@ -75,9 +75,9 @@ service_start ()
       # which is the property we are looking for
       INT=wan0
       OUR_MAC=`ip link show $INT | grep link | awk '{print $2}'`
-      MAC1=`echo $OUR_MAC | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$6) }'`
-      MAC2=`echo $OUR_MAC | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$5) }'`
-      RANDOM=`expr $MAC1 \* $MAC2`
+      MAC1=`echo "$OUR_MAC" | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$6) }'`
+      MAC2=`echo "$OUR_MAC" | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$5) }'`
+      RANDOM=`expr "$MAC1" \* "$MAC2"`
    
       mkdir -p $CRONTAB_DIR
    
@@ -85,7 +85,7 @@ service_start ()
       echo "1,6,11,16,21,26,31,36,41,46,51,56 * * * *  execute_dir /etc/cron/cron.every5minute" >> $CRONTAB_FILE
       echo "2,12,22,32,42,52 * * * *  execute_dir /etc/cron/cron.every10minute" >> $CRONTAB_FILE
       num1=$RANDOM
-      rand1=`expr $num1 % 60`
+      rand1=`expr "$num1" % 60`
       rand4=`expr "$RANDOM" \* 2`
       rand4=`expr "$rand4" % 60`
       echo "$rand1 * * * * execute_dir /etc/cron/cron.hourly" >> $CRONTAB_FILE
@@ -116,22 +116,22 @@ service_start ()
       
       num1=$RANDOM
       num2=$RANDOM
-      rand1=`expr $num1 % 60`
-      rand2=`expr $num2 % 24`
+      rand1=`expr "$num1" % 60`
+      rand2=`expr "$num2" % 24`
       echo "$rand1 $rand2 * * * execute_dir /etc/cron/cron.daily" >> $CRONTAB_FILE
       num1=$RANDOM
       num2=$RANDOM
       num3=$RANDOM
-      rand1=`expr $num1 % 60`
-      rand2=`expr $num2 % 24`
-      rand3=`expr $num3 % 7`
+      rand1=`expr "$num1" % 60`
+      rand2=`expr "$num2" % 24`
+      rand3=`expr "$num3" % 7`
       echo "$rand1 $rand2 * * $rand3 execute_dir /etc/cron/cron.weekly" >> $CRONTAB_FILE
       num1=$RANDOM
       num2=$RANDOM
       num3=$RANDOM
-      rand1=`expr $num1 % 60`
-      rand2=`expr $num2 % 24`
-      rand3=`expr $num3 % 28`
+      rand1=`expr "$num1" % 60`
+      rand2=`expr "$num2" % 24`
+      rand3=`expr "$num3" % 28`
       echo "$rand1 $rand2 $rand3 * * execute_dir /etc/cron/cron.monthly" >> $CRONTAB_FILE
       
       # update mso potd every midnight at 00:05
@@ -172,7 +172,7 @@ service_start ()
 
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
       MODEL="`grep MODEL_NUM /etc/device.properties | cut -d "=" -f2`"
-      if [ -n "$(echo $MODEL | grep 3941)" ]; then
+      if [ -n "$(echo "$MODEL" | grep 3941)" ]; then
          echo "1 */12 * * *  rpcclient 169.254.101.2 \"/etc/ath/CurrentChainMask_Logging.sh\"" >> $CRONTAB_FILE
       fi
 
@@ -181,7 +181,7 @@ service_start ()
       telemtery_time_interval=`syscfg get unique_telemetry_interval`
       telemtery_tag=`syscfg get unique_telemetry_tag`
 
-      if [ "$telemtery_enable" = "true" ] && [ 0$telemtery_time_interval -gt 0 ] && [ ! -z "$telemtery_tag" -a "$telemtery_tag" != " " ] ; then
+      if [ "$telemtery_enable" = "true" ] && [ 0"$telemtery_time_interval" -gt 0 ] && [ ! -z "$telemtery_tag" -a "$telemtery_tag" != " " ] ; then
         #Convert time interval(in minutes) to days, hours and minutes
         d=$(($telemtery_time_interval / (60*24)))
         h=$((($telemtery_time_interval % (60*24)) / 60))
@@ -274,13 +274,13 @@ service_stop ()
 # Entry
 echo_t "SERVICE_CROND : event $1"
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;
