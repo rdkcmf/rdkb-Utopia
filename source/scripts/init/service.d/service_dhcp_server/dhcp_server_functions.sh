@@ -960,7 +960,15 @@ fi
 	  if [ "1" = "$NAMESERVERENABLED" ]; then
 		  DHCP_OPTION_FOR_LAN=`get_dhcp_option_for_brlan0`
 		  echo "$PREFIX""$DHCP_OPTION_FOR_LAN" >> $LOCAL_DHCP_CONF
-		  echo_t "DHCP_SERVER : $PREFIX$DHCP_OPTION_FOR_LAN" 
+		  echo_t "DHCP_SERVER : $PREFIX$DHCP_OPTION_FOR_LAN"
+                  SECUREWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
+                  if [ "$SECUREWEBUI_ENABLED" = "true" ]; then
+                      locaddr=`syscfg get lan_ipaddr`
+                      LOCDOMAIN_NAME=`syscfg get SecureWebUI_LocalFqdn`
+                      echo "address=/$LOCDOMAIN_NAME/$locaddr" >> $LOCAL_DHCP_CONF
+                      echo "server=/$LOCDOMAIN_NAME/$locaddr" >> $LOCAL_DHCP_CONF
+                      
+                  fi 
           fi
                
    fi

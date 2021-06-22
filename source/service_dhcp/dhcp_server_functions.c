@@ -1140,6 +1140,14 @@ int prepare_dhcp_conf (char *input)
 			char cDhcpNs_OptionString[ 1024 ] = { 0 }; 
 			get_dhcp_option_for_brlan0( cDhcpNs_OptionString );
 			fprintf(l_fLocal_Dhcp_ConfFile, "%s\n", cDhcpNs_OptionString);
+                        if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
+                        {
+			    char  l_clocFqdn[16] = {0},l_cCurLanIP[16] = {0};
+		            sysevent_get(g_iSyseventfd, g_tSysevent_token, "current_lan_ipaddr", l_cCurLanIP, sizeof(l_cCurLanIP));
+			    syscfg_get(NULL, "SecureWebUI_LocalFqdn", l_clocFqdn, sizeof(l_clocFqdn));
+		            fprintf(l_fLocal_Dhcp_ConfFile, "address=/%s/%s\n",l_clocFqdn,l_cCurLanIP );
+		            fprintf(l_fLocal_Dhcp_ConfFile, "server=/%s/%s\n",l_clocFqdn,l_cCurLanIP );	
+                        }
 			fprintf(stderr, "DHCP_SERVER : [%s] %s\n", l_cLan_if_name, cDhcpNs_OptionString );
 		}
 	}
