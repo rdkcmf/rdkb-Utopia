@@ -370,7 +370,6 @@ NOT_DEF:
 #include <linux/version.h>
 #endif
 
-
 #define CCSP_SUBSYS "eRT."
 #define PORTMAPPING_2WAY_PASSTHROUGH
 #define MAX_URL_LEN 1024 
@@ -439,8 +438,7 @@ NOT_DEF:
 
 #define IS_EMPTY_STRING(s)    ((s == NULL) || (*s == '\0'))
 
-/* HUB4 application specific defines. */
-#ifdef _HUB4_PRODUCT_REQ_
+#if defined(FEATURE_MAPT) || defined(_HUB4_PRODUCT_REQ_) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 #define IS_EMPTY_STRING(s)    ((s == NULL) || (*s == '\0'))
 #define BUFLEN_64 64
 #define UP "up"
@@ -450,11 +448,21 @@ NOT_DEF:
 #define BUFLEN_32 32
 #define SET "set"
 #define RET_ERR -1
+#endif //FEATURE_MAPT || _HUB4_PRODUCT_REQ_
+
+/* HUB4 application specific defines. */
+#ifdef _HUB4_PRODUCT_REQ_
 #ifdef HUB4_BFD_FEATURE_ENABLED
 #define IPOE_HEALTHCHECK "ipoe_healthcheck"
 #endif //HUB4_BFD_FEATURE_ENABLED
 
-#ifdef FEATURE_MAPT
+#ifdef HUB4_SELFHEAL_FEATURE_ENABLED
+#define SELFHEAL "SELFHEAL"
+#define HTTP_HIJACK_DIVERT "HTTP_HIJACK_DIVERT"
+#endif //HUB4_SELFHEAL_FEATURE_ENABLED
+#endif //_HUB4_PRODUCT_REQ_
+
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 #define SYSEVENT_MAPT_CONFIG_FLAG "mapt_config_flag"
 #define SYSEVENT_MAPT_IP_ADDRESS "mapt_ip_address"
 #define MAPT_NAT_IPV4_POST_ROUTING_TABLE "postrouting_towan"
@@ -465,23 +473,27 @@ NOT_DEF:
 #define SYSEVENT_MAPT_PSID_LENGTH "mapt_psid_length"
 #define ETH_MESH_BRIDGE "br403"
 
-#if defined(NAT46_KERNEL_SUPPORT)
-#define NAT46_INTERFACE "map0"
-#define NAT46_CLAMP_MSS  1440
-#endif //IVI_KERNEL_SUPPORT
 BOOL isMAPTSet(void);
 static int do_wan_nat_lan_clients_mapt(FILE *fp);
+static BOOL isMAPTReady = 0;
+static char mapt_ip_address[BUFLEN_32];
+
+#if defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+#define NAT46_INTERFACE "map0"
+#define NAT46_CLAMP_MSS  1440
+#endif // NAT46_KERNEL_SUPPORT
+
 #ifdef FEATURE_MAPT_DEBUG
 void logPrintMain(char* filename, int line, char *fmt,...);
 #define LOG_PRINT_MAIN(...) logPrintMain(__FILE__, __LINE__, __VA_ARGS__ )
 #endif
+
 #endif //FEATURE_MAPT
 
-#ifdef HUB4_SELFHEAL_FEATURE_ENABLED
-#define SELFHEAL "SELFHEAL"
-#define HTTP_HIJACK_DIVERT "HTTP_HIJACK_DIVERT"
-#endif //HUB4_SELFHEAL_FEATURE_ENABLED
-#endif //_HUB4_PRODUCT_REQ_
+#ifdef FEATURE_SUPPORT_MAPT_NAT46
+#define XHS_BRIDGE  "brlan1"
+#define LNF_BRIDGE  "br106"
+#endif
 
 #define SYSCTL_NF_CONNTRACK_HELPER "/proc/sys/net/netfilter/nf_conntrack_helper"
 #define V4_BLOCKFRAGIPPKT   "v4_BlockFragIPPkts"
@@ -672,13 +684,6 @@ static char firewall_level[20];   // None, Low, Medium, High, or Custom
 static char firewall_levelv6[20];   // None, High, or Custom
 static char cmdiag_ifname[20];       // name of the lan interface
 static int isNatReady;
-
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
-static BOOL isMAPTReady = 0;
-static char mapt_ip_address[BUFLEN_32];
-#endif
-#endif
 
 static char natip4[20];
 static char captivePortalEnabled[50]; //to ccheck captive portal is enabled or not
@@ -931,7 +936,7 @@ static int IsValidIPv6Addr(char* ip_addr_string)
 static void add_dslite_mss_clamping(FILE *fp);
 #endif
 
-#ifdef _HUB4_PRODUCT_REQ_
+#if defined(FEATURE_MAPT) || defined(FEATURE_SUPPORT_MAPT_NAT46)
 static int IsValidIPv4Addr(char* ip_addr_string)
 {
     int ret = 1;
@@ -957,7 +962,6 @@ static int IsValidIPv4Addr(char* ip_addr_string)
     return ret;
 }
 
-#ifdef FEATURE_MAPT
 /*
  ==========================================================================
                      HUB4 MAPT Feature
@@ -1018,14 +1022,14 @@ int do_mapt_rules_v6(FILE *filter_fp)
     }
 
     /* Add POSTROUTING rule. */
-#if (IVI_KERNEL_SUPPORT) || (NAT46_KERNEL_SUPPORT)
+#if (IVI_KERNEL_SUPPORT) || (NAT46_KERNEL_SUPPORT) || (FEATURE_SUPPORT_MAPT_NAT46)
     /* bypass IPv6 firewall, let IPv4 firewall handle MAP-T packets */
     fprintf(filter_fp, "-I wan2lan -d %s -j ACCEPT\n", ipV6address_str);
 
     //SKYH4-5461 - ip6tables lan2wan accept for map-t translated packets because it has already been validated in IPv4 tables.
     fprintf(filter_fp, "-I lan2wan -s %s -j ACCEPT\n", ipV6address_str);
 
-#endif // (IVI_KERNEL_SUPPORT) || (NAT46_KERNEL_SUPPORT)
+#endif // (IVI_KERNEL_SUPPORT) || (NAT46_KERNEL_SUPPORT) || (FEATURE_SUPPORT_MAPT_NAT46)
 END:
     return ret;
 }
@@ -1119,11 +1123,11 @@ int do_mapt_rules_v4(FILE *nat_fp, FILE *filter_fp, FILE *mangle_fp)
     /* Add POSTROUTING rule. */
 #if defined(IVI_KERNEL_SUPPORT)
     fprintf(nat_fp, "-A POSTROUTING -o %s -j %s\n",get_current_wan_ifname(),MAPT_NAT_IPV4_POST_ROUTING_TABLE);
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
     fprintf(nat_fp, "-A POSTROUTING -o %s -j %s\n", NAT46_INTERFACE, MAPT_NAT_IPV4_POST_ROUTING_TABLE);
 #endif
 
-#ifdef NAT46_KERNEL_SUPPORT
+#if defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
     // TCP MSS RULE - SKYH4-5123 - To improve IPv4 Downstream traffic performance
     fprintf(mangle_fp, "-A FORWARD -p tcp --tcp-flags SYN,RST SYN -o %s -j TCPMSS --set-mss %d\n", NAT46_INTERFACE, NAT46_CLAMP_MSS);
 #endif //NAT46_KERNEL_SUPPORT
@@ -1213,7 +1217,7 @@ int do_mapt_rules_v4(FILE *nat_fp, FILE *filter_fp, FILE *mangle_fp)
                     initialPortValue, finalPortValue);
             fprintf(nat_fp, "-A %s -o %s -p udp --sport %d:%d -j SNAT --to-source %s:%d-%d\n",MAPT_NAT_IPV4_POST_ROUTING_TABLE, get_current_wan_ifname(), initialPortValue, finalPortValue, ipaddress_str,
                     initialPortValue, finalPortValue);
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
             fprintf(nat_fp, "-A %s -p tcp -m connlimit --connlimit-upto %d --connlimit-daddr  -j SNAT --to-source %s:%d-%d\n", MAPT_NAT_IPV4_POST_ROUTING_TABLE, finalPortValue - initialPortValue, ipaddress_str, initialPortValue,finalPortValue);
             fprintf(nat_fp, "-A %s -p udp -m connlimit --connlimit-upto %d --connlimit-daddr  -j SNAT --to-source %s:%d-%d\n", MAPT_NAT_IPV4_POST_ROUTING_TABLE, finalPortValue - initialPortValue, ipaddress_str, initialPortValue,finalPortValue);
             fprintf(nat_fp, "-A %s -p icmp -m connlimit --connlimit-upto %d --connlimit-daddr  -j SNAT --to-source %s:%d-%d\n", MAPT_NAT_IPV4_POST_ROUTING_TABLE, finalPortValue - initialPortValue, ipaddress_str, initialPortValue,finalPortValue);
@@ -1386,7 +1390,6 @@ static int do_wan_nat_lan_clients_mapt(FILE *fp)
     return 0;
 }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
 
 /*
  *  Procedure     : do_webui_rate_limit
@@ -2312,14 +2315,14 @@ static int prepare_globals_from_configuration(void)
    }
    rfstatus =  isInRFCaptivePortal();
    isCacheActive     = (0 == strcmp("started", transparent_cache_state)) ? 1 : 0;
-   isFirewallEnabled = (0 == strcmp("0", firewall_enabled)) ? 0 : 1;  
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+   isFirewallEnabled = (0 == strcmp("0", firewall_enabled)) ? 0 : 1; 
+
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    isMAPTReady = isMAPTSet();
 
    if(!isMAPTReady) //Dual Stack Line
       isWanReady        = IsValidIPv4Addr(current_wan_ipaddr);
-#if defined(NAT46_KERNEL_SUPPORT)
+#if defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    else { //MAPT Line
       isWanReady        = IsValidIPv4Addr(mapt_ip_address);
       safec_rc = strcpy_s(current_wan_ipaddr, sizeof(current_wan_ipaddr),mapt_ip_address);
@@ -2329,9 +2332,11 @@ static int prepare_globals_from_configuration(void)
 #else // IVI
    isWanReady        = IsValidIPv4Addr(current_wan_ipaddr);
 #endif //NAT46_KERNEL_SUPPORT
+#endif //FEATURE_MAPT
 
-#else // NON FEATURE_MAPT
-   isWanReady        = IsValidIPv4Addr(current_wan_ipaddr);
+#ifdef _HUB4_PRODUCT_REQ_
+#ifndef FEATURE_MAPT
+   isWanReady        = (0 == strcmp("0.0.0.0", current_wan_ipaddr)) ? 0 : 1;
 #endif //FEATURE_MAPT
 #else //_HUB4_PRODUCT_REQ_ ENDS
    isWanReady        = (0 == strcmp("0.0.0.0", current_wan_ipaddr)) ? 0 : 1;
@@ -2934,14 +2939,9 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #ifndef INTEL_PUMA7
    char *tmp = NULL;
 #endif
-           FIREWALL_DEBUG("Entering do_single_port_forwarding\n");       
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+           FIREWALL_DEBUG("Entering do_single_port_forwarding\n");
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    BOOL isBothProtocol = FALSE;
-#endif
-#endif
-
-#ifdef FEATURE_MAPT
    BOOL isFeatureDisabled = TRUE;
 #endif
    query[0] = '\0';
@@ -2957,7 +2957,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          count = MAX_SYSCFG_ENTRIES;
       }
    }
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    {
        FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA TRUE);
        isFeatureDisabled = FALSE;
@@ -2972,7 +2972,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          continue;
       }
    
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:Index %d\n" COMMA idx);
 #endif
       // is the rule enabled
@@ -2983,7 +2983,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       } else if ( (0 == strcmp("0", query)) || (0 == strcasecmp("false", query)) ) {
         continue;
       }
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
         FIREWALL_DEBUG("PortMapping:Enable %s\n" COMMA query);
 #endif
    
@@ -3006,7 +3006,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
             continue;
         }
       }
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       if(iptype == AF_INET){
           FIREWALL_DEBUG("PortMapping:Internal Client %s\n" COMMA toip);
       } else {
@@ -3022,7 +3022,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          continue;
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:External Port %s\n" COMMA external_port);
 #endif
 
@@ -3033,7 +3033,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       if (0 != rc || '\0' == internal_port[0]) {
          snprintf(internal_port, sizeof(internal_port), "%s", external_port);
       }
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:Internal Port %s\n" COMMA internal_port);
 #endif
 
@@ -3052,7 +3052,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          snprintf(prot, sizeof(prot), "%s", "both");
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:Protocol %s\n" COMMA prot);
 #endif
 
@@ -3068,9 +3068,8 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 
           continue;
       }
-
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+      
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       if (isMAPTReady == TRUE )
       {
           if (0 == strcmp("both", prot))
@@ -3092,27 +3091,20 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
               LOG_PRINT_MAIN("ivictl: %s",cmdIvictlPf);
 #endif
               system(cmdIvictlPf);
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
           {
 
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Single Port Forwarding --- BOTH" );
 #endif
              fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif
  
              fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif
           }
 #endif //IVI_KERNEL_SUPPORT
           }
        }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
       
       
     if ( (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) && (privateIpCheck(toip)) )
@@ -3120,9 +3112,8 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 	     if (isNatReady) {
             fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
          }
-         
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)              
@@ -3140,21 +3131,17 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif
                  system(cmdIvictlPf);
             }
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
             if (isBothProtocol == FALSE)
             {
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Single Port Forwarding --- TCP" );
 #endif
                 fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif
             }
 #endif //IVI_KERNEL_SUPPORT
          }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
                fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
@@ -3168,8 +3155,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                 fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, natip4);
                 #endif
             }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
           else
           {
               if(isMAPTReady)
@@ -3185,7 +3171,6 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                   fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, mapt_ip_address);
               }
           }
-#endif
 #endif
          }else if (!isNatRedirectionBlocked) {
             fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", lan_ipaddr, external_port, toip, port_modifier);
@@ -3220,8 +3205,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 		 if (isNatReady) {
             fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
          }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)
@@ -3239,21 +3223,17 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif                
                  system(cmdIvictlPf);
              }
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
              if (isBothProtocol == FALSE)
              {
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Single Port Forwarding --- UDP" );
 #endif
                  fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif
              }
 #endif //IVI_KERNEL_SUPPORT
          }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
                fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
@@ -3267,8 +3247,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                 fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, natip4);
                 #endif
             }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
     else{ 
             if(isMAPTReady)
             {
@@ -3288,7 +3267,6 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                 fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, mapt_ip_address);
             }
         }
-#endif
 #endif
          }else if (!isNatRedirectionBlocked) {
             fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", lan_ipaddr, external_port, toip, port_modifier);
@@ -3324,7 +3302,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif
    }
 SinglePortForwardNext:
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
      if(isFeatureDisabled == TRUE)
      {
          FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA FALSE);
@@ -3350,18 +3328,12 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
    char namespace[MAX_NAMESPACE];
    char query[MAX_QUERY];
    int  rc;
-#if defined(CISCO_CONFIG_TRUE_STATIC_IP) || (defined(FEATURE_MAPT) && defined(NAT46_KERNEL_SUPPORT))
-#endif
    int count;
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    BOOL isBothProtocol = FALSE;
-#endif
-#endif
-   
-#ifdef FEATURE_MAPT
    BOOL isFeatureDisabled = TRUE;
 #endif
+
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP 
 
    memset(PfRangeIP,0,sizeof(PfRangeIP));
@@ -3380,7 +3352,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          count = MAX_SYSCFG_ENTRIES;
       }
    }
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA TRUE);
    isFeatureDisabled = FALSE;
 #endif
@@ -3393,7 +3365,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          continue;
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:Index %d\n" COMMA idx);
 #endif
 
@@ -3406,7 +3378,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
         continue;
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
         FIREWALL_DEBUG("PortMapping:Feature %s\n" COMMA query);
 #endif
 
@@ -3431,7 +3403,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
           strncpy(PfRangeIP[PfRangeCount],toip,MAX_IP4_SIZE-1);
           PfRangeCount++ ;
 #endif
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
           FIREWALL_DEBUG("PortMapping:Internal Client %s\n" COMMA toip);
 #endif
 
@@ -3478,7 +3450,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
           if (0 != rc || toipv6[0] == '\0' || strcmp("x", toipv6) == 0 || strcmp("0", toipv6) == 0) {
              continue;
           }
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
           FIREWALL_DEBUG("PortMapping:Internal Client IPv6 %s\n" COMMA toipv6);
 #endif
       }
@@ -3499,7 +3471,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          }
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:External Port %s\n" COMMA sdport);
       FIREWALL_DEBUG("PortMapping:External Port End Range %s\n" COMMA edport);
 #endif
@@ -3522,7 +3494,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          if (internal_port < 0) internal_port = 0;
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:Internal Port %s\n" COMMA internal_port);
 #endif
 
@@ -3543,7 +3515,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          snprintf(prot, sizeof(prot), "%s", "both");
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:Protocol %s\n" COMMA prot);
 #endif
 
@@ -3584,8 +3556,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
           continue;
       }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT      
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       if (isMAPTReady == TRUE)
       {
           if (0 == strcmp("both", prot))
@@ -3613,23 +3584,16 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                   system(cmdIvictlPf);
                   memset(cmdIvictlPf, 0, sizeof(cmdIvictlPf));
               }
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Range Port Forwarding --- BOTH" );
 #endif
               fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif
               fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif
 #endif //IVI_KERNEL_SUPPORT
           }
       }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
       
       
       if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) && (privateIpCheck(toip)))
@@ -3638,8 +3602,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
             fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
          }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)
@@ -3664,29 +3627,24 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                         memset(cmdIvictlPf, 0, sizeof(cmdIvictlPf));
                     }
             }
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
             if (isBothProtocol == FALSE)
             {
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Range Port Forwarding --- TCP" );
 #endif
               fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif
             }
 #endif //IVI_KERNEL_SUPPORT
          }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
                 fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
  
                 fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
             }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          if(isMAPTReady)
          {
              fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
@@ -3695,7 +3653,6 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                  fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, mapt_ip_address);
              }
          }
-#endif 
 #endif 
          }else if (!isNatRedirectionBlocked) {
             fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", lan_ipaddr, sdport, edport, toip, target_internal_port);
@@ -3720,9 +3677,8 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 		 if (isNatReady) {
             fprintf(nat_fp,  "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
          }
- 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)              
@@ -3748,29 +3704,24 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                     memset(cmdIvictlPf, 0, sizeof(cmdIvictlPf));
                 }
             }
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
             if (isBothProtocol == FALSE)
             {
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Range Port Forwarding --- UDP" );
 #endif
               fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
-#ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("str: %s",str );
-#endif 
             }
 #endif //IVI_KERNEL_SUPPORT
          }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
                 fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
  
                 fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
             }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          if(isMAPTReady)
          {
              if (IsValidIPv4Addr(mapt_ip_address))
@@ -3780,7 +3731,6 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                  fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, mapt_ip_address);
              }
          }
-#endif
 #endif
          }else if (!isNatRedirectionBlocked) {
             fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", lan_ipaddr, sdport, edport, toip, target_internal_port);
@@ -3808,7 +3758,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 
    }
 PortRangeForwardNext:
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       if (isFeatureDisabled == TRUE)
       {
           FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA FALSE);
@@ -4063,8 +4013,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
                fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s\n", natip4, external_dest_port, external_ip, toip, port_modifier);
             }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
         if (isMAPTReady)
         {
            if (IsValidIPv4Addr(mapt_ip_address))
@@ -4072,7 +4021,6 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
                fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_dest_port, external_ip, toip, port_modifier);
            }
         }
-#endif
 #endif
             if (!isNatRedirectionBlocked) {
                if (0 == strcmp("none", fromip)) {
@@ -4096,8 +4044,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
                fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s\n", natip4, external_dest_port, external_ip, toip, port_modifier);
             }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
         if (isMAPTReady)
         {
            if (IsValidIPv4Addr(mapt_ip_address))
@@ -4105,7 +4052,6 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
                fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_dest_port, external_ip, toip, port_modifier);
            }
         }
-#endif        
 #endif        
             if (!isNatRedirectionBlocked) {
                if (0 == strcmp("none", fromip)) {
@@ -4463,8 +4409,7 @@ if(status_http_ert == 0){
 #endif
          }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          else
          {
              /*  Check mapt config flag is SET*/
@@ -4476,18 +4421,11 @@ if(status_http_ert == 0){
                      LOG_PRINT_MAIN("Enabling DMZ(All) --- BOTH" );
 #endif
                      fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p tcp -m multiport ! --dports %s,%s -j DNAT %s\n", mapt_ip_address, Httpport, Httpsport, dst_str);
-#ifdef FEATURE_MAPT_DEBUG
-                     LOG_PRINT_MAIN("str: %s",str );
-#endif 
  
                      fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p udp -m multiport ! --dports %s,%s -j DNAT %s\n", mapt_ip_address, Httpport, Httpsport, dst_str);
-#ifdef FEATURE_MAPT_DEBUG
-                     LOG_PRINT_MAIN("str: %s",str );
-#endif
                  }
              }
          }
-#endif
 #endif
          /*snprintf(str, sizeof(str),
                   "-A wan2lan_dmz -d %s.%s -j xlog_accept_wan2lan", lan_3_octets, tohost);*/
@@ -4499,8 +4437,7 @@ if(status_http_ert == 0){
          if (isNatReady) {
             fprintf(nat_fp, "-A prerouting_fromwan_todmz --src %s --dst %s -j DNAT %s\n", src_str, natip4, dst_str);
          }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          else
          {
              /*  Check mapt config flag is SET*/
@@ -4512,13 +4449,9 @@ if(status_http_ert == 0){
                      LOG_PRINT_MAIN("Enabling DMZ --- IP" );
 #endif
                      fprintf(nat_fp, "-A prerouting_fromwan_todmz --src %s --dst %s -j DNAT %s\n", src_str, mapt_ip_address, dst_str);
-#ifdef FEATURE_MAPT_DEBUG
-                     LOG_PRINT_MAIN("str: %s",str );
-#endif 
                  }
              }
          }
-#endif
 #endif
          /*snprintf(str, sizeof(str),
                   "-A wan2lan_dmz -s %s -d %s.%s -j xlog_accept_wan2lan", src_str, lan_3_octets, tohost);*/
@@ -4531,8 +4464,7 @@ if(status_http_ert == 0){
          if (isNatReady) {
             fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -m iprange --src-range %s -j DNAT %s\n", natip4, src_str,  dst_str);
          }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
          else
          {
              /*  Check mapt config flag is SET*/
@@ -4544,13 +4476,9 @@ if(status_http_ert == 0){
                      LOG_PRINT_MAIN("Enabling DMZ --- Range" );
 #endif
                      fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -m iprange --src-range %s -j DNAT %s\n", mapt_ip_address, src_str,  dst_str);
-#ifdef FEATURE_MAPT_DEBUG
-                     LOG_PRINT_MAIN("str: %s",str );
-#endif 
                  }
              }
          }
-#endif
 #endif
  
          /*snprintf(str, sizeof(str),
@@ -5114,13 +5042,9 @@ static int do_wan_nat_lan_clients(FILE *fp)
 #endif
   {/*fix RDKB-21704, SNAT is required only for private IP ranges. */
   memset(str, 0, sizeof(str));
-#if defined(_HUB4_PRODUCT_REQ_)
-  /*SKYH4-1344 : SNAT rule required to support local IP ranges with 10.X.X.X */   
-  /*RDKB-28433: [EWAN] Internet is not working when gateway IP is changed.*/
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
   if (!isMAPTReady)
 #endif //FEATURE_MAPT
-#endif /*_HUB4_PRODUCT_REQ_*/
      if(!IS_EMPTY_STRING(natip4))
      {
          fprintf(fp, "-A postrouting_towan -s 10.0.0.0/8  -j SNAT --to-source %s\n", natip4);
@@ -5133,7 +5057,14 @@ static int do_wan_nat_lan_clients(FILE *fp)
   }
   else
   {
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+     if (!isMAPTReady)
+     {
+#endif
 	  fprintf(fp, "-A postrouting_towan  -j SNAT --to-source %s\n", natip4);
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+     }
+#endif
   }
 
   // fprintf(fp, "%s\n", str);
@@ -5523,19 +5454,11 @@ static int do_lan2self_mgmt(FILE *fp)
 static int do_lan2self(FILE *fp)
 {
         // FIREWALL_DEBUG("Entering do_lan2self\n");     
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
-#if defined(NAT46_KERNEL_SUPPORT)
+#if (defined(FEATURE_MAPT) && defined(NAT46_KERNEL_SUPPORT)) || defined(FEATURE_SUPPORT_MAPT_NAT46)
    if((!isMAPTReady) & isWanReady) // Pass for Dual Stack Line
 #else
    if(isWanReady)
-#endif //NAT46_KERNEL_SUPPORT
-#else //Hub4 NON-MAPT
-   if(isWanReady)
 #endif //FEATURE_MAPT
-#else
-   if(isWanReady)
-#endif //_HUB4_PRODUCT_REQ_
        do_lan2self_by_wanip(fp, AF_INET);
 
    do_lan2self_attack(fp);
@@ -5719,8 +5642,7 @@ static int do_wan2self_attack(FILE *fp)
 #endif /*_HUB4_PRODUCT_REQ_*/
        fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", current_wan_ipaddr);
    }
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    else
    {
        if (IsValidIPv4Addr(mapt_ip_address))
@@ -5730,7 +5652,6 @@ static int do_wan2self_attack(FILE *fp)
            fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", mapt_ip_address);
        }
    }
-#endif
 #endif
 
    /*
@@ -9058,10 +8979,9 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
    char query[MAX_QUERY];
 
    int count;
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    BOOL isFeatureDisabled = TRUE;
 #endif
-
 
    query[0] = '\0';
    rc = syscfg_get(NULL, "PortRangeTriggerCount", query, sizeof(query));
@@ -9077,7 +8997,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
       }
    }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    FIREWALL_DEBUG("PortTriggers:Feature Enable %d\n" COMMA TRUE);
    isFeatureDisabled = FALSE;
 #endif
@@ -9089,7 +9009,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
       if (0 != rc || '\0' == namespace[0]) {
          continue;
       }
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortTriggers:Index %d\n" COMMA idx);
 #endif
   
@@ -9106,7 +9026,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
 #endif
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortTriggers:Enable %s\n" COMMA query);
 #endif
 
@@ -9126,7 +9046,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
          snprintf(prot, sizeof(prot), "%s", "both");
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortTriggers:Trigger Protocol %s\n" COMMA prot);
 #endif
 
@@ -9151,7 +9071,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
          }
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortTriggers:Trigger Port Start %s\n" COMMA sdport);
       FIREWALL_DEBUG("PortTriggers:Trigger Port End %s\n" COMMA edport);
 #endif
@@ -9165,7 +9085,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
          snprintf(fprot, sizeof(fprot), "%s", "both");
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortTriggers:Forward Protocol %s\n" COMMA fprot);
 #endif
 
@@ -9189,7 +9109,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
          }
       }
 
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortTriggers:Forward Port Start %s\n" COMMA sfport);
       FIREWALL_DEBUG("PortTriggers:Forward Port End %s\n" COMMA efport);
 #endif
@@ -9235,7 +9155,7 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
    }
 
 end_do_prepare_port_range_triggers:
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    if (isFeatureDisabled == TRUE)
    {
        FIREWALL_DEBUG("PortTriggers:Feature Enable %d\n" COMMA FALSE);
@@ -9445,11 +9365,9 @@ static void do_lan2wan_disable(FILE *filter_fp)
      * all private packet from lan to wan should be blocked
      * public packet should be allowed 
      */
-#if _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
      if (isMAPTReady)
          return ;
-#endif
 #endif
     if(!isNatReady){
          fprintf(filter_fp, "-A lan2wan_disable -s %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
@@ -9510,11 +9428,9 @@ static int do_lan2wan_misc(FILE *filter_fp)
    /*
     * if the wan is currently unavailable, then drop any packets from lan to wan
     */
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
     if (isMAPTReady)
         return 0;
-#endif
 #endif    
    if (!isWanReady) {
       fprintf(filter_fp, "-I lan2wan_misc 1 -j DROP\n");
@@ -9879,7 +9795,7 @@ FirewallRuleNext2:
    return(0);
 }
 
-#if defined (MULTILAN_FEATURE)
+#if defined (MULTILAN_FEATURE) && !defined (FEATURE_SUPPORT_MAPT_NAT46)
 /*
  *  Procedure     : do_multinet_wan2lan_disable
  *  Purpose       : prepare rules for ipv4 firewall for multinet LANs
@@ -9940,10 +9856,7 @@ static int do_multinet_wan2lan_disable(FILE *filter_fp) {
 static int do_wan2lan_disabled(FILE *fp)
 {
    FIREWALL_DEBUG("Entering do_wan2lan_disabled\n");
-#if !defined(_HUB4_PRODUCT_REQ_) || (defined(_HUB4_PRODUCT_REQ_) && defined(FEATURE_MAPT))
-#endif
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    char mapt_config_value[BUFLEN_8] = {0};
    /* Check sysevent fd availabe at this point. */
    if (sysevent_fd < 0)
@@ -9965,7 +9878,8 @@ static int do_wan2lan_disabled(FILE *fp)
       }
    }
 #endif //FEATURE_MAPT
-#else
+
+#ifndef _HUB4_PRODUCT_REQ_
    /*
     * if the wan is currently unavailable, then drop any packets from wan to lan
     */
@@ -10412,16 +10326,12 @@ static int prepare_multinet_filter_input(FILE *filter_fp) {
     //Allow GRE tunnel traffic
     // TODO: Read sysevent enable flag
     fprintf(filter_fp, "-I INPUT -i %s -p gre -j ACCEPT\n", current_wan_ifname);
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
-#ifdef NAT46_KERNEL_SUPPORT
+#if (defined(FEATURE_MAPT) && defined(NAT46_KERNEL_SUPPORT)) || defined(FEATURE_SUPPORT_MAPT_NAT46)
     if (isMAPTReady)
     {
         fprintf(filter_fp, "-I INPUT -i %s -p gre -j ACCEPT\n", NAT46_INTERFACE);
     }
-#endif //NAT46_KERNEL_SUPPORT
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
                  FIREWALL_DEBUG("Exiting prepare_multinet_filter_input\n"); 	 
     return 0;  
 }
@@ -11464,17 +11374,13 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 //   fprintf(nat_fp, "-A device_based_parcon -j parcon_walled_garden\n");
 #endif
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
-#ifdef NAT46_KERNEL_SUPPORT
+#if (defined(FEATURE_MAPT) && defined(NAT46_KERNEL_SUPPORT)) || defined(FEATURE_SUPPORT_MAPT_NAT46)
    if (isMAPTReady)
    {
       fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan\n",NAT46_INTERFACE );
    }
    else // Add erouter0 prerouting_fromwan chain for 'Dual Stack' line only
-#endif //NAT46_KERNEL_SUPPORT
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_ 
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan\n", current_wan_ifname);
    prepare_multinet_prerouting_nat(nat_fp);
 #ifdef CONFIG_BUILD_TRIGGER
@@ -11484,9 +11390,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #endif
 #endif
    fprintf(nat_fp, "-A PREROUTING -j prerouting_plugins\n");
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
-#ifdef NAT46_KERNEL_SUPPORT
+
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+#if defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    if (isMAPTReady)
    {
        fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan_todmz\n", NAT46_INTERFACE);
@@ -11533,18 +11439,15 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        // This breaks emta DNS routing on XF3. We may need some special rule here.
        fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
    }
-#else //Hub4 NON-MAPT
-   fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan_todmz\n", current_wan_ifname);
-   fprintf(nat_fp, "-A POSTROUTING -j postrouting_ephemeral\n");
-// This breaks emta DNS routing on XF3. We may need some special rule here.
-   fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
-#endif //FEATURE_MAPT
-#else // NON _HUB4_PRODUCT_REQ_
+#endif // FEATURE_MAPT
+
+#if !defined(FEATURE_MAPT) || !defined(_HUB4_PRODUCT_REQ_)
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromwan_todmz\n", current_wan_ifname);
    fprintf(nat_fp, "-A POSTROUTING -j postrouting_ephemeral\n");
 // This breaks emta DNS routing on XF3. We may need some special rule here.
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_towan\n", current_wan_ifname);
 #endif //_HUB4_PRODUCT_REQ_ ENDS
+
    fprintf(nat_fp, "-A POSTROUTING -o %s -j postrouting_tolan\n", lan_ifname);
    prepare_multinet_postrouting_nat(nat_fp);
    fprintf(nat_fp, "-A POSTROUTING -j postrouting_plugins\n");
@@ -11829,17 +11732,22 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       fprintf(nat_fp, "-I PREROUTING -i %s -p tcp --dport 53 -j DNAT --to %s\n", lan_ifname, lan_ipaddr);
    }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
-#ifdef NAT46_KERNEL_SUPPORT
+#if (defined(FEATURE_MAPT) && defined(NAT46_KERNEL_SUPPORT)) || defined(FEATURE_SUPPORT_MAPT_NAT46)
    if (isMAPTReady) {
       fprintf(filter_fp, "-I FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, NAT46_INTERFACE);
       fprintf(filter_fp, "-I FORWARD -i %s -o %s -j lan2wan\n", ETH_MESH_BRIDGE, NAT46_INTERFACE);
       fprintf(filter_fp, "-I FORWARD -i %s -o %s -j wan2lan\n", NAT46_INTERFACE, lan_ifname);
       fprintf(filter_fp, "-I FORWARD -i %s -o %s -j wan2lan\n", NAT46_INTERFACE, ETH_MESH_BRIDGE);
+#ifdef FEATURE_SUPPORT_MAPT_NAT46
+      fprintf(filter_fp, "-I FORWARD -i %s -o %s -j lan2wan\n", XHS_BRIDGE, NAT46_INTERFACE);
+      fprintf(filter_fp, "-I FORWARD -i %s -o %s -j lan2wan\n", LNF_BRIDGE, NAT46_INTERFACE);
+      fprintf(filter_fp, "-I FORWARD -i %s -o %s -j wan2lan\n", NAT46_INTERFACE, XHS_BRIDGE);
+      fprintf(filter_fp, "-I FORWARD -i %s -o %s -j wan2lan\n", NAT46_INTERFACE, LNF_BRIDGE);
+#endif
    }
-#endif //NAT46_KERNEL_SUPPORT
 #endif //FEATURE_MAPT
+
+#ifdef _HUB4_PRODUCT_REQ_
 #ifdef HUB4_SELFHEAL_FEATURE_ENABLED
    //SKYH4-952: Hub4 SelfHeal support.
    //If SelfHeal_Enable syscfg value is TRUE then SET the DNS directions to GW.
@@ -12443,7 +12351,7 @@ static int do_block_ports(FILE *filter_fp)
    int retPsmGet = CCSP_SUCCESS;
    char *strValue = NULL;
 
-   /* Blocking block page ports except for brlan0 interface */ 
+   /* Blocking block page ports except for brlan0 interface */
    fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 21515 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
    /* Blocking zebra ports except for brlan0 interface */
@@ -12621,14 +12529,12 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    do_dmz(nat_fp, filter_fp);
    do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    if (isMAPTReady)
    {
        do_wan_nat_lan_clients_mapt(nat_fp);
    }
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_  
 
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    if(isGuestNetworkEnabled) {
@@ -12656,15 +12562,15 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    prepare_ethernetbhaul_greclamp(mangle_fp);
  
    prepare_multinet_mangle(mangle_fp);
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+   do_mapt_rules_v4(nat_fp, filter_fp, mangle_fp);
+#endif //FEATURE_MAPT
+
 #ifdef _HUB4_PRODUCT_REQ_
    do_hub4_voice_rules_v4(filter_fp);
 #ifdef HUB4_BFD_FEATURE_ENABLED
    do_hub4_bfd_rules_v4(nat_fp, filter_fp, mangle_fp);
 #endif //HUB4_BFD_FEATURE_ENABLED
-#ifdef FEATURE_MAPT
-   do_mapt_rules_v4(nat_fp, filter_fp, mangle_fp);
-#endif //FEATURE_MAPT
-
 #ifdef HUB4_QOS_MARK_ENABLED
    do_qos_output_marking_v4(mangle_fp);
 #endif
@@ -12672,7 +12578,6 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
 #ifdef HUB4_SELFHEAL_FEATURE_ENABLED
    do_self_heal_rules_v4(mangle_fp);
 #endif
-
 #endif //_HUB4_PRODUCT_REQ_
 
    //do_multinet_patch(mangle_fp, nat_fp, filter_fp);
@@ -12783,15 +12688,12 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    do_port_forwarding(nat_fp, NULL);
    do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    if (isMAPTReady)
    {
        do_wan_nat_lan_clients_mapt(nat_fp);
    }
 #endif  //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_  
-
   
    fprintf(nat_fp, "%s\n", "COMMIT");
 
@@ -13468,6 +13370,12 @@ int prepare_ipv6_firewall(const char *fw_file)
 //#if defined(MOCA_HOME_ISOLATION)
   //      prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
 //#endif
+//
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+   /* bypass IPv6 firewall, let IPv4 firewall handle MAP-T packets */
+    do_mapt_rules_v6(filter_fp);
+#endif //FEATURE_MAPT
+
 #ifdef _HUB4_PRODUCT_REQ_
     do_hub4_voice_rules_v6(filter_fp, mangle_fp);
     if (do_hub4_dns_rule_v6(mangle_fp) == 0)
@@ -13478,11 +13386,6 @@ int prepare_ipv6_firewall(const char *fw_file)
     {
         FIREWALL_DEBUG("INFO: Firewall rule addition failed for IPv6 DNS CHECKSUM \n");
     }
-
-#ifdef FEATURE_MAPT
-    /* bypass IPv6 firewall, let IPv4 firewall handle MAP-T packets */
-    do_mapt_rules_v6(filter_fp);
-#endif //HUB4_BFD_FEATURE_ENABLED
 
 #ifdef HUB4_BFD_FEATURE_ENABLED
     do_hub4_bfd_rules_v6(filter_fp, mangle_fp);
@@ -14158,11 +14061,10 @@ v6GPFirewallRuleNext:
 
       fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", lan_ifname, lan_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, wan6_ifname);
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 #if defined(IVI_KERNEL_SUPPORT)
       fprintf(fp, "-I FORWARD -i %s -o %s -j lan2wan\n", ETH_MESH_BRIDGE, wan6_ifname);
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       if (isMAPTReady)
       {
          fprintf(fp, "-I FORWARD -i %s -o %s -j lan2wan\n", NAT46_INTERFACE, wan6_ifname);
@@ -14170,7 +14072,6 @@ v6GPFirewallRuleNext:
       }
 #endif //IVI_KERNEL_SUPPORT
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
 
 #if !defined(_HUB4_PRODUCT_REQ_)
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, ecm_wan_ifname);
@@ -14286,11 +14187,10 @@ v6GPFirewallRuleNext:
       fprintf(fp, "-A wan2lan -m state --state INVALID -j LOG_FORWARD_DROP\n");
 
       fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, lan_ifname);
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef FEATURE_MAPT
+#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 #if defined(IVI_KERNEL_SUPPORT)
       fprintf(fp, "-I FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, ETH_MESH_BRIDGE);
-#elif defined(NAT46_KERNEL_SUPPORT)
+#elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       if (isMAPTReady)
       {
          fprintf(fp, "-I FORWARD -i %s -o %s -j wan2lan\n", wan6_ifname, NAT46_INTERFACE);
@@ -14298,7 +14198,6 @@ v6GPFirewallRuleNext:
       }
 #endif //IVI_KERNEL_SUPPORT
 #endif //FEATURE_MAPT
-#endif //_HUB4_PRODUCT_REQ_
 
 #if !defined(_HUB4_PRODUCT_REQ_)
       fprintf(fp, "-A FORWARD -i %s -o %s -j wan2lan\n", ecm_wan_ifname, lan_ifname);
