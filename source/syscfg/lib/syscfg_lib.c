@@ -59,7 +59,7 @@
  * Global data structures
  */
 static syscfg_shm_ctx *syscfg_ctx = NULL;
-int            syscfg_initialized = 0;
+static int syscfg_initialized = 0;
 
 static char name_p[MAX_NAME_LEN+1];                      // internal temp name buffer
 
