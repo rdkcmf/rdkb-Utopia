@@ -20,3 +20,6 @@ SUBDIRS = ulog syscfg sysevent services utctx utapi firewall firewall_log dhcppr
 if DSLITE_FEATURE_SUPPORT
 SUBDIRS += service_dslite
 endif
+if WITH_GTEST_SUPPORT
+SUBDIRS += test
+endif
