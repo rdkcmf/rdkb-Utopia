@@ -171,6 +171,7 @@ lan_status_change ()
          # Check for RFC Enable for DNS STRICT ORDER
          if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
               DNS_ADDITIONAL_OPTION=" -o "
+              DNS_ADDITIONAL_OPTION=" $DNS_ADDITIONAL_OPTION --dhcp-authoritative "
               echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
          else
               echo "RFC DNSTRICT ORDER is not defined or Enabled"
@@ -295,6 +296,7 @@ restart_request ()
       # the dns server to give out a _requested_ lease even if
       # that lease is not found in the dnsmasq.leases file
       # Get the DNS strict order option
+      DNS_ADDITIONAL_OPTION=" $DNS_ADDITIONAL_OPTION --dhcp-authoritative "
       dnsmasq_server_start
 
       if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ] ; then
@@ -533,6 +535,7 @@ dhcp_server_start ()
    fi
    
    echo_t "RDKB_SYSTEM_BOOT_UP_LOG : starting dhcp-server_from_dhcp_server_start:`uptime | cut -d "," -f1 | tr -d " \t\n\r"`"
+   DNS_ADDITIONAL_OPTION=" $DNS_ADDITIONAL_OPTION --dhcp-authoritative "
    dnsmasq_server_start
 
    if [ $? -eq 0 ]; then
@@ -740,6 +743,7 @@ dns_start ()
    if [ "stopped" = "$DHCP_STATE" ]; then
 	dnsmasq_server_start
    else
+	DNS_ADDITIONAL_OPTION=" $DNS_ADDITIONAL_OPTION --dhcp-authoritative "   
         dnsmasq_server_start
 	 if [ $? -eq 0 ]; then
    		echo_t "$SERVER process started successfully"
