@@ -233,6 +233,8 @@ void srv_register(void) {
       "lnf-setup|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
       "meshbhaul-setup|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
       "meshethbhaul-bridge-setup|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "meshethbhaul-up|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
+      "meshethbhaul-down|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
       NULL };
 
       syscfg_init();
