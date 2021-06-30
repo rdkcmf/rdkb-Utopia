@@ -2259,7 +2259,7 @@ int main( int argc, char **argv )
   {
     char buf[ 64 ] = { 0 };
 
-#if defined(INTEL_PUMA7)
+#if defined(INTEL_PUMA7) && !defined(_XB7_PRODUCT_REQ_)
 	//Below validation is needed to make sure the factory_partnerid and syscfg_partnerid are in sync.
 	//This is mainly to address those units where customer_index/factory_partnerid was modified in the field through ARRISXB6-8400.
 	system( "sh /lib/rdk/validate_syscfg_partnerid.sh" );
