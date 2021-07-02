@@ -12222,7 +12222,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(filter_fp, "-A general_input -i brlan0 ! -s 192.168.100.3 -d 192.168.100.1 -j xlog_drop_lan2self\n");
    }
  
-#if defined(FEATURE_SUPPORT_RADIUSGREYLIST) && (defined (_XB7_PRODUCT_REQ_) && defined (_COSA_BCM_ARM_))
+#if defined(FEATURE_SUPPORT_RADIUSGREYLIST) && defined (_XB7_PRODUCT_REQ_)
      int RPsmGet = CCSP_SUCCESS;
      char *strvalue = NULL;
      RPsmGet = PSM_VALUE_GET_STRING(PSM_NAME_RADIUS_GREY_LIST_ENABLED, strvalue);
