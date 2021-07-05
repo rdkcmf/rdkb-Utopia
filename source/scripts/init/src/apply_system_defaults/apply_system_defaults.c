@@ -1163,12 +1163,12 @@ void updateSysCfgdDB(char * key, char * value)
    }
    if ( 0 == strcmp ( key, "Device.X_RDK_WebConfig.URL") )
    {
-         set_syscfg_partner_values( value,"WebConfig_url" );
+         set_syscfg_partner_values( value,"WEBCONFIG_INIT_URL" );
          IsPSMMigrationNeeded = 1;
    }
    if ( 0 == strcmp ( key, "Device.X_RDK_WebConfig.SupplementaryServiceUrls.Telemetry") )
    {
-         set_syscfg_partner_values( value,"telemetry_url" );
+         set_syscfg_partner_values( value,"TELEMETRY_INIT_URL" );
          IsPSMMigrationNeeded = 1;
    }
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
