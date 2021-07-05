@@ -41,6 +41,10 @@ SERVICE_NAME="igd"
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/ut_plat.sh
 
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
 
 SELF_NAME="`basename $0`"
 
@@ -201,7 +205,10 @@ case "$1" in
       ;;
     snmp_subagent-status)
         init_once
-        resync_upnp
+        #SKYH4-5296 - IGD process running by default after reboot and FR eventhough upnp is disabled.
+        if [ "x$BOX_TYPE" != "xHUB4" ]; then
+            resync_upnp
+        fi
    ;;
     ipv4-resyncAll)
         resync_upnp
