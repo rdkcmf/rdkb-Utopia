@@ -60,12 +60,12 @@
 #define HDRLEN 62
 #define MAX_IPLEN INET6_ADDRSTRLEN 
 //starts with "0x0a 0x0d"
-unsigned char http_redirect_payload2[] = { \
+static const unsigned char http_redirect_payload2[] = { \
     0x2f,0x48,0x6e,0x61,0x70,0x50,0x63,0x53,0x69,0x74, \
     0x65,0x42,0x6c,0x6f,0x63,0x6b,0x65,0x64,0x2e,0x70,0x68,0x70,0x3f,0x75,0x72,0x6c, 0x3d \
 }; //ends with "url=", add "www.xxx.com"
 
-const unsigned char http_redirect_payload_bottom[] = { \
+static const unsigned char http_redirect_payload_bottom[] = { \
     0x0d,0x0a, \
     0x43,0x6f,0x6e,0x74,0x65,0x6e,0x74,0x2d,0x74,0x79,0x70,0x65,0x3a,0x20,0x74,0x65, \
     0x78,0x74,0x2f,0x68,0x74,0x6d,0x6c,0x0d,0x0a,0x43,0x6f,0x6e,0x74,0x65,0x6e,0x74, \
@@ -78,7 +78,7 @@ const unsigned char http_redirect_payload_bottom[] = { \
 };
 
 //assuming max url length is 256
-unsigned char http_redirect_payload[HDRLEN+MAX_IPLEN + 2 +sizeof(http_redirect_payload2)+256+sizeof(http_redirect_payload_bottom)] = { \
+static unsigned char http_redirect_payload[HDRLEN+MAX_IPLEN + 2 +sizeof(http_redirect_payload2)+256+sizeof(http_redirect_payload_bottom)] = { \
     0x48,0x54,0x54,0x50,0x2f,0x31,0x2e,0x31,0x20,0x33,0x30,0x32,0x20,0x46,0x6f,0x75, \
     0x6e,0x64,0x0d,0x0a,0x58,0x2d,0x50,0x6f,0x77,0x65,0x72,0x65,0x64,0x2d,0x42,0x79, \
     0x3a,0x20,0x50,0x48,0x50,0x2f,0x35,0x2e,0x33,0x2e,0x32,0x0d,0x0a,0x4c,0x6f,0x63, \
@@ -101,7 +101,7 @@ typedef struct PseudoHeaderv6 {
     u_int8_t next_hdr;
 } PseudoHeaderv6;
 
-unsigned short tcp_checksum(unsigned short *buffer, int byte_count)
+static unsigned short tcp_checksum (unsigned short *buffer, int byte_count)
 {
     register long word_sum;
     int word_count;
@@ -130,7 +130,7 @@ unsigned short tcp_checksum(unsigned short *buffer, int byte_count)
 
 }
 
-int SendRawPacket(int rawsock, unsigned char *pkt, int pkt_len, char *dstIp, unsigned short dstPort)
+static int SendRawPacket (int rawsock, unsigned char *pkt, int pkt_len, char *dstIp, unsigned short dstPort)
 {
     int sent= 0;
     struct sockaddr_in to;
@@ -149,7 +149,7 @@ int SendRawPacket(int rawsock, unsigned char *pkt, int pkt_len, char *dstIp, uns
     return 1;
 }
 
-struct ethhdr* CreateEthernetHeader(char *src_mac, char *dst_mac, int protocol)
+static struct ethhdr *CreateEthernetHeader (char *src_mac, char *dst_mac, int protocol)
 {
     struct ethhdr *ethernet_header;
     ethernet_header = (struct ethhdr *)malloc(sizeof(struct ethhdr));
@@ -168,7 +168,7 @@ struct ethhdr* CreateEthernetHeader(char *src_mac, char *dst_mac, int protocol)
 }
 
 /* ComputeChecksum() */
-unsigned short ComputeChecksum( void *data, unsigned long length )
+static unsigned short ComputeChecksum (void *data, unsigned long length)
 {
 	unsigned short	*tempUshort 	  = NULL,
 					 UshortForPadding = 0;
@@ -226,7 +226,7 @@ unsigned short ComputeChecksum( void *data, unsigned long length )
 	return	~((unsigned short)checksum);
 }
 
-void *CreateIPHeader(int family, char *srcIp, char *dstIp, unsigned int dataSize)
+static void *CreateIPHeader (int family, char *srcIp, char *dstIp, unsigned int dataSize)
 {
     if(family == AF_INET6){
         struct ip6_hdr *ipv6Hdr = malloc(sizeof(struct ip6_hdr));
@@ -265,7 +265,7 @@ void *CreateIPHeader(int family, char *srcIp, char *dstIp, unsigned int dataSize
     }
 }
 
-struct tcphdr *CreateTcpHeader(int family, unsigned short sport, unsigned short dport, unsigned long seqNum, unsigned long ackNum, unsigned char fin)
+static struct tcphdr *CreateTcpHeader(int family, unsigned short sport, unsigned short dport, unsigned long seqNum, unsigned long ackNum, unsigned char fin)
 {
     struct tcphdr *tcp_header;
 
@@ -288,7 +288,7 @@ struct tcphdr *CreateTcpHeader(int family, unsigned short sport, unsigned short 
     return (tcp_header);
 }
 
-void CreatePseudoHeaderAndComputeTcpChecksum(int family, struct tcphdr *tcp_header, void *ip_header, unsigned char *data, unsigned int dataSize)
+static void CreatePseudoHeaderAndComputeTcpChecksum (int family, struct tcphdr *tcp_header, void *ip_header, unsigned char *data, unsigned int dataSize)
 {
     unsigned char *hdr = NULL;
     int pseudo_offset = 0;
@@ -348,7 +348,7 @@ void CreatePseudoHeaderAndComputeTcpChecksum(int family, struct tcphdr *tcp_head
     return ;
 }
 
-unsigned char *CreateData(int family, char *url, char *gwIp)
+static unsigned char *CreateData (int family, char *url, char *gwIp)
 {
     unsigned char *data = http_redirect_payload;
     int offset = 0;
@@ -370,7 +370,7 @@ unsigned char *CreateData(int family, char *url, char *gwIp)
     return data;
 }
 
-void send_tcp_pkt(char *interface,int family, char *srcMac, char *dstMac, char *srcIp, char *dstIp, unsigned short srcPort, unsigned short dstPort, unsigned long seqNum, unsigned long ackNum, char *url, unsigned char rst)
+void send_tcp_pkt (char *interface, int family, char *srcMac, char *dstMac, char *srcIp, char *dstIp, unsigned short srcPort, unsigned short dstPort, unsigned long seqNum, unsigned long ackNum, char *url, unsigned char rst)
 {
     int raw;
     unsigned char *packet;
