@@ -10801,11 +10801,39 @@ static void do_ipv4_UIoverWAN_filter(FILE* fp) {
       {
         fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,current_wan_ipaddr);
         fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,current_wan_ipaddr);
+        int rc = 0;
+        char buf[16] ;
+        memset(buf,0,sizeof(buf));
+        rc = syscfg_get(NULL, "mgmt_wan_httpaccess", buf, sizeof(buf));
+        if ( rc == 0 && atoi(buf) == 0 )
+        {
+            memset(buf,0,sizeof(buf));
+            rc = syscfg_get(NULL, "mgmt_wan_httpport", buf, sizeof(buf));
+            if ( rc == 0 && buf[0] != '\0' )
+            {
+                fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport %s -j DROP\n", lan_ifname,current_wan_ipaddr,buf);
+            }
+
+        }
+        memset(buf,0,sizeof(buf));
+        rc = syscfg_get(NULL, "mgmt_wan_httpsaccess", buf, sizeof(buf));
+        if ( rc == 0 && atoi(buf) == 0 )
+        {
+            memset(buf,0,sizeof(buf));
+            rc = syscfg_get(NULL, "mgmt_wan_httpsport", buf, sizeof(buf));
+            if ( rc == 0 && buf[0] != '\0' )
+            {
+                fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport %s -j DROP\n", lan_ifname,current_wan_ipaddr,buf);
+            }
+
+        }
       }
 
+        #if defined (_COSA_BCM_ARM_)
         fprintf(fp, "-A PREROUTING -i %s -d 192.168.100.1 -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname);
         fprintf(fp, "-A PREROUTING -i %s -d 192.168.100.1 -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname);
         FIREWALL_DEBUG("Exiting do_ipv4_UIoverWAN_filter \n"); 
+        #endif
 }
 /*
  *  Procedure     : prepare_subtables
@@ -10894,10 +10922,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_trigger\n");
 #endif
 #endif
-   if(bEthWANEnable)
-   {
-       do_ipv4_UIoverWAN_filter(mangle_fp);
-   }
+
+   do_ipv4_UIoverWAN_filter(mangle_fp);
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_lan2lan\n");
@@ -12646,7 +12672,34 @@ static void do_ipv6_UIoverWAN_filter(FILE* fp) {
       {
         fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,(char *)current_wan_ipv6);
         fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,(char *)current_wan_ipv6);
+        int rc = 0;
+        char buf[16] ;
+        memset(buf,0,sizeof(buf));
+        rc = syscfg_get(NULL, "mgmt_wan_httpaccess", buf, sizeof(buf));
+        if ( rc == 0 && atoi(buf) == 0 )
+        {
+            memset(buf,0,sizeof(buf));
+            rc = syscfg_get(NULL, "mgmt_wan_httpport", buf, sizeof(buf));
+            if ( rc == 0 && buf[0] != '\0' )
+            {
+                fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport %s -j DROP\n", lan_ifname,(char *)current_wan_ipv6,buf);
+            }
+
+        }
+        memset(buf,0,sizeof(buf));
+        rc = syscfg_get(NULL, "mgmt_wan_httpsaccess", buf, sizeof(buf));
+        if ( rc == 0 && atoi(buf) == 0 )
+        {
+            memset(buf,0,sizeof(buf));
+            rc = syscfg_get(NULL, "mgmt_wan_httpsport", buf, sizeof(buf));
+            if ( rc == 0 && buf[0] != '\0' )
+            {
+                fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport %s -j DROP\n", lan_ifname,(char *)current_wan_ipv6,buf);
+            }
+
+        }
       }
+
         FIREWALL_DEBUG("Exiting do_ipv6_UIoverWAN_filter \n"); 
 }
 /*-----*/
@@ -12918,9 +12971,10 @@ int prepare_ipv6_firewall(const char *fw_file)
 
   	if ( bEthWANEnable )
   	{
-          do_ipv6_UIoverWAN_filter(mangle_fp);
       	  ethwan_mso_gui_acess_rules(NULL,mangle_fp);                      
   	}
+    do_ipv6_UIoverWAN_filter(mangle_fp);
+
 #if defined(_COSA_BCM_MIPS_) // RDKB-35063
 	ethwan_mso_gui_acess_rules(NULL,mangle_fp);
 #endif
