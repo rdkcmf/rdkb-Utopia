@@ -52,6 +52,11 @@
 #include <stdbool.h>
 #include <net/if.h>
 #include <signal.h>
+
+#if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) || defined (_CBR2_PRODUCT_REQ_)
+#include <sys/stat.h>
+#endif
+
 #include "util.h"
 #include <telemetry_busmessage_sender.h>
 #include "syscfg/syscfg.h"
@@ -97,6 +102,29 @@ struct serv_routed {
     bool        lan_ready;
     bool        wan_ready;
 };
+
+#if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) || defined (_CBR2_PRODUCT_REQ_)
+#ifdef _BWG_PRODUCT_REQ_
+#define LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
+#else
+#define LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
+#endif
+#define DEG_PRINT(fmt ...)   {\
+   FILE *logfp = fopen ( LOG_FILE , "a+");\
+   if (logfp)\
+   {\
+        fprintf(logfp,fmt);\
+        fclose(logfp);\
+   }\
+}\
+
+#define RIPD_CONF_PAM_UPDATE "/tmp/pam_ripd_config_completed"
+static int IsFileExists(char *file_name)
+{
+    struct stat file;
+    return (stat(file_name, &file));
+}
+#endif
 
 static int fw_restart(struct serv_routed *sr)
 {
@@ -1223,7 +1251,9 @@ static int radv_restart(struct serv_routed *sr)
 static int rip_start(struct serv_routed *sr)
 {
     char enable[16];
-
+#if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) || defined (_CBR2_PRODUCT_REQ_)
+    char ripd_conf_status[16];
+#endif
     if (!serv_can_start(sr->sefd, sr->setok, "rip"))
         return -1;
 #ifndef _HUB4_PRODUCT_REQ_
@@ -1250,13 +1280,29 @@ static int rip_start(struct serv_routed *sr)
         sysevent_set(sr->sefd, sr->setok, "rip-status", "error", 0);
         return -1;
     }
-
-    if (v_secure_system("ripd -d -f %s -u root", RIPD_CONF_FILE) != 0) {
-        sysevent_set(sr->sefd, sr->setok, "rip-status", "error", 0);
-        return -1;
-    }
-
-    sysevent_set(sr->sefd, sr->setok, "rip-status", "started", 0);
+#if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) || defined (_CBR2_PRODUCT_REQ_)
+	  int retries=0;
+    	  while (retries<20)  {
+          memset(ripd_conf_status,0,sizeof(ripd_conf_status));
+          sysevent_get(sr->sefd, sr->setok, "ripd_conf-status", ripd_conf_status, sizeof(ripd_conf_status));
+          if (strcmp((const char*)ripd_conf_status, "ready") == 0) {
+              if (!(IsFileExists(RIPD_CONF_PAM_UPDATE) == 0)) {
+                    DEG_PRINT("Incomplete ripd conf update \n");
+              }
+              else  {
+                    DEG_PRINT("starting ripd after PAM updates conf \n");
+              }
+              if (v_secure_system("ripd -d -f %s -u root", RIPD_CONF_FILE) != 0) {
+                   sysevent_set(sr->sefd, sr->setok, "rip-status", "error", 0);
+                   return -1;
+             }
+              sysevent_set(sr->sefd, sr->setok, "rip-status", "started", 0);
+             break;
+          }
+          sleep(5);
+          retries=retries+1;
+     }
+#endif
     return 0;
 }
 
