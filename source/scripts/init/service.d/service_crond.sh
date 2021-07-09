@@ -157,9 +157,9 @@ service_start ()
       echo "*/15 * * * * /usr/ccsp/tad/syscfg_recover.sh" >> $CRONTAB_FILE
 
       # Monitor resource_monitor.sh every 5 minutes TCCBR-3288
-      if [ "$BOX_TYPE" = "TCCBR" ]; then 
+#      if [ "$BOX_TYPE" = "TCCBR" ]; then 
          echo "*/5 * * * * /usr/ccsp/tad/resource_monitor_recover.sh" >> $CRONTAB_FILE
-      fi
+#      fi
 
       # RDKB-23651
       if [ "x$THERMALCTRL_ENABLE" == "xtrue" ]; then
