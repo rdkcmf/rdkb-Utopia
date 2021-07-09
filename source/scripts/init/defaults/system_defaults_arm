@@ -1314,9 +1314,6 @@ $dslite_mss_clamping_enable_1=0
 #dslite_tcpmss - TCP Mss value for ipv6 tunnel
 $dslite_tcpmss_1=1420
 
-#dslite_ipv6_frag_enable - Enable/disable dslite IPv6 frag
-$dslite_ipv6_frag_enable_1=0
-
 #Credential Download and usage is diasbled by default
 $CredDwnld_Enable=false
 $CredDwnld_Use=false

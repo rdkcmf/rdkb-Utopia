@@ -262,6 +262,7 @@ int Utopia_DelDsliteEntry(UtopiaContext *ctx, unsigned long ulInstanceNumber)
         Utopia_UnsetIndexed(ctx,UtopiaValue_Dslite_Mss_Clamping_Enable,ulIndex);
         Utopia_UnsetIndexed(ctx,UtopiaValue_Dslite_Tcpmss,ulIndex);
         Utopia_UnsetIndexed(ctx,UtopiaValue_Dslite_IPv6_Frag_Enable,ulIndex);
+        Utopia_UnsetIndexed(ctx,UtopiaValue_Dslite_Tunnel_V4Addr,ulIndex);
     }
 
     return SUCCESS;
@@ -351,6 +352,7 @@ int Utopia_GetDsliteByIndex(UtopiaContext *ctx, unsigned long ulIndex, DsLiteCfg
     Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_Origin,(ulIndex + 1),&(pDsLiteCfg_t->origin));
     Utopia_GetIndexed(ctx,UtopiaValue_Dslite_Tunnel_Interface,(ulIndex + 1),pDsLiteCfg_t->tunnel_interface,STR_SZ);
     Utopia_GetIndexed(ctx,UtopiaValue_Dslite_Tunneled_Interface,(ulIndex + 1),pDsLiteCfg_t->tunneled_interface,STR_SZ);
+    Utopia_GetIndexed(ctx,UtopiaValue_Dslite_Tunnel_V4Addr,(ulIndex + 1),pDsLiteCfg_t->tunnel_v4addr,65);
 
     return SUCCESS;
 }
@@ -378,6 +380,7 @@ int Utopia_SetDsliteByIndex(UtopiaContext *ctx, unsigned long ulIndex, DsLiteCfg
     Utopia_SetIndexedInt(ctx,UtopiaValue_Dslite_Mss_Clamping_Enable,(ulIndex + 1),pDsLiteCfg_t->mss_clamping_enable);
     Utopia_SetIndexedInt(ctx,UtopiaValue_Dslite_Tcpmss,(ulIndex + 1),pDsLiteCfg_t->tcpmss);
     Utopia_SetIndexedInt(ctx,UtopiaValue_Dslite_IPv6_Frag_Enable,(ulIndex + 1),pDsLiteCfg_t->ipv6_frag_enable);
+    Utopia_SetIndexed(ctx,UtopiaValue_Dslite_Tunnel_V4Addr,(ulIndex + 1), pDsLiteCfg_t->tunnel_v4addr);
 
     return SUCCESS;
 }

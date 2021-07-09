@@ -630,6 +630,7 @@ typedef enum _UtopiaValue
     UtopiaValue_Dslite_Mss_Clamping_Enable,
     UtopiaValue_Dslite_Tcpmss,
     UtopiaValue_Dslite_IPv6_Frag_Enable,
+    UtopiaValue_Dslite_Tunnel_V4Addr,
     #endif /* DSLITE_FEATURE_SUPPORT */
     UtopiaValue__LAST__
 } UtopiaValue;

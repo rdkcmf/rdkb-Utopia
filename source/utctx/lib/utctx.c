@@ -788,6 +788,7 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_mss_clamping_enable_%d", UtopiaValue__UNKNOWN__ },      /* UtopiaValue_Dslite_Mss_Clamping_Enable */
     { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_tcpmss_%d",          UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Tcpmss */
     { Utopia_Type_IndexedConfig, Utopia_Event_DSLite_Restart,       Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_ipv6_frag_enable_%d", UtopiaValue__UNKNOWN__ },         /* UtopiaValue_Dslite_IPv6_Frag_Enable */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,              Utopia_Static__NONE__, Utopia_Index_For_Key, 1, "dslite_tunnel_v4addr_%d",   UtopiaValue__UNKNOWN__ },          /* UtopiaValue_Dslite_Tunneled_Interface */
 #endif
     { Utopia_Type__UNKNOWN__, Utopia_Event__NONE__, Utopia_Static__NONE__, Utopia_For__NONE__, 0, 0, UtopiaValue__UNKNOWN__ }, /* UtopiaValue__LAST__ */
 };

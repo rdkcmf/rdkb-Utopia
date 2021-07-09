@@ -38,6 +38,7 @@ DsLiteCfg
     int            mss_clamping_enable;
     unsigned long  tcpmss;
     int            ipv6_frag_enable;
+    char           tunnel_v4addr[64+1];
 }DsLiteCfg_t;
 
 int Utopia_GetDsliteEnable(UtopiaContext *ctx, boolean_t *bEnabled);
