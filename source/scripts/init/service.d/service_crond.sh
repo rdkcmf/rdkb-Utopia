@@ -113,7 +113,8 @@ service_start ()
 #RDKB-9367, file handle monitor, needs to be run every 12 hours
       echo "1 */12 * * *   /usr/ccsp/tad/FileHandle_Monitor.sh" >> $CRONTAB_FILE
 
-      if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] ; then
+
+      if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
             echo "*/15 * * * *  /usr/ccsp/tad/log_staticIP_client_info.sh" >> $CRONTAB_FILE
       fi
       
