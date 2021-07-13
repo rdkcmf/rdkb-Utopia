@@ -934,6 +934,9 @@ fi
    if [ "$BOX_TYPE" = "XB6" ]; then
      echo "dhcp-option=vendor:Plume,43,tag=123" >> $LOCAL_DHCP_CONF 
      echo "dhcp-option=vendor:PP203X,43,tag=123" >> $LOCAL_DHCP_CONF
+     echo "dhcp-option=vendor:SE401,43,tag=123" >> $LOCAL_DHCP_CONF
+     echo "dhcp-option=vendor:HIXE12AWR,43,tag=123" >> $LOCAL_DHCP_CONF
+     echo "dhcp-option=vendor:WNXE12AWR,43,tag=123" >> $LOCAL_DHCP_CONF
    fi
 
    if [ "dns_only" != "$3" ] ; then

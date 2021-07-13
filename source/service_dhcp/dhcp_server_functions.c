@@ -1127,6 +1127,9 @@ int prepare_dhcp_conf (char *input)
 #if defined (_COSA_INTEL_XB3_ARM_)
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:Plume,43,tag=123\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:PP203X,43,tag=123\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:HIXE12AWR,43,tag=123\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:WNXE12AWR,43,tag=123\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:SE401,43,tag=123\n");
 #endif 
 	if ((NULL == input) || 
 		((NULL != input) && (strncmp(input, "dns_only", 8)))) //not dns_only case
