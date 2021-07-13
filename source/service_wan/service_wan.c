@@ -194,6 +194,7 @@ static int Getdhcpcpidfile(char *pidfile,int size )
 #elif (defined _COSA_INTEL_XB3_ARM_) || (defined INTEL_PUMA7)
       {
 
+        
         char udhcpflag[10]="";
         syscfg_get( NULL, "UDHCPEnable", udhcpflag, sizeof(udhcpflag));
         if( 0 == strcmp(udhcpflag,"true")){
@@ -393,7 +394,7 @@ static int dhcp_start(struct serv_wan *sw)
     char options[VENDOR_OPTIONS_LENGTH];
 
     if ((err = dhcp_parse_vendor_info(options, VENDOR_OPTIONS_LENGTH,cEthWanMode)) == 0) {
-        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /usr/bin/service_udhcpc", sw->ifname, DHCPC_PID_FILE, options);
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -O 2 -x %s -s /usr/bin/service_udhcpc", sw->ifname, DHCPC_PID_FILE, options);
     }
     }
    else
@@ -426,17 +427,17 @@ static int dhcp_start(struct serv_wan *sw)
     
     #if defined (EROUTER_DHCP_OPTION_MTA)
 	if (strcmp(cEthWanMode, "true") == 0 ) 
-      	  err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 122 -O 125 -x %s -x 125:0000118b0701027B7C7c0107 -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+      	  err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 122 -O 125 -O 2 -x %s -x 125:0000118b0701027B7C7c0107 -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
 	else
-         err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+         err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -O 2 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
     #else
      {
-        err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+        err = vsystem("/sbin/udhcpc -b -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -O 2 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
      }
     #endif
 #else
     #if !defined (_HUB4_PRODUCT_REQ_)
-        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
+        err = vsystem("/sbin/udhcpc -i %s -p %s -V eRouter1.0 -O ntpsrv -O timezone -O 125 -O 2 -x %s -s /etc/udhcpc.script", sw->ifname, DHCPC_PID_FILE, options);
     #endif
 #endif
 
