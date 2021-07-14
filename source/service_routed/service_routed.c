@@ -759,6 +759,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif //_HUB4_PRODUCT_REQ_
 #endif
 
+#ifndef _HUB4_PRODUCT_REQ_
             /* If WAN is stopped or not in IPv6 or dual stack mode, send RA with router lifetime of zero */
             if ( (strcmp(wan_st, "stopped") == 0) || (atoi(rtmod) != 2 && atoi(rtmod) != 3) )
             {
@@ -766,12 +767,14 @@ static int gen_zebra_conf(int sefd, token_t setok)
             }
             else
             {
-#ifdef _HUB4_PRODUCT_REQ_
-        fprintf(fp, "   ipv6 nd ra-lifetime 540\n");
-#else
-        fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
-#endif
+                fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
             }
+#else
+	/* SKYH4-5324 : Selfheal is not working from IPv6 only client.
+	 * The Router Life time should not change even after wan disconnection for SKYHUB4.
+	 * Requirement of SelfHeal feature */
+        fprintf(fp, "   ipv6 nd ra-lifetime 540\n");
+#endif //_HUB4_PRODUCT_REQ_
 
         syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
         if (strcmp(m_flag, "1") == 0)
