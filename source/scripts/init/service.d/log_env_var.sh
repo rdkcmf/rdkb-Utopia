@@ -23,8 +23,6 @@ NVRAM2_SUPPORTED="no"
 ATOM_IP=""
 UPLOAD_THRESHOLD=""
 
-
-TMP_UPLOAD="/tmp/logs/"
 LOG_SYNC_PATH="/nvram2/logs/"
 LOG_SYNC_BACK_UP_PATH="/nvram2/logs/"
 LOG_SYNC_BACK_UP_REBOOT_PATH="/nvram2/logs/"
