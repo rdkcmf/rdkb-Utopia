@@ -7637,8 +7637,13 @@ static int do_parental_control_allow_trusted(FILE *fp, int iptype, const char* l
       if (this_iptype != 6) this_iptype = 4;
 
       this_iptype == 4 ? ++count_v4 : ++count_v6;
-
+#if defined(_HUB4_PRODUCT_REQ_) || defined(FEATURE_MAPT)
+      /* Add the service rules for V6 table on MAPT line and Dual stack, since this rules were added only for V4, needed for v6 also. 
+         As of now 'this_iptype' value is always '4', blocking the rule for v6 */
+      if ((this_iptype == iptype) || (iptype == 6))
+#else
       if (this_iptype == iptype)
+#endif
       {
          query[0] = '\0';
          rc = syscfg_get(namespace, "ip_addr", query, sizeof(query)); 
