@@ -12822,7 +12822,17 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "%s\n", ":mtadosattack - [0:0]");
 #endif
    //<<DOS
-  
+ 
+   if (isBridgeMode)
+   {
+       fprintf(filter_fp, "%s\n", ":general_input - [0:0]");
+       fprintf(filter_fp, "%s\n", ":general_output - [0:0]");
+       fprintf(filter_fp, "%s\n", ":general_forward - [0:0]");
+       fprintf(filter_fp, "-A INPUT -j general_input\n");
+       fprintf(filter_fp, "-A FORWARD -j general_forward\n");
+       fprintf(filter_fp, "-A OUTPUT -j general_output\n");
+       do_filter_table_general_rules(filter_fp);
+   }
    fprintf(filter_fp, "-A xlog_drop_wan2self -j DROP\n");
    fprintf(filter_fp, "-A xlog_drop_lan2self -j DROP\n");
    if(isWanServiceReady || isBridgeMode) {
