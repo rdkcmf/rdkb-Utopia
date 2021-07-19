@@ -1125,8 +1125,8 @@ int prepare_dhcp_conf (char *input)
 	}
 //Ethernet Backhaul changes for plume pods   
 #if defined (_COSA_INTEL_XB3_ARM_)
-        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:Plume,43,tag=1060\n");
-        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:PP203X,43,tag=1060\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:Plume,43,tag=123\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=vendor:PP203X,43,tag=123\n");
 #endif 
 	if ((NULL == input) || 
 		((NULL != input) && (strncmp(input, "dns_only", 8)))) //not dns_only case
@@ -1255,6 +1255,15 @@ int prepare_dhcp_conf (char *input)
 		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.4090,6,%s\n", l_cWan_Dhcp_Dns);
 		fprintf(stderr, "DHCP_SERVER : [l2sd0.4090] dhcp-option=l2sd0.4090,6,%s\n", l_cWan_Dhcp_Dns);
 	}
+ 
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=brebhaul\n");
+	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.85.5,169.254.85.253,255.255.255.0,infinite\n");
+
+        if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+        {
+                fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
+                fprintf(stderr, "DHCP_SERVER : [brebhaul] dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
+        }
 	
 #elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath12\n");
