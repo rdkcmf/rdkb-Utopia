@@ -1255,16 +1255,35 @@ int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *P
    cJSON * subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
    cJSON * subitem_nvram = cJSON_GetObjectItem(root_nvram_json,PartnerID);
 
+   cJSON * overrideObj = NULL;
+   char devModel[20] = "\0";
+
+   GetDevicePropertiesEntry (devModel, sizeof(devModel), "MODEL_NUM");
+   overrideObj = cJSON_GetObjectItem (cJSON_GetObjectItem(subitem_etc, "override"), devModel);
+
    if( subitem_etc )
    {
       cJSON *param = subitem_etc->child;
       cJSON *newPartnerObj = cJSON_CreateObject();
       while( param )
       {
-         char *key = NULL, *value = NULL, *value_nvram = NULL;
+         char *key = NULL, *value = NULL, *value_nvram = NULL, *value_etc = NULL;
          cJSON *newParamObj = cJSON_CreateObject();
          key = param->string;
          cJSON * value_obj = cJSON_GetObjectItem(subitem_etc, key);
+
+         if (!strncmp(key, "override", 8))
+         {
+            param = param->next;
+            continue;
+         }
+
+         if (overrideObj && cJSON_HasObjectItem(overrideObj, key))
+         {
+            value_etc = value_obj->valuestring;
+            value_obj = cJSON_GetObjectItem(overrideObj, key);
+         }
+
          if (value_obj)
             value = value_obj->valuestring;
 
@@ -1284,7 +1303,10 @@ int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *P
             if (value_nvram_obj)
                value_nvram = value_nvram_obj->valuestring;
 
-            if ( value_nvram && strcmp(value, value_nvram) != 0)
+            /* etc value and nvram value are different, then nvram value is choosed.
+               etc and nvram are same, but override value differs, then override value is choosed.
+            */
+            if ( value_nvram && strcmp((value_etc)?value_etc:value, value_nvram) != 0 && !value_etc)
             {
                APPLY_PRINT("nvram value = %s\n", value_nvram);
                cJSON_AddStringToObject(newParamObj, "ActiveValue", value_nvram);
@@ -1380,7 +1402,13 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
    root_etc_json = cJSON_Parse(partner_etc_obj);
    cJSON * subitem_etc = cJSON_GetObjectItem(root_etc_json,PartnerID);
    cJSON * subitem_nvram_bs = cJSON_GetObjectItem(root_nvram_bs_json,PartnerID);
+   cJSON * overrideObj = NULL;
    char *key=NULL, *value=NULL;
+   char devModel[20] = "\0";
+
+   GetDevicePropertiesEntry (devModel, sizeof(devModel), "MODEL_NUM");
+   overrideObj = cJSON_GetObjectItem (cJSON_GetObjectItem(subitem_etc, "override"), devModel);
+
    if( subitem_etc )
    {
       cJSON *param = subitem_etc->child;
@@ -1388,6 +1416,18 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
       {
          key = param->string;
          cJSON * value_obj = cJSON_GetObjectItem(subitem_etc, key);
+
+         if (!strncmp(key, "override", 8))
+         {
+            param = param->next;
+            continue;
+         }
+
+         if (overrideObj && cJSON_HasObjectItem(overrideObj, key))
+         {
+            value_obj = cJSON_GetObjectItem(overrideObj, key);
+         }
+
          if (value_obj)
             value = value_obj->valuestring;
          else
@@ -1449,7 +1489,7 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
          if nvram has more entries, we may need to check what was
          removed from etc in current release.
       */
-      int subitem_etc_count = cJSON_GetArraySize(subitem_etc);
+      int subitem_etc_count = cJSON_GetArraySize(subitem_etc) - !(!overrideObj);
       int subitem_nvram_bs_count = cJSON_GetArraySize(subitem_nvram_bs);
       int iCount = 0;
       if ( subitem_etc_count < subitem_nvram_bs_count)
@@ -1459,7 +1499,8 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
             key=cJSON_GetArrayItem(subitem_nvram_bs,iCount)->string;
             //printf("String key is : %s\n",key);
             cJSON * etc_key=cJSON_GetObjectItem(subitem_etc,key);
-            if(etc_key == NULL)
+            if(etc_key == NULL &&
+               !(overrideObj && cJSON_HasObjectItem(overrideObj, key)))
             {
                APPLY_PRINT("Delete parameter %s from /nvram/bootstrap.json\n", key);
                //key=cJSON_GetArrayItem(subitem_nvram_bs,iCount);
