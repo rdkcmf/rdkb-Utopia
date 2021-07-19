@@ -8433,7 +8433,7 @@ static int do_parcon_mgmt_service(FILE *fp, int iptype, FILE *cron_fp)
             continue;
          }
 
-         fprintf(fp, ": LOG_ServiceBlocked_%d_DROP- [0:0]\n", idx);
+         fprintf(fp, ":LOG_ServiceBlocked_%d_DROP - [0:0]\n", idx);
          fprintf(fp, "-A LOG_ServiceBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix LOG_ServiceBlocked_%d_DROP --log-level %d\n", idx, idx, syslog_level);
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
 
