@@ -455,7 +455,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
     char config[1024] = {0};
     char *p= NULL;
     fd = open(config_file, O_RDWR);
-
+	
     if (fd < 0) {
         fprintf(stderr, "open file %s failed!\n", config_file);
         return -1;
@@ -463,9 +463,9 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
 
     memset(config, 0, sizeof(config));
     read(fd, config, sizeof(config));
+
     if (!strncmp(config, "dibbler-client", strlen("dibbler-client"))) 
     {
-
         /*the format is :
           add 2000::ba7a:1ed4:99ea:cd9f :: 0 t1
           action, address, prefix, pref_len 3600
@@ -473,7 +473,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
 
         p = config + strlen("dibbler-client");
         while(isblank(*p)) p++;
-
+		
         //fprintf(stderr, "%s -- %d !!! get configs from v6 client: %s \n", __FUNCTION__, __LINE__,p);
 
         if (sscanf(p, "%63s %63s %s %s %s %s %s %63s %d %s %s %s %s %s", 
@@ -483,6 +483,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
             fprintf(stderr, "IA_NA:%s %s %s %s %s %s, IA_PD:%s %d %s %s %s %s\n",
                     iana->value.v6addr, iana->iaid, iana->t1, iana->t2, iana->pretm, iana->vldtm,
                     iapd->value.v6pref, iapd->len, iapd->t1, iapd->t2, iapd->pretm, iapd->vldtm);
+					
         } else {
             fprintf(stderr, "Get the IA_NA and IA_PD failed.\n");
 	    close(fd); /*RDKB-12965 & CID:-34141*/
@@ -1056,7 +1057,6 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
 #if defined(MULTILAN_FEATURE)
     char bridge_mode[BRIDGE_MODE_STRLEN]={0};
 #endif
-    
    
     /*
      * divide the Operator-delegated prefix to sub-prefixes
@@ -1139,6 +1139,7 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
 
 #ifdef MULTILAN_FEATURE
         sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, action, sizeof(action));
+		
         if(action[0]!='\0') {
             if(!strcmp(action,"'\\0'"))
                 strncpy(iapd_preftm, "forever", sizeof(iapd_preftm));
@@ -1152,7 +1153,7 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
             else
                 strncpy(iapd_vldtm, strtok (action,"'"), sizeof(iapd_vldtm));
         }
-
+		
         snprintf(cmd, CMD_BUF_SIZE, "ip -6 addr add %s/%d dev %s valid_lft %s preferred_lft %s",
                 ipv6_addr, prefix_len, iface_name, iapd_vldtm, iapd_preftm);
 
@@ -1293,6 +1294,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     ia_na_t             ia_na;
     ia_pd_t             ia_pd;
     char                evt_val[64] = {0};
+    char                s_ia_pd_pretm[32] = {0};
     int                 ret = 0;
     int                 colon_count = 0;
     char                bridge_mode[4] = {0};
@@ -1343,8 +1345,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
 
     for (pool_index = 0; pool_index < dhcpv6s_cfg.pool_num; pool_index++) {
         dhcpv6s_pool_cfg.index = pool_index;
-        get_dhcpv6s_pool_cfg(si6, &dhcpv6s_pool_cfg);
-
+        get_dhcpv6s_pool_cfg(si6, &dhcpv6s_pool_cfg);		
         if (!dhcpv6s_pool_cfg.enable || dhcpv6s_pool_cfg.ia_prefix[0] == '\0') continue;
     	syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode));
         if (strcmp(bridge_mode, "2") || strcmp(dhcpv6s_pool_cfg.interface, "brlan0")) {
@@ -1396,6 +1397,14 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
             /*lease time*/
             {
                 unsigned long t1, t2, pref_time, valid_time;
+                if ( ret < 0){
+                    sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME, s_ia_pd_pretm, sizeof(s_ia_pd_pretm));
+                    dhcpv6s_pool_cfg.lease_time = atol(s_ia_pd_pretm);
+                }
+                else {
+                    dhcpv6s_pool_cfg.lease_time = atol(ia_pd.pretm);
+                }
+
                 if (dhcpv6s_pool_cfg.lease_time <= -1) {
                     t1 = t2 = pref_time = valid_time = 0xFFFFFFFF;
                 } else {
@@ -1411,7 +1420,6 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
 
             fprintf(fp, "   }\n");
         }
-        
         if (dhcpv6s_pool_cfg.iapd_enable) {    
             /*pd pool*/
             if(get_pd_pool(si6, &pd_pool) == 0) {
