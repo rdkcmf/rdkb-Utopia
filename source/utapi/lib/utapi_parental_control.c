@@ -56,6 +56,9 @@
 #include "utapi.h"
 #include "utapi_util.h"
 #include "utapi_parental_control.h"
+#ifdef _HUB4_PRODUCT_REQ_
+#include "secure_wrapper.h"
+#endif
 
 int Utopia_GetBlkURLCfg(UtopiaContext *ctx, int *enable)
 {
@@ -264,6 +267,41 @@ int Utopia_GetTrustedUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, trus
     return 0;
 }
 
+#ifdef _HUB4_PRODUCT_REQ_
+/* To collect mac address from listed ipaddress of host */
+static int getmacaddress_fromip(char *ipaddress, int iptype, char *mac, int mac_size)
+{
+    FILE *fp = NULL;
+    char output[64] = {0};
+
+    if (!ipaddress || !mac || !mac_size)
+        return -1;
+
+    if (4 == iptype)
+    {
+        fp = v_secure_popen("r","ip neighbour show | grep brlan0 | grep -i %s | awk '{print $5}' ", ipaddress);
+    }
+    else
+    {
+        fp = v_secure_popen("r","ip -6 nei show | grep brlan0 | grep -i %s | awk '{print $5}' ", ipaddress);
+    }
+
+    if(!fp)
+    {
+        return -1;
+    }
+
+    while(fgets(output, sizeof(output), fp)!=NULL)
+    {
+        output[strlen(output) - 1] = '\0';
+        strncpy(mac,output,mac_size);
+        break;
+    }
+
+    v_secure_pclose(fp);
+    return 0;
+}
+#endif
 int Utopia_SetTrustedUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, const trusted_user_t *trusted_user)
 {
     int index = ulIndex+1;
@@ -276,6 +314,20 @@ int Utopia_SetTrustedUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, cons
     Utopia_SetIndexedInt(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_IpType, index, trusted_user->ipaddrtype);
     Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_IpAddr, index, (char*)trusted_user->ipaddr);
     Utopia_SetIndexedBool(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_Trusted, index, trusted_user->trusted);
+#ifdef _HUB4_PRODUCT_REQ_
+    char mac[32];
+    int ret = 0;
+    memset(mac,0,sizeof(mac));
+    ret = getmacaddress_fromip((char*)trusted_user->ipaddr, trusted_user->ipaddrtype, mac, sizeof(mac));
+    if ((0 == ret) && (strlen(mac) > 0))
+    {
+        Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_MacAddr, index, mac);
+    }
+    else
+    {
+        Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_MacAddr, index, "");
+    }
+#endif
     return 0;
 }
 
@@ -333,6 +385,9 @@ int Utopia_DelTrustedUser(UtopiaContext *ctx, unsigned long ins)
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_Desc, count);
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_IpType, count);
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_IpAddr, count);
+#ifdef _HUB4_PRODUCT_REQ_
+    Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_MacAddr, count);
+#endif
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_Trusted, count);
 
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted, count);
@@ -523,6 +578,20 @@ int Utopia_SetMSTrustedUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, co
     Utopia_SetIndexedInt(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_IpType, index, ms_trusteduser->ipaddrtype);
     Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_IpAddr, index, (char*)ms_trusteduser->ipaddr);
     Utopia_SetIndexedBool(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_Trusted, index, ms_trusteduser->trusted);
+#ifdef _HUB4_PRODUCT_REQ_
+    char mac[32];
+    int ret = 0;
+    memset(mac,0,sizeof(mac));
+    ret = getmacaddress_fromip((char*)ms_trusteduser->ipaddr, ms_trusteduser->ipaddrtype, mac, sizeof(mac));
+    if ((0 == ret) && (strlen(mac) > 0))
+    {
+        Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_MacAddr, index, mac);
+    }
+    else
+    {
+        Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_MacAddr, index, "");
+    }
+#endif
     return 0;
 }
 
@@ -581,6 +650,9 @@ int Utopia_DelMSTrustedUser(UtopiaContext *ctx, unsigned long ins)
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_Desc, count);
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_IpType, count);
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_IpAddr, count);
+#ifdef _HUB4_PRODUCT_REQ_
+    Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_MacAddr, count);
+#endif
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_Trusted, count);
 
     Utopia_UnsetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted, count);

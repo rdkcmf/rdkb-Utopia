@@ -701,6 +701,9 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "desc",                      UtopiaValue_ParentalControl_ManagedSiteTrusted }, /* UtopiaValue_ParentalControl_ManagedSiteTrusted_Desc   */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "ip_type",                   UtopiaValue_ParentalControl_ManagedSiteTrusted }, /* UtopiaValue_ParentalControl_ManagedSiteTrusted_IpType  */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "ip_addr",                   UtopiaValue_ParentalControl_ManagedSiteTrusted }, /* UtopiaValue_ParentalControl_ManagedSiteTrusted_IPAddr  */
+#ifdef _HUB4_PRODUCT_REQ_
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "mac_addr",                   UtopiaValue_ParentalControl_ManagedSiteTrusted }, /* UtopiaValue_ParentalControl_ManagedSiteTrusted_MacAddr  */
+#endif
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "trusted",                   UtopiaValue_ParentalControl_ManagedSiteTrusted }, /* UtopiaValue_ParentalControl_ManagedSiteTrusted_Trusted  */
     { Utopia_Type_Config, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "managedservices_enabled",            UtopiaValue__UNKNOWN__ }, /* UtopiaValue_ParentalControl_ManagedServices_Enabled */
     { Utopia_Type_Config, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "ManagedServiceBlockCount",           UtopiaValue__UNKNOWN__ }, /* UtopiaValue_ParentalControl_ManagedServiceBlockedCount */
@@ -721,7 +724,10 @@ static struct
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "alias",                     UtopiaValue_ParentalControl_ManagedServiceTrusted }, /* UtopiaValue_ParentalControl_ManagedServiceTrusted_Alias  */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "desc",                      UtopiaValue_ParentalControl_ManagedServiceTrusted }, /* UtopiaValue_ParentalControl_ManagedServiceTrusted_Desc   */
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "ip_type",                   UtopiaValue_ParentalControl_ManagedServiceTrusted }, /* UtopiaValue_ParentalControl_ManagedServiceTrusted_IpType  */
-    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "ip_addr",                   UtopiaValue_ParentalControl_ManagedServiceTrusted }, /* UtopiaValue_ParentalControl_ManagedServiceTrusted_IPAddr  */
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "ip_addr",                   UtopiaValue_ParentalControl_ManagedServiceTrusted }, /* UtopiaValue_ParentalControl_ManagedServiceTrusted_IpAddr  */
+#ifdef _HUB4_PRODUCT_REQ_
+    { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "mac_addr",                   UtopiaValue_ParentalControl_ManagedServiceTrusted }, /* UtopiaValue_ParentalControl_ManagedServiceTrusted_MacAddr  */
+#endif
     { Utopia_Type_IndexedConfig, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_Index_For_NS,  1, "trusted",                   UtopiaValue_ParentalControl_ManagedServiceTrusted }, /* UtopiaValue_ParentalControl_ManagedServiceTrusted_Trusted  */
     { Utopia_Type_Config, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "manageddevices_enabled",             UtopiaValue__UNKNOWN__ }, /* UtopiaValue_ParentalControl_ManagedDevices_Enabled */
     { Utopia_Type_Config, Utopia_Event__NONE__,   Utopia_Static__NONE__, Utopia_For__NONE__, 1, "manageddevices_allow_all",           UtopiaValue__UNKNOWN__ }, /* UtopiaValue_ParentalControl_ManagedDevices_AllowAll */

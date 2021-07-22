@@ -547,6 +547,9 @@ typedef enum _UtopiaValue
     UtopiaValue_ParentalControl_ManagedSiteTrusted_Desc,
     UtopiaValue_ParentalControl_ManagedSiteTrusted_IpType,
     UtopiaValue_ParentalControl_ManagedSiteTrusted_IpAddr,
+#ifdef _HUB4_PRODUCT_REQ_
+    UtopiaValue_ParentalControl_ManagedSiteTrusted_MacAddr,
+#endif
     UtopiaValue_ParentalControl_ManagedSiteTrusted_Trusted,
     UtopiaValue_ParentalControl_ManagedServices_Enabled,
     UtopiaValue_ParentalControl_ManagedServiceBlockedCount,
@@ -568,6 +571,9 @@ typedef enum _UtopiaValue
     UtopiaValue_ParentalControl_ManagedServiceTrusted_Desc,
     UtopiaValue_ParentalControl_ManagedServiceTrusted_IpType,
     UtopiaValue_ParentalControl_ManagedServiceTrusted_IpAddr,
+#ifdef _HUB4_PRODUCT_REQ_
+    UtopiaValue_ParentalControl_ManagedServiceTrusted_MacAddr,
+#endif
     UtopiaValue_ParentalControl_ManagedServiceTrusted_Trusted,
     UtopiaValue_ParentalControl_ManagedDevices_Enabled,
     UtopiaValue_ParentalControl_ManagedDevices_AllowAll,

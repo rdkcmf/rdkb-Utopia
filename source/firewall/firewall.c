@@ -7506,6 +7506,7 @@ static int determine_enforcement_schedule2(FILE *cron_fp, const char *namespace)
    return within_policy_start_stop;
 }
 
+#ifndef _HUB4_PRODUCT_REQ_
 static int getipv4_fromhostdesc(char *listname,char *hostdesc, char *ipv4, int ipv4_max_size)
 {
     int count=0, idx, rc;
@@ -7588,6 +7589,7 @@ static int getmacaddress_fromip(char *ipaddress, int iptype, char *mac, int mac_
     v_secure_pclose(fp);
     return 0;
 }
+#endif
 
 /*
  *  Procedure     : do_parental_control_allow_trusted
@@ -7645,6 +7647,16 @@ static int do_parental_control_allow_trusted(FILE *fp, int iptype, const char* l
       if (this_iptype == iptype)
 #endif
       {
+#if defined(_HUB4_PRODUCT_REQ_)
+         char mac[32];
+         memset(mac,0,sizeof(mac));
+
+         rc = syscfg_get(namespace, "mac_addr", mac, sizeof(mac));
+         if (rc == 0 && mac[0] != '\0')
+         {
+                fprintf(fp, "-A %s -m mac --mac-source %s -j RETURN\n", table_name, mac);
+         }
+#else
          query[0] = '\0';
          rc = syscfg_get(namespace, "ip_addr", query, sizeof(query)); 
          if (rc == 0 && query[0] != '\0')
@@ -7683,6 +7695,7 @@ static int do_parental_control_allow_trusted(FILE *fp, int iptype, const char* l
                 }
             }
          }
+#endif
       }
    }
     FIREWALL_DEBUG("Exiting do_parental_control_allow_trusted\n");  
