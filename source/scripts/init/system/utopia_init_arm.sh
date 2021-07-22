@@ -194,7 +194,7 @@ SYSCFG_TMP_LOCATION=/tmp
 SYSCFG_FILE=$SYSCFG_TMP_LOCATION/syscfg.db
 SYSCFG_BKUP_FILE=$SYSCFG_MOUNT/syscfg.db
 SYSCFG_OLDBKUP_FILE=$SYSCFG_MOUNT/syscfg_bkup.db
-PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
+PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_TMP_LOCATION/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"  
 HOTSPOT_BLOB="/nvram/hotspot_blob"
@@ -390,6 +390,13 @@ fi
 if [ -f /nvram/cacert.pem ]; then
         echo "Remove HTTPS root certificate for TR69 if available in NVRAM to prevent updating cert"
 	rm -f /nvram/cacert.pem
+fi
+
+#CISCOXB3-6085:Removing current configuration from nvram as a part of PSM migration.
+if [ -f /nvram/bbhm_cur_cfg.xml  ]; then
+       mv /nvram/bbhm_cur_cfg.xml $PSM_CUR_XML_CONFIG_FILE_NAME
+elif [ -f $PSM_BAK_XML_CONFIG_FILE_NAME  ]; then	
+	cp -f $PSM_BAK_XML_CONFIG_FILE_NAME $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
 
 #echo "[utopia][init] Starting system logging"

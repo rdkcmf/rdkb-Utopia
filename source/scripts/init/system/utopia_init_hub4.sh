@@ -118,7 +118,7 @@ SYSCFG_ENCRYPTED_PATH=/opt/secure/
 SYSCFG_PERSISTENT_PATH=/opt/secure/data
 SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
 SYSCFG_NEW_BKUP_FILE=$SYSCFG_PERSISTENT_PATH/syscfg_bkup.db
-PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
+PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_TMP_LOCATION/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
@@ -332,6 +332,13 @@ fi
 if [ -f /nvram/cacert.pem ]; then
         echo "Remove HTTPS root certificate for TR69 if available in NVRAM to prevent updating cert"
 	rm -f /nvram/cacert.pem
+fi
+
+#CISCOXB3-6085:Removing current configuration from nvram as a part of PSM migration.
+if [ -f /nvram/bbhm_cur_cfg.xml  ]; then
+       mv /nvram/bbhm_cur_cfg.xml $PSM_CUR_XML_CONFIG_FILE_NAME
+elif [ -f $PSM_BAK_XML_CONFIG_FILE_NAME  ]; then
+        cp -f $PSM_BAK_XML_CONFIG_FILE_NAME $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
 
 # update max number of msg in queue based on system maximum queue memory.

@@ -244,7 +244,7 @@ SYSCFG_ENCRYPTED_PATH=/opt/secure/
 SYSCFG_PERSISTENT_PATH=/opt/secure/data
 SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
 SYSCFG_NEW_BKUP_FILE=$SYSCFG_PERSISTENT_PATH/syscfg_bkup.db
-PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_cur_cfg.xml"
+PSM_CUR_XML_CONFIG_FILE_NAME="$SYSCFG_TMP_LOCATION/bbhm_cur_cfg.xml"
 PSM_BAK_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_bak_cfg.xml"
 PSM_TMP_XML_CONFIG_FILE_NAME="$SYSCFG_MOUNT/bbhm_tmp_cfg.xml"
 XDNS_DNSMASQ_SERVERS_CONFIG_FILE_NAME="$SYSCFG_MOUNT/dnsmasq_servers.conf"
@@ -404,7 +404,6 @@ fi
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
    rm -f $SYSCFG_NEW_FILE
-   rm -f $PSM_CUR_XML_CONFIG_FILE_NAME
    rm -f $PSM_BAK_XML_CONFIG_FILE_NAME
    rm -f $PSM_TMP_XML_CONFIG_FILE_NAME
    rm -f $TR69TLVFILE
@@ -692,18 +691,18 @@ elif [ -f /nvram/restore_reboot ]; then
      syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
      
      if [ "$BOX_TYPE" == "TCCBR" ];then
-         if [ -f /nvram/bbhm_cur_cfg.xml-temp ]; then
+         if [ -f /nvram/bbhm_bak_cfg.xml-temp ]; then
               ##Work around: TCCBR-4087 Restored saved configuration is not restoring wan Static IP.
               ##after untar the new bbhm current config is overrriden/corrupted at times.
-              ##Hence we are storing a backup and replacing it to current config upon such cases
-              a=`md5sum /nvram/bbhm_cur_cfg.xml-temp`
+              ##Hence we are storing a backup and replacing it to backup config upon such cases
+              a=`md5sum /nvram/bbhm_bak_cfg.xml-temp`
               a=$(echo $a | cut -f 1 -d " ")
-              b=`md5sum /nvram/bbhm_cur_cfg.xml`  
+              b=`md5sum $PSM_CUR_XML_CONFIG_FILE_NAME`  
               b=$(echo $b | cut -f 1 -d " ")
               if [[ $a != $b ]]; then
-                  cp /nvram/bbhm_cur_cfg.xml-temp /nvram/bbhm_cur_cfg.xml
+                  cp /nvram/bbhm_bak_cfg.xml-temp /nvram/bbhm_bak_cfg.xml
               fi
-              rm -f /nvram/bbhm_cur_cfg.xml-temp
+			 rm -f /nvram/bbhm_bak_cfg.xml-temp
          fi
      fi
      rm -f /nvram/restore_reboot
@@ -735,6 +734,13 @@ else
    fi
 fi
 syscfg commit
+
+#CISCOXB3-6085:Removing current configuration from nvram as a part of PSM migration.
+if [ -f /nvram/bbhm_cur_cfg.xml  ]; then
+       mv /nvram/bbhm_cur_cfg.xml $PSM_CUR_XML_CONFIG_FILE_NAME
+elif [ -f $PSM_BAK_XML_CONFIG_FILE_NAME  ]; then
+        cp -f $PSM_BAK_XML_CONFIG_FILE_NAME $PSM_CUR_XML_CONFIG_FILE_NAME
+fi
 
 #RDKB-24155 - TLVData.bin should not be used in EWAN mode
 eth_wan_enable=`syscfg get eth_wan_enabled`
