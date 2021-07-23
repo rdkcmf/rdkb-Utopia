@@ -162,6 +162,15 @@ void update_rabid_features_status()
     FIREWALL_DEBUG("Exiting update_rabid_features_status \n");
 }
 
+__attribute__((weak))
+int prepare_rabid_rules_for_mapt(FILE *filter_fp, ip_ver_t ver)
+{
+    FIREWALL_DEBUG("Entering prepare_rabid_rules_for_mapt \n");
+    FIREWALL_DEBUG("Exiting prepare_rabid_rules_for_mapt \n");
+    return 0;
+}
+
+
 /*              
  ==========================================================================
                 Ethwan MSO GUI acess Markings

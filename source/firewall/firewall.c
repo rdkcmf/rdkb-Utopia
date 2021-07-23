@@ -513,6 +513,7 @@ static int do_ipflooddetectv6(FILE *fp);
 #else
     int prepare_rabid_rules(FILE *filter_fp, ip_ver_t ver);
 #endif
+int prepare_rabid_rules_for_mapt(FILE *filter_fp, ip_ver_t ver);
 
 int firewall_lib_init(void *bus_handle, int sysevent_fd, token_t sysevent_token);
 #if defined(CONFIG_KERNEL_NETFILTER_XT_TARGET_CT)
@@ -12273,6 +12274,8 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    do_blockfragippktsv4(filter_fp);
    do_portscanprotectv4(filter_fp);
    do_ipflooddetectv4(filter_fp);
+
+   prepare_rabid_rules_for_mapt(filter_fp, IP_V4);
 
    fprintf(raw_fp, "%s\n", "COMMIT");
    fprintf(mangle_fp, "%s\n", "COMMIT");
