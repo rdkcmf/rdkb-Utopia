@@ -1497,7 +1497,14 @@ OPTIONS:
             for (tag_index = 0; tag_index < NELEMS(tag_list); tag_index++ ) {
                 if (tag_list[tag_index].tag == opt.tag) break;
             }
-            
+            char l_cSecWebUI_Enabled[8] = {0};
+            syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));      
+            if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
+            {
+                char dyn_dns[256] = {0};
+                sysevent_get(si6->sefd, si6->setok, "ipv6_nameserver", dyn_dns, sizeof(dyn_dns));
+                strcpy( dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers,dyn_dns );    
+            }
             if (tag_index >= NELEMS(tag_list)) continue;
 
             if (opt.pt_client[0]) {
@@ -1513,6 +1520,17 @@ OPTIONS:
 																						  __LINE__,
 																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled,
 																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+
+                                                if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
+                                                {
+                                                    char static_dns[256] = {0};
+                                                    sysevent_get(si6->sefd, si6->setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
+                                                    if ( '\0' != static_dns[ 0 ] )
+                                                    {
+                                                        strcat(dns_str," ");
+                                                        strcat(dns_str,static_dns);
+                                                    }
+                                                }
 					}
 					else
 					{
