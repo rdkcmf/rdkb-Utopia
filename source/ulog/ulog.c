@@ -45,6 +45,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <sys/time.h>
 #include <syslog.h>
 #include "ulog.h"
 #include "unistd.h"
@@ -54,7 +56,6 @@
 #define ULOG_IDENT  "UTOPIA"
 
 static _sys_Log_Info sys_Log_Info = {"", 0, LOG_INFO, 1, 0, NULL};
-int gettimeofday(struct timeval *tv , void *tz ) ;
 
 typedef struct ucomp {
     char *name;
@@ -370,7 +371,7 @@ void ulog_SetEnable(unsigned int enable)
 
 void ulog_sys(int prior, const char* fileName, int line, const char* fmt, ...)
 {
-    char buf[ULOG_STR_SIZE] = {'\0'}; 
+    char buf[ULOG_STR_SIZE] = {'\0'};
     struct timeval tv;
     time_t curtime;
     va_list ap;
@@ -380,11 +381,10 @@ void ulog_sys(int prior, const char* fileName, int line, const char* fmt, ...)
     if(sys_Log_Info.stream != NULL && sys_Log_Info.enable == 1)
         fprintf(sys_Log_Info.stream, "%s", buf);*/
 
-    memset(buf, 0, sizeof(buf));
     gettimeofday(&tv, NULL);
     curtime=tv.tv_sec;
 
-    strftime(buf,30,"%Y-%m-%d  %T.",(const void *)localtime(&curtime));
+    strftime(buf, sizeof(buf), "%Y-%m-%d  %T.", (const void *)localtime(&curtime));
 
     snprintf(sfmt, sizeof(sfmt), "%s, %s:%d, %s", buf, fileName, line, fmt);
 
