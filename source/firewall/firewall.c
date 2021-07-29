@@ -1363,17 +1363,11 @@ static int do_wan_nat_lan_clients_mapt(FILE *fp)
 #endif
                 if (mapt_config_ratio == 1)
                 {
-                    snprintf(str, sizeof(str),
-                            "-A postrouting_towan -s 10.0.0.0/8  -j SNAT --to-source %s", mapt_ip_address);
-                    fprintf(fp, "%s\n", str);
+		    fprintf(fp, "-A postrouting_towan -s 10.0.0.0/8  -j SNAT --to-source %s\n", mapt_ip_address);
                     memset(str, 0, sizeof(str));
-                    snprintf(str, sizeof(str),
-                            "-A postrouting_towan -s 192.168.0.0/16  -j SNAT --to-source %s", mapt_ip_address);
-                    fprintf(fp, "%s\n", str);
+		    fprintf(fp, "-A postrouting_towan -s 192.168.0.0/16  -j SNAT --to-source %s\n", mapt_ip_address);
                     memset(str, 0, sizeof(str));
-                    snprintf(str, sizeof(str),
-                            "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s", mapt_ip_address);
-                    fprintf(fp, "%s\n", str);
+                    fprintf(fp, "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s\n", mapt_ip_address);
                 }
             }
         }
@@ -2716,18 +2710,13 @@ static int prepare_globals_from_configuration(void)
  */
  int do_raw_logs(FILE *fp)
 {
-   char str[MAX_QUERY];
   // FIREWALL_DEBUG("Entering do_raw_logs\n");       
  if (isLogEnabled) {
       if (isLogSecurityEnabled) {
-         snprintf(str, sizeof(str),
-                  "-A xlog_drop_lanattack -j LOG --log-prefix \"UTOPIA: FW.LANATTACK DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_drop_lanattack -j LOG --log-prefix \"UTOPIA: FW.LANATTACK DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
       }
    }
-   snprintf(str, sizeof(str),
-            "-A xlog_drop_lanattack -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_drop_lanattack -j DROP\n");
   // FIREWALL_DEBUG("Exiting do_raw_logs\n");       
    return(0);
 }
@@ -2743,7 +2732,6 @@ static int prepare_globals_from_configuration(void)
  */
  int do_logs(FILE *fp)
 {
-   char str[MAX_QUERY];
   // FIREWALL_DEBUG("Entering do_logs\n");       
    /*
     * Aside from the general idea that logging is enabled,
@@ -2752,134 +2740,76 @@ static int prepare_globals_from_configuration(void)
     */
    if (isLogEnabled) {
       if (isLogOutgoingEnabled) {
-            snprintf(str, sizeof(str),
-                     "-A xlog_accept_lan2wan -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.LAN2WAN ACCEPT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-            fprintf(fp, "%s\n", str);
+            fprintf(fp, "-A xlog_accept_lan2wan -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.LAN2WAN ACCEPT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
       }
 
       if (isLogIncomingEnabled) {
-         snprintf(str, sizeof(str),
-                  "-A xlog_accept_wan2lan -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2LAN ACCEPT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_accept_wan2lan -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2LAN ACCEPT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlog_accept_wan2self -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2SELF ACCEPT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_accept_wan2self -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2SELF ACCEPT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlog_drop_wan2lan -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2LAN DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_drop_wan2lan -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2LAN DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlog_drop_wan2self -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2SELF DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_drop_wan2self -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WAN2SELF DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlogdrop -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlogdrop -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlogreject -j LOG --log-prefix \"UTOPIA: FW.REJECT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlogreject -j LOG --log-prefix \"UTOPIA: FW.REJECT \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
       }
 
       if (isLogSecurityEnabled) {
-         snprintf(str, sizeof(str),
-                  "-A xlog_drop_wanattack -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WANATTACK DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_drop_wanattack -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.WANATTACK DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlog_drop_lanattack -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.LANATTACK DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_drop_lanattack -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.LANATTACK DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlog_drop_lan2self -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.LAN2SELF DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A xlog_drop_lan2self -m state --state NEW -j LOG --log-prefix \"UTOPIA: FW.LAN2SELF DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A xlog_drop_lan2wan -j LOG --log-prefix \"UTOPIA: FW.LAN2WAN DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp,  "-A xlog_drop_lan2wan -j LOG --log-prefix \"UTOPIA: FW.LAN2WAN DROP \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
          if(isComcastImage) {
-             snprintf(str, sizeof(str),
-                  "-A LOG_TR69_DROP -j LOG --log-prefix \"TR-069 ACS Server Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-             fprintf(fp, "%s\n", str);
+             fprintf(fp, "-A LOG_TR69_DROP -j LOG --log-prefix \"TR-069 ACS Server Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
          }
 
-         snprintf(str, sizeof(str),
-                  "-A LOG_SSH_DROP -j LOG --log-prefix \"SSH Connection Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A LOG_SSH_DROP -j LOG --log-prefix \"SSH Connection Blocked: \" --log-level %d --log-tcp-sequence --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
 
-         snprintf(str, sizeof(str),
-                  "-A SNMPDROPLOG -j LOG --log-prefix \"SNMP DROP Connection Blocked: \" --log-level %d  -m limit --limit 1/minute --limit-burst 1", syslog_level);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A SNMPDROPLOG -j LOG --log-prefix \"SNMP DROP Connection Blocked: \" --log-level %d  -m limit --limit 1/minute --limit-burst 1\n", syslog_level);
       }
 
    }
 
-   snprintf(str, sizeof(str),
-            "-A xlog_accept_lan2wan -j ACCEPT");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_accept_lan2wan -j ACCEPT\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlog_accept_wan2lan -j ACCEPT");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_accept_wan2lan -j ACCEPT\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlog_accept_wan2self -j ACCEPT");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_accept_wan2self -j ACCEPT\n");
 #if !(defined INTEL_PUMA7) && !(defined _COSA_BCM_ARM_)
-   snprintf(str, sizeof(str),
-            "-A xlog_drop_wan2lan -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_drop_wan2lan -j DROP\n");
 #endif
-   snprintf(str, sizeof(str),
-            "-A xlog_drop_wan2self -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_drop_wan2self -j DROP\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlog_drop_wanattack -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_drop_wanattack -j DROP\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlog_drop_lanattack -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_drop_lanattack -j DROP\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlog_drop_lan2self -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_drop_lan2self -j DROP\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlog_drop_lan2wan -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlog_drop_lan2wan -j DROP\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlogdrop -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlogdrop -j DROP\n");
 
-   snprintf(str, sizeof(str),
-            "-A xlogreject -p tcp -m tcp -j REJECT --reject-with tcp-reset");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlogreject -p tcp -m tcp -j REJECT --reject-with tcp-reset\n");
 
    if(isComcastImage) {
-       snprintf(str, sizeof(str),
-            "-A LOG_TR69_DROP -j DROP");
-       fprintf(fp, "%s\n", str);
+       fprintf(fp, "-A LOG_TR69_DROP -j DROP\n");
    }
 
-   snprintf(str, sizeof(str),
-            "-A LOG_SSH_DROP -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A LOG_SSH_DROP -j DROP\n");
 
    //SNMPv3 
-   snprintf(str, sizeof(str),
-            "-A SNMPDROPLOG -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A SNMPDROPLOG -j DROP\n");
 
    // for non tcp
-   snprintf(str, sizeof(str),
-            "-A xlogreject -j DROP");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A xlogreject -j DROP\n");
     //       FIREWALL_DEBUG("Exiting do_logs\n");       
    return(0);
 }
@@ -3075,23 +3005,16 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
               system(cmdIvictlPf);
 #elif defined(NAT46_KERNEL_SUPPORT)
           {
-             char str[MAX_QUERY];
 
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Single Port Forwarding --- BOTH" );
 #endif
-             snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, external_port, toip, port_modifier);
-             fprintf(nat_fp, "%s\n", str);
+             fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif
  
-             snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, external_port, toip, port_modifier);
-             fprintf(nat_fp, "%s\n", str);
+             fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif
@@ -3102,15 +3025,11 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif //FEATURE_MAPT
 #endif //_HUB4_PRODUCT_REQ_
       
-      char str[MAX_QUERY];
       
     if ( (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) && (privateIpCheck(toip)) )
 	  {
 	     if (isNatReady) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     natip4, external_port, toip, port_modifier);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
          }
          
 #ifdef _HUB4_PRODUCT_REQ_
@@ -3121,10 +3040,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
              char cmdIvictlPf[MAX_QUERY] = {0};
              int tcp_protocol = 100;
 
-             snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, external_port, toip, port_modifier);
-             fprintf(nat_fp, "%s\n", str);
+             fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
              if (isBothProtocol == FALSE)
              {
                  snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
@@ -3141,10 +3057,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Single Port Forwarding --- TCP" );
 #endif
-                snprintf(str, sizeof(str),
-                    "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, external_port, toip, port_modifier);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif
@@ -3155,10 +3068,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                        natip4, external_port, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
                 #ifndef INTEL_PUMA7
                 if(strcmp(internal_port, "0")){
                     tmp = internal_port; 
@@ -3166,10 +3076,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                     tmp = external_port;
                 }
                 //ARRISXB6-4723 - Below SNAT rule is causing access issues for LAN-wifi clients when port forwarding is enabled in XB6, hence the conditional check.
-                snprintf(str, sizeof(str),
-                    "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                     lan_3_octets, lan_netmask, toip, tmp, natip4);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, natip4);
                 #endif
             }
 #ifdef _HUB4_PRODUCT_REQ_
@@ -3178,10 +3085,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
           {
               if(isMAPTReady)
               {
-                  snprintf(str, sizeof(str),
-                          "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                          mapt_ip_address, external_port, toip, port_modifier);
-                  fprintf(nat_fp, "%s\n", str);
+                  fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
 
                   if(strcmp(internal_port, "0")){
                       tmp = internal_port; 
@@ -3189,61 +3093,34 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                       tmp = external_port;
                   }
 
-                  snprintf(str, sizeof(str),
-                          "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                          lan_3_octets, lan_netmask, toip, tmp, mapt_ip_address);
-                  fprintf(nat_fp, "%s\n", str);
+                  fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, mapt_ip_address);
               }
           }
 #endif
 #endif
          }else if (!isNatRedirectionBlocked) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     lan_ipaddr, external_port, toip, port_modifier);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", lan_ipaddr, external_port, toip, port_modifier);
          
             if (isNatReady) {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s",
-                        natip4, external_port, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
             }
 
             if(strcmp(internal_port, "0")){
-                snprintf(str, sizeof(str),
-                         "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                        lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
             }else{
-                snprintf(str, sizeof(str),
-                         "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                        lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
             }
          }
          if (filter_fp) {
             if(strcmp(internal_port, "0")){
-                snprintf(str, sizeof(str),
-                        "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                        toip, internal_port);
-                fprintf(filter_fp, "%s\n", str);
+                fprintf(filter_fp, "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan\n", toip, internal_port);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-            snprintf(str, sizeof(str),
-                 "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
-                 toip, internal_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan\n", toip, internal_port);
 #endif
          }else{
-            snprintf(str, sizeof(str),
-                      "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                     toip, external_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan\n", toip, external_port);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-            snprintf(str, sizeof(str),
-                 "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
-                 toip, external_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan\n", toip, external_port);
 #endif
          }
 
@@ -3252,10 +3129,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&  (privateIpCheck(toip)) )	
 	  {
 		 if (isNatReady) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     natip4, external_port, toip, port_modifier);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
          }
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
@@ -3265,10 +3139,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
              char cmdIvictlPf[MAX_QUERY] = {0};
              char udp_protocol[BUFLEN_8] = "010";
  
-             snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, external_port, toip, port_modifier);
-             fprintf(nat_fp, "%s\n", str);
+             fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
              if (isBothProtocol == FALSE)
              {
                  snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
@@ -3285,10 +3156,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Single Port Forwarding --- UDP" );
 #endif
-                 snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, external_port, toip, port_modifier);
-                 fprintf(nat_fp, "%s\n", str);
+                 fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif
@@ -3299,10 +3167,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 #endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                        natip4, external_port, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
                #ifndef INTEL_PUMA7 
                 if(strcmp(internal_port, "0")){
                     tmp = internal_port; 
@@ -3310,10 +3175,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
                     tmp = external_port;
                 }
                 //ARRISXB6-4723 - Below SNAT rule is causing access issues for LAN-wifi clients when port forwarding is enabled in XB6, hence the conditional check.
-                snprintf(str, sizeof(str),
-                    "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                     lan_3_octets, lan_netmask, toip, tmp, natip4);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, natip4);
                 #endif
             }
 #ifdef _HUB4_PRODUCT_REQ_
@@ -3323,10 +3185,7 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
             {
                 if(IsValidIPv4Addr(mapt_ip_address))
                 {
-                    snprintf(str, sizeof(str),
-                            "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                            mapt_ip_address, external_port, toip, port_modifier);
-                    fprintf(nat_fp, "%s\n", str);
+                    fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
                 }
             }
             if(strcmp(internal_port, "0")){
@@ -3337,71 +3196,41 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
 
             if(IsValidIPv4Addr(mapt_ip_address))
             {
-                snprintf(str, sizeof(str),
-                        "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                        lan_3_octets, lan_netmask, toip, tmp, mapt_ip_address);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, tmp, mapt_ip_address);
             }
         }
 #endif
 #endif
          }else if (!isNatRedirectionBlocked) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                     lan_ipaddr, external_port, toip, port_modifier);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", lan_ipaddr, external_port, toip, port_modifier);
 
             if (isNatReady) {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s",
-                        natip4, external_port, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", natip4, external_port, toip, port_modifier);
             }
 
             if(strcmp(internal_port, "0")){
-                snprintf(str, sizeof(str),
-                     "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                    lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, internal_port, lan_ipaddr);
             }else{
-                snprintf(str, sizeof(str),
-                     "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                    lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, external_port, lan_ipaddr);
             }
          }
          if (filter_fp) {
             if(strcmp(internal_port, "0")){
-                snprintf(str, sizeof(str),
-                    "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-                    toip, internal_port);
-                fprintf(filter_fp, "%s\n", str);
+                fprintf(filter_fp, "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan\n", toip, internal_port);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-            snprintf(str, sizeof(str),
-                 "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
-                 toip, internal_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan\n", toip, internal_port);
 #endif
          }else{
-            snprintf(str, sizeof(str),
-                 "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-                 toip, external_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan\n",  toip, external_port);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-            snprintf(str, sizeof(str),
-                 "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
-                 toip, external_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan\n", toip, external_port);
 #endif
             }
          }
       }
 #ifndef PORTMAPPING_2WAY_PASSTHROUGH
             if (filter_fp) {
-                snprintf(str, sizeof(str),
-                    "-A lan2wan_forwarding_accept -m conntrack --ctstate DNAT -j xlog_accept_lan2wan", 
-                    toip, internal_port);
-                fprintf(filter_fp, "%s\n", str);
+                fprintf(filter_fp, "-A lan2wan_forwarding_accept -m conntrack --ctstate DNAT -j xlog_accept_lan2wan\n", toip, internal_port);
             }
 #endif
    }
@@ -3433,7 +3262,6 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
    char query[MAX_QUERY];
    int  rc;
 #if defined(CISCO_CONFIG_TRUE_STATIC_IP) || (defined(FEATURE_MAPT) && defined(NAT46_KERNEL_SUPPORT))
-   char str[MAX_QUERY];
 #endif
    int count;
 #ifdef _HUB4_PRODUCT_REQ_
@@ -3521,34 +3349,18 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 /* if TRUE static IP not be configed , skip one 2 one nat */
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
                  if (isWanReady && isWanStaticIPReady) {
-                     snprintf(str, sizeof(str),
-                         "-A prerouting_fromwan -d %s -j DNAT --to-destination %s",
-                         public_ip, toip);
-                    fprintf(nat_fp, "%s\n", str);
-                    snprintf(str, sizeof(str), 
-                        "-A postrouting_towan -s %s -j SNAT --to-source %s", 
-                        toip, public_ip);
-                    fprintf(nat_fp, "%s\n", str);
+                    fprintf(nat_fp, "-A prerouting_fromwan -d %s -j DNAT --to-destination %s\n", public_ip, toip);
+                    fprintf(nat_fp, "-A postrouting_towan -s %s -j SNAT --to-source %s\n", toip, public_ip);
                     if (filter_fp) {
-                        snprintf(str, sizeof(str),
-                            "-A wan2lan_forwarding_accept  -d %s -j xlog_accept_wan2lan", 
-                            toip);
-                        fprintf(filter_fp, "%s\n", str);
+                        fprintf(filter_fp, "-A wan2lan_forwarding_accept  -d %s -j xlog_accept_wan2lan\n", toip);
                         /* one 2 one should work even nat disable */ 
                         if(!isNatReady){
-                            snprintf(str, sizeof(str), 
-                                "-I lan2wan_disable -s %s -j xlog_accept_lan2wan", toip);
-                            fprintf(filter_fp, "%s\n", str);
-                            snprintf(str, sizeof(str), 
-                                "-I wan2lan_disabled -d %s -j xlog_accept_wan2lan", toip);
-                            fprintf(filter_fp, "%s\n", str);
+                            fprintf(filter_fp, "-I lan2wan_disable -s %s -j xlog_accept_lan2wan\n", toip);
+                            fprintf(filter_fp, "-I wan2lan_disabled -d %s -j xlog_accept_wan2lan\n", toip);
                         }
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-                        snprintf(str, sizeof(str),
-                            "-A lan2wan_forwarding_accept -s %s -j xlog_accept_lan2wan", 
-                            toip);
-                        fprintf(filter_fp, "%s\n", str);
+                        fprintf(filter_fp, "-A lan2wan_forwarding_accept -s %s -j xlog_accept_lan2wan\n", toip);
 #endif
                     }
                  }
@@ -3701,17 +3513,11 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Range Port Forwarding --- BOTH" );
 #endif
-              snprintf(str, sizeof(str),
-                   "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                   mapt_ip_address, sdport, edport, toip, target_internal_port);
-              fprintf(nat_fp, "%s\n", str);
+              fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif
-              snprintf(str, sizeof(str),
-                   "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                   mapt_ip_address, sdport, edport, toip, target_internal_port);
-              fprintf(nat_fp, "%s\n", str);
+              fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif
@@ -3721,15 +3527,11 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 #endif //FEATURE_MAPT
 #endif //_HUB4_PRODUCT_REQ_
       
-      char str[MAX_QUERY];
       
       if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) && (privateIpCheck(toip)))
 	  {
 		 if (isNatReady) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     natip4, sdport, edport, toip, target_internal_port);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
          }
 
 #ifdef _HUB4_PRODUCT_REQ_
@@ -3742,10 +3544,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
             int index;
             int range = 0;
 
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, sdport, edport, toip, target_internal_port);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
             if (isBothProtocol == FALSE)
             {
                     range = atoi(edport) - atoi(sdport);
@@ -3767,10 +3566,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Range Port Forwarding --- TCP" );
 #endif
-              snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, sdport, edport, toip, target_internal_port);
-              fprintf(nat_fp, "%s\n", str);
+              fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif
@@ -3781,74 +3577,44 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 #endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
-                snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                        natip4, sdport, edport, toip, target_internal_port);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
  
-                snprintf(str, sizeof(str),
-                    "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                     lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
             }
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
          if(isMAPTReady)
          {
-             snprintf(str, sizeof(str),
-                     "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, sdport, edport, toip, target_internal_port);
-             fprintf(nat_fp, "%s\n", str);
+             fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
              if (IsValidIPv4Addr(mapt_ip_address))
              {
-                 snprintf(str, sizeof(str),
-                     "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                     lan_3_octets, lan_netmask, toip, match_internal_port, mapt_ip_address);
-                 fprintf(nat_fp, "%s\n", str);
+                 fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, mapt_ip_address);
              }
          }
 #endif 
 #endif 
          }else if (!isNatRedirectionBlocked) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     lan_ipaddr, sdport, edport, toip, target_internal_port);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", lan_ipaddr, sdport, edport, toip, target_internal_port);
 
             if (isNatReady) {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                        natip4, sdport, edport, toip, target_internal_port);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
             }
 
-            snprintf(str, sizeof(str),
-                     "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                    lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
          }
 
          if (filter_fp) {
-            snprintf(str, sizeof(str),
-                    "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan", 
-                    toip, match_internal_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A wan2lan_forwarding_accept -p tcp -m tcp -d %s --dport %s -j xlog_accept_wan2lan\n", toip, match_internal_port);
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-            snprintf(str, sizeof(str),
-                    "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan", 
-                    toip, match_internal_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A lan2wan_forwarding_accept -p tcp -m tcp -s %s --sport %s -j xlog_accept_lan2wan\n", toip, match_internal_port);
 #endif
          }
       }
       if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&  (privateIpCheck(toip)) )
 	  {
 		 if (isNatReady) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     natip4, sdport, edport, toip, target_internal_port);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp,  "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
          }
  
 #ifdef _HUB4_PRODUCT_REQ_
@@ -3861,10 +3627,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
             int range = 0;
             int index;
              
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, sdport, edport, toip, target_internal_port);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
               
             if (isBothProtocol == FALSE )
             {
@@ -3887,10 +3650,7 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("Enabling Range Port Forwarding --- UDP" );
 #endif
-              snprintf(str, sizeof(str),
-                        "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                        mapt_ip_address, sdport, edport, toip, target_internal_port);
-              fprintf(nat_fp, "%s\n", str);
+              fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
 #ifdef FEATURE_MAPT_DEBUG
               LOG_PRINT_MAIN("str: %s",str );
 #endif 
@@ -3901,15 +3661,9 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
 #endif //_HUB4_PRODUCT_REQ_
          if(isHairpin){
              if (isNatReady) {
-                snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                        natip4, sdport, edport, toip, target_internal_port);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
  
-                snprintf(str, sizeof(str),
-                    "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                     lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
-                fprintf(nat_fp, "%s\n", str);
+                fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, natip4);
             }
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
@@ -3917,58 +3671,34 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          {
              if (IsValidIPv4Addr(mapt_ip_address))
              {
-                 snprintf(str, sizeof(str),
-                         "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                         mapt_ip_address, sdport, edport, toip, target_internal_port);
-                 fprintf(nat_fp, "%s\n", str);
+                 fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
             
-                 snprintf(str, sizeof(str),
-                        "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                         lan_3_octets, lan_netmask, toip, match_internal_port, mapt_ip_address);
-                 fprintf(nat_fp, "%s\n", str);
+                 fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, mapt_ip_address);
              }
          }
 #endif
 #endif
          }else if (!isNatRedirectionBlocked) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                     lan_ipaddr, sdport, edport, toip, target_internal_port);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", lan_ipaddr, sdport, edport, toip, target_internal_port);
 
             if (isNatReady) {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s",
-                        natip4, sdport, edport, toip, target_internal_port);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", natip4, sdport, edport, toip, target_internal_port);
             }
 
-            snprintf(str, sizeof(str),
-                    "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                    lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, match_internal_port, lan_ipaddr);
         }
 
         if(filter_fp){
-            snprintf(str, sizeof(str),
-                    "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan", 
-                    toip, match_internal_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A wan2lan_forwarding_accept -p udp -m udp -d %s --dport %s -j xlog_accept_wan2lan\n", toip, match_internal_port);
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan", 
-                  toip, match_internal_port);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A lan2wan_forwarding_accept -p udp -m udp -s %s --sport %s -j xlog_accept_lan2wan\n", toip, match_internal_port);
 #endif
         }
       }
 #ifndef PORTMAPPING_2WAY_PASSTHROUGH
     if(filter_fp) {
-            snprintf(str, sizeof(str),
-                 "-A lan2wan_forwarding_accept -m conntrack --ctstate DNAT -j xlog_accept_lan2wan", 
-                 toip, internal_port);
-            fprintf(filter_fp, "%s\n", str);
+            fprintf(filter_fp, "-A lan2wan_forwarding_accept -m conntrack --ctstate DNAT -j xlog_accept_lan2wan\n", toip, internal_port);
     }
 #endif
 
@@ -4092,40 +3822,24 @@ static int do_wellknown_ports_forwarding(FILE *nat_fp, FILE *filter_fp)
            snprintf(port_modifier, sizeof(port_modifier), ":%s", toport);
          }
 
-         char str[MAX_QUERY];
 		 if  (privateIpCheck(toip))
 		 {
 		 	if (isWanReady) {
-            	snprintf(str, sizeof(str),
-                	     "-A prerouting_fromwan -p %s -m %s -d %s --dport %s -j DNAT --to-destination %s.%s%s",
-                    	 port_prot, port_prot, current_wan_ipaddr, port_val, lan_3_octets, toip, port_modifier);
-	            fprintf(nat_fp, "%s\n", str);
+	            fprintf(nat_fp, "-A prerouting_fromwan -p %s -m %s -d %s --dport %s -j DNAT --to-destination %s.%s%s\n", port_prot, port_prot, current_wan_ipaddr, port_val, lan_3_octets, toip, port_modifier);
     	     }
 
         	 if (!isNatRedirectionBlocked) {
-            	snprintf(str, sizeof(str),
-                		 "-A prerouting_fromlan -p %s -m %s -d %s --dport %s -j DNAT --to-destination %s.%s%s",
-		                 port_prot, port_prot, lan_ipaddr, port_val, lan_3_octets, toip, port_modifier);
-        	    fprintf(nat_fp, "%s\n", str);
+        	    fprintf(nat_fp, "-A prerouting_fromlan -p %s -m %s -d %s --dport %s -j DNAT --to-destination %s.%s%s\n", port_prot, port_prot, lan_ipaddr, port_val, lan_3_octets, toip, port_modifier);
 
             	if (isWanReady) {
-               		snprintf(str, sizeof(str),
-                    		 "-A prerouting_fromlan -p %s -m %s -d %s --dport %s -j DNAT --to-destination %s.%s%s",
-		                     port_prot, port_prot, current_wan_ipaddr, port_val, lan_3_octets, toip, port_modifier);
-        	       fprintf(nat_fp, "%s\n", str);
+        	       fprintf(nat_fp, "-A prerouting_fromlan -p %s -m %s -d %s --dport %s -j DNAT --to-destination %s.%s%s\n", port_prot, port_prot, current_wan_ipaddr, port_val, lan_3_octets, toip, port_modifier);
             	}
 
-            	snprintf(str, sizeof(str),
-                		 "-A postrouting_tolan -s %s.0/%s -p %s -m %s -d %s.%s --dport %s -j SNAT --to-source %s", 
-		                 lan_3_octets, lan_netmask, port_prot, port_prot, lan_3_octets, toip, '\0' == toport[0] ? port_val : toport, lan_ipaddr);
-        	    fprintf(nat_fp, "%s\n", str);
+        	    fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p %s -m %s -d %s.%s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, port_prot, port_prot, lan_3_octets, toip, '\0' == toport[0] ? port_val : toport, lan_ipaddr);
          	}
 
 		    if(filter_fp) {
-        	    snprintf(str, sizeof(str),
-            		     "-A wan2lan_forwarding_accept -p %s -m %s -d %s.%s --dport %s -j xlog_accept_wan2lan", port_prot, port_prot, lan_3_octets, 
-						 toip, '\0' == toport[0] ? port_val : toport);
-            	fprintf(filter_fp, "%s\n", str);
+            	fprintf(filter_fp, "-A wan2lan_forwarding_accept -p %s -m %s -d %s.%s --dport %s -j xlog_accept_wan2lan\n", port_prot, port_prot, lan_3_octets, toip, '\0' == toport[0] ? port_val : toport);
          	}
 		 }
       }
@@ -4239,14 +3953,10 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
          }
 
          
-         char str[MAX_QUERY];
          if ((0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) &&  (privateIpCheck(toip)) )
 		 {
 			if (isNatReady) {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
-                        natip4, external_dest_port, external_ip, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s\n", natip4, external_dest_port, external_ip, toip, port_modifier);
             }
 
 #ifdef _HUB4_PRODUCT_REQ_
@@ -4255,49 +3965,31 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
         {
            if (IsValidIPv4Addr(mapt_ip_address))
            {
-               snprintf(str, sizeof(str),
-                        "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
-                     mapt_ip_address, external_dest_port, external_ip, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_dest_port, external_ip, toip, port_modifier);
            }
         }
 #endif
 #endif
             if (!isNatRedirectionBlocked) {
                if (0 == strcmp("none", fromip)) {
-                  snprintf(str, sizeof(str),
-                        "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
-                        lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
-                  fprintf(nat_fp, "%s\n", str);
+                  fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s\n", lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
 
                   if (isNatReady) {
-                     snprintf(str, sizeof(str),
-                           "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s",
-                           natip4, external_dest_port, external_ip, toip, port_modifier);
-                     fprintf(nat_fp, "%s\n", str);
+                     fprintf(nat_fp, "-A prerouting_fromlan -p tcp -m tcp -d %s %s %s -j DNAT --to-destination %s%s\n", natip4, external_dest_port, external_ip, toip, port_modifier);
                   }
 
-                  snprintf(str, sizeof(str),
-                        "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s", 
-                       lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
-                  fprintf(nat_fp, "%s\n", str);
+                  fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p tcp -m tcp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
                }
             }
 
             if(filter_fp) {
-                snprintf(str, sizeof(str),
-                        "-A wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan", 
-                            external_ip, toip, dport);
-                fprintf(filter_fp, "%s\n", str);
+                fprintf(filter_fp, "-A wan2lan_forwarding_accept -p tcp -m tcp %s -d %s --dport %s -j xlog_accept_wan2lan\n", external_ip, toip, dport);
             }
          }
          if ((0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) &&  (privateIpCheck(toip)) )
 		 {
 			if (isNatReady) {
-               snprintf(str, sizeof(str),
-                       "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
-                       natip4, external_dest_port, external_ip, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s\n", natip4, external_dest_port, external_ip, toip, port_modifier);
             }
 
 #ifdef _HUB4_PRODUCT_REQ_
@@ -4306,40 +3998,25 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
         {
            if (IsValidIPv4Addr(mapt_ip_address))
            {
-               snprintf(str, sizeof(str),
-                       "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
-                       mapt_ip_address, external_dest_port, external_ip, toip, port_modifier);
-               fprintf(nat_fp, "%s\n", str);
+               fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_dest_port, external_ip, toip, port_modifier);
            }
         }
 #endif        
 #endif        
             if (!isNatRedirectionBlocked) {
                if (0 == strcmp("none", fromip)) {
-                  snprintf(str, sizeof(str),
-                    "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
-                    lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
-                  fprintf(nat_fp, "%s\n", str);
+                  fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s\n", lan_ipaddr, external_dest_port, external_ip, toip, port_modifier);
 
                   if (isNatReady) {
-                     snprintf(str, sizeof(str),
-                       "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s",
-                       natip4, external_dest_port, external_ip, toip, port_modifier);
-                     fprintf(nat_fp, "%s\n", str);
+                     fprintf(nat_fp, "-A prerouting_fromlan -p udp -m udp -d %s %s %s -j DNAT --to-destination %s%s\n", natip4, external_dest_port, external_ip, toip, port_modifier);
                   }
 
-                  snprintf(str, sizeof(str),
-                        "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s", 
-                          lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
-                  fprintf(nat_fp, "%s\n", str);
+                  fprintf(nat_fp, "-A postrouting_tolan -s %s.0/%s -p udp -m udp -d %s --dport %s -j SNAT --to-source %s\n", lan_3_octets, lan_netmask, toip, dport, lan_ipaddr);
                }
             }
 
             if(filter_fp) {
-                snprintf(str, sizeof(str),
-                        "-A wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan", 
-                            external_ip, toip, dport);
-                fprintf(filter_fp, "%s\n", str);
+                fprintf(filter_fp, "-A wan2lan_forwarding_accept -p udp -m udp %s -d %s --dport %s -j xlog_accept_wan2lan\n", external_ip, toip, dport);
             }
          }
       }
@@ -4413,11 +4090,7 @@ static int do_static_route_forwarding(FILE *filter_fp)
          continue;
       }
 
-      char str[600];
-      snprintf(str, sizeof(str),
-                  "-A wan2lan_forwarding_accept -d %s/%s -j xlog_accept_wan2lan",
-                  dest, netmask);
-       fprintf(filter_fp, "%s\n", str);
+       fprintf(filter_fp, "-A wan2lan_forwarding_accept -d %s/%s -j xlog_accept_wan2lan\n", dest, netmask);
     }
 StaticRouteForwardDone:
            FIREWALL_DEBUG("Exiting do_static_route_forwarding\n");       
@@ -4524,10 +4197,7 @@ static int do_nonat(FILE *filter_fp)
          }
       }
 
-      char str[MAX_QUERY];
-      snprintf(str, sizeof(str),
-               "-A wan2lan_nonat -d %s/%s -j xlog_accept_wan2lan", lan_ipaddr, lan_netmask);
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A wan2lan_nonat -d %s/%s -j xlog_accept_wan2lan\n", lan_ipaddr, lan_netmask);
    }
            FIREWALL_DEBUG("Exiting do_nonat\n");       
    return(0);
@@ -4676,17 +4346,12 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
    snprintf(dst_str, sizeof(dst_str), "--to-destination %s ", tohost);
 
    switch (src_type) {
-      char str[MAX_QUERY];
       case(0):
          if (isNatReady &&
              strcmp(tohost, "0.0.0.0") != 0) { /* 0.0.0.0 stands for disable in SA-RG-MIB */
-            snprintf(str, sizeof(str),
-               "-A prerouting_fromwan_todmz --dst %s -p tcp -m multiport ! --dports %s,%s -j DNAT %s", natip4, Httpport, Httpsport, dst_str);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p tcp -m multiport ! --dports %s,%s -j DNAT %s\n", natip4, Httpport, Httpsport, dst_str);
             
-            snprintf(str, sizeof(str),
-               "-A prerouting_fromwan_todmz --dst %s -p udp -m multiport ! --dports %s,%s -j DNAT %s", natip4, Httpport, Httpsport, dst_str);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p udp -m multiport ! --dports %s,%s -j DNAT %s\n", natip4, Httpport, Httpsport, dst_str);
          }
 
 #ifdef _HUB4_PRODUCT_REQ_
@@ -4701,16 +4366,12 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
 #ifdef FEATURE_MAPT_DEBUG
                      LOG_PRINT_MAIN("Enabling DMZ(All) --- BOTH" );
 #endif
-                     snprintf(str, sizeof(str),
-                         "-A prerouting_fromwan_todmz --dst %s -p tcp -m multiport ! --dports %s,%s -j DNAT %s", mapt_ip_address, Httpport, Httpsport, dst_str);
-                     fprintf(nat_fp, "%s\n", str);
+                     fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p tcp -m multiport ! --dports %s,%s -j DNAT %s\n", mapt_ip_address, Httpport, Httpsport, dst_str);
 #ifdef FEATURE_MAPT_DEBUG
                      LOG_PRINT_MAIN("str: %s",str );
 #endif 
  
-                     snprintf(str, sizeof(str),
-                         "-A prerouting_fromwan_todmz --dst %s -p udp -m multiport ! --dports %s,%s -j DNAT %s", mapt_ip_address, Httpport, Httpsport, dst_str);
-                     fprintf(nat_fp, "%s\n", str);
+                     fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p udp -m multiport ! --dports %s,%s -j DNAT %s\n", mapt_ip_address, Httpport, Httpsport, dst_str);
 #ifdef FEATURE_MAPT_DEBUG
                      LOG_PRINT_MAIN("str: %s",str );
 #endif
@@ -4721,19 +4382,13 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
 #endif
          /*snprintf(str, sizeof(str),
                   "-A wan2lan_dmz -d %s.%s -j xlog_accept_wan2lan", lan_3_octets, tohost);*/
-         snprintf(str, sizeof(str),
-                  "-A wan2lan_dmz -d %s -j xlog_accept_wan2lan", tohost);
-         fprintf(filter_fp, "%s\n", str);
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_dmz_accept -s %s -j xlog_accept_wan2lan", tohost);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A wan2lan_dmz -d %s -j xlog_accept_wan2lan\n", tohost);
+         fprintf(filter_fp, "-A lan2wan_dmz_accept -s %s -j xlog_accept_wan2lan\n", tohost);
 
          break;
       case(1):
          if (isNatReady) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan_todmz --src %s --dst %s -j DNAT %s", src_str, natip4, dst_str);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan_todmz --src %s --dst %s -j DNAT %s\n", src_str, natip4, dst_str);
          }
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
@@ -4747,9 +4402,7 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
 #ifdef FEATURE_MAPT_DEBUG
                      LOG_PRINT_MAIN("Enabling DMZ --- IP" );
 #endif
-                     snprintf(str, sizeof(str),
-                             "-A prerouting_fromwan_todmz --src %s --dst %s -j DNAT %s", src_str, mapt_ip_address, dst_str);
-                     fprintf(nat_fp, "%s\n", str);
+                     fprintf(nat_fp, "-A prerouting_fromwan_todmz --src %s --dst %s -j DNAT %s\n", src_str, mapt_ip_address, dst_str);
 #ifdef FEATURE_MAPT_DEBUG
                      LOG_PRINT_MAIN("str: %s",str );
 #endif 
@@ -4760,20 +4413,14 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
 #endif
          /*snprintf(str, sizeof(str),
                   "-A wan2lan_dmz -s %s -d %s.%s -j xlog_accept_wan2lan", src_str, lan_3_octets, tohost);*/
-         snprintf(str, sizeof(str),
-                  "-A wan2lan_dmz -s %s -d %s -j xlog_accept_wan2lan", src_str, tohost);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A wan2lan_dmz -s %s -d %s -j xlog_accept_wan2lan\n", src_str, tohost);
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_dmz_accept -d %s -s %s -j xlog_accept_lan2wan", src_str, tohost);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A lan2wan_dmz_accept -d %s -s %s -j xlog_accept_lan2wan\n", src_str, tohost);
 #endif
          break;
       case(2):
          if (isNatReady) {
-            snprintf(str, sizeof(str),
-                     "-A prerouting_fromwan_todmz --dst %s -m iprange --src-range %s -j DNAT %s", natip4, src_str,  dst_str);
-            fprintf(nat_fp, "%s\n", str);
+            fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -m iprange --src-range %s -j DNAT %s\n", natip4, src_str,  dst_str);
          }
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
@@ -4787,9 +4434,7 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
 #ifdef FEATURE_MAPT_DEBUG
                      LOG_PRINT_MAIN("Enabling DMZ --- Range" );
 #endif
-                     snprintf(str, sizeof(str),
-                         "-A prerouting_fromwan_todmz --dst %s -m iprange --src-range %s -j DNAT %s", mapt_ip_address, src_str,  dst_str);
-                     fprintf(nat_fp, "%s\n", str);
+                     fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -m iprange --src-range %s -j DNAT %s\n", mapt_ip_address, src_str,  dst_str);
 #ifdef FEATURE_MAPT_DEBUG
                      LOG_PRINT_MAIN("str: %s",str );
 #endif 
@@ -4801,14 +4446,10 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
  
          /*snprintf(str, sizeof(str),
                   "-A wan2lan_dmz -m iprange --src-range %s -d %s.%s -j xlog_accept_wan2lan", src_str, lan_3_octets, tohost);*/
-         snprintf(str, sizeof(str),
-                  "-A wan2lan_dmz -m iprange --src-range %s -d %s -j xlog_accept_wan2lan", src_str, tohost);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A wan2lan_dmz -m iprange --src-range %s -d %s -j xlog_accept_wan2lan\n", src_str, tohost);
 
 #ifdef PORTMAPPING_2WAY_PASSTHROUGH
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_dmz_accept -m iprange --dst-range %s -s %s -j xlog_accept_lan2wan", src_str, tohost);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A lan2wan_dmz_accept -m iprange --dst-range %s -s %s -j xlog_accept_lan2wan\n", src_str, tohost);
 #endif
          break;
       default:
@@ -4888,11 +4529,7 @@ static int write_qos_classification_statement (FILE *fp, FILE *qos_fp, char *nam
 
       char subst[MAX_QUERY];
       char subst2[MAX_QUERY];
-      char str[300];
-      snprintf(str, sizeof(str),
-               "-A %s %s -j DSCP --set-dscp-class %s", 
-              subst_hook, make_substitutions(match,subst,sizeof(subst)), make_substitutions(class, subst2,sizeof(subst2)));
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A %s %s -j DSCP --set-dscp-class %s\n", subst_hook, make_substitutions(match,subst,sizeof(subst)), make_substitutions(class, subst2,sizeof(subst2)));
    }
            FIREWALL_DEBUG("Exiting write_qos_classification_statement\n");       
    return(0); 
@@ -5156,11 +4793,7 @@ QoSMacAddrs:
             break;
          } else {
             char subst[MAX_QUERY];
-            char str[350];
-            snprintf(str, sizeof(str),
-                     "-A prerouting_qos -m mac --mac-source %s -j DSCP --set-dscp-class %s", 
-                     mac, make_substitutions(class, subst, sizeof(subst)));
-            fprintf(fp, "%s\n", str);
+            fprintf(fp, "-A prerouting_qos -m mac --mac-source %s -j DSCP --set-dscp-class %s\n", mac, make_substitutions(class, subst, sizeof(subst)));
         }
       }
    }
@@ -5201,11 +4834,7 @@ QoSVoiceDevices:
             break;
          } else {
             char subst[MAX_QUERY];
-            char str[350];
-            snprintf(str, sizeof(str),
-                     "-A prerouting_qos -m mac --mac-source %s -j DSCP --set-dscp-class %s", 
-                     mac,  make_substitutions(class, subst, sizeof(subst)));
-            fprintf(fp, "%s\n", str);
+            fprintf(fp, "-A prerouting_qos -m mac --mac-source %s -j DSCP --set-dscp-class %s\n", mac, make_substitutions(class, subst, sizeof(subst)));
         }
       }
    }
@@ -5288,14 +4917,10 @@ static int do_wan_nat_lan_clients(FILE *fp)
   //do not do SNAT on public ip
   int i;
   for(i = 0; i < StaticIPSubnetNum ;i++ ){
-    snprintf(str, sizeof(str), 
-              "-A postrouting_towan -s %s/%s -j RETURN", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask);
-    fprintf(fp, "%s\n",str);
+    fprintf(fp, "-A postrouting_towan -s %s/%s -j RETURN\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask);
   }
   //do not do SNAT if packet is come from erouter0
-  snprintf(str, sizeof(str), 
-           "-A postrouting_towan -s %s -j RETURN", current_wan_ipaddr);
-  fprintf(fp, "%s\n",str); 
+  fprintf(fp, "-A postrouting_towan -s %s -j RETURN\n", current_wan_ipaddr); 
 #endif 
 #if defined(_ENABLE_EPON_SUPPORT_)
   if (isBridgeMode) {// Dont NAT network devices that are part of erouter0    
@@ -5332,32 +4957,23 @@ static int do_wan_nat_lan_clients(FILE *fp)
 #endif /*_HUB4_PRODUCT_REQ_*/
      if(!IS_EMPTY_STRING(natip4))
      {
-         snprintf(str, sizeof(str),
-               "-A postrouting_towan -s 10.0.0.0/8  -j SNAT --to-source %s", natip4);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A postrouting_towan -s 10.0.0.0/8  -j SNAT --to-source %s\n", natip4);
          memset(str, 0, sizeof(str));
-         snprintf(str, sizeof(str),
-               "-A postrouting_towan -s 192.168.0.0/16  -j SNAT --to-source %s", natip4);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A postrouting_towan -s 192.168.0.0/16  -j SNAT --to-source %s\n", natip4);
          memset(str, 0, sizeof(str));
-         snprintf(str, sizeof(str),
-               "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s", natip4);
+	 fprintf(fp, "-A postrouting_towan -s 172.16.0.0/12  -j SNAT --to-source %s\n", natip4);
 
      }
   }
   else
   {
-	  snprintf(str, sizeof(str),
-           "-A postrouting_towan  -j SNAT --to-source %s", natip4);
+	  fprintf(fp, "-A postrouting_towan  -j SNAT --to-source %s\n", natip4);
   }
 
-  fprintf(fp, "%s\n", str);
+  // fprintf(fp, "%s\n", str);
   
    if (isCacheActive) {
-      char rule[MAX_QUERY];
-      snprintf(rule, sizeof(rule),
-               "-A PREROUTING -i %s -p tcp --dport 80 -j DNAT --to %s:%s", lan_ifname, lan_ipaddr, "3128");
-      fprintf(fp, "%s\n", rule);
+      fprintf(fp, "-A PREROUTING -i %s -p tcp --dport 80 -j DNAT --to %s:%s\n", lan_ifname, lan_ipaddr, "3128");
    }
            FIREWALL_DEBUG("Exiting do_wan_nat_lan_clients\n");       
    return(0);
@@ -5424,24 +5040,17 @@ static int do_multinet_lan2self_attack(FILE *filter_fp) {
 static int do_lan2self_attack(FILE *fp)
 {
    /* LAND ATTACK */
-   char str[MAX_QUERY];
 // TODO: Add for each lan ip
            FIREWALL_DEBUG("Entering do_lan2self_attack\n");       
- snprintf(str, sizeof(str),
-            "-A lanattack -s %s -d %s -j xlog_drop_lanattack", lan_ipaddr, lan_ipaddr);
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A lanattack -s %s -d %s -j xlog_drop_lanattack\n", lan_ipaddr, lan_ipaddr);
 
 #if defined (MULTILAN_FEATURE)
    do_multinet_lan2self_attack(fp);
 #endif
 
-   snprintf(str, sizeof(str),
-            "-A lanattack -s 127.0.0.1 -j xlog_drop_lanattack");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A lanattack -s 127.0.0.1 -j xlog_drop_lanattack\n");
 
-   snprintf(str, sizeof(str),
-            "-A lanattack -d 127.0.0.1 -j xlog_drop_lanattack");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A lanattack -d 127.0.0.1 -j xlog_drop_lanattack\n");
            FIREWALL_DEBUG("Exiting do_lan2self_attack\n");       
    return(0);
 }
@@ -5711,10 +5320,8 @@ static int do_lan2self_mgmt(FILE *fp)
          while (NULL != q)  {
             next_token = token_get(q, ' ');
             if ( 0 != strcmp(q, "") ) {
-                char str[MAX_QUERY];
-                snprintf(str, sizeof(str), /* TODO: is this used / accurate? */
-                        "-A lan2self_mgmt -p tcp  -m tcp --dport %s -m physdev --physdev-in %s -j DROP",  reserved_mgmt_port, q);
-               fprintf(fp, "%s\n", str);
+                /* TODO: is this used / accurate? */
+               fprintf(fp, "-A lan2self_mgmt -p tcp  -m tcp --dport %s -m physdev --physdev-in %s -j DROP\n",  reserved_mgmt_port, q);
 
             }
             q = next_token;
@@ -5838,7 +5445,6 @@ static int do_wan2self_attack(FILE *fp)
       return(0);
    }
 
-   char str[300];
    char *logRateLimit = "-m limit --limit 6/h --limit-burst 1";
         // FIREWALL_DEBUG("Entering do_wan2self_attack\n");     
    /*
@@ -5960,57 +5566,31 @@ static int do_wan2self_attack(FILE *fp)
     * Reject packets from RFC1918 class networks (i.e., spoofed)
     */
    if (isRFC1918Blocked) {
-      snprintf(str, sizeof(str),
-               "-A wanattack -s 10.0.0.0/8 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -s 10.0.0.0/8 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -s 169.254.0.0/16 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -s 169.254.0.0/16 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -s 172.16.0.0/12 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -s 172.16.0.0/12 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -s 192.168.0.0/16 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -s 192.168.0.0/16 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -i ! lo -s 127.0.0.0/8 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -i ! lo -s 127.0.0.0/8 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -s 224.0.0.0/4 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -s 224.0.0.0/4 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -d 224.0.0.0/4 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -d 224.0.0.0/4 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -s 240.0.0.0/5 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -s 240.0.0.0/5 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -d 240.0.0.0/5 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -d 240.0.0.0/5 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -s 0.0.0.0/8 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -s 0.0.0.0/8 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -d 0.0.0.0/8 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -d 0.0.0.0/8 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -d 239.255.255.0/24 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -d 239.255.255.0/24 -j xlog_drop_wanattack\n");
 
-      snprintf(str, sizeof(str),
-               "-A wanattack -d 255.255.255.255  -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -d 255.255.255.255  -j xlog_drop_wanattack\n");
    }
 
    /*
@@ -6018,9 +5598,7 @@ static int do_wan2self_attack(FILE *fp)
     *  Drop excessive RST packets to avoid SMURF attacks, by given the
     *  next real data packet in the sequence a better chance to arrive first.
     */
-   snprintf(str, sizeof(str),
-            "-A wanattack -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/second --limit-burst 2 -j xlog_accept_wan2lan");
-   fprintf(fp, "%s\n", str);
+   fprintf(fp, "-A wanattack -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/second --limit-burst 2 -j xlog_accept_wan2lan\n");
 
    /*
     * SYN Flood
@@ -6043,31 +5621,21 @@ static int do_wan2self_attack(FILE *fp)
     if ('\0' != isp_connection[0] && 
         0 != strcmp("0.0.0.0", isp_connection) && 
         0 != strcmp(isp_connection, current_wan_ipaddr)) {
-       snprintf(str, sizeof(str),
-                "-A wanattack -s %s -j xlog_drop_wanattack", isp_connection);
-       fprintf(fp, "%s\n", str);
+       fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", isp_connection);
     }
 
-    snprintf(str, sizeof(str),
-             "-A wanattack -s %s -j xlog_drop_wanattack", lan_ipaddr);
-    fprintf(fp, "%s\n", str);
+    fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", lan_ipaddr);
 
-    snprintf(str, sizeof(str),
-             "-A wanattack -d %s -j xlog_drop_wanattack", lan_ipaddr);
 
 #if defined (MULTILAN_FEATURE)
     do_multinet_wan2self_attack(fp);
 #endif
 
-    fprintf(fp, "%s\n", str);
+    fprintf(fp, "-A wanattack -d %s -j xlog_drop_wanattack\n", lan_ipaddr);
 
-    snprintf(str, sizeof(str),
-             "-A wanattack -s 127.0.0.1 -j xlog_drop_wanattack");
-    fprintf(fp, "%s\n", str);
+    fprintf(fp, "-A wanattack -s 127.0.0.1 -j xlog_drop_wanattack\n");
 
-    snprintf(str, sizeof(str),
-             "-A wanattack -d 127.0.0.1 -j xlog_drop_wanattack");
-    fprintf(fp, "%s\n", str);
+    fprintf(fp, "-A wanattack -d 127.0.0.1 -j xlog_drop_wanattack\n");
 
    /*
     * Port Scanning
@@ -6077,25 +5645,17 @@ static int do_wan2self_attack(FILE *fp)
    if (isPortscanDetectionEnabled) {
 
       // Anyone who tried to portscan us is locked out for an entire day.
-      snprintf(str, sizeof(str),
-               "-A wanattack -m recent --name portscan --rcheck --seconds 86400 -j xlog_drop_wanattack");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack -m recent --name portscan --rcheck --seconds 86400 -j xlog_drop_wanattack\n");
 
 
       // Once the day has passed, remove them from the portscan list
-      snprintf(str, sizeof(str),
-               "-A wanattack   -m recent --name portscan --remove");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack   -m recent --name portscan --remove\n");
 
 
       // These rules add scanners to the portscan list, and log the attempt.
-      snprintf(str, sizeof(str),
-               "-A wanattack  -i %s -p tcp -m tcp --dport 139  -m recent --name portscan --set -j LOG --log-prefix \"Portscan:\" -m limit --limit 1/minute --limit-burst 1", current_wan_ifname);
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack  -i %s -p tcp -m tcp --dport 139  -m recent --name portscan --set -j LOG --log-prefix \"Portscan:\" -m limit --limit 1/minute --limit-burst 1\n", current_wan_ifname);
 
-      snprintf(str, sizeof(str),
-               "-A wanattack  -i %s -p tcp -m tcp --dport 139 -m recent --name portscan --set -j xlog_drop_wanattack", current_wan_ifname);
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wanattack  -i %s -p tcp -m tcp --dport 139 -m recent --name portscan --set -j xlog_drop_wanattack\n", current_wan_ifname);
 
    }
         // FIREWALL_DEBUG("Exiting do_wan2self_attack\n");     
@@ -6112,12 +5672,8 @@ static int do_wan2self_attack(FILE *fp)
  */
 static int do_mgmt_override(FILE *nat_fp)
 {
-   char str[MAX_QUERY];
        //  FIREWALL_DEBUG("Entering do_mgmt_override\n");     
-  snprintf(str, sizeof(str),
-            "-I prerouting_mgmt_override 1 -s %s/%s -d %s -p tcp  -m tcp --dport %s -j ACCEPT",
-              lan_ipaddr, lan_netmask, lan_ipaddr, reserved_mgmt_port);
-   fprintf(nat_fp, "%s\n", str);
+   fprintf(nat_fp, "-I prerouting_mgmt_override 1 -s %s/%s -d %s -p tcp  -m tcp --dport %s -j ACCEPT\n", lan_ipaddr, lan_netmask, lan_ipaddr, reserved_mgmt_port);
         // FIREWALL_DEBUG("Exiting do_mgmt_override\n");     
    return(0);
 }
@@ -6570,14 +6126,11 @@ if(family == AF_INET6)
 static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
 
-   char str[MAX_QUERY];
         // FIREWALL_DEBUG("Entering do_wan2self_ports\n");    
    // since connection tracking is turned of if current_wan_ipaddr = 0.0.0.0
    // we need to explicitly allow dns
    if (!isWanReady) {
-      snprintf(str, sizeof(str), 
-         "-A wan2self_ports -i %s -p udp -m udp --sport 53 -j xlog_accept_wan2self", default_wan_ifname);
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A wan2self_ports -i %s -p udp -m udp --sport 53 -j xlog_accept_wan2self\n", default_wan_ifname);
    }
 
    /*
@@ -6586,59 +6139,37 @@ static int do_wan2self_ports(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
     * as well as unicast
     */
    if (isRipWanEnabled) {
-      snprintf(str, sizeof(str),
-               "-A wan2self_ports -d 224.0.0.9 -p udp -m udp --dport 520 -j xlog_accept_wan2self");
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A wan2self_ports -d 224.0.0.9 -p udp -m udp --dport 520 -j xlog_accept_wan2self\n");
       if (isDmzEnabled) {
-         snprintf(str, sizeof(str),
-                  "-I prerouting_fromwan_todmz 1 -d 224.0.0.9 -p udp -m udp --dport 520 -j ACCEPT");
-         fprintf(nat_fp, "%s\n", str);
+         fprintf(nat_fp, "-I prerouting_fromwan_todmz 1 -d 224.0.0.9 -p udp -m udp --dport 520 -j ACCEPT\n");
       }
 
-      snprintf(str, sizeof(str),
-               "-A wan2self_ports -p udp -m udp --dport 520 -j xlog_accept_wan2self");
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A wan2self_ports -p udp -m udp --dport 520 -j xlog_accept_wan2self\n");
       if (isDmzEnabled) {
-         snprintf(str, sizeof(str),
-                  "-I prerouting_fromwan_todmz 1 --dport 520  -j ACCEPT");
-         fprintf(nat_fp, "%s\n", str);
+         fprintf(nat_fp, "-I prerouting_fromwan_todmz 1 --dport 520  -j ACCEPT\n");
       }
 
       // set QoS DSCP markings
-     snprintf(str, sizeof(str),
-              "-A postrouting_qos -p udp -m udp --dport 520 -j DSCP --set-dscp-class cs6");
-     fprintf(mangle_fp, "%s\n", str);
+     fprintf(mangle_fp, "-A postrouting_qos -p udp -m udp --dport 520 -j DSCP --set-dscp-class cs6\n");
    }
 
    /*
     * if the development override switch is enabled then allow ssh, http, https, from wan side
     */
    if (isDevelopmentOverride) {
-      snprintf(str, sizeof(str),
-               "-A wan2self_ports -p tcp -m tcp --dport 22 -j xlog_accept_wan2self");
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A wan2self_ports -p tcp -m tcp --dport 22 -j xlog_accept_wan2self\n");
       if (isDmzEnabled) {
-         snprintf(str, sizeof(str),
-                  "-I prerouting_fromwan_todmz 1 -p tcp -m tcp --dport 22  -j ACCEPT");
-         fprintf(nat_fp, "%s\n", str);
+         fprintf(nat_fp, "-I prerouting_fromwan_todmz 1 -p tcp -m tcp --dport 22  -j ACCEPT\n");
       }
 
-      snprintf(str, sizeof(str),
-               "-A wan2self_ports -p tcp -m tcp --dport 80 -j xlog_accept_wan2self");
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A wan2self_ports -p tcp -m tcp --dport 80 -j xlog_accept_wan2self\n");
       if (isDmzEnabled) {
-         snprintf(str, sizeof(str),
-                  "-I prerouting_fromwan_todmz 1 -p tcp -m tcp --dport 80  -j ACCEPT");
-         fprintf(nat_fp, "%s\n", str);
+         fprintf(nat_fp, "-I prerouting_fromwan_todmz 1 -p tcp -m tcp --dport 80  -j ACCEPT\n");
       }
 
-      snprintf(str, sizeof(str),
-               "-A wan2self_ports -p tcp -m tcp --dport 443 -j xlog_accept_wan2self");
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A wan2self_ports -p tcp -m tcp --dport 443 -j xlog_accept_wan2self\n");
       if (isDmzEnabled) {
-         snprintf(str, sizeof(str),
-                  "-I prerouting_fromwan_todmz 1 -p tcp -m tcp --dport 443  -j ACCEPT");
-         fprintf(nat_fp, "%s\n", str);
+         fprintf(nat_fp, "-I prerouting_fromwan_todmz 1 -p tcp -m tcp --dport 443  -j ACCEPT\n");
       }
 
    }
@@ -6829,9 +6360,7 @@ static int write_block_application_statement (FILE *fp, FILE *wkp_fp, char *tabl
       }
       
       char str[MAX_QUERY];
-      snprintf(str, sizeof(str),
-               "-A %s -p %s -m %s --dport %s -j xlogreject", table, port_prot, port_prot, port_val);
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A %s -p %s -m %s --dport %s -j xlogreject\n", table, port_prot, port_prot, port_val);
 
    }
          FIREWALL_DEBUG("Exiting write_block_application_statement\n");    
@@ -6852,59 +6381,50 @@ static int write_block_application_statement (FILE *fp, FILE *wkp_fp, char *tabl
 #if 0
 static int do_lan2wan_webfilters(FILE *filter_fp)
 {
-   char str[MAX_QUERY];
    char webfilter_enable[4];
          FIREWALL_DEBUG("Entering do_lan2wan_webfilters\n");    
 if ( 0 == syscfg_get(NULL, "block_webproxy", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
 #if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
+	 fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject\n");
 #else
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-proxy -j xlogreject");
+	 fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-proxy -j xlogreject\n");
 #endif
-         fprintf(filter_fp, "%s\n", str);
+         // fprintf(filter_fp, "%s\n", str);
       }
    }
    if ( 0 == syscfg_get(NULL, "block_java", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
 #if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
+	  fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject\n");
 #else
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-java -j xlogreject");
+	 fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-java -j xlogreject\n");
 #endif
-         fprintf(filter_fp, "%s\n", str);
+         // fprintf(filter_fp, "%s\n", str);
       }
    }
    if ( 0 == syscfg_get(NULL, "block_activex", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
 #if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject");
+	 fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --url -j xlogreject\n");
 #else
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-activex -j xlogreject");
+	 fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpurl --match-activex -j xlogreject\n");
 #endif
-         fprintf(filter_fp, "%s\n", str);
+         //fprintf(filter_fp, "%s\n", str);
       }
    }
    if ( 0 == syscfg_get(NULL, "block_cookies", webfilter_enable, sizeof(webfilter_enable)) ) {
       if ('\0' != webfilter_enable[0] && 0 != strncmp("0", webfilter_enable, sizeof(webfilter_enable)) ) {
 #if 1 // RDKB-19924 Intel Proposed RDKB Generic Bug Fix
          //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --content");
+	 fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m webstr --content\n");
 #else
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpcookie --block-cookies");
+	 fprintf(filter_fp, "-A lan2wan_webfilters -p tcp -m tcp --dport 80 -m httpcookie --block-cookies\n");
 #endif
-         fprintf(filter_fp, "%s\n", str);
+         // fprintf(filter_fp, "%s\n", str);
       }
    }
          FIREWALL_DEBUG("Exiting do_lan2wan_webfilters\n");    
@@ -7316,29 +6836,21 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
       }
 
       char str[MAX_QUERY];
-      snprintf(str, sizeof(str),
-               ":%s - [0:0]", classification_table); 
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, ":%s - [0:0]\n", classification_table);
       snprintf(str, sizeof(str),
                "-N %s", classification_table); 
       snprintf(str, sizeof(str),
                "-F %s", classification_table); 
 
-      snprintf(str, sizeof(str),
-               ":%s - [0:0]", rules_table); 
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, ":%s - [0:0]\n", rules_table);
       snprintf(str, sizeof(str),
                "-N %s", rules_table); 
       snprintf(str, sizeof(str),
                "-F %s", rules_table); 
 
-      snprintf(str, sizeof(str),
-               "-A lan2wan_iap -j %s", classification_table); 
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A lan2wan_iap -j %s\n", classification_table);
 
-      snprintf(str, sizeof(str),
-               "-A lan2wan_iap -j %s", rules_table); 
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A lan2wan_iap -j %s\n", rules_table);
 
       char block_device[MAX_QUERY];
       char block_site[MAX_QUERY];
@@ -7348,28 +6860,28 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
       snprintf(block_site, sizeof(block_site), "LOG_SiteBlocked_%d_DROP", idx);
       snprintf(block_service, sizeof(block_service), "LOG_ServiceBlocked_%d_DROP", idx);
 
-      fprintf(fp, ":%s: - [0:0]\n", block_device);
-      fprintf(fp, "-N %s\n", block_device);
-      fprintf(fp, "-F %s\n", block_device);
+      fprintf(fp, ":LOG_DeviceBlocked_%d_DROP: - [0:0]\n", idx);
+      fprintf(fp, "-N LOG_DeviceBlocked_%d_DROP\n", idx);
+      fprintf(fp, "-F LOG_DeviceBlocked_%d_DROP\n", idx);
 
-      fprintf(fp, ":%s: - [0:0]\n", block_site);
-      fprintf(fp, "-N %s\n", block_site);
-      fprintf(fp, "-F %s\n", block_site);
+      fprintf(fp, ":LOG_SiteBlocked_%d_DROP: - [0:0]\n", idx);
+      fprintf(fp, "-N LOG_SiteBlocked_%d_DROP\n", idx);
+      fprintf(fp, "-F LOG_SiteBlocked_%d_DROP\n", idx);
 
-      fprintf(fp, ":%s: - [0:0]\n", block_service);
-      fprintf(fp, "-N %s\n", block_service);
-      fprintf(fp, "-F %s\n", block_service);
+      fprintf(fp, ":LOG_ServiceBlocked_%d_DROP: - [0:0]\n", idx);
+      fprintf(fp, "-N LOG_ServiceBlocked_%d_DROP\n", idx);
+      fprintf(fp, "-F LOG_ServiceBlocked_%d_DROP\n", idx);
 
       if (isLogEnabled)
       {
-         fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix %s\n", block_device, block_device);
-         fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix %s\n", block_site, block_site);
-         fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix %s\n", block_service, block_service);
+         fprintf(fp, "-A LOG_DeviceBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix LOG_DeviceBlocked_%d_DROP\n", idx, idx);
+         fprintf(fp, "-A LOG_SiteBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix LOG_SiteBlocked_%d_DROP\n", idx, idx);
+         fprintf(fp, "-A LOG_ServiceBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix LOG_ServiceBlocked_%d_DROP\n", idx, idx);
       }
 
-      fprintf(fp, "-A %s -j DROP\n", block_device);
-      fprintf(fp, "-A %s -j DROP\n", block_site);
-      fprintf(fp, "-A %s -j DROP\n", block_service);
+      fprintf(fp, "-A LOG_DeviceBlocked_%d_DROP -j DROP\n", idx);
+      fprintf(fp, "-A LOG_SiteBlocked_%d_DROP -j DROP\n", idx);
+      fprintf(fp, "-A LOG_ServiceBlocked_%d_DROP -j DROP\n", idx);
          
       char query2[100];
       query2[0] = '\0';
@@ -7417,11 +6929,7 @@ static int do_lan_access_restrictions(FILE *fp, FILE *nat_fp)
          if (0 != rc || '\0' == ip[0]) {
             continue;
          } else {
-            snprintf(str, sizeof(str), 
-                     "-A %s -s %s.%s -j %s", 
-                     classification_table, lan_3_octets, ip,  
-                     ( (0 == access_mode) || (1 == access_mode && 0 == within_policy_start_stop)) ? block_device : rules_table);
-           fprintf(fp, "%s\n", str);
+           fprintf(fp, "-A %s -s %s.%s -j %s\n", classification_table, lan_3_octets, ip, ( (0 == access_mode) || (1 == access_mode && 0 == within_policy_start_stop)) ? block_device : rules_table);
 
          }   
       }
@@ -7453,11 +6961,7 @@ InternetAccessPolicyNext:
          } else {
             int first, last;
             if (2 == sscanf(ip, "%d %d", &first, &last)) {
-               snprintf(str, sizeof(str), 
-                        "-A %s -m iprange --src-range %s.%d-%s.%d -j %s", 
-                        classification_table, lan_3_octets, first, lan_3_octets, last, 
-                        ( (0 == access_mode) || (1 == access_mode && 0 == within_policy_start_stop)) ? block_device : rules_table);
-              fprintf(fp, "%s\n", str);
+              fprintf(fp, "-A %s -m iprange --src-range %s.%d-%s.%d -j %s\n", classification_table, lan_3_octets, first, lan_3_octets, last, ( (0 == access_mode) || (1 == access_mode && 0 == within_policy_start_stop)) ? block_device : rules_table);
             }
          }   
       }
@@ -7487,11 +6991,7 @@ InternetAccessPolicyNext2:
          if (0 != rc || '\0' == mac[0]) {
             continue;
          } else {
-            snprintf(str, sizeof(str), 
-                     "-A %s -m mac --mac-source %s -j %s", 
-                     classification_table, mac,
-                     ( (0 == access_mode) || (1 == access_mode && 0 == within_policy_start_stop)) ? block_device : rules_table);
-            fprintf(fp, "%s\n", str);
+            fprintf(fp, "-A %s -m mac --mac-source %s -j %s\n", classification_table, mac, ( (0 == access_mode) || (1 == access_mode && 0 == within_policy_start_stop)) ? block_device : rules_table);
          }   
       }
 
@@ -7597,10 +7097,7 @@ InternetAccessPolicyNext3:
             if (0 != rc || '\0' == url[0]) {
                continue;
             } else {
-               snprintf(str, sizeof(str), 
-                        "-A %s -p tcp -m tcp  -m string --string \"%s\" --algo kmp -j %s", 
-                        rules_table, url, block_site);
-               fprintf(fp, "%s\n", str);
+               fprintf(fp, "-A %s -p tcp -m tcp  -m string --string \"%s\" --algo kmp -j %s\n", rules_table, url, block_site);
             }   
          }
 
@@ -7659,18 +7156,12 @@ InternetAccessPolicyNext3:
                   }
                }
                if (0 == proto || 1 ==  proto) {
-                  snprintf(str, sizeof(str), 
-                           "-A %s -p tcp -m tcp --dport %s:%s -j %s",
-                           rules_table, sdport, edport, block_service);
-                  fprintf(fp, "%s\n", str);
+                  fprintf(fp, "-A %s -p tcp -m tcp --dport %s:%s -j %s\n", rules_table, sdport, edport, block_service);
 
                }
 
                if (0 == proto || 2 ==  proto) {
-                  snprintf(str, sizeof(str), 
-                           "-A %s -p udp -m udp --dport %s:%s -j %s",
-                      rules_table, sdport, edport, block_service);
-                  fprintf(fp, "%s\n", str);
+                  fprintf(fp, "-A %s -p udp -m udp --dport %s:%s -j %s\n", rules_table, sdport, edport, block_service);
                }
             }
          }
@@ -7697,9 +7188,7 @@ InternetAccessPolicyNext3:
                continue;
             } else {
                char str[MAX_QUERY];
-               snprintf(str, sizeof(str),
-                        "-A %s %s -j %s", rules_table, app, block_service);
-               fprintf(fp, "%s\n", str);
+               fprintf(fp, "-A %s %s -j %s\n", rules_table, app, block_service);
 
             }   
          }
@@ -7742,9 +7231,7 @@ InternetAccessPolicyNext3:
          tstr[0] = '\0';
          rc = syscfg_get(namespace, "BlockPing", tstr, sizeof(tstr));
          if (0 == rc && 0 == strcmp(tstr, "1")) {
-            snprintf(str, sizeof(str), 
-                     "-A %s -p icmp --icmp-type 8 -j xlogreject", rules_table);
-            fprintf(fp, "%s\n", str);
+            fprintf(fp, "-A %s -p icmp --icmp-type 8 -j xlogreject\n", rules_table);
          }
       }
    }
@@ -8724,8 +8211,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 			fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
 #else
 			char drop_log[40] = { 0 };
-			snprintf(drop_log, sizeof(drop_log), "LOG_DeviceBlocked_%d_DROP", idx);
-			fprintf(fp, ":%s - [0:0]\n", drop_log);
+			fprintf(fp, ":LOG_DeviceBlocked_%d_DROP - [0:0]\n", idx);
 			fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
 			fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j %s\n",query,drop_log);
@@ -8754,13 +8240,11 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 #if 0
 		fprintf(fp, "-A prerouting_devices -p tcp -j prerouting_redirect\n");
 #else
-		char drop_log[40] = { 0 };
-		snprintf(drop_log, sizeof(drop_log), "LOG_DeviceBlocked_DROP");
-		fprintf(fp, ":%s - [0:0]\n", drop_log);
-		fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
-		fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
+		fprintf(fp, ":LOG_DeviceBlocked_DROP - [0:0]\n");
+		fprintf(fp, "-A LOG_DeviceBlocked_DROP -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix LOG_DeviceBlocked_DROP --log-level %d\n",  syslog_level);
+		fprintf(fp, "-A LOG_DeviceBlocked_DROP -j prerouting_redirect\n");
 
-        fprintf(fp, "-A prerouting_devices -p tcp -j %s\n",drop_log);        
+        fprintf(fp, "-A prerouting_devices -p tcp -j LOG_DeviceBlocked_DROP\n");
 #endif /* 0 */
       }
    }
@@ -8825,14 +8309,12 @@ static int do_parcon_device_cloud_mgmt(FILE *fp, int iptype, FILE *cron_fp)
 	if(devMacs2)
 	{
 
-			char drop_log[40] = { 0 };
-			snprintf(drop_log, sizeof(drop_log), "LOG_DeviceBlocked_%d_DROP", idx+1);
-			fprintf(fp, ":%s - [0:0]\n", drop_log);
-			fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
-			fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
+			fprintf(fp, ":LOG_DeviceBlocked_%d_DROP - [0:0]\n", idx+1);
+			fprintf(fp, "-A LOG_DeviceBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix LOG_DeviceBlocked_%d_DROP --log-level %d\n", idx+1, idx+1, syslog_level);
+			fprintf(fp, "-A LOG_DeviceBlocked_%d_DROP -j prerouting_redirect\n", idx+1);
 
-            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j %s\n",devMacs2->mac,drop_log);  
-            fprintf(fp, "-A prerouting_devices -p udp -m mac --mac-source %s -j %s\n",devMacs2->mac,drop_log);                      
+            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",devMacs2->mac,idx+1);  
+            fprintf(fp, "-A prerouting_devices -p udp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",devMacs2->mac,idx+1);                      
 
                v_secure_system("touch /tmp/conn_mac");
                v_secure_system("echo %s >> /tmp/conn_mac", devMacs2->mac);
@@ -8920,29 +8402,27 @@ static int do_parcon_mgmt_service(FILE *fp, int iptype, FILE *cron_fp)
             continue;
          }
 
-         char drop_log[40];
-         snprintf(drop_log, sizeof(drop_log), "LOG_ServiceBlocked_%d_DROP", idx);
-         fprintf(fp, ":%s - [0:0]\n", drop_log);
-         fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
+         fprintf(fp, ": LOG_ServiceBlocked_%d_DROP- [0:0]\n", idx);
+         fprintf(fp, "-A LOG_ServiceBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1 -j LOG --log-prefix LOG_ServiceBlocked_%d_DROP --log-level %d\n", idx, idx, syslog_level);
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
 
-         fprintf(fp, "-A %s -p tcp -m multiport --dports 80,8080 -j parcon_service_nfq\n", drop_log);
+         fprintf(fp, "-A LOG_ServiceBlocked_%d_DROP -p tcp -m multiport --dports 80,8080 -j parcon_service_nfq\n", idx);
 		 /* if we dorp the tcp SYN packet without any FIN or RST, some client will retry many times*/ 
-         fprintf(fp, "-A %s -j DROP\n", drop_log);
+         fprintf(fp, "-A LOG_ServiceBlocked_%d_DROP -j DROP\n", idx);
 //         fprintf(fp, "-A %s -p tcp -j REJECT --reject-with tcp-reset\n", drop_log);
 //         if(iptype == 4)
 //            fprintf(fp, "-A %s -p udp -j REJECT --reject-with icmp-port-unreachable\n", drop_log);
 //         else
 //            fprintf(fp, "-A %s -p udp -j REJECT --reject-with icmp6-port-unreachable\n", drop_log);
 #else
-         fprintf(fp, "-A %s -j DROP\n", drop_log);
+         fprintf(fp, "-A LOG_ServiceBlocked_%d_DROP -j DROP\n", idx);
 #endif
          if (0 == proto || 1 ==  proto) {
-            fprintf(fp, "-A lan2wan_pc_service -p tcp -m tcp --dport %s:%s -j %s\n", sdport, edport, drop_log);
+            fprintf(fp, "-A lan2wan_pc_service -p tcp -m tcp --dport %s:%s -j LOG_ServiceBlocked_%d_DROP\n", sdport, edport, idx);
          }
 
          if (0 == proto || 2 ==  proto) {
-            fprintf(fp, "-A lan2wan_pc_service -p udp -m udp --dport %s:%s -j %s\n", sdport, edport, drop_log);
+            fprintf(fp, "-A lan2wan_pc_service -p udp -m udp --dport %s:%s -j LOG_ServiceBlocked_%d_DROP\n", sdport, edport, idx);
          }
       }
    }
@@ -9054,23 +8534,23 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
             if (!within_policy_start_stop) continue;
 
             char drop_log[40];
-            snprintf(drop_log, sizeof(drop_log), "LOG_SiteBlocked_%d_DROP", idx);
-            fprintf(fp, ":%s - [0:0]\n", drop_log);
-            fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
+	    snprintf(drop_log, sizeof(drop_log), "LOG_SiteBlocked_%d_DROP", idx);
+            fprintf(fp, ":LOG_SiteBlocked_%d_DROP - [0:0]\n", idx);
+            fprintf(fp, "-A LOG_SiteBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix LOG_SiteBlocked_%d_DROP --log-level %d\n", idx, idx, syslog_level);
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
-            fprintf(fp, "-A %s -j MARK --set-mark 0x%x\n", drop_log, atoi(ins_num));
+            fprintf(fp, "-A LOG_SiteBlocked_%d_DROP -j MARK --set-mark 0x%x\n", idx, atoi(ins_num));
             if(iptype==4){
-                fprintf(fp, "-A %s -j NFQUEUE "HTTP_GET_QUEUE_CONFIG "\n", drop_log);
-                fprintf(nat_fp, ":%s - [0:0]\n", drop_log);
-                fprintf(nat_fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
+                fprintf(fp, "-A LOG_SiteBlocked_%d_DROP -j NFQUEUE "HTTP_GET_QUEUE_CONFIG "\n", idx);
+                fprintf(nat_fp, ":LOG_SiteBlocked_%d_DROP - [0:0]\n", idx);
+                fprintf(nat_fp, "-A LOG_SiteBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix LOG_SiteBlocked_%d_DROP --log-level %d\n", idx, idx, syslog_level);
                 //if(isHttps)
                 //    fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
                 //else
                 //    fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
             }else    
-                fprintf(fp, "-A %s -j NFQUEUE "HTTPV6_GET_QUEUE_CONFIG "\n", drop_log);
+                fprintf(fp, "-A LOG_SiteBlocked_%d_DROP -j NFQUEUE "HTTPV6_GET_QUEUE_CONFIG "\n", idx);
 #else
-            fprintf(fp, "-A %s -j DROP\n", drop_log);
+            fprintf(fp, "-A LOG_SiteBlocked_%d_DROP -j DROP\n", idx);
 #endif
             if (strncasecmp(method, "URL", 3)==0)
             {
@@ -9135,20 +8615,20 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                         *pch = '\0';
 #if defined (INTEL_PUMA7)
                     //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport %s -m webstr --host \"%s:%s\" -j %s\n", nstdPort, query + host_name_offset, nstdPort, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport %s -m webstr --host \"%s:%s\" -j LOG_SiteBlocked_%d_DROP\n", nstdPort, query + host_name_offset, nstdPort, idx);
 #else
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport %s -m httphost --host \"%s:%s\" -j %s\n", nstdPort, query + host_name_offset, nstdPort, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport %s -m httphost --host \"%s:%s\" -j LOG_SiteBlocked_%d_DROP\n", nstdPort, query + host_name_offset, nstdPort, idx);
 #endif
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
                     if(iptype == 4){
                         if(isHttps){
-                            fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport %s -m set --match-set %s dst -m comment --comment \"host match %s \"  -j %s\n",\
-                                    nstdPort, ins_num, query, drop_log);
-                            fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
+                            fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport %s -m set --match-set %s dst -m comment --comment \"host match %s \"  -j LOG_SiteBlocked_%d_DROP\n",\
+                                    nstdPort, ins_num, query, idx);
+                            fprintf(nat_fp, "-A LOG_SiteBlocked_%d_DROP -m tcp -p tcp -j REDIRECT --to-port %s\n\n", idx, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
                         }else{
-                            fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport %s -m set --match-set %s dst -m comment --comment \"host match %s \"  -j %s\n",\
-                                    nstdPort, ins_num, query, drop_log);
-                            fprintf(nat_fp, "-A %s -m tcp -p tcp -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
+                            fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport %s -m set --match-set %s dst -m comment --comment \"host match %s \"  -j LOG_SiteBlocked_%d_DROP\n",\
+                                    nstdPort, ins_num, query, idx);
+                            fprintf(nat_fp, "-A LOG_SiteBlocked_%d_DROP -m tcp -p tcp -j REDIRECT --to-port %s\n\n", idx, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
                         }
                     }
                     
@@ -9161,24 +8641,24 @@ static int do_parcon_mgmt_site_keywd(FILE *fp, FILE *nat_fp, int iptype, FILE *c
                 {
 #if defined (INTEL_PUMA7)
 					//Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m webstr --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
-					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m webstr --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
+					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m webstr --host \"%s\" -j LOG_SiteBlocked_%d_DROP\n", query + host_name_offset, idx);
+					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m webstr --host \"%s\" -j LOG_SiteBlocked_%d_DROP\n", query + host_name_offset, idx);
 #elif defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -d \"%s\" -j %s\n", query + host_name_offset, drop_log);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -d \"%s\" -j LOG_SiteBlocked_%d_DROP\n", query + host_name_offset, idx);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -d \"%s\" -j LOG_SiteBlocked_%d_DROP\n", query + host_name_offset, idx);
 #else
-					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
-                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m httphost --host \"%s\" -j %s\n", query + host_name_offset, drop_log);
+					fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 80 -m httphost --host \"%s\" -j LOG_SiteBlocked_%d_DROP\n", query + host_name_offset, idx);
+                    fprintf(fp, "-A lan2wan_pc_site -p tcp -m tcp --dport 443 -m httphost --host \"%s\" -j LOG_SiteBlocked_%d_DROP\n", query + host_name_offset, idx);
 #endif
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
                     if(iptype == 4)
                     {
-                        fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport 80 -m set --match-set %s dst -m comment --comment \"host match %s \"  -j  %s\n", \
-                                ins_num, query, drop_log);
-                        fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport 443 -m set --match-set %s dst -m comment --comment \"host match %s \" -j  %s\n", \
-                                ins_num, query, drop_log);
-                        fprintf(nat_fp, "-A %s -m tcp -p tcp --dport 443 -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
-                        fprintf(nat_fp, "-A %s -m tcp -p tcp --dport 80 -j REDIRECT --to-port %s\n\n", drop_log, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
+                        fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport 80 -m set --match-set %s dst -m comment --comment \"host match %s \"  -j  LOG_SiteBlocked_%d_DROP\n", \
+                                ins_num, query, idx);
+                        fprintf(nat_fp, "-A parcon_walled_garden -p tcp --dport 443 -m set --match-set %s dst -m comment --comment \"host match %s \" -j  LOG_SiteBlocked_%d_DROP\n", \
+                                ins_num, query, idx);
+                        fprintf(nat_fp, "-A LOG_SiteBlocked_%d_DROP -m tcp -p tcp --dport 443 -j REDIRECT --to-port %s\n\n", idx, PARCON_WALLED_GARDEN_HTTPS_PORT_SITEBLK);
+                        fprintf(nat_fp, "-A LOG_SiteBlocked_%d_DROP -m tcp -p tcp --dport 80 -j REDIRECT --to-port %s\n\n", idx, PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK);
                     }
 #endif
                 }
@@ -9409,81 +8889,39 @@ static int do_prepare_port_range_triggers(FILE *mangle_fp, FILE *filter_fp)
 #endif
 
       if (0 == strcmp("both", prot) || 0 == strcmp("tcp", prot)) {
-         char str[MAX_QUERY];
 #ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
-         snprintf(str, sizeof(str), 
-                  "-A prerouting_fromlan_trigger -p tcp -m tcp --dport %s:%s -j TRIGGER --trigger-type out --trigger-proto %s --trigger-match %s:%s --trigger-relate %s:%s",
-                      sdport, edport, fprot, sdport, edport, sfport, efport);
-         fprintf(nat_fp, "%s\n", str);
-         snprintf(str, sizeof(str), 
-                  "-A lan2wan_triggers -p tcp -m tcp --dport %s:%s -j xlog_accept_lan2wan",
-                      sdport, edport);
-         fprintf(filter_fp, "%s\n", str);
-         snprintf(str, sizeof(str), 
-                  "-A lan2wan_triggers -p tcp -m tcp --sport %s:%s -j xlog_accept_lan2wan",
-                      sfport, efport);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(nat_fp, "-A prerouting_fromlan_trigger -p tcp -m tcp --dport %s:%s -j TRIGGER --trigger-type out --trigger-proto %s --trigger-match %s:%s --trigger-relate %s:%s\n", sdport, edport, fprot, sdport, edport, sfport, efport);
+         fprintf(filter_fp, "-A lan2wan_triggers -p tcp -m tcp --dport %s:%s -j xlog_accept_lan2wan\n", sdport, edport);
+         fprintf(filter_fp, "-A lan2wan_triggers -p tcp -m tcp --sport %s:%s -j xlog_accept_lan2wan\n", sfport, efport);
 
 #else
-         snprintf(str, sizeof(str), 
-                  "-A prerouting_trigger -p tcp -m tcp --dport %s:%s -j MARK --set-mark %d",
-                      sdport, edport, atoi(id));
-         fprintf(mangle_fp, "%s\n", str);
+         fprintf(mangle_fp, "-A prerouting_trigger -p tcp -m tcp --dport %s:%s -j MARK --set-mark %d\n", sdport, edport, atoi(id));
 
-         snprintf(str, sizeof(str), 
-                  "-A lan2wan_triggers -p tcp -m tcp --dport %s:%s -j NFQUEUE --queue-num 22",
-                      sdport, edport);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A lan2wan_triggers -p tcp -m tcp --dport %s:%s -j NFQUEUE --queue-num 22\n", sdport, edport);
 #endif
       }
   
       if (0 == strcmp("both", prot) || 0 == strcmp("udp", prot)) {
-         char str[MAX_QUERY];
 #ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
-         snprintf(str, sizeof(str), 
-                  "-A prerouting_fromlan_trigger -p udp -m udp --dport %s:%s -j TRIGGER --trigger-type out --trigger-proto %s --trigger-match %s:%s --trigger-relate %s:%s",
-                      sdport, edport, fprot, sdport, edport, sfport, efport);
-         fprintf(nat_fp, "%s\n", str);
-         snprintf(str, sizeof(str), 
-                  "-A lan2wan_triggers -p udp -m udp --dport %s:%s -j xlog_accept_lan2wan",
-                      sdport, edport);
-         fprintf(filter_fp, "%s\n", str);
-         snprintf(str, sizeof(str), 
-                  "-A lan2wan_triggers -p udp -m udp --sport %s:%s -j xlog_accept_lan2wan",
-                      sfport, efport);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(nat_fp, "-A prerouting_fromlan_trigger -p udp -m udp --dport %s:%s -j TRIGGER --trigger-type out --trigger-proto %s --trigger-match %s:%s --trigger-relate %s:%s\n", sdport, edport, fprot, sdport, edport, sfport, efport);
+         fprintf(filter_fp, "-A lan2wan_triggers -p udp -m udp --dport %s:%s -j xlog_accept_lan2wan\n", sdport, edport);
+         fprintf(filter_fp, "-A lan2wan_triggers -p udp -m udp --sport %s:%s -j xlog_accept_lan2wan\n", sfport, efport);
 
 #else
-         snprintf(str, sizeof(str), 
-                  "-A prerouting_trigger -p udp -m udp --dport %s:%s -j MARK --set-mark %d",
-                      sdport, edport, atoi(id));
-         fprintf(mangle_fp, "%s\n", str);
+         fprintf(mangle_fp, "-A prerouting_trigger -p udp -m udp --dport %s:%s -j MARK --set-mark %d\n", sdport, edport, atoi(id));
 
-         snprintf(str, sizeof(str), 
-                   "-A lan2wan_triggers -p udp -m udp --dport %s:%s -j NFQUEUE --queue-num 22",
-                      sdport, edport);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A lan2wan_triggers -p udp -m udp --dport %s:%s -j NFQUEUE --queue-num 22\n", sdport, edport);
 #endif
       }
 
 #ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
       if (0 == strcmp("both", fprot) || 0 == strcmp("tcp", fprot)) {
-         char str[MAX_QUERY];
-         snprintf(str, sizeof(str), 
-                  "-A prerouting_fromwan_trigger -p tcp -m tcp --dport %s:%s -j TRIGGER --trigger-type dnat", sfport, efport);
-         fprintf(nat_fp, "%s\n", str);
-         snprintf(str, sizeof(str), 
-                  "-A wan2lan_trigger -p tcp -m tcp --dport %s:%s -j TRIGGER --trigger-type in", sfport, efport);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(nat_fp, "-A prerouting_fromwan_trigger -p tcp -m tcp --dport %s:%s -j TRIGGER --trigger-type dnat\n", sfport, efport);
+         fprintf(filter_fp, "-A wan2lan_trigger -p tcp -m tcp --dport %s:%s -j TRIGGER --trigger-type in\n", sfport, efport);
       }
       if (0 == strcmp("both", fprot) || 0 == strcmp("udp", fprot)) {
-         char str[MAX_QUERY];
-         snprintf(str, sizeof(str), 
-                  "-A prerouting_fromwan_trigger -p udp -m udp --dport %s:%s -j TRIGGER --trigger-type dnat", sfport, efport);
-         fprintf(nat_fp, "%s\n", str);
-         snprintf(str, sizeof(str), 
-                  "-A wan2lan_trigger -p udp -m udp --dport %s:%s -j TRIGGER --trigger-type in", sfport, efport);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(nat_fp, "-A prerouting_fromwan_trigger -p udp -m udp --dport %s:%s -j TRIGGER --trigger-type dnat\n", sfport, efport);
+         fprintf(filter_fp, "-A wan2lan_trigger -p udp -m udp --dport %s:%s -j TRIGGER --trigger-type in\n", sfport, efport);
       }
 #endif
    }
@@ -9512,7 +8950,6 @@ static int prepare_host_detect(FILE * fp)
 {
    FIREWALL_DEBUG("Entering prepare_host_detect\n"); 
    if (isLanHostTracking || isDMZbyMAC) {
-      char str[MAX_QUERY];
       /*
        * add all known hosts and have them be accepted, but if not, then the last statement is the new host
        */
@@ -9523,17 +8960,11 @@ static int prepare_host_detect(FILE * fp)
             char ip[20];
             char mac[20];
             sscanf(buf, "%20s %20s", ip, mac);
-            snprintf(str, sizeof(str),
-                     // "-A host_detect -i %s -s %s -m state --state NEW -j RETURN", lan_ifname, ip);
-                     "-A host_detect -i %s -s %s -j RETURN", lan_ifname, ip);
-           fprintf(fp, "%s\n", str);
+           fprintf(fp, "-A host_detect -i %s -s %s -j RETURN\n", lan_ifname, ip);
          }
          fclose(kh_fp);
       }
-      snprintf(str, sizeof(str),
-               "-A host_detect -m state --state NEW -j LOG --log-level 1 --log-prefix \"%s.NEWHOST \" --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1", 
-                 LOG_TRIGGER_PREFIX);
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A host_detect -m state --state NEW -j LOG --log-level 1 --log-prefix \"%s.NEWHOST \" --log-tcp-options --log-ip-options -m limit --limit 1/minute --limit-burst 1\n", LOG_TRIGGER_PREFIX);
    }
    FIREWALL_DEBUG("Exiting prepare_host_detect\n"); 
    return(0);
@@ -9564,19 +8995,11 @@ static int prepare_lan_bandwidth_tracking(FILE *fp)
          char mac[20];
          sscanf(buf, "%20s %20s", ip, mac);
          char str[MAX_QUERY];
-         snprintf(str, sizeof(str),
-             ":bandwidth_%s - [0:0]", ip);
-         fprintf(fp, "%s\n", str);
-         snprintf(str, sizeof(str),
-               "-N bandwidth_%s", ip); 
+         fprintf(fp, ":bandwidth_%s - [0:0]\n", ip);
+	 fprintf(fp, "-N bandwidth_%s\n", ip);
+         fprintf(fp, "-A bandwidth_%s -j RETURN\n", ip);
 
-         snprintf(str, sizeof(str),
-                  "-A bandwidth_%s -j RETURN", ip);
-         fprintf(fp, "%s\n", str);
-
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_bandwidth -s %s -o %s -j bandwidth_%s", ip, current_wan_ifname, ip);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A lan2wan_bandwidth -s %s -o %s -j bandwidth_%s\n", ip, current_wan_ifname, ip);
 
          hosts++;
       }
@@ -9703,7 +9126,6 @@ static int do_multinet_lan2wan_disable(FILE *filter_fp) {
  */
 static void do_lan2wan_disable(FILE *filter_fp)
 {
-   char str[MAX_QUERY];
    FIREWALL_DEBUG("Entering do_lan2wan_disable\n"); 
 
    fprintf(filter_fp, "-A lan2wan_disable -d 169.254.0.0/16 -j DROP\n");
@@ -9722,9 +9144,7 @@ static void do_lan2wan_disable(FILE *filter_fp)
 #endif
 #endif
     if(!isNatReady){
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_disable -s %s/%s -j DROP", lan_ipaddr, lan_netmask);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A lan2wan_disable -s %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
 
 #if defined (MULTILAN_FEATURE)
          do_multinet_lan2wan_disable(filter_fp);
@@ -9778,7 +9198,6 @@ static int do_lan2wan_helpers(FILE *raw_fp)
  */
 static int do_lan2wan_misc(FILE *filter_fp)
 {
-   char str[MAX_QUERY];
    FIREWALL_DEBUG("Entering do_lan2wan_misc\n");
    /*
     * if the wan is currently unavailable, then drop any packets from lan to wan
@@ -9790,18 +9209,14 @@ static int do_lan2wan_misc(FILE *filter_fp)
 #endif
 #endif    
    if (!isWanReady) {
-      snprintf(str, sizeof(str),
-               "-I lan2wan_misc 1 -j DROP");
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-I lan2wan_misc 1 -j DROP\n");
    }
    char mtu[26];
    int tcp_mss_limit;
    if ( 0 == sysevent_get(sysevent_fd, sysevent_token, "ppp_clamp_mtu", mtu, sizeof(mtu)) ) {
       if ('\0' != mtu[0] && 0 != strncmp("0", mtu, sizeof(mtu)) ) {
          tcp_mss_limit=atoi(mtu) + 1;
-         snprintf(str, sizeof(str),
-                  "-A lan2wan_misc -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS --set-mss %s", tcp_mss_limit, mtu);
-         fprintf(filter_fp, "%s\n", str);
+         fprintf(filter_fp, "-A lan2wan_misc -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS --set-mss %s\n", tcp_mss_limit, mtu);
       }
    }
 
@@ -10043,11 +9458,7 @@ static int do_wan2lan_misc(FILE *fp)
       } 
 
       char subst[MAX_QUERY];
-      char str[300];
-      snprintf(str, sizeof(str),
-               "-A wan2lan_misc %s -j %s", 
-               match, make_substitutions(result, subst, sizeof(subst)));
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wan2lan_misc %s -j %s\n", match, make_substitutions(result, subst, sizeof(subst)));
 
    }
 FirewallRuleNext:
@@ -10119,15 +9530,12 @@ FirewallRuleNext:
                continue;
             }
 
-            char subst[MAX_QUERY];
+	    char subst[MAX_QUERY];
             /*
              * The wan2lan iptables chain contains packets from wan destined to lan.
              * The wan2lan chain is linked to from the FORWARD chain
              */
-            char str[MAX_QUERY];
-            snprintf(str, sizeof(str),
-                     "-A wan2lan_misc %s -j %s", match, make_substitutions(result, subst, sizeof(subst)));
-            fprintf(fp, "%s\n", str);
+            fprintf(fp, "-A wan2lan_misc %s -j %s\n", match, make_substitutions(result, subst, sizeof(subst)));
          }
       }
 FirewallRuleNext2:
@@ -10139,12 +9547,9 @@ FirewallRuleNext2:
    char mtu[26];
    int tcp_mss_limit;
    if ( 0 == sysevent_get(sysevent_fd, sysevent_token, "ppp_clamp_mtu", mtu, sizeof(mtu)) ) {
-     char str[MAX_QUERY];
       if ('\0' != mtu[0] && 0 != strncmp("0", mtu, sizeof(mtu)) ) {
          tcp_mss_limit=atoi(mtu) + 1;
-         snprintf(str, sizeof(str),
-                  "-A wan2lan_misc -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS --set-mss %s", tcp_mss_limit, mtu);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A wan2lan_misc -p tcp --tcp-flags SYN,RST SYN -m tcpmss --mss %d: -j TCPMSS --set-mss %s\n", tcp_mss_limit, mtu);
       }
    }
 
@@ -10221,7 +9626,6 @@ static int do_wan2lan_disabled(FILE *fp)
 {
    FIREWALL_DEBUG("Entering do_wan2lan_disabled\n");
 #if !defined(_HUB4_PRODUCT_REQ_) || (defined(_HUB4_PRODUCT_REQ_) && defined(FEATURE_MAPT))
-   char str[MAX_QUERY];
 #endif
 #ifdef _HUB4_PRODUCT_REQ_
 #ifdef FEATURE_MAPT
@@ -10242,9 +9646,7 @@ static int do_wan2lan_disabled(FILE *fp)
    if (strncmp(mapt_config_value,SET, 3) != 0)
    {
       if (!isNatReady ) {
-         snprintf(str, sizeof(str),
-             "-A wan2lan_disabled -d %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
-         fprintf(fp, "%s\n", str);
+         fprintf(fp, "-A wan2lan_disabled -d %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
       }
    }
 #endif //FEATURE_MAPT
@@ -10253,9 +9655,7 @@ static int do_wan2lan_disabled(FILE *fp)
     * if the wan is currently unavailable, then drop any packets from wan to lan
     */
    if (!isNatReady ) {
-      snprintf(str, sizeof(str),
-               "-A wan2lan_disabled -d %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wan2lan_disabled -d %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
 
 #if defined (MULTILAN_FEATURE)
       do_multinet_wan2lan_disable(fp);
@@ -10280,14 +9680,11 @@ static int do_wan2lan_disabled(FILE *fp)
 static int do_wan2lan_accept(FILE *fp)
 {
 
-   char str[MAX_QUERY];
    FIREWALL_DEBUG("Entering do_wan2lan_accept\n"); 
 
    if (!isMulticastBlocked) {
       // accept multicast from our wan
-      snprintf(str, sizeof(str),
-         "-A wan2lan_accept -p udp -m udp --destination 224.0.0.0/4 -j ACCEPT");
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A wan2lan_accept -p udp -m udp --destination 224.0.0.0/4 -j ACCEPT\n");
    }
    FIREWALL_DEBUG("Exiting do_wan2lan_accept\n"); 
    return(0);
@@ -11952,10 +11349,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    if ('\0' != default_wan_ifname[0] && 0 != strlen(default_wan_ifname) && 0 != strcmp(default_wan_ifname, current_wan_ifname)) {
       // even if current_wan_ifname is ppp we still want to consider default wan ifname as an interface
       // but dont duplicate
-      char str[MAX_QUERY];
-      snprintf(str, sizeof(str),
-               "-A INPUT -i %s -j wan2self\n", default_wan_ifname);
-      fprintf(filter_fp, "%s\n", str);
+      fprintf(filter_fp, "-A INPUT -i %s -j wan2self\n", default_wan_ifname);
    }
 
    //Add wan2self restrictions to other wan interfaces
@@ -12547,11 +11941,9 @@ static int do_raw_table_nowan(FILE *fp)
       //use the raw table
       isRawTableUsed = 1;
 
-      snprintf(str, sizeof(str), "-A prerouting_nowan -i %s -j NOTRACK", default_wan_ifname);
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A prerouting_nowan -i %s -j NOTRACK\n", default_wan_ifname);
 
-      snprintf(str, sizeof(str), "-A output_nowan -o %s -j NOTRACK",default_wan_ifname);
-      fprintf(fp, "%s\n", str);
+      fprintf(fp, "-A output_nowan -o %s -j NOTRACK\n",default_wan_ifname);
    }
       FIREWALL_DEBUG("Exiting do_raw_table_nowan \n"); 
    return(0);
@@ -12562,46 +11954,36 @@ static int do_raw_table_nowan(FILE *fp)
 static int do_raw_table_puma7(FILE *fp)
 {
    FIREWALL_DEBUG("Entering do_raw_table_puma7 \n"); 
-	char str[MAX_QUERY];
 	fprintf(stderr,"******DO RAW TABLE PUMA7 ****\n");
 
       	//use the raw table
       	isRawTableUsed = 1;
 
-	snprintf(str, sizeof(str), "-A PREROUTING -i a-mux -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i a-mux -j NOTRACK\n");
 
 	//For ath0 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1000 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1000 -j NOTRACK\n");
 
 	//For ath1 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1001 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1001 -j NOTRACK\n");
 
 	//For ath2 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1002 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1002 -j NOTRACK\n");
 
 	//For ath3 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1003 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1003 -j NOTRACK\n");
 
 	//For ath4 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1004 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1004 -j NOTRACK\n");
 
 	//For ath5 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1005 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1005 -j NOTRACK\n");
 
 	//For ath6 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1006 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1006 -j NOTRACK\n");
 
 	//For ath7 acceleration loop
-	snprintf(str, sizeof(str), "-A PREROUTING -i wifilbr0.1007 -j NOTRACK");
-	fprintf(fp, "%s\n", str);
+	fprintf(fp, "-A PREROUTING -i wifilbr0.1007 -j NOTRACK\n");
    FIREWALL_DEBUG("Exiting do_raw_table_puma7 \n"); 
 	return(0);
 }

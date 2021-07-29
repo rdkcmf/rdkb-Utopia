@@ -202,8 +202,7 @@ void handle_dns_query(struct nfq_data *pkt)
 #endif
         if((mac2Ip = fopen(mac, "w")) != NULL) /*RDKB-7144, CID-33323, free resource after use*/
         {
-            snprintf(ipAddr, sizeof(ipAddr), "%u.%u.%u.%u", srcIp[0], srcIp[1], srcIp[2], srcIp[3]);
-            fprintf(mac2Ip, "%s", ipAddr);
+            fprintf(mac2Ip, "%u.%u.%u.%u\n", srcIp[0], srcIp[1], srcIp[2], srcIp[3]);
             fclose(mac2Ip);
         }
 #if _NFQ_DEBUG_LEVEL == 1
