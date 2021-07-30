@@ -835,16 +835,9 @@ void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram
             {
                 sscanf(version_nvram,"%d.%d",&nvram_major,&nvram_minor);
                 printf ("\n READ version ######## nvram: major %d minor %d\n",nvram_major, nvram_minor);
-                if (nvram_major < etc_major)
+                if (nvram_major != etc_major || nvram_minor != etc_minor)
                 {
                     *do_compare = true;
-                }
-                else if (nvram_major == etc_major)
-                {
-                    if (nvram_minor < etc_minor)
-                    {
-                        *do_compare = true;
-                    }
                 }
 
                 if (*do_compare)
