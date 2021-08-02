@@ -8227,9 +8227,7 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 #endif
             if(cron_fp)
             {
-               v_secure_system("touch /tmp/conn_mac");
                v_secure_system("echo %s >> /tmp/conn_mac", query);
-	       v_secure_system("cat /tmp/conn_mac");
             }
          }
       }
@@ -8316,9 +8314,7 @@ static int do_parcon_device_cloud_mgmt(FILE *fp, int iptype, FILE *cron_fp)
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",devMacs2->mac,idx+1);  
             fprintf(fp, "-A prerouting_devices -p udp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",devMacs2->mac,idx+1);                      
 
-               v_secure_system("touch /tmp/conn_mac");
                v_secure_system("echo %s >> /tmp/conn_mac", devMacs2->mac);
-	       v_secure_system("cat /tmp/conn_mac");
 	}
 	++devMacs2;
 	
