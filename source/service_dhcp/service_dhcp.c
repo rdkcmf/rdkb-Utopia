@@ -67,36 +67,32 @@ char g_cBox_Type[8] = {0}, g_cXdns_Enabled[8] = {0};
 char g_cMfg_Name[8] = {0}, g_cAtom_Arping_IP[16] = {0};
 char g_cMig_Check[8] = {0};
 
-int dbusInit( void )
+static int dbusInit( void )
 {
-    int   ret  = -1;
+    int ret = -1;
     char* pCfg = CCSP_MSG_BUS_CFG;
-
-    if(g_vBus_handle == NULL)
+    if (g_vBus_handle == NULL)
     {
-        // Dbus connection init
-        #ifdef DBUS_INIT_SYNC_MODE
+#ifdef DBUS_INIT_SYNC_MODE // Dbus connection init
         ret = CCSP_Message_Bus_Init_Synced(g_cComponent_id,
                                            pCfg,
                                            &g_vBus_handle,
                                            Ansc_AllocateMemory_Callback,
                                            Ansc_FreeMemory_Callback);
-        #else
+#else
         ret = CCSP_Message_Bus_Init((char *)g_cComponent_id,
                                     pCfg,
                                     &g_vBus_handle,
                                     (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback,
                                     Ansc_FreeMemory_Callback);
-        #endif /* DBUS_INIT_SYNC_MODE */
+#endif  /* DBUS_INIT_SYNC_MODE */
+        if (ret == -1)
+        {
+            // Dbus connection error
+            fprintf(stderr, "DBUS connection error\n");
+            g_vBus_handle = NULL;
+        }
     }
-
-    if (ret == -1)
-    {
-        // Dbus connection error
-        fprintf(stderr, " DBUS connection error\n");
-        g_vBus_handle = NULL;
-    }
-
     return ret;
 }
 
