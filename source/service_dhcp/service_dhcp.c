@@ -106,7 +106,7 @@ void print_with_uptime(const char* input)
     struct tm * l_sTimeInfo;
     time_t l_sNowTime;
     int l_iDays, l_iHours, l_iMins, l_iSec;
-    char l_cLocalTime[42] = {0};
+    char l_cLocalTime[128];
 
     sysinfo(&l_sSysInfo);
     time(&l_sNowTime);
@@ -118,7 +118,7 @@ void print_with_uptime(const char* input)
     l_iDays = l_sTimeInfo->tm_yday; 
     l_sTimeInfo = localtime(&l_sNowTime);
 
-    sprintf(l_cLocalTime, "%02d:%02d:%02dup%02ddays:%02dhours:%02dmin:%02dsec", 
+    snprintf(l_cLocalTime, sizeof(l_cLocalTime), "%02d:%02d:%02dup%02ddays:%02dhours:%02dmin:%02dsec", 
                            l_sTimeInfo->tm_hour, l_sTimeInfo->tm_min, l_sTimeInfo->tm_sec, 
                            l_iDays, l_iHours, l_iMins, l_iSec);
 
