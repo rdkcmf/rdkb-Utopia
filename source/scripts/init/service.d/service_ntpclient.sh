@@ -186,7 +186,7 @@ service_start ()
       # if there is an Internet Access Policy then we need to give the firewall a chance to react to the 
       # new known time
        echo "service_ntpclient : Triggering RDKB_FIREWALL_RESTART"
-       t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+       t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
       sysevent set firewall-restart
    fi
    sysevent set ${SERVICE_NAME}-status "started"

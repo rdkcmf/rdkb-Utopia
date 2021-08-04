@@ -242,7 +242,7 @@ case "$1" in
 		echo_t "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started
 		echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART"
-		t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+		t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
                 sysevent set firewall-restart
             fi
 
@@ -287,7 +287,7 @@ case "$1" in
         fi
 
         echo_t "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler"
-	t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+	t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
         sysevent set firewall-restart 
 	if [ -e "/usr/bin/print_uptime" ]; then
 	    /usr/bin/print_uptime "Laninit_complete"

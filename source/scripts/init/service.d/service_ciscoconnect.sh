@@ -64,7 +64,7 @@ stop_guestnet ()
     sysevent set ipv4-down `sysevent get ${SERVICE_NAME}_guest_l3net`
     sysevent set multinet-down `sysevent get ${SERVICE_NAME}_guest_l2net`
     echo "service_ciscoconnect : Triggering RDKB_FIREWALL_RESTART"
-    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+    t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
     sysevent set firewall-restart
     sysevent set ciscoconnect-guest_status "stopped"
 }

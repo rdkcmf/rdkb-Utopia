@@ -152,7 +152,7 @@ start_net () {
     
     if [ x1 = x$2 ]; then
         echo "MultinetService Triggering RDKB_FIREWALL_RESTART"
-	t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+	t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
         sysevent set firewall-restart
     fi
     

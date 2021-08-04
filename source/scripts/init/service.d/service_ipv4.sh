@@ -117,7 +117,7 @@ handle_l2_status () {
             if [ 0 = $? ]; then
                 sysevent set ${SERVICE_NAME}_${1}-status $L3_UP_STATUS
 		echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART"
-		t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+		t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
 				sysevent set firewall-restart
                 if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
 				uptime=`cat /proc/uptime | awk '{ print $1 }' | cut -d"." -f1`

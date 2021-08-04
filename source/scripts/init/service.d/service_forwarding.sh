@@ -185,7 +185,7 @@ service_start ()
          # just in case the firewall is still configured for router mode, restart it
 
          echo "service_forwarding : Triggering RDKB_FIREWALL_RESTART before bridge starting"
-	 t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+	 t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
          sysevent set firewall-restart
       else
          ulog forwarding status "starting wan"
@@ -206,7 +206,7 @@ service_start ()
          if [ "stopped" = "$STATUS" ] ; then
             ulog forwarding status "starting firewall"
             echo "service_forwarding : Triggering RDKB_FIREWALL_RESTART before lan_wan starting"
-	    t2CountNotify "SYS_SH_RDKB_FIREWALL_RESTART"
+	    t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
             sysevent set firewall-restart
          fi
          wait_till_state lan starting
