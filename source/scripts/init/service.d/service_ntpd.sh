@@ -394,15 +394,27 @@ case "$1" in
       ;;
   wan-status)
       if [ "started" = "$CURRENT_WAN_STATUS" ] ; then
-         echo_t "SERVICE_NTPD : wan-status calling service_start" >> $NTPD_LOG_NAME
-         service_start
+         if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ]; then
+            NTPD_PROCESS=`pidof $BIN`
+            if [ "x$NTPD_PROCESS" != "x" ];then
+               echo_t "SERVICE_NTPD : ntp process is already running and pid is = $NTPD_PROCESS" >> $NTPD_LOG_NAME
+            else
+               echo_t "SERVICE_NTPD : wan-status calling service_start" >> $NTPD_LOG_NAME
+               service_start
+            fi
+         else
+            echo_t "SERVICE_NTPD : wan-status calling service_start" >> $NTPD_LOG_NAME
+            service_start
+         fi
       fi
       ;;
   ipv6_connection_state)
       if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ]; then
          CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
-         if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ] ; then
+         NTP_PREFIX=`sysevent get ntp_prefix`
+         if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ] && [ "x$NTP_PREFIX" != "x$CURRENT_WAN_V6_PREFIX" ] ; then
             echo_t "SERVICE_NTPD : ipv6_connection_state calling service_start" >> $NTPD_LOG_NAME
+            sysevent set ntp_prefix $CURRENT_WAN_V6_PREFIX
             service_start
          fi
       fi
