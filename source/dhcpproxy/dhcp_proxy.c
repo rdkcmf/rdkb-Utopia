@@ -648,8 +648,12 @@ void dhcp_relay_message(struct dhcp_lease *lease,
             old_ip_cksum = ~ntohs(relay_iphdr->cksum);
 
             new_ip_cksum = old_ip_cksum - ntohs(relay_iphdr->len) + new_ip_len;
+
+	    /* CID 60037 : Bad bit shift operation
+	     * These 2 lines of code have no effect.
+	     * The value of old_ip_cksum is never used again, 
             old_ip_cksum = (old_ip_cksum>>16) + (old_ip_cksum&0xffff);
-            old_ip_cksum = (old_ip_cksum>>16) + (old_ip_cksum&0xffff);
+            old_ip_cksum = (old_ip_cksum>>16) + (old_ip_cksum&0xffff); */
 
             relay_iphdr->len = htons(new_ip_len);
             relay_iphdr->cksum = htons(~new_ip_cksum);

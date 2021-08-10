@@ -1970,7 +1970,9 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num, unsigned int 
             ulogf(ULOG_FIREWALL, UL_INFO,"%s parsing the value of %s\n",__FUNCTION__,v6Details.intrName);
             /* Global address */ 
             if(scope_in == (v6Details.scopeofipv6 & IPV6_ADDR_SCOPE_MASK)){
-                strncpy(ipArry[i], v6Details.address6, 40);
+		/*CID 185694: BUFFER_SIZE */
+                strncpy(ipArry[i], v6Details.address6, sizeof(ipArry[i])-1);
+		ipArry[i][sizeof(ipArry[i])-1] = '\0';
                 i++;
                 if(i == IF_IPV6ADDR_MAX)
                     break;
@@ -13154,19 +13156,19 @@ static void do_ipv6_sn_filter(FILE* fp) {
 	char ip[128]="";
 	char buf[256]="";
         fp1=fopen("/proc/net/if_inet6", "r");
-        if(fp1) { 
-        	while(fgets(buf, sizeof(buf), fp1)) {  
-        		if(!strstr(buf, current_wan_ifname))   
-           			continue;  
-        		if(strlen(buf)<35)   
-           			continue;  
-        		strncpy(ip, "ff02::1:ff", sizeof(ip));  
-        		ip[10]=buf[26];  ip[11]=buf[27];  ip[12]=':';  ip[13]=buf[28];  ip[14]=buf[29];  ip[15]=buf[30];  ip[16]=buf[31];  ip[17]=0;  
-        		fprintf(fp, "-A PREROUTING -d %s -j ACCEPT\n", ip); 
-        	} 
-        	fprintf(fp, "-A PREROUTING -p icmpv6 --icmpv6-type neighbor-solicitation -i %s -d ff02::1:ff00:0/104 -j DROP\n", current_wan_ifname); 
-        	fclose(fp1);
-        }
+        if(fp1) {
+	   while(fgets(buf, sizeof(buf), fp1)) {
+                 if(!strstr(buf, current_wan_ifname))
+          	    continue;
+        	 if(strlen(buf)<35)
+                    continue;
+        	 strncpy(ip, "ff02::1:ff", sizeof(ip));
+        	 ip[10]=buf[26];  ip[11]=buf[27];  ip[12]=':';  ip[13]=buf[28];  ip[14]=buf[29];  ip[15]=buf[30];  ip[16]=buf[31];  ip[17]=0;
+        	 fprintf(fp, "-A PREROUTING -d %s -j ACCEPT\n", ip);
+       	   }
+           fprintf(fp, "-A PREROUTING -p icmpv6 --icmpv6-type neighbor-solicitation -i %s -d ff02::1:ff00:0/104 -j DROP\n", current_wan_ifname);
+           fclose(fp1);
+	}
 	//RDKB-10248: IPv6 Entries issue in ip neigh show 2. Bring back TOS mirroring 
 
 #if !defined(_PLATFORM_IPQ_)
@@ -13178,7 +13180,6 @@ static void do_ipv6_sn_filter(FILE* fp) {
         fprintf(fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",ecm_wan_ifname);
         fprintf(fp, "-A PREROUTING -i %s -p tcp -m tcp ! --tcp-flags FIN,SYN,RST,ACK SYN -m conntrack --ctstate NEW -j DROP\n",emta_wan_ifname);
 #endif
-
      FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
 static void do_ipv6_nat_table(FILE* fp)

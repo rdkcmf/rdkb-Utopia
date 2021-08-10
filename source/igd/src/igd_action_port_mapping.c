@@ -263,7 +263,9 @@ INT32 IGD_get_GenericPortMapping_entry(INOUT struct action_event *event)
 
         ret = PAL_UPNP_SOAP_E_ACTION_FAILED;
         event->request->error_code = ret;
-        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), PAL_UPNP_LINE_SIZE);
+	/*CID 135271 : BUFFER_SIZE_WARNING */
+        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), sizeof(event->request->error_str)-1);
+	event->request->error_str[sizeof(event->request->error_str)-1] = '\0';
 
         return ret;
     }
@@ -430,7 +432,9 @@ INT32 IGD_get_SpecificPortMapping_entry(INOUT struct action_event *event)
 
         ret = PAL_UPNP_SOAP_E_ACTION_FAILED;
         event->request->error_code = ret;
-        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), PAL_UPNP_LINE_SIZE);
+	/* CID 135641 : BUFFER_SIZE_WARNING */
+        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), sizeof(event->request->error_str)-1);
+	event->request->error_str[sizeof(event->request->error_str)-1] = '\0';
 
         return ret;
     }
@@ -443,7 +447,9 @@ INT32 IGD_get_SpecificPortMapping_entry(INOUT struct action_event *event)
 
         ret = PAL_UPNP_SOAP_E_INVALID_ARGS;
         event->request->error_code = ret;
-        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_INVALID_ARGS), PAL_UPNP_LINE_SIZE);
+	/* CID 135641 : BUFFER_SIZE_WARNING */
+        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_INVALID_ARGS), sizeof(event->request->error_str)-1);
+	event->request->error_str[sizeof(event->request->error_str)-1] = '\0';
     } else if ((portmapIndex.remoteHost != NULL)
                 &&(0 == inet_pton(AF_INET, portmapIndex.remoteHost, &addr))){ 
         PAL_LOG(WAN_CONNECTION_DEVICE_LOG_NAME, PAL_LOG_LEVEL_DEBUG, "remoteHost format error: x.x.x.x");
@@ -458,12 +464,16 @@ INT32 IGD_get_SpecificPortMapping_entry(INOUT struct action_event *event)
         bzero(&portmapEntry, sizeof(portmapEntry));
         if(portmapIndex.remoteHost != NULL)
         {
-            strncpy(portmapEntry.remoteHost, portmapIndex.remoteHost, IPV4_ADDR_LEN);
+            /* CID 135641 : BUFFER_SIZE_WARNING */
+            strncpy(portmapEntry.remoteHost, portmapIndex.remoteHost, sizeof(portmapEntry.remoteHost)-1);
+	    portmapEntry.remoteHost[sizeof(portmapEntry.remoteHost)-1] = '\0';
         }
         portmapEntry.externalPort = portmapIndex.externalPort;
         if(portmapIndex.pmProtocol != NULL)
         {
-            strncpy(portmapEntry.protocol, portmapIndex.pmProtocol, PORT_MAP_PROTOCOL_LEN);
+            /* CID 135641 : BUFFER_SIZE_WARNING */ 
+            strncpy(portmapEntry.protocol, portmapIndex.pmProtocol, sizeof(portmapEntry.protocol)-1);
+	    portmapEntry.protocol[sizeof(portmapEntry.protocol)-1] = '\0';
         }
 
         ret = IGD_pii_get_portmapping_entry_specific(pIndex->wan_device_index,
@@ -575,7 +585,9 @@ INT32 IGD_add_PortMapping(INOUT struct action_event *event)
 
         ret = PAL_UPNP_SOAP_E_ACTION_FAILED;
         event->request->error_code = ret;
-        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), PAL_UPNP_LINE_SIZE);
+	/* CID 135442: BUFFER_SIZE_WARNING */
+        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), sizeof(event->request->error_str)-1);
+	event->request->error_str[sizeof(event->request->error_str)-1] = '\0' ;
 
         return ret;
     }
@@ -744,7 +756,9 @@ INT32 IGD_delete_PortMapping(INOUT struct action_event *event)
 
         ret = PAL_UPNP_SOAP_E_ACTION_FAILED;
         event->request->error_code = ret;
-        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), PAL_UPNP_LINE_SIZE);
+	/* CID 135406 : BUFFER_SIZE_WARNING */
+        strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_ACTION_FAILED), sizeof(event->request->error_str)-1);
+	event->request->error_str[sizeof(event->request->error_str)-1] = '\0';
 
         return ret;
     }

@@ -163,7 +163,9 @@ void fUnlock(int fd){
     fl.l_len = 0;  
     fl.l_pid = -1;  
 
-    fcntl(fd,F_SETLK,&fl);
+    if (fcntl(fd,F_SETLK,&fl) == -1) {
+	printf("fcntl failed \n");  //CID-66345 Unchecked return value
+    }  
     close(fd);
     printf("UN-LOCK SUCCESS\n");
     return;    
@@ -674,7 +676,10 @@ void get_rule_time(int count){
 #else
     fd = open(FW_ORG_LOG_NAME,O_RDONLY);
     if(fd < 0){
-        remove(FW_ORG_LOG_NAME);
+        /*CID 53216 : Unchecked return value from library*/
+        if (remove(FW_ORG_LOG_NAME) != 0){
+            printf("removing file is failed \n");
+        }  
         return;
     }
     if(fstat(fd, &statbuf) < 0){
@@ -752,7 +757,11 @@ END:
 #else
     close(fd);
 #endif
-    remove(FW_ORG_LOG_NAME);
+    /*CID 53216 : Unchecked return value from library*/
+    if (remove(FW_ORG_LOG_NAME))
+    {
+	printf("removing file is failed \n");
+    }
     return;
 }
 /* 

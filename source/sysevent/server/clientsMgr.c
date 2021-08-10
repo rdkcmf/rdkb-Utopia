@@ -265,6 +265,8 @@ int CLI_MGR_remove_client_by_fd (const int fd, const token_t id, const int force
             )
             // if the client has registered for notifications, then remove the registration
             if (global_clients.clients[i].notifications) {
+	       /*  CID 135490: Thread deadlock */
+	       /* TODO */
                TRIGGER_MGR_remove_notification_message_actions(global_clients.clients[i].id);
             }
             free_a_client(&(global_clients.clients[i]));

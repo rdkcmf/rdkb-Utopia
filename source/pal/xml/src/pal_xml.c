@@ -576,8 +576,13 @@ VOID PAL_xml_top_AddElementIntValue(IN pal_xml_top *top, IN pal_xml_element *par
 
     pal_debug("PAL_xml_top_add_element_int_value start !\r\n");
     
-    asprintf(&buf,"%d",value);
-    
+    /*CID 72621: Unchecked return value */
+    if (asprintf(&buf,"%d",value) < 0)
+    {
+        pal_debug("PAL_xml_top_add_element_int_value asprintf failed !\r\n");
+        return;
+    }
+
     PAL_xml_top_AddElementTextValue(top, parent, tagname, buf); 
     
     free(buf); 
@@ -605,9 +610,13 @@ VOID PAL_xml_top_AddElementLongValue(IN pal_xml_top *top, IN pal_xml_element *pa
     CHAR *buf = NULL; 
 
     pal_debug("PAL_xml_top_add_element_long_value start !\r\n");
-    
-    asprintf(&buf,"%lld",value); 
-    
+
+    /*CID 73193: Unchecked return value */
+    if (asprintf(&buf,"%lld",value) < 0)
+    {
+	pal_debug("PAL_xml_top_add_element_long_value asprintf failed !\r\n");
+	return;
+    }
     PAL_xml_top_AddElementTextValue(top, parent, tagname, buf); 
     
     free(buf); 

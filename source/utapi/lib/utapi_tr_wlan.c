@@ -1130,8 +1130,8 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
 
     wifiSSIDCfg_t *cfg_t = (wifiSSIDCfg_t *)cfg;
     char buf[BUF_SZ] = {'\0'};
-    char tmpBuf[STR_SZ] = {'\0'};
     char state[STR_SZ] = {'\0'};
+    char tmpBuf[STR_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -1160,7 +1160,7 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
             vif_num = 0;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s > %s | awk '{print $1$2}' ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
     }
@@ -1190,11 +1190,11 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     }
     for(; ptr; ptr=ptr->next){
         if(!strcasecmp(ptr->param_name, "SSID")){
-            if(strlen(ptr->param_val)){
+            if(ptr->param_val[0]){
                 safec_rc = strcpy_s(cfg_t->SSID, sizeof(cfg_t->SSID),ptr->param_val);
                 ERR_CHK(safec_rc);
             }
-            else 
+            else
             {
                 /* Set a temporary SSID */
                 prefix = wifiTRPlatform_multiSSID[ulIndex].syscfg_namespace_prefix;
@@ -1205,6 +1205,7 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
                 UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_SSID,prefix,tmpBuf);
                 safec_rc = strcpy_s(cfg_t->SSID, sizeof(cfg_t->SSID),tmpBuf);
                 ERR_CHK(safec_rc);
+		free(ptr->param_name); /* CID 124859 */
             }
         }
     }

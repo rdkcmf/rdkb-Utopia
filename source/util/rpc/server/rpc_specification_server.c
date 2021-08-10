@@ -50,7 +50,8 @@ int * exec_1_svc(rpc_CommandBuf *cmd, struct svc_req *req)
 {
 	//cmd->buffer size is 4096
 	char cmdBuf[4100]={0};
-	int ret = 1;
+	/* CID- 61247 : Pointer to local outside scope */
+        static int ret = 1;
 	snprintf(cmdBuf,sizeof(cmdBuf),"%s &",cmd->buffer);
 	system(cmdBuf);
 	return &ret;

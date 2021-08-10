@@ -814,7 +814,7 @@ int Utopia_GetBridgeConnectionInfo (UtopiaContext *ctx, bridgeConnectionInfo_t *
 int Utopia_SetRouteNAT (UtopiaContext *ctx, napt_mode_t enable);
 int Utopia_GetRouteNAT (UtopiaContext *ctx, napt_mode_t *enable);
 
-int Utopia_SetRouteRIP (UtopiaContext *ctx, routeRIP_t rip);
+int Utopia_SetRouteRIP (UtopiaContext *ctx, routeRIP_t *rip); //CID 67860: Big parameter passed by value
 int Utopia_GetRouteRIP (UtopiaContext *ctx, routeRIP_t *rip);
 
 int Utopia_FindStaticRoute (int count, routeStatic_t *sroutes, const char *route_name);
@@ -883,7 +883,7 @@ int Utopia_GetPortTriggerByRuleId (UtopiaContext *ctx, portRangeTrig_t *portinfo
 int Utopia_SetPortTriggerByRuleId (UtopiaContext *ctx, portRangeTrig_t *portinfo);
 int Utopia_DelPortTriggerByRuleId (UtopiaContext *ctx, int trigger_id);
 
-int Utopia_SetDMZSettings (UtopiaContext *ctx, dmz_t dmz);
+int Utopia_SetDMZSettings (UtopiaContext *ctx, dmz_t *dmz);
 int Utopia_GetDMZSettings (UtopiaContext *ctx, dmz_t *out_dmz);
 
 int Utopia_AddInternetAccessPolicy (UtopiaContext *ctx, iap_entry_t *iap);

@@ -197,7 +197,12 @@ INT32 IGD_pii_get_uuid(INOUT CHAR *uuid)
 
 	if(!get_global_uuid_once)
 	{
-		Utopia_Init(&utctx);
+		/* CID 72543: Unchecked return value */
+		if (!Utopia_Init(&utctx))
+		{
+	            printf("Error, in getting utctx object\n");
+                    return -1;
+		}
 		Utopia_RawGet(&utctx,NULL,"lan_ifname",igd_upnp_interface,sizeof(igd_upnp_interface));
         Utopia_Free(&utctx, FALSE);
 		if(_pii_get_if_MacAddress(igd_upnp_interface,uuid_mac_part))

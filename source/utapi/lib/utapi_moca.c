@@ -144,7 +144,11 @@ int Utopia_GetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
     
     Utopia_Get(pCtx, UtopiaValue_Moca_FreqCurMaskSet, buf, sizeof(buf));
     buf[strlen(buf)] = '\0';
-    getHex(buf, deviceMocaIntfCfg->FreqCurrentMaskSetting, HEX_SZ);
+    /*CID 62105: Unchecked return value */
+    if(getHex(buf, deviceMocaIntfCfg->FreqCurrentMaskSetting, HEX_SZ) != SUCCESS){
+       sprintf(ulog_msg, "%s: FreqCurrentMaskSetting read error !!!\n", __FUNCTION__);
+       ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+    }
 
     if(Utopia_Get(pCtx, UtopiaValue_Moca_KeyPassPhrase, (char *)&deviceMocaIntfCfg->KeyPassphrase, KEYPASS_SZ) == 0)
         memset(deviceMocaIntfCfg->KeyPassphrase, 0, KEYPASS_SZ);    /*default value */

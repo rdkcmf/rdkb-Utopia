@@ -91,12 +91,13 @@ int unregister_if(PL2Net net, PMember members, int numMembers) {
     int i;
     MemberControl memberControl;
     int handleArray[numMembers];
+    /* CID 57687: Sizeof not portable */
+    memset(handleArray, 0, sizeof(handleArray));
     
     memberControl.member = members;
     memberControl.handled = handleArray;
     memberControl.numMembers = numMembers;
-    
-    memset(memberControl.handled, 0, sizeof(memberControl.handled)*memberControl.numMembers);
+
     for ( i = 0; i < numHandlers /*&& members->remaining*/; ++i) {
         handlerList[i].ensure_mapping(net, &memberControl); 
     }
@@ -114,12 +115,13 @@ int add_vlan_for_members(PL2Net net, PMember members, int numMembers) {
     int i;
     MemberControl memberControl;
     int handleArray[numMembers];
-    
+    /* CID 63700: Sizeof not portable */
+    memset(handleArray, 0, sizeof(handleArray));
+
     memberControl.member = members;
     memberControl.handled = handleArray;
     memberControl.numMembers = numMembers;
-    
-    memset(memberControl.handled, 0, sizeof(memberControl.handled)*memberControl.numMembers);
+
     for (i = 0; i < numHandlers /*&& members->remaining*/; ++i) {
         handlerList[i].add_vlan_for_members(net, &memberControl); 
     }
@@ -130,11 +132,12 @@ int remove_vlan_for_members(PL2Net net, PMember members, int numMembers) {
     int i;
     MemberControl memberControl;
     int handleArray[numMembers];
-    
+    /* CID 58043: Sizeof not portable */
+    memset(handleArray, 0, sizeof(handleArray));
+
     memberControl.member = members;
     memberControl.handled = handleArray;
     memberControl.numMembers = numMembers;
-    memset(memberControl.handled, 0, sizeof(memberControl.handled)*memberControl.numMembers);
     for (i = 0; i < numHandlers /*&& members->remaining*/; ++i) {
         handlerList[i].remove_vlan_for_members(net, &memberControl); 
     }

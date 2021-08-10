@@ -221,8 +221,10 @@ static int handle_set_data(char *target, char *value)
        length = ftell(pFile);
        rewind(pFile);
        valp = (char *) malloc(length * sizeof(char));
-       if (!valp)
+       if (!valp) {
+	    fclose(pFile); /* CID 160988: Resource leak */
             return -1;
+       }
        fread(valp,length,1,pFile);
        fclose(pFile);
    }
@@ -431,6 +433,8 @@ static int handle_async(int numparams, char **params)
          args[i] = params[i + 2]; 
       }
       rc = sysevent_setcallback(fd, token, ACTION_FLAG_NONE, target,function, param_count, args, &async_id);
+      /* CID 74403: Resource leak */
+      free(args);
    }
    printf("0x%x 0x%x\n", async_id.trigger_id, async_id.action_id);
    server_disconnect(fd, token);
@@ -488,6 +492,8 @@ static int handle_async_with_flags(action_flag_t flags, int numparams, char **pa
          args[i] = params[i + 2];
       }
       rc = sysevent_setcallback(fd, token, flags, target,function, param_count, args, &async_id);
+      /* CID 61153: Resource leak */
+      free(args);
    }
    printf("0x%x 0x%x\n", async_id.trigger_id, async_id.action_id);
    server_disconnect(fd, token);

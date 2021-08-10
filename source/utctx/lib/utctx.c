@@ -1233,7 +1233,6 @@ static void s_UtopiaEvent_Trigger(UtopiaContext* pUtopiaCtx)
 static UtopiaTransact_Node* s_UtopiaTransact_Add(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey, char* pszValue)
 {
     UtopiaTransact_Node* pNode;
-    size_t len;
 
     if (pszKey == 0)
     {
@@ -1241,59 +1240,36 @@ static UtopiaTransact_Node* s_UtopiaTransact_Add(UtopiaContext* pUtopiaCtx, Utop
     }
 
     /* Allocate a transaction node */
-    if ((pNode = malloc(sizeof(UtopiaTransact_Node))) == 0)
+    if ((pNode = (UtopiaTransact_Node*)calloc(1, sizeof(UtopiaTransact_Node))) == 0)
     {
         return 0;
     }
 
-    /* Zero out the transaction node */
-    memset(pNode, 0, sizeof(UtopiaTransact_Node));
 
-    if (pszNamespace)
-    {
-        len = strlen(pszNamespace);
-        if ((pNode->pszNamespace = malloc(len + 1)) == 0)
-        {
-            free(pNode);
-            return 0;
-        }
-
-        memcpy(pNode->pszNamespace, pszNamespace, len + 1);
+    if ((pNode->pszKey = strdup(pszKey)) == NULL) {
+        free(pNode);
+        return NULL;
     }
 
-    len = strlen(pszKey);
-    if ((pNode->pszKey = malloc(len + 1)) == 0)
+    if (pszNamespace && (pNode->pszNamespace = strdup(pszNamespace)) == NULL) //CID:56805
     {
+	free(pNode->pszKey);
+        free(pNode);
+        return NULL;
+    }
+    if (pszValue && (pNode->pszValue = strdup(pszValue)) == NULL) // CID:56805 : Wrong sizeof argument
+    {
+        free(pNode->pszKey);
         if (pNode->pszNamespace)
         {
             free(pNode->pszNamespace);
         }
         free(pNode);
-        return 0;
+        return NULL;
     }
 
-    memcpy(pNode->pszKey, pszKey, len + 1);
-
-    if (pszValue)
-    {
-        len = strlen(pszValue);
-        if ((pNode->pszValue = malloc(len + 1)) == 0)
-        {
-            if (pNode->pszNamespace)
-            {
-                free(pNode->pszNamespace);
-            }
-            free(pNode->pszKey);
-            free(pNode);
-            return 0;
-        }
-
-        memcpy(pNode->pszValue, pszValue, len + 1);
-    }
-
-    /* Set the utopia index */
+    /* Set the utopia index, namespace, key, and value */
     pNode->ixUtopia = ixUtopia;
-
     /* Add the node to the transaction list */
     pNode->pNext = pUtopiaCtx->pHead;
     pUtopiaCtx->pHead = pNode;
@@ -1422,13 +1398,11 @@ int UtopiaTransact_Set(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* ps
         /* Allocate memory and copy value if needed */
         if (pszValue)
         {
-            size_t len = strlen(pszValue);
-
-            if ((pNode->pszValue = malloc(len + 1)) == 0)
+            pNode->pszValue = strdup(pszValue); //CID 62572: Wrong sizeof argument
+	    if (! pNode->pszValue)
             {
                 return 0;
             }
-            memcpy(pNode->pszValue, pszValue, len + 1);
         }
         else
         {

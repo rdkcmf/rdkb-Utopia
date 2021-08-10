@@ -1277,11 +1277,17 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
          system(buf);
  
       FILE *pFile = fopen("/tmp/setdata.bin","wb");
+      if (pFile == NULL)
+      {
+	  printf("failed to open setdata.bin\n");
+	  pthread_mutex_unlock(&global_data_elements.mutex);
+	  return(0);
+      }
        if (pFile && element->value)
        {
            fwrite(element->value,element->value_length,1,pFile);
-           fclose(pFile);
        }
+       fclose(pFile); /* CID 160975: Resource leak */
    }
    // if the tuple options are set for event then we execute notifications
    // even if there is no tuple value change

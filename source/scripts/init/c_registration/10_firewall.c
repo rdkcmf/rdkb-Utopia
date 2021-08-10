@@ -70,7 +70,12 @@ void srv_register(void) {
     * Set up a directory for known lan hosts discovered
     * using triggers. This will be used by firewall.c
     */
-   mkdir("/tmp/lanhosts", S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+   /* CID 68276: Unchecked return value from library */
+   if (0 != mkdir("/tmp/lanhosts", S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))
+   {
+       printf("Failed to Create lanhosts directory.\n");
+       return;
+   }
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
 #if !defined(NO_TRIGGER)
 #ifndef CONFIG_KERNEL_NF_TRIGGER_SUPPORT

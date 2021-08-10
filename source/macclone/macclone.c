@@ -118,7 +118,11 @@ int addr_set(const char *intf, const char *addr)
 
     if (memcmp(ifr.ifr_hwaddr.sa_data, "\0\0\0\0\0\0", ETHER_ADDR_LEN)) {
         ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
-        ioctl(fd, SIOCSIFHWADDR, &ifr);
+	/*CID  60555: Unchecked return value */
+        if (ioctl(fd, SIOCSIFHWADDR, &ifr) == -1)
+        {
+	    DEBUG("macclone: ioctl failure\n");
+	}
     } else {
         DEBUG("macclone: invalid hardware address\n");
     }

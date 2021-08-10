@@ -146,6 +146,12 @@ int file_parse(char* file_name, param_node **head)
         val = NULL;
         str = NULL;
     }
+    /* CID 125190: Resource leak */
+    if(node)
+    {
+       free(node);
+       node = NULL;
+    }
     if(fclose(fp) != SUCCESS){
         rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: File Close Error !!!", __FUNCTION__);
         if(rc < EOK)
@@ -155,7 +161,6 @@ int file_parse(char* file_name, param_node **head)
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_FILE_CLOSE_FAIL;
     }
-    
     return SUCCESS;
 }
 

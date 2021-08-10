@@ -302,6 +302,7 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
      
             if (length - opt_len < 6) {
                 fprintf( stderr, "%s: Too many options\n", __FUNCTION__ );
+		fclose(fp);   //CID 61631 : Resource leak
                 return -1;
             }
            
@@ -341,6 +342,7 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
             }
             else {
                 fprintf( stderr, "%s: Invalid suboption\n", __FUNCTION__ );
+                fclose(fp);
                 return -1;
             }
             
@@ -356,6 +358,7 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
             for (ptr=subopt_value; (char)*ptr != (char)0; ptr++) {
                 if (length - opt_len <= 2) {
                     fprintf( stderr, "%s: Too many options\n", __FUNCTION__ );
+                    fclose(fp);
                     return -1;
                 }
                 rc = sprintf_s(options + opt_len, (length - opt_len), "%02x", *ptr);
@@ -369,6 +372,7 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
         
         if ((num_read != EOF) && (num_read != 3)) {
             fprintf(stderr, "%s: Error parsing file\n", __FUNCTION__);
+            fclose(fp);
             return -1;
         }
     }
@@ -376,7 +380,7 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
         fprintf(stderr, "%s: Cannot read %s\n", __FUNCTION__, VENDOR_SPEC_FILE);
         return -1;
     }
-    
+    fclose(fp);
     return 0;
 }
 

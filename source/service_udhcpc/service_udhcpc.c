@@ -733,6 +733,7 @@ void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
    if(dns_server_list != NULL)
    {
       free(dns_server_list);
+      dns_server_list = NULL; //CID 189741 -To avoid double free
    }
       fclose(fptr);
       fclose(ftmp);
@@ -762,7 +763,17 @@ void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
 
       fclose(fout);
       fclose(fIN);
-      remove(RESOLV_CONF_TMP);
+      /* CID 118955: Unchecked return value from library */
+      if (remove(RESOLV_CONF_TMP) != 0)
+      {
+         perror("removing resolve_conf_tmp file is failed \n");
+         return;
+      }
+   }
+   /* CID 118956: Resource leak */
+   if(dns_server_list != NULL)
+   {
+      free(dns_server_list);
    }
 }
 

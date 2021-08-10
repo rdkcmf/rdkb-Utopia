@@ -200,7 +200,7 @@ int shm_malloc (syscfg_shm_ctx *ctx, int size, shmoff_t *out_offset);
 void shm_free (syscfg_shm_ctx *ctx, shmoff_t offset);
 
 static int   syscfg_shm_init ();
-static void *syscfg_shm_create (store_info_t store_info, int *out_shmid);
+static void *syscfg_shm_create (store_info_t *store_info, int *out_shmid);
 static void *syscfg_shm_attach (int *out_shmid);
 static int   syscfg_shm_getid ();
 static void syscfg_shm_destroy (syscfg_shm_ctx *ctx);

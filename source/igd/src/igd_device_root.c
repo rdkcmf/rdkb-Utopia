@@ -173,8 +173,9 @@ LOCAL INT32 _igd_root_device_init(VOID)
 	struct upnp_device *next_device=NULL;
 	struct device_and_service_index igd_index;
 	CHAR device_udn[UPNP_UUID_LEN_BY_VENDER];
-	INT32 wan_device_number = 0;
+	INT32 wan_device_number = 0, ret = 0;
 	FILE *fp=NULL;
+        errno = 0;
 //    CHAR ip_address[IP_ADDRESS_LEN] = {'\0'};
     //UtopiaContext utctx;
 
@@ -190,8 +191,14 @@ LOCAL INT32 _igd_root_device_init(VOID)
 		return -1;
 	}
 	PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_INFO,"\nRoot Device UUID:%s\n",IGD_device.udn);
-	
-	mkdir("/var/IGD",0755);
+
+        /* CID 64826: Unchecked return value from library */
+	ret = mkdir("/var/IGD",0755);
+        if(ret !=0 && errno != EEXIST) {
+	   PAL_LOG(LOG_IGD_NAME, PAL_LOG_LEVEL_FAILURE,"Failed to Create IGD directory.\n");
+	   return -1;
+	}
+
 	unlink(DESC_DOC_PATH);
 	fp=fopen(DESC_DOC_PATH, "w");
 	if(fp==NULL)
@@ -312,7 +319,12 @@ main( IN INT32 argc,
         system("./pal_log_router_transmitter &");//to start log transmitter
         sleep(5);
 #endif
-        Utopia_Init(&utctx);
+	/*CID 67479: Unchecked return value */
+        if (!Utopia_Init(&utctx)) {
+            PAL_LOG(LOG_IGD_NAME,PAL_LOG_LEVEL_FAILURE, "%s: Error, in getting utctx object", __FUNCTION__);
+            return -1;
+	}
+
         //Utopia_RawGet(&utctx,NULL,"lan_ifname",igd_upnp_interface, sizeof(igd_upnp_interface));
         Utopia_RawGet(&utctx,NULL, "upnp_igd_advr_expire",igd_advr_expire,sizeof(igd_advr_expire));
         Utopia_Free(&utctx, FALSE);

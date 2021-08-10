@@ -197,12 +197,15 @@ BOOL IsDhcpConfHasInterface(void)
         char *interface = NULL;
         interface = strstr(buf,"interface=");
         if (interface)
-        printf ("\ninterface search res : %s\n",interface);
-        if (interface)
+	{
+            printf ("\ninterface search res : %s\n",interface);
+	    fclose(fp); /* CID -43141 : Resource leak */
             return TRUE;
+	}    
     }
 
     fprintf(stderr, "dnsmasq.conf does not have any interfaces\n");
+    fclose(fp); /* CID -43141 : Resource leak */
     return FALSE;
 }
 
@@ -455,23 +458,22 @@ int dhcp_server_start (char *input)
 			remove_file("/var/tmp/lan_not_restart");	
 		}
 	}
-
-   	if (access("/tmp/dhcp_server_start", F_OK) == -1 && errno == ENOENT) //If file not present
-	{
-    	print_with_uptime("dhcp_server_start is called for the first time private LAN initization is complete");
-		if((fd = creat("/tmp/dhcp_server_start", S_IRUSR | S_IWUSR)) == -1)
-		{
-			fprintf(stderr, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
-		} else  {
-                        close(fd);
-                }
-		print_uptime("boot_to_ETH_uptime",NULL, NULL);
+        /*  TODO CID 135332: Time of check time of use */
+        if (access("/tmp/dhcp_server_start", F_OK) == -1 && errno == ENOENT) //If file not present
+        {
+    	    print_with_uptime("dhcp_server_start is called for the first time private LAN initization is complete");
+	    if((fd = creat("/tmp/dhcp_server_start", S_IRUSR | S_IWUSR)) == -1)
+	    {
+		fprintf(stderr, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
+	    } else  {
+                close(fd);
+	    }
+	    print_uptime("boot_to_ETH_uptime",NULL, NULL);
        	
-		print_with_uptime("LAN initization is complete notify SSID broadcast");
-		snprintf(l_cRpc_Cmd, sizeof(l_cRpc_Cmd), "rpcclient %s \"/bin/touch /tmp/.advertise_ssids\"", g_cAtom_Arping_IP);
-		executeCmd(l_cRpc_Cmd);
-	}
-   
+	    print_with_uptime("LAN initization is complete notify SSID broadcast");
+	    snprintf(l_cRpc_Cmd, sizeof(l_cRpc_Cmd), "rpcclient %s \"/bin/touch /tmp/.advertise_ssids\"", g_cAtom_Arping_IP);
+	    executeCmd(l_cRpc_Cmd);
+        }
     // This function is called for brlan0 and brlan1
     // If brlan1 is available then XHS service is available post all DHCP configuration   
     if (is_iface_present(XHS_IF_NAME))

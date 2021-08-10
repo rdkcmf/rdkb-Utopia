@@ -873,10 +873,20 @@ static int initialize_system(void)
    //  quickly if it dies abnormally
    int oldflags = fcntl (global_tcp_fd, F_GETFD, 0);
    if (0 > oldflags) {
-     fcntl (global_tcp_fd, F_SETFD, FD_CLOEXEC);
+     /* CID 73196: Unchecked return value from library */
+       if (fcntl (global_tcp_fd, F_SETFD, FD_CLOEXEC))
+       {
+	   close(global_tcp_fd);
+           return -1;
+       }
+
    } else {
      oldflags |= FD_CLOEXEC;
-     fcntl (global_tcp_fd, F_SETFD, oldflags);
+     if (fcntl (global_tcp_fd, F_SETFD, oldflags))
+     {
+         close(global_tcp_fd);
+         return -1;
+     }
    }
 
    // Enable address reuse
@@ -1175,7 +1185,7 @@ static void *sanity_thread_main(void *arg)
 
 int main (int argc, char **argv)
 {
-   int rc;
+   int rc, ret;
 
    if (1 > NUM_CLIENT_ONLY_THREAD) {
       printf("NUM_CLIENT_ONLY_THREAD must be at least 1. Currently it is %d", NUM_CLIENT_ONLY_THREAD);
@@ -1219,7 +1229,11 @@ int main (int argc, char **argv)
    FILE *fp = fopen(SE_SERVER_PID_FILE, "r");
    if (NULL != fp) {
       int old_pid;
-      fscanf(fp, "%d", &old_pid);
+      /* CID 60917:Unchecked return value from library */
+      if((ret = fscanf(fp, "%d", &old_pid)) <= 0 )
+      {
+	  printf("read error of %s\n",SE_SERVER_PID_FILE);
+      }
       fclose(fp);
 
       // see if the process is still alive
@@ -1231,7 +1245,10 @@ int main (int argc, char **argv)
          unlink(SE_SERVER_PID_FILE);
       } else {
          char cmdline[500];
-         fscanf(fp, "%s", cmdline);
+         if ((ret = fscanf(fp, "%s", cmdline)) <= 0)
+	 {
+	    printf("read error of %s\n",filename);
+	 }
          fclose(fp);
          if (NULL == strstr(cmdline, argv[0])) {
             printf("Our pid has been taken over. We are dead. Cleaning up\n");

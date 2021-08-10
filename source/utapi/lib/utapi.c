@@ -576,7 +576,9 @@ int Utopia_GetDHCPServerStaticHosts (UtopiaContext *ctx, int *count, DHCPMap_t *
 		    (*dhcpMap)[i].host_ip[sizeof((*dhcpMap)[i].host_ip)-1] = '\0';
                       
                     p = n;
-                    strncpy((*dhcpMap)[i].client_name, p, TOKEN_SZ);
+		    /* CID 135354 : BUFFER_SIZE_WARNING */
+                    strncpy((*dhcpMap)[i].client_name, p, sizeof((*dhcpMap)[i].client_name)-1);
+		    (*dhcpMap)[i].client_name[sizeof((*dhcpMap)[i].client_name)-1] = '\0';
                 }
             }
         } else {
@@ -758,14 +760,14 @@ int Utopia_GetWLANClients (UtopiaContext *ctx, int *count, char **out_maclist)
 /*
  * WAN Settings
  */
-static int s_SetWANStaticSetting (UtopiaContext *ctx, wan_static_t wstatic)
+static int s_SetWANStaticSetting (UtopiaContext *ctx, wan_static_t *wstatic)
 {
-    UTOPIA_SETIP(ctx, UtopiaValue_WAN_IPAddr, wstatic.ip_addr);
-    UTOPIA_VALIDATE_SET(ctx, UtopiaValue_WAN_Netmask, wstatic.subnet_mask, IsValid_Netmask, ERR_INVALID_NETMASK);
-    UTOPIA_SETIP(ctx, UtopiaValue_WAN_DefaultGateway, wstatic.default_gw);
-    UTOPIA_SETIP(ctx, UtopiaValue_WAN_NameServer1, wstatic.dns_ipaddr1);
-    UTOPIA_SETIP(ctx, UtopiaValue_WAN_NameServer2, wstatic.dns_ipaddr2);
-    UTOPIA_SETIP(ctx, UtopiaValue_WAN_NameServer3, wstatic.dns_ipaddr3);
+    UTOPIA_SETIP(ctx, UtopiaValue_WAN_IPAddr, wstatic->ip_addr);
+    UTOPIA_VALIDATE_SET(ctx, UtopiaValue_WAN_Netmask, wstatic->subnet_mask, IsValid_Netmask, ERR_INVALID_NETMASK);
+    UTOPIA_SETIP(ctx, UtopiaValue_WAN_DefaultGateway, wstatic->default_gw);
+    UTOPIA_SETIP(ctx, UtopiaValue_WAN_NameServer1, wstatic->dns_ipaddr1);
+    UTOPIA_SETIP(ctx, UtopiaValue_WAN_NameServer2, wstatic->dns_ipaddr2);
+    UTOPIA_SETIP(ctx, UtopiaValue_WAN_NameServer3, wstatic->dns_ipaddr3);
 
     return SUCCESS;
 }
@@ -797,7 +799,7 @@ static int s_SetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
         UTOPIA_SETBOOL(ctx, UtopiaValue_WAN_PPTPAddressStatic, wan->ppp.ipAddrStatic);
         UTOPIA_SETBOOL(ctx, UtopiaValue_WAN_L2TPAddressStatic, wan->ppp.ipAddrStatic);
         if (wan->ppp.ipAddrStatic) {
-            rc = s_SetWANStaticSetting (ctx, wan->wstatic);
+            rc = s_SetWANStaticSetting (ctx, &wan->wstatic); //CID-72043: Big parameter passed by value
         }
     }
 
@@ -837,7 +839,7 @@ int Utopia_SetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
     case DHCP:
         break;
     case STATIC:
-        rc = s_SetWANStaticSetting (ctx, wan_info->wstatic);
+        rc = s_SetWANStaticSetting (ctx, &wan_info->wstatic); //CID-72043: Big parameter passed by value
         break;
     case PPPOE:
     case PPTP:
@@ -1388,15 +1390,16 @@ static int s_GetBridgeStaticSetting (UtopiaContext *ctx, bridge_static_t *bstati
     return SUCCESS;
 }
 
-static int s_SetBridgeStaticSetting (UtopiaContext *ctx, bridge_static_t bstatic)
+/* CID 63801: Big parameter passed by value */
+static int s_SetBridgeStaticSetting (UtopiaContext *ctx, bridge_static_t *bstatic)
 {
-    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_IPAddress, bstatic.ip_addr);
-    UTOPIA_VALIDATE_SET(ctx, UtopiaValue_Bridge_Netmask, bstatic.subnet_mask, IsValid_Netmask, ERR_INVALID_NETMASK);
-    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_DefaultGateway, bstatic.default_gw);
-    UTOPIA_SET(ctx, UtopiaValue_Bridge_Domain, bstatic.domainname);
-    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_NameServer1, bstatic.dns_ipaddr1);
-    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_NameServer2, bstatic.dns_ipaddr2);
-    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_NameServer3, bstatic.dns_ipaddr3);
+    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_IPAddress, bstatic->ip_addr);
+    UTOPIA_VALIDATE_SET(ctx, UtopiaValue_Bridge_Netmask, bstatic->subnet_mask, IsValid_Netmask, ERR_INVALID_NETMASK);
+    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_DefaultGateway, bstatic->default_gw);
+    UTOPIA_SET(ctx, UtopiaValue_Bridge_Domain, bstatic->domainname);
+    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_NameServer1, bstatic->dns_ipaddr1);
+    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_NameServer2, bstatic->dns_ipaddr2);
+    UTOPIA_SETIP(ctx, UtopiaValue_Bridge_NameServer3, bstatic->dns_ipaddr3);
 
     return SUCCESS;
 }
@@ -1417,7 +1420,7 @@ int Utopia_SetBridgeSettings (UtopiaContext *ctx, bridgeInfo_t *bridge_info)
         break;
     case BRIDGE_MODE_STATIC:
 	case BRIDGE_MODE_FULL_STATIC:
-        rc = s_SetBridgeStaticSetting (ctx, bridge_info->bstatic);
+        rc = s_SetBridgeStaticSetting (ctx, &bridge_info->bstatic); //CID 63801: Big parameter passed by value
         break;
     default:
         return ERR_INVALID_BRIDGE_MODE;
@@ -1570,15 +1573,16 @@ int Utopia_GetRouteNAT (UtopiaContext *ctx, napt_mode_t *enable)
     return SUCCESS;
 }
 
-int Utopia_SetRouteRIP (UtopiaContext *ctx, routeRIP_t rip)
+/* CID 67860: Big parameter passed by value */
+int Utopia_SetRouteRIP (UtopiaContext *ctx, routeRIP_t *rip)
 {
-    UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_Enabled, rip.enabled);
-    if (TRUE == rip.enabled) {
-        UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_NoSplitHorizon, rip.no_split_horizon);
-        UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_InterfaceLAN, rip.lan_interface);
-        UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_InterfaceWAN, rip.wan_interface);
-        UTOPIA_SET(ctx, UtopiaValue_RIP_MD5Passwd, rip.wan_md5_password);
-        UTOPIA_SET(ctx, UtopiaValue_RIP_TextPasswd, rip.wan_text_password);
+    UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_Enabled, rip->enabled);
+    if (TRUE == rip->enabled) {
+        UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_NoSplitHorizon, rip->no_split_horizon);
+        UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_InterfaceLAN, rip->lan_interface);
+        UTOPIA_SETBOOL(ctx, UtopiaValue_RIP_InterfaceWAN, rip->wan_interface);
+        UTOPIA_SET(ctx, UtopiaValue_RIP_MD5Passwd, rip->wan_md5_password);
+        UTOPIA_SET(ctx, UtopiaValue_RIP_TextPasswd, rip->wan_text_password);
     } 
 
     return SUCCESS;
@@ -2659,7 +2663,9 @@ static int s_get_portmapdyn (int index, portMapDyn_t *portmap)
         return ERR_INVALID_VALUE;
     }
     if (0 != strcasecmp(p, "none")) {
-        strncpy(portmap->external_host, p, IPADDR_SZ);
+	/* CID 135651: BUFFER_SIZE_WARNING */
+        strncpy(portmap->external_host, p, sizeof(portmap->external_host)-1);
+	portmap->external_host[sizeof(portmap->external_host)-1] = '\0';
     }
     p = next;
 
@@ -2672,7 +2678,9 @@ static int s_get_portmapdyn (int index, portMapDyn_t *portmap)
     if (NULL == (next = chop_str(p,','))) {
         return ERR_INVALID_VALUE;
     }
-    strncpy(portmap->internal_host, p, IPADDR_SZ);
+    /* CID 135651: BUFFER_SIZE_WARNING */
+    strncpy(portmap->internal_host, p, sizeof(portmap->internal_host)-1);
+    portmap->internal_host[sizeof(portmap->internal_host)-1] = '\0';
     p = next;
 
     if (NULL == (next = chop_str(p,','))) {
@@ -3887,25 +3895,26 @@ int Utopia_CheckPortTriggerRange(UtopiaContext *ctx, int new_rule_id, int new_st
     return TRUE;
 }
 
-int Utopia_SetDMZSettings (UtopiaContext *ctx, dmz_t dmz)
+/* CID : 71892 Big parameter passed by value */
+int Utopia_SetDMZSettings (UtopiaContext *ctx, dmz_t *dmz)
 {
-    if (NULL == ctx) {
+    if (NULL == ctx || NULL == dmz) {
         return ERR_INVALID_ARGS;
     }
 
-    UTOPIA_SETBOOL(ctx, UtopiaValue_DMZ_Enabled, dmz.enabled);
-    if (TRUE == dmz.enabled) {
-        if (IsValid_IPAddr(dmz.source_ip_start) && 
-            IsValid_IPAddr(dmz.source_ip_end)) {
+    UTOPIA_SETBOOL(ctx, UtopiaValue_DMZ_Enabled, dmz->enabled);
+    if (TRUE == dmz->enabled) {
+        if (IsValid_IPAddr(dmz->source_ip_start) &&
+            IsValid_IPAddr(dmz->source_ip_end)) {
             char src_addr_range[512];
-            snprintf(src_addr_range, sizeof(src_addr_range), "%s-%s", dmz.source_ip_start, dmz.source_ip_end);
+            snprintf(src_addr_range, sizeof(src_addr_range), "%s-%s", dmz->source_ip_start, dmz->source_ip_end);
             UTOPIA_SET(ctx, UtopiaValue_DMZ_SrcAddrRange, src_addr_range);
         } else {
             UTOPIA_SET(ctx, UtopiaValue_DMZ_SrcAddrRange, "*");
         }
-        UTOPIA_SET(ctx, UtopiaValue_DMZ_DstIpAddr, dmz.dest_ip);
-        UTOPIA_SET(ctx, UtopiaValue_DMZ_DstMacAddr, dmz.dest_mac);
-        UTOPIA_SET(ctx, UtopiaValue_DMZ_DstIpAddrV6, dmz.dest_ipv6);
+        UTOPIA_SET(ctx, UtopiaValue_DMZ_DstIpAddr, dmz->dest_ip);
+        UTOPIA_SET(ctx, UtopiaValue_DMZ_DstMacAddr, dmz->dest_mac);
+        UTOPIA_SET(ctx, UtopiaValue_DMZ_DstIpAddrV6, dmz->dest_ipv6);
     }
 
     return SUCCESS;
@@ -4058,7 +4067,9 @@ static int s_getiap (UtopiaContext *ctx, int index, iap_entry_t *iap)
 	    /* CID 135580 : BUFFER_SIZE_WARNING */
             strncpy(iap->tod.start_time, sched, sizeof(iap->tod.start_time)-1);
 	    iap->tod.start_time[sizeof(iap->tod.start_time)-1] = '\0';
-            strncpy(iap->tod.stop_time, stop_time, HH_MM_SZ);
+	    /* CID 135580 : BUFFER_SIZE_WARNING */
+            strncpy(iap->tod.stop_time, stop_time, sizeof(iap->tod.stop_time)-1);
+	    iap->tod.stop_time[sizeof(iap->tod.stop_time)-1] = '\0';
         }
     }
 
@@ -5432,7 +5443,11 @@ int Utopia_ReleaseFirmwareUpgradeLock (int lock_fd)
     fl.l_pid = getpid();
     
     // Release the lock on the given lock file
-    fcntl(lock_fd, F_SETLK, &fl);
+    if (fcntl(lock_fd, F_SETLK, &fl) == -1)
+    {
+	close(lock_fd);   /* CID 56445: Unchecked return value from library */
+        return ERR_FW_UPGRADE_LOCK_CONFLICT;
+    }
     
     // Close the file
     close(lock_fd);
@@ -5465,7 +5480,11 @@ int Utopia_SystemChangesAllowed (void)
     }
     
     // Retrieve the information on the lock
-    fcntl(fd, F_GETLK, &fl);
+    if (fcntl(fd, F_GETLK, &fl) == -1)
+    {
+        close(fd);  /* CID 57415: Unchecked return value from library */
+        return ERR_FW_UPGRADE_LOCK_CONFLICT;
+    }
     close(fd);
     
     // If another process is holding onto the lock,
@@ -6292,7 +6311,8 @@ static pid_t s_spawn_async_process(const char *lock_filename,
                 
                 if (output_fd < 0) {
                     fl.l_type = F_UNLCK;
-                    fcntl(lock_fd, F_SETLK, &fl);
+                    if (fcntl(lock_fd, F_SETLK, &fl) != 1)
+			ulog_debugf(ULOG_CONFIG, UL_UTAPI, "%s: fcntl failed", __FUNCTION__);
                     close(lock_fd);
                     exit(1);
                 }
@@ -6327,7 +6347,9 @@ static pid_t s_spawn_async_process(const char *lock_filename,
                 close(output_fd);
             }
             fl.l_type = F_UNLCK;
-            fcntl(lock_fd, F_SETLK, &fl);
+            if (fcntl(lock_fd, F_SETLK, &fl) != 1) //CID-67237
+                ulog_debugf(ULOG_CONFIG, UL_UTAPI, "%s: fcntl failed", __FUNCTION__);
+
             close(lock_fd);
             exit(1);
         }
@@ -6368,7 +6390,12 @@ static int s_has_lock_been_acquired(const char *lock_filename,
     fl.l_pid    = 0;
     
     // Retrieve the info associated with the lock file
-    fcntl(lock_fd, F_GETLK, &fl);
+    /* CID 53688: Unchecked return value from library */
+    if (fcntl(lock_fd, F_GETLK, &fl) == -1)
+    {
+	close(lock_fd);
+	return 0;
+    }
     
     // If a process is holding the lock,
     if (fl.l_pid > 0) {
@@ -6381,7 +6408,11 @@ static int s_has_lock_been_acquired(const char *lock_filename,
             
             // Release the lock
             fl.l_type = F_UNLCK;
-            fcntl(lock_fd, F_SETLK, &fl);
+            if (fcntl(lock_fd, F_SETLK, &fl) == -1)
+	    {
+		close(lock_fd);
+                return 0;
+            }
         }
     }
  
@@ -7317,7 +7348,10 @@ int Utopia_set_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsign
 				return(ERR_INVALID_VALUE);
 			Utopia_UnsetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1);
 			snprintf(buffer, sizeof(buffer),"%d+%s",index1,comments2);
-			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr2, (char *)buffer);
+                        /* CID 62086: Unchecked return value */
+                        if (0 == Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr2, (char *)buffer)) {
+                                ulogf(ULOG_CONFIG, UL_UTAPI, "%s: Utopia_SetNamed failed:%d ", __FUNCTION__,index1);
+                        }
 			Utopia_SetIndexed(ctx, UtopiaValue_USGv2_Lan_Clients, index1, macStr2);
 			Utopia_UnsetIndexed(ctx, UtopiaValue_USGv2_Lan_Clients, count);
 		}
@@ -7328,11 +7362,18 @@ int Utopia_set_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsign
 		if(index1 <= 0){/*a new one*/
 			Utopia_SetIndexed(ctx, UtopiaValue_USGv2_Lan_Clients, count+1, macStr1);
 			snprintf(buffer, sizeof(buffer),"%d+%s",count+1,pComments);
-			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, (char *)buffer);
+			/* CID 62086: Unchecked return value */
+			if (0  == Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, (char *)buffer))
+			{
+                            ulogf(ULOG_CONFIG, UL_UTAPI, "%s: Utopia_SetNamed failed:%d ", __FUNCTION__, index1);
+			}
 			Utopia_SetInt(ctx, UtopiaValue_USGv2_Lan_Clients_Count, count+1);
 		}else{
 			snprintf(buffer, sizeof(buffer),"%d+%s",index1,pComments);
-			Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, (char *)buffer);
+                        /* CID 62086: Unchecked return value */
+                        if (0 == Utopia_SetNamed(ctx, UtopiaValue_USGv2_Lan_Clients_Mac, macStr1, (char *)buffer)) {
+                                ulogf(ULOG_CONFIG, UL_UTAPI, "%s: Utopia_SetNamed failed:%d", __FUNCTION__,index1);
+                        }
 		}
 	}
 	

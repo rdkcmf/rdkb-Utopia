@@ -518,6 +518,7 @@ static int prepare_action_type_message_msg_data (char* buffer, const int buf_len
          }
          remaining_buf_bytes -= strsize;
          send_data_ptr       += strsize;
+
          strsize              = SE_msg_add_data(send_data_ptr,
                                             remaining_buf_bytes,
                                             value,
@@ -933,6 +934,8 @@ static int execute_trigger_actions_data(const trigger_t *tr, const char* const n
                      )
                      pthread_mutex_unlock(&trigger_communication_mutex);
                   }
+		  /* CID 160984: Resource leak */
+		  sysevent_free((void **)&send_msg_buffer,__FILE__, __LINE__);
                }
             } else if (ACTION_TYPE_MESSAGE == action->action_type) {
                if (0 != trigger_datacommunication_fd_writer_end) 
@@ -989,6 +992,8 @@ static int execute_trigger_actions_data(const trigger_t *tr, const char* const n
                      )
                      pthread_mutex_unlock(&trigger_communication_mutex);
                   }
+                  /* CID 160984: Resource leak */
+                  sysevent_free((void **)&send_msg_buffer,__FILE__, __LINE__);
                } else {
                   SE_INC_LOG(ERROR,
                      printf("prepare_action_type_message failed for <%s %s>\n", 

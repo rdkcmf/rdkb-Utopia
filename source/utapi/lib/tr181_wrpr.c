@@ -98,11 +98,13 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
     }
     for(; ptr; ptr=ptr->next){
 	if(!strcasecmp(ptr->param_name, "Name")){
-	    strncpy(deviceMocaIntfStatic->Name, ptr->param_val, strlen(ptr->param_val));
-            deviceMocaIntfStatic->Name[strlen(ptr->param_val)] = '\0';
+            /* CID 135359: Destination buffer too small */
+	    strncpy(deviceMocaIntfStatic->Name, ptr->param_val, sizeof(deviceMocaIntfStatic->Name)-1);
+            deviceMocaIntfStatic->Name[sizeof(deviceMocaIntfStatic->Name)-1] = '\0';
 	}else if(!strcasecmp(ptr->param_name, "FirmwareVersion")){
-	    strncpy(deviceMocaIntfStatic->FirmwareVersion, ptr->param_val, strlen(ptr->param_val));
-            deviceMocaIntfStatic->FirmwareVersion[strlen(ptr->param_val)] = '\0';
+            /* CID 135359: Destination buffer too small */
+	    strncpy(deviceMocaIntfStatic->FirmwareVersion, ptr->param_val, sizeof(deviceMocaIntfStatic->FirmwareVersion)-1);
+            deviceMocaIntfStatic->FirmwareVersion[sizeof(deviceMocaIntfStatic->FirmwareVersion)-1] = '\0';
 	}else if(!strcasecmp(ptr->param_name, "FreqCapabilityMask")){
 	    if(getHex(ptr->param_val, deviceMocaIntfStatic->FreqCapabilityMask, HEX_SZ) != SUCCESS){
             rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: FreqCapabilityMask read error !!!\n", __FUNCTION__);
@@ -276,8 +278,9 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
 	}else if(!strcasecmp(ptr->param_name, "LastChange")){
 	    deviceMocaIntfDyn->LastChange = atoi(ptr->param_val);
 	}else if(!strcasecmp(ptr->param_name, "FreqCurrentMask")){
-	    strncpy(deviceMocaIntfDyn->FreqCurrentMask, ptr->param_val, strlen(ptr->param_val));
-            deviceMocaIntfDyn->FreqCurrentMask[strlen(ptr->param_val)] = '\0';
+		/* CID 135279: Destination buffer too small */
+	    strncpy(deviceMocaIntfDyn->FreqCurrentMask, ptr->param_val, sizeof(deviceMocaIntfDyn->FreqCurrentMask)-1);
+            deviceMocaIntfDyn->FreqCurrentMask[sizeof(deviceMocaIntfDyn->FreqCurrentMask)-1] = '\0';
 	    if(getHex(ptr->param_val, deviceMocaIntfDyn->FreqCurrentMask, HEX_SZ) != SUCCESS){
 	        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: FreqCurrentMask read error !!!\n", __FUNCTION__);
 	        if(rc < EOK)
@@ -452,11 +455,12 @@ int Utopia_Count_AssociateDeviceEntry(int *devCount)
 	    ERR_CHK(rc);
 	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        free_paramList(head); //CID -125353: Resource leak
         return ERR_NO_NODES;
-    }else{ 
-        *devCount = atoi(ptr->param_val);
     }
-
+    *devCount = atoi(ptr->param_val);
+    free_paramList(ptr); //CID -125353: Resource leak
+    free_paramList(head);
     return SUCCESS;
 }
 

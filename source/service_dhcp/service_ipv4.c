@@ -729,22 +729,23 @@ void load_static_l3 (int l3_inst)
 #endif
 			if (4 == l3_inst)
 			{
-            	fprintf(stderr, "IPv4 address is set for %s interface MOCA interface is UP\n",
+            	            fprintf(stderr, "IPv4 address is set for %s interface MOCA interface is UP\n",
 					    LAN_IF_NAME);
-                if (access("/tmp/moca_start", F_OK) == -1 && errno == ENOENT)
-                {
-                        if((fd = creat("/tmp/moca_start", S_IRUSR | S_IWUSR)) == -1)
-                        {
-                                fprintf(stderr, "File: /tmp/moca_start creation failed with error:%d\n", errno);
+		            /* TODO CID 135409 Time of check time of use */
+                          if (access("/tmp/moca_start", F_OK) == -1 && errno == ENOENT)
+                          {  
+                              if((fd = creat("/tmp/moca_start", S_IRUSR | S_IWUSR)) == -1)
+                              {
+                                 fprintf(stderr, "File: /tmp/moca_start creation failed with error:%d\n", errno);
+                              }
+                              else
+                              {
+                                 close(fd);
+                              }  
+                              print_uptime("boot_to_MOCA_uptime",NULL, NULL);
+                          }
                         }
-                        else
-                        {
-                                close(fd);
-                        }
-                        print_uptime("boot_to_MOCA_uptime",NULL, NULL);
-                }
-            }
-        }
+        }   
 	}	
     else
 	{

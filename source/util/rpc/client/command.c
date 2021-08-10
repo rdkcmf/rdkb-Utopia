@@ -104,12 +104,16 @@ main (int argc, char *argv[],char **args)
          if((property = strstr(props, "ARM_ARPING_IP=")))
          {
              property = property + strlen("ARM_ARPING_IP=");
-             strncpy(l_cArmArpingIP, property, (strlen(props) - strlen("ARM_ARPING_IP=")));
+	     /* CID 58698: Out-of-bounds access (OVERRUN) */
+             strncpy(l_cArmArpingIP, property, sizeof(l_cArmArpingIP)-1);
+	     l_cArmArpingIP[sizeof(l_cArmArpingIP)-1] = '\0';
          }
          if((property = strstr(props, "ATOM_ARPING_IP=")))
          {
              property = property + strlen("ATOM_ARPING_IP=");
-             strncpy(l_cAtomArpingIP, property, (strlen(props) - strlen("ATOM_ARPING_IP=")));
+	     /* CID 71622 : Out-of-bounds access (OVERRUN) */
+             strncpy(l_cAtomArpingIP, property, sizeof(l_cAtomArpingIP)-1);
+	     l_cAtomArpingIP[sizeof(l_cAtomArpingIP)-1] = '\0';
          }
     }
     fclose(l_fFp);

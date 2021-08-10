@@ -2026,10 +2026,19 @@ static int connect_to_local_sysevent_daemon(char *target, int* sockfd)
    // can't use SOCK_NONBLOCK in socket call for some reason, so use fcntl
    int oldflags = fcntl (*sockfd, F_GETFL, 0);
    if (0 > oldflags) {
-     fcntl (*sockfd, F_SETFL, O_NONBLOCK);
+     /* CID 62864: Unchecked return value from library */
+     if (fcntl (*sockfd, F_SETFL, O_NONBLOCK) == -1)
+     {
+         close(*sockfd);
+         return -1;
+     }	     
    } else {
      oldflags |= O_NONBLOCK;
-     fcntl (*sockfd, F_SETFL, oldflags);
+     if (fcntl (*sockfd, F_SETFL, oldflags) == -1)
+     {
+         close(*sockfd);
+         return -1;
+     }
    }
 
    // connect to the server 
@@ -2142,10 +2151,22 @@ static int connect_to_sysevent_daemon(char *ip, unsigned short port, int* sockfd
                   // can't use SOCK_NONBLOCK in socket call for some reason, so use fcntl
                   int oldflags = fcntl (*sockfd, F_GETFL, 0);
                   if (0 > oldflags) {
-                    fcntl (*sockfd, F_SETFL, O_NONBLOCK);
+	             /* CID 55738: Unchecked return value from library */
+                    if (fcntl (*sockfd, F_SETFL, O_NONBLOCK) == -1)
+	            {
+			close(*sockfd);
+			freeaddrinfo(result);
+			return -1;
+		    }
                   } else {
                     oldflags |= O_NONBLOCK;
-                    fcntl (*sockfd, F_SETFL, oldflags);
+                    if (fcntl (*sockfd, F_SETFL, oldflags) == -1)
+		    {
+			close(*sockfd);
+                        freeaddrinfo(result);
+                        return -1;
+                    }
+
                   }
 
                   // connect to server
@@ -2228,10 +2249,21 @@ static int connect_to_sysevent_daemon(char *ip, unsigned short port, int* sockfd
                   // can't use SOCK_NONBLOCK in socket call for some reason, so use fcntl
                   int oldflags = fcntl (*sockfd, F_GETFL, 0);
                   if (0 > oldflags) {
-                    fcntl (*sockfd, F_SETFL, O_NONBLOCK);
+		    /* CID 55738: Unchecked return value from library */
+                    if (fcntl (*sockfd, F_SETFL, O_NONBLOCK) == -1)
+		    {
+			close(*sockfd);
+			freeaddrinfo(result);
+			return -1;
+		    }
                   } else {
                     oldflags |= O_NONBLOCK;
-                    fcntl (*sockfd, F_SETFL, oldflags);
+                    if (fcntl (*sockfd, F_SETFL, oldflags) == -1)
+		    {
+			close(*sockfd);
+			freeaddrinfo(result);
+                        return -1;
+		    }
                   }
 
                   // connect to server
@@ -2385,7 +2417,12 @@ int sysevent_open (char *ip, unsigned short port, int version, char *id, token_t
 
    // set up the message body
    char *send_data_ptr = (char *)&(send_msg_body->data);
-   SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   /* CID 72219 : Unchecked return value */
+   int strsize = SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   if (0 == strsize) {
+      close(sockfd);
+      return(ERR_CANNOT_SET_STRING);
+   }
 
    // send registration msg and receive the reply
    se_buffer                     reply_msg_buffer;
@@ -2463,7 +2500,12 @@ int sysevent_open_data (char *ip, unsigned short port, int version, char *id, to
 
    // set up the message body
    char *send_data_ptr = (char *)&(send_msg_body->data);
-   SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   /* CID 160974: Unchecked return value */
+   int strsize = SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   if (0 == strsize) {
+	close(sockfd);
+        return(ERR_CANNOT_SET_STRING);
+   }
 
    // send registration msg and receive the reply
    se_buffer                     reply_msg_buffer;
@@ -2539,7 +2581,12 @@ int sysevent_local_open_data (char *target, int version, char *id, token_t *toke
 
    // set up the message body
    char *send_data_ptr = (char *)&(send_msg_body->data);
-   SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   /* CID 160990  Unchecked return value */
+   int strsize = SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   if (0 == strsize) {
+      close(sockfd);
+      return(ERR_CANNOT_SET_STRING);
+   }
 
    // send registration msg and receive the reply
    se_buffer                     reply_msg_buffer;
@@ -2628,7 +2675,12 @@ int sysevent_local_open (char *target, int version, char *id, token_t *token)
 
    // set up the message body
    char *send_data_ptr = (char *)&(send_msg_body->data);
-   SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   /* CID 58171: Unchecked return value */
+   int strsize = SE_msg_add_string(send_data_ptr, remaining_buf_bytes, id);
+   if (0 == strsize) {
+      close(sockfd);
+      return(ERR_CANNOT_SET_STRING);
+   }
 
    // send registration msg and receive the reply
    se_buffer                     reply_msg_buffer;
@@ -3301,7 +3353,8 @@ unsigned int sysevent_get_binmsg_maxsize()
     FILE *fp = fopen(SE_MAX_MSG_DATA_SIZE_READ_FILE,"r");
     if (NULL != fp) {
         unsigned int value = 0;
-        fscanf(fp, "%u",&value);
+        if (fscanf(fp, "%u",&value) <= 0)
+            printf("read error of %s \n",SE_MAX_MSG_DATA_SIZE_READ_FILE); //CID -160978
         fclose(fp);
         if (value != 0)
         {    

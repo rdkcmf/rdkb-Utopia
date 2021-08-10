@@ -333,7 +333,9 @@ int syscfg_create (const char *file, long int max_file_sz, const char *mtd_devic
 
     if (file) {
         store_info.type = STORE_FILE;
-        strncpy(store_info.path, file, sizeof(store_info.path));
+	/* CID 135542: BUFFER_SIZE_WARNING */
+        strncpy(store_info.path, file, sizeof(store_info.path)-1);
+	store_info.path[sizeof(store_info.path)-1] = '\0';
         store_info.max_size = (max_file_sz > 0) ? max_file_sz : DEFAULT_MAX_FILE_SZ;
         store_info.hdr_size = 0;
     } else {
@@ -347,7 +349,7 @@ int syscfg_create (const char *file, long int max_file_sz, const char *mtd_devic
 
     ulog_LOG_Info("creating shared memory with store type %d, path %s, size %ld, hdr size %d \n", store_info.type, store_info.path, store_info.max_size, store_info.hdr_size);
 
-    syscfg_ctx = (syscfg_shm_ctx *) syscfg_shm_create(store_info, &shmid);
+    syscfg_ctx = (syscfg_shm_ctx *) syscfg_shm_create(&store_info, &shmid);
     if (NULL == syscfg_ctx) {
         ulog_LOG_Err("Error creating shared memory");
         return ERR_SHM_CREATE;
@@ -1141,7 +1143,8 @@ static void shm_mm_init (syscfg_shm_ctx *ctx);
 /*
  * initialize control block
  */
-static int shm_cb_init (syscfg_shm_ctx *ctx, int shmid, store_info_t store_info)
+/* CID 68025: Big parameter passed by value */
+static int shm_cb_init (syscfg_shm_ctx *ctx, int shmid, store_info_t *store_info)
 {
     shm_cb *cb = &(ctx->cb);
 
@@ -1151,12 +1154,12 @@ static int shm_cb_init (syscfg_shm_ctx *ctx, int shmid, store_info_t store_info)
     cb->version = (SYSCFG_SHM_VERSION_MAJOR << 4) | (SYSCFG_SHM_VERSION_MINOR);
     cb->size = SYSCFG_SHM_SIZE;
     cb->shmid = shmid;
-    cb->store_type = store_info.type;
+    cb->store_type = store_info->type;
     /* CID 135644 : BUFFER_SIZE_WARNING */
-    strncpy(cb->store_path, store_info.path, sizeof(cb->store_path)-1);
+    strncpy(cb->store_path, store_info->path, sizeof(cb->store_path)-1);
     cb->store_path[sizeof(cb->store_path)-1] = '\0';
-    cb->max_store_size = store_info.max_size;
-    cb->used_store_size = store_info.hdr_size;
+    cb->max_store_size = store_info->max_size;
+    cb->used_store_size = store_info->hdr_size;
 
     int rc = lock_init(ctx);
     if (rc) {
@@ -1190,29 +1193,34 @@ static int syscfg_shm_init (syscfg_shm_ctx **out_ctx)
     return 0;
 }
 
-static void *syscfg_shm_create (store_info_t store_info, int *out_shmid)
+/* CID 63267:Big parameter passed by value */
+static void *syscfg_shm_create (store_info_t *store_info, int *out_shmid)
 {
     int shmid;
     key_t key;
     struct stat sbuf;
 
-    if (-1 != stat(SYSCFG_SHM_FILE, &sbuf)) {
+ 
+    /*CID: 135594 Time of check time of use*/
+    // precreate file 
+    FILE *fp = fopen(SYSCFG_SHM_FILE, "w");
+    if (NULL == fp) {
+        return NULL;
+    }
+
+    if (-1 != fstat(fileno(fp), &sbuf)) {
         void *p_shm = syscfg_shm_attach(&shmid);
         if (p_shm) {
             ulog_error(ULOG_SYSTEM, UL_SYSCFG, "Old shm instance still present. destroy it before creating new one");
+	    fclose(fp);
             return NULL;
         } else {
             ulog_error(ULOG_SYSTEM, UL_SYSCFG, "WARN: Unexpected shared memory file during creation"); 
         }
     }
-
-    // precreate file  
-    FILE *fp = fopen(SYSCFG_SHM_FILE, "w");
-    if (NULL == fp) {
-        return NULL;
-    }
     fputs("creating", fp);
     fclose(fp);
+
 
     // get unique key using file path and proj id
     if (-1 == (key= ftok(SYSCFG_SHM_FILE, SYSCFG_SHM_PROJID))) {
@@ -1501,13 +1509,19 @@ static void _syscfg_file_lock (int fd)
     fl.l_whence = SEEK_SET;
     fl.l_start = 0;
     fl.l_len = 0; // whole file, even if it grows
-    fcntl(fd, F_SETLKW, &fl);
-
+    /* CID 70977: Unchecked return value from library */
+    if (fcntl(fd, F_SETLKW, &fl) == -1)
+    {
+	close(fd);
+	return;
+    }
     fl.l_type = F_RDLCK;
     fl.l_whence = SEEK_SET;
     fl.l_start = 0;
     fl.l_len = 0; // whole file, even if it grows
-    fcntl(fd, F_SETLKW, &fl);
+    if (fcntl(fd, F_SETLKW, &fl) == -1) {
+        close(fd);
+    }
 }
 
 /*
@@ -1524,7 +1538,11 @@ static void _syscfg_file_unlock (int fd)
     fl.l_whence = SEEK_SET;
     fl.l_start = 0;
     fl.l_len = 0; // whole file, even if it grows
-    fcntl(fd, F_SETLKW, &fl);
+    /* CID 63229: Unchecked return value from library */
+     if (fcntl(fd, F_SETLKW, &fl) == -1)
+     {
+         close(fd);
+     }
 }
 
 int load_from_file (const char *fname)

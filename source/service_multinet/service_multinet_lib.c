@@ -430,13 +430,14 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
 	{
 	    ConfigureMoCABridge(l2net);
             MNET_DEBUG("MoCA Bridge case creating %s file \n" COMMA LOCAL_MOCABR_UP_FILE)
-            if(creat(LOCAL_MOCABR_UP_FILE, S_IRUSR | S_IWUSR) == -1)
+            if((fd = creat(LOCAL_MOCABR_UP_FILE, S_IRUSR | S_IWUSR)) == -1) //CID: 74549
             {
                 MNET_DEBUG("%s file creation failed with error:%d\n" COMMA LOCAL_MOCABR_UP_FILE COMMA errno)
             }
             else
             {
                 MNET_DEBUG("%s file creation is successful \n" COMMA LOCAL_MOCABR_UP_FILE)
+		close(fd); //CID: 74549
             }
 
 	}

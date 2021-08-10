@@ -489,8 +489,13 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
     }
 
     memset(config, 0, sizeof(config));
-    read(fd, config, sizeof(config));
-
+    /* CID 68571 : Ignoring number of bytes read */
+    if (read(fd, config, sizeof(config)) == -1)
+    {
+        fprintf(stderr, "read error: could not read message \n");
+        close(fd);
+        return -1;
+    }
     if (!strncmp(config, "dibbler-client", strlen("dibbler-client"))) 
     {
         /*the format is :
@@ -520,6 +525,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
 	close(fd); /*RDKB-12965 & CID:-34141*/
         return -1;
     }
+    close(fd); //CID 64774: Resource leak
 
 #if 1
     /*client v6 address*/
@@ -537,7 +543,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
    sysevent_set(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, iapd->pretm, 0);
    sysevent_set(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME, iapd->vldtm, 0);
 #endif
-#endif	
+#endif
     return 0;
 }
 

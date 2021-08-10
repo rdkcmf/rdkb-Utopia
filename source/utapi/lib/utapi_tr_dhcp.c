@@ -995,8 +995,11 @@ int Utopia_GetDhcpV4SPool_SAddressByIndex(UtopiaContext *ctx, unsigned long ulIn
         }
         p = n;
         /*CID 69969 : Dereference after null check */
-	if(p != NULL)
-           strncpy(dhcp_static_hosts.client_name, p, TOKEN_SZ);
+	if(p != NULL) {
+	   /* CID:135654 BUFFER_SIZE_WARNING */
+           strncpy(dhcp_static_hosts.client_name, p, sizeof(dhcp_static_hosts.client_name)-1);
+	   dhcp_static_hosts.client_name[sizeof(dhcp_static_hosts.client_name)-1] = '\0';
+        }
 
         /* Correct the Host IP */
         /*

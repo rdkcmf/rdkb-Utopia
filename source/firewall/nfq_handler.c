@@ -441,6 +441,7 @@ static int http_get_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *
 
             //reverse src/dst ip & port
 
+	    // CID 66818: intentionally reversed src/dst ip & port, this CID was false positive
             send_tcp_pkt("brlan0", family, srcMac, dstMac, dstIpAddr, srcIpAddr, ntohs(tcpHdr->dest), ntohs(tcpHdr->source), ntohl(tcpHdr->ack_seq), ackNum, url, 1);
 
             ret = nfq_set_verdict(queueHandle, id, NF_DROP, 0, NULL);

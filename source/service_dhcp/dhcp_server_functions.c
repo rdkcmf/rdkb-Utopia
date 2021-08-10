@@ -564,7 +564,10 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 		if (NULL != (l_cRemoveHttp = strstr(l_cCloud_Personal_Url, "http://")))
 	    {
     	    l_cRemoveHttp = l_cRemoveHttp + strlen("http://");
-	        strncpy(l_cCloud_Personal_Url, l_cRemoveHttp, sizeof(l_cCloud_Personal_Url));
+	        /*CID - 135387 BUFFER_SIZE_WARNING */
+	        strncpy(l_cCloud_Personal_Url, l_cRemoveHttp, sizeof(l_cCloud_Personal_Url)-1);
+		l_cCloud_Personal_Url[sizeof(l_cCloud_Personal_Url)-1] = '\0';
+
     	}
 		else if (NULL != (l_cRemoveHttp = strstr(l_cCloud_Personal_Url, "https://")))
 		{
@@ -787,7 +790,7 @@ int prepare_dhcp_conf (char *input)
 
 
 	int l_iMkdir_Res, l_iRet_Val;
-	int l_iRetry_Count = 0;
+	int l_iRetry_Count = 0, ret;
 
 	FILE *l_fLocal_Dhcp_ConfFile = NULL;
     FILE *l_fNetRes = NULL, *l_fDef_Resolv = NULL;
@@ -941,7 +944,12 @@ int prepare_dhcp_conf (char *input)
     }
     else
 	{
-        fscanf(l_fNetRes,"%s", l_cNetwork_Res);
+                /* CID 60600: Unchecked return value from library */
+                if ((ret = fscanf(l_fNetRes,"%s", l_cNetwork_Res)) != 1)
+	        {
+		   fprintf(stderr, "read error of %s \n",NETWORK_RES_FILE);
+		}
+
 		fclose(l_fNetRes);
 	}	
    

@@ -506,7 +506,7 @@ char * json_file_parse( char *path )
 {
 	FILE	 	*fileRead 	= NULL;
 	char		*data 		= NULL;
-	int 		 len 		= 0;
+	int 		 len 		= 0 , n=0;
 
 	//File read
 	fileRead = fopen( path, "r" );
@@ -532,7 +532,14 @@ char * json_file_parse( char *path )
 		 if ( data != NULL ) 
 		 {
 			memset( data, 0, ( sizeof(char) * (len + 1) ));
-			fread( data, 1, len, fileRead );
+			/* CID 58465: Ignoring number of bytes read */
+			if((n = fread( data, 1, len, fileRead )) <= 0)
+			{
+			   APPLY_PRINT("%s-%d : fread failed Length :%d\n", __FUNCTION__, __LINE__, n );
+			   fclose(fileRead);
+			   free(data);
+			   return NULL;
+			}
 		 } 
 		 else 
 		 {
@@ -743,7 +750,10 @@ static int get_PartnerID( char *PartnerID)
 	{
 		FILE	   *FilePtr 			= NULL;
 		char		fileContent[ 256 ]	= { 0 };
-		
+
+	        /* TODO CID 135527: Time of check time of use 
+                *  As per code flow either access() or fopen() will be invoked
+                *  so we could not hit the TOCTOU issue. It could be a false positive.*/
 		FilePtr = fopen( PARTNERID_FILE, "r" );
 		
 		if ( FilePtr ) 
@@ -932,7 +942,7 @@ int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
 	FILE *fileRead = NULL;
 	char * cJsonOut = NULL;
 	char* data = NULL;
-	 int len ;
+	 int len, n;
 	 int configUpdateStatus = -1;
 	 fileRead = fopen( PARTNERS_INFO_FILE, "r" );
 	 if( fileRead == NULL ) 
@@ -952,27 +962,31 @@ int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
          }
 	 fseek( fileRead, 0, SEEK_SET );
 	 data = ( char* )malloc( sizeof(char) * (len + 1) );
-	 if (data != NULL) 
-	 {
-		memset( data, 0, ( sizeof(char) * (len + 1) ));
-	 	fread( data, 1, len, fileRead );
-		/*CID 135511 String not null terminated */
-		data[len] = '\0';
+	 if (!data) 
+	 {	
+	     APPLY_PRINT("%s-%d : Memory allocation failed \n", __FUNCTION__, __LINE__);
+	     fclose( fileRead );
+	     return -1;
 	 }
-	 else 
-	 {
-		 APPLY_PRINT("%s-%d : Memory allocation failed \n", __FUNCTION__, __LINE__);
-		 fclose( fileRead );
-		 return -1;
+	 memset( data, 0, ( sizeof(char) * (len + 1) ));
+	 /* CID 65253: Ignoring number of bytes read */
+         if ((n= fread( data, 1, len, fileRead )) <=0)
+         {
+              APPLY_PRINT("%s-%d : fread failed Length :%d\n", __FUNCTION__, __LINE__, n );
+              fclose(fileRead);
+	      free(data);
+              return -1;
 	 }
-	 
+	 /*CID 135511 String not null terminated */
+	 data[len] = '\0';
+
 	 fclose( fileRead );
 	 if ( data == NULL )
 	 {
 		APPLY_PRINT("%s-%d : fileRead failed \n", __FUNCTION__, __LINE__);
 		return -1;
 	 }
-	 else if ( strlen(data) != 0)
+	 else if (data[0])
 	 {
 		 json = cJSON_Parse( data );
 		 if( !json ) 
@@ -981,46 +995,42 @@ int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
 			 free(data);
 			 return -1;
 		 } 
-		 else
+		 partnerObj = cJSON_GetObjectItem( json, PartnerId );
+		 if ( NULL != partnerObj)
 		 {
-			 partnerObj = cJSON_GetObjectItem( json, PartnerId );
-			 if ( NULL != partnerObj)
+			 if (NULL == cJSON_GetObjectItem( partnerObj, pKey) )
 			 {
-				 if (NULL == cJSON_GetObjectItem( partnerObj, pKey) )
-				 {
-					cJSON_AddItemToObject(partnerObj, pKey, cJSON_CreateString(pValue));
-				 }
-				 else
-				 {
-					 cJSON_ReplaceItemInObject(partnerObj, pKey, cJSON_CreateString(pValue));
-				 }
-				 cJsonOut = cJSON_Print(json);
-				 configUpdateStatus = writeToJson(cJsonOut, PARTNERS_INFO_FILE);
-				 if ( !configUpdateStatus)
-				 {
-					 APPLY_PRINT( "Added/Updated Value for %s partner\n",PartnerId);
-					 APPLY_PRINT( "Param:%s - Value:%s\n",pKey,pValue);
-				 }
-				 else
-			 	 {
-					 APPLY_PRINT( "Failed to update value for %s partner\n",PartnerId);
-					 APPLY_PRINT( "Param:%s\n",pKey);
-		 			 cJSON_Delete(json);
-					 return -1;
-			 	 }
+				cJSON_AddItemToObject(partnerObj, pKey, cJSON_CreateString(pValue));
 			 }
 			 else
 			 {
-			 	APPLY_PRINT("%s - PARTNER ID OBJECT Value is NULL\n", __FUNCTION__ );
-			 	cJSON_Delete(json);
-			 	return -1;
+				 cJSON_ReplaceItemInObject(partnerObj, pKey, cJSON_CreateString(pValue));
 			 }
-			cJSON_Delete(json);
+			 cJsonOut = cJSON_Print(json);
+			 configUpdateStatus = writeToJson(cJsonOut, PARTNERS_INFO_FILE);
+			 if ( configUpdateStatus)
+			 {
+				 APPLY_PRINT( "Failed to update value for %s partner\n",PartnerId);
+				 APPLY_PRINT( "Param:%s\n",pKey);
+		 		 cJSON_Delete(json);
+				 return -1;
+			 }
+		         APPLY_PRINT( "Added/Updated Value for %s partner\n",PartnerId);
+			 APPLY_PRINT( "Param:%s - Value:%s\n",pKey,pValue);
 		 }
+		 else
+		 {
+		 	APPLY_PRINT("%s - PARTNER ID OBJECT Value is NULL\n", __FUNCTION__ );
+		 	cJSON_Delete(json);
+		 	return -1;
+		 }
+		 cJSON_Delete(json);
 	  }
 	  else
 	  {
 		APPLY_PRINT("PARTNERS_INFO_FILE %s is empty\n", PARTNERS_INFO_FILE);
+		/* CID: 66806 Resource leak*/
+                free(data);
 		return -1;
 	  }
 	 return 0;
@@ -2081,7 +2091,7 @@ if ( paramObjVal != NULL )
 
                       if(jsonNTPServer1 != NULL)
                       {
-                         if(0 != strnlen(jsonNTPServer1, sizeof(jsonNTPServer1)))
+                         if(jsonNTPServer1[0]) //CID 172848: Wrong sizeof argument
                          {
                             set_syscfg_partner_values(jsonNTPServer1,"ntp_server1");
                             APPLY_PRINT(" %s ntp_server1 set to json value:%s\n", __FUNCTION__, jsonNTPServer1);
@@ -2132,7 +2142,7 @@ static void getPartnerIdWithRetry(char* buf, char* PartnerID)
         for(i=0; i < RETRY_COUNT;i++)
         {
                 //Get the partner ID
-                syscfg_get( NULL, "PartnerID", buf, sizeof( buf ));
+                syscfg_get( NULL, "PartnerID", buf, 64); //CID 59410: Wrong sizeof argument
                 if(buf[0] !=  '\0')
                 {
                         strncpy( PartnerID, buf , strlen( buf ) );

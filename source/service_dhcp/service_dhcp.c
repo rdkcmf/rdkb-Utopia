@@ -138,24 +138,32 @@ void get_device_props()
             if(NULL != (property = strstr(props, "BOX_TYPE=")))
             {
                 property = property + strlen("BOX_TYPE=");
-                strncpy(g_cBox_Type, property, (strlen(props) - strlen("BOX_TYPE=")));
+		/* CID 60267: Out-of-bounds access (OVERRUN)*/
+                strncpy(g_cBox_Type, property, sizeof(g_cBox_Type)-1);
+		g_cBox_Type[sizeof(g_cBox_Type)-1] = '\0';
             }
 #ifdef XDNS_ENABLE
             if(NULL != (property = strstr(props, "XDNS_ENABLE=")))
             {
                 property = property + strlen("XDNS_ENABLE=");
-                strncpy(g_cXdns_Enabled, property, (strlen(props) - strlen("XDNS_ENABLE=")));
+		/* CID 53527: Out-of-bounds access (OVERRUN)*/
+                strncpy(g_cXdns_Enabled, property, sizeof(g_cXdns_Enabled)-1);
+		g_cXdns_Enabled[sizeof(g_cXdns_Enabled)-1] = '\0';
             }
 #endif
             if(NULL != (property = strstr(props, "MIG_CHECK=")))
             {
                 property = property + strlen("MIG_CHECK=");
-                strncpy(g_cMig_Check, property, (strlen(props) - strlen("MIG_CHECK=")));
+		/*CID 71049: Out-of-bounds access (OVERRUN)*/
+                strncpy(g_cMig_Check, property, sizeof(g_cMig_Check)-1);
+		g_cMig_Check[sizeof(g_cMig_Check)-1] = '\0';
             }
-			if(NULL != (property = strstr(props, "ATOM_ARPING_IP=")))
+	    if(NULL != (property = strstr(props, "ATOM_ARPING_IP=")))
             {
                 property = property + strlen("ATOM_ARPING_IP=");
-                strncpy(g_cAtom_Arping_IP, property, (strlen(props) - strlen("ATOM_ARPING_IP=")));
+		/* CID 74595 : Out-of-bounds access (OVERRUN)*/
+                strncpy(g_cAtom_Arping_IP, property, sizeof(g_cAtom_Arping_IP)-1);
+		g_cAtom_Arping_IP[sizeof(g_cAtom_Arping_IP)-1] = '\0';
             }
         }
         fclose(l_fFp);
