@@ -68,6 +68,8 @@
 #define CMD_STRING_LEN 255
 #define MAC_ADDRESS_OCTET_MAX 0x100
 #define MAC_ADDRESS_LOCAL_MASK 0x02
+/* Using 1111 11xx bit mask to derive unique bridge mac addresses */
+#define BIT_MASK 0xFC
 #endif
 
 #if defined (INTEL_PUMA7) || defined(MULTILAN_FEATURE)
@@ -198,12 +200,12 @@ static int nethelper_bridgeCreate(char* brname) {
  *
  * Creates a bridge with a unique and consistent mac address.
  * The mac address is calculated by starting with the base mac address taken from
- * the syscfg key defined in BASE_MAC_SYSCFG_KEY.  Then the bridge instance number is added
- * to the least-significant octet.  If the resulting octet is larger than MAC_ADDRESS_OCTET_MAX,
- * the value becomes the remainder of the intermediate value divided by MAC_ADDRESS_OCTET_MAX.
- * This is to allow roll-over in the resulting mac address octet.
- * Finally, the Universal/Local bit (found in MAC_ADDRESS_LOCAL_MASK) is set on the
- * resulting mac address to specify that this is NOT a globally-unique mac address.
+ * the syscfg key defined in BASE_MAC_SYSCFG_KEY and adding 1 to the least-significant octet.
+ * Then the bridge instance number is used with 1111 11xx (0xFC) bit mask and bit shift by 0x2
+ * If the resulting octet is larger than MAC_ADDRESS_OCTET_MAX, the value becomes the remainder
+ * of the intermediate value divided by MAC_ADDRESS_OCTET_MAX. This is to allow roll-over in the
+ * resulting mac address octet. Finally, the Universal/Local bit (found in MAC_ADDRESS_LOCAL_MASK)
+ * is set on the resulting mac address to specify that this is NOT a globally-unique mac address.
 */
 static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
     char cmdBuff[CMD_STRING_LEN];
@@ -238,12 +240,12 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
                 &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]
                 ) == 6)
             {
-                /* Add offset and instance to least significant octet */
-                mac[5] += (mac_offset + id);
+                /* Add offset+1 to least significant octet */
+                mac[5] += (mac_offset + 1);
                 /* Handle roll-over */
                 mac[5] %= MAC_ADDRESS_OCTET_MAX;
-                /* Set as a local mac address */
-                mac[0] |= MAC_ADDRESS_LOCAL_MASK;
+                /* Set as a local mac address using combination of BIT_MASK and MAC_ADDRESS_LOCAL_MASK */
+                mac[0] = (mac[0] & ~BIT_MASK) | (id << MAC_ADDRESS_LOCAL_MASK) | MAC_ADDRESS_LOCAL_MASK;
                 /* Set the newly-generated mac address to the bridge */
                 snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x",
                     brname, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
