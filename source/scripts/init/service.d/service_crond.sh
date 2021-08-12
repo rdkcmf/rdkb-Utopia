@@ -113,10 +113,6 @@ service_start ()
 #RDKB-9367, file handle monitor, needs to be run every 12 hours
       echo "1 */12 * * *   /usr/ccsp/tad/FileHandle_Monitor.sh" >> $CRONTAB_FILE
 
-      if [ ! -f "/nvram/syscfg_clean" ]; then
-        echo "0 2 * * *   /usr/ccsp/tad/syscfg_cleanup.sh" >> $CRONTAB_FILE
-      fi
-
       if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] ; then
             echo "*/15 * * * *  /usr/ccsp/tad/log_staticIP_client_info.sh" >> $CRONTAB_FILE
       fi
