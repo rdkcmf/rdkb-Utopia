@@ -637,6 +637,27 @@ static int wan_start(struct serv_wan *sw)
     print_uptime("Wan_init_start", NULL, NULL);
     OnboardLog("Wan_init_start:%d\n",uptime);
 
+
+    #if defined (_BRIDGE_UTILS_BIN_)
+
+    char ovs_enable[8] = {0};
+    char bridge_mode[8] = {0};
+
+    if( 0 == syscfg_get( NULL, "bridge_mode", bridge_mode, sizeof( bridge_mode ) ) )
+    {
+    	if ( atoi(bridge_mode) != 0 )
+        {
+        	if( 0 == syscfg_get( NULL, "mesh_ovs_enable", ovs_enable, sizeof( ovs_enable ) ) )
+                {
+               		if ( strcmp (ovs_enable,"true") == 0 )
+                  	{
+                        	v_secure_system("/usr/bin/bridgeUtils add-port brlan0 llan0 &");
+                  	}
+                }	 
+          }
+    }
+    #endif
+
 #if defined (INTEL_PUMA7)
 	//Intel Proposed RDKB Generic Bug Fix from XB6 SDK
 	int pid = 0;
