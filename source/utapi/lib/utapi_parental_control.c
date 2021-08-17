@@ -274,7 +274,7 @@ static int getmacaddress_fromip(char *ipaddress, int iptype, char *mac, int mac_
     FILE *fp = NULL;
     char output[64] = {0};
 
-    if (!ipaddress || !mac || !mac_size)
+    if (!ipaddress || !mac || !mac_size || !strlen(ipaddress))
         return -1;
 
     if (4 == iptype)
