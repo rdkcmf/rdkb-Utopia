@@ -6062,7 +6062,10 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     // RDKB-21814 
     // Drop only remote managment port(8080,8181) in bridge_mode 
     // because port 80, 443 will be used to access MSO page / local admin page.
-    if (isBridgeMode)
+    rc = syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
+    tmpQuery[0] = '\0';
+    ret =  syscfg_get(NULL, "mgmt_wan_httpsaccess", tmpQuery, sizeof(tmpQuery));
+    if (isBridgeMode && ( (rc == 0 && atoi(query) == 1) && (ret == 0 && atoi(tmpQuery) == 1)))
     {
         if(httpport[0] == '\0' || atoi(httpport) < 0 || atoi(httpport) > 65535)
             strcpy(httpport, "8080");
