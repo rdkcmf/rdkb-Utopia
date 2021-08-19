@@ -158,8 +158,9 @@ CheckAndReCreateDB()
 	fi 
 }
 
-echo "[utopia][init] Starting syscfg using file store ($SYSCFG_NEW_FILE)"
-if [ -f $SYSCFG_NEW_FILE ]; then
+#SKYH4-5485: The admin user unable to login to GUI after flashing factory image.
+if [ -s $SYSCFG_NEW_FILE ]; then
+     echo "[utopia][init] Starting syscfg using file store ($SYSCFG_NEW_FILE)"
      cp $SYSCFG_NEW_FILE $SYSCFG_FILE 
      syscfg_create -f $SYSCFG_FILE
      if [ $? != 0 ]; then
