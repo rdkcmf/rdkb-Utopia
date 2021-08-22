@@ -1385,6 +1385,25 @@ static int do_wan_nat_lan_clients_mapt(FILE *fp)
 #endif //_HUB4_PRODUCT_REQ_
 
 /*
+ *  Procedure     : do_webui_rate_limit
+ *  Purpose       : Create chain to ratelimit remote management GUI packets over erouter interface
+ *  Parameters    :
+ *    fp             : An open file to write webui_ratelimit Rule
+ * Return Values  :
+ *    0              : Success
+ */
+void do_webui_rate_limit (FILE *filter_fp)
+{
+   FIREWALL_DEBUG("Entering do_webui_rate_limit\n");
+   fprintf(filter_fp, "%s\n", ":webui_limit - [0:0]");
+   fprintf(filter_fp, "-I webui_limit -m state --state ESTABLISHED,RELATED -j ACCEPT\n");
+   fprintf(filter_fp, "-A webui_limit -p tcp -m tcp  --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 4/sec --limit-burst 5 -j ACCEPT\n");
+   fprintf(filter_fp, "-A webui_limit -m limit --limit 1/sec --limit-burst 1 -j LOG --log-prefix \"WebUI Rate Limited: \" --log-level 6\n");
+   fprintf(filter_fp, "-A webui_limit -j DROP\n"); 
+   FIREWALL_DEBUG("Exiting do_webui_rate_limit\n");
+}
+
+/*
  * Check whether an l2 instance belongs to a MultiLAN bridge
  */
 static inline BOOL isMultiLANL2Instance(int instance){
@@ -5756,20 +5775,47 @@ static int do_mgmt_override(FILE *nat_fp)
 
 static int remote_access_set_proto(FILE *filt_fp, FILE *nat_fp, const char *port, const char *src, int family, const char *interface)
 {
-	char IPv6[INET6_ADDRSTRLEN] = "0";
-	memset(IPv6, 0, INET6_ADDRSTRLEN);
-	sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", IPv6, sizeof(IPv6));
-	
-         FIREWALL_DEBUG("Entering remote_access_set_proto\n");    
+  	int ret = 0;
+  	char httpport[64] = {0};
+  	char httpsport[64] = {0};
+  	char tmpQuery[MAX_QUERY];
+		
+         FIREWALL_DEBUG("Entering remote_access_set_proto\n");   
+        ret = syscfg_get(NULL, "mgmt_wan_httpport", httpport, sizeof(port));
+#if defined(CONFIG_CCSP_WAN_MGMT_PORT)
+          tmpQuery[0] = '\0';
+          ret = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmpQuery, sizeof(tmpQuery));
+          if(ret == 0)
+              strcpy(httpport, tmpQuery);
+#endif
+  	if ((ret != 0) || ('\0' == httpport[0])) {
+            strcpy(httpport, "8080");
+   	}
+
+  	ret = syscfg_get(NULL, "mgmt_wan_httpsport", httpsport, sizeof(httpsport));
+  	if ((ret != 0) || ('\0' == httpsport[0])) {
+             strcpy(httpsport, "8181");
+        }
     if (family == AF_INET) {
-        fprintf(filt_fp, "-A wan2self_mgmt -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port);
+        if ((0 == strcmp(httpport, port)) || (0 == strcmp(httpsport, port))) {
+          fprintf(filt_fp, "-A wan2self_mgmt -i %s %s -p tcp -m tcp --dport %s -j webui_limit\n", interface, src, port);
+        } else {
+          fprintf(filt_fp, "-A wan2self_mgmt -i %s %s -p tcp -m tcp --dport %s -j ACCEPT \n", interface, src, port);
+        }          
     } else { 
 #if defined(_COSA_BCM_MIPS_) //Fix  for XF3-5627
 		if(0 == strcmp("80", port)) {
-		fprintf(filt_fp, "-A INPUT -i %s  -p tcp -m tcp --dport %s -d %s -j DROP\n", interface, port, IPv6 );
+                    char IPv6[INET6_ADDRSTRLEN];
+      		    memset(IPv6, 0, INET6_ADDRSTRLEN);
+      		    if (0 == sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", IPv6, sizeof(IPv6))) 
+		        fprintf(filt_fp, "-A INPUT -i %s  -p tcp -m tcp --dport %s -d %s -j DROP\n", interface, port, IPv6 );
 		}
 #endif
-        fprintf(filt_fp, "-A INPUT -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port);
+      if ((0 == strcmp(httpport, port)) || (0 == strcmp(httpsport, port))) {
+        fprintf(filt_fp, "-A INPUT -i %s %s -p tcp -m tcp --dport %s -j webui_limit\n", interface, src, port); 
+      } else {
+        fprintf(filt_fp, "-A INPUT -i %s %s -p tcp -m tcp --dport %s -j ACCEPT\n", interface, src, port); 
+      }
     }
          FIREWALL_DEBUG("Exiting remote_access_set_proto\n");    
     return 0;
@@ -11440,6 +11486,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (filter_fp);
+   
+   // Create iptable chain to ratelimit remote management(8080, 8181) packets
+   do_webui_rate_limit(filter_fp);
        
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
@@ -12557,6 +12606,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (filter_fp);
+   
+   // Create iptable chain to ratelimit remote management packets
+   do_webui_rate_limit(filter_fp);
 #if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
    do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
 #else
@@ -13316,6 +13368,9 @@ static void do_ipv6_filter_table(FILE *fp){
 
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (fp);
+
+   // Create iptable chain to ratelimit remote management packets
+   do_webui_rate_limit(fp);
 
    if (!isFirewallEnabled || isBridgeMode || !isWanServiceReady) {
        if(isBridgeMode || isWanServiceReady)
