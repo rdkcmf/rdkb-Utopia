@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include "print_uptime.h"
 #include <telemetry_busmessage_sender.h>
+#include "safec_lib_common.h"
 #ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
 #include <rdk_debug.h>
 #define LOGGING_MODULE "Utopia"
@@ -56,6 +57,7 @@ void get_dateanduptime(char *buffer, int *uptime)
     struct 	tm       *tm;
     struct 	sysinfo info;
     char 	fmt[ 64 ], buf [64];
+    errno_t safec_rc = -1;
 
     sysinfo( &info );
     gettimeofday( &tv, NULL );
@@ -65,8 +67,10 @@ void get_dateanduptime(char *buffer, int *uptime)
 	strftime( fmt, sizeof( fmt ), "%y%m%d-%T.%%06u", tm );
 	snprintf( buf, sizeof( buf ), fmt, tv.tv_usec );
     }
-    
-    sprintf( buffer, "%s", buf);
+
+    /* Here buffer is pointer, It's pointing to the array size is 64 bytes */
+    safec_rc = strcpy_s( buffer, 64, buf);
+    ERR_CHK(safec_rc);
     *uptime= info.uptime;
 }
 
@@ -218,11 +222,15 @@ void ipv4_status(int l3_inst, char *status)
 	FILE *l_fFp = NULL;	
 	int uptime = 0;
 	char buffer[64] = { 0 };
+	errno_t safec_rc = -1;
 	if (!strncmp(status, "up", 2))
 	{	
     	syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
 
-		sprintf(l_cSysevent_Cmd, "ipv4_%d-ifname", l3_inst);	
+		safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"ipv4_%d-ifname", l3_inst);
+		if(safec_rc < EOK){
+			ERR_CHK(safec_rc);
+		}
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cLanIfName, sizeof(l_cLanIfName));
 
         // if it's ipv4 only, not enable link local 
@@ -494,6 +502,7 @@ void lan_restart()
 	char *l_cpPsm_Get = NULL;
 	
 	int l_iLanInst, l_iRetVal;
+	errno_t safec_rc = -1;
 
 	syscfg_get(NULL, "lan_ipaddr", l_cLanIpAddr, sizeof(l_cLanIpAddr));
 
@@ -576,7 +585,10 @@ void lan_restart()
 	//handle ipv6 address on brlan0. 
 	//Because it's difficult to add ipv6 operation in ipv4 process. 
 	//So just put here as a temporary method
-	sprintf(l_cSysevent_Cmd, "ipv4_%d-ifname", l_iLanInst);	
+	safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"ipv4_%d-ifname", l_iLanInst);
+	if(safec_rc < EOK){
+		ERR_CHK(safec_rc);
+	}
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, 
 				 l_cLanIfName, sizeof(l_cLanIfName));
 

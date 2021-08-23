@@ -54,6 +54,7 @@
 #include "syscfg_mtd.h"   // MTD IO friend sub-class
 #include "syscfg_lib.h"   // internal interface
 #include "syscfg.h"       // external interface used by users
+#include "safec_lib_common.h"
 
 /*
  * Global data structures
@@ -803,6 +804,7 @@ static int make_ht_entry (const char *name, const char *value, shmoff_t *out_off
     syscfg_shm_ctx *ctx = syscfg_ctx;
     char *p_entry_name, *p_entry_value;
     int rc = 0;
+    errno_t   safec_rc = -1;
 
     int size = strlen(name_p) + 1 +
                strlen(value) + 1 +
@@ -822,10 +824,10 @@ static int make_ht_entry (const char *name, const char *value, shmoff_t *out_off
         p_entry_name = HT_ENTRY_NAME(ctx,ht_entry_offset);
         p_entry_value = HT_ENTRY_VALUE(ctx,ht_entry_offset);
         
-        strcpy(p_entry_name, name);
-        p_entry_name[entry->name_sz] = '\0';
-        strcpy(p_entry_value, value);
-        p_entry_value[entry->value_sz] = '\0';
+        safec_rc = strcpy_s(p_entry_name, HT_ENTRY_NAMESZ(ctx,ht_entry_offset), name);
+        ERR_CHK(safec_rc);
+        safec_rc = strcpy_s(p_entry_value, HT_ENTRY_VALUESZ(ctx,ht_entry_offset), value);
+        ERR_CHK(safec_rc);
     }
 
     return rc;

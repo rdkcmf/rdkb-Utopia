@@ -40,22 +40,24 @@
 #include "hdk_util.h"
 
 #include <stdio.h>
-
+#include "safec_lib_common.h"
 
 char* HDK_Util_IPToStr(char pszStr[16], HDK_XML_IPAddress* pIPAddress)
 {
-    if (!pIPAddress)
-    {
+    errno_t safec_rc = -1;
+    if (!pIPAddress){
         return 0;
     }
-    else
-    {
-        sprintf(pszStr, "%u.%u.%u.%u",
+
+    safec_rc = sprintf_s(pszStr, 16,"%u.%u.%u.%u",
                 pIPAddress->a, pIPAddress->b,
                 pIPAddress->c, pIPAddress->d);
-
-        return pszStr;
+    if(safec_rc < EOK)
+    {
+          ERR_CHK(safec_rc);
+          return 0;
     }
+    return pszStr;
 }
 
 HDK_XML_IPAddress* HDK_Util_StrToIP(HDK_XML_IPAddress* pIPAddress, char* pszStr)
@@ -81,19 +83,20 @@ HDK_XML_IPAddress* HDK_Util_StrToIP(HDK_XML_IPAddress* pIPAddress, char* pszStr)
 
 char* HDK_Util_MACToStr(char pszStr[20], HDK_XML_MACAddress* pMacAddress)
 {
-    if (!pMacAddress)
-    {
+    errno_t safec_rc = -1;
+    if (!pMacAddress){
         return 0;
     }
-    else
-    {
-        sprintf(pszStr, "%02X:%02X:%02X:%02X:%02X:%02X",
+    safec_rc = sprintf_s(pszStr, 20,"%02X:%02X:%02X:%02X:%02X:%02X",
                 pMacAddress->a, pMacAddress->b,
                 pMacAddress->c, pMacAddress->d,
                 pMacAddress->e, pMacAddress->f);
-
-        return pszStr;
+    if(safec_rc < EOK)
+    {
+        ERR_CHK(safec_rc);
+        return 0;
     }
+    return pszStr;
 }
 
 HDK_XML_MACAddress* HDK_Util_StrToMAC(HDK_XML_MACAddress* pMACAddress, char* pszStr)

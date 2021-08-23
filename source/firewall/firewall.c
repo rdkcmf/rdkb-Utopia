@@ -364,6 +364,7 @@ NOT_DEF:
 #include "ccsp_memory.h"
 #include "firewall_custom.h"
 #include "secure_wrapper.h"
+#include "safec_lib_common.h"
 
 #if defined (_PROPOSED_BUG_FIX_)
 #include <linux/version.h>
@@ -1860,6 +1861,7 @@ int parseProcfileParams(char* lineToParse,ifv6Details *detailsToParse,char* inte
 {
     struct sockaddr_in6 sAddr6;
     char splitv6[8][5];
+    errno_t  safec_rc  = -1;
     ulogf(ULOG_FIREWALL, UL_INFO,"%s, Parse the line read from file\n",__FUNCTION__);
 
     if (lineToParse == NULL)
@@ -1913,7 +1915,11 @@ int parseProcfileParams(char* lineToParse,ifv6Details *detailsToParse,char* inte
                int iCount =0;
                for (iCount=0; (iCount< ( detailsToParse->bitsToMask%16 ? (detailsToParse->bitsToMask/16+1):detailsToParse->bitsToMask/16)) && iCount<8; iCount++)
                {
-                  sprintf(detailsToParse->prefix_v6+strlen(detailsToParse->prefix_v6), "%s:",splitv6[iCount]);
+                  safec_rc = sprintf_s(detailsToParse->prefix_v6+strlen(detailsToParse->prefix_v6), sizeof(detailsToParse->prefix_v6)-strlen(detailsToParse->prefix_v6),"%s:",splitv6[iCount]);
+                  if(safec_rc < EOK)
+                  {
+                     ERR_CHK(safec_rc);
+                  }
                }
                ulogf(ULOG_FIREWALL, UL_INFO,"%s,Interface IPv6 prefix calculation done\n",__FUNCTION__);
             }
@@ -2041,6 +2047,7 @@ static int bIsContainerEnabled( void)
     int isContainerEnabled = 0, offsetValue = 0;
     char fileContent[255] = {'\0'};
     FILE *deviceFilePtr;
+    errno_t   safec_rc     = -1;
 
     FIREWALL_DEBUG("Entering bIsContainerEnabled\n");
     deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
@@ -2056,7 +2063,8 @@ static int bIsContainerEnabled( void)
             } else if ((pLxcBridge = strstr(fileContent, "LXC_BRIDGE_NAME")) != NULL) {
                 offsetValue = strlen("LXC_BRIDGE_NAME=");
                 pLxcBridge = pLxcBridge + offsetValue ;
-                strcpy(lxcBridgeName, pLxcBridge);
+                safec_rc = strcpy_s(lxcBridgeName, sizeof(lxcBridgeName),pLxcBridge);
+                ERR_CHK(safec_rc);
             } else {
                 continue;
             }
@@ -2132,6 +2140,7 @@ static int prepare_globals_from_configuration(void)
    char tmp[100];
    char *pStr = NULL;
    int i;
+   errno_t  safec_rc  = -1;
    FIREWALL_DEBUG("Entering prepare_globals_from_configuration\n");       
    tmp[0] = '\0';
    // use wan protocol determined wan interface name if possible, else use default (the name used by the OS)
@@ -2175,7 +2184,11 @@ static int prepare_globals_from_configuration(void)
    memset(iptables_pri_level, 0, sizeof(iptables_pri_level));
    for(i = 0; i < IPT_PRI_MAX; i++)
    {
-      sprintf(pri_level_name, "ipt_pri_level_%d", i+1);
+      safec_rc = sprintf_s(pri_level_name, sizeof(pri_level_name),"ipt_pri_level_%d", i+1);
+      if(safec_rc < EOK)
+      {
+         ERR_CHK(safec_rc);
+      }
       tmp[0] = '\0';
       rc =  sysevent_get(sysevent_fd, sysevent_token, pri_level_name, tmp, sizeof(tmp));
       if(rc != 0 || tmp[0] == '\0')
@@ -2222,9 +2235,10 @@ static int prepare_globals_from_configuration(void)
    //syscfg_get(NULL, "bridge_mode", bridge_mode, sizeof(bridge_mode)); 
    sysevent_get(sysevent_fd, sysevent_token, "bridge_mode", bridge_mode, sizeof(bridge_mode));
    syscfg_get(NULL, "log_level", log_level, sizeof(log_level)); 
-   if ('\0' == log_level[0]) {
-      sprintf(log_level, "1");
-   } 
+   if (! log_level[0]) {
+        log_level[0] = '1';
+        log_level[1] = '\0';
+   }
    log_leveli = atoi(log_level);
    syslog_level = to_syslog_level(log_leveli);
 
@@ -2272,7 +2286,8 @@ static int prepare_globals_from_configuration(void)
 #if defined(NAT46_KERNEL_SUPPORT)
    else { //MAPT Line
       isWanReady        = IsValidIPv4Addr(mapt_ip_address);
-      strcpy(current_wan_ipaddr, mapt_ip_address);
+      safec_rc = strcpy_s(current_wan_ipaddr, sizeof(current_wan_ipaddr),mapt_ip_address);
+      ERR_CHK(safec_rc);
    }
 // Check isWanReady flag for IVI Kernel Module. If required, include this changes under IVI_KERNEL_SUPPORT Build flag
 #else // IVI
@@ -2332,14 +2347,16 @@ static int prepare_globals_from_configuration(void)
       /* Get True static Ip information */ 
       rc = PSM_VALUE_GET_STRING(PSM_NAME_TRUE_STATIC_IP_ADDRESS,pStr);
       if(rc == CCSP_SUCCESS && pStr != NULL){
-         strcpy(current_wan_static_ipaddr, pStr);
+         safec_rc = strcpy_s(current_wan_static_ipaddr, sizeof(current_wan_static_ipaddr),pStr);
+         ERR_CHK(safec_rc);
          Ansc_FreeMemory_Callback(pStr);
          pStr = NULL;
       }
       
       rc = PSM_VALUE_GET_STRING(PSM_NAME_TRUE_STATIC_IP_NETMASK ,pStr);
       if(rc == CCSP_SUCCESS && pStr != NULL){
-         strcpy(current_wan_static_mask, pStr);
+         safec_rc = strcpy_s(current_wan_static_mask, sizeof(current_wan_static_mask),pStr);
+         ERR_CHK(safec_rc);
          Ansc_FreeMemory_Callback(pStr);
          pStr = NULL;
       }
@@ -2357,7 +2374,10 @@ static int prepare_globals_from_configuration(void)
              ts_asn_count = MAX_TS_ASN_COUNT -1;
           }
           for(i = 0; i < (int)ts_asn_count ; i++){
-             sprintf(tmp,"%s%d.%s", PSM_NAME_TRUE_STATIC_ASN, ts_asn_ins[i], PSM_NAME_TRUE_STATIC_ASN_ENABLE);
+             safec_rc = sprintf_s(tmp, sizeof(tmp),"%s%d.%s", PSM_NAME_TRUE_STATIC_ASN, ts_asn_ins[i], PSM_NAME_TRUE_STATIC_ASN_ENABLE);
+             if(safec_rc < EOK){
+               ERR_CHK(safec_rc);
+             }
              rc = PSM_VALUE_GET_STRING(tmp, pStr) - CCSP_SUCCESS;
              if(rc == 0 && pStr != NULL){
                 if(atoi(pStr) != 1){
@@ -2369,7 +2389,10 @@ static int prepare_globals_from_configuration(void)
                 pStr = NULL;
              }
  
-             sprintf(tmp,"%s%d.%s", PSM_NAME_TRUE_STATIC_ASN, ts_asn_ins[i], PSM_NAME_TRUE_STATIC_ASN_IP);
+             safec_rc = sprintf_s(tmp, sizeof(tmp),"%s%d.%s", PSM_NAME_TRUE_STATIC_ASN, ts_asn_ins[i], PSM_NAME_TRUE_STATIC_ASN_IP);
+             if(safec_rc < EOK){
+               ERR_CHK(safec_rc);
+             }
              rc |= PSM_VALUE_GET_STRING(tmp, pStr) - CCSP_SUCCESS;
              if(rc == 0 && pStr != NULL){
                 strncpy(StaticIPSubnet[StaticIPSubnetNum].ip, pStr, sizeof(StaticIPSubnet[StaticIPSubnetNum].ip));
@@ -2377,7 +2400,10 @@ static int prepare_globals_from_configuration(void)
                 pStr = NULL;
              }
  
-             sprintf(tmp,"%s%d.%s", PSM_NAME_TRUE_STATIC_ASN, ts_asn_ins[i], PSM_NAME_TRUE_STATIC_ASN_MASK);
+             safec_rc = sprintf_s(tmp, sizeof(tmp),"%s%d.%s", PSM_NAME_TRUE_STATIC_ASN, ts_asn_ins[i], PSM_NAME_TRUE_STATIC_ASN_MASK);
+             if(safec_rc < EOK){
+               ERR_CHK(safec_rc);
+             }
              rc |= PSM_VALUE_GET_STRING(tmp, pStr) - CCSP_SUCCESS;
              if(rc == 0 && pStr != NULL){
                 strncpy(StaticIPSubnet[StaticIPSubnetNum].mask, pStr, sizeof(StaticIPSubnet[StaticIPSubnetNum].mask));
@@ -2398,13 +2424,16 @@ static int prepare_globals_from_configuration(void)
 
    if(isWanReady && isNatEnabled == 1){
        isNatReady = 1;
-       strcpy(natip4, current_wan_ipaddr);
+       safec_rc = strcpy_s(natip4, sizeof(natip4),current_wan_ipaddr);
+       ERR_CHK(safec_rc);
    }else if(isWanReady && isNatEnabled == 2 && isWanStaticIPReady ){
        isNatReady = 1;
-       strcpy(natip4, current_wan_static_ipaddr); 
+       safec_rc = strcpy_s(natip4, sizeof(natip4),current_wan_static_ipaddr);
+       ERR_CHK(safec_rc);
    }else if(isWanReady && isNatEnabled == 2 && isWanStaticIPReady == 0 ){
        /* RDKB-34155 When True static IP configured device moved to bridge mode */
-       strcpy(natip4, current_wan_ipaddr);
+       safec_rc = strcpy_s(natip4, sizeof(natip4),current_wan_ipaddr);
+       ERR_CHK(safec_rc);
        isNatReady = 1;  
    }else 
        isNatReady = 0;
@@ -2414,7 +2443,8 @@ static int prepare_globals_from_configuration(void)
    isFWTS_enable = (0 == strcmp("1", firewall_true_static_ip_enable) ? 1 : 0);
 	   
 #else
-    strcpy(natip4, current_wan_ipaddr);
+    safec_rc = strcpy_s(natip4, sizeof(natip4),current_wan_ipaddr);
+    ERR_CHK(safec_rc);
     isNatReady = isWanReady; 
 #endif
 
@@ -4359,8 +4389,10 @@ static int do_dmz(FILE *nat_fp, FILE *filter_fp)
    #if defined(CONFIG_CCSP_WAN_MGMT_PORT)
    tmphttpQuery[0] = '\0';
    status_http_ert = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmphttpQuery, sizeof(tmphttpQuery));
-   if(status_http_ert == 0)
-       strcpy(Httpport, tmphttpQuery);
+if(status_http_ert == 0){
+       errno_t safec_rc = strcpy_s(Httpport, sizeof(Httpport),tmphttpQuery);
+       ERR_CHK(safec_rc);
+   }
    #endif
 
    if (0 != status_http || '\0' == Httpport[0]) {
@@ -4520,6 +4552,7 @@ static int write_qos_classification_statement (FILE *fp, FILE *qos_fp, char *nam
    rewind(qos_fp);
    char line[512];
    char *next_token;
+   errno_t safec_rc = -1;
            FIREWALL_DEBUG("Entering write_qos_classification_statement\n");       
    while (NULL != (next_token = match_keyword(qos_fp, name, '|', line, sizeof(line))) ) {
 
@@ -4550,9 +4583,11 @@ static int write_qos_classification_statement (FILE *fp, FILE *qos_fp, char *nam
          continue;
       } else {
          if (0 == strcasestr(hook, "PREROUTING")) {
-            sprintf(subst_hook, "prerouting_qos");
+           safec_rc = strcpy_s(subst_hook, sizeof(subst_hook),"prerouting_qos");
+           ERR_CHK(safec_rc);
          } else if (0 == strcasestr(hook, "POSTROUTING") ) {
-            sprintf(subst_hook, "postrouting_qos");
+            safec_rc = strcpy_s(subst_hook, sizeof(subst_hook),"postrouting_qos");
+            ERR_CHK(safec_rc);
          } else {
             continue;
          }
@@ -5317,8 +5352,10 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
 #if defined(CONFIG_CCSP_WAN_MGMT_PORT)
    tmpQuery[0] = '\0';
    ret = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmpQuery, sizeof(tmpQuery));
-   if(ret == 0)
-       strcpy(httpport, tmpQuery);
+   if(ret == 0){
+       errno_t safec_rc = strcpy_s(httpport, sizeof(httpport),tmpQuery);
+       ERR_CHK(safec_rc);
+   }
 #endif
    //>>zqiu 
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 192.168.101.1/32 -j xlog_drop_lan2self\n", lan_ipaddr);
@@ -5891,6 +5928,7 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     char port[64];
     char utKey[64];
     unsigned char srcany = 0, validEntry = 0, noIPv6Entry = 0;
+    errno_t safec_rc = -1;
 #if !defined(CONFIG_CCSP_CM_IP_WEBACCESS)
     char cm_ip_webaccess[2];
     cm_ip_webaccess[0] = '\0';
@@ -6017,16 +6055,21 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
 #if defined(CONFIG_CCSP_WAN_MGMT_ACCESS) && !defined(_PLATFORM_TURRIS_)
    tmpQuery[0] = '\0';
    ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
-   if(ret == 0)
-       strcpy(query, tmpQuery);
+   if(ret == 0){
+       safec_rc = strcpy_s(query, sizeof(query),tmpQuery);
+       ERR_CHK(safec_rc);
+   }
+       
 #endif
 
    rc |= syscfg_get(NULL, "mgmt_wan_httpport", httpport, sizeof(httpport));
 #if defined(CONFIG_CCSP_WAN_MGMT_PORT)
    tmpQuery[0] = '\0';
    ret = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmpQuery, sizeof(tmpQuery));
-   if(ret == 0)
-       strcpy(httpport, tmpQuery);
+   if(ret == 0){
+       safec_rc = strcpy_s(httpport, sizeof(httpport),tmpQuery);
+       ERR_CHK(safec_rc);
+   }
 #endif
 
    if (rc == 0 && atoi(query) == 1)
@@ -6188,16 +6231,18 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
 
     if (isBridgeMode)
     {
-        if(httpport[0] == '\0' || atoi(httpport) < 0 || atoi(httpport) > 65535)
-            strcpy(httpport, "8080");
-        if(httpsport[0] == '\0' || atoi(httpsport) < 0 || atoi(httpsport) > 65535)
-            strcpy(httpsport, "8181");  
+        int port;
+        port = (httpport[0]) ? atoi(httpport) : -1;
+        if (port < 0 || port > 65535 || port == 80) {
+           safec_rc = strcpy_s(httpport, sizeof(httpport),"8080");
+           ERR_CHK(safec_rc);
+        }
 
-        if(strcmp(httpport, "80") == 0)
-            strcpy(httpport, "8080");
-        if(strcmp(httpsport, "443") == 0)
-            strcpy(httpsport, "8181");
-
+        port = (httpsport[0]) ? atoi(httpsport) : -1;
+        if (port < 0 || port > 65535 || port == 443) {
+           safec_rc = strcpy_s(httpsport, sizeof(httpport),"8181");
+           ERR_CHK(safec_rc);
+        }		
         if (rc == 0 && atoi(query) == 0)
             fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname);
         if (ret == 0 && atoi(tmpQuery) == 0)
@@ -6205,16 +6250,30 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     }
     else
 #endif
-    {
-        if(httpport[0] == '\0' || atoi(httpport) < 0 || atoi(httpport) > 65535)
-            strcpy(httpport, "80");
-        if(httpsport[0] == '\0' || atoi(httpsport) < 0 || atoi(httpsport) > 65535)
-            strcpy(httpsport, "443");
+    {		
+		int port;
+        port = (httpport[0]) ? atoi(httpport) : -1;
+        if (port < 0 || port > 65535) {
+           port = 80;
+           safec_rc = strcpy_s(httpport, sizeof(httpport), "80");
+           ERR_CHK(safec_rc);
+        }
+        if (port != 80) {
+           safec_rc = strcat_s(httpport, sizeof(httpport), ",80");
+           ERR_CHK(safec_rc);
+        }
 
-        if(strcmp(httpport, "80") != 0)
-            strcat(httpport, ",80");
-        if(strcmp(httpsport, "443") != 0)
-            strcat(httpsport, ",443");
+        port = (httpsport[0]) ? atoi(httpsport) : -1;
+        if (port < 0 || port > 65535) {
+            port = 443;
+            safec_rc = strcpy_s(httpsport, sizeof(httpport),"443");
+            ERR_CHK(safec_rc);
+        }
+        if (port != 443) {
+           safec_rc = strcat_s(httpport, sizeof(httpport), ",443");
+           ERR_CHK(safec_rc);
+        }
+		
     }
     if ( ( bEthWANEnable ) && (family == AF_INET6) )
     {
@@ -7385,6 +7444,7 @@ static int determine_enforcement_schedule(FILE *cron_fp, const char *namespace)
     FIREWALL_DEBUG("Entering determine_enforcement_schedule\n");  
    int always = 1;
    query[0] = '\0';
+   errno_t safec_rc = -1;
    rc = syscfg_get(namespace, "always", query, sizeof(query));
    if (0 != rc || '\0' == query[0] || query[0] == '0') always = 0;
 
@@ -7402,28 +7462,43 @@ static int determine_enforcement_schedule(FILE *cron_fp, const char *namespace)
    char policy_time_start_weekends[sizeof("00:00")], policy_time_stop_weekends[sizeof("00:00")];
 
    rc = syscfg_get(namespace, "end_time", timeStr, sizeof(timeStr));
-   if (rc != 0 || timeStr[0] == '\0') strcpy(timeStr, "0:0,0:0");
-
+   if (rc != 0 || timeStr[0] == '\0'){
+       safec_rc = strcpy_s(timeStr, sizeof(timeStr),"0:0,0:0");
+       ERR_CHK(safec_rc);
+   }
    char *pch = strchr(timeStr, ',');
    *pch = '\0';
 
-   strcpy(policy_time_start, timeStr);
-   strcpy(policy_time_start_weekends, pch+1);
+   safec_rc = strcpy_s(policy_time_start, sizeof(policy_time_start),timeStr);
+   ERR_CHK(safec_rc);
+   safec_rc = strcpy_s(policy_time_start_weekends, sizeof(policy_time_start_weekends),pch+1);
+   ERR_CHK(safec_rc);
 
    rc = syscfg_get(namespace, "start_time", timeStr, sizeof(timeStr));
-   if (rc != 0 || timeStr[0] == '\0') strcpy(timeStr, "0:0,0:0");
+   if (rc != 0 || timeStr[0] == '\0'){
+       safec_rc = strcpy_s(timeStr, sizeof(timeStr),"0:0,0:0");
+       ERR_CHK(safec_rc);
+   }
 
    pch = strchr(timeStr, ',');
    *pch = '\0';
 
-   strcpy(policy_time_stop, timeStr);
-   strcpy(policy_time_stop_weekends, pch+1);
+   safec_rc = strcpy_s(policy_time_stop, sizeof(policy_time_stop),timeStr);
+   ERR_CHK(safec_rc);
+   safec_rc = strcpy_s(policy_time_stop_weekends, sizeof(policy_time_stop_weekends),pch+1);
+   ERR_CHK(safec_rc);
 #else
    rc = syscfg_get(namespace, "start_time", policy_time_start, sizeof(policy_time_start));
-   if (rc != 0 || policy_time_start[0] == '\0') strcpy(policy_time_start, "0:0");
+   if (rc != 0 || policy_time_start[0] == '\0'){
+      safec_rc = strcpy_s(policy_time_start, sizeof(policy_time_start),"0:0");
+      ERR_CHK(safec_rc);
+   }
 
    rc = syscfg_get(namespace, "end_time", policy_time_stop, sizeof(policy_time_stop));
-   if (rc != 0 || policy_time_stop[0] == '\0') strcpy(policy_time_stop, "0:0");
+   if (rc != 0 || policy_time_stop[0] == '\0'){
+      safec_rc = strcpy_s(policy_time_stop, sizeof(policy_time_stop),"0:0");
+      ERR_CHK(safec_rc);
+   }
 #endif
 
    query[0] = '\0';
@@ -7542,12 +7617,19 @@ static int determine_enforcement_schedule2(FILE *cron_fp, const char *namespace)
 
    int policy_days = 0;
    char policy_time_start[25], policy_time_stop[25];
+   errno_t safec_rc = -1;
 
    rc = syscfg_get(namespace, "start_time", policy_time_start, sizeof(policy_time_start));
-   if (rc != 0 || policy_time_start[0] == '\0') strcpy(policy_time_start, "0:0");
+   if (rc != 0 || policy_time_start[0] == '\0'){
+     safec_rc = strcpy_s(policy_time_start, sizeof(policy_time_start),"0:0");
+     ERR_CHK(safec_rc);
+   }
 
    rc = syscfg_get(namespace, "end_time", policy_time_stop, sizeof(policy_time_stop));
-   if (rc != 0 || policy_time_stop[0] == '\0') strcpy(policy_time_stop, "0:0");
+   if (rc != 0 || policy_time_stop[0] == '\0'){
+      safec_rc = strcpy_s(policy_time_stop, sizeof(policy_time_stop),"0:0");
+      ERR_CHK(safec_rc);
+   }
 
    query[0] = '\0';
    rc = syscfg_get(namespace, "days", query, sizeof(query));
@@ -10610,14 +10692,20 @@ static int prepare_ethernetbhaul_greclamp( FILE *mangle_fp) {
    char eb_gre_status[20] = {0};
    int isEBGreup = 0;
    const char *XHSLan = "dmsb.l2net.2.Name";
+   errno_t safec_rc = -1;
 
    eb_gre_status[0] = '\0';
    sysevent_get(sysevent_fd, sysevent_token, "eb_gre", eb_gre_status, sizeof(eb_gre_status));
    isEBGreup = (0 == strcmp("up", eb_gre_status)) ? 1 : 0; 
    FIREWALL_DEBUG("Entering prepare_ethernetbhaul_greclamp status:%s\n" COMMA eb_gre_status);
    if( isEBGreup) {
-    (bus_handle && PSM_VALUE_GET_STRING(XHSLan, pVal) == CCSP_SUCCESS && pVal) ? strcpy(xhs,pVal) :
-                                                                                         strcpy(xhs,"brlan1");
+    if(bus_handle && PSM_VALUE_GET_STRING(XHSLan, pVal) == CCSP_SUCCESS && pVal){
+            safec_rc = strcpy_s(xhs, sizeof(xhs),pVal);
+            ERR_CHK(safec_rc);
+    }else {
+            safec_rc = strcpy_s(xhs, sizeof(xhs),"brlan1");
+            ERR_CHK(safec_rc);
+    }
     if(pVal) {
         Ansc_FreeMemory_Callback(pVal);
         pVal = NULL;
@@ -10886,13 +10974,18 @@ static int prepare_lnf_internet_rules(FILE *mangle_fp,int iptype)
         char lnf_ifName[50];
         char ipv6prefix[100];
         char cmd_buff[100];
+        errno_t safec_rc = -1;
         memset(lnf_ifName, 0, sizeof(lnf_ifName));
         memset(cmd_buff, 0, sizeof(cmd_buff));
         syscfg_get(NULL, "iot_ifname", lnf_ifName, sizeof(lnf_ifName));
         if (strlen(lnf_ifName) > 0)
         {
             memset(ipv6prefix, 0, sizeof(ipv6prefix));
-	    sprintf(cmd_buff, "%s%s",lnf_ifName,"_ipaddr_v6");
+            safec_rc = sprintf_s(cmd_buff, sizeof(cmd_buff),"%s_ipaddr_v6",lnf_ifName);
+            if(safec_rc < EOK)
+            {
+              ERR_CHK(safec_rc);
+            }
             sysevent_get(sysevent_fd, sysevent_token, cmd_buff, ipv6prefix, sizeof(ipv6prefix));
             if (strlen(ipv6prefix) > 0 )
             {
@@ -12241,6 +12334,7 @@ static int prepare_MoCA_bridge_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat
    const char *HomeMoCALan = "dmsb.l2net.9.Name";
    char MoCA_AccountIsolation[8] = {0};
    int rc = 0;
+   errno_t safec_rc = -1;
    if(bus_handle != NULL)
    {
        retPsm = PSM_VALUE_GET_STRING(HomeNetIsolation, pVal);
@@ -12256,14 +12350,16 @@ static int prepare_MoCA_bridge_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat
        retPsm = PSM_VALUE_GET_STRING(HomePrivateLan, pVal);
        if(retPsm == CCSP_SUCCESS && pVal != NULL)
        {
-          strcpy(pLan,pVal);
+          safec_rc = strcpy_s(pLan, sizeof(pLan),pVal);
+          ERR_CHK(safec_rc);
           Ansc_FreeMemory_Callback(pVal);
           pVal = NULL;
        }
        retPsm = PSM_VALUE_GET_STRING(HomeMoCALan, pVal);
        if(retPsm == CCSP_SUCCESS && pVal != NULL)
        {
-          strcpy(mLan,pVal);
+          safec_rc = strcpy_s(mLan, sizeof(mLan),pVal);
+          ERR_CHK(safec_rc);
           Ansc_FreeMemory_Callback(pVal);
           pVal = NULL;
        }
@@ -13035,6 +13131,7 @@ char *token = NULL;char *pt;
 char buf[MAX_BUFF_LEN];
 char str[MAX_BUFF_LEN],prefixlen[MAX_BUFF_LEN];
 int i =0, ret;
+errno_t safec_rc = -1;
  FIREWALL_DEBUG("Inside getIpv6Interfaces \n");
           ret = syscfg_get(NULL, "IPv6subPrefix", buf, sizeof(buf));
           if(ret == 0)
@@ -13072,7 +13169,8 @@ int i =0, ret;
     pt = str;
 
     while((token = strtok_r(pt, ",", &pt))) {
-	strcpy(Interface[i],token);
+	safec_rc = strcpy_s(Interface[i], MAX_LEN_IPV6_INF,token);
+	ERR_CHK(safec_rc);
 	i++;
 	if(i > MAX_NO_IPV6_INF)
 	break;
@@ -13114,8 +13212,11 @@ int prepare_ipv6_firewall(const char *fw_file)
    
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipv6_interface", wan6_ifname, sizeof(wan6_ifname));
    
-   if (wan6_ifname[0] == '\0') 
-       strcpy(wan6_ifname, current_wan_ifname);
+   errno_t safec_rc = -1;
+   if (wan6_ifname[0] == '\0'){
+       safec_rc = strcpy_s(wan6_ifname, sizeof(wan6_ifname),current_wan_ifname);
+       ERR_CHK(safec_rc);
+    }
 
 	int ret=0;
 	FILE *raw_fp=NULL;
@@ -13449,6 +13550,7 @@ static void do_ipv6_filter_table(FILE *fp){
       char wanIPv6[64];
 #endif
       int rc, ret;
+      errno_t safec_rc = -1;
 
       
       // not sure if this is the right thing to do, but if there is no current_wan_ipv6_interface several iptables statements fail
@@ -13461,8 +13563,10 @@ static void do_ipv6_filter_table(FILE *fp){
 #if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
       tmpQuery[0] = '\0';
       ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
-      if(ret == 0)
-          strcpy(query, tmpQuery);
+      if(ret == 0){
+          safec_rc = strcpy_s(query, sizeof(query),tmpQuery);
+          ERR_CHK(safec_rc);
+      }
 #endif
       if (0 == rc && '\0' != query[0] && (0 !=  strncmp(query, "0", sizeof(query))) ) {
 
@@ -13470,8 +13574,10 @@ static void do_ipv6_filter_table(FILE *fp){
 #if defined(CONFIG_CCSP_WAN_MGMT_PORT)
           tmpQuery[0] = '\0';
           ret = syscfg_get(NULL, "mgmt_wan_httpport_ert", tmpQuery, sizeof(tmpQuery));
-          if(ret == 0)
-              strcpy(port, tmpQuery);
+          if(ret == 0){
+              safec_rc = strcpy_s(port, sizeof(port),tmpQuery);
+              ERR_CHK(safec_rc);
+          }
 #endif
 
           if (0 != rc || '\0' == port[0]) {

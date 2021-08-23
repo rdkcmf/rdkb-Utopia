@@ -56,6 +56,7 @@
 #include "service_multinet_ep.h"
 #include "sysevent/sysevent.h"
 #include "syscfg/syscfg.h"
+#include "safec_lib_common.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -357,6 +358,7 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     char cmdBuff[MAX_CMD_SIZE];
     char temp_ifname[MAX_CMD_SIZE];
     int result = 0;
+    errno_t rc = -1;
 
     for (i = 0; i < numArgs; ++i ) 
 	{ 
@@ -367,28 +369,40 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
 
 #if defined (MULTILAN_FEATURE)
             //Form command to add wifi interfaces to the respective bridge
-            sprintf(cmdBuff, "brctl addif %s %s", args[0].hints.network->name,temp_ifname);
+            rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "brctl addif %s %s", args[0].hints.network->name,temp_ifname);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
             //Run command here
             result = system_wrapper(cmdBuff);
 #else
             //Form command to add wifi
             if (args[i].vidParams.tagging) {
-                sprintf(cmdBuff, "%s/%s create_vap %s %s %d", 
+                rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s/%s create_vap %s %s %d", 
                         SERVICE_D_BASE_DIR, 
                         PUMA7_WIFI_UTIL, 
                         temp_ifname, 
                         args[0].hints.network->name,
                         args[i].vidParams.vid
                         );
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
             }
             else
             {
-                sprintf(cmdBuff, "%s/%s create_vap %s %s", 
+                rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s/%s create_vap %s %s", 
                         SERVICE_D_BASE_DIR, 
                         PUMA7_WIFI_UTIL, 
                         temp_ifname, 
                         args[0].hints.network->name
                         );
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
             }
             //Run command here
             MNET_DEBUG("%s: command is %s\n" COMMA __FUNCTION__ COMMA cmdBuff);
@@ -399,16 +413,24 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
         {
 #if defined (MULTILAN_FEATURE)
             //Form command to delete wifi interfaces from the respective bridge
-            sprintf(cmdBuff, "brctl delif %s %s", args[0].hints.network->name,temp_ifname);
+            rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "brctl delif %s %s", args[0].hints.network->name,temp_ifname);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
             //Run command here
             result = system_wrapper(cmdBuff);
 #else
             //Form command to delete wifi
-                sprintf(cmdBuff, "%s/%s delete_vap %s", 
+                rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s/%s delete_vap %s", 
                         SERVICE_D_BASE_DIR, 
                         PUMA7_WIFI_UTIL, 
                         temp_ifname
                         );            
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
             //Run command here
             MNET_DEBUG("%s: command is %s\n" COMMA __FUNCTION__ COMMA cmdBuff);
             result = system_wrapper(cmdBuff);

@@ -46,6 +46,7 @@
 #include <arpa/inet.h>
 
 #include "dhcp_util.h"
+#include "safec_lib_common.h"
 
 /**
  * @brief Send a DHCP Message
@@ -70,11 +71,13 @@ void insert_arp_record(int s, const char *device_name,
                        ui8 htype, ui8 hlen, ui8* chaddr)
 {
    struct arpreq req;
+   errno_t  rc  = -1;
 
    *((struct sockaddr_in *)&req.arp_pa) = ip_addr;
    req.arp_ha.sa_family = htype;
    memcpy(req.arp_ha.sa_data, chaddr, hlen);
-   strcpy(req.arp_dev, device_name);
+   rc = strcpy_s(req.arp_dev, sizeof(req.arp_dev), device_name);
+   ERR_CHK(rc);
 
    req.arp_flags = ATF_COM;
 

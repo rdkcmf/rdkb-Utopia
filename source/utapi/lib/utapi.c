@@ -60,6 +60,7 @@
 #include "utapi_wlan.h"
 #include "DM_TR181.h"
 #include "secure_wrapper.h"
+#include "safec_lib_common.h"
 #define UTOPIA_TR181_PARAM_SIZE 64
 #define UTOPIA_TR181_PARAM_SIZE1        256
 #define UTOPIA_TR181_PARAM_SIZE2        1024
@@ -2504,6 +2505,7 @@ static int s_set_portmapdyn_count (int count)
 {
     token_t  se_token;
     int      se_fd = s_sysevent_connect(&se_token);
+    errno_t   rc = -1;
     if (0 > se_fd) {
         return ERR_SYSEVENT_CONN;
     }
@@ -2512,7 +2514,11 @@ static int s_set_portmapdyn_count (int count)
     snprintf(val, sizeof(val), "%d", count);
     sysevent_set(se_fd, se_token, "portmap_dyn_count", val, 0);
 
-    sprintf(ulog_msg, "%s: set count %d", __FUNCTION__, count);
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: set count %d", __FUNCTION__, count);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 
     return UT_SUCCESS;
@@ -2710,6 +2716,7 @@ static int s_get_portmapdyn (int index, portMapDyn_t *portmap)
 static int s_find_portmapdyn (const char *external_host, int external_port, protocol_t proto)
 {
     int i, count = s_get_portmapdyn_count();
+    errno_t  rc = -1;
 
     ulog_debugf(ULOG_CONFIG, UL_UTAPI, "%s: count %d", __FUNCTION__, count);
 
@@ -2722,8 +2729,12 @@ static int s_find_portmapdyn (const char *external_host, int external_port, prot
             if (external_port == pmap.external_port &&
                 proto == pmap.protocol &&
                 (0 == strcasecmp(external_host, pmap.external_host))) {
-                sprintf(ulog_msg, "%s: found dynamic port map: entry %d (%s:%d<->%s:%d)",
+                rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: found dynamic port map: entry %d (%s:%d<->%s:%d)",
                         __FUNCTION__, i, pmap.external_host, pmap.external_port, pmap.internal_host, pmap.internal_port);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
                 ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
                 return i;
             }
@@ -4006,6 +4017,7 @@ static int s_getiap (UtopiaContext *ctx, int index, iap_entry_t *iap)
 {
     char buf[128], *sched, *stop_time;
     int i, j, count = 0;
+    errno_t  rc = -1;
 
     Utopia_GetIndexed(ctx, UtopiaValue_InternetAccessPolicy, index, buf, sizeof(buf));
     if (0 == (strcmp(buf, "none"))) {
@@ -4210,7 +4222,8 @@ static int s_getiap (UtopiaContext *ctx, int index, iap_entry_t *iap)
                 j++;
             }
             if (is_ping_blocked) {
-                strcpy(app[j].name, "Ping");
+                rc = strcpy_s(app[j].name, NAME_SZ, "Ping");
+                ERR_CHK(rc);
                 app[j].proto = -1;
                 app[j].port.start = 0;
                 app[j].port.end = 0;
@@ -6606,6 +6619,7 @@ int Utopia_Get_BYOI_allowed(UtopiaContext *ctx,  int *byoi_state)
 {  
 
     char buf[TOKEN_SZ];
+    errno_t  rc = -1;
 
     if (NULL == ctx) {
         return ERR_UTCTX_INIT;
@@ -6627,7 +6641,11 @@ int Utopia_Get_BYOI_allowed(UtopiaContext *ctx,  int *byoi_state)
 
      *byoi_state = status;
 
-    sprintf(ulog_msg, "%s: hsd_allowed %d", __FUNCTION__, *byoi_state);
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: hsd_allowed %d", __FUNCTION__, *byoi_state);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 
     return UT_SUCCESS;
@@ -6796,13 +6814,18 @@ int Utopia_Get_DeviceTime_NTPServer(UtopiaContext *ctx, char *server,int index)
 
 int Utopia_Set_DeviceTime_LocalTZ(UtopiaContext *ctx, char *tz)
 {
+  errno_t  rc = -1;
   if (NULL == ctx || NULL == tz)
   {
      return ERR_UTCTX_INIT;
   }
 
   UTOPIA_SET(ctx, UtopiaValue_TZ, tz);
-  sprintf(ulog_msg, "%s: entered ", __FUNCTION__);
+  rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: entered ", __FUNCTION__);
+  if(rc < EOK)
+  {
+      ERR_CHK(rc);
+  }
   ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
   return SUCCESS;
 }
@@ -6915,10 +6938,15 @@ int Utopia_GetEthAssocDevices(int unitId, int portId ,unsigned char *macAddrList
     int index = 0;
     FILE *fp = NULL;
     int numAssocDev = 0;
+    errno_t  rc = -1;
 
     v_secure_system("switchcfg -a %d 'l2 show' | grep Learned | grep 'DestPort(s): %d' | cut -d'|' -f3 | awk '{print $1$2}' > " ETHERNET_ASSOC_DEVICE_FILE , unitId, portId);
     if((fp = fopen(ETHERNET_ASSOC_DEVICE_FILE, "r"))== NULL ) {
-        sprintf(ulog_msg, "%s: Error in File Open !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in File Open !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_FILE_OPEN_FAIL;
     }
@@ -6951,7 +6979,11 @@ int Utopia_GetEthAssocDevices(int unitId, int portId ,unsigned char *macAddrList
     *numMacAddr = numAssocDev;
 
     if(fclose(fp) != SUCCESS){
-        sprintf(ulog_msg, "%s: File Close Error !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: File Close Error !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_FILE_CLOSE_FAIL;
     }
@@ -6994,8 +7026,13 @@ int Utopia_SetLanMngmInsNum(UtopiaContext *ctx, unsigned long int val){
     char buf[64] = {0};
     /* Not use */
     (void)ctx;
+    errno_t rc = -1;
 
-    sprintf(buf, "%ld", val);
+    rc = sprintf_s(buf, sizeof(buf), "%ld", val);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     if(Utopia_RawSet(ctx, NULL, UTOPIA_LANMNG_INSNUM, buf)){
 	return SUCCESS;
     }else
@@ -7196,6 +7233,7 @@ int Utopia_GetDNSServer(UtopiaContext *ctx, DNS_Client_t * dns){
 static int get_lan_host_index_and_comments(UtopiaContext *ctx, char *macStr,int *pIndex, char *pComments)
 {
 	char buffer[256];
+    errno_t  rc = -1;
 
 	buffer[0] = 0;
 	pComments[0] = 0;
@@ -7207,7 +7245,8 @@ static int get_lan_host_index_and_comments(UtopiaContext *ctx, char *macStr,int 
 		*pIndex = atoi(buffer);
 		p = strchr(buffer, '+');
 		if(p!=NULL){
-			strcpy(pComments,p+1);
+			rc = strcpy_s(pComments, 256, p+1);
+			ERR_CHK(rc);
 		}
 	}
 	return(SUCCESS);
@@ -7217,11 +7256,16 @@ int Utopia_get_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsign
 {
 	int index;
 	char macStr[18];
+	errno_t  rc = -1;
 
 	if((ctx==NULL)||(pMac==NULL)||(pComments==NULL))
 		return(ERR_INVALID_ARGS);
-	sprintf(macStr,"%02x:%02x:%02x:%02x:%02x:%02x",
+	rc = sprintf_s(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
 		pMac[0],pMac[1],pMac[2],pMac[3],pMac[4],pMac[5]);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	get_lan_host_index_and_comments(ctx,macStr,&index,pComments);
 	return(SUCCESS);
 }
@@ -7231,12 +7275,17 @@ int Utopia_set_lan_host_comments(UtopiaContext *ctx, unsigned char *pMac, unsign
 	int count = 0, index1=0, index2=0;
 	char macStr1[18], macStr2[18];
 	unsigned char comments1[64],comments2[64], buffer[128];
+	errno_t  rc = -1;
 	
 	if((ctx==NULL)||(pMac==NULL)||(pComments==NULL))
 		return(ERR_INVALID_ARGS);
 	Utopia_GetInt(ctx, UtopiaValue_USGv2_Lan_Clients_Count, &count);
-	sprintf(macStr1,"%02x:%02x:%02x:%02x:%02x:%02x",
+	rc = sprintf_s(macStr1, sizeof(macStr1), "%02x:%02x:%02x:%02x:%02x:%02x",
 		pMac[0],pMac[1],pMac[2],pMac[3],pMac[4],pMac[5]);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	get_lan_host_index_and_comments(ctx,macStr1,&index1,comments1);
 	if(pComments[0]==0){/*remove comments for a client*/
 		if(index1 <=0 )
@@ -7324,6 +7373,7 @@ int Utopia_privateIpCheck(char *ip_to_check)
 int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCallForAdd )
 {
 	token_t	se_token;
+	errno_t  safec_rc = -1;
 	int		se_fd 		 = s_sysevent_connect( &se_token ),
 			isBridgeMode = FALSE,
 			isWanReady   = FALSE,
@@ -7418,16 +7468,28 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 	/* external & destination IP-Host */
 	memset( external_ip, 0, sizeof( external_ip ) );
 	memset( external_dest_port, 0, sizeof( external_dest_port ) );	
-	memset( fromip, 0, sizeof( fromip ) );
-	memset( fromport, 0, sizeof( fromport ) );	
-	memset( toip, 0, sizeof( toip ) );
-	memset( dport, 0, sizeof( dport ) );	
+	
 
-	sprintf( fromip, "%s", (strlen(pmap->external_host) == 0) ? "none" : pmap->external_host );
-	sprintf( fromport, "%d", pmap->external_port );
-
-	sprintf( toip, "%s", pmap->internal_host );
-	sprintf( dport, "%d", pmap->internal_port );
+	safec_rc = sprintf_s( fromip, sizeof(fromip), "%s", (strlen(pmap->external_host) == 0) ? "none" : pmap->external_host );
+	if(safec_rc < EOK)
+	{
+	    ERR_CHK(safec_rc);
+	}
+	safec_rc = sprintf_s( fromport, sizeof(fromport), "%d", pmap->external_port );
+	if(safec_rc < EOK)
+	{
+	    ERR_CHK(safec_rc);
+	}
+	safec_rc = sprintf_s( toip, sizeof(toip), "%s", pmap->internal_host );
+	if(safec_rc < EOK)
+	{
+	    ERR_CHK(safec_rc);
+	}
+	safec_rc = sprintf_s( dport, sizeof(dport), "%d", pmap->internal_port );
+	if(safec_rc < EOK)
+	{
+	    ERR_CHK(safec_rc);
+	}
 
 	if ( 0 != strcmp( "none", fromip ) ) 
 	{

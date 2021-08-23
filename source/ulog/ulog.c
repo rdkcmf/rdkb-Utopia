@@ -51,6 +51,7 @@
 #include "ulog.h"
 #include "unistd.h"
 #include "time.h"
+#include "safec_lib_common.h"
 
 #define ULOG_FILE   "/var/log/messages"
 #define ULOG_IDENT  "UTOPIA"
@@ -189,6 +190,7 @@ ulog_get_mesgs (UCOMP comp, USUBCOMP sub, char *mesgbuf, unsigned int size)
 {
     FILE *fp;
     char match_string[128], linebuf[256];
+    errno_t  rc = -1;
 
     if (NULL == mesgbuf) {
         return;
@@ -210,7 +212,8 @@ ulog_get_mesgs (UCOMP comp, USUBCOMP sub, char *mesgbuf, unsigned int size)
             if (lsz >= remaining_sz) {
                 break;  // no more room
             }
-            strcat(mesgbuf, linebuf);
+            rc = strcat_s(mesgbuf, ULOG_STR_SIZE, linebuf);
+            ERR_CHK(rc);
             remaining_sz -= lsz;
         }
     }
@@ -252,6 +255,7 @@ void ulog_sys_Init(int prior, unsigned int enable)
 {
     char    name[80];
     int     ret;
+    errno_t  rc = -1;
 
     //ulog_GetGlobalPrior();
     ulog_GetPrior();
@@ -263,8 +267,11 @@ void ulog_sys_Init(int prior, unsigned int enable)
     if(ret != 0)
         return;
 
-    sprintf(name, "/var/log/%s.log", sys_Log_Info.name);
-
+    rc = sprintf_s(name, sizeof(name), "/var/log/%s.log", sys_Log_Info.name);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     sys_Log_Info.stream = fopen(name, "w");
     printf("After fopen pid  file  \n");
     if (sys_Log_Info.stream == NULL)

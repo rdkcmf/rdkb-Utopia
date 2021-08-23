@@ -45,6 +45,7 @@
 #include "autoconf.h"
 #include "secure_wrapper.h"
 #include <sys/stat.h>
+#include "safec_lib_common.h"
 
 #ifdef MULTILAN_FEATURE
 #include "ccsp_psm_helper.h"
@@ -419,36 +420,57 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
         return -1;
 #if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) 
 	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_T1_SYSEVENT_NAME, action, sizeof(action));
+	errno_t  rc  = -1;
 	if(action[0]!='\0')
 	{
 		if(!strcmp(action,"'\\0'"))
-			strcpy(iapd->t1,"0");
+		{
+			rc = strcpy_s(iapd->t1, sizeof(iapd->t1), "0");
+		}
 		else
-			strcpy(iapd->t1,strtok (action,"'"));
+		{
+			rc = strcpy_s(iapd->t1, sizeof(iapd->t1), strtok (action,"'"));
+		}
+		ERR_CHK(rc);
 	}
 	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_T2_SYSEVENT_NAME, action, sizeof(action));
 	if(action[0]!='\0')
 	{
 		if(!strcmp(action,"'\\0'"))
-			strcpy(iapd->t2,"0");
+		{
+			rc = strcpy_s(iapd->t2, sizeof(iapd->t2), "0");
+		}
 		else
-			strcpy(iapd->t2,strtok (action,"'"));
+		{
+			rc = strcpy_s(iapd->t2, sizeof(iapd->t2), strtok (action,"'"));
+		}
+		ERR_CHK(rc);
 	}
 	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_PRETM_SYSEVENT_NAME, action, sizeof(action));
 	if(action[0]!='\0')
 	{
 		if(!strcmp(action,"'\\0'"))
-			strcpy(iapd->pretm,"0");
+		{
+			rc = strcpy_s(iapd->pretm, sizeof(iapd->pretm),"0");
+		}
 		else
-			strcpy(iapd->pretm,strtok (action,"'"));
+		{
+			rc = strcpy_s(iapd->pretm, sizeof(iapd->pretm),strtok (action,"'"));
+		}
+		ERR_CHK(rc);
 	}
 	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_VLDTM_SYSEVENT_NAME, action, sizeof(action));	
 	if(action[0]!='\0')
 	{
 		if(!strcmp(action,"'\\0'"))
-			strcpy(iapd->vldtm,"0");
+		{
+			rc = strcpy_s(iapd->vldtm, sizeof(iapd->vldtm), "0");
+		}
 		else
-			strcpy(iapd->vldtm,strtok (action,"'"));
+		{
+			rc = strcpy_s(iapd->vldtm, sizeof(iapd->vldtm), strtok (action,"'"));
+		}
+		ERR_CHK(rc);
 	}
 #else
     int  fd = 0;
@@ -691,18 +713,24 @@ static int get_active_lanif(struct serv_ipv6 *si6, unsigned int insts[], unsigne
 static int get_pd_pool(struct serv_ipv6 *si6, pd_pool_t *pool)
 {
     char evt_val[256] = {0};
+    errno_t rc = -1;
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_subprefix-start", evt_val, sizeof(evt_val));
-    if (evt_val[0] != '\0')
-        strcpy(pool->start, evt_val);
-    else 
+    if (! evt_val[0])
+    {
         return -1;
+    }
+    rc = strcpy_s(pool->start, sizeof(pool->start), evt_val);
+    ERR_CHK(rc);
+
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_subprefix-end", evt_val, sizeof(evt_val));
-    if (evt_val[0] != '\0')
-        strcpy(pool->end, evt_val);
-    else 
+    if (! evt_val[0])
+    {
         return -1;
+    }
+    rc = strcpy_s(pool->end, sizeof(pool->end), evt_val);
+    ERR_CHK(rc);
 
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-length", evt_val, sizeof(evt_val));
     if (evt_val[0] != '\0')
@@ -742,6 +770,7 @@ static int divide_ipv6_prefix(struct serv_ipv6 *si6)
     char                evt_val[64];
     char                iface_name[64];
     int                 used_sub_prefix_num = 0; 
+    errno_t  rc = -1;
 
     sysevent_set(si6->sefd, si6->setok, "ipv6_prefix-divided", "", 0);
 
@@ -851,7 +880,8 @@ static int divide_ipv6_prefix(struct serv_ipv6 *si6)
 #endif		
         memcpy((void *)buf, (void *)&tmp_prefix, 8);
         inet_ntop(AF_INET6, buf, iface_prefix, INET6_ADDRSTRLEN);
-        strcat(iface_prefix, "/64");
+        rc = strcat_s(iface_prefix, sizeof(iface_prefix), "/64");
+        ERR_CHK(rc);
 
         /*set related sysevent*/
         snprintf(evt_name, sizeof(evt_name), "multinet_%d-name", l2_insts[i]);
@@ -906,9 +936,10 @@ int compute_global_ip(char *prefix, char *if_name, char *ipv6_addr, unsigned int
     char            out[256]         = {0};
     char            tmp[8]           = {0};
     char            mac[32]          = {0};
+    errno_t   rc  = -1;
 
-
-    strcpy(globalIP, prefix);
+    rc = strcpy_s(globalIP, sizeof(globalIP), prefix);
+    ERR_CHK(rc);
 
     /* Prepare the first part. */
 
@@ -975,8 +1006,10 @@ int compute_global_ip(char *prefix, char *if_name, char *ipv6_addr, unsigned int
     //00:50:56: FF:FE:  92:00:22
     strncpy(out, mac, 9);
     out[9] = '\0';
-    strcat(out, "FF:FE:");
-    strcat(out, mac+9);
+    rc = strcat_s(out, sizeof(out), "FF:FE:");
+    ERR_CHK(rc);
+    rc = strcat_s(out, sizeof(out), mac+9);
+    ERR_CHK(rc);
 
     for(k = 0, j = 0; out[j]; j++) {
         if (out[j] == ':')
@@ -1454,6 +1487,7 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
                 } */
                 char dummyAddr[128];
                 char HwAddr[24];
+                errno_t  rc = -1;
                 memset( HwAddr, 0, sizeof( HwAddr ) );
                 memset( dummyAddr, 0, sizeof( dummyAddr ) );
                 strncpy(dummyAddr,prefix_value,sizeof(dummyAddr));
@@ -1474,15 +1508,15 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
                 fprintf(fp, "   {\n");
 		if (colon_count == 5)
                 {
-                	strcat(dummyAddr,":123");
-			dummyAddr[sizeof(dummyAddr)-1] = '\0';
+                	rc = strcat_s(dummyAddr, sizeof(dummyAddr), ":123");
+                	ERR_CHK(rc);
 			fprintf(fp, "   address %s\n",dummyAddr);
 			fprintf(fp, "   prefix %s:/64\n",prefix_value);
                 }
                 else
 		{
-                	strcat(dummyAddr,"123");
-			dummyAddr[sizeof(dummyAddr)-1] = '\0';
+                	rc = strcat_s(dummyAddr, sizeof(dummyAddr),"123");
+                	ERR_CHK(rc);
 			fprintf(fp, "   address %s\n",dummyAddr);
 			fprintf(fp, "   prefix %s/64\n",prefix_value);
 		}
@@ -1510,12 +1544,13 @@ OPTIONS:
             if (opt.pt_client[0]) {
                 if (opt.tag == 23) {//dns
                     char dns_str[256] = {0};
+                    errno_t  rc = -1;
 
 					/* Static DNS */
 					if( 1 == dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled )	
 					{
-						memset( dns_str, 0, sizeof( dns_str ) );
-						strcpy( dns_str, dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+						rc = strcpy_s( dns_str, sizeof(dns_str), dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+						ERR_CHK(rc);
 						fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__, 
 																						  __LINE__,
 																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled,

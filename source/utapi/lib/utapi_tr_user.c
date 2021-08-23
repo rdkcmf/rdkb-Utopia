@@ -45,6 +45,7 @@
 #include "utapi_util.h"
 #include "utapi_tr_user.h"
 #include "DM_TR181.h"
+#include "safec_lib_common.h"
 
 static int g_IndexMapUser[MAX_NUM_INSTANCES+1] = {-1};
 
@@ -57,7 +58,12 @@ int Utopia_GetNumOfUsers(UtopiaContext *ctx)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -74,7 +80,12 @@ int Utopia_SetNumOfUsers(UtopiaContext *ctx, int count)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -89,7 +100,12 @@ int Utopia_GetUserEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pUserEn
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -115,7 +131,12 @@ int Utopia_GetUserCfg(UtopiaContext *ctx, void *pUserCfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     
@@ -138,7 +159,12 @@ int Utopia_AddUser(UtopiaContext *ctx, void *pUserCfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -163,13 +189,18 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
     unsigned long ulIndex = 0;
     userCfg_t userCfg;
     char buf[STR_SZ+8] = {'\0'};
+    errno_t rc = -1;
 
     if(NULL == ctx){
         return ERR_INVALID_ARGS;
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -185,7 +216,11 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
     /* Delete user from Linux DB if user is added there */
     if((TRUE == userCfg.bEnabled) && (TRUE == userCfg.RemoteAccessCapable)) {
 	if( (access( "/usr/sbin/deluser", F_OK ) != -1) || (access( "/usr/bin/deluser", F_OK ) != -1) ) {
-		sprintf(buf,"deluser %s",userCfg.Username);
+		rc = sprintf_s(buf, sizeof(buf), "deluser %s",userCfg.Username);
+		if(rc < EOK)
+		{
+		    ERR_CHK(rc);
+		}
 		system(buf);
 	}
     }
@@ -226,7 +261,12 @@ int Utopia_SetUserCfg(UtopiaContext *ctx, void *pUserCfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -247,7 +287,12 @@ int Utopia_SetUserValues(UtopiaContext *ctx, unsigned long ulIndex, unsigned lon
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -261,7 +306,12 @@ int Utopia_GetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     int iVal = 0;
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -288,9 +338,14 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     int iVal = 0;
     char buf[BUF_SZ] = {'\0'};
     char tmpBuf[STR_SZ] = {'\0'};
+    errno_t  rc = -1;
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -298,7 +353,11 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     /* This is required to take care of the change in username itself */
     if(0 != Utopia_GetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1),tmpBuf,STR_SZ)) {
     if( (access( "/usr/sbin/deluser", F_OK ) != -1) || (access( "/usr/bin/deluser", F_OK ) != -1) ) {
-		sprintf(buf,"deluser %s",tmpBuf);
+		rc = sprintf_s(buf,sizeof(buf),"deluser %s",tmpBuf);
+		if(rc < EOK)
+		{
+		    ERR_CHK(rc);
+		}
 		system(buf);
 		memset(buf,0,BUF_SZ);
 	}
@@ -321,16 +380,29 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
 
     if((TRUE == pUserCfg_t->bEnabled) && (TRUE == pUserCfg_t->RemoteAccessCapable)) {
         /* Add the user with a home directory */
-        sprintf(buf,"adduser -h /tmp/home/%s %s",pUserCfg_t->Username,pUserCfg_t->Username);
+        rc = sprintf_s(buf,sizeof(buf),"adduser -h /tmp/home/%s %s",pUserCfg_t->Username,pUserCfg_t->Username);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         system(buf);
-        memset(buf,0,BUF_SZ);
-        sprintf(buf,"echo %s:%s > %s",pUserCfg_t->Username,pUserCfg_t->Password,TMP_FILE);
+        rc = sprintf_s(buf,sizeof(buf),"echo %s:%s > %s",pUserCfg_t->Username,pUserCfg_t->Password,TMP_FILE);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         system(buf);
-        memset(buf,0,BUF_SZ);
-        sprintf(buf,"chpasswd < %s ",TMP_FILE);
+        rc = sprintf_s(buf,sizeof(buf),"chpasswd < %s ",TMP_FILE);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         system(buf);
-        memset(buf,0,BUF_SZ);
-        sprintf(buf,"rm %s ",TMP_FILE);
+        rc = sprintf_s(buf,sizeof(buf),"rm %s ",TMP_FILE);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         system(buf);
     }
 

@@ -27,6 +27,7 @@
 #include "swctl_hal.h"
 #include "service_multinet_base.h"
 #include "errno.h"
+#include "safec_lib_common.h"
 
 #define MOCACTL 	"/usr/sbin/mocactl"
 #define IPC_VLAN	500	
@@ -92,6 +93,7 @@ void handle_moca(int vlan_id, int *tagged, int add)
 	char l_cMoca_Tports[16] = {0}, l_cMoca_Utport[8] = {0}, l_cMoca_Tport[8] = {0};
 	int l_iMoca_UtPort = 100;
 	char l_cSystem_Cmd[128] = {0};
+	errno_t  rc  = -1;
 
 	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_tports", l_cMoca_Tports, sizeof(l_cMoca_Tports));
 	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_utport", l_cMoca_Utport, sizeof(l_cMoca_Utport));
@@ -179,7 +181,11 @@ void handle_moca(int vlan_id, int *tagged, int add)
 			{
 				printf("sw_moca_tports already has a value not doing anything \n");
 			}
-			sprintf(l_cMoca_Utport, "%d", vlan_id);
+			rc = sprintf_s(l_cMoca_Utport, sizeof(l_cMoca_Utport), "%d", vlan_id);
+			if(rc < EOK)
+			{
+				ERR_CHK(rc);
+			}
 			sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_utport", l_cMoca_Utport, 0);
 		}
 	}
@@ -189,7 +195,11 @@ void handle_moca(int vlan_id, int *tagged, int add)
 		if (TAGGING_MODE == *tagged)
 		{
             // Removing trunking vlan
-			sprintf(l_cMoca_Tport, "%d", vlan_id);
+            rc = sprintf_s(l_cMoca_Tport, sizeof(l_cMoca_Tport), "%d", vlan_id);
+            if(rc < EOK)
+            {
+				ERR_CHK(rc);
+            }
 			sw_remove_member(l_cMoca_Tports, l_cMoca_Tport);
 			if (0 == l_cMoca_Tports[0])
 			{
@@ -394,6 +404,7 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 	int arm_venable = 0, i2e_venable = 0, e2i_venable = 0;
 	int atom_venable = 0, atom_port = 0, ext_port = 0;
 	int l_iLen;
+	errno_t   rc = -1;
 
 	if (0 == hdl_sw_sysevent_fd)
 		handle_sw_init();
@@ -488,7 +499,11 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 		    if (0 != l_cExt_Vids[0] && l_cExt_Vids[l_iLen] != ' ')
         		strncat(l_cExt_Vids, " ", 1);
 			
-			sprintf(l_cVlan_Id, "%d", vlan_id);
+			rc = sprintf_s(l_cVlan_Id, sizeof(l_cVlan_Id), "%d", vlan_id);
+			if(rc < EOK)
+			{
+				ERR_CHK(rc);
+			}
 			strncat(l_cExt_Vids, l_cVlan_Id, (size_t)(strlen(l_cVlan_Id)));
 			printf("sysevent set sw_ext_vids %s\n", l_cExt_Vids);
 			sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, 
@@ -533,6 +548,7 @@ void delVlan(int net_id, int vlan_id, char *ports_add)
 	char l_cVid_Ports[64] = {0}, l_cExt_Vid_Ports[64] = {0};
 	char l_cAtom_Vid_Ports[32] = {0}, l_cExt_Vids[8] = {0};
 	char l_cCmd_Buff[128] = {0}, l_cVlan_Id[8] = {0}, l_cPort[8] = {0};
+	errno_t   rc  = -1;
 	
 	int l_iAtom_Port, l_iExt_Port, l_iIter = 0, l_iTagged = UNTAGGED_MODE;
 
@@ -616,7 +632,11 @@ void delVlan(int net_id, int vlan_id, char *ports_add)
 		swctl(1, 5, vlan_id, -1, -1, -1, NULL, NULL);
             
     	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_ext_vids", l_cExt_Vids, sizeof(l_cExt_Vids));
-		sprintf(l_cVlan_Id, "%d", vlan_id);
+		rc = sprintf_s(l_cVlan_Id, sizeof(l_cVlan_Id), "%d", vlan_id);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
 		sw_remove_member(l_cExt_Vids, l_cVlan_Id);
 		sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_ext_vids", l_cExt_Vids, 0);
     }

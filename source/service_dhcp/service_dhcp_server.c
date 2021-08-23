@@ -31,6 +31,7 @@
 #include "print_uptime.h"
 #include "util.h"
 #include "service_dhcp_server.h"
+#include "safec_lib_common.h"
 
 #define THIS        "/usr/bin/service_dhcp"
 #define BIN			"dnsmasq"
@@ -96,6 +97,7 @@ void getRFC_Value(const char* dnsOption)
 int dnsmasq_server_start()
 {
     char l_cSystemCmd[255] = {0};
+    errno_t safec_rc = -1;
 
     getRFC_Value (dnsOption);
     fprintf(stdout, "Adding DNSMASQ Option: %s\n", dnsOption);
@@ -108,17 +110,26 @@ int dnsmasq_server_start()
 
         syscfg_get(NULL, "XDNS_RefacCodeEnable", l_cXdnsRefacCodeEnable, sizeof(l_cXdnsRefacCodeEnable));
         if (!strncmp(l_cXdnsRefacCodeEnable, "1", 1)){
-                sprintf(l_cSystemCmd, "%s -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s --xdns-refac-code",
+                safec_rc = sprintf_s(l_cSystemCmd, sizeof(l_cSystemCmd),"%s -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s --xdns-refac-code",
                                 SERVER, DHCP_CONF,dnsOption);
+                if(safec_rc < EOK){
+                   ERR_CHK(safec_rc);
+                }
         }else{
-                sprintf(l_cSystemCmd, "%s -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",
+                safec_rc = sprintf_s(l_cSystemCmd, sizeof(l_cSystemCmd),"%s -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s",
                                 SERVER, DHCP_CONF,dnsOption);
+                if(safec_rc < EOK){
+                   ERR_CHK(safec_rc);
+                }
         }
     }
     else //If XDNS is not enabled 
 #endif
     {
-        sprintf(l_cSystemCmd, "%s -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
+        safec_rc = sprintf_s(l_cSystemCmd, sizeof(l_cSystemCmd),"%s -P 4096 -C %s %s", SERVER, DHCP_CONF,dnsOption);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
     }
 
 	return system(l_cSystemCmd);
@@ -128,6 +139,7 @@ void dhcp_server_stop()
 {
         char l_cDhcp_Status[16] = {0}, l_cSystemCmd[255] = {0};
         int l_iSystem_Res;
+        errno_t safec_rc = -1;
         wait_till_end_state("dhcp_server");
    	sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", l_cDhcp_Status, sizeof(l_cDhcp_Status));	
 	if (!strncmp(l_cDhcp_Status, "stopped", 7))
@@ -140,7 +152,10 @@ void dhcp_server_stop()
    	prepare_hostname();
    	prepare_dhcp_conf("dns_only");
 	
-	sprintf(l_cSystemCmd, "%s unsetproc dhcp_server", PMON);
+	safec_rc = sprintf_s(l_cSystemCmd, sizeof(l_cSystemCmd),"%s unsetproc dhcp_server", PMON);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
 	l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
     if (0 != l_iSystem_Res)
 	{
@@ -207,7 +222,8 @@ int dhcp_server_start (char *input)
 	int l_iSystem_Res;
         int fd = 0;
 
-	char *l_cToken = NULL;	
+	char *l_cToken = NULL;
+	errno_t safec_rc = -1;
 
 	service_dhcp_init();
 
@@ -290,7 +306,8 @@ int dhcp_server_start (char *input)
 	}	
 	else
 	{
-	    sprintf(l_cCommand, "pidof dnsmasq");
+	    safec_rc = strcpy_s(l_cCommand, sizeof(l_cCommand),"pidof dnsmasq");
+		ERR_CHK(safec_rc);
     	copy_command_output(l_cCommand, l_cBuf, sizeof(l_cBuf));
 	    l_cBuf[strlen(l_cBuf)] = '\0';
 
@@ -337,7 +354,8 @@ int dhcp_server_start (char *input)
 	remove_file(PID_FILE);
 
         /* Kill dnsmasq if its not stopped properly */
-	sprintf(l_cCommand, "pidof dnsmasq");  
+	safec_rc = strcpy_s(l_cCommand, sizeof(l_cCommand),"pidof dnsmasq");
+	ERR_CHK(safec_rc);
         memset (l_cBuf, '\0',  sizeof(l_cBuf));
     	copy_command_output(l_cCommand, l_cBuf, sizeof(l_cBuf));
 	l_cBuf[strlen(l_cBuf)] = '\0';
@@ -355,7 +373,10 @@ int dhcp_server_start (char *input)
     if ((strncmp(l_cBridge_Mode, "0", 1)) && (FALSE == IsDhcpConfHasInterface()))
     {
         fprintf(stderr, "no interface present in dnsmasq.conf %s process not started\n", SERVER);
-        sprintf(l_cSystemCmd, "%s unsetproc dhcp_server", PMON);
+        safec_rc = sprintf_s(l_cSystemCmd, sizeof(l_cSystemCmd),"%s unsetproc dhcp_server", PMON);
+        if(safec_rc < EOK){
+            ERR_CHK(safec_rc);
+        }
         l_iSystem_Res = system(l_cSystemCmd); //dnsmasq command
         if (0 != l_iSystem_Res)
         {
@@ -472,8 +493,11 @@ int dhcp_server_start (char *input)
         fprintf(stderr, "Xfinityhome service is not UP yet\n");
     }
 
-	sprintf(l_cPmonCmd, "%s setproc dhcp_server %s %s \"%s dhcp_server-restart\"", 
+	safec_rc = sprintf_s(l_cPmonCmd, sizeof(l_cPmonCmd),"%s setproc dhcp_server %s %s \"%s dhcp_server-restart\"", 
 			PMON, BIN, PID_FILE, THIS);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
 
 	system(l_cPmonCmd);
 

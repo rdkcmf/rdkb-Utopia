@@ -79,6 +79,7 @@
 #endif
 #include "secure_wrapper.h"
 #include "print_uptime.h"
+#include "safec_lib_common.h"
 
 #if defined (_PROPOSED_BUG_FIX_)
 #include <syslog.h>
@@ -283,12 +284,18 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
     FILE *fp;
     char subopt_num[12] ={0}, subopt_value[64] = {0} , mode[8] = {0} ;
     int num_read;
-    
+    errno_t rc = -1; 
+ 
     if ((fp = fopen(VENDOR_SPEC_FILE, "ra")) != NULL) {
         int opt_len = 0;   //Total characters read
         
         //Start the string off with "43:"
-        opt_len = sprintf(options, "43:");
+        rc =  sprintf_s(options, length, "43:");
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
+        opt_len = rc;
 
         while ((num_read = fscanf(fp, "%7s %11s %63s", mode, subopt_num, subopt_value)) == 3) {
             char *ptr;
@@ -317,10 +324,20 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
  
             //Print the option number
             if (strcmp(subopt_num, "SUBOPTION2") == 0) {
-                opt_len += sprintf(options + opt_len, "02");
+                rc = sprintf_s(options + opt_len, (length - opt_len), "02");
+                if(rc < EOK)
+                {
+                   ERR_CHK(rc);
+                }
+                opt_len += rc;
             }
             else if (strcmp(subopt_num, "SUBOPTION3") == 0) {
-                opt_len += sprintf(options + opt_len, "03");
+                rc = sprintf_s(options + opt_len, (length - opt_len), "03");
+                if(rc < EOK)
+                {
+                   ERR_CHK(rc);
+                }
+                opt_len += rc;
             }
             else {
                 fprintf( stderr, "%s: Invalid suboption\n", __FUNCTION__ );
@@ -328,7 +345,12 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
             }
             
             //Print the length of the sub-option value
-            opt_len += sprintf(options + opt_len, "%02x", strlen(subopt_value));
+            rc = sprintf_s(options + opt_len, (length - opt_len), "%02x", strlen(subopt_value));
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            opt_len += rc;
 
             //Print the sub-option value in hex
             for (ptr=subopt_value; (char)*ptr != (char)0; ptr++) {
@@ -336,7 +358,12 @@ static int dhcp_parse_vendor_info( char *options, const int length, char *ethWan
                     fprintf( stderr, "%s: Too many options\n", __FUNCTION__ );
                     return -1;
                 }
-                opt_len += sprintf(options + opt_len, "%02x", *ptr);
+                rc = sprintf_s(options + opt_len, (length - opt_len), "%02x", *ptr);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+                opt_len += rc;
             }
         } //while
         
@@ -516,18 +543,26 @@ void get_dateanduptime(char *buffer, int *uptime)
     struct 	timeval  tv;
     struct 	tm       *tm;
     struct 	sysinfo info;
-    char 	fmt[ 64 ], buf [64];
+    char 	fmt[ 64 ];
+    errno_t   rc = -1;
 
     sysinfo( &info );
     gettimeofday( &tv, NULL );
     
-    if( (tm = localtime( &tv.tv_sec ) ) != NULL)
+    tm = localtime( &tv.tv_sec );
+    if (!tm)
     {
-	strftime( fmt, sizeof( fmt ), "%y%m%d-%T.%%06u", tm );
-	snprintf( buf, sizeof( buf ), fmt, tv.tv_usec );
+        buffer[0] = '\0';
     }
-    
-    sprintf( buffer, "%s", buf);
+    else
+    {
+        strftime(fmt, sizeof(fmt), "%y%m%d-%T.%%06u", tm);
+        rc = sprintf_s(buffer, 64, fmt, tv.tv_usec);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+    }
     *uptime= info.uptime;
 }
 

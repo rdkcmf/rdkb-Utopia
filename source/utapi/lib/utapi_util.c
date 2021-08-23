@@ -46,6 +46,7 @@
 #include "utapi.h"
 #include "utapi_util.h"
 #include <unistd.h>
+#include "safec_lib_common.h"
 
 // Global
 char ulog_msg[1024];
@@ -453,8 +454,7 @@ static int parsePrefixAddress(const char *prefixAddr, char *address, int *plen)
     int status = FALSE;
     char tmpBuf[64] = {0};
     char *separator;
-    int len;
-
+    errno_t safec_rc = -1;
     if (prefixAddr == NULL || address == NULL || plen == NULL)
     {
        return status;
@@ -465,16 +465,10 @@ static int parsePrefixAddress(const char *prefixAddr, char *address, int *plen)
     *address = '\0';
     *plen    = 128;
 
-    len = strlen(prefixAddr);
-
-    if (len < sizeof(tmpBuf))
-    {
-       sprintf(tmpBuf, "%s", prefixAddr);
-    }
-    else
-    {
-        fprintf(stderr,"%s:%d - Error invalid prefix length len : %d \n", __FUNCTION__, __LINE__, len);
-        return status;
+    safec_rc = strcpy_s(tmpBuf, sizeof(tmpBuf), prefixAddr);
+    if(safec_rc != EOK){
+       ERR_CHK(safec_rc);
+       return status;
     }
     separator = strchr(tmpBuf, '/');
     if (separator != NULL)
@@ -493,7 +487,9 @@ static int parsePrefixAddress(const char *prefixAddr, char *address, int *plen)
     fprintf(stderr,"%s:%d - address :%s plen:%d \n", __FUNCTION__, __LINE__, tmpBuf, *plen);
     if (strlen(tmpBuf) < 40 && *plen <= 128)
     {
-        strcpy(address, tmpBuf);
+        /* Here, address is pointer, it's pointing to 64 bytes data */
+        safec_rc = strcpy_s(address, 64,tmpBuf);
+        ERR_CHK(safec_rc);
         status = TRUE;
     }
 

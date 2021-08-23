@@ -38,6 +38,7 @@
 #include "service_multinet_ep.h"
 #include "sysevent/sysevent.h"
 #include "syscfg/syscfg.h"
+#include "safec_lib_common.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -76,6 +77,7 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
 #endif
     char ifname[80];
     char temp_ifname[80];
+    errno_t  rc = -1;
     memset(ifname, 0, 80);
     memset(temp_ifname, 0, 80);
 
@@ -84,11 +86,17 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
     	portState = (PSwPortState) args[i].portID;
         stringIDExtSw(portState, temp_ifname, sizeof(temp_ifname));
         if (args[i].vidParams.tagging)
-        	strcat(temp_ifname, "-t");
-
-        strcat(ifname, temp_ifname);
-		if (i < (numArgs - 1)) 
-            strcat(ifname, " ");
+        {
+            rc = strcat_s(temp_ifname, sizeof(temp_ifname), "-t");
+            ERR_CHK(rc);
+        }
+        rc = strcat_s(ifname, sizeof(ifname), temp_ifname);
+        ERR_CHK(rc);
+        if (i < (numArgs - 1)) 
+        {
+            rc = strcat_s(ifname, sizeof(ifname), " ");
+            ERR_CHK(rc);
+        }
     }
 #if defined(_COSA_INTEL_XB3_ARM_)
 	if (up)
@@ -103,9 +111,12 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
 	}
 #else
     //Rag: netid and vlanid is same for all the args, so index zero is being used.
-    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
+    rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
 			args[0].hints.network->inst, args[0].vidParams.vid, ifname);
-
+    if(rc < EOK)
+    {
+       ERR_CHK(rc);
+    }
     MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
     system(cmdBuff);
 #endif
@@ -120,15 +131,19 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
 #endif
     char portID[80];
     memset(portID, 0, 80);
+    errno_t  rc = -1;
 
     for (i = 0; i < numArgs; ++i ) 
     { 
-        strcat(portID, (char*)args[i].portID);
+        rc = strcat_s(portID, sizeof(portID), (char*)args[i].portID);
+        ERR_CHK(rc);
         if (args[i].vidParams.tagging){
-            strcat(portID, "-t");
+            rc = strcat_s(portID, sizeof(portID), "-t");
+            ERR_CHK(rc);
         }
         if (i < (numArgs - 1)){
-            strcat(portID, " ");
+            rc = strcat_s(portID, sizeof(portID), " ");
+            ERR_CHK(rc);
         }
     }
   
@@ -145,9 +160,12 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     }
 #else 
     //Rag: netid and vlanid is same for all the args, so index zero is being used. 
-    sprintf(cmdBuff, "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", 
+    rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", 
 			args[0].hints.network->inst, args[0].vidParams.vid, portID);
-
+    if(rc < EOK)
+    {
+       ERR_CHK(rc);
+    }
     MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
     system(cmdBuff);
 #endif
@@ -181,6 +199,7 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
 {
     int i;
     PSwPortState portState;
+    errno_t  rc = -1;
 #if !defined(_COSA_INTEL_XB3_ARM_)
     char cmdBuff[180];
 #endif
@@ -195,8 +214,10 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
 		if (up)
 		{
 			if (args[i].vidParams.tagging)
-            	strcat(ifname, "-t");
-
+			{
+				rc = strcat_s(ifname, sizeof(ifname),"-t");
+				ERR_CHK(rc);   
+			}
            	MNET_DEBUG("Adding Internal switch ports:%s\n" COMMA ifname)
 			addVlan(args[i].hints.network->inst, args[i].vidParams.vid, ifname);
 		}
@@ -206,8 +227,12 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
 			delVlan(args[i].hints.network->inst, args[i].vidParams.vid, ifname);
 		}
 #else
-		sprintf(cmdBuff, "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
+		rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
 				args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
     	system(cmdBuff);
 #endif
 	}

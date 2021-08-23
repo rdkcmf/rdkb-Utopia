@@ -37,6 +37,7 @@
 #include "utctx.h"
 #include "utctx_api.h"
 #include "utctx_internal.h"
+#include "safec_lib_common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -821,6 +822,7 @@ static void s_Utopia_AuthFileUpdate(UtopiaContext* pCtx)
 #ifndef UTCTX_UNITTEST
     char* pszHttpdSh = "/etc/init.d/service_httpd/httpd_util.sh";
     char pszArgs[UTOPIA_BUF_SIZE] = {'\0'};
+    errno_t rc = -1;
     char* ppszEnv[] =
         {
             "PATH=/bin:/sbin:/usr/sbin:/usr/bin",
@@ -839,7 +841,11 @@ static void s_Utopia_AuthFileUpdate(UtopiaContext* pCtx)
     Utopia_Get(pCtx, UtopiaValue_HTTP_AdminUser, pszDeviceUsername, UTOPIA_MAX_USERNAME_LENGTH);
        
     /* Format the arguments */
-    sprintf(pszArgs, "generate_authfile %s %s", pszDeviceUsername, pszDevicePassword);
+    rc = sprintf_s(pszArgs, sizeof(pszArgs), "generate_authfile %s %s", pszDeviceUsername, pszDevicePassword);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
 
     /* Fork and execute */
     pID = fork();
@@ -863,6 +869,7 @@ static int s_UtopiaValue_FormatNamespaceKey(UtopiaContext* pCtx, UtopiaValue ixU
                                             char* pszNamespace, unsigned int cbNamespace, char* pszKey, unsigned int cbKey)
 {
     unsigned int iKeyLength;
+    errno_t      rc = -1;
 
     /* Validate our indexes and prefix depending on UtopiaValue type */
     if (Utopia_IsIndexedConfig(ixUtopia) && iIndex1 < 1)
@@ -889,37 +896,68 @@ static int s_UtopiaValue_FormatNamespaceKey(UtopiaContext* pCtx, UtopiaValue ixU
          ((Utopia_IsNamedConfig(ixUtopia) || Utopia_IsNamed2Config(ixUtopia)) && Utopia_IsNameForNS(ixUtopia))) &&
         (iKeyLength + 1 <= cbKey))
     {
-        strcpy(pszKey, Utopia_ToKey(ixUtopia));
+        rc = strcpy_s(pszKey, cbKey, Utopia_ToKey(ixUtopia));
+        ERR_CHK(rc);
     }
     else if (Utopia_IsIndexedConfig(ixUtopia) && Utopia_IsIndexForKey(ixUtopia) &&
              (iIndex1 < 1000) && (iKeyLength + 2 <= cbKey))
     {
-        sprintf(pszKey, Utopia_ToKey(ixUtopia), iIndex1);
+        rc = sprintf_s(pszKey, cbKey, Utopia_ToKey(ixUtopia), iIndex1);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     else if (Utopia_IsIndexed2Config(ixUtopia) && Utopia_IsIndexForBoth(ixUtopia) &&
              (iIndex2 < 1000) && (iKeyLength + 2 <= cbKey))
     {
-        sprintf(pszKey, Utopia_ToKey(ixUtopia), iIndex2);
+        rc = sprintf_s(pszKey, cbKey, Utopia_ToKey(ixUtopia), iIndex2);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     else if (Utopia_IsIndexed2Config(ixUtopia) && Utopia_IsIndexForKey(ixUtopia) &&
              (iIndex1 < 1000) && (iIndex2 < 1000) && (iKeyLength + 3 <= cbKey))
     {
-        sprintf(pszKey, Utopia_ToKey(ixUtopia), iIndex1, iIndex2);
+        rc = sprintf_s(pszKey, cbKey, Utopia_ToKey(ixUtopia), iIndex1, iIndex2);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     else if (Utopia_IsNamedConfig(ixUtopia) && Utopia_IsNameForKey(ixUtopia) &&
              (iKeyLength + strlen(pszName1) - 1 <= cbKey))
     {
-        sprintf(pszKey, Utopia_ToKey(ixUtopia), pszName1);
+        rc = sprintf_s(pszKey, cbKey, Utopia_ToKey(ixUtopia), pszName1);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     else if (Utopia_IsNamed2Config(ixUtopia) && Utopia_IsNameForBoth(ixUtopia) &&
              (iKeyLength + strlen(pszName2) - 1 <= cbKey))
     {
-        sprintf(pszKey, Utopia_ToKey(ixUtopia), pszName2);
+        rc = sprintf_s(pszKey, cbKey, Utopia_ToKey(ixUtopia), pszName2);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     else if (Utopia_IsNamed2Config(ixUtopia) && Utopia_IsNameForKey(ixUtopia) &&
              (iKeyLength + strlen(pszName1) + strlen(pszName2) - 3 <= cbKey))
     {
-        sprintf(pszKey, Utopia_ToKey(ixUtopia), pszName1, pszName2);
+        rc = sprintf_s(pszKey, cbKey, Utopia_ToKey(ixUtopia), pszName1, pszName2);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     else
     {
@@ -964,7 +1002,8 @@ static int s_UtopiaValue_FormatNamespaceKey(UtopiaContext* pCtx, UtopiaValue ixU
         {
             return 0;
         }
-        strcpy(pszNamespace, pszName1);
+        rc = strcpy_s(pszNamespace, cbNamespace, pszName1);
+        ERR_CHK(rc);
     }
     return 1;
 }
@@ -1434,6 +1473,7 @@ static int s_UtopiaTransact_GetAll(UtopiaContext* pUtopiaCtx, char* pszBuffer, u
     char pState[UTOPIA_STATE_SIZE];
     int iSize;
     UtopiaTransact_Node* pNode;
+    errno_t rc = -1;
 
     /* Zero out the buffer */
     memset(pszBuffer, 0, ccbBuf);
@@ -1457,11 +1497,23 @@ static int s_UtopiaTransact_GetAll(UtopiaContext* pUtopiaCtx, char* pszBuffer, u
 
         if (pNode->pszNamespace != 0)
         {
-            j = sprintf(pszBuffer, "%s::%s=%s\n", pNode->pszNamespace, pNode->pszKey, pNode->pszValue);
+            rc = sprintf_s(pszBuffer, ccbBuf, "%s::%s=%s\n", pNode->pszNamespace, pNode->pszKey, pNode->pszValue);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+                return 0;
+            }
+            j = rc;
         }
         else
         {
-            j = sprintf(pszBuffer, "%s=%s\n", pNode->pszKey, pNode->pszValue);
+            rc = sprintf_s(pszBuffer, ccbBuf, "%s=%s\n", pNode->pszKey, pNode->pszValue);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+                return 0;
+            }
+            j = rc;
         }
 
         pszBuffer += j;
@@ -1519,11 +1571,23 @@ static int s_UtopiaTransact_GetAll(UtopiaContext* pUtopiaCtx, char* pszBuffer, u
 
                 if (pszNamespace != 0)
                 {
-                    j = sprintf(pszBuffer, "%s::%s=%s\n", pszNamespace, pszKey, pszValue);
+                    rc = sprintf_s(pszBuffer, ccbBuf, "%s::%s=%s\n", pszNamespace, pszKey, pszValue);
+                    if(rc < EOK)
+                    {
+                        ERR_CHK(rc);
+                        return 0;
+                    }
+                    j = rc;
                 }
                 else
                 {
-                    j = sprintf(pszBuffer, "%s=%s\n", pszKey, pszValue);
+                    rc = sprintf_s(pszBuffer, ccbBuf, "%s=%s\n", pszKey, pszValue);
+                    if(rc < EOK)
+                    {
+                        ERR_CHK(rc);
+                        return 0;
+                    }
+                    j = rc;
                 }
 
                 pszBuffer += j;
@@ -1588,6 +1652,7 @@ static int s_UtopiaValue_GetKey(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia,
 {
     char pszKey[UTOPIA_KEY_NS_SIZE] = {'\0'};
     char pszNS[UTOPIA_KEY_NS_SIZE] = {'\0'};
+    errno_t rc = -1;
 
     if (pUtopiaCtx == 0 || pszValue == 0)
     {
@@ -1611,11 +1676,21 @@ static int s_UtopiaValue_GetKey(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia,
 
     if (*pszNS != '\0')
     {
-        sprintf(pszValue, "%s::%s", pszNS, pszKey);
+        rc = sprintf_s(pszValue, ccbBuf, "%s::%s", pszNS, pszKey);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     else
     {
-        sprintf(pszValue, "%s", pszKey);
+        rc = sprintf_s(pszValue, ccbBuf, "%s", pszKey);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+            return 0;
+        }
     }
     return 1;
 }

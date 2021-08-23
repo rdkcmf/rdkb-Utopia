@@ -152,7 +152,12 @@ void print_uptime(char *uptimeLog, char *bootfile, char *uptime)
 	}
 	/* telemetry 2.0 ends */
 
-	sprintf(l_cLocalTime, "%02d:%02d:%02d",l_sTimeInfo->tm_hour, l_sTimeInfo->tm_min, l_sTimeInfo->tm_sec);
+	rc = sprintf_s(l_cLocalTime, sizeof(l_cLocalTime), "%02d:%02d:%02d",l_sTimeInfo->tm_hour, l_sTimeInfo->tm_min, l_sTimeInfo->tm_sec);
+	if( rc < EOK )
+	{
+	   ERR_CHK(rc);
+	   return;
+	}
 
 	if(bootfile != NULL)
 	{

@@ -56,6 +56,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include "secure_wrapper.h"
+#include "safec_lib_common.h"
 
 #define _NFQ_DEBUG_LEVEL 0
 #define PARCON_IP_PATH "/var/parcon/"
@@ -456,6 +457,7 @@ static void getIFMac(char *interface, char *mac){
     int s;
     struct ifreq buffer;
     int ret = -1;
+    errno_t safec_rc = -1;
     do{
         s = socket(PF_INET, SOCK_DGRAM, 0);
 	/* CID 65152: Argument cannot be negative */
@@ -464,12 +466,15 @@ static void getIFMac(char *interface, char *mac){
 	   return;
         }
         memset(&buffer, 0x00, sizeof(buffer));
-        strcpy(buffer.ifr_name, interface);
+        safec_rc = strcpy_s(buffer.ifr_name, sizeof(buffer.ifr_name),interface);
+        ERR_CHK(safec_rc);
         ret = ioctl(s, SIOCGIFHWADDR, &buffer);
         close(s);
         sleep(5);
     }while(ret != 0);
-    strcpy(mac, (void *)ether_ntoa((struct ether_addr *)(buffer.ifr_hwaddr.sa_data)));
+    // Here mac is pointer is pointing to srcMac[20] global array
+    safec_rc = strcpy_s(mac, sizeof(srcMac),(void *)ether_ntoa((struct ether_addr *)(buffer.ifr_hwaddr.sa_data)));
+    ERR_CHK(safec_rc);
 }
 //skeleton to connect to iptables NFQUEUE argv[1]
 //argv[2] query:intercept dns query, response:intercept dns response

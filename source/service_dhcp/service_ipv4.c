@@ -26,6 +26,7 @@
 #include "lan_handler.h"
 #include "print_uptime.h"
 #include <telemetry_busmessage_sender.h>
+#include "safec_lib_common.h"
 
 #define THIS            "/usr/bin/service_dhcp"
 #define LAN_IF_NAME     "brlan0"
@@ -318,7 +319,7 @@ void sync_tsip_asn ()
     unsigned int *l_iTs_Asn_Ins = NULL; 
 	char* l_cpPsm_Get = NULL;
 	int l_iRet_Val = 0, l_iCIDR, l_iIter;
-
+    errno_t safec_rc = -1;
     l_iRet_Val = PSM_VALUE_GET_INS(IPV4_TSIP_ASNPREFIX, &l_iTs_Asn_Count, &l_iTs_Asn_Ins);
     if(l_iRet_Val == CCSP_SUCCESS)
 	{
@@ -386,9 +387,12 @@ void sync_tsip_asn ()
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
  	
-    	        sprintf(l_cPsm_Parameter,"%s%d.%s", 
+    	        safec_rc = sprintf_s(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s", 
 						IPV4_TSIP_ASNPREFIX, l_iTs_Asn_Ins[l_iIter], 
 						IPV4_TSIP_SUBNET);
+                if(safec_rc < EOK){
+                    ERR_CHK(safec_rc);
+                }
 
         	    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
             	if (l_iRet_Val == 0)

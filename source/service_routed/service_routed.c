@@ -52,6 +52,7 @@
 #include <stdbool.h>
 #include <net/if.h>
 #include <signal.h>
+#include "safec_lib_common.h"
 
 #if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) || defined (_CBR2_PRODUCT_REQ_)
 #include <sys/stat.h>
@@ -1014,6 +1015,7 @@ char *token = NULL;
 char *pt;
 char pref_rx[16];
 int pref_len = 0;
+errno_t  rc = -1;
 memset(out,0,sizeof(out));
 memset(pref_rx,0,sizeof(pref_rx));
 sysevent_get(sefd, setok,"lan_prefix_v6", pref_rx, sizeof(pref_rx));
@@ -1062,8 +1064,11 @@ if(!strncmp(out,"true",strlen(out)))
                 #endif 
         	fprintf(fp, "interface %s\n", interface_name);
         	fprintf(fp, "   no ipv6 nd suppress-ra\n");
-		memset(cmd,0,sizeof(cmd));
-		sprintf(cmd, "%s%s",interface_name,"_ipaddr_v6");
+		rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6");
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
 		memset(prefix,0,sizeof(prefix));
 		sysevent_get(sefd, setok, cmd, prefix, sizeof(prefix));
         	if (strlen(prefix) != 0)

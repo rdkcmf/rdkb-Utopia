@@ -40,6 +40,7 @@
 #include "hnap12.h"
 #include "hotspot.h"
 #include "utctx_api.h"
+#include "safec_lib_common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -777,13 +778,23 @@ static int s_HNAP12_WLan_Set_KeyRenewal(HDK_MOD_MethodContext* pMethodCtx, HDK_X
     char pszBuffer[UTOPIA_BUF_SIZE] = {'\0'};
     char pszRenewal[20] = {'\0'};
     int* piRenewal;
+    errno_t safec_rc = -1;
 
     Utopia_GetNamed(pUTCtx(pMethodCtx), UtopiaValue_WLAN_SecurityMode, pszPrefix, pszBuffer, sizeof(pszBuffer));
 
-    if ((piRenewal = HDK_XML_Get_Int(pStruct, HNAP12_Element_PN_KeyRenewal)) != 0 &&
-        (sprintf(pszRenewal, "%d", *piRenewal) >= 0) &&
-        ((*piRenewal >= 600 && *piRenewal <= 7200) ||
-         (strcmp(pszBuffer, "disabled") == 0 && *piRenewal < 600)))
+    piRenewal = HDK_XML_Get_Int(pStruct, HNAP12_Element_PN_KeyRenewal);
+    if (! piRenewal) {
+        return 0;
+    }
+    safec_rc = sprintf_s(pszRenewal, sizeof(pszRenewal),"%d", *piRenewal);
+    if(safec_rc < EOK)
+    {
+       ERR_CHK(safec_rc);
+       return 0;
+    }
+
+    if ((*piRenewal >= 600 && *piRenewal <= 7200) ||
+         (strcmp(pszBuffer, "disabled") == 0 && *piRenewal < 600))
     {
         return Utopia_SetNamed(pUTCtx(pMethodCtx), UtopiaValue_WLAN_KeyRenewal, pszPrefix, pszRenewal);
     }
@@ -847,10 +858,20 @@ static int s_HNAP12_WLan_Set_RadiusPort1(HDK_MOD_MethodContext* pMethodCtx, HDK_
 {
     char pszPort[12] = {'\0'};
     int* piPort;
+    errno_t safec_rc = -1;
 
-    if ((piPort = HDK_XML_Get_Int(pStruct, HNAP12_Element_PN_RadiusPort1)) != 0 &&
-        (sprintf(pszPort, "%d", *piPort) >= 0) &&
-        (*piPort >= 0 && *piPort <= 65535))
+    piPort = HDK_XML_Get_Int(pStruct, HNAP12_Element_PN_RadiusPort1);
+    if (! piPort) {
+        return 0;
+    }
+    safec_rc = sprintf_s(pszPort, sizeof(pszPort),"%d", *piPort);
+    if(safec_rc < EOK)
+    {
+       ERR_CHK(safec_rc);
+       return 0;
+    }
+
+    if (*piPort >= 0 && *piPort <= 65535)
     {
         return Utopia_SetNamed(pUTCtx(pMethodCtx), UtopiaValue_WLAN_RadiusPort, pszPrefix, pszPort);
     }
@@ -1080,16 +1101,27 @@ static int s_HNAP12_WLan_Set_Channel(HDK_MOD_MethodContext* pMethodCtx, HDK_XML_
 {
     char pszChannel[12] = {'\0'};
     int* piChannel;
+    errno_t safec_rc = -1;
 
     if ((piChannel = HDK_XML_Get_Int(pStruct, HNAP12_Element_PN_Channel)) != 0)
     {
         if (*piChannel == 0)
         {
-            strcpy(pszChannel, "auto");
+            safec_rc = strcpy_s(pszChannel, sizeof(pszChannel),"auto");
+            if(safec_rc != EOK)
+            {
+               ERR_CHK(safec_rc);
+               return 0;
+            }
         }
         else
         {
-            sprintf(pszChannel, "%d", *piChannel);
+            safec_rc = sprintf_s(pszChannel, sizeof(pszChannel),"%d", *piChannel);
+            if(safec_rc < EOK)
+            {
+               ERR_CHK(safec_rc);
+               return 0;
+            }
         }
 
         return Utopia_SetNamed(pUTCtx(pMethodCtx), UtopiaValue_WLAN_Channel, pszPrefix, pszChannel);
@@ -1250,6 +1282,7 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
     /* Variables used by a number of cases, declared here to save typing */
     char pszBuffer[UTOPIA_BUF_SIZE] = {'\0'};
     HDK_XML_IPAddress ipAddress = {0,0,0,0};
+    errno_t safec_rc = -1;
 
     switch(value)
     {
@@ -1348,8 +1381,15 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
                 Utopia_Get(pUTCtx(pMethodCtx), UtopiaValue_ModelRevision, pszBuffer, sizeof(pszBuffer));
                 Utopia_Get(pUTCtx(pMethodCtx), UtopiaValue_FirmwareVersion, pszVersion, sizeof(pszBuffer));
 
-                if (sscanf(pszVersion, "%d.%d.%d", &x, &y, &z) == 3 &&
-                    sprintf(pszBuffer, "%s.%02d build %d%d", pszBuffer, x, y, z) > 0)
+                if (sscanf(pszVersion, "%d.%d.%d", &x, &y, &z) == 3 )
+                {
+                    safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%s.%02d build %d%d", pszBuffer, x, y, z);
+                    if(safec_rc < EOK)
+                    {
+                       ERR_CHK(safec_rc);
+                    }
+                }
+                if(safec_rc > 0 )
                 {
                     pMember = HDK_XML_Set_String(pStruct, element, pszBuffer);
                 }
@@ -1608,7 +1648,12 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
                                 FILE* fdWlRssi;
 
                                 /* Format the wl command */
-                                sprintf(pszCmd, "wl -i %s rssi ", WIFI_RADIO_ETHIF(ixRadio));
+                                safec_rc = sprintf_s(pszCmd, sizeof(pszCmd),"wl -i %s rssi ", WIFI_RADIO_ETHIF(ixRadio));
+                                if(safec_rc < EOK)
+                                {
+                                   ERR_CHK(safec_rc);
+                                   continue;
+                                }
                                 HDK_Util_MACToStr(pszCmd + strlen(pszCmd), pMAC);
 
                                 /* Spawn a process with the wl command */
@@ -2656,8 +2701,11 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
 
                     if (wanIP.a || wanIP.b || wanIP.c || wanIP.d)
                     {
-                        sprintf(pszCmd, "/sbin/route -n | grep %u.%u.%u 2> /dev/null", wanIP.a, wanIP.b, wanIP.c);
-
+                        safec_rc = sprintf_s(pszCmd, sizeof(pszCmd),"/sbin/route -n | grep %u.%u.%u 2> /dev/null", wanIP.a, wanIP.b, wanIP.c);
+                        if(safec_rc < EOK)
+                        {
+                           ERR_CHK(safec_rc);
+                        }
                         /* Spawn process to get the netmask */
                         fp = popen(pszCmd, "r");
                         if (fp != 0)
@@ -2863,6 +2911,7 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
     /* Variables used by a number of cases, declared here to save typing */
     char pszBuffer[UTOPIA_BUF_SIZE] = {'\0'};
     char* pszStr;
+    errno_t safec_rc = -1;
 
     switch(value)
     {
@@ -2939,7 +2988,8 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                             if (*pfAutoDST &&
                                 g_TimezoneMap[i].pszDT != 0)
                             {
-                                strcat(pszBuffer, g_TimezoneMap[i].pszDT);
+                                safec_rc = strcat_s(pszBuffer, sizeof(pszBuffer),g_TimezoneMap[i].pszDT);
+                                ERR_CHK(safec_rc);
                             }
 
                             iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_TZ, pszBuffer) &&
@@ -3043,7 +3093,11 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                             ++i <= 10)
                         {
                             /* Create a unique namespace key */
-                            sprintf(pszBuffer, "spf_%d", i);
+                            safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"spf_%d", i);
+                            if(safec_rc < EOK)
+                            {
+                               ERR_CHK(safec_rc);
+                            }
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SinglePortForward, i, pszBuffer);
 
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Enabled, i, "1");
@@ -3052,13 +3106,25 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Name, i, pszDescription);
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_Protocol, i, (*pEnum == HNAP12_Enum_PN_IPProtocol_TCP ? "tcp" : "udp"));
 
-                            sprintf(pszBuffer, "%d", *piExtPort);
+                            safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%d", *piExtPort);
+                            if(safec_rc < EOK)
+                            {
+                               ERR_CHK(safec_rc);
+                            }
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_ExternalPort, i, pszBuffer);
 
-                            sprintf(pszBuffer, "%d", *piIntPort);
+                            safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%d", *piIntPort);
+                            if(safec_rc < EOK)
+                            {
+                               ERR_CHK(safec_rc);
+                            }
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_InternalPort, i, pszBuffer);
 
-                            sprintf(pszBuffer, "%u", pIPAddress->d);
+                            safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%u", pIPAddress->d);
+                            if(safec_rc < EOK)
+                            {
+                               ERR_CHK(safec_rc);
+                            }
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_SPF_ToIp, i, pszBuffer);
                         }
                         else
@@ -3070,7 +3136,11 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                     if (iReturn)
                     {
                         /* Update the SinglePortForwardCount */
-                        sprintf(pszBuffer, "%d", i);
+                        safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%d", i);
+                        if(safec_rc < EOK)
+                        {
+                          ERR_CHK(safec_rc);
+                        }
                         iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_Firewall_SPFCount, pszBuffer);
                     }
                 }
@@ -3131,14 +3201,22 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                             (pMacAddr->a || pMacAddr->b || pMacAddr->c ||
                              pMacAddr->d || pMacAddr->e || pMacAddr->f) &&
                             HDK_Util_MACToStr(pszMacAddr, pMacAddr) &&
-                            ++iMACListCount <= 32 &&
-                            sprintf(pszBuffer, "%s%s", pszBuffer, pszMacAddr) >= 0)
+                            ++iMACListCount <= 32 )
+                        {
+                           safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%s%s", pszBuffer, pszMacAddr);
+                           if(safec_rc < EOK)
+                           {
+                              ERR_CHK(safec_rc);
+                           }
+                        }
+                        if(safec_rc >= 0)
                         {
 
                             /* If this is not the last one, concatenate the delimeter */
                             if (pmMacInfo->pNext)
                             {
-                                strcat(pszBuffer, " ");
+                                safec_rc = strcat_s(pszBuffer, sizeof(pszBuffer)," ");
+                                ERR_CHK(safec_rc);
                             }
                         }
                         else
@@ -3208,8 +3286,15 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
 
                 if ((piLeaseTime = HDK_XML_Get_Int(pStruct, element)) != 0 &&
                      *piLeaseTime >= 1 &&
-                     *piLeaseTime <= 9999 &&
-                     sprintf(pszBuffer, "%dm", *piLeaseTime) >= 0)
+                     *piLeaseTime <= 9999 )
+                {
+                     safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%dm", *piLeaseTime);
+                     if(safec_rc < EOK)
+                     {
+                        ERR_CHK(safec_rc);
+                     }
+                }
+                if(safec_rc >= 0)
                 {
                     iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_DHCP_LeaseTime, pszBuffer);
                 }
@@ -3221,8 +3306,16 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
             {
                 HDK_XML_IPAddress* pIPFirst;
 
-                if ((pIPFirst = HDK_XML_Get_IPAddress(pStruct, element)) != 0 &&
-                    sprintf(pszBuffer, "%u", (unsigned int)pIPFirst->d) >= 0)
+                if ((pIPFirst = HDK_XML_Get_IPAddress(pStruct, element)) != 0 )
+                {
+                   safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%u", (unsigned int)pIPFirst->d);
+                   if(safec_rc < EOK)
+                   {
+                      ERR_CHK(safec_rc);
+                   }
+                }
+
+                if(safec_rc >= 0)
                 {
                     iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_DHCP_Start, pszBuffer);
                 }
@@ -3237,8 +3330,15 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                 Utopia_Get(pUTCtx(pMethodCtx), UtopiaValue_DHCP_Start, pszBuffer, sizeof(pszBuffer));
                 iFirstIPOctet = atoi(pszBuffer);
 
-                if ((pIPLast = HDK_XML_Get_IPAddress(pStruct, element)) != 0 &&
-                    sprintf(pszBuffer, "%u", (unsigned int)(pIPLast->d - iFirstIPOctet + 1)) >= 0)
+                if ((pIPLast = HDK_XML_Get_IPAddress(pStruct, element)) != 0 )
+                {
+                   safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%u", (unsigned int)(pIPLast->d - iFirstIPOctet + 1));
+                   if(safec_rc < EOK)
+                   {
+                      ERR_CHK(safec_rc);
+                   }
+                }
+                if(safec_rc >= 0)
                 {
                     iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_DHCP_Num, pszBuffer);
                 }
@@ -3265,8 +3365,15 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                         if ((psDHCP = HDK_XML_GetMember_Struct(pmDHCP)) != 0 &&
                             (pIpAddr = HDK_XML_Get_IPAddress(psDHCP, HNAP12_Element_PN_IPAddress)) != 0 &&
                             (pMacAddr = HDK_XML_Get_MACAddress(psDHCP, HNAP12_Element_PN_MacAddress)) != 0 &&
-                            HDK_Util_MACToStr(pszMacAddr, pMacAddr) != 0 &&
-                            sprintf(pszDHCP, "%s,%u", pszMacAddr, (unsigned int)pIpAddr->d) >= 0)
+                            HDK_Util_MACToStr(pszMacAddr, pMacAddr) != 0 )
+	                    {
+                            safec_rc = sprintf_s(pszDHCP, sizeof(pszDHCP),"%s,%u", pszMacAddr, (unsigned int)pIpAddr->d);
+                            if(safec_rc < EOK)
+                            {
+                               ERR_CHK(safec_rc);
+                            }
+                        }
+                        if(safec_rc >= 0)
                         {
                             ++iCount;
                             Utopia_SetIndexed(pUTCtx(pMethodCtx), UtopiaValue_DHCP_StaticHost, iCount, pszDHCP);
@@ -3274,7 +3381,11 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                     }
 
                     /* Set the dhcp reservation count */
-                    sprintf(pszDHCP, "%d", iCount);
+                    safec_rc = sprintf_s(pszDHCP, sizeof(pszDHCP),"%d", iCount);
+                    if(safec_rc < EOK)
+                    {
+                       ERR_CHK(safec_rc);
+                    }
                     iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_DHCP_NumStaticHosts, pszDHCP);
                 }
             }
@@ -3322,7 +3433,11 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
 
                 if ((piRemotePort = HDK_XML_Get_Int(pStruct, element)) != 0)
                 {
-                    sprintf(pszBuffer, "%d", *piRemotePort);
+                    safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%d", *piRemotePort);
+                    if(safec_rc < EOK)
+                    {
+                       ERR_CHK(safec_rc);
+                    }
 
                     iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_Mgmt_WANHTTPPort, pszBuffer);
                 }
@@ -3423,8 +3538,11 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                 {
                     /* Convert to minutes */
                     *piMaxIdleTime /= 60;
-                    sprintf(pszBuffer, "%d", *piMaxIdleTime);
-
+                    safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%d", *piMaxIdleTime);
+                    if(safec_rc < EOK)
+                    {
+                       ERR_CHK(safec_rc);
+                    }
                     iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_WAN_PPPIdleTime, pszBuffer);
                 }
             }
@@ -3605,7 +3723,11 @@ static int s_HNAP12_SRV_Device_ADISet(HDK_MOD_MethodContext* pMethodCtx, HDK_SRV
                         }
                     }
 
-                    sprintf(pszBuffer, "%d", *piMTU);
+                    safec_rc = sprintf_s(pszBuffer, sizeof(pszBuffer),"%d", *piMTU);
+                    if(safec_rc < EOK)
+                    {
+                       ERR_CHK(safec_rc);
+                    }
                     iReturn = Utopia_Set(pUTCtx(pMethodCtx), UtopiaValue_WAN_MTU, pszBuffer);
                 }
             }

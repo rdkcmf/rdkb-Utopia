@@ -42,34 +42,34 @@
 #include "utapi_util.h"
 #include "utapi_wlan.h"
 #include "DM_TR181.h"
-
+#include "safec_lib_common.h"
 
 int Utopia_GetMocaIntf_Static(void *str_handle)
 {
     Obj_Device_MoCA_Interface_i_static *deviceMocaIntfStatic = NULL;
-    char buf[BUF_SZ] = {'\0'};
+    errno_t  rc = -1;
 
     if (str_handle == NULL) {
-	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_ARGS;
     }
     deviceMocaIntfStatic = (Obj_Device_MoCA_Interface_i_static *)str_handle;
 
-    sprintf(buf, "mocacfg %s > %s", "moca0", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 moca", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 mac", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 phy", MOCACFG_FILE_NAME);
-    system(buf);
-
+    system("mocacfg moca0 > " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 moca >> " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 mac >> " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 phy >> " MOCACFG_FILE_NAME);
     if(Utopia_Get_TR181_Device_MoCA_Interface_i_Static(deviceMocaIntfStatic) != SUCCESS){
-	sprintf(ulog_msg, "%s: Error in MoCA_Intf_GET !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in MoCA_Intf_GET !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_ITEM_NOT_FOUND;
     }
@@ -80,29 +80,30 @@ int Utopia_GetMocaIntf_Static(void *str_handle)
 int Utopia_GetMocaIntf_Dyn(void *str_handle)
 {
     Obj_Device_MoCA_Interface_i_dyn *deviceMocaIntfDyn = NULL;
-    char buf[BUF_SZ];
+    errno_t  rc = -1;
     
     if (str_handle == NULL) {
-	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_ARGS;
     }
     deviceMocaIntfDyn = (Obj_Device_MoCA_Interface_i_dyn*)str_handle;
 
-    sprintf(buf, "mocacfg %s > %s", "moca0", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 moca", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 mac", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 phy", MOCACFG_FILE_NAME);
-    system(buf);
+    system("mocacfg moca0 > " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 moca >> " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 mac >> " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 phy >> " MOCACFG_FILE_NAME);
 
     if(Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(deviceMocaIntfDyn) != SUCCESS){
-	sprintf(ulog_msg, "%s: Error in MoCA_Intf_GET !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in MoCA_Intf_GET !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_ITEM_NOT_FOUND;
     }
@@ -115,9 +116,14 @@ int Utopia_GetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
     Obj_Device_MoCA_Interface_i_cfg *deviceMocaIntfCfg = NULL;
     int iVal = -1;
     char buf[64] = {'\0'};
+    errno_t  rc = -1;
     
     if (!pCtx || !str_handle) {
-	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_ARGS;
     }
@@ -159,9 +165,14 @@ int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
     char buf[64] = {'\0'};
     char cmd[128] = {'\0'};
     char key_val[64] = {'\0'};
+    errno_t  rc = -1;
     
     if (!pCtx || !str_handle) {
-	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+	if(rc < EOK)
+	{
+	   ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_ARGS;
     }
@@ -177,30 +188,47 @@ int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
     }
 
     memset(cmd, 0, sizeof(cmd));
-    memset(buf, 0, sizeof(buf));
     if(deviceMocaIntfCfg->PreferredNC == FALSE)
-        strcpy(buf, "slave");
+    {
+        rc = strcpy_s(buf, sizeof(buf), "slave");
+        ERR_CHK(rc);
+    }
     else
-        strcpy(buf, "master");
+    {
+        rc = strcpy_s(buf, sizeof(buf), "master");
+        ERR_CHK(rc);
+    }
     Utopia_Set(pCtx, UtopiaValue_Moca_PreferredNC, buf);
-    sprintf(cmd, "mocacfg -s moca nc %s", buf);
+    rc = sprintf_s(cmd, sizeof(cmd), "mocacfg -s moca nc %s", buf);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(cmd);
 
     memset(cmd, 0, sizeof(cmd));
-    memset(buf, 0, sizeof(buf));
     if(deviceMocaIntfCfg->PrivacyEnabledSetting == FALSE)
-        strcpy(buf, "disable");
+    {
+        rc = strcpy_s(buf, sizeof(buf),"disable");
+        ERR_CHK(rc);
+    }
     else
-        strcpy(buf, "enable");
+    {
+        rc = strcpy_s(buf, sizeof(buf), "enable");
+        ERR_CHK(rc);
+    }
     Utopia_Set(pCtx, UtopiaValue_Moca_PrivEnabledSet, buf);
-    sprintf(cmd, "mocacfg -s moca privacy %s", buf);
+    rc = sprintf_s(cmd, sizeof(cmd), "mocacfg -s moca privacy %s", buf);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(cmd);
 
     Utopia_Set(pCtx, UtopiaValue_Moca_Alias, deviceMocaIntfCfg->Alias);
 
     memset(cmd, 0, sizeof(cmd));
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "%02X%02X%02X%02X%02X%02X%02X%02X", 
+    rc = sprintf_s(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X%02X%02X", 
                  deviceMocaIntfCfg->FreqCurrentMaskSetting[0],
 		 deviceMocaIntfCfg->FreqCurrentMaskSetting[1],
 		 deviceMocaIntfCfg->FreqCurrentMaskSetting[2],
@@ -210,36 +238,67 @@ int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
 		 deviceMocaIntfCfg->FreqCurrentMaskSetting[6],
 		 deviceMocaIntfCfg->FreqCurrentMaskSetting[7]
 	   );
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     buf[16] = '\0';
     Utopia_Set(pCtx, UtopiaValue_Moca_FreqCurMaskSet, buf);
     Utopia_RawSet(pCtx, NULL, "FreqMode", "manual");
     system("mocacfg -s moca fmode manual");
-    sprintf(cmd, "mocacfg -s moca fplan 0x%s", buf);
+    rc = sprintf_s(cmd, sizeof(cmd), "mocacfg -s moca fplan 0x%s", buf);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(cmd);
 
     memset(cmd, 0, sizeof(cmd));
     Utopia_Set(pCtx, UtopiaValue_Moca_KeyPassPhrase, deviceMocaIntfCfg->KeyPassphrase);
-    sprintf(cmd, "mocacfg -s moca ppassword %s", deviceMocaIntfCfg->KeyPassphrase);
+    rc = sprintf_s(cmd, sizeof(cmd), "mocacfg -s moca ppassword %s", deviceMocaIntfCfg->KeyPassphrase);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(cmd);
  
-    memset(cmd, 0, sizeof(cmd));
     Utopia_SetInt(pCtx, UtopiaValue_Moca_TxPowerLimit, deviceMocaIntfCfg->TxPowerLimit); 
-    sprintf(key_val, "%lu", deviceMocaIntfCfg->TxPowerLimit);
-    sprintf(cmd, "mocacfg -s moca maxtxpower %s", key_val);
+    rc = sprintf_s(key_val, sizeof(key_val), "%lu", deviceMocaIntfCfg->TxPowerLimit);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+    rc = sprintf_s(cmd, sizeof(cmd), "mocacfg -s moca maxtxpower %s", key_val);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(cmd);
 
-    memset(cmd, 0, sizeof(cmd));
-    memset(key_val, 0, sizeof(key_val));
     Utopia_SetInt(pCtx, UtopiaValue_Moca_PwrCntlPhyTarget, deviceMocaIntfCfg->PowerCntlPhyTarget);
-    sprintf(key_val, "%lu", deviceMocaIntfCfg->PowerCntlPhyTarget);
-    sprintf(cmd, "mocacfg -s moca phyrate %s", key_val);
+    rc = sprintf_s(key_val, sizeof(key_val), "%lu", deviceMocaIntfCfg->PowerCntlPhyTarget);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+    rc = sprintf_s(cmd, sizeof(cmd), "mocacfg -s moca phyrate %s", key_val);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(cmd);
 
-    memset(cmd, 0, sizeof(cmd));
-    memset(key_val, 0, sizeof(key_val));
     Utopia_SetInt(pCtx, UtopiaValue_Moca_BeaconPwrLimit, deviceMocaIntfCfg->BeaconPowerLimit);
-    sprintf(key_val, "%lu", deviceMocaIntfCfg->BeaconPowerLimit);
-    sprintf(cmd, "mocacfg -s moca bbackoff %s", key_val);
+    rc = sprintf_s(key_val, sizeof(key_val), "%lu", deviceMocaIntfCfg->BeaconPowerLimit);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+    rc = sprintf_s(cmd, sizeof(cmd), "mocacfg -s moca bbackoff %s", key_val);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(cmd);
 
     return UT_SUCCESS;
@@ -248,29 +307,30 @@ int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
 int Utopia_GetMocaIntf_AssociateDevice(void *str_handle, int count)
 {
     Obj_Device_MoCA_Interface_i_AssociatedDevice_i *mocaIntfAssociatedevice = NULL;
-    char buf[BUF_SZ] = {'\0'};
+    errno_t  rc = -1;
 
     if (str_handle == NULL) {
-        sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_ARGS;
     }
     mocaIntfAssociatedevice = (Obj_Device_MoCA_Interface_i_AssociatedDevice_i *)str_handle;
 
-    sprintf(buf, "mocacfg %s > %s", " moca0", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 moca", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 mac", MOCACFG_FILE_NAME);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf, "mocacfg %s >> %s", "-g moca0 phy", MOCACFG_FILE_NAME);
-    system(buf);
+    system("mocacfg moca0 > " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 moca >> " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 mac >> " MOCACFG_FILE_NAME);
+    system("mocacfg -g moca0 phy >> " MOCACFG_FILE_NAME);
 
     if(Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(mocaIntfAssociatedevice, count) != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in MoCA_Intf_AssociateDevice_GET !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in MoCA_Intf_AssociateDevice_GET !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_ITEM_NOT_FOUND;
     }

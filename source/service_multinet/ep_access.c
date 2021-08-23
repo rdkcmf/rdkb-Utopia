@@ -42,6 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "safec_lib_common.h"
 #ifdef MULTILAN_FEATURE
 #if defined (INTEL_PUMA7)
 #include <unistd.h>
@@ -99,6 +100,7 @@ int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
     char* ifToken, *dash;
     int curNumMembers = 0;
     char *saveptr1;
+    errno_t  rc = -1;
  
     snprintf(netmemberskey, sizeof(netmemberskey), MNET_EP_ALLMEMBERS_KEY_FORMAT(net->inst));
     
@@ -134,7 +136,9 @@ int ep_get_allMembers(PL2Net net, PMember live_members, int numMembers){
             live_members[curNumMembers].bTagging = 0;
         }
         live_members[curNumMembers].interface->map = NULL;
-        strcpy(live_members[curNumMembers++].interface->name, ifnamebuf);
+        rc = strcpy_s(live_members[curNumMembers].interface->name, sizeof(live_members[curNumMembers].interface->name), ifnamebuf);
+        ERR_CHK(rc);
+        curNumMembers++;
     }
     MNET_DEBUG("%s: Done tokenizing multinet_%d-allMembers\n" COMMA __FUNCTION__ COMMA net->inst);
 
@@ -207,6 +211,7 @@ int ep_get_bridge(int l2netinst, PL2Net net) {
     char keybuf[64];
     char valbuf[64];
     net->inst = l2netinst;
+    errno_t  rc = -1;
     
     snprintf(keybuf, sizeof(keybuf),  MNET_EP_BRIDGE_VID_FORMAT(l2netinst));
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive,keybuf, valbuf, sizeof(valbuf));
@@ -219,7 +224,8 @@ int ep_get_bridge(int l2netinst, PL2Net net) {
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive,keybuf, valbuf, sizeof(valbuf));
     
     if(strlen(valbuf) > 0) {
-        strcpy(net->name, valbuf);
+        rc = strcpy_s(net->name, sizeof(net->name), valbuf);
+        ERR_CHK(rc);
     }
     return 0;
 }

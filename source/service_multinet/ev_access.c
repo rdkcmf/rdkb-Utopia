@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <telemetry_busmessage_sender.h>
-
+#include "safec_lib_common.h"
 
 token_t sysevent_token_interactive;
 int sysevent_fd_interactive;
@@ -65,9 +65,11 @@ static void include_netInst(PL2Net net) {
     char* tok = NULL;
     int match = 0;
     int len = 0;
+    errno_t   rc  = -1;
     
     sysevent_get(sysevent_fd_interactive, sysevent_token_interactive, "multinet-instances", liveNetBuf, sizeof(liveNetBuf));
-    strcpy(outBuf, liveNetBuf);
+    rc = strcpy_s(outBuf, sizeof(outBuf), liveNetBuf);
+    ERR_CHK(rc);
     
     for(buf = liveNetBuf; (tok = strtok_r(buf, " ", &save)); buf = NULL) {
         if ( net->inst == atoi(tok) ) {

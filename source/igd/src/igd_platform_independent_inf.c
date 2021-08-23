@@ -103,6 +103,9 @@
 
 #include "pal_log.h"
 #include "igd_platform_independent_inf.h"
+#include "safec_lib_common.h"
+
+#define UPNP_LINE_SIZE       180
 
 int Utopia_UpdateDynPortMapping_WithoutFirewallRestart (int index, portMapDyn_t *pmap);
 /************************************************************
@@ -351,9 +354,10 @@ INT32 IGD_pii_get_possible_connection_types(IN INT32 WanDeviceIndex,
     (void) WanConnectionDeviceIndex;
     (void) WanConnectionServiceIndex;
     (void) ServiceType;
-
+    errno_t safec_rc = -1;
     if (ConnectionTypesList) {
-        strcpy(ConnectionTypesList, IPCONNTYPELIST);
+        safec_rc = strcpy_s(ConnectionTypesList, UPNP_LINE_SIZE ,IPCONNTYPELIST);
+        ERR_CHK(safec_rc);
     }
 
     return 0;
@@ -400,7 +404,7 @@ INT32 IGD_pii_get_connection_status(IN INT32 WanDeviceIndex,
     bzero(&wan, sizeof(wanConnectionStatus_t));
 
     UtopiaContext ctx;
-
+    errno_t safec_rc = -1;
     if (!Utopia_Init(&ctx)) {
         PAL_LOG("igd_platform", "debug", "%s: Error, in getting utctx object", __FUNCTION__);
         return 1;
@@ -414,19 +418,24 @@ INT32 IGD_pii_get_connection_status(IN INT32 WanDeviceIndex,
 
     switch (wan.status) {
     case WAN_CONNECTED:
-        strcpy(ConnectionStatus, "Connected");
+        safec_rc = strcpy_s(ConnectionStatus, UPNP_LINE_SIZE,"Connected");
+        ERR_CHK(safec_rc);
         break;
     case WAN_CONNECTING:
-        strcpy(ConnectionStatus, "Connecting");
+        safec_rc = strcpy_s(ConnectionStatus, UPNP_LINE_SIZE,"Connecting");
+        ERR_CHK(safec_rc);
         break;
     case WAN_DISCONNECTING:
-        strcpy(ConnectionStatus, "Disconnecting");
+        safec_rc = strcpy_s(ConnectionStatus, UPNP_LINE_SIZE,"Disconnecting");
+        ERR_CHK(safec_rc);
         break;
     case WAN_DISCONNECTED:
-        strcpy(ConnectionStatus, "Disconnected");
+        safec_rc =  strcpy_s(ConnectionStatus, UPNP_LINE_SIZE,"Disconnected");
+        ERR_CHK(safec_rc);
         break;
     default:
-        strcpy(ConnectionStatus, "Unconfigured");
+        safec_rc = strcpy_s(ConnectionStatus, UPNP_LINE_SIZE,"Unconfigured");
+        ERR_CHK(safec_rc);
     }
 
     return 0;
@@ -460,8 +469,9 @@ INT32 IGD_pii_get_connection_type(IN INT32 WanDeviceIndex,
     (void) WanConnectionDeviceIndex;
     (void) WanConnectionServiceIndex;
     (void) ServiceType;
-
-    strcpy(ConnectionType, "IP_Routed");
+    errno_t safec_rc = -1;
+    safec_rc = strcpy_s(ConnectionType, UPNP_LINE_SIZE,"IP_Routed");
+    ERR_CHK(safec_rc);
     return 0;
 }
 		
@@ -492,9 +502,9 @@ INT32 IGD_pii_set_connection_type(IN INT32 WanDeviceIndex,
     (void) WanConnectionDeviceIndex;
     (void) WanConnectionServiceIndex;
     (void) ServiceType;
-
-    strcpy(ipconntype, ConnType);
-
+    errno_t safec_rc = -1;
+    safec_rc = strcpy_s(ipconntype, sizeof(ipconntype),ConnType);
+    ERR_CHK(safec_rc);
     return 0;
 }	
 
@@ -663,9 +673,11 @@ INT32 IGD_pii_get_link_layer_max_bitrate(IN INT32 WanDeviceIndex,
     (void) WanConnectionDeviceIndex;
     (void) WanConnectionServiceIndex;
     (void) ServiceType;
-
-    strcpy(UpRate, "10000000");
-    strcpy(DownRate, "10000000");
+    errno_t safec_rc = -1;
+    safec_rc = strcpy_s(UpRate, UPNP_LINE_SIZE,"10000000");
+    ERR_CHK(safec_rc);
+    safec_rc = strcpy_s(DownRate, UPNP_LINE_SIZE,"10000000");
+    ERR_CHK(safec_rc);
     return 0;
 }
 
@@ -703,7 +715,7 @@ INT32 IGD_pii_get_up_time(IN INT32 WanDeviceIndex,
 
     bzero(&wan, sizeof(wanConnectionStatus_t));
     UtopiaContext ctx;
-
+    errno_t safec_rc = -1;
     if (!Utopia_Init(&ctx)) {
         PAL_LOG("igd_platform", "debug", "%s: Error, in getting utctx object", __FUNCTION__);
         return 1;
@@ -715,8 +727,10 @@ INT32 IGD_pii_get_up_time(IN INT32 WanDeviceIndex,
     }
     Utopia_Free(&ctx, 0);
 
-    sprintf(UpTime, "%ld", wan.uptime);
-
+    safec_rc = sprintf_s(UpTime, UPNP_LINE_SIZE,"%ld", wan.uptime);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     return 0;
 }
 
@@ -1054,6 +1068,7 @@ INT32 IGD_pii_get_portmapping_entry_generic( IN INT32 WanDeviceIndex,
      */
     UtopiaContext ctx;
     int rc = 0;
+    errno_t safec_rc = -1;
 
     if (Utopia_Init(&ctx)) {
         portMapDyn_t portmap;
@@ -1082,14 +1097,18 @@ INT32 IGD_pii_get_portmapping_entry_generic( IN INT32 WanDeviceIndex,
         strncpy(PortmappingEntry->description, portmap.name, PORT_MAP_DESCRIPTION_LEN);
         PortmappingEntry->leaseTime = portmap.lease;       
         if (portmap.protocol == TCP) {
-            strcpy(PortmappingEntry->protocol, "TCP");
+            safec_rc = strcpy_s(PortmappingEntry->protocol, sizeof(PortmappingEntry->protocol),"TCP");
+            ERR_CHK(safec_rc);
         } else {
-            strcpy(PortmappingEntry->protocol, "UDP");
+            safec_rc = strcpy_s(PortmappingEntry->protocol, sizeof(PortmappingEntry->protocol),"UDP");
+            ERR_CHK(safec_rc);
         } 
         PortmappingEntry->externalPort = portmap.external_port;
-        strcpy(PortmappingEntry->remoteHost, portmap.external_host); 
+        safec_rc = strcpy_s(PortmappingEntry->remoteHost, sizeof(PortmappingEntry->remoteHost),portmap.external_host);
+        ERR_CHK(safec_rc);
         PortmappingEntry->internalPort = portmap.internal_port;
-        strcpy(PortmappingEntry->internalClient, portmap.internal_host); 
+        safec_rc = strcpy_s(PortmappingEntry->internalClient, sizeof(PortmappingEntry->internalClient),portmap.internal_host);
+        ERR_CHK(safec_rc);		
 
         PAL_LOG("igd_platform", "debug", "%s: Lock released ", __FUNCTION__);
         Utopia_Free(&ctx, 0);
@@ -1139,7 +1158,7 @@ INT32 IGD_pii_get_portmapping_entry_specific( IN INT32 WanDeviceIndex,
      */
     UtopiaContext ctx;
     int rc = 1; 
-
+    errno_t safec_rc = -1;
     if (Utopia_Init(&ctx)) {
         int index;
         portMapDyn_t pmap;
@@ -1160,7 +1179,8 @@ INT32 IGD_pii_get_portmapping_entry_specific( IN INT32 WanDeviceIndex,
             strncpy(PortmappingEntry->description, pmap.name, PORT_MAP_DESCRIPTION_LEN);
             PortmappingEntry->leaseTime = pmap.lease;       
             PortmappingEntry->internalPort = pmap.internal_port;
-            strcpy(PortmappingEntry->internalClient, pmap.internal_host); 
+            safec_rc = strcpy_s(PortmappingEntry->internalClient, sizeof(PortmappingEntry->internalClient),pmap.internal_host);
+            ERR_CHK(safec_rc);
 
             rc = 0;
         } else {
@@ -1350,9 +1370,11 @@ INT32 IGD_pii_get_traffic_stats(IN INT32 WanDeviceIndex,
 INT32 IGD_pii_get_lan_dhcpserver_configurable(IN INT32 LanDeviceIndex, OUT CHAR *status)
 {
     (void) LanDeviceIndex;
-
+    errno_t safec_rc = -1;
     PAL_LOG("igd_platform", "debug", "%s: Enter ", __FUNCTION__);
-    strcpy(status, "0");
+    // Here status is pointer, It's pointing to the array size is 16 bytes
+    safec_rc = strcpy_s(status, 16,"0");
+    ERR_CHK(safec_rc);
     return 0;
 }
 
@@ -1373,9 +1395,11 @@ INT32 IGD_pii_get_lan_dhcpserver_configurable(IN INT32 LanDeviceIndex, OUT CHAR 
 INT32 IGD_pii_get_lan_dhcp_relay_status(IN INT32 LanDeviceIndex, OUT CHAR *status)
 {
     (void) LanDeviceIndex;
-
+    errno_t safec_rc = -1;
     PAL_LOG("igd_platform", "debug", "%s: Enter ", __FUNCTION__);
-    strcpy(status, "0");
+    // Here status is pointer, It's pointing to the array size is 16 bytes
+    safec_rc = strcpy_s(status, 16,"0");
+    ERR_CHK(safec_rc);
     return 0;
 }
 

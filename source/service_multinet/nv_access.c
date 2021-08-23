@@ -35,6 +35,7 @@
 #include "service_multinet_nv.h"
 #include <stdio.h>
 #include <string.h>
+#include "safec_lib_common.h"
 #if defined(_COSA_INTEL_XB3_ARM_) || defined(INTEL_PUMA7)
 #include "ccsp_custom.h"
 #include "ccsp_psm_helper.h"
@@ -343,6 +344,7 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
     int offset = 0;
     FILE* psmcliOut;
     char* ifToken = NULL, *dash = NULL;
+    errno_t  rc = -1;
     
     int actualNumMembers = 0;
     
@@ -370,8 +372,11 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
                     memberList[actualNumMembers].bTagging = 0;
                 }
                 memberList[actualNumMembers].interface->map = NULL; // No mapping has been performed yet
-                strcpy(memberList[actualNumMembers].interface->name, ifToken);
-                strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+                rc = strcpy_s(memberList[actualNumMembers].interface->name, sizeof(memberList[actualNumMembers].interface->name), ifToken);
+                ERR_CHK(rc);
+                rc = strcpy_s(memberList[actualNumMembers].interface->type->name, sizeof(memberList[actualNumMembers].interface->type->name), typeStrings[i]);
+                ERR_CHK(rc);
+                actualNumMembers++;
                 if (dash) *dash = '-'; // replace character just in case it would confuse strtok
                 
                 ifToken = strtok(NULL, "\" \n");
@@ -449,9 +454,12 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 					if(HomeIsolation_en == 0)
 					{
 						
-						strcpy(memberList[actualNumMembers].interface->name, ifToken);
+						rc = strcpy_s(memberList[actualNumMembers].interface->name, sizeof(memberList[actualNumMembers].interface->name), ifToken);
+						ERR_CHK(rc);
 						MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
-						strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+						rc = strcpy_s(memberList[actualNumMembers].interface->type->name, sizeof(memberList[actualNumMembers].interface->type->name), typeStrings[i]);
+						ERR_CHK(rc);
+						actualNumMembers++;
 					}
 					else
 					{
@@ -473,18 +481,24 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 						if(0 != strcmp(ifToken,"sw_5"))
 #endif
 						{
-							strcpy(memberList[actualNumMembers].interface->name, ifToken);
+							rc = strcpy_s(memberList[actualNumMembers].interface->name, sizeof(memberList[actualNumMembers].interface->name), ifToken);
+							ERR_CHK(rc);
 							MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
-							strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+							rc = strcpy_s(memberList[actualNumMembers].interface->type->name, sizeof(memberList[actualNumMembers].interface->type->name), typeStrings[i]);
+							ERR_CHK(rc);
+							actualNumMembers++;
 						}
 					}
 				}
 				else
 				{
 #endif
-					strcpy(memberList[actualNumMembers].interface->name, ifToken);
+					rc = strcpy_s(memberList[actualNumMembers].interface->name, sizeof(memberList[actualNumMembers].interface->name), ifToken);
+					ERR_CHK(rc);
 					MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
-					strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
+					rc = strcpy_s(memberList[actualNumMembers].interface->type->name, sizeof(memberList[actualNumMembers].interface->type->name), typeStrings[i]);
+					ERR_CHK(rc);
+					actualNumMembers++;
 #if defined(MOCA_HOME_ISOLATION)
 				}
 #endif
@@ -541,6 +555,7 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 
 	int  rc;
 	char *pStr = NULL;
+	errno_t  safec_rc = -1;
 
 	/* dbus init based on bus handle value */
 	if(bus_handle == NULL)
@@ -557,7 +572,8 @@ int nv_get_bridge(int l2netInst, PL2Net net)
 	rc = PSM_VALUE_GET_STRING(cmdBuff, pStr);
 	if(rc == CCSP_SUCCESS && pStr != NULL)
 	{
-		 strcpy(net->name, pStr);
+		 safec_rc = strcpy_s(net->name, sizeof(net->name), pStr);
+		 ERR_CHK(safec_rc);
 		 Ansc_FreeMemory_Callback(pStr);
 		 pStr = NULL;
 	} 

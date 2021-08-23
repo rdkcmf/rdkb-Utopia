@@ -58,6 +58,7 @@
 #define LOCAL_MOCABR_UP_FILE "/tmp/MoCABridge_up"
 #define MOCA_BRIDGE_IP "169.254.30.1"
 #endif
+#include "safec_lib_common.h"
 
 #ifdef MULTILAN_FEATURE
 /* Syscfg keys used for calculating mac addresses of local interfaces and bridges */
@@ -672,9 +673,12 @@ int multinet_ifStatusUpdate_ids(int l2netInst, char* ifname, char* ifType, char*
     NetInterface iface = {0};
     Member member = {0};
     L2Net net = {0};
+    errno_t  rc = -1;
     IF_STATUS ifStatus;
-    strcpy(type.name, ifType);
-    strcpy(iface.name, ifname);
+    rc = strcpy_s(type.name, sizeof(type.name), ifType);
+    ERR_CHK(rc);
+    rc = strcpy_s(iface.name, sizeof(iface.name), ifname);
+    ERR_CHK(rc);
     iface.type = &type;
     member.interface = &iface;
     

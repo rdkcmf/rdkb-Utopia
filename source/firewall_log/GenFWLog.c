@@ -46,6 +46,7 @@
 #include "syscfg/syscfg.h"
 #include "sysevent/sysevent.h"
 #include "autoconf.h"
+#include "safec_lib_common.h"
 #define _XOPEN_SOURCE
 #include <time.h>
 //#define _NO_MMAP__
@@ -282,13 +283,16 @@ int _anlz_ipt_rule(char* line, ipt_rule_t *ipt){
 int SiteBlocked_func(char *line, char *desp, char *key){
     char *c;
     int tmp;
+    errno_t safec_rc = -1;
 
     if(-1 == _get_key(line, key, STRING_SITE_BLOCKED))
         return -1;
 
     if(NULL != (c = strstr(line, "STRING match"))){
         c += strlen("STRING match");
-        memcpy(desp, STRING_KEYWORD, strlen(STRING_KEYWORD));
+        // Here desp is pointer, It's pointing to the array size is DESP_SIZE
+        safec_rc = strcpy_s(desp, DESP_SIZE, STRING_KEYWORD);
+        ERR_CHK(safec_rc);
         tmp = _memcpy_quotes(desp + strlen(STRING_KEYWORD), c, DESP_SIZE - strlen(STRING_KEYWORD) - 1);
         if(tmp != 0){
             tmp += strlen(STRING_KEYWORD);
@@ -298,7 +302,9 @@ int SiteBlocked_func(char *line, char *desp, char *key){
     }
     else if(NULL != (c = strstr(line, STRING_URL))){
         int tmp;
-        strcpy(desp, STRING_SITE);
+        // Here desp is pointer, It's pointing to the array size is DESP_SIZE
+        safec_rc = strcpy_s(desp, DESP_SIZE ,STRING_SITE);
+        ERR_CHK(safec_rc);
         tmp = _memcpy_2_graph(desp + strlen(STRING_SITE), c + strlen(STRING_URL), DESP_SIZE - strlen(STRING_SITE) -1);
         if(tmp != 0){
             tmp += strlen(STRING_SITE);
@@ -312,13 +318,17 @@ int SiteBlocked_func(char *line, char *desp, char *key){
 int DeviceBlocked_func(char *line, char *desp, char *key){
     char *c;
     int tmp;
+    errno_t safec_rc = -1;
 
     if(-1 == _get_key(line, key, STRING_DEVICE_BLOCKED))
         return -1;
 
     if( NULL != strstr(key, STRING_DEVICE_BLOCKED_ALL)){
-        strcpy(desp, "Blocked Unallowed Devices");
-        strcpy(key, STRING_DEVICE_BLOCKED_ALL);
+        // Here desp is pointer, It's pointing to the array size is DESP_SIZE
+        safec_rc = strcpy_s(desp, DESP_SIZE,"Blocked Unallowed Devices");
+        ERR_CHK(safec_rc);
+        safec_rc = strcpy_s(key, KEY_SIZE,STRING_DEVICE_BLOCKED_ALL);
+        ERR_CHK(safec_rc);
         return 0;
     }else if(NULL != (c = strstr(line, "MAC "))){
         c += strlen("MAC ");
@@ -430,6 +440,7 @@ int anlz_rule(char* line, rule_info_t *info){
     int get_count_flag = 0;
     static int flag = 0;
     static rule_info_t tmp;
+    errno_t safec_rc = -1;
 #define ARF_GET_NEXT_COUNT 1
 
     memset(info, 0, sizeof(rule_info_t));
@@ -452,7 +463,8 @@ int anlz_rule(char* line, rule_info_t *info){
         if(action_arry[i].get_desp != NULL){
             ret = action_arry[i].get_desp(line, info->desp, info->key);
             if(0 == ret){
-                strcpy(info->action, action_arry[i].action_name);
+                safec_rc = strcpy_s(info->action, sizeof(info->action),action_arry[i].action_name);
+                ERR_CHK(safec_rc);
                 info->count = count;
                 info->time[0] = '\0';
                 return 0;
@@ -462,7 +474,8 @@ int anlz_rule(char* line, rule_info_t *info){
                 /* So use the DROP rule count */
                 flag = ARF_GET_NEXT_COUNT; // we need get next rule's count
                 tmp = *info;
-                strcpy(tmp.action, action_arry[i].action_name);
+                safec_rc = strcpy_s(tmp.action, sizeof(tmp.action),action_arry[i].action_name);
+                ERR_CHK(safec_rc);
                 info->time[0] = '\0';
                 return -1;    
             }
@@ -484,6 +497,7 @@ char* get_old(FILE *fp, char* name){
     int flag = 0, index = 0;
     unsigned int old = 0xffffffff, cur;
     char fName[50] ;
+    errno_t safec_rc = -1;
     while(EOF != (c = fgetc(fp)))
     {
         if(c == ' ' || c == '\n'){
@@ -508,7 +522,10 @@ char* get_old(FILE *fp, char* name){
         cur = atoi(fName);
         old = (old > cur) ? cur : old;
     }
-    sprintf(name, "%08d", old);
+    safec_rc = sprintf_s(name, 20,"%08d", old);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     return name;
 }              
 
@@ -536,7 +553,11 @@ void clean_log(void){
             
                 if(count > LOG_FILE_COUNT_MAX){
                     fseek(fp, 0, SEEK_SET);
-                    sprintf(cmd, "rm %s/%s", FIREWALL_LOG_DIR, get_old(fp,name));
+                    safec_rc = sprintf_s(cmd, sizeof(cmd),"rm %s/%s", FIREWALL_LOG_DIR, get_old(fp,name));
+                    if(safec_rc < EOK)
+                    {
+                      ERR_CHK(safec_rc);
+                    }
                     printf("%s\n", cmd);
                     system(cmd);    
                     break;
@@ -613,6 +634,7 @@ void get_rule_time(int count){
     char today[32];
     int i = 0;
     rule_info_t *tbl = g_p_rule_tbl;
+    errno_t safec_rc = -1;
 #ifndef _NO_MMAP__
     int fd;
     struct stat statbuf;
@@ -622,7 +644,11 @@ void get_rule_time(int count){
     FILE *fd;
 #endif
     strftime(today, sizeof(today), "%b %d", g_ptime);
-    sprintf(cmd, "grep -h -e \"%s\"  %s %s  > %s 2>/dev/null", today, ORG_LOG_NAME_2, ORG_LOG_NAME_1, FW_ORG_LOG_NAME);
+    safec_rc = sprintf_s(cmd, sizeof(cmd),"grep -h -e \"%s\"  %s %s  > %s 2>/dev/null", today, ORG_LOG_NAME_2, ORG_LOG_NAME_1, FW_ORG_LOG_NAME);
+    if(safec_rc < EOK)
+    {
+        ERR_CHK(safec_rc);
+    }
 //    printf("%s\n", cmd);
     system(cmd);
 #ifdef _NO_MMAP__
@@ -744,16 +770,17 @@ int main(int argc, char** argv){
     size_t size;
     int opt = 0;
     rule_info_t rule;
-    char iptables_flage[8];
+    char *iptables_flage = "";
     char cmd[128];
     int i=0;
-    char fFlag[8];
+    char *fFlag = "w";
     char temp[100];
     int            sysevent_fd = -1;
     char          *sysevent_name = "GenFWLog";
     token_t        sysevent_token;
     unsigned short sysevent_port;
     char           sysevent_ip[19];
+    errno_t        safec_rc = -1;
 
     t=time(NULL);
     g_ptime=localtime(&t);
@@ -780,19 +807,24 @@ int main(int argc, char** argv){
 
     if(argc == 2 && !strcmp(argv[1], "-nz")){
         /* Don't clear iptables count */
-        iptables_flage[0] = '\0';
-        strcpy(fFlag, "w");
-        sprintf(fName, "%s/99999999", FIREWALL_LOG_DIR);
+        safec_rc = sprintf_s(fName, sizeof(fName),"%s/99999999", FIREWALL_LOG_DIR);
+        if(safec_rc < EOK)
+        {
+            ERR_CHK(safec_rc);
+        }
 		 opt = 3;
     }else if(argc == 2 && !strcmp(argv[1], "-c")){
         /* recoder iptabls rule and count in TEMP_FILE, but not generate log file */
-        iptables_flage[0] = '\0';
         opt = 1;    
     }else{
         /* Clear iptables count */
-        strcpy(iptables_flage, "-Z");
-        strcpy(fFlag, "r+");
-        sprintf(fName, "%s/%04d%02d%02d", FIREWALL_LOG_DIR, 1900 + g_ptime->tm_year, 1 + g_ptime->tm_mon, g_ptime->tm_mday);
+        iptables_flage = "-Z";
+        fFlag = "r+";
+        safec_rc = sprintf_s(fName, sizeof(fName),"%s/%04d%02d%02d", FIREWALL_LOG_DIR, 1900 + g_ptime->tm_year, 1 + g_ptime->tm_mon, g_ptime->tm_mday);
+        if(safec_rc < EOK)
+        {
+            ERR_CHK(safec_rc);
+        }
         if(argc == 2 && !strcmp(argv[1], "-gc")){
             opt = 2;    
         }
@@ -800,7 +832,11 @@ int main(int argc, char** argv){
 
     if( -1 == access(FIREWALL_LOG_DIR, 0))
     {
-         sprintf(temp, "mkdir -p %s", FIREWALL_LOG_DIR);
+        safec_rc = sprintf_s(temp, sizeof(temp),"mkdir -p %s", FIREWALL_LOG_DIR);
+        if(safec_rc < EOK)
+        {
+            ERR_CHK(safec_rc);
+        }
          system(temp);
     }
     
@@ -813,19 +849,35 @@ int main(int argc, char** argv){
     }
 
     if(opt != 2){
-        sprintf(cmd, "%s%s > %s", IPT_COUNT_CMD, iptables_flage, TEMP_FILE);
+        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s > %s", IPT_COUNT_CMD, iptables_flage, TEMP_FILE);
+        if(safec_rc < EOK)
+        {
+            ERR_CHK(safec_rc);
+        }
         printf("%s\n",cmd);
         system(cmd);
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
-        sprintf(cmd, "%s%s >> %s", IPT_NAT_COUNT_CMD , iptables_flage, TEMP_FILE);
+        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s >> %s", IPT_NAT_COUNT_CMD , iptables_flage, TEMP_FILE);
+        if(safec_rc < EOK)
+        {
+            ERR_CHK(safec_rc);
+        }
         printf("%s\n",cmd);
         system(cmd);
 #endif
-        sprintf(cmd, "%s%s >> %s", IP6T_COUNT_CMD, iptables_flage, TEMP_FILE);
+        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s >> %s", IP6T_COUNT_CMD, iptables_flage, TEMP_FILE);
+        if(safec_rc < EOK)
+        {
+            ERR_CHK(safec_rc);
+        }
         printf("%s\n",cmd);
         system(cmd);
 #if defined (CONFIG_CISCO_PARCON_WALLED_GARDEN) && defined(_HUB4_PRODUCT_REQ_)
-        sprintf(cmd, "%s%s >> %s", IP6T_NAT_COUNT_CMD , iptables_flage, TEMP_FILE);
+        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s >> %s", IP6T_NAT_COUNT_CMD , iptables_flage, TEMP_FILE);
+        if(safec_rc < EOK)
+        {
+            ERR_CHK(safec_rc);
+        }
         printf("%s\n",cmd);
         system(cmd);
 #endif

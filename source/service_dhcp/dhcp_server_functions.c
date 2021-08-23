@@ -32,6 +32,7 @@
 #include "util.h"
 #include "dhcp_server_functions.h"
 #include <telemetry_busmessage_sender.h>
+#include "safec_lib_common.h"
 
 #define HOSTS_FILE              "/etc/hosts"
 #define HOSTNAME_FILE           "/etc/hostname"
@@ -248,6 +249,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	int l_iCIDR;
 	
 	struct sockaddr_in l_sSocAddr;
+	errno_t safec_rc = -1;
 
     syscfg_get(NULL, "lan_ipaddr", l_cLanIPAddress, sizeof(l_cLanIPAddress));
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
@@ -256,8 +258,8 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 		fprintf(stderr, "[DHCPCORRUPT_TRACE] DHCP Net Mask:%s is corrupted. Setting to default Net Mask\n",
 				l_cLanNetMask);
 		//copy the default netmask
-		memset(l_cLanNetMask, 0, sizeof(l_cLanNetMask));
-		sprintf(l_cLanNetMask, "%s", "255.255.255.0");
+		safec_rc = strcpy_s(l_cLanNetMask, sizeof(l_cLanNetMask),"255.255.255.0");
+		ERR_CHK(safec_rc);
 		syscfg_set(NULL, "lan_netmask", l_cLanNetMask);
 		syscfg_commit();
 	}
@@ -307,7 +309,10 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
         fprintf(stderr, "DHCP Start Address:%s is not valid re-calculating it\n", l_cDhcp_Start);
         sscanf(l_cLanSubnet, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
         l_iLastOct = 2;
-        sprintf(l_cDhcp_Start, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);    
+        safec_rc = sprintf_s(l_cDhcp_Start, sizeof(l_cDhcp_Start),"%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+        if(safec_rc < EOK) {
+          ERR_CHK(safec_rc);
+        }
         syscfg_set(NULL, "dhcp_start", l_cDhcp_Start);
 	}
  	
@@ -360,7 +365,10 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
         {
             sscanf(l_cLanSubnet, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
             l_iLastOct = 253;
-            sprintf(l_cDhcp_End, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+            safec_rc = sprintf_s(l_cDhcp_End, sizeof(l_cDhcp_End),"%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+            if(safec_rc < EOK) {
+               ERR_CHK(safec_rc);
+            }
         }
         //Extract 1st 2 octets of the lan subnet and 
         //set the last remaining to 255.253 for the start address
@@ -370,7 +378,10 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
             l_iThirdOct = 255;
             l_iLastOct = 253;
 
-            sprintf(l_cDhcp_End, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+            safec_rc = sprintf_s(l_cDhcp_End, sizeof(l_cDhcp_End),"%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+            if(safec_rc < EOK) {
+               ERR_CHK(safec_rc);
+            }
         }
         //Extract 1st octet of the lan subnet and 
         //set the last remaining octets to 255.255.253 for the start address
@@ -381,7 +392,10 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
             l_iThirdOct = 255;
             l_iLastOct = 253;
 
-            sprintf(l_cDhcp_End, "%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+            safec_rc = sprintf_s(l_cDhcp_End, sizeof(l_cDhcp_End),"%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
+            if(safec_rc < EOK){
+               ERR_CHK(safec_rc);
+            }
         }
         else
         {
@@ -412,8 +426,13 @@ void prepare_dhcp_conf_static_hosts()
     char l_cHostLine[255] = {0}, l_cSyscfgCmd[32] = {0};
 	int l_iStatHostsNum, l_iIter;
     FILE *l_fLocalStatHosts = NULL;
+    errno_t safec_rc = -1;
 
-    sprintf(l_cLocalStatHosts, "/tmp/dhcp_static_hosts%d", getpid());
+    safec_rc = sprintf_s(l_cLocalStatHosts, sizeof(l_cLocalStatHosts),"/tmp/dhcp_static_hosts%d", getpid());
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+       return;
+    }
     l_fLocalStatHosts = fopen(l_cLocalStatHosts, "w+"); //It will create a file and open, re-write fresh RDK-B 12160
     if(NULL == l_fLocalStatHosts)
     {
@@ -425,7 +444,10 @@ void prepare_dhcp_conf_static_hosts()
 	
 	for (l_iIter = 1; l_iIter <= l_iStatHostsNum; l_iIter++)
 	{
-		sprintf(l_cSyscfgCmd, "dhcp_static_host_%d", l_iIter);
+		safec_rc = sprintf_s(l_cSyscfgCmd, sizeof(l_cSyscfgCmd),"dhcp_static_host_%d", l_iIter);
+		if(safec_rc < EOK){
+			ERR_CHK(safec_rc);
+		}
 		syscfg_get(NULL, l_cSyscfgCmd, l_cHostLine, sizeof(l_cHostLine));
 
 		fprintf(l_fLocalStatHosts, "%s,%s\n", l_cHostLine, g_cDhcp_Lease_Time);
@@ -442,8 +464,13 @@ void prepare_dhcp_options_wan_dns()
 	char *l_cToken = NULL, l_cNs[255] = {""};
 	FILE *l_fLocalDhcpOpt = NULL;
 	char pL_cNs[256];
+	errno_t safec_rc = -1;
 	
-	sprintf(l_cLocalDhcpOpt, "/tmp/dhcp_options%d", getpid());
+    safec_rc = sprintf_s(l_cLocalDhcpOpt, sizeof(l_cLocalDhcpOpt),"/tmp/dhcp_options%d", getpid());
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+       return;
+    }	
     l_fLocalDhcpOpt = fopen(l_cLocalDhcpOpt, "a+"); //It will create a file and open
     if(NULL == l_fLocalDhcpOpt) 
     {    
@@ -468,12 +495,18 @@ void prepare_dhcp_options_wan_dns()
 			{
 				if (0 != l_cNs[0])
 				{
-					sprintf(pL_cNs, "%s,%s", l_cNs, l_cToken);
+					safec_rc = sprintf_s(pL_cNs, sizeof(pL_cNs),"%s,%s", l_cNs, l_cToken);
+					if(safec_rc < EOK){
+						ERR_CHK(safec_rc);
+					}
 					strncpy(l_cNs, pL_cNs, strlen(pL_cNs));
 				}
 				else
 				{
-					sprintf(l_cNs, "%s", l_cToken);
+					safec_rc = sprintf_s(l_cNs, sizeof(l_cNs),"%s", l_cToken);
+					if(safec_rc < EOK){
+						ERR_CHK(safec_rc);
+					}
 				}
 				l_cToken = strtok(NULL, " ");
 			}
@@ -615,6 +648,7 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix, unsigned char bDhc
 	char l_cPools[8] = {0};
 	char *l_cToken = NULL;	
 	int l_iPool, l_iIpv4Inst;
+	errno_t safec_rc = -1;
     
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 				 "dhcp_server_current_pools", l_cPools, sizeof(l_cPools));
@@ -625,40 +659,64 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix, unsigned char bDhc
 		if (0 != l_cToken[0])
 		{
 			l_iPool = atoi(l_cToken);
-			sprintf(l_cSysevent_Cmd, "dhcp_server_%d_enabled", l_iPool);			
+			safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dhcp_server_%d_enabled", l_iPool);
+			if(safec_rc < EOK){
+				ERR_CHK(safec_rc);
+			}
     		sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 						 l_cSysevent_Cmd, l_cDhcpEnabled, sizeof(l_cDhcpEnabled));
 
 			if (!strncmp(l_cDhcpEnabled, "TRUE", 4))
 			{
-				sprintf(l_cSysevent_Cmd, "dhcp_server_%d_ipv4inst", l_iPool);
+				safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dhcp_server_%d_ipv4inst", l_iPool);
+				if(safec_rc < EOK){
+					ERR_CHK(safec_rc);
+				}
     			sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 							 l_cSysevent_Cmd, l_cIpv4Inst, sizeof(l_cIpv4Inst));
 				l_iIpv4Inst = atoi(l_cIpv4Inst);	
 				
-				sprintf(l_cSysevent_Cmd, "ipv4_%d-status", l_iIpv4Inst);	
+				safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"ipv4_%d-status", l_iIpv4Inst);
+				if(safec_rc < EOK){
+					ERR_CHK(safec_rc);
+				}	
     			sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 							 l_cSysevent_Cmd, l_cIpv4InstStatus, sizeof(l_cIpv4InstStatus));
 				
 				if (!strncmp(l_cIpv4InstStatus, "up", 2))
 				{
-					sprintf(l_cSysevent_Cmd, "dhcp_server_%d_startaddr", l_iPool);	
+					safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dhcp_server_%d_startaddr", l_iPool);
+					if(safec_rc < EOK){
+						ERR_CHK(safec_rc);
+					}
     				sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 								 l_cSysevent_Cmd, l_cDhcp_Start_Addr, sizeof(l_cDhcp_Start_Addr));
 
-					sprintf(l_cSysevent_Cmd, "dhcp_server_%d_endaddr", l_iPool);	
+					safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dhcp_server_%d_endaddr", l_iPool);
+					if(safec_rc < EOK){
+						ERR_CHK(safec_rc);
+					}		
     				sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 								 l_cSysevent_Cmd, l_cDhcp_End_Addr, sizeof(l_cDhcp_End_Addr));
 
-					sprintf(l_cSysevent_Cmd, "dhcp_server_%d_subnet", l_iPool);	
+					safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dhcp_server_%d_subnet", l_iPool);
+					if(safec_rc < EOK){
+						ERR_CHK(safec_rc);
+					}
     				sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 								 l_cSysevent_Cmd, l_cLan_Subnet, sizeof(l_cLan_Subnet));
 
-					sprintf(l_cSysevent_Cmd, "dhcp_server_%d_leasetime", l_iPool);	
+					safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dhcp_server_%d_leasetime", l_iPool);
+					if(safec_rc < EOK){
+						ERR_CHK(safec_rc);
+					}
     				sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 								 l_cSysevent_Cmd, l_cDhcp_Lease_Time, sizeof(l_cDhcp_Lease_Time));
 
-					sprintf(l_cSysevent_Cmd, "ipv4_%d-ifname", l_iIpv4Inst);	
+					safec_rc = sprintf_s(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"ipv4_%d-ifname", l_iIpv4Inst);
+					if(safec_rc < EOK){
+						ERR_CHK(safec_rc);
+					}
     				sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 								 l_cSysevent_Cmd, l_cIfName, sizeof(l_cIfName));
 
@@ -741,6 +799,7 @@ int prepare_dhcp_conf (char *input)
 	     l_bWifi_Res_Mig = FALSE,
 		 l_bDhcpNs_Enabled = FALSE,
 		 l_bIsValidWanDHCPNs = FALSE;
+	errno_t safec_rc = -1;
 
 	if ((NULL != input) && (!strncmp(input, "dns_only", 8)))
 	{
@@ -748,7 +807,10 @@ int prepare_dhcp_conf (char *input)
 		l_cDns_Only_Prefix[0] = '#';
 	}
 
-	sprintf(l_cLocalDhcpConf, "/tmp/dnsmasq.conf%d", getpid());
+	safec_rc = sprintf_s(l_cLocalDhcpConf, sizeof(l_cLocalDhcpConf),"/tmp/dnsmasq.conf%d", getpid());
+	if(safec_rc < EOK){
+		ERR_CHK(safec_rc);
+	}
 	l_fLocal_Dhcp_ConfFile = fopen(l_cLocalDhcpConf, "a+"); //It will create a file and open
     if(NULL == l_fLocal_Dhcp_ConfFile) 
     {   
@@ -1424,6 +1486,7 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
                  l_cWan_Dhcp_Dns[ 256 ]                          = { 0 },
 		 l_cDhcpNs_OptionString[ 1024 ] 	         = { 0 },
 		 l_cDhcpNs_OptionString_new[ 1424 ]              = { 0 }; //CID 177296 : Uninitialized scalar variable
+         errno_t safec_rc                                = -1;
 
     // Static LAN DNS
 	syscfg_get(NULL, "dhcp_nameserver_1", l_cDhcpNs_1, sizeof(l_cDhcpNs_1));
@@ -1431,13 +1494,17 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 	syscfg_get(NULL, "dhcp_nameserver_3", l_cDhcpNs_3, sizeof(l_cDhcpNs_3));
         sysevent_get(g_iSyseventfd, g_tSysevent_token, "current_lan_ipaddr", l_cLocalNs, sizeof(l_cLocalNs));		
 
-	strcpy( l_cDhcpNs_OptionString, "dhcp-option=brlan0,6");
+	safec_rc = strcpy_s( l_cDhcpNs_OptionString, sizeof(l_cDhcpNs_OptionString),"dhcp-option=brlan0,6");
+	ERR_CHK(safec_rc);
 
 	if( ( '\0' != l_cDhcpNs_1[ 0 ] ) && \
 		( 0 != strcmp( l_cDhcpNs_1, "0.0.0.0" ) ) 
 	  )
 	{
-		sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_1 );
+		safec_rc = sprintf_s( l_cDhcpNs_OptionString_new, sizeof(l_cDhcpNs_OptionString_new),"%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_1 );
+		if(safec_rc < EOK){
+			ERR_CHK(safec_rc);
+		}
 	}
 
 	if( ( '\0' != l_cDhcpNs_2[ 0 ] ) && \
@@ -1445,7 +1512,10 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 	  )
 	{
 		memset(l_cDhcpNs_OptionString_new, 0 ,sizeof(l_cDhcpNs_OptionString_new));
-		sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_2 );
+		safec_rc = sprintf_s( l_cDhcpNs_OptionString_new, sizeof(l_cDhcpNs_OptionString_new),"%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_2 );
+		if(safec_rc < EOK){
+			ERR_CHK(safec_rc);
+		}
 	}
 
 	
@@ -1454,7 +1524,10 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
 	  )
 	{
 		memset(l_cDhcpNs_OptionString_new, 0 ,sizeof(l_cDhcpNs_OptionString_new));
-		sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_3 );
+		safec_rc = sprintf_s( l_cDhcpNs_OptionString_new, sizeof(l_cDhcpNs_OptionString_new),"%s,%s", l_cDhcpNs_OptionString, l_cDhcpNs_3 );
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
 	}
 
         char l_cSecWebUI_Enabled[8] = {0};
@@ -1464,20 +1537,28 @@ void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString )
                 check_and_get_wan_dhcp_dns( l_cWan_Dhcp_Dns );
                 memset(l_cDhcpNs_OptionString_new, 0 ,sizeof(l_cDhcpNs_OptionString_new));
                 if ( '\0' != l_cWan_Dhcp_Dns[ 0 ] ){
-                    sprintf( l_cDhcpNs_OptionString_new, "%s,%s,%s", l_cDhcpNs_OptionString, l_cLocalNs, l_cWan_Dhcp_Dns );
+                    safec_rc = sprintf_s( l_cDhcpNs_OptionString_new, sizeof(l_cDhcpNs_OptionString_new),"%s,%s,%s", l_cDhcpNs_OptionString, l_cLocalNs, l_cWan_Dhcp_Dns );
+                    if(safec_rc < EOK){
+                      ERR_CHK(safec_rc);
+                    }
                 }    
                 else{
-                    sprintf( l_cDhcpNs_OptionString_new, "%s,%s", l_cDhcpNs_OptionString, l_cLocalNs );
+                    safec_rc = sprintf_s( l_cDhcpNs_OptionString_new, sizeof(l_cDhcpNs_OptionString_new),"%s,%s", l_cDhcpNs_OptionString, l_cLocalNs );
+                    if(safec_rc < EOK){
+                       ERR_CHK(safec_rc);
+                    }
                 }
         }
         // Copy custom dns servers
-	sprintf( pDhcpNs_OptionString, "%s", l_cDhcpNs_OptionString_new );
+       safec_rc = strcpy_s( pDhcpNs_OptionString, 1024, l_cDhcpNs_OptionString_new ); /* Here pDhcpNs_OptionString is pointer, it's pointing to the array size is 1024 bytes */
+       ERR_CHK(safec_rc);
 }
 
 void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns )
 {
 	char l_cWan_Dhcp_Dns[ 256 ] = { 0 };
 	int  charCounter 			= 0;
+	errno_t safec_rc = -1;
 
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan_dhcp_dns", l_cWan_Dhcp_Dns, sizeof(l_cWan_Dhcp_Dns));	
 
@@ -1493,8 +1574,10 @@ void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns )
 		charCounter++;
 	}
 
-	sprintf( pl_cWan_Dhcp_Dns, "%s", l_cWan_Dhcp_Dns );
-	
+	/* Here pl_cWan_Dhcp_Dns is pointer, it's pointing to the array size is 256 bytes */
+	safec_rc = strcpy_s( pl_cWan_Dhcp_Dns, 256, l_cWan_Dhcp_Dns );
+	ERR_CHK(safec_rc);
+
 	fprintf( stderr, "DHCP SERVER : After conversion wan_dhcp_dns:%s \n", l_cWan_Dhcp_Dns );
 }
 

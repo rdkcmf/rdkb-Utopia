@@ -72,7 +72,7 @@
 #include <execinfo.h>
 #endif
 
-
+#include "safec_lib_common.h"
 #include "libsysevent_internal.h"
 #include "syseventd.h"
 #include "clientsMgr.h"
@@ -948,10 +948,15 @@ static int initialize_system(void)
   // bind our local address
    struct sockaddr_un se_server_uds_addr;
    size_t             se_server_uds_addr_length;
+   errno_t  safec_rc = -1;
 
    memset(&se_server_uds_addr, 0, sizeof(se_server_uds_addr));
    se_server_uds_addr.sun_family = AF_UNIX;
-   sprintf(se_server_uds_addr.sun_path, "%s", UDS_PATH);
+   safec_rc = sprintf_s(se_server_uds_addr.sun_path, sizeof(se_server_uds_addr.sun_path), "%s", UDS_PATH);
+   if( safec_rc < EOK)
+   {
+       ERR_CHK(safec_rc);
+   }
    se_server_uds_addr_length     = sizeof(se_server_uds_addr.sun_family) + strlen(se_server_uds_addr.sun_path);
 
    if (0 > (bind(global_uds_connection_fd, (struct sockaddr *) &se_server_uds_addr, se_server_uds_addr_length)) ) {
@@ -1073,6 +1078,7 @@ static void *sanity_thread_main(void *arg)
    unsigned int counter = 0;  // for SANITY debugging
    int modulo           = 30; // 5 mins    // for SANITY debugging
    FILE *l_FsyseventFp = NULL;
+   errno_t  rc = -1;
 
    for ( ; ; ) {
       /*
@@ -1097,16 +1103,29 @@ static void *sanity_thread_main(void *arg)
       char tstr[1024];              // for SANITY debugging
       SE_INC_LOG(SANITY,
                  if (1 == counter % modulo) {
-                    sprintf(outstr, "gets:%d,sets:%d||active q:", debug_num_gets, debug_num_sets);
-                    sprintf(outstr2,"Threads: [main]=%d|", debug_num_accepts);
+                    rc = sprintf_s(outstr, sizeof(outstr), "gets:%d,sets:%d||active q:", debug_num_gets, debug_num_sets);
+                    if(rc < EOK)
+                    {
+                        ERR_CHK(rc);
+                    }
+                    rc = sprintf_s(outstr2, sizeof(outstr2),"Threads: [main]=%d|", debug_num_accepts);
+                    if(rc < EOK)
+                    {
+                        ERR_CHK(rc);
+                    }
                     int i;
 
                     for (i=0 ; i<numThreads; i++) {
-                       sprintf(tstr, "[%d]=%d,%d|", 
-                            thread_private_info[i].id, 
-                            thread_stat_info[i].num_activation, 
+                       rc = sprintf_s(tstr, sizeof(tstr), "[%d]=%d,%d|",
+                            thread_private_info[i].id,
+                            thread_stat_info[i].num_activation,
                             thread_stat_info[i].state);
-                       strcat(outstr2, tstr); 
+                       if(rc < EOK)
+                       {
+                           ERR_CHK(rc);
+                       }
+                       rc = strcat_s(outstr2, sizeof(outstr2), tstr);
+                       ERR_CHK(rc);
                     }
                  }
       )
@@ -1114,8 +1133,13 @@ static void *sanity_thread_main(void *arg)
       for (i=0; i<numThreads; i++) {
          SE_INC_LOG(SANITY,
                     if (1 == counter % modulo) {
-                       sprintf(tstr, "[%d]=%d:%d|", i+1, waiting_pid[i].pid, waiting_pid[i].mark);
-                       strcat(outstr, tstr); 
+                       rc = sprintf_s(tstr, sizeof(tstr), "[%d]=%d:%d|", i+1, waiting_pid[i].pid, waiting_pid[i].mark);
+                       if(rc < EOK)
+                       {
+                           ERR_CHK(rc);
+                       }
+                       rc = strcat_s(outstr, sizeof(outstr), tstr);
+                       ERR_CHK(rc);
                     }
           )
          if (0 != waiting_pid[i].pid) {

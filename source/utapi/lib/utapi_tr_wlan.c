@@ -68,6 +68,7 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.*/
 #include "DM_TR181.h"
 #include <arpa/inet.h>
 #include "utapi_tr_wlan.h"
+#include "safec_lib_common.h"
 
 const wifiTRPlatformSetup_t wifiTRPlatform[] =
 {
@@ -97,7 +98,11 @@ int Utopia_GetWifiRadioInstances()
 {
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     return WIFI_RADIO_NUM_INSTANCES;
@@ -110,7 +115,11 @@ int Utopia_GetWifiRadioEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pE
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -135,7 +144,11 @@ int Utopia_GetIndexedWifiRadioCfg(UtopiaContext *ctx, unsigned long ulIndex, voi
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -178,9 +191,13 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     unsigned long ulVal = 0;
     char *prefix;
     unsigned long ulIndex;
+    errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -198,19 +215,21 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
  
     prefix =  wifiTRPlatform[ulIndex].syscfg_namespace_prefix ;
 
-    sprintf(buf,"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf,"cat %s | grep Extensions | cut -d. -f2- -s > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_EXTN_FILE);
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    sprintf(buf,"cat %s |  sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_FILE );
-    system(buf);
+    system("cat " WLANCFG_RADIO_FULL_FILE " | grep Extensions | cut -d. -f2- -s > " WLANCFG_RADIO_EXTN_FILE);
+    system("cat " WLANCFG_RADIO_FULL_FILE " | sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > " WLANCFG_RADIO_FILE);
 
     retVal = file_parse(WLANCFG_RADIO_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127,CID-32897, free unused resources before exit */
         return retVal;
@@ -218,7 +237,10 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -286,7 +308,10 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     retVal = file_parse(WLANCFG_RADIO_EXTN_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127,CID-32897, free unused resources before exit */
         return retVal;
@@ -294,7 +319,10 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -389,13 +417,16 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
     char buf[STR_SZ] = {0};
     char* prefix;
     unsigned long ulVal = 0;
-
+    errno_t safec_rc = -1;
     if (NULL == ctx || NULL == cfg) {
         return ERR_INVALID_ARGS;
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -418,26 +449,32 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
 
     if (cfg_t->OperatingStandards & WIFI_STD_a )
     {
-        strcat(buf, "a");
+        safec_rc = strcat_s(buf, sizeof(buf),"a");
+        ERR_CHK(safec_rc);
     }
     if (cfg_t->OperatingStandards & WIFI_STD_b )
     {
-       strcat(buf, "b");
+       safec_rc = strcat_s(buf, sizeof(buf),"b");
+       ERR_CHK(safec_rc);
     }
     if (cfg_t->OperatingStandards & WIFI_STD_g )
     {
-       strcat(buf, "g");
+       safec_rc = strcat_s(buf, sizeof(buf),"g");
+       ERR_CHK(safec_rc);
     }
     if (cfg_t->OperatingStandards & WIFI_STD_n )
     {
-       strcat(buf, "n");
+       safec_rc = strcat_s(buf, sizeof(buf),"n");
+       ERR_CHK(safec_rc);
     }
     if(0 == strlen(buf)) {/* We didnt get any valid Operating Standards */
 	if(0 == ulIndex) {
-	   strcpy(buf,"bgn");
+	   safec_rc = strcpy_s(buf, sizeof(buf),"bgn");
+	   ERR_CHK(safec_rc);
         }
 	else {
-	   strcpy(buf,"an");
+	   safec_rc = strcpy_s(buf, sizeof(buf),"an");
+	   ERR_CHK(safec_rc);
         }
     }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Network_Mode,prefix,buf);
@@ -456,57 +493,87 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
 
     /* Validation Required */
     memset(buf,0,STR_SZ);
-    if(cfg_t->MCS == -1)
-	strcpy(buf,"auto");
-    else
-        sprintf(buf,"%d",cfg_t->MCS);
+    if(cfg_t->MCS == -1){
+       safec_rc = strcpy_s(buf, sizeof(buf),"auto");
+       ERR_CHK(safec_rc);
+    } else {
+       safec_rc = sprintf_s(buf, sizeof(buf),"%d",cfg_t->MCS);
+       if(safec_rc < EOK){
+          ERR_CHK(safec_rc);
+       }
+    }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_N_TransmissionRate,prefix,buf);
 
     memset(buf,0,STR_SZ);
-    if(cfg_t->TransmitPower == TX_POWER_LOW)
-	strcpy(buf,"low");
-    else if(cfg_t->TransmitPower == TX_POWER_MEDIUM)
-	strcpy(buf,"medium");
-    else if(cfg_t->TransmitPower == TX_POWER_HIGH)
-	strcpy(buf,"high");
-    else
-        strcpy(buf,"high"); /* Set the default value */
+    if(cfg_t->TransmitPower == TX_POWER_LOW){
+       safec_rc = strcpy_s(buf, sizeof(buf),"low");
+       ERR_CHK(safec_rc);
+    }
+    else if(cfg_t->TransmitPower == TX_POWER_MEDIUM){
+      safec_rc = strcpy_s(buf, sizeof(buf),"medium");
+      ERR_CHK(safec_rc);
+    }
+    else if(cfg_t->TransmitPower == TX_POWER_HIGH){
+       safec_rc = strcpy_s(buf, sizeof(buf),"high");
+       ERR_CHK(safec_rc);
+    } else {
+        safec_rc = strcpy_s(buf, sizeof(buf),"high"); /* Set the default value */
+        ERR_CHK(safec_rc);
+    }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_TransmissionPower,prefix,buf);
 
     memset(buf,0,STR_SZ);
-    if(cfg_t->OperatingChannelBandwidth == STD_20MHZ)
-	strcpy(buf,"standard");
-    else if(cfg_t->OperatingChannelBandwidth == WIDE_40MHZ)
-        strcpy(buf,"wide");
-    else if(cfg_t->OperatingChannelBandwidth == BAND_AUTO)
-	strcpy(buf,"auto");
-    else
-	strcpy(buf,"auto"); /* Set the default */
+    if(cfg_t->OperatingChannelBandwidth == STD_20MHZ){
+       safec_rc = strcpy_s(buf, sizeof(buf),"standard");
+       ERR_CHK(safec_rc);
+    }
+    else if(cfg_t->OperatingChannelBandwidth == WIDE_40MHZ){
+        safec_rc = strcpy_s(buf, sizeof(buf),"wide");
+        ERR_CHK(safec_rc);
+    }
+    else if(cfg_t->OperatingChannelBandwidth == BAND_AUTO){
+        safec_rc = strcpy_s(buf, sizeof(buf),"auto");
+        ERR_CHK(safec_rc);
+    }
+    else {
+        safec_rc = strcpy_s(buf, sizeof(buf),"auto"); /* Set the default */
+        ERR_CHK(safec_rc);
+    }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_RadioBand,prefix,buf);
 
     memset(buf,0,STR_SZ);
-    if(cfg_t->ExtensionChannel == SIDEBAND_UPPER)
-	strcpy(buf,"upper");
-    else
-        strcpy(buf,"lower");
+    if(cfg_t->ExtensionChannel == SIDEBAND_UPPER){
+       safec_rc = strcpy_s(buf, sizeof(buf),"upper");
+       ERR_CHK(safec_rc);
+    }
+    else {
+        safec_rc = strcpy_s(buf, sizeof(buf),"lower");
+        ERR_CHK(safec_rc);
+    }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_SideBand,prefix,buf);
 
     memset(buf,0,STR_SZ);
-    if((cfg_t->GuardInterval) == GI_SHORT) 
-	strcpy(buf,"short");
-    else if((cfg_t->GuardInterval - 2) == GI_LONG) /* There is a mismatch between the enums */
-        strcpy(buf,"long");
-    else if((cfg_t->GuardInterval -1) == GI_AUTO)
-	strcpy(buf,"auto");
-    else
-	strcpy(buf,"auto"); /* There was an error - Set it to default value */
+    if((cfg_t->GuardInterval) == GI_SHORT){
+        safec_rc = strcpy_s(buf, sizeof(buf),"short");
+        ERR_CHK(safec_rc);
+    }
+    else if((cfg_t->GuardInterval - 2) == GI_LONG) { /* There is a mismatch between the enums */
+        safec_rc = strcpy_s(buf, sizeof(buf),"long");
+        ERR_CHK(safec_rc);
+    }
+    else if((cfg_t->GuardInterval -1) == GI_AUTO) {
+	    safec_rc = strcpy_s(buf, sizeof(buf),"auto");
+        ERR_CHK(safec_rc);
+    }
+    else {
+        safec_rc = strcpy_s(buf, sizeof(buf),"auto"); /* There was an error - Set it to default value */
+        ERR_CHK(safec_rc);
+    }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_GuardInterval,prefix,buf);
  
     memset(buf,0,STR_SZ);
-    if(cfg_t->IEEE80211hEnabled == TRUE)
-	strcpy(buf,"h");
-    else
-        strcpy(buf,"off");
+    safec_rc = strcpy_s(buf, sizeof(buf),((cfg_t->IEEE80211hEnabled == TRUE)? "h" : "off"));
+    ERR_CHK(safec_rc);
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Regulatory_Mode,prefix,buf);
 
     if(cfg_t->AutoChannelEnable == TRUE)
@@ -514,10 +581,8 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
 
     /* Cisco Extensions */
     memset(buf,0,STR_SZ);
-    if(cfg_t->APIsolation == FALSE)
-	strcpy(buf,"disabled");
-    else
-        strcpy(buf,"enabled");
+    safec_rc = strcpy_s(buf, sizeof(buf),((cfg_t->APIsolation == FALSE)? "disabled" : "enabled"));
+    ERR_CHK(safec_rc);
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_ApIsolation,prefix,buf);
 
     Utopia_SetNamedInt(ctx,UtopiaValue_WLAN_BeaconInterval,prefix,cfg_t->BeaconInterval);
@@ -529,51 +594,80 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
     Utopia_SetNamedInt(ctx,UtopiaValue_WLAN_RTSThreshold,prefix,cfg_t->RTSThreshold);
 
     memset(buf,0,STR_SZ);
-    if(cfg_t->FrameBurst == FALSE)
-	strcpy(buf,"disabled");
-    else
-        strcpy(buf,"enabled");
+    if(cfg_t->FrameBurst == FALSE){
+	   safec_rc = strcpy_s(buf, sizeof(buf),"disabled");
+       ERR_CHK(safec_rc);
+    }
+    else{
+        safec_rc = strcpy_s(buf, sizeof(buf),"enabled");
+        ERR_CHK(safec_rc);
+    }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_FrameBurst,prefix,buf);
 
     memset(buf,0,STR_SZ);
-    if(cfg_t->CTSProtectionMode == FALSE)
-	strcpy(buf,"disabled");
-    else
-        strcpy(buf,"auto");
+    safec_rc = strcpy_s(buf, sizeof(buf),((cfg_t->CTSProtectionMode == FALSE)? "disabled" : "auto"));
+    ERR_CHK(safec_rc);
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_CTSProtectionMode,prefix,buf);
 
     /* Validation required */
     memset(buf,0,STR_SZ);
     switch((int)cfg_t->TxRate) {
         case 1:
-            strcpy(buf,"auto");
+            safec_rc = strcpy_s(buf, sizeof(buf),"auto");
+            ERR_CHK(safec_rc);
             break;
         case 2:
-            sprintf(buf,"%d",6);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",6);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break;
         case 3:
-            sprintf(buf,"%d",9);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",9);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break;
         case 4:
-            sprintf(buf,"%d",12);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",12);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break;
         case 5:
-            sprintf(buf,"%d",18);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",18);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break; 
         case 6:
-            sprintf(buf,"%d",24);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",24);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break;
         case 7:
-            sprintf(buf,"%d",36);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",36);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break;
         case 8:
-            sprintf(buf,"%d",48);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",48);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break;
         case 9:
-            sprintf(buf,"%d",54);
+            safec_rc = sprintf_s(buf, sizeof(buf),"%d",54);
+            if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+            }
             break;
         default:
-            strcpy(buf,"auto");
+            safec_rc = strcpy_s(buf, sizeof(buf),"auto");
+            ERR_CHK(safec_rc);
+            
     }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_TransmissionRate,prefix,buf);
 
@@ -584,11 +678,14 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
 
     memset(buf,0,STR_SZ);
     if(cfg_t->BasicRate == 1){
-        strcpy(buf,"default");
+        safec_rc = strcpy_s(buf, sizeof(buf),"default");
+        ERR_CHK(safec_rc);
     }else if(cfg_t->BasicRate == 2){
-        strcpy(buf,"1-2mbps");
+        safec_rc = strcpy_s(buf, sizeof(buf),"1-2mbps");
+        ERR_CHK(safec_rc);
     }else{
-        strcpy(buf,"all");
+        safec_rc = strcpy_s(buf, sizeof(buf),"all");
+        ERR_CHK(safec_rc);
     }
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_BasicRate,prefix, buf);
 
@@ -605,9 +702,13 @@ int Utopia_GetWifiRadioSinfo(unsigned long ulIndex, void *sInfo)
         return ERR_INVALID_ARGS;
     }
 
+    errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -615,23 +716,28 @@ int Utopia_GetWifiRadioSinfo(unsigned long ulIndex, void *sInfo)
     /* Common values for both 2.4GHz and 5GHz Radios */
     sInfo_t->bUpstream = FALSE;
     sInfo_t->AutoChannelSupported = TRUE;
-    strcpy(sInfo_t->TransmitPowerSupported,"25,50,100");
+    safec_rc = strcpy_s(sInfo_t->TransmitPowerSupported, sizeof(sInfo_t->TransmitPowerSupported),"25,50,100");
+    ERR_CHK(safec_rc);
     sInfo_t->IEEE80211hSupported = TRUE;
     sInfo_t->MaxBitRate = 300000000; /*Get this from WlanCfg */
 
     if(0 == ulIndex) /* This is a 2.4GHz channel */
     {
-        strcpy(sInfo_t->Name,"wl0");
+        safec_rc = strcpy_s(sInfo_t->Name, sizeof(sInfo_t->Name),"wl0");
+        ERR_CHK(safec_rc);
         sInfo_t->SupportedFrequencyBands = (FREQ_2_4_GHZ + 1);
         sInfo_t->SupportedStandards = (WIFI_STD_b | WIFI_STD_g | WIFI_STD_n);
-        strcpy(sInfo_t->PossibleChannels,"1-11");
+        safec_rc = strcpy_s(sInfo_t->PossibleChannels, sizeof(sInfo_t->PossibleChannels),"1-11");
+        ERR_CHK(safec_rc);
 
     }else /* This is a 5GHz channel */
     {
-        strcpy(sInfo_t->Name,"wl1");
+        safec_rc = strcpy_s(sInfo_t->Name, sizeof(sInfo_t->Name),"wl1");
+        ERR_CHK(safec_rc);
         sInfo_t->SupportedFrequencyBands = (FREQ_5_GHZ + 1);
         sInfo_t->SupportedStandards = (WIFI_STD_a | WIFI_STD_n);
-        strcpy(sInfo_t->PossibleChannels,"36,40,44,48,52,56,60,64,149,153,157,161,165");
+        safec_rc = strcpy_s(sInfo_t->PossibleChannels, sizeof(sInfo_t->PossibleChannels),"36,40,44,48,52,56,60,64,149,153,157,161,165");
+        ERR_CHK(safec_rc);
     }
     return SUCCESS;
 }
@@ -645,7 +751,11 @@ int Utopia_GetIndexedWifiRadioDinfo(UtopiaContext *ctx, unsigned long ulIndex, v
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     if(ulIndex >= WIFI_RADIO_NUM_INSTANCES){
@@ -677,9 +787,12 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
     if (NULL == dInfo) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -698,16 +811,25 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
         return ERR_INVALID_ARGS;
     }
 
-    sprintf(buf,"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
-    sprintf(buf,"cat %s |  sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_FILE );
+    safec_rc = sprintf_s(buf, sizeof(buf),"cat %s |  sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_FILE );
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
     system(buf);
     
     retVal = file_parse(WLANCFG_RADIO_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127,CID-33277, free unused resource before exit*/
         return retVal;
@@ -715,7 +837,10 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -728,14 +853,10 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
     }
     free_paramList(head);
 
-    if(0 == ulIndex) /* Index number 0 means 2.4GHz channel */
-    {
-       strcpy(dInfo_t->ChannelsInUse,"1,6,11");
-    }else /* Index number 1 which means 5GHz channel */
-    {
-       strcpy(dInfo_t->ChannelsInUse,"36,40,44,48,52,56,60,64,149,153,157,161,165");
-    }
-
+    /* Index number 0 means 2.4GHz channel */
+    /* Index number 1 which means 5GHz channel */
+    safec_rc = strcpy_s(dInfo_t->ChannelsInUse, sizeof(dInfo_t->ChannelsInUse),((0 == ulIndex) ? "1,6,11" : "36,40,44,48,52,56,60,64,149,153,157,161,165"));
+    ERR_CHK(safec_rc);
     return SUCCESS;
 }
 
@@ -746,8 +867,13 @@ int Utopia_GetWifiRadioStats(unsigned long instanceNum, void *stats)
         return ERR_INVALID_ARGS;
     }
 
+    errno_t safec_rc = -1;
+
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -766,16 +892,25 @@ int Utopia_GetWifiRadioStats(unsigned long instanceNum, void *stats)
         return ERR_INVALID_ARGS;
     }
 
-    sprintf(buf,"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
-    sprintf(buf,"cat %s | grep Stats | cut -d. -f2- -s > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_STATS_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"cat %s | grep Stats | cut -d. -f2- -s > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_STATS_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
 
     retVal = file_parse(WLANCFG_RADIO_STATS_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127, CID-33224, Free unused resource before exit*/
         return retVal;
@@ -783,7 +918,10 @@ int Utopia_GetWifiRadioStats(unsigned long instanceNum, void *stats)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -821,7 +959,11 @@ int Utopia_WifiRadioSetValues(UtopiaContext *ctx, unsigned long ulIndex, unsigne
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -854,9 +996,13 @@ int Utopia_GetWifiSSIDInstances(UtopiaContext *ctx)
     int count = 0;
     int i = 0;
     char ifCfg[STR_SZ] = {'\0'};
+    errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -869,14 +1015,23 @@ int Utopia_GetWifiSSIDInstances(UtopiaContext *ctx)
            allocateMultiSSID_Struct(i);
            if( 0 == strncmp(ifCfg,"wl0",3)) {
                wifiTRPlatform_multiSSID[i].interface = FREQ_2_4_GHZ;
-               strcpy(wifiTRPlatform_multiSSID[i].ifconfig_interface, "eth0");
+               safec_rc = strcpy_s(wifiTRPlatform_multiSSID[i].ifconfig_interface, STR_SZ,"eth0");
+               ERR_CHK(safec_rc);
            }else if (0 == strncmp(ifCfg,"wl1",3)) {
                wifiTRPlatform_multiSSID[i].interface = FREQ_5_GHZ;
-               strcpy(wifiTRPlatform_multiSSID[i].ifconfig_interface, "eth1");
+               safec_rc = strcpy_s(wifiTRPlatform_multiSSID[i].ifconfig_interface, STR_SZ,"eth1");
+               ERR_CHK(safec_rc);
            }
-           strcpy(wifiTRPlatform_multiSSID[i].syscfg_namespace_prefix, ifCfg);
-           sprintf(wifiTRPlatform_multiSSID[i].ssid_name, "SSID%d",i);
-           sprintf(wifiTRPlatform_multiSSID[i].ap_name, "ap%d",i);
+           safec_rc = strcpy_s(wifiTRPlatform_multiSSID[i].syscfg_namespace_prefix, STR_SZ,ifCfg);
+           ERR_CHK(safec_rc);
+           safec_rc = sprintf_s(wifiTRPlatform_multiSSID[i].ssid_name, STR_SZ,"SSID%d",i);
+           if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+           }
+           safec_rc = sprintf_s(wifiTRPlatform_multiSSID[i].ap_name, STR_SZ,"ap%d",i);
+           if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+           }
        }
     } else if(count < STATIC_SSID_COUNT) {
         count = STATIC_SSID_COUNT; /* These are statically configured */
@@ -896,7 +1051,11 @@ int Utopia_GetWifiSSIDEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pEn
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -917,7 +1076,10 @@ int Utopia_GetIndexedWifiSSIDCfg(UtopiaContext *ctx, unsigned long ulIndex, void
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -956,8 +1118,13 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
         return ERR_INVALID_ARGS;
     }
 
+    errno_t safec_rc = -1;
+
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -993,14 +1160,20 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
             vif_num = 0;
     }
 
-    sprintf(buf,"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s > %s | awk '{print $1$2}' ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s > %s | awk '{print $1$2}' ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
 
     retVal = file_parse(WLANCFG_SSID_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127,CID-33259, free unused resource before exit*/
         return retVal;
@@ -1008,22 +1181,30 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
     for(; ptr; ptr=ptr->next){
         if(!strcasecmp(ptr->param_name, "SSID")){
             if(strlen(ptr->param_val)){
-                strcpy(cfg_t->SSID,ptr->param_val);
+                safec_rc = strcpy_s(cfg_t->SSID, sizeof(cfg_t->SSID),ptr->param_val);
+                ERR_CHK(safec_rc);
             }
             else 
             {
                 /* Set a temporary SSID */
                 prefix = wifiTRPlatform_multiSSID[ulIndex].syscfg_namespace_prefix;
-                sprintf(tmpBuf,"Cisco-SSID-%lu",ulIndex);
+                safec_rc = sprintf_s(tmpBuf, sizeof(tmpBuf),"Cisco-SSID-%lu",ulIndex);
+                if(safec_rc < EOK){
+                   ERR_CHK(safec_rc);
+                }
                 UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_SSID,prefix,tmpBuf);
-                strcpy(cfg_t->SSID,tmpBuf);
+                safec_rc = strcpy_s(cfg_t->SSID, sizeof(cfg_t->SSID),tmpBuf);
+                ERR_CHK(safec_rc);
             }
         }
     }
@@ -1032,8 +1213,10 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     /* Get Alias from syscfg */    
     prefix =  wifiTRPlatform_multiSSID[ulIndex].ssid_name; 
     Utopia_GetNamed(ctx,UtopiaValue_WLAN_SSID_Alias,prefix,cfg_t->Alias,sizeof(cfg_t->Alias));
-    if(0 == (strlen(cfg_t->Alias)))
-	strcpy(cfg_t->Alias,prefix);
+    if(0 == (strlen(cfg_t->Alias))){
+	   safec_rc = strcpy_s(cfg_t->Alias, sizeof(cfg_t->Alias),prefix);
+       ERR_CHK(safec_rc);
+    }
 
     /* It is always enabled for primary SSIDs */
     if(ulIndex < PRIMARY_SSID_COUNT)
@@ -1056,8 +1239,13 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
         return ERR_INVALID_ARGS;
     }
 
+    errno_t safec_rc = -1;
+
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1080,14 +1268,20 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
             vif_num = 0;
     }
 
-    sprintf(buf,"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
 
     retVal = file_parse(WLANCFG_SSID_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127, CID-33247, free unused resources before exit*/
         return retVal;
@@ -1095,20 +1289,29 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
     for(; ptr; ptr=ptr->next){
         if(!strcasecmp(ptr->param_name, "BSSID")){
 	   if(getHex(ptr->param_val, sInfo_t->BSSID, MAC_SZ) != SUCCESS){
-                sprintf(ulog_msg, "%s: BSSID read error !!!\n", __FUNCTION__);
+                safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: BSSID read error !!!\n", __FUNCTION__);
+                if(safec_rc < EOK){
+                   ERR_CHK(safec_rc);
+                }
                 ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             }
 
         }else if(!strcasecmp(ptr->param_name,"MACAddress")){
 	    if(getHex(ptr->param_val , sInfo_t->MacAddress, MAC_SZ) != SUCCESS){
-                sprintf(ulog_msg, "%s: Macaddress read error !!!\n", __FUNCTION__);
+                safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Macaddress read error !!!\n", __FUNCTION__);
+                if(safec_rc < EOK){
+                   ERR_CHK(safec_rc);
+                }
                 ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             }
 
@@ -1117,7 +1320,8 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
     free_paramList(head);
 
     /* SSID Names are currently stored in this table */
-    strcpy(sInfo_t->Name,wifiTRPlatform_multiSSID[ulIndex].ssid_name);
+    safec_rc = strcpy_s(sInfo_t->Name, sizeof(sInfo_t->Name),wifiTRPlatform_multiSSID[ulIndex].ssid_name);
+    ERR_CHK(safec_rc);
 
     return SUCCESS;
 }
@@ -1131,7 +1335,11 @@ int Utopia_GetIndexedWifiSSIDDInfo(UtopiaContext *ctx, unsigned long ulIndex, vo
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1166,8 +1374,12 @@ int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
         return ERR_INVALID_ARGS;
     }
 
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1197,14 +1409,20 @@ int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
             vif_num = 0;
     }
 	
-    sprintf(buf,"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
 
     retVal = file_parse(WLANCFG_SSID_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127, CID-33106, free unused resources before exit*/
         return retVal;
@@ -1212,7 +1430,10 @@ int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -1235,7 +1456,11 @@ int Utopia_SetWifiSSIDCfg(UtopiaContext *ctx, void *cfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1279,8 +1504,12 @@ int Utopia_AddWifiSSID(UtopiaContext *ctx, void *entry)
     if((NULL == ctx) || (NULL == entry)){
         return ERR_INVALID_ARGS;
     }
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1295,9 +1524,14 @@ int Utopia_AddWifiSSID(UtopiaContext *ctx, void *entry)
 
     /* Find out the free secondary SSID */
     for(j = START_DYNAMIC_SSID; j < MAX_SSID_PER_RADIO; j++) {
-        sprintf(append,".%d",j);
-        strcpy(intfName,cfg_t.WiFiRadioName);
-        strcat(cfg_t.WiFiRadioName,append);
+        safec_rc = sprintf_s(append, sizeof(append),".%d",j);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
+        safec_rc = strcpy_s(intfName, sizeof(intfName),cfg_t.WiFiRadioName);
+        ERR_CHK(safec_rc);
+        safec_rc = strcat_s(cfg_t.WiFiRadioName, sizeof(cfg_t.WiFiRadioName),append);
+        ERR_CHK(safec_rc);
         for(i = STATIC_SSID_COUNT; i < count; i++) {
             if(0 == strcmp(wifiTRPlatform_multiSSID[i].syscfg_namespace_prefix,cfg_t.WiFiRadioName))
                 break;
@@ -1310,14 +1544,23 @@ int Utopia_AddWifiSSID(UtopiaContext *ctx, void *entry)
             /* Fill in the wifiTRPlatform_multiSSID */
             if( 0 == strncmp(cfg_t.WiFiRadioName,"wl0",3)) {
                wifiTRPlatform_multiSSID[i].interface = FREQ_2_4_GHZ;
-               strcpy(wifiTRPlatform_multiSSID[i].ifconfig_interface, "eth0");
+               safec_rc = strcpy_s(wifiTRPlatform_multiSSID[i].ifconfig_interface,  STR_SZ,"eth0");
+               ERR_CHK(safec_rc);
            }else if (0 == strncmp(cfg_t.WiFiRadioName,"wl1",3)) {
                wifiTRPlatform_multiSSID[i].interface = FREQ_5_GHZ;
-               strcpy(wifiTRPlatform_multiSSID[i].ifconfig_interface, "eth1");
+               safec_rc = strcpy_s(wifiTRPlatform_multiSSID[i].ifconfig_interface, STR_SZ,"eth1");
+               ERR_CHK(safec_rc);
            }
-           strcpy(wifiTRPlatform_multiSSID[i].syscfg_namespace_prefix, cfg_t.WiFiRadioName);
-           sprintf(wifiTRPlatform_multiSSID[i].ssid_name, "SSID%d",i);
-           sprintf(wifiTRPlatform_multiSSID[i].ap_name, "ap%d",i);
+           safec_rc = strcpy_s(wifiTRPlatform_multiSSID[i].syscfg_namespace_prefix, STR_SZ,cfg_t.WiFiRadioName);
+           ERR_CHK(safec_rc);
+           safec_rc = sprintf_s(wifiTRPlatform_multiSSID[i].ssid_name, STR_SZ,"SSID%d",i);
+           if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+           }
+           safec_rc = sprintf_s(wifiTRPlatform_multiSSID[i].ap_name, STR_SZ,"ap%d",i);
+           if(safec_rc < EOK){
+              ERR_CHK(safec_rc);
+           }
            /* Set the Instance Number in syscfg */
            Utopia_SetNamedInt(ctx,UtopiaValue_WLAN_SSID_Instance_Num,wifiTRPlatform_multiSSID[i].ssid_name,cfg_t.InstanceNumber);
            /* Set Radio for this index */
@@ -1330,13 +1573,14 @@ int Utopia_AddWifiSSID(UtopiaContext *ctx, void *entry)
 
            return SUCCESS;
         }
-        sprintf(append, "%s", "");
+        append[0] = '\0';
         /* Reset the RadioName to original value */
-        strcpy(cfg_t.WiFiRadioName,intfName);
+        safec_rc = strcpy_s(cfg_t.WiFiRadioName, sizeof(cfg_t.WiFiRadioName),intfName);
+        ERR_CHK(safec_rc);
     }
 
     /* The only reason why it would come here is if all the SSIDs are occupied */
-    strcpy(cfg_t.WiFiRadioName,"");
+    cfg_t.WiFiRadioName[0] = '\0';
     return ERR_WIFI_NO_FREE_SSID;
 }
 
@@ -1346,12 +1590,16 @@ int Utopia_DelWifiSSID(UtopiaContext *ctx, unsigned long ulInstanceNumber)
     unsigned long ulIndex = 0;
     unsigned long ulInsNum = 0;
     char ifCfg[STR_SZ] = {'\0'};
+    errno_t safec_rc = -1;
 
     if(NULL == ctx){
         return ERR_INVALID_ARGS;
     }
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
                                                                                              
@@ -1375,10 +1623,14 @@ int Utopia_DelWifiSSID(UtopiaContext *ctx, unsigned long ulInstanceNumber)
        {
           /* Move the array forward */
           wifiTRPlatform_multiSSID[ulIndex].interface = wifiTRPlatform_multiSSID[ulIndex+1].interface;
-          strcpy(wifiTRPlatform_multiSSID[ulIndex].syscfg_namespace_prefix, wifiTRPlatform_multiSSID[ulIndex+1].syscfg_namespace_prefix);
-          strcpy(wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, wifiTRPlatform_multiSSID[ulIndex+1].ifconfig_interface);
-          strcpy(wifiTRPlatform_multiSSID[ulIndex].ssid_name, wifiTRPlatform_multiSSID[ulIndex+1].ssid_name);
-          strcpy(wifiTRPlatform_multiSSID[ulIndex].ap_name,wifiTRPlatform_multiSSID[ulIndex+1].ap_name );
+          safec_rc = strcpy_s(wifiTRPlatform_multiSSID[ulIndex].syscfg_namespace_prefix, STR_SZ,wifiTRPlatform_multiSSID[ulIndex+1].syscfg_namespace_prefix);
+          ERR_CHK(safec_rc);
+          safec_rc = strcpy_s(wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, STR_SZ,wifiTRPlatform_multiSSID[ulIndex+1].ifconfig_interface);
+          ERR_CHK(safec_rc);
+          safec_rc = strcpy_s(wifiTRPlatform_multiSSID[ulIndex].ssid_name, STR_SZ,wifiTRPlatform_multiSSID[ulIndex+1].ssid_name);
+          ERR_CHK(safec_rc);
+          safec_rc = strcpy_s(wifiTRPlatform_multiSSID[ulIndex].ap_name, STR_SZ,wifiTRPlatform_multiSSID[ulIndex+1].ap_name );
+          ERR_CHK(safec_rc);
           Utopia_GetIndexed(ctx,UtopiaValue_WLAN_SSID_Radio,(ulIndex + 1),ifCfg,sizeof(ifCfg));
           Utopia_SetIndexed(ctx,UtopiaValue_WLAN_SSID_Radio,ulIndex,ifCfg);
           Utopia_GetNamedInt(ctx,UtopiaValue_WLAN_SSID_Instance_Num,wifiTRPlatform_multiSSID[ulIndex+1].ssid_name,(int *)&ulInsNum);
@@ -1397,7 +1649,11 @@ int Utopia_WifiSSIDSetValues(UtopiaContext *ctx, unsigned long ulIndex, unsigned
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1426,9 +1682,12 @@ int Utopia_GetWifiSSIDStats(unsigned long ulInstanceNum, void *stats)
     if (NULL == stats) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1445,8 +1704,8 @@ int Utopia_GetWifiSSIDStats(unsigned long ulInstanceNum, void *stats)
         return ERR_INVALID_ARGS;
     }
 
-    strcpy(if_name,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface); 
-
+    safec_rc = strcpy_s(if_name, sizeof(if_name),wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface); 
+    ERR_CHK(safec_rc);
     stats_t->BytesReceived = parse_proc_net_dev(if_name,1);
     stats_t->PacketsReceived = parse_proc_net_dev(if_name,2);
     stats_t->ErrorsReceived = parse_proc_net_dev(if_name,3);
@@ -1462,7 +1721,11 @@ int Utopia_GetWifiAPInstances(UtopiaContext *ctx)
 {
     int count = 0;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     Utopia_GetInt(ctx,UtopiaValue_WLAN_SSID_Num,&count);
@@ -1478,7 +1741,11 @@ int Utopia_GetWifiAPEntry(UtopiaContext *ctx, char *pSSID, void *pEntry)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1508,7 +1775,11 @@ int Utopia_GetIndexedWifiAPCfg(UtopiaContext *ctx, unsigned long ulIndex, void *
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg,  sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1547,9 +1818,12 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
     if (NULL == ctx || NULL == cfg) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1584,14 +1858,20 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
             vif_num = 0;
     }
  
-    sprintf(buf,"wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
     
     retVal = file_parse(WLANCFG_AP_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127,CID-32951, free unused resources before exit */
         return retVal;
@@ -1599,7 +1879,10 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -1622,8 +1905,10 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
     /* Get AP Alias */
     prefix = wifiTRPlatform_multiSSID[ulIndex].ap_name;
     Utopia_GetNamed(ctx,UtopiaValue_WLAN_AP_Alias,prefix,cfg_t->Alias,sizeof(cfg_t->Alias));
-    if(0 == (strlen(cfg_t->Alias)))
-	strcpy(cfg_t->Alias,prefix);
+    if(0 == (strlen(cfg_t->Alias))){
+      safec_rc = strcpy_s(cfg_t->Alias, sizeof(cfg_t->Alias),prefix);
+      ERR_CHK(safec_rc);
+    }
  
      /* It is always enabled for primary SSIDs */
     if(ulIndex < PRIMARY_SSID_COUNT)
@@ -1640,11 +1925,17 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
     if(Utopia_GetNamedInt(ctx,UtopiaValue_WLAN_SSID_Instance_Num,prefix,(int *)&ssidInstanceNum))
     {
 	/* We didnt find any instance num for this SSID */
-	sprintf(cfg_t->SSID,"Device.WiFi.SSID.%lu.",(ulIndex+1));
+      safec_rc = sprintf_s(cfg_t->SSID, sizeof(cfg_t->SSID),"Device.WiFi.SSID.%lu.",(ulIndex+1));
+      if(safec_rc < EOK){
+         ERR_CHK(safec_rc);
+      }
     }
     else
     {
-        sprintf(cfg_t->SSID,"Device.WiFi.SSID.%lu.",ssidInstanceNum);
+        safec_rc = sprintf_s(cfg_t->SSID, sizeof(cfg_t->SSID),"Device.WiFi.SSID.%lu.",ssidInstanceNum);
+        if(safec_rc < EOK){
+         ERR_CHK(safec_rc);
+        }
     }
 
     return SUCCESS;
@@ -1655,9 +1946,12 @@ int Utopia_GetWifiAPInfo(UtopiaContext *ctx, char *pSSID, void *info)
     if ((NULL == ctx) || (NULL == info) || (NULL == pSSID)) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1687,14 +1981,20 @@ int Utopia_GetWifiAPInfo(UtopiaContext *ctx, char *pSSID, void *info)
             vif_num = 0;
     }
 
-    sprintf(buf,"wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
 
     retVal = file_parse(WLANCFG_AP_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127,CID-33342, free unused resources before exit */
         return retVal;
@@ -1702,7 +2002,10 @@ int Utopia_GetWifiAPInfo(UtopiaContext *ctx, char *pSSID, void *info)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -1735,9 +2038,12 @@ int Utopia_SetWifiAPCfg(UtopiaContext *ctx, void *cfg)
     if (NULL == ctx || NULL == cfg) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1763,17 +2069,13 @@ int Utopia_SetWifiAPCfg(UtopiaContext *ctx, void *cfg)
     prefix =  wifiTRPlatform_multiSSID[ulIndex].syscfg_namespace_prefix ;
     
     memset(buf,0,STR_SZ);
-    if(cfg_t->WMMEnable == FALSE)
-        strcpy(buf,"disabled");
-    else
-        strcpy(buf,"enabled");
+    safec_rc = strcpy_s(buf, sizeof(buf), ((cfg_t->WMMEnable == FALSE) ? "disabled" : "enabled"));
+    ERR_CHK(safec_rc);
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_AP_WMM,prefix,buf);
 
     memset(buf,0,STR_SZ);
-    if(cfg_t->UAPSDEnable == FALSE)
-        strcpy(buf,"disabled");
-    else
-        strcpy(buf,"enabled");
+    safec_rc = strcpy_s(buf, sizeof(buf), ((cfg_t->UAPSDEnable == FALSE) ? "disabled" : "enabled"));
+    ERR_CHK(safec_rc);
     UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_AP_WMM_UAPSD,prefix,buf);
     
     Utopia_SetNamedInt(ctx,UtopiaValue_WLAN_AP_Retry_Limit,prefix,cfg_t->RetryLimit); 
@@ -1800,7 +2102,11 @@ int Utopia_WifiAPSetValues(UtopiaContext *ctx, unsigned long ulIndex, unsigned l
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     
@@ -1830,7 +2136,11 @@ int Utopia_GetWifiAPSecEntry(UtopiaContext *ctx,char *pSSID, void *pEntry)
    }
 
 #ifdef _DEBUG_
-   sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+   errno_t safec_rc = -1;
+   safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+   if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+   }
    ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1846,9 +2156,12 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
     if (NULL == ctx || NULL == cfg || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1878,14 +2191,20 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
             vif_num = 0;
     }
 
-    sprintf(buf,"wlancfg_tr %s %d | grep Security |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_SEC_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep Security |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_SEC_FILE);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
 
     retVal = file_parse(WLANCFG_AP_SEC_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+          ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head); /*RDKB-7127,CID-32998, free unused resources before exit */
         return retVal;
@@ -1893,7 +2212,10 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -1940,7 +2262,7 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
            else
               cfg_t->RekeyingInterval = atol(ptr->param_val);
         }else if(!strcasecmp(ptr->param_name,"WEPKey")) {
-            strcpy(cfg_t->WEPKeyp,""); /*Default Empty */
+            cfg_t->WEPKeyp[0] = '\0' ; /*Default Empty */
             if(ptr->param_val)
             {
                 if (WIFI_SECURITY_WEP_64 == cfg_t->ModeEnabled)
@@ -1949,9 +2271,12 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
                     getHexGeneric(ptr->param_val,cfg_t->WEPKeyp,13);
              }
          }else if(!strcasecmp(ptr->param_name,"KeyPassphrase")) {
-            strcpy(cfg_t->KeyPassphrase,"wpa2psk"); /*Default Value */
-            if(ptr->param_val)
-                strcpy(cfg_t->KeyPassphrase,ptr->param_val);
+            safec_rc = strcpy_s(cfg_t->KeyPassphrase, sizeof(cfg_t->KeyPassphrase),"wpa2psk"); /*Default Value */
+            ERR_CHK(safec_rc);
+            if(ptr->param_val){
+                safec_rc = strcpy_s(cfg_t->KeyPassphrase, sizeof(cfg_t->KeyPassphrase),ptr->param_val);
+                ERR_CHK(safec_rc);
+            }
          }else if(!strcasecmp(ptr->param_name,"EncryptionMethod")) {
             cfg_t->EncryptionMethod = WIFI_SECURITY_AES_TKIP; /*Default Value */
             if(ptr->param_val)
@@ -1964,11 +2289,13 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
             if(ptr->param_val)
                 cfg_t->RadiusServerPort = atoi(ptr->param_val);  
          }else if (!strcasecmp(ptr->param_name,"RadiusSharedSecret")) {
-            if(ptr->param_val)
-                strcpy(cfg_t->RadiusSecret,ptr->param_val); 
+            if(ptr->param_val){
+                safec_rc = strcpy_s(cfg_t->RadiusSecret, sizeof(cfg_t->RadiusSecret),ptr->param_val);
+                ERR_CHK(safec_rc);
+            }
          }
      }
-     strcpy(cfg_t->PreSharedKey,""); /* PSK is to be always returned as EMPTY */     
+     cfg_t->PreSharedKey[0] = '\0'; /* PSK is to be always returned as EMPTY */     
      free_paramList(head); /*RDKB-7127,CID-32998, free unused resources before exit */
      return SUCCESS;
 }
@@ -1980,7 +2307,11 @@ int Utopia_GetWifiAPSecInfo(UtopiaContext *ctx,char *pSSID, void *info)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -1997,9 +2328,12 @@ int Utopia_SetWifiAPSecCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     if (NULL == ctx || NULL == cfg || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -2021,37 +2355,46 @@ int Utopia_SetWifiAPSecCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     memset(buf,0,STR_SZ);
   
     if(cfg_t->ModeEnabled & WIFI_SECURITY_None) {
-        strcpy(buf,"disabled");
+        safec_rc = strcpy_s(buf, sizeof(buf),"disabled");
+        ERR_CHK(safec_rc);
     }
     else if((cfg_t->ModeEnabled & WIFI_SECURITY_WEP_64) || (cfg_t->ModeEnabled & WIFI_SECURITY_WEP_128)) {
-        strcpy(buf,"wep");
+        safec_rc = strcpy_s(buf, sizeof(buf),"wep");
+        ERR_CHK(safec_rc);
     }
     else if(cfg_t->ModeEnabled & WIFI_SECURITY_WPA_Personal) {
-        strcpy(buf,"wpa-personal");
+        safec_rc = strcpy_s(buf, sizeof(buf),"wpa-personal");
+        ERR_CHK(safec_rc);
         UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Encryption,prefix,"tkip"); /* Set the default Encryption */
     }
     else if(cfg_t->ModeEnabled & WIFI_SECURITY_WPA2_Personal) {
-        strcpy(buf,"wpa2-personal");
+        safec_rc = strcpy_s(buf, sizeof(buf),"wpa2-personal");
+        ERR_CHK(safec_rc);
         UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Encryption,prefix,"tkip+aes"); /* Set the default Encryption */
     }
     else if(cfg_t->ModeEnabled & WIFI_SECURITY_WPA_Enterprise) {
-        strcpy(buf,"wpa-enterprise");
+        safec_rc = strcpy_s(buf, sizeof(buf),"wpa-enterprise");
+        ERR_CHK(safec_rc);
         UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Encryption,prefix,"tkip"); /* Set the default Encryption */
     } 
     else if (cfg_t->ModeEnabled & WIFI_SECURITY_WPA2_Enterprise) {
-        strcpy(buf,"wpa2-enterprise");
+        safec_rc = strcpy_s(buf, sizeof(buf),"wpa2-enterprise");
+        ERR_CHK(safec_rc);
         UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Encryption,prefix,"tkip+aes"); /* Set the default Encryption */
     }
     else if (cfg_t->ModeEnabled & WIFI_SECURITY_WPA_WPA2_Personal) {
-        strcpy(buf,"wpa-wpa2-personal");
+        safec_rc = strcpy_s(buf, sizeof(buf),"wpa-wpa2-personal");
+        ERR_CHK(safec_rc);
         UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Encryption,prefix,"tkip+aes"); 
     }
     else if (cfg_t->ModeEnabled & WIFI_SECURITY_WPA_WPA2_Enterprise) {
-        strcpy(buf,"wpa-wpa2-enterprise");
+        safec_rc = strcpy_s(buf, sizeof(buf),"wpa-wpa2-enterprise");
+        ERR_CHK(safec_rc);
         UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Encryption,prefix,"tkip+aes");
     }
     else { 
-        strcpy(buf,"wpa2-personal"); /* Default value and no other sec.modes supported */
+        safec_rc = strcpy_s(buf, sizeof(buf),"wpa2-personal"); /* Default value and no other sec.modes supported */
+        ERR_CHK(safec_rc);
         UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_Encryption,prefix,"tkip+aes"); /* Set the default Encryption */
     }
  
@@ -2061,7 +2404,10 @@ int Utopia_SetWifiAPSecCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     if(cfg_t->ModeEnabled & WIFI_SECURITY_WEP_64)
     {
        /* It is a WEP-64 Key, so expect it to be of 5 byte */
-       sprintf(buf,"%02X%02X%02X%02X%02X",cfg_t->WEPKeyp[0],cfg_t->WEPKeyp[1],cfg_t->WEPKeyp[2],cfg_t->WEPKeyp[3],cfg_t->WEPKeyp[4]);
+       safec_rc = sprintf_s(buf, sizeof(buf),"%02X%02X%02X%02X%02X",cfg_t->WEPKeyp[0],cfg_t->WEPKeyp[1],cfg_t->WEPKeyp[2],cfg_t->WEPKeyp[3],cfg_t->WEPKeyp[4]);
+       if(safec_rc < EOK){
+          ERR_CHK(safec_rc);
+       }
           buf[10] = '\0';
 
        UTOPIA_SETNAMED(ctx, UtopiaValue_WLAN_Key0, prefix, buf); 
@@ -2070,7 +2416,10 @@ int Utopia_SetWifiAPSecCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     else if(cfg_t->ModeEnabled & WIFI_SECURITY_WEP_128) 
     {
        /* It is a WEP-128 Key, so expect it to be 13 byte */
-       sprintf(buf,"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",cfg_t->WEPKeyp[0],cfg_t->WEPKeyp[1],cfg_t->WEPKeyp[2],cfg_t->WEPKeyp[3],cfg_t->WEPKeyp[4],cfg_t->WEPKeyp[5],cfg_t->WEPKeyp[6],cfg_t->WEPKeyp[7],cfg_t->WEPKeyp[8],cfg_t->WEPKeyp[9],cfg_t->WEPKeyp[10],cfg_t->WEPKeyp[11],cfg_t->WEPKeyp[12]);
+       safec_rc = sprintf_s(buf, sizeof(buf),"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",cfg_t->WEPKeyp[0],cfg_t->WEPKeyp[1],cfg_t->WEPKeyp[2],cfg_t->WEPKeyp[3],cfg_t->WEPKeyp[4],cfg_t->WEPKeyp[5],cfg_t->WEPKeyp[6],cfg_t->WEPKeyp[7],cfg_t->WEPKeyp[8],cfg_t->WEPKeyp[9],cfg_t->WEPKeyp[10],cfg_t->WEPKeyp[11],cfg_t->WEPKeyp[12]);
+       if(safec_rc < EOK){
+          ERR_CHK(safec_rc);
+       }
        buf[26] = '\0';
 
        UTOPIA_SETNAMED(ctx, UtopiaValue_WLAN_Key0, prefix, buf); 
@@ -2124,7 +2473,11 @@ int Utopia_GetWifiAPWPSEntry(UtopiaContext *ctx, char*pSSID, void *pEntry)
    }
 
 #ifdef _DEBUG_
-   sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+   errno_t safec_rc = -1;
+   safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
    ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -2144,7 +2497,11 @@ int Utopia_GetWifiAPWPSCfg(UtopiaContext *ctx, char*pSSID, void *cfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -2195,9 +2552,12 @@ int Utopia_SetWifiAPWPSCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
     if (NULL == ctx || NULL == cfg || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -2219,24 +2579,18 @@ int Utopia_SetWifiAPWPSCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
 
    memset(buf,0,STR_SZ);
    /* First set these values in syscfg */
-   if(cfg_t->ConfigMethodsEnabled & WIFI_WPS_METHOD_Pin)
-       strcpy(buf,"enabled");
-   else
-       strcpy(buf,"disabled");
+   safec_rc = strcpy_s(buf, sizeof(buf), ((cfg_t->ConfigMethodsEnabled & WIFI_WPS_METHOD_Pin) ? "enabled" : "disabled" ));
+   ERR_CHK(safec_rc);
    UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_WPS_PIN_Method,prefix,buf);
 
    memset(buf,0,STR_SZ);
-   if(cfg_t->ConfigMethodsEnabled & WIFI_WPS_METHOD_PushButton)
-       strcpy(buf,"enabled");
-   else
-       strcpy(buf,"disabled");
+   safec_rc = strcpy_s(buf, sizeof(buf), ((cfg_t->ConfigMethodsEnabled & WIFI_WPS_METHOD_PushButton) ? "enabled" : "disabled" ));
+   ERR_CHK(safec_rc);
    UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_WPS_PBC_Method,prefix,buf);
 
    memset(buf,0,STR_SZ);
-   if(FALSE == cfg_t->bEnabled)
-       strcpy(buf,"disabled");
-   else
-       strcpy(buf,"enabled");
+   safec_rc = strcpy_s(buf, sizeof(buf), ((FALSE == cfg_t->bEnabled) ? "disabled" : "enabled" ));
+   ERR_CHK(safec_rc);
    UTOPIA_SETNAMED(ctx,UtopiaValue_WLAN_WPS_Enabled,prefix,buf);
 
    return SUCCESS;
@@ -2247,9 +2601,12 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
     if (NULL == ctx || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -2278,14 +2635,20 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
             vif_num = 0;
     }
 
-    sprintf(buf,"wlancfg_tr %s %d | grep AssociatedDevice |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_ASSOC_DEV_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AssociatedDevice |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_ASSOC_DEV_FILE);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
 
     retVal = file_parse(WLANCFG_AP_ASSOC_DEV_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head);/*RDKB-7127, CID-33021, free unused resource before exit*/
         return retVal;
@@ -2293,7 +2656,10 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+          ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -2313,9 +2679,12 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
     if (NULL == ctx || NULL == assocDev || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
-
+    errno_t safec_rc = -1;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     wifiAPAssocDevice_t *assocDev_t = (wifiAPAssocDevice_t *)assocDev;
@@ -2343,14 +2712,20 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
             vif_num = 0;
     }
  
-    sprintf(buf,"wlancfg_tr %s %d | grep AssociatedDevice_%lu |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulAPIndex].ifconfig_interface, vif_num, ulIndex, WLANCFG_AP_ASSOC_DEV_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AssociatedDevice_%lu |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulAPIndex].ifconfig_interface, vif_num, ulIndex, WLANCFG_AP_ASSOC_DEV_FILE);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     system(buf);
     memset(buf, 0, sizeof(buf));
 
     retVal = file_parse(WLANCFG_AP_ASSOC_DEV_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+          ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head);/*RDKB-7127, CID-33011, free unused resource before exit*/
         return retVal;
@@ -2358,14 +2733,20 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
     for(; ptr; ptr=ptr->next){
         if(!strcasecmp(ptr->param_name, "MACAddress")){
             if(getHex(ptr->param_val , assocDev_t->MacAddress, MAC_SZ) != SUCCESS){
-                sprintf(ulog_msg, "%s: Macaddress read error !!!\n", __FUNCTION__);
+                safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Macaddress read error !!!\n", __FUNCTION__);
+                if(safec_rc < EOK){
+                  ERR_CHK(safec_rc);
+                }
                 ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             }
         } else if(!strcasecmp(ptr->param_name,"AuthenticationState")) {
@@ -2402,7 +2783,11 @@ unsigned long Utopia_GetWifiAPIndex(UtopiaContext *ctx, char *pSSID)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** with SSID %s!!!", __FUNCTION__,pSSID);
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** with SSID %s!!!", __FUNCTION__,pSSID);
+    if(safec_rc < EOK){
+      ERR_CHK(safec_rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -2448,15 +2833,22 @@ int setMacList(unsigned char *macAddr, char *macList, unsigned long numMac)
     int i;
     int j = 0;
     char mac[50][18];
-    
+    errno_t safec_rc = -1;
     if(!macList)
         return ERR_INVALID_ARGS;
 
     for(i =0; i<numMac; i++){
-       if(i > 0)
-           strcat(macList, " ");
-       sprintf(mac[i], "%02x:%02x:%02x:%02x:%02x:%02x", macAddr[j], macAddr[j+1], macAddr[j+2], macAddr[j+3], macAddr[j+4], macAddr[j+5]);
-       strcat(macList, mac[i]);
+       if(i > 0){
+           /* Here, macList is pointer, It's pointing to 1024 bytes data */
+           safec_rc = strcat_s(macList, 1024," ");
+           ERR_CHK(safec_rc);
+       }
+       safec_rc = sprintf_s(mac[i], 18,"%02x:%02x:%02x:%02x:%02x:%02x", macAddr[j], macAddr[j+1], macAddr[j+2], macAddr[j+3], macAddr[j+4], macAddr[j+5]);
+       if(safec_rc < EOK){
+          ERR_CHK(safec_rc);
+       }
+       safec_rc = strcat_s(macList, 1024,mac[i]);
+       ERR_CHK(safec_rc);
        j +=6;
     }
     return SUCCESS;
@@ -2477,8 +2869,12 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     int retVal = ERR_GENERAL;
     char token[64] = {'\0'};
     int vif_num = 0;
+    errno_t safec_rc = -1;
 
-    sprintf(ulog_msg, "%s: ********Entered ****** with SSID %s!!!", __FUNCTION__,pSSID);
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** with SSID %s!!!", __FUNCTION__,pSSID);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     ulogf(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 
     int index = Utopia_GetWifiAPIndex(ctx, pSSID);
@@ -2502,20 +2898,29 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
             vif_num = 0;
     }
 
-    sprintf(buf, "wlancfg_tr %s %d | grep Filter | cut -d. -f5- -s | sed 's/ //' | sed 's/ /,/g' > %s", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WIFI_MACFILTER_FILE);
+    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep Filter | cut -d. -f5- -s | sed 's/ //' | sed 's/ /,/g' > %s", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WIFI_MACFILTER_FILE);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     system(buf);
 
     retVal = file_parse(WIFI_MACFILTER_FILE, &head);
 
     if(retVal != SUCCESS){
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         free_paramList(head);/*RDKB-7127, CID-33359, free unused resource before exit*/
         return retVal;
     }
     ptr = head;
     if(!ptr){
-        sprintf(ulog_msg, "%s: No nodes found!!!", __FUNCTION__);
+        safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: No nodes found!!!", __FUNCTION__);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }
@@ -2539,7 +2944,8 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
                 if(strlen(maclist) <= 1){
                     numlist = 0;
                 }else{
-                    strcpy(token, " ");
+                    safec_rc = strcpy_s(token, sizeof(token)," ");
+                    ERR_CHK(safec_rc);
                     getMacList(maclist, cfg_t->macAddress, token, &numlist);
                 }
             }
@@ -2548,7 +2954,8 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
                 if(strlen(ptr->param_val) <= 1){
                     numlist = 0;
                 }else{
-                    strcpy(token, ",");
+                    safec_rc = strcpy_s(token, sizeof(token),",");
+                    ERR_CHK(safec_rc);
                     getMacList(ptr->param_val, cfg_t->macAddress, token, &numlist);
                 }
             }
@@ -2569,6 +2976,7 @@ int Utopia_SetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     char buf[BUF_SZ]   = {'\0'};
     char maclist[1024] = {'\0'};    
     char numlist[64]   = {'\0'};
+    errno_t safec_rc = -1;
 
     if (NULL == ctx || NULL == cfg) {
         return ERR_INVALID_ARGS;
@@ -2587,22 +2995,25 @@ int Utopia_SetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     if(ulIndex >= WIFI_AP_NUM_INSTANCES){
         return ERR_INVALID_ARGS;
     }
-    strcpy(buf, (cfg_t->macFilterEnabled == FALSE)? "false" : "true");
+    safec_rc = strcpy_s(buf, sizeof(buf),((cfg_t->macFilterEnabled == FALSE)? "false" : "true"));
+    ERR_CHK(safec_rc);
     UTOPIA_SET(ctx, UtopiaValue_WLAN_Enable_MACFilter, buf);
 
     memset(buf, 0, BUF_SZ);
     if (cfg_t->macFilterEnabled == FALSE){
-        strcpy(buf, "disabled");
+        safec_rc = strcpy_s(buf, sizeof(buf),"disabled");
+        ERR_CHK(safec_rc);
         cfg_t->macFilterMode = TRUE;
     }else{
-        if(cfg_t->macFilterMode == TRUE)
-            strcpy(buf, "deny");
-        else
-            strcpy(buf, "allow");
+        safec_rc = strcpy_s(buf, sizeof(buf),((cfg_t->macFilterMode == TRUE)? "deny" : "allow"));
+        ERR_CHK(safec_rc);
     }
     UTOPIA_SET(ctx, UtopiaValue_WLAN_AccessRestriction, buf);
 
-    sprintf(numlist, "%ld", cfg_t->NumberMacAddrList);
+    safec_rc = sprintf_s(numlist, sizeof(numlist),"%ld", cfg_t->NumberMacAddrList);
+    if(safec_rc < EOK){
+       ERR_CHK(safec_rc);
+    }
     UTOPIA_SET(ctx, UtopiaValue_WLAN_NUM_MACFilter, numlist);
 
     /*Convert unsigned char to space separated string */

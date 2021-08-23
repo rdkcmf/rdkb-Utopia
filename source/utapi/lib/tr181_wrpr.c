@@ -38,34 +38,21 @@
 #include <string.h>
 #include <unistd.h>
 #include "DM_TR181.h"
-
+#include "safec_lib_common.h"
 
 static void create_file()
 {
-    char buf[BUF_SZ] = {'\0'};
-    
-    sprintf (buf, "cat %s|grep MOCASTATS|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > %s", MOCACFG_FILE_NAME, MOCA_STATS_FILE);
-    system(buf);
-    
-    memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s|grep SUMMARY|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > %s", MOCACFG_FILE_NAME, MOCA_SUM_FILE);
-    system(buf);
-    
-    memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s|grep PHYCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > %s", MOCACFG_FILE_NAME, MOCA_PHY_FILE);
-    system(buf);
-    
-    memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s|grep MACCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > %s", MOCACFG_FILE_NAME, MOCA_MAC_FILE);
-    system(buf);
-    
-    memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s | sed -n '1,10p' > %s", MOCA_MAC_FILE, MOCA_MAC_FILE_1);
-    system(buf);
-    
-    memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s | sed '1,/AssociatedDeviceNumberOfEntries/d' > %s", MOCA_MAC_FILE, MOCA_ASSOC_DEV);
-    system(buf);
+    system("cat " MOCACFG_FILE_NAME "|grep MOCASTATS|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_STATS_FILE);
+
+    system("cat " MOCACFG_FILE_NAME "|grep SUMMARY|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_SUM_FILE);
+
+    system("cat " MOCACFG_FILE_NAME "|grep PHYCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_PHY_FILE);
+
+    system("cat " MOCACFG_FILE_NAME "|grep MACCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_MAC_FILE);
+
+    system("cat " MOCA_MAC_FILE " | sed -n '1,10p' > " MOCA_MAC_FILE_1);
+
+    system("cat " MOCA_MAC_FILE " | sed '1,/AssociatedDeviceNumberOfEntries/d' > " MOCA_ASSOC_DEV);
 }
 
 int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_static *deviceMocaIntfStatic)
@@ -75,25 +62,38 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
     int nodeId = 0;
+    errno_t rc = -1;
 
     if (NULL == deviceMocaIntfStatic) {
-	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
-	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+        ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_ARGS;
     }
     create_file();
 
     retVal = file_parse(MOCA_SUM_FILE, &head);
     if(retVal != SUCCESS){
-	free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
-	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
-	return retVal;
+        free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+        ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        return retVal;
     }
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
@@ -105,14 +105,22 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
             deviceMocaIntfStatic->FirmwareVersion[strlen(ptr->param_val)] = '\0';
 	}else if(!strcasecmp(ptr->param_name, "FreqCapabilityMask")){
 	    if(getHex(ptr->param_val, deviceMocaIntfStatic->FreqCapabilityMask, HEX_SZ) != SUCCESS){
-	        sprintf(ulog_msg, "%s: FreqCapabilityMask read error !!!\n", __FUNCTION__);
-	        ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+            rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: FreqCapabilityMask read error !!!\n", __FUNCTION__);
+            if(rc < EOK)
+            {
+               ERR_CHK(rc);
             }
+            ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        }
 	}else if(!strcasecmp(ptr->param_name, "MACAddress")){
 	    if(getHex(ptr->param_val, deviceMocaIntfStatic->MACAddress, MAC_SZ)!= SUCCESS){
-	        sprintf(ulog_msg, "%s: Macaddress read error !!!\n", __FUNCTION__);
-	        ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+            rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Macaddress read error !!!\n", __FUNCTION__);
+            if(rc < EOK)
+            {
+               ERR_CHK(rc);
             }
+            ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        }
 	}else if(!strcasecmp(ptr->param_name, "Upstream")){
 	    deviceMocaIntfStatic->Upstream = (!strncasecmp(ptr->param_val, "false", 5))? FALSE : TRUE ;
 	}else if(!strcasecmp(ptr->param_name, "NodeID")){
@@ -123,21 +131,32 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
     retVal = ERR_GENERAL;
     ptr = head = NULL;
 
-    memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, nodeId, MOCA_MAC_NODE);
+    rc = sprintf_s (buf, sizeof(buf), "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, nodeId, MOCA_MAC_NODE);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(buf);
     
     retVal = file_parse(MOCA_MAC_NODE, &head);
     if(retVal != SUCCESS){
-	free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
-	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
-	return retVal;
+        free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+        ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+        return retVal;
     }
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
@@ -158,25 +177,41 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
     retVal = file_parse(MOCA_PHY_FILE, &head);
     if(retVal != SUCCESS){
         free_paramList(head); /*RDKB-7129, CID-32892, free unused resources before exit*/
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return retVal;
     }
     ptr = head;
 
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
         if(!strcasecmp(ptr->param_name, "NetworkTabooMask")){
             if(getHex(ptr->param_val, deviceMocaIntfStatic->NetworkTabooMask, HEX_SZ) != SUCCESS){
-                sprintf(ulog_msg, "%s: NetworkTabooMask read error !!!\n", __FUNCTION__);
+                rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: NetworkTabooMask read error !!!\n", __FUNCTION__);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
                 ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             }
         }else if(!strcasecmp(ptr->param_name, "NodeTabooMask")){
             if(getHex(ptr->param_val, deviceMocaIntfStatic->NodeTabooMask, HEX_SZ) != SUCCESS){
-                sprintf(ulog_msg, "%s: NodeTabooMask read error !!!\n", __FUNCTION__);
+                rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: NodeTabooMask read error !!!\n", __FUNCTION__);
+                if(rc < EOK)
+                {
+                   ERR_CHK(rc);
+                }
                 ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             }
         }else if(!strcasecmp(ptr->param_name, "MaxBitRate")){
@@ -196,9 +231,14 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
+    errno_t   rc = -1;
 
     if (NULL == deviceMocaIntfDyn) {
-	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return ERR_INVALID_ARGS;
     }
@@ -206,7 +246,11 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     
     retVal = file_parse(MOCA_SUM_FILE, &head);
     if(retVal != SUCCESS){
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
 	return retVal;
@@ -214,7 +258,11 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     ptr = head;
         
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
@@ -231,7 +279,11 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
 	    strncpy(deviceMocaIntfDyn->FreqCurrentMask, ptr->param_val, strlen(ptr->param_val));
             deviceMocaIntfDyn->FreqCurrentMask[strlen(ptr->param_val)] = '\0';
 	    if(getHex(ptr->param_val, deviceMocaIntfDyn->FreqCurrentMask, HEX_SZ) != SUCCESS){
-	        sprintf(ulog_msg, "%s: FreqCurrentMask read error !!!\n", __FUNCTION__);
+	        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: FreqCurrentMask read error !!!\n", __FUNCTION__);
+	        if(rc < EOK)
+	        {
+	           ERR_CHK(rc);
+	        }
 	        ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             }
 	}else if(!strcasecmp(ptr->param_name, "NodeID")){
@@ -243,12 +295,20 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     ptr = head = NULL;
     
     memset(buf, 0, BUF_SZ);
-    sprintf (buf, "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, (int)deviceMocaIntfDyn->NodeID, MOCA_MAC_NODE);
+    rc = sprintf_s (buf, sizeof(buf), "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, (int)deviceMocaIntfDyn->NodeID, MOCA_MAC_NODE);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(buf);
     
     retVal = file_parse(MOCA_MAC_NODE, &head);
     if(retVal != SUCCESS){
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
 	return retVal;
@@ -256,7 +316,11 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     ptr = head;
         
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
@@ -275,14 +339,22 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     retVal = file_parse(MOCA_MAC_FILE_1, &head);
     if(retVal != SUCCESS){
 	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
     }
     ptr = head;
         
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
@@ -307,14 +379,22 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     retVal = file_parse(MOCA_PHY_FILE, &head);
     if(retVal != SUCCESS){
 	free_paramList(head); /*RDKB-7129, CID-33397, free unused resources before exit*/
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
     }
     ptr = head;
         
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
@@ -334,18 +414,28 @@ int Utopia_Count_AssociateDeviceEntry(int *devCount)
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
+    errno_t  rc = -1;
     
     create_file();    
     retVal = file_parse(MOCA_MAC_FILE_1, &head);
     if(retVal != SUCCESS){
 	free_paramList(head); /*RDKB-7129, CID-33166, free unused resources before exit*/
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
+
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
     }
     ptr = head;
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     while(strcasecmp(ptr->param_name, "AssociatedDeviceNumberOfEntries") != 0)
@@ -356,7 +446,11 @@ int Utopia_Count_AssociateDeviceEntry(int *devCount)
     }
     
     if(ptr == NULL){
-	sprintf(ulog_msg, "%s: Not found- AssociatedDeviceNumberOfEntries !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Not found- AssociatedDeviceNumberOfEntries !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_NO_NODES;
     }else{ 
@@ -375,34 +469,55 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
     int i,j = 0;
     i = (count*19)+ 1;
     j = (count+1)*19;
+    errno_t rc = -1;
 
     if (NULL == mocaIntfAssociatedevice) {
-	sprintf(ulog_msg, "%s: Invalid Input Parameter", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return ERR_INVALID_ARGS;
     }
     create_file();    
 
-    sprintf (buf, "cat %s|sed -n '%d,%d p'> %s", MOCA_ASSOC_DEV, i, j, MOCA_ASS_INST);
+    rc = sprintf_s(buf, sizeof(buf), "cat %s|sed -n '%d,%d p'> %s", MOCA_ASSOC_DEV, i, j, MOCA_ASS_INST);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     system(buf);
 
     retVal = file_parse(MOCA_ASS_INST, &head);
     if(retVal != SUCCESS){
 	free_paramList(head); /*RDKB-7129, CID-33335, free unused resources before exit*/
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
     }
     ptr = head;
         
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg,  sizeof(ulog_msg),"%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){
         if(!strcasecmp(ptr->param_name, "MACAddress")){
             if(getHex(ptr->param_val, mocaIntfAssociatedevice->MACAddress, MAC_SZ) != SUCCESS){
-	        sprintf(ulog_msg, "%s: Macaddress read error !!!\n", __FUNCTION__);
+	        rc = sprintf_s(ulog_msg,  sizeof(ulog_msg),"%s: Macaddress read error !!!\n", __FUNCTION__);
+	        if(rc < EOK)
+	        {
+	           ERR_CHK(rc);
+	        }
 	        ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             } 
 	}else if(!strcasecmp(ptr->param_name, "NodeID")){
@@ -443,13 +558,21 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
     retVal = file_parse(MOCA_STATS_FILE, &head);
     if(retVal != SUCCESS){
 	free_paramList(head); /*RDKB-7129, CID-33335, free unused resources before exit*/
-	sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+	rc = sprintf_s(ulog_msg,  sizeof(ulog_msg),"%s: Error in file read !!!", __FUNCTION__);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return retVal;
     }
     ptr = head;
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
 
@@ -462,29 +585,36 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
     ptr = head = NULL;
     i = 0;
 
-    memset(buf, 0, BUF_SZ);
-    sprintf(buf, "cp %s %s", MOCA_STATS_FILE, MOCA_STATS_FILE_TEMP);
-    system(buf);
+    system("cp " MOCA_STATS_FILE " " MOCA_STATS_FILE_TEMP);
     if(count == 0){
-        memset(buf, 0, BUF_SZ);
-        sprintf (buf, "cat %s| sed -n '1,3 p' > %s", MOCA_STATS_FILE_TEMP, MOCA_STATS_FILE_1);
-        system(buf);
+        system("cat " MOCA_STATS_FILE_TEMP "| sed -n '1,3 p' > " MOCA_STATS_FILE_1);
     }else{
-        memset(buf, 0, BUF_SZ);
-	sprintf(buf, "cat %s| grep -A 2 'NodeID:%d' > %s", MOCA_STATS_FILE, mocaIntfAssociatedevice->NodeID, MOCA_STATS_FILE_1);
+	rc = sprintf_s(buf, sizeof(buf), "cat %s| grep -A 2 'NodeID:%d' > %s", MOCA_STATS_FILE, mocaIntfAssociatedevice->NodeID, MOCA_STATS_FILE_1);
+	if(rc < EOK)
+	{
+	    ERR_CHK(rc);
+	}
 	system(buf);
     }
 
     retVal = file_parse(MOCA_STATS_FILE_1, &head);
     if(retVal != SUCCESS){
         free_paramList(head); /*RDKB-7129, CID-33335, free unused resources before exit*/
-        sprintf(ulog_msg, "%s: Error in file read !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error in file read !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return retVal;
     }
     ptr = head;
     if(!ptr){
-        sprintf(ulog_msg, "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s,%d: No nodes found !!!", __FUNCTION__, __LINE__);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
     }
     for(; ptr; ptr=ptr->next){

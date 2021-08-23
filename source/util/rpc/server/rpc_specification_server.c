@@ -21,10 +21,14 @@ executecommand_1_svc(rpc_CommandBuf *argp, struct svc_req *rqstp)
 	snprintf(cmdBuf,sizeof(cmdBuf),"%s 2>&1",argp->buffer);
 	RPC_PRINT("Server received command %s \n",cmdBuf);
 	FILE *cmd = popen(cmdBuf, "r");
+	if (! cmd)
+	{
+		RPC_PRINT("command failed %s , error (errno %d) %s \n",cmdBuf, errno, strerror(errno));
+		return NULL;
+	}
 	char line [128] = {0}; /* or other suitable maximum line size */
 	memset (output.buffer,0,4096);
         int MAXCOUNTER= (sizeof(output.buffer)/sizeof(line) );
-	if (cmd != NULL) {
 		while ( fgets ( line, sizeof (line), cmd ) != NULL ) 
 		{  
 		   if (counter >= MAXCOUNTER ) 
@@ -32,18 +36,13 @@ executecommand_1_svc(rpc_CommandBuf *argp, struct svc_req *rqstp)
                       if ( (strlen(output.buffer) + strlen(line) ) > sizeof(output.buffer) ) 
                               break;
                    }
+			/*Here destination output.buffer size is 4096.
+			As per safec limitation, it won't copy to the destination buffer , if destination size is more than 4K*/
 			strcat(output.buffer,line);
-			memset (line,0,128);
                   	counter++;
 		}
 		pclose ( cmd );
 		return &output;
-	}
-	else
-	{
-	RPC_PRINT("command failed %s , error (errno %d) %s \n",cmdBuf, errno, strerror(errno)); 
-	return 	NULL;
-	}
 }
 
 

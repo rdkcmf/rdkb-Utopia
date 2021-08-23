@@ -37,7 +37,7 @@
 #include <errno.h>
 #include <sys/sysinfo.h>
 #include "DM_TR181.h"
-
+#include "safec_lib_common.h"
 
 int file_parse(char* file_name, param_node **head)
 {
@@ -50,14 +50,23 @@ int file_parse(char* file_name, param_node **head)
     char line[LINE_SZ];
     char tok[] = ": \n";
     int  len   = 0;
+    errno_t  rc = -1;
 
     if (!file_name || !head) {
-        sprintf(ulog_msg, "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_PARAM;
     }
     if((fp = fopen(file_name, "r"))== NULL ) {
-        sprintf(ulog_msg, "%s: Error File Open !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Error File Open !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_FILE_OPEN_FAIL;
     }
@@ -77,7 +86,11 @@ int file_parse(char* file_name, param_node **head)
         node = (param_node*)malloc(sizeof(param_node));
         if (!node) {
             fclose(fp);/*RDKB-7130, CID-33164, free resources before exit*/
-            sprintf(ulog_msg, "%s: Memory Allocation Error !!!", __FUNCTION__);
+            rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Memory Allocation Error !!!", __FUNCTION__);
+            if(rc < EOK)
+            {
+               ERR_CHK(rc);
+            }
             ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
             return ERR_INSUFFICIENT_MEM;
         }
@@ -91,7 +104,11 @@ int file_parse(char* file_name, param_node **head)
                     while(*(str++))
                         len++;
                     val[len-1] = '\0'; /* str will point to ':', hence strlen(val) = strlen(str)-1 */
-                    sprintf(ulog_msg, "%s: MACAddressFilterList = %slen = %d \n", __FUNCTION__, val, strlen(val));
+                    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: MACAddressFilterList = %slen = %d \n", __FUNCTION__, val, strlen(val));
+                    if(rc < EOK)
+                    {
+                       ERR_CHK(rc);
+                    }
                     ulogf(ULOG_CONFIG, UL_UTAPI, ulog_msg);
                 }else{
                     val   = str+1;
@@ -130,7 +147,11 @@ int file_parse(char* file_name, param_node **head)
         str = NULL;
     }
     if(fclose(fp) != SUCCESS){
-        sprintf(ulog_msg, "%s: File Close Error !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: File Close Error !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_FILE_CLOSE_FAIL;
     }
@@ -152,14 +173,23 @@ int getMac(char * macAddress, int len, unsigned char * mac)
 {
     char byte[3];
     int i, index, mc;
+    errno_t  rc = -1;
 
     if (macAddress == NULL){
-        sprintf(ulog_msg, "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_PARAM;
     }
     if ((int)strlen(macAddress) < MIN_MAC_LEN){
-        sprintf(ulog_msg, "%s: Invalid MAC Address Length!!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid MAC Address Length!!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_PARAM;
     }
@@ -173,7 +203,11 @@ int getMac(char * macAddress, int len, unsigned char * mac)
 	byte[1] = macAddress[i+1];
 
 	if (sscanf(byte, "%x", &mc) != 1){
-            sprintf(ulog_msg, "%s: Invalid MAC Address!!!", __FUNCTION__);
+            rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid MAC Address!!!", __FUNCTION__);
+            if(rc < EOK)
+            {
+               ERR_CHK(rc);
+            }
 	    ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	    return ERR_INVALID_PARAM;
         }
@@ -185,7 +219,11 @@ int getMac(char * macAddress, int len, unsigned char * mac)
     }
 
     if ((len && index != MAC_SZ)||(!len && index > MAC_SZ)){
-	sprintf(ulog_msg, "%s: Invalid Mac Length !!!", __FUNCTION__);
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Mac Length !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
 	ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 	return ERR_INVALID_PARAM;
     }
@@ -198,9 +236,14 @@ int getHex(char *hex_val, unsigned char *hexVal, int hexLen)
     char byte[3];
     char str[MAX_HEX_LEN+1] = {'\0'};
     int i, index, val, j;
+    errno_t  rc = -1;
 
     if (hex_val == NULL){
-        sprintf(ulog_msg, "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return -1;
     }
@@ -233,7 +276,11 @@ int getHex(char *hex_val, unsigned char *hexVal, int hexLen)
 	    i++;
     }
     if(index != hexLen){
-        sprintf(ulog_msg, "%s: Error in hex length!!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: Error in hex length!!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_PARAM;
     }
@@ -245,9 +292,14 @@ int getHexGeneric(char *hex_val, unsigned char *hexVal, int hexLen)
 {
     char byte[3];
     int i, index, val;
+    errno_t  rc = -1;
 
     if (hex_val == NULL){
-        sprintf(ulog_msg, "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg,sizeof(ulog_msg), "%s: Invalid Input Parameter !!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return -1;
     }
@@ -267,7 +319,11 @@ int getHexGeneric(char *hex_val, unsigned char *hexVal, int hexLen)
             i++;
     }
     if(index != hexLen){
-        sprintf(ulog_msg, "%s: Error in hex length!!!", __FUNCTION__);
+        rc = sprintf_s(ulog_msg,sizeof(ulog_msg), "%s: Error in hex length!!!", __FUNCTION__);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
         return ERR_INVALID_PARAM;
     }

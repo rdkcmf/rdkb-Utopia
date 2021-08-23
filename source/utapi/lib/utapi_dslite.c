@@ -25,6 +25,7 @@
 #include "utapi_util.h"
 #include "utapi_dslite.h"
 #include "DM_TR181.h"
+#include "safec_lib_common.h"
 
 static int g_IndexMapDslite[MAX_NUM_INSTANCES+1] = {-1};
 
@@ -32,7 +33,12 @@ int Utopia_GetDsliteEnable(UtopiaContext *ctx, boolean_t *bEnabled)
 {
     boolean_t flag;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -51,7 +57,12 @@ int Utopia_GetDsliteEnable(UtopiaContext *ctx, boolean_t *bEnabled)
 int Utopia_SetDsliteEnable(UtopiaContext *ctx, boolean_t bEnabled)
 {
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** with !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** with !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -64,7 +75,12 @@ int Utopia_GetNumOfDsliteEntries(UtopiaContext *ctx,unsigned long *cnt)
 {
     int ivalue;
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -77,7 +93,12 @@ int Utopia_GetNumOfDsliteEntries(UtopiaContext *ctx,unsigned long *cnt)
 int Utopia_SetNumOfDsliteEntries(UtopiaContext *ctx,unsigned long cnt)
 {
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** with !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** with !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -96,7 +117,12 @@ int Utopia_GetDsliteCfg(UtopiaContext *ctx,DsLiteCfg_t *pDsliteCfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -120,7 +146,12 @@ int Utopia_SetDsliteCfg(UtopiaContext *ctx,DsLiteCfg_t *pDsliteCfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -146,7 +177,12 @@ int Utopia_AddDsliteEntry(UtopiaContext *ctx, DsLiteCfg_t *pDsliteCfg)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -178,7 +214,12 @@ int Utopia_DelDsliteEntry(UtopiaContext *ctx, unsigned long ulInstanceNumber)
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -226,7 +267,12 @@ int Utopia_GetDsliteEntry(UtopiaContext *ctx,unsigned long ulIndex, void *pDslit
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -253,7 +299,12 @@ int Utopia_SetDsliteInsNum(UtopiaContext *ctx, unsigned long ulIndex, unsigned l
     }
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
@@ -265,7 +316,12 @@ int Utopia_SetDsliteInsNum(UtopiaContext *ctx, unsigned long ulIndex, unsigned l
 int Utopia_GetDsliteByIndex(UtopiaContext *ctx, unsigned long ulIndex, DsLiteCfg_t *pDsLiteCfg_t)
 {
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,(ulIndex + 1),&(pDsLiteCfg_t->InstanceNumber));
@@ -293,7 +349,12 @@ int Utopia_SetDsliteByIndex(UtopiaContext *ctx, unsigned long ulIndex, DsLiteCfg
 {
 
 #ifdef _DEBUG_
-    sprintf(ulog_msg, "%s: ********Entered ****** !!!", __FUNCTION__);
+    errno_t  rc = -1;
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 

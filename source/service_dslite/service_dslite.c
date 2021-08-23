@@ -36,6 +36,7 @@
 #include <event2/util.h>
 #include <event2/event.h>
 #include "time.h"
+#include "safec_lib_common.h"
 
 #define PROG_NAME       "SERVICE-DSLITE"
 #define ER_NETDEVNAME   "erouter0"
@@ -270,6 +271,7 @@ static int dslite_start(struct serv_dslite *sd)
     char return_buffer[256] = {0};
     FILE *fptmp = NULL;
     char dslite_ipv6_frag_enable[64] = {0};
+    errno_t safec_rc = -1;
 
     memset(val, 0, sizeof(val));
     memset(buf, 0, sizeof(buf));
@@ -307,7 +309,8 @@ static int dslite_start(struct serv_dslite *sd)
 
     /*get the WAN side IPv6 global address */
     sysevent_get(sd->sefd, sd->setok, "tr_"ER_NETDEVNAME"_dhcpv6_client_v6addr", val, sizeof(val));
-    strcpy(gw_ipv6, val);
+    safec_rc = strcpy_s(gw_ipv6, sizeof(gw_ipv6),val);
+    ERR_CHK(safec_rc);
     fprintf(stderr, "%s: The GW IPv6 address is %s\n", __FUNCTION__, gw_ipv6);
     if (strlen(val)==0)
     {
@@ -317,7 +320,8 @@ static int dslite_start(struct serv_dslite *sd)
     }
     val[0] = '4';
     val[1] = '0';
-    strcpy(dslite_tnl_ip, val);//Follow TS9.1, the dslite tunnel interface IPv6 address starts with "40"
+    safec_rc = strcpy_s(dslite_tnl_ip, sizeof(dslite_tnl_ip),val);//Follow TS9.1, the dslite tunnel interface IPv6 address starts with "40"
+    ERR_CHK(safec_rc);
     fprintf(stderr, "%s: The dslite tunnel interface IPv6 address is %s\n", __FUNCTION__, dslite_tnl_ip);
 
     /* do start */
@@ -385,7 +389,8 @@ static int dslite_start(struct serv_dslite *sd)
     //Use the above IPv6 nameserver to do DNS resolution for AFTR
     if(inet_pton(AF_INET6, DSLITE_AFTR, &v6_addr)==1)/*IPv6 address format, no need to do DNS resolution*/
     {
-        strcpy(resolved_ipv6, DSLITE_AFTR);
+        safec_rc = strcpy_s(resolved_ipv6, sizeof(resolved_ipv6),DSLITE_AFTR);
+        ERR_CHK(safec_rc);
         dnsttl = 0;
     }
     else /*domain format, need to do DNS resolution*/
@@ -393,7 +398,8 @@ static int dslite_start(struct serv_dslite *sd)
         addrp = dslite_resolve_fqdn_to_ipv6addr(DSLITE_AFTR, &dnsttl, buf);
         if(addrp)
         {
-            strcpy(resolved_ipv6, inet_ntop(AF_INET6, addrp, ipv6_str, INET6_ADDRSTRLEN));
+            safec_rc = strcpy_s(resolved_ipv6, sizeof(resolved_ipv6),inet_ntop(AF_INET6, addrp, ipv6_str, INET6_ADDRSTRLEN));
+            ERR_CHK(safec_rc);
             free(addrp);/* free the memory that dslite_resolve_fqdn_to_ipv6addr had allocated*/
         }
         else
@@ -414,9 +420,15 @@ static int dslite_start(struct serv_dslite *sd)
         memset(buf, 0, sizeof(buf));
         memset(val, 0, sizeof(val));
         syscfg_set(NULL, "dslite_aftr_resolved_1", resolved_ipv6);
-        sprintf(buf, "%lu", time(NULL));
+        safec_rc = sprintf_s(buf, sizeof(buf),"%lu", time(NULL));
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         syscfg_set(NULL, "dslite_dns_time_1", buf);
-        sprintf(val, "%u", dnsttl);
+        safec_rc = sprintf_s(val, sizeof(val),"%u", dnsttl);
+        if(safec_rc < EOK){
+           ERR_CHK(safec_rc);
+        }
         syscfg_set(NULL, "dslite_dns_ttl_1", val);
 
         fprintf(stderr, "%s: Resolved AFTR address is %s, time=%s DNS-TTL=%d\n", __FUNCTION__, resolved_ipv6, buf, dnsttl);
