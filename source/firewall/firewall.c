@@ -6062,10 +6062,19 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
     // RDKB-21814 
     // Drop only remote managment port(8080,8181) in bridge_mode 
     // because port 80, 443 will be used to access MSO page / local admin page.
+
     rc = syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
+#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
+      tmpQuery[0] = '\0';
+      ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
+      if(ret == 0)
+          strcpy(query, tmpQuery);
+#endif
+
     tmpQuery[0] = '\0';
     ret =  syscfg_get(NULL, "mgmt_wan_httpsaccess", tmpQuery, sizeof(tmpQuery));
-    if (isBridgeMode && ( (rc == 0 && atoi(query) == 1) && (ret == 0 && atoi(tmpQuery) == 1)))
+
+    if (isBridgeMode)
     {
         if(httpport[0] == '\0' || atoi(httpport) < 0 || atoi(httpport) > 65535)
             strcpy(httpport, "8080");
@@ -6076,6 +6085,11 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
             strcpy(httpport, "8080");
         if(strcmp(httpsport, "443") == 0)
             strcpy(httpsport, "8181");
+
+        if (rc == 0 && atoi(query) == 0)
+            fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 80 -j DROP\n");
+        if (ret == 0 && atoi(tmpQuery) == 0)
+            fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 443 -j DROP\n");
     }
     else
 #endif
