@@ -996,6 +996,9 @@ $ForwardSSH=true
 #mTlsLogUpload is disabled by default.
 $mTlsLogUpload_Enable=false
 
+#UploadLogsOnUnscheduledRebootDisable is disabled by default.
+$UploadLogsOnUnscheduledRebootDisable=false
+
 #SyndicationFlowControl Defaults
 $SyndicationFlowControlEnable=false
 $DSCP_InitialForwardedMark=
