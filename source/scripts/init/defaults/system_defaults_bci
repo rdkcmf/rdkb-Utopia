@@ -1088,6 +1088,9 @@ $last_router_reboot_time=0
 $router_reboot_Interval=28800
 $CodeBigFirstEnabled=false
 
+#ManageNotifications
+$ManageableNotificationEnabled=false
+
 #UniqueTelemetryId default values
 $unique_telemetry_enable=false
 $unique_telemetry_tag=
