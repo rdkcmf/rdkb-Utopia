@@ -563,6 +563,11 @@ static int isFWTS_enable = 0;
 static int StaticIPSubnetNum = 0;
 staticip_subnet_t StaticIPSubnet[MAX_TS_ASN_COUNT]; 
 
+#if defined(_BWG_PRODUCT_REQ_)
+staticip_subnet_t StaticClientIP[MAX_TS_ASN_COUNT];
+static int StaticNatCount = 0;
+#endif
+
 #endif
 typedef enum {
     SERVICE_EV_UNKNOWN,
@@ -3350,6 +3355,14 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                  if (isWanReady && isWanStaticIPReady) {
                     fprintf(nat_fp, "-A prerouting_fromwan -d %s -j DNAT --to-destination %s\n", public_ip, toip);
                     fprintf(nat_fp, "-A postrouting_towan -s %s -j SNAT --to-source %s\n", toip, public_ip);
+
+		    #if defined(_BWG_PRODUCT_REQ_)
+		    fprintf(stderr, "%s:1-to-1 NAT StaticIP =%s StaticNatCount =%d \n",__FUNCTION__, public_ip, StaticNatCount);
+		    strncpy(StaticClientIP[StaticNatCount].ip, public_ip,sizeof(StaticClientIP[StaticNatCount].ip));
+                    StaticNatCount++;
+                    fprintf(stderr, "%s:1-to-1 NAT StaticIP =%s StaticNatCount =%d \n",__FUNCTION__, StaticClientIP[StaticNatCount-1].ip, StaticNatCount);
+		    #endif
+
                     if (filter_fp) {
                         fprintf(filter_fp, "-A wan2lan_forwarding_accept  -d %s -j xlog_accept_wan2lan\n", toip);
                         /* one 2 one should work even nat disable */ 
@@ -4894,6 +4907,60 @@ static int do_nat_ephemeral(FILE *fp)
            FIREWALL_DEBUG("Exiting do_nat_ephemeral\n");       
    return(0);
 }
+
+#if defined(_BWG_PRODUCT_REQ_)
+/*
+ *  Procedure     : do_raw_table_staticip
+ *  Purpose       : prepare the iptables for static IP clients dont track in raw tables
+ *  Parameters    :
+ *     fp              : An open file that will be used for iptables
+ *  Return Values :
+ *     0               : done
+ *    -1               : bad input parameter
+ */
+static int do_raw_table_staticip(FILE *raw_fp)
+{
+   int i=0;
+   isRawTableUsed = 1;
+   FIREWALL_DEBUG("Entering do_raw_table_staticip...!\n");
+
+   if(isWanStaticIPReady){
+   	/*
+    	* Keep the conntrack for any NAT.
+    	* NAT relies on conntrack to built up, all the inbound traffic towards
+    	* internel spot needs records there for translation.
+    	*/
+	if (((0 < StaticIPSubnetNum) && (isNatEnabled == 1)) || ((0 < StaticIPSubnetNum) && (isNatEnabled == 2))){
+	if ((0 != strcmp("0.0.0.0", natip4)) || (0 != strcmp("", natip4)))
+	{
+       	   fprintf(raw_fp, "-A PREROUTING -d %s -j ACCEPT \n ", natip4);
+	}
+	}
+
+	/*1-to-1 NAT configurations */
+	fprintf(stderr, "do_raw_table_staticip: 1-to-1 NAT Configured Static IP= %s StaticNatCount=%d ...!!\n",StaticClientIP[0].ip,StaticNatCount);
+	for(i = 0; i < StaticNatCount ;i++ ){
+	fprintf(stderr, "do_raw_table_staticip: 1-to-1 NAT Configured Static IP= %s ...!!\n",StaticClientIP[i].ip);
+	if ((0 != strcmp("0.0.0.0", StaticClientIP[i].ip)) || (0 != strcmp("", StaticClientIP[i].ip)))
+	{
+           fprintf(stderr, "do_raw_table_staticip: 1-to-1 NAT Configured Static IP= %s ...!!\n",StaticClientIP[i].ip);
+           fprintf(raw_fp, "-A PREROUTING -d %s -j ACCEPT \n ", StaticClientIP[i].ip);
+           fprintf(stderr, "do_raw_table_staticip: 1-to-1 NAT Config rule = -A PREROUTING -d %s -j ACCEPT  ...!!\n",StaticClientIP[i].ip);
+	}
+ 	}
+	//Set the NO track rules in raw table for STATIC IP clients
+	for(i = 0; i < StaticIPSubnetNum ;i++ ){
+	if ((0 != strcmp("0.0.0.0", StaticIPSubnet[i].mask)) || (0 != strcmp("", StaticIPSubnet[i].mask)))
+	{
+	   fprintf(raw_fp, "-A PREROUTING -d %s/%s -j CT --notrack \n ", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask);
+	   /*fprintf(raw_fp, "-A PREROUTING -s %s/%s -j CT --notrack \n ", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask);*/
+	}
+	}
+   }
+   FIREWALL_DEBUG("Exist do_raw_table_staticip...!!\n");
+   return 0;
+}
+#endif
 
 /*
  *  Procedure     : do_wan_nat_lan_clients
@@ -10912,15 +10979,19 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        fprintf(raw_fp, "%s\n", ":lan2wan_helpers - [0:0]");
    }
 #endif
+
    fprintf(raw_fp, "%s\n", ":output_raw - [0:0]");
    fprintf(raw_fp, "%s\n", ":prerouting_nowan - [0:0]");
    fprintf(raw_fp, "%s\n", ":output_nowan - [0:0]");
+ 
+#if !defined(_BWG_PRODUCT_REQ_)
    fprintf(raw_fp, "-A PREROUTING -j prerouting_ephemeral\n");
    fprintf(raw_fp, "-A OUTPUT -j output_ephemeral\n");
    fprintf(raw_fp, "-A PREROUTING -j prerouting_raw\n");
    fprintf(raw_fp, "-A OUTPUT -j output_raw\n");
    fprintf(raw_fp, "-A PREROUTING -j prerouting_nowan\n");
    fprintf(raw_fp, "-A OUTPUT -j output_nowan\n");
+#endif
 
 #if defined(CONFIG_KERNEL_NETFILTER_XT_TARGET_CT)
    /* On some platforms automatic connection tracking helpers are disabled for security reasons. */
@@ -12268,7 +12339,13 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    do_lan2wan(mangle_fp, filter_fp, nat_fp); 
    do_wan2lan(filter_fp);
    do_filter_table_general_rules(filter_fp);
+
+#if defined(_BWG_PRODUCT_REQ_)
+   do_raw_table_staticip(raw_fp);
+#else
    do_raw_logs(raw_fp);
+#endif
+
    do_logs(filter_fp);
   
 /* Prepare mangle table rules for brlan1 traffic marking used to clamp mss for GRE traffic */
@@ -12334,6 +12411,11 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 #ifdef INTEL_PUMA7
    do_raw_table_puma7(raw_fp);
 #endif
+
+#if defined(_BWG_PRODUCT_REQ_)
+   do_raw_table_staticip(raw_fp);
+#endif
+
    fprintf(raw_fp, "%s\n", "COMMIT");
 
    /*
@@ -13080,8 +13162,10 @@ int prepare_ipv6_firewall(const char *fw_file)
 
 #endif //_HUB4_PRODUCT_REQ_
 	/*add rules before this*/
-
+#if !defined(_BWG_PRODUCT_REQ_)
 	fprintf(raw_fp, "COMMIT\n");
+#endif
+
 	fprintf(mangle_fp, "COMMIT\n");
 #if !defined(_PLATFORM_IPQ_)
 	fprintf(nat_fp, "COMMIT\n");
@@ -13102,6 +13186,7 @@ int prepare_ipv6_firewall(const char *fw_file)
 	* The raw table is before conntracking and is thus expensive
 	* So we dont set it up unless we actually used it
 	*/
+#if !defined(_BWG_PRODUCT_REQ_)
 	if (isRawTableUsed) {
 		while (NULL != (strp = fgets(string, MAX_QUERY, raw_fp)) ) {
 		   fprintf(fp, "%s", string);
@@ -13109,6 +13194,8 @@ int prepare_ipv6_firewall(const char *fw_file)
 	} else {
 		fprintf(fp, "*raw\n-F\nCOMMIT\n");
 	}
+#endif
+
 	while (NULL != (strp = fgets(string, MAX_QUERY, mangle_fp)) ) {
 		fprintf(fp, "%s", string);
 	}
