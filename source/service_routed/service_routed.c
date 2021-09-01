@@ -505,8 +505,13 @@ static int gen_zebra_conf(int sefd, token_t setok)
     }
     else
     {
-        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
-        syscfg_commit();
+	char l_cDhcpv6_Dns[256] = {0};
+        syscfg_get(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers", l_cDhcpv6_Dns, sizeof(l_cDhcpv6_Dns));
+        if ( '\0' == l_cDhcpv6_Dns[ 0 ] )
+        {
+            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
+            syscfg_commit();
+        }
     }
     FILE *fp = NULL;
     char rtmod[16], ra_en[16], dh6s_en[16];

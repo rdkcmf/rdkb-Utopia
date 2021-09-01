@@ -344,15 +344,20 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
 #endif
     char l_cSecWebUI_Enabled[8] = {0};
     syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
-    if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
+    char l_cDhcpv6_Dns[256] = {0};
+    syscfg_get(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers", l_cDhcpv6_Dns, sizeof(l_cDhcpv6_Dns));
+    if ( '\0' == l_cDhcpv6_Dns[ 0 ] )
     {
-        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
-        syscfg_commit();
-    }
-    else
-    {
-        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
-        syscfg_commit();
+        if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
+        {
+            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
+            syscfg_commit();
+        }
+        else
+        {
+            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
+            syscfg_commit();
+        }
     } 
 
     DHCPV6S_SYSCFG_GETI(DHCPV6S_NAME, "pool", cfg->index, "", 0, "bEnabled", cfg->enable);
@@ -420,7 +425,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
         return -1;
 #if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) 
 	sysevent_get(si6->sefd, si6->setok, COSA_DML_DHCPV6C_PREF_T1_SYSEVENT_NAME, action, sizeof(action));
-	errno_t  rc  = -1;
+        errno_t  rc  = -1;
 	if(action[0]!='\0')
 	{
 		if(!strcmp(action,"'\\0'"))
@@ -1537,35 +1542,40 @@ OPTIONS:
             {
                 char dyn_dns[256] = {0};
                 sysevent_get(si6->sefd, si6->setok, "ipv6_nameserver", dyn_dns, sizeof(dyn_dns));
-                strcpy( dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers,dyn_dns );    
+                if ( '\0' == dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers[ 0 ] )
+                {
+                   strcpy( dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers,dyn_dns );
+                }
             }
             if (tag_index >= NELEMS(tag_list)) continue;
 
             if (opt.pt_client[0]) {
                 if (opt.tag == 23) {//dns
                     char dns_str[256] = {0};
-                    errno_t  rc = -1;
 
 					/* Static DNS */
 					if( 1 == dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled )	
 					{
-						rc = strcpy_s( dns_str, sizeof(dns_str), dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
-						ERR_CHK(rc);
-						fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__, 
-																						  __LINE__,
-																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled,
-																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
 
+						memset( dns_str, 0, sizeof( dns_str ) );
                                                 if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
                                                 {
                                                     char static_dns[256] = {0};
                                                     sysevent_get(si6->sefd, si6->setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
                                                     if ( '\0' != static_dns[ 0 ] )
                                                     {
+                                                        strcpy( dns_str, static_dns );
                                                         strcat(dns_str," ");
-                                                        strcat(dns_str,static_dns);
                                                     }
                                                 }
+                                                strcat(dns_str,dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers);
+                                            
+						fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__, 
+																						  __LINE__,
+																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled,
+																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+
+                                        
 					}
 					else
 					{
