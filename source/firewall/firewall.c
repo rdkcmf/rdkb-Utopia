@@ -10757,11 +10757,11 @@ static int prepare_lnf_internet_rules(FILE *mangle_fp,int iptype)
         char lnf_ipaddress[50];
         memset(lnf_ipaddress, 0, sizeof(lnf_ipaddress));
         syscfg_get(NULL, "iot_ipaddr", lnf_ipaddress, sizeof(lnf_ipaddress));
-        fprintf(mangle_fp, "-A FORWARD -i %s -d %s/24 -m dscp --dscp-class cs0 -j LOG --log-prefix \"Internet packets in LnF\"\n",
+        fprintf(mangle_fp, "-A FORWARD -i %s -d %s/24 -m dscp --dscp-class cs0 -m limit --limit 1/minute -j LOG --log-prefix \"Internet packets in LnF\"\n",
                 current_wan_ifname,lnf_ipaddress);
         fprintf(mangle_fp, "-A FORWARD -i %s -d %s/24 -m dscp --dscp-class cs0 -j DROP\n",current_wan_ifname,lnf_ipaddress);
 
-        fprintf(mangle_fp, "-A FORWARD -i %s -d %s/24 -m dscp --dscp-class cs1 -j LOG --log-prefix \"Internet packets in LnF\"\n",
+        fprintf(mangle_fp, "-A FORWARD -i %s -d %s/24 -m dscp --dscp-class cs1 -m limit --limit 1/minute -j LOG --log-prefix \"Internet packets in LnF\"\n",
                 current_wan_ifname,lnf_ipaddress);
         fprintf(mangle_fp, "-A FORWARD -i %s -d %s/24 -m dscp --dscp-class cs1 -j DROP\n",current_wan_ifname,lnf_ipaddress);
         fprintf(mangle_fp, "-A FORWARD -i %s -d %s/24 -j ACCEPT\n",current_wan_ifname,lnf_ipaddress);
@@ -10781,11 +10781,11 @@ static int prepare_lnf_internet_rules(FILE *mangle_fp,int iptype)
             sysevent_get(sysevent_fd, sysevent_token, cmd_buff, ipv6prefix, sizeof(ipv6prefix));
             if (strlen(ipv6prefix) > 0 )
             {
-                fprintf(mangle_fp, "-A FORWARD -i %s -d %s -m dscp --dscp-class cs0 -j LOG --log-prefix \"Internet packets in LnF\"\n",
+                fprintf(mangle_fp, "-A FORWARD -i %s -d %s -m dscp --dscp-class cs0 -m limit --limit 1/minute -j LOG --log-prefix \"Internet packets in LnF\"\n",
                     current_wan_ifname,ipv6prefix);
                 fprintf(mangle_fp, "-A FORWARD -i %s -d %s -m dscp --dscp-class cs0 -j DROP\n",current_wan_ifname,ipv6prefix);
 
-                fprintf(mangle_fp, "-A FORWARD -i %s -d %s -m dscp --dscp-class cs1 -j LOG --log-prefix \"Internet packets in LnF\"\n",
+                fprintf(mangle_fp, "-A FORWARD -i %s -d %s -m dscp --dscp-class cs1 -m limit --limit 1/minute -j LOG --log-prefix \"Internet packets in LnF\"\n",
                     current_wan_ifname,ipv6prefix);
                 fprintf(mangle_fp, "-A FORWARD -i %s -d %s -m dscp --dscp-class cs1 -j DROP\n",current_wan_ifname,ipv6prefix);
                 fprintf(mangle_fp, "-A FORWARD -i %s -d %s -j ACCEPT\n",current_wan_ifname,ipv6prefix);
