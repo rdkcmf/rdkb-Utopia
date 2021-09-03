@@ -489,6 +489,10 @@ dhcp_server_start ()
          return 0
    fi
 
+   if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ]; then
+       $PMON unsetproc dhcp_server
+   fi
+
    sysevent set dns-status stopped
    killall `basename $SERVER`
    rm -f $PID_FILE
