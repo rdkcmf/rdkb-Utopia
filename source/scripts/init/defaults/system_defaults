@@ -1115,9 +1115,6 @@ $SecureWebUI_LocalFqdn=myrouter.io
 #Static IPV6 DNS enabled
 $dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled=0
 
-#NonRootSupport enable
-$NonRootSupport=true
-
 #Aggressive selfheal interval default value
 $AggressiveInterval=5
 
