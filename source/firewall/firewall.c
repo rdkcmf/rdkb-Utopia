@@ -10900,6 +10900,47 @@ static int do_ipv4_norf_captiveportalrule(FILE *nat_fp)
 }
 #endif
 
+#if defined (_SR300_PRODUCT_REQ_)
+#ifdef SR300_FEATURE_SELFHEAL
+static int do_ipv4_selfheal_enable_rule(FILE *nat_fp)
+{
+    char captivePortalEnabled[16] = { 0 };
+    int retCode = 0;
+
+    if (!nat_fp)
+        return -1;
+    retCode = syscfg_get(NULL, "CaptivePortal_Enable", captivePortalEnabled, sizeof(captivePortalEnabled));  
+
+    if (0 != retCode || '\0' == captivePortalEnabled[0])
+    {
+        return -1;
+    }
+
+    //if captive portal is enabled and wan is down,  apply the rules to redirect the traffic
+    if ((!strcmp("true", captivePortalEnabled)) && isInSelfHealMode() == 1)
+    {
+
+        fprintf(nat_fp, "-I PREROUTING -i %s -j prerouting_selfheal_redirect \n", lan_ifname);
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -p udp -m udp --dport 80 -j DNAT --to-destination %s:80\n", lan_ipaddr);
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -p tcp -m tcp --dport 80 -j DNAT --to-destination %s:80\n", lan_ipaddr);
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -p udp -m udp --dport 443 -j DNAT --to-destination %s:443\n", lan_ipaddr);
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -p tcp -m tcp --dport 443 -j DNAT --to-destination %s:443\n", lan_ipaddr);
+
+
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -s %s/%s -d %s -p tcp  -m tcp --dport 80 -j ACCEPT\n",
+                lan_ipaddr, lan_netmask, lan_ipaddr);
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -s %s/%s -d %s -p udp  -m udp --dport 80 -j ACCEPT\n",
+                lan_ipaddr, lan_netmask, lan_ipaddr);
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -s %s/%s -d %s -p tcp  -m tcp --dport 443 -j ACCEPT\n",
+                lan_ipaddr, lan_netmask, lan_ipaddr);
+        fprintf(nat_fp, "-I prerouting_selfheal_redirect -s %s/%s -d %s -p udp  -m udp --dport 443 -j ACCEPT\n",
+                lan_ipaddr, lan_netmask, lan_ipaddr);
+    }
+    return 0;
+}
+#endif
+#endif
+
 /*
  ==========================================================================
               IPv4 Firewall 
@@ -11242,6 +11283,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if defined (_XB6_PRODUCT_REQ_)
    fprintf(nat_fp, "%s\n", ":prerouting_noRFCP_redirect - [0:0]");
 #endif
+#if defined (_SR300_PRODUCT_REQ_)
+#ifdef SR300_FEATURE_SELFHEAL
+   fprintf(nat_fp, "%s\n", ":prerouting_selfheal_redirect - [0:0]");
+#endif
+#endif
    fprintf(nat_fp, "%s\n", ":prerouting_ephemeral - [0:0]");
    fprintf(nat_fp, "%s\n", ":prerouting_fromwan - [0:0]");
    fprintf(nat_fp, "%s\n", ":prerouting_mgmt_override - [0:0]");
@@ -11267,6 +11313,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #endif
 #if defined (_XB6_PRODUCT_REQ_)
    do_ipv4_norf_captiveportalrule (nat_fp);
+#endif
+#if defined (_SR300_PRODUCT_REQ_)
+#ifdef SR300_FEATURE_SELFHEAL
+   do_ipv4_selfheal_enable_rule (nat_fp);
+#endif
 #endif
    fprintf(nat_fp, "-A PREROUTING -j prerouting_ephemeral\n");
    fprintf(nat_fp, "-A PREROUTING -j prerouting_mgmt_override\n");

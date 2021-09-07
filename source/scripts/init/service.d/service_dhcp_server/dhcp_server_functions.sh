@@ -1144,10 +1144,18 @@ fi
                isItLocalHost=`cat /etc/resolv.conf | grep "127.0.0.1" | cut -d " " -f2`
                if [ "$resolv_conf_entry_cnt" == "1" ] && [ "$isItLocalHost" == "127.0.0.1" ]
                then
-                   echo "Adding static entries for selfheal"
-                   echo "address=/#/10.10.10.10" >> $LOCAL_DHCP_CONF
-                   echo "address=/#/a000::1" >> $LOCAL_DHCP_CONF
-                   echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
+                   if [ "$BOX_TYPE" = "SR300" ]; then
+                   #If wan is down and if captive portal is enabled, set cpative portal mode
+                   #Once captive portal mode is set, it will set lan IP for DNS in dnsmasq.conf
+                        if [ "$CAPTIVEPORTAL_ENABLED" == "true" ]; then
+                            CAPTIVE_PORTAL_MODE="true"
+                        fi
+                   else
+                       echo "Adding static entries for selfheal"
+                       echo "address=/#/10.10.10.10" >> $LOCAL_DHCP_CONF
+                       echo "address=/#/a000::1" >> $LOCAL_DHCP_CONF
+                       echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
+                   fi
                fi
            fi
 
