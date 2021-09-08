@@ -1258,3 +1258,5 @@ $hwHealthTest=false
 #TDK Enable default value
 $TDKEnable=false
 
+#CMRouteIsolation is enabled by default
+$CMRouteIsolation_Enable=true

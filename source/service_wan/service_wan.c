@@ -675,6 +675,87 @@ static int wan_start(struct serv_wan *sw)
 
     /* do start */
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "starting", 0);
+    
+#if (defined _COSA_INTEL_XB3_ARM_)
+    /* For xb3 we have default route for both wan0 and erouter0,
+       move wan0 to separate routing table, to make sure we are 
+       limiting wan0 traffic only on wan0 */
+
+    /* we will come here when wan0 got ip,tftp,tod was completed before erouter0
+       and brlan0 got ipv6 */ 
+    char cmroute_isolation[8] = {0};
+    int  cm_isolation_enbld = 0;
+
+    if( 0 == syscfg_get( NULL, "CMRouteIsolation_Enable", cmroute_isolation, sizeof( cmroute_isolation ) ) )
+    {
+       if ( strcmp (cmroute_isolation,"true") == 0 ) {
+           cm_isolation_enbld=1;
+       }
+    }
+
+    if (cm_isolation_enbld) {
+    	char buff[256] = {0};
+        FILE *Fp;
+        char *p;
+        Fp = v_secure_popen("r","ip -6 addr show dev wan0 scope global \
+		    		| awk '/inet/{print $2}' | cut -d '/' -f1");  
+        if (Fp == NULL)
+        {
+    	   fprintf(stderr, "<%s>:<%d> Error popen\n", __FUNCTION__, __LINE__);
+        } 
+        else
+        {
+           if (fgets(buff, 50, Fp) != NULL)
+           {
+              if (buff[0] != 0)
+              {
+ 	         if ((p = strchr(buff, '\n'))) {
+                    *p = '\0';
+                 }
+  	         fprintf(stderr, "Configuring wan0 to route table cmwan\n");
+	         if (sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra_table", "wan0", "1024") == 0)
+	         {
+	            /* accept_Ra_table accpets only integers, currently table name cmwan mapped with 1024
+		     * in case, if changed make sure to update in etc/iproute2/rt_tables too*/ 
+    	            v_secure_system("ip -6 rule add from %s lookup cmwan && "
+                                    "ip -6 rule add from all oif wan0 table cmwan && "
+                                    "ip -6 route del default dev wan0 && "
+                                    "touch /tmp/wan0_configured ",buff);
+		    
+		    /* check to ensure, we are properly configured, partial configuration
+                     * may lead to indefinite behaviour,revert to original state*/
+    		    if (access( "/tmp/wan0_configured", F_OK ) != 0) 
+    		    {
+                       fprintf(stderr, "Configuring wan0 to route table cmwan failed, Reset to default state\n");
+	               if (sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra_table", "wan0", "254") == 0)
+	               {		
+	                  v_secure_system("ip -6 rule del lookup cmwan && "
+					  "ip -6 rule del from all oif wan0 lookup cmwan && "
+		    	                  "ip -6 route del default dev wan0 table cmwan ");
+		       }
+		       else
+	                  fprintf(stderr, "Sysctl set failed,Unable to Reset Route table for wan0\n");
+                    }
+		 }
+		 else
+		    fprintf(stderr, "Sysctl set failed,unable to configure routing table cmwan\n");
+	      }
+              else
+	         fprintf(stderr, "WAN0 IPv6 null,Unable to configure route table cmwan\n");
+            }
+            else
+            {
+                /* ??? we can't be empty, either the box management is ipv4 only or
+                rare conditon of wan0 is empty. can't taken any action for now
+                */
+                fprintf(stderr, "WAN0 IPv6 empty,Unable to configure route table cmwan\n");
+            }
+            v_secure_pclose(Fp);
+        }
+     }
+     else 
+	fprintf(stderr, "RFC disabled, Skip WAN0 CM Route Isolation\n");
+#endif
 
     /*
      * If we are in routing mode and executing a wan-restart
@@ -877,6 +958,13 @@ static int wan_start(struct serv_wan *sw)
         t2_event_d("btime_waninit_split", uptime);	
     /* RDKB-24991 to handle snmpv3 based on wan-status event */
     v_secure_system("sh /lib/rdk/postwanstatusevent.sh &");
+#if (defined _COSA_INTEL_XB3_ARM_)
+    if (cm_isolation_enbld) { 
+       fprintf(stderr, "Dumping Route table cmwan and routing rules\n");   
+       v_secure_system("ip -6 route show table cmwan && "
+                       "ip -6 rule show "); 
+    }
+#endif
     return 0;
 }
 
@@ -897,6 +985,22 @@ static int wan_stop(struct serv_wan *sw)
  
     /* do stop */
     sysevent_set(sw->sefd, sw->setok, "wan_service-status", "stopping", 0);
+#if (defined _COSA_INTEL_XB3_ARM_)    
+    if (access( "/tmp/wan0_configured", F_OK ) == 0) 
+    {
+        fprintf(stderr, "Reset Route table and routing rules for wan0\n");
+	if (sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra_table", "wan0", "254") == 0)
+	{		
+	   v_secure_system("ip -6 rule del from all oif wan0 lookup cmwan && "
+                           "ip -6 rule del lookup cmwan && "
+		    	   "ip -6 route del default dev wan0 table cmwan && "
+                           "rm /tmp/wan0_configured ");
+	}
+	else
+	   fprintf(stderr, "Sysctl set failed,Unable to Reset Route table for wan0\n");
+    }
+#endif    
+ 
 
     /*
      * To facilitate mode switch between IPV4, IPv6 and Mix mode we set last_erouter_mode
