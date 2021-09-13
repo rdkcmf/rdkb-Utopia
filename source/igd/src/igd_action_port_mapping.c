@@ -453,6 +453,7 @@ INT32 IGD_get_SpecificPortMapping_entry(INOUT struct action_event *event)
 	/* CID 135641 : BUFFER_SIZE_WARNING */
         strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_INVALID_ARGS), sizeof(event->request->error_str)-1);
         event->request->error_str[sizeof(event->request->error_str)-1] = '\0';
+	PAL_xml2s_free(&portmapIndex, tableSpecPorMap);
     } else {
         bzero(&portmapEntry, sizeof(portmapEntry));
         if(portmapIndex.remoteHost != NULL)
@@ -602,6 +603,7 @@ INT32 IGD_add_PortMapping(INOUT struct action_event *event)
 	/*CID 163387 : BUFFER_SIZE */
         strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_INVALID_ARGS), sizeof(event->request->error_str)-1);
 	event->request->error_str[sizeof(event->request->error_str)-1] = '\0';
+	PAL_xml2s_free(&portmapEntry, tableAddPorMap);
     } else {
         bzero(&pii_pmEntry, sizeof(pii_pmEntry));
 
@@ -766,6 +768,7 @@ INT32 IGD_delete_PortMapping(INOUT struct action_event *event)
 	/* CID 163319 : BUFFER_SIZE_WARNING */
         strncpy(event->request->error_str, PAL_upnp_get_error_message(PAL_UPNP_SOAP_E_INVALID_ARGS), sizeof(event->request->error_str)-1);
 	event->request->error_str[sizeof(event->request->error_str)-1] = '\0';
+	PAL_xml2s_free(&portmapIndex, tableDelPorMap);
     } else {
 
         ret = IGD_pii_del_portmapping_entry(pIndex->wan_device_index,
