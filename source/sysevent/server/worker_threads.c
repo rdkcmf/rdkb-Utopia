@@ -2070,7 +2070,19 @@ static int handle_run_executable_msg(const int local_fd, const token_t who, se_r
          } else {
             // unlink from the global list
          if (NULL == link->prev) {
-            global_blocked_exec_head = link->next;
+            /* RDKB-37534 
+             * Update Double linked list head ( i.e head node of inprogress exec list) only 
+             * when flag ACTION_FLAG_MULTIPLE_ACTIVATION is not set
+             * link-wait = 0 ( flag ACTION_FLAG_MULTIPLE_ACTIVATION (or NOT_THREAD_SAFE) is set)
+             * link->wait = 1 (flag ACTION_FLAG_MULTIPLE_ACTIVATION (or NOT_THREAD_SAFE) is not set)
+             * if ACTION_FLAG_MULTIPLE_ACTIVATION is set, then node is not added to double linked list,
+             * so not need to update head node.
+             */
+             if (link->wait)
+             {
+                global_blocked_exec_head = link->next;
+             }
+
          } else {
             (link->prev)->next = link->next;
          }
