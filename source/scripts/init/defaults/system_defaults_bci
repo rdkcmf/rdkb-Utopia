@@ -1266,3 +1266,6 @@ $CMRouteIsolation_Enable=true
 
 #SHORTS is disabled by default
 $ShortsEnabled=false
+
+#Collectd Enable default value
+$CollectdEnable=false
