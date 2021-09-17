@@ -53,7 +53,7 @@ prepare_resolv_conf () {
    fi
 
        
-   if [[ ( "0.0.0.0" != "$NAMESERVER1"  &&  "" != "$NAMESERVER1" ) || ( "0.0.0.0" != "$NAMESERVER2"  &&  "" != "$NAMESERVER2" ) ]] ; then
+   if ( [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ) || ( [ "0.0.0.0" != "$NAMESERVER2" ] && [ "" != "$NAMESERVER2" ] ) ; then
    	sed -i '/nameserver [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/d' "$RESOLV_CONF_TMP"
    fi
 
