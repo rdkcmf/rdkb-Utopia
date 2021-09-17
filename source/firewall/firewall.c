@@ -14102,10 +14102,10 @@ void RmConntrackEntry(char *IPaddr)
         v_secure_system("conntrack -D -f ipv6 -d %s", IPaddr);
 
 /*Mamidi:12042017:Fix for ARRISXB6-5237 and ARRISXB6-6256*/
-#if !defined (INTEL_PUMA7)  
+#if !defined (INTEL_PUMA7)
         v_secure_system("ip6tables -I FORWARD -s %s -j DROP", IPaddr);
-#endif
         v_secure_system("ip6tables -I FORWARD -s %s -m state --state ESTABLISHED -j DROP", IPaddr);
+#endif
         v_secure_system("ip6tables -I FORWARD -s %s -m udp -p udp -j DROP", IPaddr);
         v_secure_system("ip6tables -I FORWARD -s %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
         v_secure_system("ip6tables -I FORWARD -d %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
@@ -14115,10 +14115,10 @@ void RmConntrackEntry(char *IPaddr)
     {
         v_secure_system("conntrack -D --orig-src %s", IPaddr);
 /*Mamidi:12042017:Fix for ARRISXB6-5237 and ARRISXB6-6256*/
-#if !defined (INTEL_PUMA7)  
+#if !defined (INTEL_PUMA7)
         v_secure_system("iptables -I FORWARD -s %s -j DROP", IPaddr);
-#endif
         v_secure_system("iptables -I FORWARD -s %s -m state --state ESTABLISHED -j DROP", IPaddr);
+#endif
         v_secure_system("iptables -I FORWARD -s %s -m udp -p udp -j DROP", IPaddr);
         v_secure_system("iptables -I FORWARD -s %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
         v_secure_system("iptables -I FORWARD -d %s -m udp -p udp --dport 53 -j ACCEPT", IPaddr);
