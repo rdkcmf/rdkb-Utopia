@@ -223,6 +223,7 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 						
 						MNET_DEBUG("%s, interface token %s\n" COMMA __FUNCTION__ COMMA ifToken )
 #if defined(MULTILAN_FEATURE)
+						skipMocaIsoInterface = false;
 						for (iterator = 0; iterator < sizeof(miInterfaceStrings)/sizeof(*miInterfaceStrings); ++iterator) {
 							if(0 == strncmp(miInterfaceStrings[iterator], ifToken, strlen(miInterfaceStrings[iterator])))
 							{
@@ -237,10 +238,9 @@ int nv_get_members(PL2Net net, PMember memberList, int numMembers)
 						if(0 != strcmp(ifToken,"sw_5"))
 #endif
 						{
-						strcpy(memberList[actualNumMembers].interface->name, ifToken);
-						MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
-						strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
-	
+							strcpy(memberList[actualNumMembers].interface->name, ifToken);
+							MNET_DEBUG("%s, interface %s\n" COMMA __FUNCTION__ COMMA memberList[actualNumMembers].interface->name )
+							strcpy(memberList[actualNumMembers++].interface->type->name, typeStrings[i]);
 						}
 					}
 				}
