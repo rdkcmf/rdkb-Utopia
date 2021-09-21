@@ -1201,8 +1201,8 @@ int prepare_dhcp_conf (char *input)
 		else
 		{
 			//TODO add dns_only prefix 
-			fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-range=%s,%s,%s,%s\n", 
-					l_cDns_Only_Prefix, l_cIotStartAddr, l_cIotEndAddr, l_cIotNetMask, g_cDhcp_Lease_Time);
+			fprintf(l_fLocal_Dhcp_ConfFile, "%sdhcp-range=%s,%s,%s,86400\n", 
+					l_cDns_Only_Prefix, l_cIotStartAddr, l_cIotEndAddr, l_cIotNetMask);
 		}
 
 		// Add iot custom dns server configuration

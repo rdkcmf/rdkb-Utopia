@@ -998,7 +998,7 @@ fi
 	  if [ $DHCP_LEASE_TIME == -1 ]; then
 		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,infinite" >> $LOCAL_DHCP_CONF
 	  else
-		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,$DHCP_LEASE_TIME" >> $LOCAL_DHCP_CONF
+		echo "$PREFIX""dhcp-range=$IOT_START_ADDR,$IOT_END_ADDR,$IOT_NETMASK,86400" >> $LOCAL_DHCP_CONF
 	  fi
 	  
 	   if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
