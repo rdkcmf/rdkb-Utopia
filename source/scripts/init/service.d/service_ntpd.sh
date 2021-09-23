@@ -222,11 +222,26 @@ service_start ()
        MASK="255.255.255.0"
    fi
 
+   WAN_IP=""
    QUICK_SYNC_WAN_IP=""
-	
+
    if [ "$NTPD_INTERFACE" == "erouter0" ]; then
+
+       # Enable Basic NTPD Daemon Logging in Newer Devices
+       echo "logconfig =syncall +clockall +sysall +peerall" >> $NTP_CONF_TMP
+
        sleep 30
        erouter_wait QUICK_SYNC_WAN_IP quickSync
+       erouter_wait WAN_IP
+   else
+       PROVISIONED_TYPE=""
+       PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
+
+       if [ "$PROVISIONED_TYPE" == "IPV4" ]; then
+           WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+       else
+           WAN_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+       fi
    fi
 
    if [ "$QUICK_SYNC_WAN_IP" != "" ]; then
@@ -243,6 +258,10 @@ service_start ()
    echo "interface ignore wildcard" >> $NTP_CONF_TMP
    echo "interface listen 127.0.0.1" >> $NTP_CONF_TMP
    echo "interface listen ::1" >> $NTP_CONF_TMP
+
+   if [ "$WAN_IP" != "" ]; then
+       echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
+   fi  
 
    if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ]; then
        # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
