@@ -992,6 +992,10 @@ static int wan_stop(struct serv_wan *sw)
     v_secure_system("sh /etc/network_response.sh OnlyForNoRf &");
 #endif
     v_secure_system("/rdklogger/backupLogs.sh false '' wan-stopped");
+
+    // RDKB-37891: To clear Time-offset cache on wan-stop
+    sysevent_set(sw->sefd, sw->setok,"ipv4-timeoffset", "", 0);
+    sysevent_set(sw->sefd, sw->setok,"ipv6-timeoffset", "", 0);
     return 0;
 }
 
