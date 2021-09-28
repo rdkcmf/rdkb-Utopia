@@ -12601,6 +12601,8 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
    fprintf(filter_fp, "-A LOG_SSH_DROP -j DROP\n");
 
+   fprintf(filter_fp, "-A INPUT -i %s -p udp -m udp --dport 161 -j xlog_drop_lan2self\n", cmdiag_ifname); //SNMP filter
+
    //SNMPv3 chains for logging and filtering
    fprintf(filter_fp, "%s\n", ":SNMPDROPLOG - [0:0]");
    fprintf(filter_fp, "%s\n", ":SNMP_FILTER - [0:0]");
