@@ -1197,6 +1197,9 @@ $T2Enable=false
 $T2Version=2.0.1
 $T2ConfigURL=
 
+#Defaults for mTLS in T2
+$T2mTLSEnable=true
+
 #Enable DNS strict order
 $DNSStrictOrder=false
 
