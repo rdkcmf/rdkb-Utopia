@@ -640,6 +640,7 @@ static char lan_local_ipv6[IF_IPV6ADDR_MAX][40];
 
 static int current_wan_ipv6_num = 0;
 static char current_wan_ipv6[IF_IPV6ADDR_MAX][40];
+char current_wan_ip6_addr[128];
 
 static char current_wan_ipaddr[20]; // ipv4 address of the wan interface, whether ppp or regular
 static char lan_ifname[50];       // name of the lan interface
@@ -2265,7 +2266,33 @@ static int prepare_globals_from_configuration(void)
    syscfg_get(NULL, "eth_wan_enabled", eth_wan_enabled, sizeof(eth_wan_enabled));
    if (0 == strcmp("true", eth_wan_enabled))
       bEthWANEnable = TRUE;
+    
+   memset(current_wan_ip6_addr, 0, sizeof(current_wan_ip6_addr)); 
+   sysevent_get(sysevent_fd, sysevent_token, "tr_erouter0_dhcpv6_client_v6addr", current_wan_ip6_addr, sizeof(current_wan_ip6_addr));
    
+   if ( ('\0' == current_wan_ip6_addr[0] ) && ( 0 == strlen(current_wan_ip6_addr) ) ) {
+
+        FILE *ipAddrFp = NULL;
+        char buf[256] = {0};
+        memset(buf,0,sizeof(buf));
+        snprintf(buf, sizeof(buf), "ifconfig erouter0 | grep Global |  awk '/inet6/{print $3}' | cut -d '/' -f1");
+        ipAddrFp = popen(buf, "r") ;
+        if (ipAddrFp != NULL )
+        {
+            if(fgets(current_wan_ip6_addr, sizeof(current_wan_ip6_addr), ipAddrFp)!=NULL)
+            {
+                  int ipAddr_len = 0;
+                  ipAddr_len = strlen(current_wan_ip6_addr);
+                  if ( current_wan_ip6_addr[ipAddr_len-1] == '\n' )
+                  {
+                      current_wan_ip6_addr[ipAddr_len - 1] = '\0';
+                  }
+            }
+            pclose(ipAddrFp);
+            ipAddrFp = NULL;
+          }
+
+    } 
 
    get_ip6address(ecm_wan_ifname, ecm_wan_ipv6, &ecm_wan_ipv6_num,IPV6_ADDR_SCOPE_GLOBAL);
    get_ip6address(lan_ifname, lan_local_ipv6, &lan_local_ipv6_num,IPV6_ADDR_SCOPE_LINKLOCAL);
@@ -5911,7 +5938,49 @@ static void do_container_allow(FILE *pFilter, FILE *pMangle, FILE *pNat, int fam
  }
  #endif
 
+  static void checkandblock_remote_access(FILE *filter_fp)
+  {
+	int rc, ret;
+	char query[MAX_QUERY], tmpQuery[MAX_QUERY];
+	char httpportno[64];
+	char httpsportno[64];
+	
+	memset(query, 0, sizeof(query));
+	memset(tmpQuery, 0, sizeof(tmpQuery));
+	memset(httpportno, 0, sizeof(httpportno));
+	memset(httpsportno, 0, sizeof(httpsportno));	
 
+	tmpQuery[0] = '\0';
+	ret =  syscfg_get(NULL, "mgmt_wan_httpsaccess", tmpQuery, sizeof(tmpQuery));
+	if ((ret == 0) && atoi(tmpQuery) == 0){
+	    syscfg_get(NULL, "mgmt_wan_httpsport", httpsportno, sizeof(httpsportno));
+	    if('\0' != httpsportno[0]) {
+	    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport %s -d %s -j DROP\n", current_wan_ifname, httpsportno, current_wan_ip6_addr );
+	    }
+	}
+	query[0] = '\0';
+        rc =  syscfg_get(NULL, "mgmt_wan_httpaccess", query, sizeof(query));
+#if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
+      tmpQuery[0] = '\0';
+      ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
+      if(ret == 0)
+          strcpy(query, tmpQuery);
+#endif
+	if((rc == 0)&& atoi(query) == 0 ) {
+#if defined(_COSA_BCM_MIPS_) || defined(CONFIG_CCSP_WAN_MGMT_PORT)
+        syscfg_get(NULL, "mgmt_wan_httpport_ert", httpportno, sizeof(httpportno));
+	if('\0' == httpportno[0]) {
+		syscfg_get(NULL, "mgmt_wan_httpport", httpportno, sizeof(httpportno));
+	}
+#else
+        syscfg_get(NULL, "mgmt_wan_httpport", httpportno, sizeof(httpportno));
+#endif
+	if('\0' != httpportno[0]) {
+	    fprintf(filter_fp, "-A INPUT -i %s  -p tcp -m tcp --dport %s -d %s -j DROP\n", current_wan_ifname, httpportno, current_wan_ip6_addr );
+	}
+	}
+  }
+  
 #define IPRANGE_UTKEY_PREFIX "mgmt_wan_iprange_"
 static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
 {
@@ -6278,14 +6347,19 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
         }
 		
     }
-    if ( ( bEthWANEnable ) && (family == AF_INET6) )
-    {
-          ethwan_mso_gui_acess_rules(filter_fp,NULL);           
-    }
+	
+	if(family == AF_INET6){	
 #if defined(_COSA_BCM_MIPS_) // RDKB-35063
-if(family == AF_INET6)
-	ethwan_mso_gui_acess_rules(filter_fp,NULL);
+		checkandblock_remote_access(filter_fp);
+		ethwan_mso_gui_acess_rules(filter_fp,NULL);
+#else
+		if( bEthWANEnable )
+		{
+			checkandblock_remote_access(filter_fp);
+			ethwan_mso_gui_acess_rules(filter_fp,NULL);
+		}
 #endif
+	}
     //remote management is only available on eCM interface if it is enabled
 #ifdef _COSA_INTEL_XB3_ARM_ 
    if(family == AF_INET)
