@@ -30,6 +30,7 @@
 #define THIS            "/usr/bin/service_dhcp"
 #define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
+#define XHS_INST         5
 
 #define IPV4_TSIP_PREFIX    "dmsb.truestaticip"
 #define IPV4_TSIP_ASNPREFIX "dmsb.truestaticip.Asn"
@@ -699,8 +700,15 @@ void load_static_l3 (int l3_inst)
 		
 		       fprintf(stderr, "service_ipv4 : Triggering RDKB_FIREWALL_RESTART\n");
                        t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
-			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);	
-
+		       sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
+#if (defined _COSA_INTEL_XB3_ARM_)
+		       if(XHS_INST == l3_inst)
+		       {
+			   fprintf(stderr, "service_ipv4 : ipv4_5-status,calling dhcp_server-restart lan_not_restart event\n");    
+		           sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_status-dhcp", "started", 0);
+			   sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-restart", "lan_not_restart", 0);
+		       }	
+#endif
 			if (4 == l3_inst)
 			{
             	fprintf(stderr, "IPv4 address is set for %s interface MOCA interface is UP\n",

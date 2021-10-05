@@ -376,8 +376,13 @@ resync_to_nonvol ()
     for i in $LOAD_POOLS; do 
         async="`sysevent get ${SERVICE_NAME}_${i}-ipv4async`"
         if [ x = x"$async" ]; then
-            eval async=\"\`sysevent async ipv4_\${IPV4_INST_${i}}-status ${UTOPIAROOT}/service_${SERVICE_NAME}.sh\`\"
-            sysevent set ${SERVICE_NAME}_${i}-ipv4async "$async"
+	    if [ "$BOX_TYPE" = "XB3" -a "$i" -eq 2 ]; then
+		echo_t "SERVICE DHCP : skip ipv4async event for xhome in xb3"
+            # skip for xhome, handled directly in dhcp_server binary
+	    else    
+               eval async=\"\`sysevent async ipv4_\${IPV4_INST_${i}}-status ${UTOPIAROOT}/service_${SERVICE_NAME}.sh\`\"
+               sysevent set ${SERVICE_NAME}_${i}-ipv4async "$async"
+	    fi
         fi
     done
     
