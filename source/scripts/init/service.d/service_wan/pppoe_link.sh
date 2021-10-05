@@ -98,7 +98,7 @@ case "$1" in
             exit 0
          fi
       else
-         if [ "up" = "CURRENT_STATE" ] ; then
+         if [ "up" = "$CURRENT_STATE" ] ; then
             ulog pppoe_link status "$PID physical link is up. Link is already up."
          else
             if [ "up" = "$DESIRED_STATE" ] ; then

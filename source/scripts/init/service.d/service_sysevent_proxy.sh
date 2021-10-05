@@ -65,7 +65,7 @@ service_start ()
    if [ -n "$SYSCFG_bootstrap_syseventd" -a -n "$SYSCFG_local_syseventd" ]  ; then
       if [ "$SYSCFG_local_syseventd" = "$SYSCFG_bootstrap_syseventd" ] ; then
          # this is the syseventd on the platform containing dns forwarder
-         if [ -n "SYSCFG_secondary_syseventd" ] ; then
+         if [ -n "$SYSCFG_secondary_syseventd" ] ; then
             /sbin/syseventd_proxy $SYSCFG_secondary_syseventd $SCRIPT_FILE
             $PMON setproc syseventd_proxy $BIN $PID_FILE "/sbin/syseventd_proxy $SYSCFG_secondary_syseventd $SCRIPT_FILE"
          fi
@@ -85,7 +85,7 @@ service_stop ()
    if [ -n "$SYSCFG_bootstrap_syseventd" -a -n "$SYSCFG_local_syseventd" ]  ; then
       if [ "$SYSCFG_local_syseventd" = "$SYSCFG_bootstrap_syseventd" ] ; then
          # this is the syseventd on the platform containing dns forwarder
-         if [ -n "SYSCFG_secondary_syseventd" ] ; then
+         if [ -n "$SYSCFG_secondary_syseventd" ] ; then
             $PMON unsetproc syseventd_proxy
             killall -TERM `cat $PID_FILE`
             rm $PID_FILE
