@@ -62,6 +62,8 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb6.sh";
 #endif
 #elif defined (_CBR_PRODUCT_REQ_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchcbr.sh";
+#elif defined (RDKB_EXTENDER)
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/bridgeutil.sh";
 #elif defined (_SR300_PRODUCT_REQ_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/bridgeutil_sr300.sh";
 #elif defined (_HUB4_PRODUCT_REQ_)
@@ -178,6 +180,14 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-down|/etc/utopia/service.d/vlan_util_tchcbr.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/vlan_util_tchcbr.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
      NULL };
+#elif defined (RDKB_EXTENDER)
+const char* SERVICE_CUSTOM_EVENTS[] = {
+    "multinet-syncNets|/etc/utopia/service.d/bridgeutil.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/bridgeutil.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/bridgeutil.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/bridgeutil.sh|NULL|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/bridgeutil.sh|NULL|"TUPLE_FLAG_EVENT,
+    NULL };
 #elif defined (_SR300_PRODUCT_REQ_)
 const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-syncNets|/etc/utopia/service.d/bridgeutil_sr300.sh|NULL|"TUPLE_FLAG_EVENT,

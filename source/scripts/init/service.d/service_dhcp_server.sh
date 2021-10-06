@@ -488,7 +488,7 @@ dhcp_server_start ()
          return 0
    fi
 
-   if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ]; then
+   if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ]; then
        $PMON unsetproc dhcp_server
    fi
 
