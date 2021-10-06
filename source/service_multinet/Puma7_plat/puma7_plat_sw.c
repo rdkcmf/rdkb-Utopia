@@ -77,6 +77,51 @@
 
 #define ETHWAN_DEF_INTF_NAME "nsgmii0"
 
+#if defined (MULTILAN_FEATURE)
+#include <unistd.h>
+#define MAX_CMD_LEN 256
+
+//Check if network interface is really connected to this bridge
+//Returns 1 if the interface is not connected to the bridge, 0 if it is
+int ep_check_if_really_bridged(PL2Net net, char *ifname){
+    char cmd[MAX_CMD_LEN] = {0};
+    char ifnamebuf[MAX_IFNAME_SIZE]; //Used to return the real interface name
+    char *dash = NULL;
+    char temp_ifname[MAX_IFNAME_SIZE] = {0}; //Used to store a copy of ifname that we can modify
+
+    //Make a copy of ifname, because we must not modify ifname
+    strncpy(temp_ifname, ifname, MAX_IFNAME_SIZE);
+
+    //If name is x-t, strip off -t
+    if ((dash = strstr(temp_ifname, "-t")) != NULL){
+        *dash = '\0';
+    }
+
+    if(!strstr(temp_ifname, "sw_") ||
+        (STATUS_OK != getIfName(ifnamebuf, temp_ifname)))
+    {
+        /* If port is not sw_x or getIfName() returns failure then use port name as the interface name */
+        strncpy(ifnamebuf, temp_ifname, MAX_IFNAME_SIZE);
+    }
+
+    //Now add the .[vlandid] suffix
+    if (dash != NULL){
+        int length = strnlen(ifnamebuf, MAX_IFNAME_SIZE);
+        snprintf( (ifnamebuf + length), (MAX_IFNAME_SIZE - length), ".%d", net->vid);
+    }
+
+    MNET_DEBUG("Checking if port %s [real name %s] is really connected to the bridge\n" COMMA ifname COMMA ifnamebuf);
+
+    snprintf(cmd, MAX_CMD_LEN, "/sys/class/net/%s/brif/%s", net->name, ifnamebuf);
+    if (access(cmd, F_OK) == -1) {
+        //Network interface is NOT connected to this bridge
+        return 1;
+    }
+
+    return 0;
+}
+#endif
+
 /* Wrap the system_wrapper() call, setting the default SIGCHLD handler before calling,
  * and restoring the old handler after the call.  Needed so that system_wrapper() will 
  * return success or failure. 

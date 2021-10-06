@@ -85,6 +85,7 @@ int eventIDSw (void* portID, char* stringbuf, int bufSize);
 
 #if defined (MULTILAN_FEATURE)
 int portHelper(char *bridge, char *port, int tagging, int vid, BOOL up);
+int ep_check_if_really_bridged(PL2Net net, char *ifname);
 #endif
 
 #endif

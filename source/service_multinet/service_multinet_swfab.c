@@ -40,6 +40,11 @@
 #include "service_multinet_swfab_plat.h"
 #include "service_multinet_swfab_deps.h"
 #include "service_multinet_swfab_LinIF.h"
+#if defined (MULTILAN_FEATURE)
+#if defined (INTEL_PUMA7)
+#include "puma7_plat_sw.h"
+#endif
+#endif
 #include <string.h>
 
 int portHelper(char *bridge, char *port, int tagging, int vid, BOOL up);
@@ -176,18 +181,23 @@ static int swfab_configVlan(PL2Net net, PMemberControl members, BOOL add) {
         //to create User VLAN (if necessary) and connect interface to the bridge.
         if (!strcmp("WiFi", members->member[i].interface->type->name ))
         {
-            if ( portHelper(net->name, members->member[i].interface->name, members->member[i].bTagging, net->vid, add) != -1 )
+#if defined (INTEL_PUMA7)
+            if (ep_check_if_really_bridged(net, members->member[i].interface->name))
+#endif
             {
-                if (add)
+                if ( portHelper(net->name, members->member[i].interface->name, members->member[i].bTagging, net->vid, add) != -1 )
                 {
-                    members->member[i].bReady = STATUS_STARTED;
+                    if (add)
+                    {
+                        members->member[i].bReady = STATUS_STARTED;
+                    }
                 }
-            }
-            else
-            {
-                if (add)
+                else
                 {
-                    members->member[i].bReady = STATUS_STOPPED;
+                    if (add)
+                    {
+                        members->member[i].bReady = STATUS_STOPPED;
+                    }
                 }
             }
             continue;
