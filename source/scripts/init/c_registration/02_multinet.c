@@ -47,11 +47,19 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchcbr.sh
 #elif (_COSA_BCM_ARM_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchxb6.sh";
 #else
+#if defined (_VLAN_PUMA7_)
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb7.sh";
+#else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_multinet_exec";
+#endif
 #endif
 #else
 #ifdef INTEL_PUMA7
+#if defined (_XB7_PROD_REQ_) && defined (_VLAN_PUMA7_)
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb7.sh";
+#else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb6.sh";
+#endif
 #elif defined (_CBR_PRODUCT_REQ_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchcbr.sh";
 #elif defined (_SR300_PRODUCT_REQ_)
@@ -114,17 +122,47 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 
 #else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
+#if defined (_VLAN_PUMA7_)
+    "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "lnf-setup|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-bridge-setup|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-up|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-down|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+#else
     "multinet-syncNets|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "multinet-syncMembers|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "multinet-down|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "multinet-up|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "lnf-setup|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
     "meshbhaul-setup|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
-    "sw_ext_restore|/etc/utopia/service.d/service_multinet/handle_sw.sh|NULL|"TUPLE_FLAG_EVENT,
+#if defined(MESH_ETH_BHAUL)
+    "meshethbhaul-bridge-setup|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-up|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-down|/etc/utopia/service.d/service_multinet_exec|NULL|"TUPLE_FLAG_EVENT,
+#endif
+#endif
+    "sw_ext_restore|/etc/utopia/service.d/service_multinet/handle_sw.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
     NULL };
 #endif
 #else
 #ifdef INTEL_PUMA7
+#if defined (_XB7_PROD_REQ_) && defined (_VLAN_PUMA7_)
+const char* SERVICE_CUSTOM_EVENTS[] = { 
+    "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "lnf-setup|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-bridge-setup|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-up|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    "meshethbhaul-down|/etc/utopia/service.d/vlan_util_xb7.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
+    NULL };
+#else
 //Intel Proposed RDKB Generic Bug Fix from XB6 SDK - ACTION_FLAG_NOT_THREADSAFE
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "multinet-syncNets|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
@@ -136,6 +174,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "meshethbhaul-up|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
     "meshethbhaul-down|/etc/utopia/service.d/vlan_util_xb6.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
     NULL };
+#endif
 #elif defined (_CBR_PRODUCT_REQ_) 
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "multinet-syncNets|/etc/utopia/service.d/vlan_util_tchcbr.sh|"ACTION_FLAG_NOT_THREADSAFE"|"TUPLE_FLAG_EVENT,
@@ -241,6 +280,19 @@ void srv_register(void) {
 
   #else
     sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
+
+#if defined (_VLAN_PUMA7_)
+    char* str[2];
+    str[0] = malloc(110);
+    str[1] = NULL;
+    for (int i = 0; i <= 15; i++)
+      for (int j = 0; j <= 10; j++)
+        {
+            snprintf(str[0], 110, "if_wlan%d.%d-status|/etc/utopia/service.d/vlan_util_xb7.sh|%s|%s", i, j, ACTION_FLAG_NORMAL, TUPLE_FLAG_EVENT);
+            sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, (const char**) str);
+        }
+    free(str[0]);
+#endif
   #endif
 #ifdef MULTILAN_FEATURE
 #if !defined(_COSA_BCM_ARM_) || defined(INTEL_PUMA7) || !defined(_CBR_PRODUCT_REQ_)
