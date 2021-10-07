@@ -48,15 +48,15 @@ fi
 #Failed validation. Repair with defaults
 
 #remove wifi from bridge 5
-ccsp_bus_client_tool eRT setv Device.Bridging.Bridge.5.Port.2.LowerLayers string ""
+dmcli eRT setv Device.Bridging.Bridge.5.Port.2.LowerLayers string ""
 
 #change port 2 to ath5
-ccsp_bus_client_tool eRT setv Device.Bridging.Bridge.4.Port.2.LowerLayers string "Device.WiFi.SSID.6"
+dmcli eRT setv Device.Bridging.Bridge.4.Port.2.LowerLayers string "Device.WiFi.SSID.6"
 
-ccsp_bus_client_tool eRT setv Device.Bridging.Bridge.4.Port.2.X_CISCO_COM_Mode string "Tagging"
+dmcli eRT setv Device.Bridging.Bridge.4.Port.2.X_CISCO_COM_Mode string "Tagging"
 
 #Enable bridge 4
-ccsp_bus_client_tool eRT setv Device.Bridging.Bridge.4.Enable bool true
+dmcli eRT setv Device.Bridging.Bridge.4.Enable bool true
 
 #Reload PSM defaults
 psmcli set dmsb.hotspot.tunnel.1.ReconnectToPrimaryRemoteEndpoint 43200

@@ -34,7 +34,7 @@
 #######################################################################
 
 
-CCSP_CLI="ccsp_bus_client_tool"
+CCSP_CLI="dmcli"
 CCSP_SUBSYS="eRT"
 CCSP_TYPE="bool"
 CCSP_DM="Device.UPnP.Device.UPnPIGD"
