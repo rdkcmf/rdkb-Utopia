@@ -23,7 +23,7 @@
 # if, and only if, the value has not yet been set
 # Both sysevent and syscfg namespace can be set
 #
-# syntax is 
+# syntax is
 # 1) for syscfg address space
 #    $name=value     Normal
 #    $$name=value    If the default should take precedence over running config.
@@ -35,12 +35,12 @@
 #          TUPLE_FLAG_EVENT    = 0x00000002  (execute registered handlers upon any set operation)
 #          TUPLE_FLAG_WORM     = 0x00000004  (write once read many)
 #          example @foo=bar 0x00000001
-#    For sysevent address space you can use a syscfg value as the 
+#    For sysevent address space you can use a syscfg value as the
 #    initial value for the sysevent tuple by prefacing the value by $
 #    eg. @name=$name will use the current value of syscfg <name> as the value
 ################################################################################
 
-# Version of the database. 
+# Version of the database.
 $$Version=16
 
 #-------------------------------------------------------------------
@@ -97,7 +97,7 @@ $$Version=16
 #     syscfg namespace
 #-------------------------------------------------------------------
 
-# hostname            - the name of the home gateway as known to itself 
+# hostname            - the name of the home gateway as known to itself
 #    and the home network. The hostname is used to identify the home gateway
 #    during dns lookups.
 #    This may be "" or unset if no hostname is desired, but this will
@@ -121,11 +121,11 @@ $$wan_physical_ifname=erouter0
 #    to be enslaved in the lan bridge when in bridge mode.
 $$wan_bridge_ifname=lbr0
 
-# wan_virtual_ifnum   - this is used only if the wan interface is part of a 
-#    virtual lan. This technique can be used to separate the ethernet switch 
+# wan_virtual_ifnum   - this is used only if the wan interface is part of a
+#    virtual lan. This technique can be used to separate the ethernet switch
 #    into a wan port and some lan ports.
-#    If so, the value of wan_virtual_ifnum determines the name of the vlan 
-#    ("vlan" contatenated with wan_virtual_ifnum). The wan_physical_ifname 
+#    If so, the value of wan_virtual_ifnum determines the name of the vlan
+#    ("vlan" contatenated with wan_virtual_ifnum). The wan_physical_ifname
 #    will be part of the resultant virtual lan.
 #    If no vlan is used then the tuple is not required, or may be set to ""
 #    This setting is not meant for users to manipulate.
@@ -140,9 +140,9 @@ $wan_mtu=0
 #    must be one of: dhcp, static, pppoe, pptp, l2tp, telstra
 $wan_proto=dhcp
 
-# if wan_proto=static then we need to know the values to which to provision 
+# if wan_proto=static then we need to know the values to which to provision
 #    ----------------
-# the wan interface 
+# the wan interface
 #    wan_ipaddr          - desired wan interface ip address
 #    wan_netmask         - desired netmask for the interface
 #    wan_default_gateway - the default gateway to route to
@@ -193,7 +193,7 @@ $pppoe_access_concentrator_name=
 # pptp_address_static- whether or not to use auto or static ip address
 #                      0 or "" means automatic
 #                      1 means static
-# if static then 
+# if static then
 #    wan_ipaddr          - desired wan interface ip address
 #    wan_netmask         - desired netmask for the interface
 #    wan_default_gateway - the default gateway to route to
@@ -218,7 +218,7 @@ $pptp_address_static=0
 # l2tp_address_static- whether or not to use auto or static ip address
 #                      0 or "" means automatic
 #                      1 means static
-# if static then 
+# if static then
 #    wan_ipaddr          - desired wan interface ip address
 #    wan_netmask         - desired netmask for the interface
 #    wan_default_gateway - the default gateway to route to
@@ -238,20 +238,20 @@ $l2tp_address_static=0
 #    This setting is not meant for users to manipulate.
 $$lan_ifname=brlan0
 
-# lan_ethernet_virtual_ifnums -  a list of vlan nums. This is used if the 
-#    ethernet switch has been segmented into wan and lan ports using the 
+# lan_ethernet_virtual_ifnums -  a list of vlan nums. This is used if the
+#    ethernet switch has been segmented into wan and lan ports using the
 #    technique described in wan_virtual_ifnum.
 #    This setting is not meant for users to manipulate.
 #$lan_ethernet_virtual_ifnums=1
 
-# lan_ethernet_physical_ifnames - a list of names of ethernet interfaces, 
+# lan_ethernet_physical_ifnames - a list of names of ethernet interfaces,
 #    which will be enslaved into the lan bridge (which is known as lan_ifname
 #    as described above)
 #    This setting is not meant for users to manipulate
 $$lan_ethernet_physical_ifnames=l2sd0.100
 
-# lan_wl_physical_ifnames - a list of names of 802.11 interfaces, which will 
-#    be enslaved into the lan bridge (which is known as lan_ifname as 
+# lan_wl_physical_ifnames - a list of names of 802.11 interfaces, which will
+#    be enslaved into the lan bridge (which is known as lan_ifname as
 #    described above).
 #    This setting is not meant for users to manipulate
 # $lan_wl_physical_ifnames=eth1 eth2
@@ -262,7 +262,7 @@ $$lan_ethernet_physical_ifnames=l2sd0.100
 # specify the settings for that interface using the format
 # XXXX_setting, where
 #    XXXX is the interface name, for example eth1
-#    setting is the name of the value to set. 
+#    setting is the name of the value to set.
 # For example eth1_wl_ssid
 #    controls the wl_ssid value for eth1
 # a) ssid
@@ -283,7 +283,7 @@ $$lan_ethernet_physical_ifnames=l2sd0.100
 # WLAN radio settings
 # $wl_config_mode=manual
 
-# 2.4GHz 
+# 2.4GHz
 # $wl0_state=up
 # dont assign ssid. instead let registration assign ssid on a per box basis
 # $wl0_ssid=ut610n
@@ -305,7 +305,7 @@ $$lan_ethernet_physical_ifnames=l2sd0.100
 
 # WLAN security settings
 
-# 2.4GHz 
+# 2.4GHz
 # $wl0_security_mode=disabled
 # $wl0_encryption=
 # $wl0_passphrase=
@@ -316,7 +316,7 @@ $$lan_ethernet_physical_ifnames=l2sd0.100
 # $wl0_encryption=tkip
 # $wl0_key_renewal=3600
 
-# 5GHz 
+# 5GHz
 # $wl1_security_mode=disabled
 # $wl1_encryption=
 # $wl1_passphrase=
@@ -326,7 +326,7 @@ $$lan_ethernet_physical_ifnames=l2sd0.100
 # $wl1_shared=0
 # $wl1_key_renewal=3600
 
-# WLAN MAC filters 
+# WLAN MAC filters
 # $wl_access_restriction=disabled
 # $wl_mac_filter=
 
@@ -345,7 +345,7 @@ $$lan_ethernet_physical_ifnames=l2sd0.100
 # $wl0_fragmentation_threshold=2346
 # $wl0_rts_threshold=2347
 
-# 5GHz 
+# 5GHz
 # $wl1_ap_isolation=disabled
 # $wl1_frame_burst=enabled
 # $wl1_authentication_type=auto
@@ -381,18 +381,18 @@ $StaticRouteCount=0
 # ----------
 # dhcp_server_enabled  - if 0 then not enabled, if 1 then enabled
 #    It must be enabled for any dhcp options to take effect
-# dhcp_start           - the starting address for assigning dhcp leases 
+# dhcp_start           - the starting address for assigning dhcp leases
 #   on the lan side
 #   It is the last octet of the ip address. Eg 100 is 192.168.1.100
-# dhcp_num             - the number of ip addresses that the dhcp server 
+# dhcp_num             - the number of ip addresses that the dhcp server
 #    can give out on the lan side
-# dhcp_lease_time      - the number of minutes (m) or hours (h) that 
+# dhcp_lease_time      - the number of minutes (m) or hours (h) that
 #                        a dhcp lease is given to a lan client
 # dhcp_nameserver_enabled, dhcp_nameserver_1, dhcp_nameserver_2, dhcp_nameserver_3 - nameservers to provision to dhcp clients
 # dhcp_wins_server    - wins server to provision to client
-# dhcp_server_propagate_wan_domain - to maintain old (and less good) behavior of using the wan domain 
+# dhcp_server_propagate_wan_domain - to maintain old (and less good) behavior of using the wan domain
 #                                    for lan clients then ser dhcp_server_propagate_wan_domain to 1
-# dhcp_server_propagate_wan_nameserver - to maintain old (and less good) behavior of using the wan nameservers 
+# dhcp_server_propagate_wan_nameserver - to maintain old (and less good) behavior of using the wan nameservers
 #                                    for lan clients then ser dhcp_server_propagate_wan_nameserver to 1
 # dhcp_server_slow_start - if we are propagating info from wan, and if wan is not yet provisioned, then give dhcp
 #                          clients a short lease in order to give wan a chance to come up
@@ -420,7 +420,7 @@ $XDNS_RefacCodeEnable=1
 #    if you want to have static addresses given to lan hosts by the dhcp server then
 #       dhcp_num_static_host  -  the number of static hosts provisioned
 #       and for each host dhcp_static_host_1 ... dhcp_static_host_x must be
-#          either none (for a hole in the array) 
+#          either none (for a hole in the array)
 #          or mac_address,last_octet_of_ip_address,friendly-name, eg. 11:22:33:44:55:66,99,Bob's iMac
 $dhcp_num_static_hosts=0
 
@@ -446,17 +446,17 @@ $dhcp_num_static_hosts=0
 #                                heipv6tb
 
 $ddns_service=dyndns
-# ddns_update_days      - the maximum number of days that we can wait between 
+# ddns_update_days      - the maximum number of days that we can wait between
 #    ddns updates in order that the server doesnt think we implicitly unregistered
 #    from the ddns service
-# ddns_last_update       - the timestamp when we last registered with the 
+# ddns_last_update       - the timestamp when we last registered with the
 #    ddns service.
 # it may be 0 if we never registered
 # ddns_hostname           - the name we are registering as with the ddns service
 # ddns_username/ddns_password -  the credentials for the ddns service
-# ddns_mx                     - string to send as the mail exchange 
+# ddns_mx                     - string to send as the mail exchange
 # ddns_wildcard               - set your domain to have a wildcard
-# ddns_server	              - override default ip:port of ddns service provider
+# ddns_server                 - override default ip:port of ddns service provider
 # wan_last_ipaddr         - the ip address that was last successfully registered
 #    This should be 0.0.0.0 until we register successfully with the ddns server
 #    This is not meant to be changed by the user
@@ -489,7 +489,7 @@ $ntp_enabled=0
 # TZ is the timezone that we are in. eg GMT+08:00
 # also Daylight Savings time can be added
 # One specification for DST starting on March 8 @ 2 AM and ending on Nov 11 @ 2AM
-# is: March 8 is the 0th day of the 2nd week of the 3rd month, and 
+# is: March 8 is the 0th day of the 2nd week of the 3rd month, and
 #     Nov 11 is the 0th day of the 1st week of the 11th month
 # thus: DST,M3.2.0/02:00,M11.1.0/02:00
 $TZ=
@@ -620,6 +620,7 @@ $portscan_enabled=0
 
 $IPSecPassthrough=1
 $PPTPPassthrough=1
+
 $SinglePortForwardCount=0
 $PortRangeForwardCount=0
 $PortRangeTriggerCount=0
@@ -713,7 +714,7 @@ $rip_enabled=0
 # Logging
 # -------
 # $log_level=[0|1|2]
-#      0 - disabled 
+#      0 - disabled
 #      1 - default log
 #      2 - extra log
 #      3 - debug log
@@ -756,29 +757,29 @@ $bridge_mode=0
 $wifi_bridge_mode=0
 
 # MOCA configuration
-# $moca_lof_channel 
+# $moca_lof_channel
 #    The last RF channel number on which a node was successfully in the steady state. Channel center frequency = 25 MHz * channel number.
 #    Valid values are 32 to 60. Set to 0 if there is no LOF.
 # $moca_freq_mode
 #    auto - automatic scan
-#    manual - fixed manual mode, use the value in moca_freq_plan 
+#    manual - fixed manual mode, use the value in moca_freq_plan
 # $moca_freq_plan
 #    Valid values are 800MHz to 1500MHz (in 25 MHz increments)
 # $moca_constant_tx_power
 #    auto - automatic level
-#    manual - fixed manual mode, use the value in moca_maximum_tx_power 
+#    manual - fixed manual mode, use the value in moca_maximum_tx_power
 # $moca_maximum_tx_power
 #    Maximum analog transmit power of the MoCA interface in units of 3dB.
 #    Valid values are 0 (0dB) to 12 (36dB) for current ADI chip.
 # $moca_dig_offset
-#    Maximum digital transmit power of the MoCA interface in units of 1/4dB. 
+#    Maximum digital transmit power of the MoCA interface in units of 1/4dB.
 #    Valid values are -48 (-12dB) to 23 (5.75dB), 0 is recommended.
 # $moca_preferred_nc
 #    Valid values are master, slave, auto and auto_nc.
 # $moca_enable_privacy
 #    Valid values are enable and disable.
 # $moca_password_seed
-#    A string up to 17 characters max. 
+#    A string up to 17 characters max.
 
 #------------------
 
@@ -974,7 +975,7 @@ $hostname=Docsis-Gateway
 @parcon_dnsv6r_end=10
 @parcon_httpv6get_start=13
 @parcon_httpv6get_end=14
-#redirection flag 
+#redirection flag
 $redirection_flag=true
 $redirection_url=http://XfinityHomeNetworking.com
 $cloud_capable_flag=1
@@ -983,8 +984,8 @@ $cloud_enable_flag=0
 # RDK log level
 $X_RDKCENTRAL-COM_LogLevel=4
 $X_RDKCENTRAL-COM_TR69_LogLevel=4
-$X_RDKCENTRAL-COM_PAM_LogLevel=4	
-$X_RDKCENTRAL-COM_PSM_LogLevel=4	
+$X_RDKCENTRAL-COM_PAM_LogLevel=4
+$X_RDKCENTRAL-COM_PSM_LogLevel=4
 $X_RDKCENTRAL-COM_MTA_LogLevel=4
 $X_RDKCENTRAL-COM_CM_LogLevel=4
 $X_RDKCENTRAL-COM_WiFi_LogLevel=4
