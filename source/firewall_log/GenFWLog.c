@@ -410,7 +410,7 @@ action_info_t action_arry[] = {
     { "Service Blocked", ServiceBlocked_func},
     { "Site Blocked", SiteBlocked_func},
     { "Firewall Blocked", FW_block_func},
-    { "\0", (void*)NULL}
+    { "", (void*)NULL}
 };
 
 int get_count(char* line){
