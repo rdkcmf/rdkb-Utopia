@@ -535,8 +535,6 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char lan_if[IFNAMSIZ];
     char *start, *tok, *sp;
     static const char *zebra_conf_base = \
-        "hostname zebra\n"
-        "!password zebra\n"
         "!enable password admin\n"
         "!log stdout\n"
         "log file /var/log/zebra.log errors\n"
