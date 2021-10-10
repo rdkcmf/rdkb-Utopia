@@ -12619,6 +12619,11 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    
    // Create iptable chain to ratelimit remote management packets
    do_webui_rate_limit(filter_fp);
+
+#if !defined(_COSA_INTEL_XB3_ARM_)
+   filterPortMap(filter_fp);
+#endif
+
 #if !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
    do_ssh_IpAccessTable(filter_fp, "22", AF_INET, ecm_wan_ifname);
 #else
