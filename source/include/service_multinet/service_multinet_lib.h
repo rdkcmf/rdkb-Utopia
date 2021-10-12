@@ -35,6 +35,7 @@
  #define MNET_LIB_H
  
  #include "service_multinet_base.h"
+#include <stdbool.h>
 
  
  #define MAX_MEMBERS 32
@@ -54,6 +55,7 @@
  extern unsigned char isDaemon;
  extern char* executableName;
  
+ extern bool ethWanEnableState;
  int multinet_bridgeUp(PL2Net network, int bFirewallRestart);
  int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart);
  

@@ -28,6 +28,8 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 #source /etc/utopia/service.d/brcm_ethernet_helper.sh
 
+source /etc/utopia/service.d/log_capture_path.sh
+
 POSTD_START_FILE="/tmp/.postd_started"
 
 SERVICE_NAME="bridge"
@@ -117,7 +119,7 @@ cmdiag_ebtables_rules()
     if [ "$1" = "enable" ] ; then
         CMDIAG_MAC="`cat /sys/class/net/lan0/address`"
         MUX_MAC="`cat /sys/class/net/adp0/address`"
-        
+
         #Don't allow lan0 or MUX to send traffic to DOCSIS bridge
         ebtables -N BRIDGE_FORWARD_FILTER
         ebtables -F BRIDGE_FORWARD_FILTER 2> /dev/null
@@ -154,6 +156,7 @@ cmdiag_if()
         cmdiag_ebtables_rules enable
         ifconfig l${CMDIAG_IF} promisc up
         ifconfig $CMDIAG_IF $LAN_IP netmask $LAN_NETMASK up
+
         #add lan0 interface entry to the TOE netdevList for PP on ATOM configuration
         if [ -d /etc/pp_on_atom ] ; then
              echo "ADD $CMDIAG_IF" > /sys/devices/platform/toe/netif_lut
@@ -223,6 +226,43 @@ routing_rules(){
     fi
 }
 
+forward_wan_lan_traffic()
+{
+
+    if [ "$1" = "enable" ] ; then
+        # set up veth interface to forward brlan0 and erouter traffic in bridge mode
+            echo "BRIDGE MODE case : ethwan enabled, creating veth interface"
+            ip link add lbr1 type veth peer name ler0
+            ifconfig lbr1 up 
+            ifconfig ler0 up
+	    echo 1 > /proc/sys/net/ipv6/conf/ler0/disable_ipv6
+            echo 1 > /proc/sys/net/ipv6/conf/lbr1/disable_ipv6
+	    brctl addif erouter0 ler0
+            MAX_WAIT_TIME=120
+            TRIES=0
+            while [  "$TRIES" -lt "$MAX_WAIT_TIME" ] ; do
+
+                   if [ "`sysevent get multinet_$INSTANCE-status`" = "ready" ];then
+                        check_iface_exists_in_bridge=`brctl show brlan0  | grep lbr1`
+                        if [ "$check_iface_exists_in_bridge" = "" ];then
+                            echo_t "multinet_$INSTANCE-status status is ready...,adding lbr1 to brlan0 and breaking the loop"  
+                            brctl addif brlan0 lbr1
+                        fi
+                        break;
+                    fi
+                 sleep 5
+                 TRIES=`expr $TRIES + 5`
+            done
+    else
+            echo "ROUTER MODE case : ethwan enabled, deleting veth interface"
+            ifconfig lbr1 down 
+            ifconfig ler0 down
+            brctl delif brlan0 lbr1
+            brctl delif erouter0 ler0
+            ip link del lbr1
+    fi
+
+}
 #Enable pseudo bridge mode.  If already enabled, just refresh parameters (in case bridges were torn down and rebuilt)
 service_start(){
     wait_till_steady_state ${SERVICE_NAME}
@@ -237,7 +277,10 @@ service_start(){
         cmdiag_if enable
         
         routing_rules enable
-        
+       
+        if [ "x$ETHWAN_ENABLED" = "xtrue" ];then
+            forward_wan_lan_traffic enable &
+        fi
         #Sync bridge ports
         MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
         if [ "$MULTILAN_FEATURE" = "1" ]; then
@@ -247,6 +290,7 @@ service_start(){
             sysevent set multinet-syncMembers $INSTANCE
         fi
         
+
         #Block traffic coming from the lbr0 connector interfaces at the MUX
         filter_local_traffic enable
         
@@ -293,7 +337,9 @@ service_stop(){
         
         #Flush connection tracking and packet processor sessions to avoid stale information
         flush_connection_info
-        
+        if [ "x$ETHWAN_ENABLED" = "xtrue" ];then
+            forward_wan_lan_traffic disable &
+        fi
         sysevent set ${SERVICE_NAME}-errinfo
         sysevent set ${SERVICE_NAME}-status stopped
         
@@ -336,17 +382,23 @@ service_init ()
 }
 
 
-echo "service_bridge_puma7.sh called with $1 $2" > /dev/console
+echo "service_bridge_puma7.sh called with $1 $2" 
 service_init
 
 BRIDGE_NAME="$SYSCFG_lan_ifname"
 CMDIAG_IF=`syscfg get cmdiag_ifname`
 CMDIAG_MAC=`ncpu_exec -ep service_bridge.sh get_cmdiag_mac`
 INSTANCE=`sysevent get primary_lan_l2net`
+if [ "$INSTANCE" = "" ];then
+	INSTANCE=`psmcli get dmsb.MultiLAN.PrimaryLAN_l2net`
+fi
 LAN_NETMASK=`syscfg get lan_netmask`
+
+ETHWAN_ENABLED=`syscfg get eth_wan_enabled`
 
 case "$1" in
     ${SERVICE_NAME}-start)
+
         firewall firewall-stop
         /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_bridged
         service_start
@@ -357,8 +409,10 @@ case "$1" in
         fi        
         gw_lan_refresh
         sysevent set firewall-restart
+
     ;;
     ${SERVICE_NAME}-stop)
+
         /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_routed
         service_stop
         if [ ! -f "$POSTD_START_FILE" ];
@@ -368,6 +422,7 @@ case "$1" in
         fi        
         gw_lan_refresh
         sysevent set firewall-restart
+
     ;;
     ${SERVICE_NAME}-restart)
         firewall firewall-stop

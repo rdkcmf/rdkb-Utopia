@@ -51,6 +51,8 @@
 #include "breakpad_wrapper.h"
 #endif
 
+#include "syscfg/syscfg.h"
+
 #ifndef SERVICE_MULTINET_EXE_PATH
 #define SERVICE_MULTINET_EXE_PATH "/etc/utopia/service.d/service_multinet_exec"
 #endif
@@ -64,6 +66,7 @@
 #endif
 #endif
 
+bool ethWanEnableState=false;
 FILE *mnetfp = NULL;
  
  typedef int (*entryCallback)(char* argv[], int argc);
@@ -142,6 +145,10 @@ void multinet_log( char* fmt, ...)
      int retval;
     int i;
 
+    syscfg_init();
+
+
+
 #ifdef MULTILAN_FEATURE
 #if defined (INTEL_PUMA7)
 //Puma 7 SoC supports using a different multinet handler for PP on ARM use case
@@ -155,7 +162,26 @@ void multinet_log( char* fmt, ...)
 		}
 		MNET_DEBUG("Forwarding command to legacy handler: %s\n" COMMA cmd);
 		return system(cmd);
- 	}	
+ 	}
+
+    #if defined(ENABLE_ETH_WAN) || defined(AUTOWAN_ENABLE)
+
+    char ethwan_enable_state[16] ;
+    memset(ethwan_enable_state,0,sizeof(ethwan_enable_state));
+    /* Determine if Ethernet WAN is enabled */
+    if (0 == syscfg_get(NULL, "eth_wan_enabled", ethwan_enable_state, sizeof(ethwan_enable_state)))
+    {
+        if(0 == strncmp(ethwan_enable_state, "true", sizeof(ethwan_enable_state)))
+        {
+            ethWanEnableState = true;
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Error: %s syscfg_get for eth_wan_enabled failed!\n", __FUNCTION__);
+    }
+    #endif
+
 #endif
 #endif
 
