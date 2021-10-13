@@ -326,7 +326,7 @@ int dhcp_server_start (char *input)
             l_cToken = strtok(l_cBuf, " ");
             while (l_cToken != NULL)
             {
-                if (!strncmp(l_cToken, l_cCurrent_PID, strlen(l_cToken)))
+                if (strcmp(l_cToken, l_cCurrent_PID) == 0)
                 {
                     l_bPid_Present = TRUE;
                     break;
