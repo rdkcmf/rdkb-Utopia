@@ -57,6 +57,7 @@
  *
  **/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <upnp/upnp.h>
 #include "pal_upnp.h" 
