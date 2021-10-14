@@ -49,11 +49,6 @@
 #include <stdlib.h>
 #include <dirent.h>
 
-// unless overridden on comand line, the directory to traverse
-// will be INIT_DIR_PATH/INIT_DIR_DIRECTORY
-#define INIT_DIR_PATH       "/etc"
-#define INIT_DIR_DIRECTORY  "/registration.d"
-
 /*
  * routines to go through a well known directory and start up any executables
  * found in that directory
@@ -193,15 +188,13 @@ static void stop_execute_dir(char *dir, char *param)
 int
 main(int argc, char **argv)
 {
-   char executedir[1024];
-   snprintf(executedir, sizeof(executedir), "%s%s", INIT_DIR_PATH, INIT_DIR_DIRECTORY);
-   if (2 <= argc) {
-      snprintf(executedir, sizeof(executedir), "%s", argv[1]);
-   }
+   if (argc < 2) {
+      return 0;
+   }   
    if (3 == argc) {
-      stop_execute_dir(executedir, argv[2]);
+      stop_execute_dir(argv[1], argv[2]);
    } else {
-      start_execute_dir(executedir);
+      start_execute_dir(argv[1]);
    }
    return(0);
 }
