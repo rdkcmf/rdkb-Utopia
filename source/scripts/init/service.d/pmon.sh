@@ -84,7 +84,7 @@ BIN=pmon
 
 do_check_process() {
 
-	UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+	UPTIME=$(cut -d. -f1 /proc/uptime)
 	if [ "$UPTIME" -lt 600 ]
 	then
 	    echo "Uptime is less than 10 mins, exiting from pmon."

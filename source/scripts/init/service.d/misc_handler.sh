@@ -35,7 +35,7 @@
 #######################################################################
 source /lib/rdk/t2Shared_api.sh
 
-UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+UPTIME=$(cut -d. -f1 /proc/uptime)
 
 if [ "$UPTIME" -lt 600 ]
 then
