@@ -59,9 +59,7 @@ void srv_register(void) {
 
    // we want cron_every_minute to be an event
    // this will generate a sysevent event every minute
-   char cmd[256];
-   snprintf(cmd, sizeof(cmd), "sysevent setoptions cron_every_minute %s", TUPLE_FLAG_EVENT);
-   system(cmd);
+   system("sysevent setoptions cron_every_minute " TUPLE_FLAG_EVENT);
 }
 
 void srv_unregister(void) {
