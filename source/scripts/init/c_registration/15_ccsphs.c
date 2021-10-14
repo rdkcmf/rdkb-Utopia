@@ -39,11 +39,11 @@
 const char* SERVICE_NAME            = "ccsphs";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ccsphs.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-                                        "lan-status|/etc/utopia/service.d/service_ccsphs.sh",
-										"multinet_2-status|/etc/utopia/service.d/service_ccsphs.sh",
-										"ipv4_5-status|/etc/utopia/service.d/service_ccsphs.sh",
-                                        NULL
-                                      };
+    "lan-status|/etc/utopia/service.d/service_ccsphs.sh",
+    "multinet_2-status|/etc/utopia/service.d/service_ccsphs.sh",
+    "ipv4_5-status|/etc/utopia/service.d/service_ccsphs.sh",
+    NULL
+};
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);

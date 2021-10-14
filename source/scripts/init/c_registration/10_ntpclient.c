@@ -38,7 +38,11 @@
 
 const char* SERVICE_NAME            = "ntpclient";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ntpclient.sh";
-const char* SERVICE_CUSTOM_EVENTS[] = { "wan-status|/etc/utopia/service.d/service_ntpclient.sh", "bridge-status|/etc/utopia/service.d/service_ntpclient.sh", NULL };
+const char* SERVICE_CUSTOM_EVENTS[] = {
+    "wan-status|/etc/utopia/service.d/service_ntpclient.sh",
+    "bridge-status|/etc/utopia/service.d/service_ntpclient.sh",
+    NULL
+};
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
