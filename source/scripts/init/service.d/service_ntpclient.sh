@@ -40,7 +40,11 @@
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
 source /lib/rdk/t2Shared_api.sh
-
+if [ -f /lib/rdk/utils.sh ];then
+     . /lib/rdk/utils.sh
+fi
+CRON_DIR="/var/spool/cron/crontabs/"
+CRONTAB_FILE=$CRON_DIR"root"
 SERVICE_NAME="ntpclient"
 SELF_NAME="`basename $0`"
 
@@ -51,9 +55,7 @@ RETRY_SOON_FILENAME=/etc/cron/cron.everyminute/ntp_retry_soon.sh
 
 prepare_retry_soon_file()
 {
-   echo "#! /bin/sh" > $RETRY_SOON_FILENAME;
-   echo "   sysevent set ntpclient-start" >> $RETRY_SOON_FILENAME;
-   chmod 700 $RETRY_SOON_FILENAME;
+   addCron "* * * * *  sysevent set ntpclient-start"
 }
 
 service_start ()
@@ -158,10 +160,8 @@ service_start ()
 
    # if we had been unable to get a response from the ntp server, then we had put
    # a request into cron to retry every minute. Cancel that request
-   if [ -f "$RETRY_SOON_FILENAME" ] ; then
-      rm -f $RETRY_SOON_FILENAME;
-   fi
-
+   removeCron "sysevent set ntpclient-start"
+   
    # now try to connect to the ntp server
    RESULT=`ntpclient -h $NTP_SERVER -i 60 -s`
 
@@ -173,7 +173,7 @@ service_start ()
 
    # if we dont get a result we should force system to try again soon because
    # otherwise we only try 1/hr.
-   if [ "" = "$RESULT" ] && [ ! -f "$RETRY_SOON_FILENAME" ] ; then
+   if [ "" = "$RESULT" ] && [ ! grep 'sysevent set ntpclient-start' $CRONTAB_FILE ] ; then
       prepare_retry_soon_file
       sysevent set ${SERVICE_NAME}-status "error"
       sysevent set ${SERVICE_NAME}-errinfo "No result from NTP Server"

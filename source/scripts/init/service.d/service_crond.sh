@@ -46,7 +46,9 @@
 
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
-
+if [ -f /lib/rdk/utils.sh ];then
+     . /lib/rdk/utils.sh
+fi
 if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
@@ -77,15 +79,6 @@ service_start ()
       MAC2=`echo $OUR_MAC | awk 'BEGIN { FS = ":" } ; { printf ("%d", "0x"$5) }'`
       RANDOM=`expr $MAC1 \* $MAC2`
    
-      # prepare busybox crontab directory
-      # echo "[utopia][registration] Preparing crond directory"
-      mkdir -p /etc/cron/cron.everyminute
-      mkdir -p /etc/cron/cron.every5minute
-      mkdir -p /etc/cron/cron.every10minute
-      mkdir -p /etc/cron/cron.hourly
-      mkdir -p /etc/cron/cron.daily
-      mkdir -p /etc/cron/cron.weekly
-      mkdir -p /etc/cron/cron.monthly
       mkdir -p $CRONTAB_DIR
    
       echo "* * * * *  execute_dir /etc/cron/cron.everyminute" > $CRONTAB_FILE
@@ -171,9 +164,7 @@ service_start ()
           echo "*/15 * * * * /etc/sky/monitor_wifi_packets.sh" >> $CRONTAB_FILE
 
           #To monitor all wifi interface dhd dump in every 1hour
-          echo "#! /bin/sh" > /etc/cron/cron.hourly/monitor_dhd_dump_hourly.sh
-          echo "sh /etc/sky/monitor_dhd_dump.sh &" >> /etc/cron/cron.hourly/monitor_dhd_dump_hourly.sh
-          chmod 700 /etc/cron/cron.hourly/monitor_dhd_dump_hourly.sh
+          addCron "48 * * * *  sh /etc/sky/monitor_dhd_dump.sh &"
       fi
 
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
@@ -210,65 +201,20 @@ service_start ()
         echo "$mins $hour $day * * /usr/ccsp/pam/unique_telemetry_id.sh" >> $CRONTAB_FILE
       fi
 
-      # add a ddns watchdog trigger to be run daily
-      echo "#! /bin/sh" > /etc/cron/cron.daily/ddns_daily.sh
-      echo "sysevent set ddns-start " >> /etc/cron/cron.daily/ddns_daily.sh
-      chmod 700 /etc/cron/cron.daily/ddns_daily.sh
-
-	  # add a mta over power status script to be run daily
-      echo "#! /bin/sh" > /etc/cron/cron.daily/mta_overcurrent_status_daily.sh
-      echo "sh /usr/ccsp/mta/mta_overcurrentfault_status.sh &" >> /etc/cron/cron.daily/mta_overcurrent_status_daily.sh
-      chmod 700 /etc/cron/cron.daily/mta_overcurrent_status_daily.sh
-
-      # add starting the ntp client once an hour
-      echo "#! /bin/sh" > /etc/cron/cron.hourly/ntp_hourly.sh
-      echo "sysevent set ntpclient-restart" >> /etc/cron/cron.hourly/ntp_hourly.sh
-      chmod 700 /etc/cron/cron.hourly/ntp_hourly.sh
-
-      # log mem and cpu info once an hour
-      echo "#! /bin/sh" > /etc/cron/cron.hourly/log_hourly.sh
-      echo "nice -n 19 sh /usr/ccsp/tad/log_hourly.sh &" >> /etc/cron/cron.hourly/log_hourly.sh
-      if [ -f /usr/ccsp/rbus_status_logger.sh ]
-      then
-          echo "/usr/ccsp/rbus_status_logger.sh" >> /etc/cron/cron.hourly/log_hourly.sh
-      fi
-      chmod 700 /etc/cron/cron.hourly/log_hourly.sh
-   
-      # add starting the process-monitor every 5 minute
-      echo "#! /bin/sh" > /etc/cron/cron.every5minute/pmon_every5minute.sh
-      echo "nice -n 19 sh /etc/utopia/service.d/pmon.sh" >> /etc/cron/cron.every5minute/pmon_every5minute.sh
-      chmod 700 /etc/cron/cron.every5minute/pmon_every5minute.sh
-
-      # add a sysevent tick every minute
-      echo "#! /bin/sh" > /etc/cron/cron.everyminute/sysevent_tick.sh
-      echo "sysevent set cron_every_minute" >> /etc/cron/cron.everyminute/sysevent_tick.sh
-      chmod 700 /etc/cron/cron.everyminute/sysevent_tick.sh
-
       # monitor syslog every 5 minute
 #      echo "#! /bin/sh" > /etc/cron/cron.every5minute/log_every5minute.sh
 #     echo "/usr/sbin/log_handle.sh" >> /etc/cron/cron.every5minute/log_every5minute.sh
 #      chmod 700 /etc/cron/cron.every5minute/log_every5minute.sh
 
 	  #monitor start-misc in case wan is not online
-      echo "#! /bin/sh" > /etc/cron/cron.everyminute/misc_handler.sh
-      echo "/etc/utopia/service.d/misc_handler.sh" >> /etc/cron/cron.everyminute/misc_handler.sh
-      chmod 700 /etc/cron/cron.everyminute/misc_handler.sh
+      addCron "* * * * *  /etc/utopia/service.d/misc_handler.sh"
 
-	  #monitor start-misc in case wan is not online
-      echo "#! /bin/sh" > /etc/cron/cron.everyminute/selfheal_bootup.sh
-      echo "/usr/ccsp/tad/selfheal_bootup.sh" >> /etc/cron/cron.everyminute/selfheal_bootup.sh
-      chmod 700 /etc/cron/cron.everyminute/selfheal_bootup.sh
+      addCron "* * * * * /usr/ccsp/tad/selfheal_bootup.sh"
 
 	  #monitor cosa_start_rem triggered state in case its not triggered on 
 	  #bootup even after 10 minutes then we have to trigger this via cron
-	  echo "#! /bin/sh" > /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
-	  echo "/usr/ccsp/tad/selfheal_cosa_start_rem.sh" >> /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
-	  chmod 700 /etc/cron/cron.every10minute/selfheal_cosa_start_rem.sh
-
-      #monitor syslog every 10 minutes
-      echo "#! /bin/sh" > /etc/cron/cron.every10minute/log_every10minute.sh
-      echo "/usr/sbin/log_handle.sh" >> /etc/cron/cron.every10minute/log_every10minute.sh
-      chmod 700 /etc/cron/cron.every10minute/log_every10minute.sh
+      addCron "2,12,22,32,42,52 * * * * /usr/ccsp/tad/selfheal_cosa_start_rem.sh"
+	
 
 	#This variable is to check RFC ETHWAN Mode Enabled/Disabled from syscfg DB
 	rfc_ethwan_status=""
@@ -287,9 +233,7 @@ service_start ()
 			if [ "x$rfc_wanlinkheal_status" == "xtrue" ]; then
 				if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xXB6" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
 					echo_t "RFC WANLinkHeal Feature is Enabled"
-					echo "#! /bin/sh" > /etc/cron/cron.every10minute/start_gw_heath.sh
-					echo "/usr/ccsp/tad/start_gw_heath.sh" >> /etc/cron/cron.every10minute/start_gw_heath.sh
-					chmod 700 /etc/cron/cron.every10minute/start_gw_heath.sh
+                                        addCron "2,12,22,32,42,52 * * * * /usr/ccsp/tad/start_gw_heath.sh"
 				else
 					echo_t "RFC WANLinkHeal Feature is not Enabled"
 				fi
@@ -303,10 +247,6 @@ service_start ()
 		echo_t "This Device should not enabled ETHWAN mode"
 	fi
 
-	  # remove max cpu usage reached indication file once in 24 hours
-	  echo "#! /bin/sh" > /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
-	  echo "/usr/ccsp/tad/remove_max_cpu_usage_file.sh" >> /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
-	  chmod 700 /etc/cron/cron.daily/remove_max_cpu_usage_file.sh
    fi
  
 

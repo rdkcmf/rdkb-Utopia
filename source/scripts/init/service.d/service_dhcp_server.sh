@@ -50,6 +50,9 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
 source /etc/device.properties
+if [ -f /lib/rdk/utils.sh ];then
+     . /lib/rdk/utils.sh
+fi
 #source /etc/utopia/service.d/sysevent_functions.sh
 UTOPIA_PATH="/etc/utopia/service.d"
 
@@ -293,9 +296,13 @@ restart_request ()
       dnsmasq_server_start
 
       if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ] ; then
-         echo "#!/bin/sh" > $TIME_FILE
-         echo "   sysevent set dhcp_server-restart" >> $TIME_FILE
-         chmod 700 $TIME_FILE
+	      if [ "$TIME_FILE" -eq "$DHCP_SLOW_START_1_FILE" ]; then
+      		    addCron "* * * * *  sysevent set dhcp_server-restart"
+              elif [ "$TIME_FILE" -eq "$DHCP_SLOW_START_2_FILE" ]; then
+      		    addCron "1,6,11,16,21,26,31,36,41,46,51,56 * * * * sysevent set dhcp_server-restart"
+              else
+      		    addCron "2,12,22,32,42,52 * * * * sysevent set dhcp_server-restart"
+              fi
       fi
       sysevent set dns-status started
       sysevent set dhcp_server-status started
@@ -553,9 +560,13 @@ dhcp_server_start ()
    fi
 
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
-         echo "#!/bin/sh" > $TIME_FILE
-         echo "   sysevent set dhcp_server-restart lan_not_restart" >> $TIME_FILE
-         chmod 700 $TIME_FILE
+	   if [ "$TIME_FILE" -eq "$DHCP_SLOW_START_1_FILE" ]; then
+		 addCron "* * * * *  sysevent set dhcp_server-restart"
+	   elif [ "$TIME_FILE" -eq "$DHCP_SLOW_START_2_FILE" ]; then
+		 addCron "1,6,11,16,21,26,31,36,41,46,51,56 * * * * sysevent set dhcp_server-restart"
+           else
+		 addCron "2,12,22,32,42,52 * * * * sysevent set dhcp_server-restart"
+           fi
    fi
    #sysevent_ap set lan-restart
 
@@ -766,10 +777,14 @@ dns_start ()
    fi
 
    if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ] ; then
-         echo "#!/bin/sh" > $TIME_FILE
-         echo "   touch /var/tmp/lan_not_restart" >> $TIME_FILE
-         echo "   sysevent set dhcp_server-restart" >> $TIME_FILE
-         chmod 700 $TIME_FILE
+       if [ "$TIME_FILE" -eq "$DHCP_SLOW_START_1_FILE" ]; then
+             addCron "* * * * *  sysevent set dhcp_server-restart"
+       elif [ "$TIME_FILE" -eq "$DHCP_SLOW_START_2_FILE" ]; then
+             addCron "1,6,11,16,21,26,31,36,41,46,51,56 * * * * sysevent set dhcp_server-restart"
+       else
+             addCron "2,12,22,32,42,52 * * * * sysevent set dhcp_server-restart"
+       fi
+
    fi
 
    $PMON setproc dhcp_server $BIN $PID_FILE "/etc/utopia/service.d/service_dhcp_server.sh dns-restart"

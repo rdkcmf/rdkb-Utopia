@@ -36,6 +36,9 @@
 source /etc/utopia/service.d/date_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
+if [ -f /lib/rdk/utils.sh ];then
+     . /lib/rdk/utils.sh
+fi
 
 SERVICE_NAME="dynamic_dns"
 
@@ -474,11 +477,7 @@ update_ddns_server() {
            syscfg set ddns_client_Lasterror $NO_ERROR
            syscfg set ddns_host_lastupdate_1 `get_current_time`
            syscfg commit
-
-           echo "   rm -f $CHECK_INTERVAL_FILENAME" >> $CHECK_INTERVAL_FILENAME;
-           echo "#! /bin/sh" > $CHECK_INTERVAL_FILENAME;
-           echo "   /etc/utopia/service.d/service_dynamic_dns.sh ${SERVICE_NAME}-check" >> $CHECK_INTERVAL_FILENAME;
-           chmod 700 $CHECK_INTERVAL_FILENAME;
+           addCron "* * * * *  /etc/utopia/service.d/service_dynamic_dns.sh dynamic_dns-check"
            break
        fi
    fi
@@ -497,7 +496,7 @@ update_ddns_server() {
        fi
    fi
    if [ "0" = "$RETRY_SONN_NEEDED" ]; then
-       rm -f $RETRY_SOON_FILENAME
+        removeCron "/etc/utopia/service.d/service_dynamic_dns.sh dynamic_dns-retry"
    fi
 }
 
@@ -555,12 +554,7 @@ do_start() {
 
 #Retry Mechanism
    if [ "$RETRY_SOON_NEEDED" == "1" ] ; then
-       echo "   rm -f $RETRY_SOON_FILENAME" >> $RETRY_SOON_FILENAME;
-       echo "#! /bin/sh" > $RETRY_SOON_FILENAME;
-       echo "   /etc/utopia/service.d/service_dynamic_dns.sh ${SERVICE_NAME}-retry" >> $RETRY_SOON_FILENAME;
-       chmod 700 $RETRY_SOON_FILENAME;
-       exit 0
-
+       addCron "* * * * *  /etc/utopia/service.d/service_dynamic_dns.sh dynamic_dns-retry"
    fi
 }
 

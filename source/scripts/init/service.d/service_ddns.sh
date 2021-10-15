@@ -37,12 +37,14 @@
 source /etc/utopia/service.d/date_functions.sh
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
+if [ -f /lib/rdk/utils.sh ];then
+     . /lib/rdk/utils.sh
+fi
 
 SERVICE_NAME="ddns"
 
 CONF_FILE=/etc/ez-ipupdate.conf
 OUTPUT_FILE=/etc/ez-ipupdate.out
-RETRY_SOON_FILENAME="/etc/cron/cron.every5minute/ddns_retry_soon.sh"
 PID="($$)"
 
 
@@ -178,7 +180,7 @@ update_ddns_server() {
       return 2
       
    else
-      rm -f $RETRY_SOON_FILENAME
+      removeCron "sysevent set ddns-start"
       sysevent set ddns_return_status success
       ulog ddns status "$PID ddns_return_status success"
       sysevent set ${SERVICE_NAME}-status started
@@ -249,11 +251,7 @@ do_start() {
             ulog ddns status "$PID ddns update required but we are in a quiet period. Will retry later"
             sysevent set ${SERVICE_NAME}-errinfo "mandated quiet period"
             sysevent set ${SERVICE_NAME}-status error
-            echo "#! /bin/sh" > $RETRY_SOON_FILENAME;
-            echo "   rm -f $RETRY_SOON_FILENAME" >> $RETRY_SOON_FILENAME;
-            echo "   sysevent set ddns-start" >> $RETRY_SOON_FILENAME;
-            chmod 700 $RETRY_SOON_FILENAME;
-            exit 0
+            addCron "1,6,11,16,21,26,31,36,41,46,51,56 * * * * sysevent set ddns-start"
          else 
             sysevent set ddns_failure_time
          fi

@@ -34,6 +34,9 @@
 #   limitations under the License.
 #######################################################################
 source /lib/rdk/t2Shared_api.sh
+if [ -f /lib/rdk/utils.sh ];then
+     . /lib/rdk/utils.sh
+fi
 
 UPTIME=$(cut -d. -f1 /proc/uptime)
 
@@ -95,7 +98,7 @@ then
 	sysevent set parcon_nfq_status started
     fi
 
-    rm /etc/cron/cron.everyminute/misc_handler.sh
+    removeCron "/etc/utopia/service.d/misc_handler.sh"
 else
     RG_MD=`syscfg get last_erouter_mode`
     MLD_PID=`pidof mldproxy`
@@ -113,5 +116,5 @@ else
       fi
     fi
 
-    rm /etc/cron/cron.everyminute/misc_handler.sh
+    removeCron "/etc/utopia/service.d/misc_handler.sh"
 fi
