@@ -1139,6 +1139,9 @@ $mTlsLogUpload_Enable=false
 #UploadLogsOnUnscheduledRebootDisable is disabled by default.
 $UploadLogsOnUnscheduledRebootDisable=false
 
+#WebUIEnable is Enable by default.
+$WebUIEnable=1
+
 #SyndicationFlowControl Defaults
 $SyndicationFlowControlEnable=false
 $DSCP_InitialForwardedMark=
