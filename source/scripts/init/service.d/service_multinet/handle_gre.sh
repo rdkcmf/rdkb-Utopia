@@ -927,18 +927,24 @@ case "$1" in
     ;;
     
     hotspot-start)
-        
-        if [ x"NULL" = x$2 ]; then
-            allGreInst="`psmcli getallinst $HS_PSM_BASE.`"
-            inst=`echo $allGreInst | cut -f 1`
-            if [ x = x$inst ]; then
-                exit 0
-            fi
+
+        WEB_CONF_ENABLE="`psmcli get eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable`"
+
+        if [ "true" = "$WEB_CONF_ENABLE" ] && [ -f /nvram/hotspot_blob ]; then
+            echo_t "hotspot enabled by webconfig...Legacy hotspot unused"
         else
-            inst=$2
+            if [ x"NULL" = x$2 ]; then
+                allGreInst="`psmcli getallinst $HS_PSM_BASE.`"
+                inst=`echo $allGreInst | cut -f 1`
+                if [ x = x$inst ]; then
+                   exit 0
+                fi
+            else
+                inst=$2
+            fi
+            
+            hotspot_up $inst
         fi
-        
-        hotspot_up $inst
     ;;
     
     hotspot-stop)
