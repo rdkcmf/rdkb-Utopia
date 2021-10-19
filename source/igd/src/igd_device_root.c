@@ -83,10 +83,13 @@
 
 #define DEFAULT_WEB_DIR "/var/IGD"
 
-
 #define DEFAULT_ADVR_EXPIRE 1800
 #define VERSION_MAJOR 		1
 #define VERSION_MINOR 		0
+
+#ifdef INCLUDE_BREAKPAD
+#include "breakpad_wrapper.h"
+#endif
 
 extern INT32 IGD_pii_get_lan_device_number(VOID);
 extern INT32 IGD_service_Layer3ForwardingInit(IN VOID* input_index_struct, INOUT FILE *fp);
@@ -297,7 +300,9 @@ main( IN INT32 argc,
             printf("IGD needs interface arguement. Failed to start.\n");
             exit(0);
         }
-        
+#ifdef INCLUDE_BREAKPAD
+    breakpad_ExceptionHandler();
+#endif
         snprintf(DESC_DOC_NAME, sizeof(DESC_DOC_NAME), "IGDdevicedesc_%s.xml", argv[1]);
         snprintf(DESC_DOC_PATH, sizeof(DESC_DOC_PATH), DEFAULT_WEB_DIR"/%s", DESC_DOC_NAME);
         

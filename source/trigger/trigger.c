@@ -52,6 +52,10 @@
 #include "sysevent/sysevent.h"
 #include <telemetry_busmessage_sender.h>
 
+#ifdef INCLUDE_BREAKPAD
+#include "breakpad_wrapper.h"
+#endif
+
 #define TRIGGER_QUEUE 22 // the netfilter queue THIS MUST BE UNIQUE IN THE SYSTEM
 static struct nfq_handle*   nfq_h;
 static struct nfq_q_handle* trigger_q;
@@ -895,7 +899,9 @@ int main(int argc, char **argv)
       printhelp(argv[0]);
       exit(0);
    }
-
+#ifdef INCLUDE_BREAKPAD
+    breakpad_ExceptionHandler();
+#endif
    daemon_init();
 
    /* set up signal handling
