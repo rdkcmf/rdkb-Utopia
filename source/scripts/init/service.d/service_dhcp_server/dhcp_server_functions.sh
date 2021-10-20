@@ -951,7 +951,14 @@ fi
          echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
       fi
    fi
-   
+  
+   if [ "$BOX_TYPE" = "rpi" ]; then                                       
+	   LAN_STATUS=`sysevent get lan-status`
+	   if [ "$LAN_STATUS" = "stopped" ]; then                
+		   echo_t "DHCP_SERVER : Starting lan-status"
+		   sysevent set lan-status started
+	   fi                                                  
+   fi   
    if [ "started" = $CURRENT_LAN_STATE ]; then
       calculate_dhcp_range $LAN_IPADDR $LAN_NETMASK
       echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
