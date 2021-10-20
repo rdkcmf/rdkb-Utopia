@@ -40,7 +40,6 @@ const char* SERVICE_NAME            = "igd";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_igd.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "lan-status|/etc/utopia/service.d/service_igd.sh",
-                                        "snmp_subagent-status|/etc/utopia/service.d/service_igd.sh",
                                         NULL
                                       };
 
