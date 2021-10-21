@@ -977,7 +977,7 @@ $NumOfFailedAttempts_2=0
 $PasswordLoginCounts_3=0
 $NumOfFailedAttempts_3=0
 $HTTPSecurityHeaderEnable=true
-$X_RDKCENTRAL-COM_AkerEnable=false
+$X_RDKCENTRAL-COM_AkerEnable=true
 #codebig
 $codebigsupport=0
 $CodeBigFirstEnabled=false
