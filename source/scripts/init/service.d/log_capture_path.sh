@@ -20,8 +20,8 @@
 ################################################################################
 
 #source /etc/utopia/service.d/log_env_var.sh
-LOG_PATH="/rdklogs/logs"
-CONSOLEFILE="$LOG_PATH/Consolelog.txt.0"
+LOG_PATH="/rdklogs/logs/"
+CONSOLEFILE="${LOG_PATH}Consolelog.txt.0"
 source /etc/log_timestamp.sh
 
 if [ ! -d "$LOG_PATH" ]; then
