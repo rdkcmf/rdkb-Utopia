@@ -758,13 +758,13 @@ case "$1" in
 #  Synchronous calls from bridge
     #Args: netid, members
     create)
-        echo "GRE CREATE: $3" > /dev/console
+        echo "GRE CREATE: $3"
         
         read_init_params $3
         
         #Initialize
         if [ x = x`sysevent get ${inst}_keepalive_pid` ]; then
-            echo "GRE INITIALIZING..." > /dev/console
+            echo "GRE INITIALIZING..."
             async="`sysevent async hotspotfd-tunnelEP $THIS`"
             sysevent set gre_ep_async "$async" > /dev/null
 #             async="`sysevent async snooper-wifi-clients $THIS`"
@@ -777,7 +777,7 @@ case "$1" in
             init_keepalive_sysevents > /dev/null
             init_snooper_sysevents
             sysevent set snooper-log-enable 1
-            echo "Starting hotspot component" > /dev/console
+            echo "Starting hotspot component"
             $HOTSPOT_COMP -subsys eRT. > /dev/null &
             sysevent set ${inst}_keepalive_pid $! > /dev/null
             
