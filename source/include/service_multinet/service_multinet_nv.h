@@ -44,5 +44,8 @@
 int nv_get_members(PL2Net net, PMember memberList, int numMembers);
 int nv_get_bridge(int l2netInst, PL2Net net);
 int nv_get_primary_l2_inst(void);
+#if defined(MESH_ETH_BHAUL)
+int nv_toggle_ethbhaul_ports(BOOL onOff);
+#endif
 
 #endif

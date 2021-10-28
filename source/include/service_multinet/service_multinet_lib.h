@@ -79,6 +79,10 @@
 
 #if defined(MULTILAN_FEATURE)
  int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion);
-#endif 
+#endif
+
+#if defined(MESH_ETH_BHAUL)
+ int toggle_ethbhaul_ports(BOOL onOff);
+#endif
  
  #endif

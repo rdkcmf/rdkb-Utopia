@@ -65,6 +65,8 @@
 #define MESHBHAUL_IPV4_CIDR "192.168.245.254/24"
 #endif
 #endif
+#define TRUE 1
+#define FALSE 0
 
 bool ethWanEnableState=false;
 FILE *mnetfp = NULL;
@@ -100,10 +102,20 @@ void setMulticastMac();
  int create_mesh_vlan(char* argv[], int argc);
  // RDKB-15951
  int add_meshbhaul_vlan(char* argv[], int argc);
+#if defined(MESH_ETH_BHAUL)
+ int handle_meshethbhaul_bridge_setup(char* argv[], int argc);
+ int handle_ethbhaul_start(char* argv[], int argc);
+ int handle_ethbhaul_stop(char* argv[], int argc);
+#endif
  EntryCall calls[] = {
 #ifdef MULTILAN_FEATURE
 	 {"lnf-setup", handle_lnf_setup},
 	 {"meshbhaul-setup", handle_meshbhaul_setup},
+#endif
+#if defined(MESH_ETH_BHAUL)
+	 {"meshethbhaul-bridge-setup", handle_meshethbhaul_bridge_setup},
+	 {"meshethbhaul-up", handle_ethbhaul_start},
+	 {"meshethbhaul-down", handle_ethbhaul_stop},
 #endif
 	 {"multinet-up", handle_up},
 	 //{"multinet-ifStatus", handle_ifStatus},
@@ -330,3 +342,39 @@ void multinet_log( char* fmt, ...)
 #endif
     return 0;
  }
+
+#if defined(MESH_ETH_BHAUL)
+int handle_meshethbhaul_bridge_setup(char* argv[], int argc) {
+     int bridgeMode = 0;
+     MNET_DEBUG("Main: handle_meshethbhaul_bridge_setup");
+     bridgeMode = atoi(argv[2]);
+
+     if( 0 == bridgeMode)
+     {
+        if(0 != toggle_ethbhaul_ports(FALSE)) {
+           MNET_DEBUG("Main: handle_meshethbhaul_bridge_setup: toggle_ethbhaul_ports Failed: FALSE");
+        }
+     }
+     else if( 1 == bridgeMode)
+     {
+        if(0 != toggle_ethbhaul_ports(TRUE)) {
+           MNET_DEBUG("Main: handle_meshethbhaul_bridge_setup: toggle_ethbhaul_ports Failed: TRUE");
+        }
+     }
+     else
+     {
+        MNET_DEBUG("Main: handle_meshethbhaul_bridge_setup: Wrong Bridge Mode");
+     }
+     return 0;
+ }
+ 
+ int handle_ethbhaul_start(char* argv[], int argc)
+ {
+    return toggle_ethbhaul_ports(TRUE);
+ }
+
+ int handle_ethbhaul_stop(char* argv[], int argc)
+ {
+    return toggle_ethbhaul_ports(FALSE);
+ }
+#endif

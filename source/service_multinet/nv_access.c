@@ -41,7 +41,13 @@
 #include <ccsp_base_api.h>
 #include "ccsp_memory.h"
 #include <stdbool.h>
+#if defined(MESH_ETH_BHAUL)
+#include "syscfg/syscfg.h"
+#endif
 #endif /* _COSA_INTEL_XB3_ARM_ */
+#if defined(ENABLE_ETH_WAN) || defined(AUTOWAN_ENABLE)
+#include "ccsp_hal_ethsw.h"
+#endif
 #ifdef MULTILAN_FEATURE
 char* typeStrings[] = {
     "SW", "Gre", "Link", "Eth", "WiFi", "Moca"
@@ -59,6 +65,9 @@ char* miInterfaceStrings[] = {"sw_5"};
 #endif
 #endif
 
+#if defined(MESH_ETH_BHAUL)
+static int syscfg_init_nvAccess_done = 0;
+#endif
 
 #if defined(_COSA_INTEL_XB3_ARM_) || defined(INTEL_PUMA7)
 
@@ -66,7 +75,17 @@ static const char* const multinet_component_id = "ccsp.multinet";
 static void* bus_handle = NULL;
 
 #define CCSP_SUBSYS 	"eRT."
+#define CCSP_CR_COMPONENT_ID "eRT.com.cisco.spvtg.ccsp.CR"
 #define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
+#define CCSP_BRIDGE_PORT_ETHBHAUL_ALIAS "MeshEthBH"
+#if defined(INTEL_PUMA7)
+#define CCSP_BRIDGE_PORT_XHS_INDEX      2
+#elif defined(_COSA_INTEL_XB3_ARM_)
+#define CCSP_BRIDGE_PORT_XHS_INDEX      4
+#endif
+#if defined(ENABLE_ETH_WAN) || defined(AUTOWAN_ENABLE)
+#define CCSP_BRIDGE_PORT_ETHWAN_INDEX   ETHWAN_DEF_INTF_NUM + 1
+#endif
 
 static int dbusInit( void )
 {
@@ -95,6 +114,222 @@ static int dbusInit( void )
     }
     return ret;
 }
+
+#if defined(MESH_ETH_BHAUL)
+static int mbus_get(char *path, char *val, int size)
+{
+    int                      compNum = 0;
+    int                      valNum = 0;
+    componentStruct_t        **ppComponents = NULL;
+    parameterValStruct_t     **parameterVal = NULL;
+    char                     *ppDestComponentName = NULL;
+    char                     *ppDestPath = NULL;
+    char                     *paramNames[1];
+
+    if (!path || !val || size < 0)
+        return -1;
+
+    if (!bus_handle) {
+         fprintf(stderr, "DBUS not connected\n");
+         return -1;
+    }
+
+    if (CcspBaseIf_discComponentSupportingNamespace(bus_handle, CCSP_CR_COMPONENT_ID, path, CCSP_SUBSYS, &ppComponents, &compNum) != CCSP_SUCCESS) {
+        fprintf(stderr, "failed to find component for %s \n", path);
+        return -1;
+    }
+    ppDestComponentName = ppComponents[0]->componentName;
+    ppDestPath = ppComponents[0]->dbusPath;
+    paramNames[0] = path;
+
+    if(CcspBaseIf_getParameterValues(bus_handle, ppDestComponentName, ppDestPath, paramNames, 1, &valNum, &parameterVal) != CCSP_SUCCESS) {
+        fprintf(stderr, "failed to get value for %s \n", path);
+        free_componentStruct_t(bus_handle, compNum, ppComponents);
+        return -1;
+    }
+
+    if(valNum >= 1) {
+        strncpy(val, parameterVal[0]->parameterValue, size);
+        free_parameterValStruct_t(bus_handle, valNum, parameterVal);
+        free_componentStruct_t(bus_handle, compNum, ppComponents);
+    }
+    return 0;
+}
+
+/* Enable or disable a boolean value in the DML. */
+static int mbus_set_bool(char *path, BOOL val)
+{
+    CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
+    int                      compNum = 0;
+    componentStruct_t        **ppComponents = NULL;
+    char                     *ppDestComponentName = NULL;
+    char                     *ppDestPath = NULL;
+    parameterValStruct_t     param_val[1];
+    char*                    faultParam = NULL;
+    int                      ret = 0;
+
+    param_val[0].parameterName = path;
+    param_val[0].parameterValue = (val ? "true" : "false");
+    param_val[0].type = ccsp_boolean;
+    
+    if (!path)
+        return -1;
+
+    if (!bus_handle) {
+         fprintf(stderr, "DBUS not connected\n");
+         return -1;
+    }
+
+    if (CcspBaseIf_discComponentSupportingNamespace(bus_handle, CCSP_CR_COMPONENT_ID, path, CCSP_SUBSYS, &ppComponents, &compNum) != CCSP_SUCCESS) {
+        fprintf(stderr, "failed to find component for %s \n", path);
+        return -1;
+    }
+
+    ppDestComponentName = ppComponents[0]->componentName;
+    ppDestPath = ppComponents[0]->dbusPath;
+
+    ret = CcspBaseIf_setParameterValues(
+        bus_handle, 
+        ppDestComponentName, 
+        ppDestPath, 
+        0,
+        0,
+        (void*)&param_val,
+        1,
+        TRUE,
+        &faultParam 
+        );
+    
+    if( ( ret != CCSP_SUCCESS ) && ( faultParam!=NULL )) {
+        fprintf(stderr, " %s:%d Failed to set %s\n",__FUNCTION__,__LINE__, path);
+        bus_info->freefunc( faultParam );
+        return -1;
+    }
+
+    return 0;
+}
+
+int nv_toggle_ethbhaul_ports(BOOL onOff)
+{
+    int bridge_count = 0;
+    int port_count = 0;
+    int bridge_index = 0;
+    int port_index = 0;
+    char cmdBuff[256] = {0};
+    char valBuff[256] = {0};
+    bool skipXhsPort = false;
+    char xhsAlias[20] = {0};
+    int retval = 0;
+#if defined(ENABLE_ETH_WAN) || defined(AUTOWAN_ENABLE)
+    bool skipEthWanPort = false;
+    char ethwan_enable[20] = {0};
+    char ethWanAlias[20] = {0};
+#endif
+
+    /* dbus init based on bus handle value */
+    if(bus_handle == NULL)
+        dbusInit( );
+
+    if(bus_handle == NULL)
+    {
+        MNET_DEBUG("nv_get_bridge, Dbus init error\n")
+        return 0;
+    }
+
+    if (!syscfg_init_nvAccess_done)
+    {
+        syscfg_init();
+        syscfg_init_nvAccess_done = 1;
+    }
+
+    /* Determine if any ports need to be skipped */
+    snprintf(cmdBuff, sizeof(cmdBuff), "Device.Bridging.Bridge.2.Port.%d.Enable", CCSP_BRIDGE_PORT_XHS_INDEX);
+    if ( (mbus_get(cmdBuff, valBuff, sizeof(valBuff))) != 0) {
+        fprintf(stderr, "Error: %s couldn't get xhs enable!\n", __FUNCTION__);
+    }
+
+    if(0 == strncmp(valBuff, "true", sizeof(valBuff)))
+    {
+        skipXhsPort = true;
+        snprintf(xhsAlias, sizeof(xhsAlias), "%s_%i", CCSP_BRIDGE_PORT_ETHBHAUL_ALIAS, CCSP_BRIDGE_PORT_XHS_INDEX);
+    }
+
+#if defined(ENABLE_ETH_WAN) || defined(AUTOWAN_ENABLE)
+    /* Determine if Ethernet WAN is enabled */
+    if (0 == syscfg_get(NULL, "eth_wan_enabled", ethwan_enable, sizeof(ethwan_enable)))
+    {
+        if(0 == strncmp(ethwan_enable, "yes", sizeof(ethwan_enable)))
+        {
+            skipEthWanPort = true;
+            snprintf(ethWanAlias, sizeof(ethWanAlias), "%s_%i", CCSP_BRIDGE_PORT_ETHBHAUL_ALIAS, CCSP_BRIDGE_PORT_ETHWAN_INDEX);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Error: %s syscfg_get for eth_wan_enabled failed!\n", __FUNCTION__);
+    }
+#endif
+
+    /* Get count of bridges */
+    if ( (mbus_get("Device.Bridging.BridgeNumberOfEntries", valBuff, sizeof(valBuff))) != 0) {
+        fprintf(stderr, "Error: %s couldn't get count of bridges!\n", __FUNCTION__);
+        return -1;
+    }
+
+    bridge_count = atoi(valBuff);
+    MNET_DEBUG("For ethbhaul found %d bridges\n" COMMA bridge_count);
+
+    for (bridge_index = 1; bridge_index <= bridge_count; bridge_index++)
+    {
+        /* Get count of ports */
+        snprintf(cmdBuff, sizeof(cmdBuff), "Device.Bridging.Bridge.%d.PortNumberOfEntries", bridge_index);
+        if ( (mbus_get(cmdBuff, valBuff, sizeof(valBuff))) != 0) {
+            fprintf(stderr, "Error: %s couldn't get count of ports for bridge %d!\n", __FUNCTION__, bridge_index);
+            continue;
+        }
+        port_count = atoi(valBuff);
+        MNET_DEBUG("For ethbhaul bridge %d found %d ports\n" COMMA bridge_index COMMA port_count);
+
+        for (port_index = 1; port_index <= port_count; port_index++)
+        {
+            /* Get alias of port */
+            snprintf(cmdBuff, sizeof(cmdBuff), "Device.Bridging.Bridge.%d.Port.%d.Alias", bridge_index, port_index);
+            if ( (mbus_get(cmdBuff, valBuff, sizeof(valBuff))) != 0) {
+                fprintf(stderr, "Error: %s couldn't get alias of bridge %d port %d!\n", __FUNCTION__, bridge_index, port_index);
+                continue;
+            }
+            /* Check whether port alias contains the string signifying it is an ethbhaul port */
+            if (strstr(valBuff, CCSP_BRIDGE_PORT_ETHBHAUL_ALIAS))
+            {
+                if(    (0 == strncmp(xhsAlias, valBuff, sizeof(xhsAlias)) && (true == skipXhsPort) && (bridge_index == 2))
+#if defined(ENABLE_ETH_WAN) || defined(AUTOWAN_ENABLE)
+                    || (0 == strncmp(ethWanAlias, valBuff, sizeof(ethWanAlias)) && (true == skipEthWanPort) )
+#endif
+                )
+                {
+                    MNET_DEBUG("Bridge %d port %d alias [%s] is already being utilized, skip\n" COMMA bridge_index COMMA port_index COMMA valBuff);
+                }
+                else
+                {
+                    MNET_DEBUG("Bridge %d port %d alias [%s] is ethbhaul, %s\n" COMMA bridge_index COMMA port_index COMMA valBuff COMMA (onOff ? "enable" : "disable"));
+                    snprintf(cmdBuff, sizeof(cmdBuff), "Device.Bridging.Bridge.%d.Port.%d.Enable", bridge_index, port_index);
+                    if ( (mbus_set_bool(cmdBuff, onOff)) != 0)
+                    {
+                        fprintf(stderr, "Error: Failed to enable bridge %d port %d for ethbhaul!\n", bridge_index, port_index);
+                        retval = -1;
+                    }
+                }
+            }
+            else
+            {
+                MNET_DEBUG("Bridge %d port %d alias [%s] is NOT ethbhaul, skip\n" COMMA bridge_index COMMA port_index COMMA valBuff);
+            }
+        }
+    } 
+
+    return retval;
+}
+#endif /* MESH_ETH_BHAUL */
 #endif
 
 int nv_get_members(PL2Net net, PMember memberList, int numMembers) 
