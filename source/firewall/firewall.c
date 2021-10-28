@@ -9478,6 +9478,10 @@ static int do_lan2wan_helpers(FILE *raw_fp)
    }
 #endif
 
+   /* RTSP helper */
+#ifdef CONFIG_CCSP_RTSP_HELPER
+   fprintf(raw_fp, "-A lan2wan_helpers -p tcp --dport 554 -j CT --helper rtsp\n");
+#endif
    FIREWALL_DEBUG("Exiting do_lan2wan_helpers\n");
    return(0);
 }
