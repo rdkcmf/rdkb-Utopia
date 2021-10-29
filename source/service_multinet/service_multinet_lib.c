@@ -88,6 +88,10 @@
 #define CLEAR_CPE_TABLE_COMMAND "echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt"
 #endif
 
+#if defined MULTILAN_FEATURE && defined(MESH_ETH_BHAUL)
+#define MESHETHBHAUL_IPV4_CIDR "169.254.85.1/24"
+#endif
+
  /* The service_multinet library provides service fuctions for manipulating the lifecycle 
  * and live configuration of system bridges and their device specific interface members. 
  * Authoritative configuration is considered to be held in nonvol storage, so most functions
@@ -96,7 +100,7 @@
 
 unsigned char isDaemon;
 char* executableName;
-#ifdef MULTILAN_FEATURE
+#if defined MULTILAN_FEATURE || defined(MESH_ETH_BHAUL)
 static int syscfg_init_done = 0;
 #endif
 
@@ -837,6 +841,51 @@ int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion) {
         return -1;
     }
     return 0;
+}
+#endif
+
+#if defined(MESH_ETH_BHAUL)
+int toggle_ethbhaul_ports(BOOL onOff)
+{
+    int retVal = 0;
+    char eb_enable[20] = {0};
+
+    if (!syscfg_init_done)
+    {
+        syscfg_init();
+        syscfg_init_done = 1;
+    }
+
+    /* Determine if Ethernet Backhaul is enabled */
+    if (0 == syscfg_get(NULL, "eb_enable", eb_enable, sizeof(eb_enable)))
+    {
+        if(0 == strncmp(eb_enable, "false", sizeof(eb_enable)))
+        {
+            /* RFC Not Enabled So Exit */
+            return retVal;
+        }
+    }
+    else
+    {
+        MNET_DEBUG("Error: %s syscfg_get for eb_enable failed!\n" COMMA __FUNCTION__);
+        return retVal;
+    }
+
+    if(1 == onOff)
+    {
+       multinet_bridgeUpInst(11, 0);
+    }
+    else if(0 == onOff)
+    {
+       multinet_bridgeDownInst(11);
+    }
+
+    multinet_assignBridgeCIDR(11, MESHETHBHAUL_IPV4_CIDR, 4);
+    system("sysevent set firewall-restart");
+
+    retVal = nv_toggle_ethbhaul_ports(onOff);
+
+    return retVal;
 }
 #endif
 
