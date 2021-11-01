@@ -4458,6 +4458,9 @@ if(status_http_ert == 0){
             fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p tcp -m multiport ! --dports %s,%s -j DNAT %s\n", natip4, Httpport, Httpsport, dst_str);
             
             fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p udp -m multiport ! --dports %s,%s -j DNAT %s\n", natip4, Httpport, Httpsport, dst_str);
+#ifdef _ICMP_ON_DMZ_HOST_
+            fprintf(nat_fp, "-A prerouting_fromwan_todmz --dst %s -p icmp  -j DNAT %s\n", natip4, dst_str);
+#endif
          }
 
 #ifdef _HUB4_PRODUCT_REQ_
