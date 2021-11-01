@@ -790,7 +790,7 @@ static BOOL MD_flag = TRUE;
  * For simplicity purposes we cap the number of syscfg entries within a
  * specific namespace. This cap is controlled by MAX_SYSCFG_ENTRIES
  */
-#define MAX_SYSCFG_ENTRIES 100
+#define MAX_SYSCFG_ENTRIES 128
 
 #define MAX_QUERY 256
 #define MAX_NAMESPACE 64
