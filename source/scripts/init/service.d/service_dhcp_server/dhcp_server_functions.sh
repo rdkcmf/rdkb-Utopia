@@ -897,6 +897,7 @@ fi
          fi
          if [ "" != "$LAN_DOMAIN" ] ; then
             echo "domain=$LAN_DOMAIN" >> $LOCAL_DHCP_CONF
+            echo "local=/$LAN_DOMAIN/" >> $LOCAL_DHCP_CONF
          fi
        fi  
    else
