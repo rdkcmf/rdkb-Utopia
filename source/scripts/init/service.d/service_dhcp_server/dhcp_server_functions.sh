@@ -553,6 +553,11 @@ get_dhcp_option_for_brlan0() {
               NS=`sysevent get wan_dhcp_dns`
               if [ "" != "$NS" ] ; then
                   NS=`echo "$NS" | sed "s/ /,/g"`
+	      else
+	          NS=`cat $RESOLV_CONF | grep nameserver | grep "\." | head -n 2 | cut -d" " -f2`
+		  if [ "" != "$NS" ] ; then
+                      NS=`echo $NS | sed 's/\( \)\{1,\}/,/g'`
+		  fi
               fi    
               if [ "" = "$DHCP_OPTION_STR" ] ; then
                  if [ "" != "$NS" ] ; then
@@ -1178,7 +1183,9 @@ fi
    fi
 
 	if [ "1" == "$NAMESERVERENABLED" ]; then
-		prepare_static_dns_urls $LOCAL_DHCP_CONF
+                if [ "$SECWEBUI_ENABLED" != "true" ]; then
+		    prepare_static_dns_urls $LOCAL_DHCP_CONF
+                fi
 	fi
 
    cat $LOCAL_DHCP_CONF > $DHCP_CONF
