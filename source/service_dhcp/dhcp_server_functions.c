@@ -1373,6 +1373,7 @@ int prepare_dhcp_conf (char *input)
         
         fprintf(l_fLocal_Dhcp_ConfFile, "domain-needed\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "bogus-priv\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "address=/.c.f.ip6.arpa/\n");
 
         if (TRUE == l_bCaptivePortal_Mode)
         {

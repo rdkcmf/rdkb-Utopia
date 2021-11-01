@@ -1044,6 +1044,7 @@ fi
 
    #echo "interface=$LAN_IFNAME" >> $LOCAL_DHCP_CONF
    echo "expand-hosts" >> $LOCAL_DHCP_CONF
+   echo "address=/.c.f.ip6.arpa/" >> $LOCAL_DHCP_CONF
 
       LOG_LEVEL=`syscfg get log_level`
    if [ "" = "$LOG_LEVEL" ] ; then
