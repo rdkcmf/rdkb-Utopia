@@ -576,10 +576,6 @@ update_ddns_if_needed () {
       0.0.0.0)
         ulog ddns status "$PID wan state is down. No ddns update possible"
            sysevent set ddns_return_status
-           syscfg set ddns_client_Status $CLIENT_ERROR_MISCONFIGURED
-           syscfg set dddns_host_status_1 $HOST_ERROR
-           syscfg set ddns_client_Lasterror $MISCONFIGURATION_ERROR
-           syscfg commit
 
         ;;
    *)
@@ -667,8 +663,6 @@ service_retry ()
 #----------------------------------------------------------------------
 service_init ()
 {
-    asyncid=`sysevent async current_wan_ipaddr /etc/utopia/service.d/service_dynamic_dns.sh`
-    sysevent set dynamicdns_ip_changed_asyncid "$asyncid"
     FOO=`utctx_cmd get wan_last_ipaddr`
     eval $FOO
 }
