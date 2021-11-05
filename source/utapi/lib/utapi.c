@@ -867,6 +867,8 @@ static int s_GetWANStaticSetting (UtopiaContext *ctx, wan_static_t *wstatic)
 static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo_t *wan)
 {
     int rc = SUCCESS;
+    void* pWanIpAddrStatic = NULL;
+    void* pWanPPPTime      = NULL;
 
     /*
      * PPP common settings
@@ -878,9 +880,11 @@ static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
     wan->ppp.conn_method = s_StrToEnum(g_WanConnMap, s_tokenbuf);
 
     if (CONNECT_ON_DEMAND == wan->ppp.conn_method) {
-        Utopia_GetInt(ctx, UtopiaValue_WAN_PPPIdleTime, &wan->ppp.max_idle_time);
+        pWanPPPTime = &wan->ppp.max_idle_time;
+        Utopia_GetInt(ctx, UtopiaValue_WAN_PPPIdleTime, pWanPPPTime);
     } else {
-        Utopia_GetInt(ctx, UtopiaValue_WAN_PPPKeepAliveInterval, &wan->ppp.redial_period);
+        pWanPPPTime = &wan->ppp.redial_period;
+        Utopia_GetInt(ctx, UtopiaValue_WAN_PPPKeepAliveInterval, pWanPPPTime);
     }
 
     if (PPPOE == wan_proto) {
@@ -889,13 +893,15 @@ static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
         Utopia_Get(ctx, UtopiaValue_WAN_ProtoServerAddress, wan->ppp.server_ipaddr, IPADDR_SZ);
     }
 
+    pWanIpAddrStatic = &wan->ppp.ipAddrStatic;
+
     if (PPTP == wan_proto) {
-        Utopia_GetBool(ctx, UtopiaValue_WAN_PPTPAddressStatic, &wan->ppp.ipAddrStatic);
+        Utopia_GetBool(ctx, UtopiaValue_WAN_PPTPAddressStatic, pWanIpAddrStatic);
         if (wan->ppp.ipAddrStatic) {
             rc = s_GetWANStaticSetting (ctx, &wan->wstatic);
         }
     } else if (L2TP == wan_proto) {
-        Utopia_GetBool(ctx, UtopiaValue_WAN_L2TPAddressStatic, &wan->ppp.ipAddrStatic);
+        Utopia_GetBool(ctx, UtopiaValue_WAN_L2TPAddressStatic, pWanIpAddrStatic);
         if (wan->ppp.ipAddrStatic) {
             rc = s_GetWANStaticSetting (ctx, &wan->wstatic);
         }
@@ -907,6 +913,7 @@ static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
 int Utopia_GetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
 {
     int rc = SUCCESS;
+    void* pWanMtuSize = NULL;
 
     if (NULL == ctx || NULL == wan_info) {
         return ERR_INVALID_ARGS;
@@ -918,7 +925,8 @@ int Utopia_GetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
     wan_info->wan_proto = s_StrToEnum(g_WanTypeMap, s_tokenbuf);
 
     Utopia_Get(ctx, UtopiaValue_WAN_ProtoAuthDomain, wan_info->domainname, IPHOSTNAME_SZ);
-    UTOPIA_GETINT(ctx, UtopiaValue_WAN_MTU, &wan_info->mtu_size);
+    pWanMtuSize = &wan_info->mtu_size;
+    UTOPIA_GETINT(ctx, UtopiaValue_WAN_MTU, pWanMtuSize);
     wan_info->auto_mtu = (wan_info->mtu_size == 0)? TRUE:FALSE;
 
     switch (wan_info->wan_proto) {
@@ -4018,13 +4026,15 @@ static int s_getiap (UtopiaContext *ctx, int index, iap_entry_t *iap)
     char buf[128], *sched, *stop_time;
     int i, j, count = 0;
     errno_t  rc = -1;
+    void* pIapEnabled = NULL;
 
     Utopia_GetIndexed(ctx, UtopiaValue_InternetAccessPolicy, index, buf, sizeof(buf));
     if (0 == (strcmp(buf, "none"))) {
         return SUCCESS;
     }
 
-    Utopia_GetIndexedBool(ctx, UtopiaValue_IAP_Enabled, index, &iap->enabled);
+    pIapEnabled = &iap->enabled;
+    Utopia_GetIndexedBool(ctx, UtopiaValue_IAP_Enabled, index, pIapEnabled);
     Utopia_GetIndexed(ctx, UtopiaValue_IAP_Name, index, iap->policyname, NAME_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_IAP_Access, index, buf, sizeof(buf));
     iap->allow_access = TRUE;

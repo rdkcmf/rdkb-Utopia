@@ -48,16 +48,22 @@ int Utopia_GetEmailNotificationSetting(UtopiaContext *ctx, email_notification_t 
 
     bzero(pSetting, sizeof(email_notification_t));
 
-    Utopia_GetBool(ctx, UtopiaValue_Security_EmailEnabled, &pSetting->bEnabled);
+    void* pEnabled               = &pSetting->bEnabled;
+    void* pSendLogs              = &pSetting->bSendLogs;
+    void* pFirewallBreach        = &pSetting->bFirewallBreach;
+    void* pParentalControlBreach = &pSetting->bParentalControlBreach;
+    void* pAlertsWarnings        = &pSetting->bAlertsWarnings;
+
+    Utopia_GetBool(ctx, UtopiaValue_Security_EmailEnabled, pEnabled);
     Utopia_Get(ctx, UtopiaValue_Security_EmailSendTo, pSetting->send_to, sizeof(pSetting->send_to));
     Utopia_Get(ctx, UtopiaValue_Security_EmailServer, pSetting->server, sizeof(pSetting->server));
     Utopia_Get(ctx, UtopiaValue_Security_EmailUsername, pSetting->username, sizeof(pSetting->username));
     Utopia_Get(ctx, UtopiaValue_Security_EmailPassword, pSetting->password, sizeof(pSetting->password));
     Utopia_Get(ctx, UtopiaValue_Security_EmailFromAddr, pSetting->from_addr, sizeof(pSetting->from_addr));
-    Utopia_GetBool(ctx, UtopiaValue_Security_SendLogs, &pSetting->bSendLogs);
-    Utopia_GetBool(ctx, UtopiaValue_Security_FirewallBreach, &pSetting->bFirewallBreach);
-    Utopia_GetBool(ctx, UtopiaValue_Security_ParentalControlBreach, &pSetting->bParentalControlBreach);
-    Utopia_GetBool(ctx, UtopiaValue_Security_AlertsWarnings, &pSetting->bAlertsWarnings);
+    Utopia_GetBool(ctx, UtopiaValue_Security_SendLogs, pSendLogs);
+    Utopia_GetBool(ctx, UtopiaValue_Security_FirewallBreach, pFirewallBreach);
+    Utopia_GetBool(ctx, UtopiaValue_Security_ParentalControlBreach, pParentalControlBreach);
+    Utopia_GetBool(ctx, UtopiaValue_Security_AlertsWarnings, pAlertsWarnings);
 
     return SUCCESS;
 }
