@@ -9577,6 +9577,12 @@ static int do_lan2wan_misc(FILE *filter_fp)
    return(0);
 }
 
+static void do_add_TCP_MSS_rules(FILE *mangle_fp)
+{
+    fprintf(mangle_fp, "-I FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+    fprintf(mangle_fp, "-I OUTPUT -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
+}
+
 /*
  *  Procedure     : do_lan2wan
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -9599,6 +9605,7 @@ static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
    do_lan2wan_disable(filter_fp);
    do_parental_control(filter_fp, nat_fp, 4);
 
+   do_add_TCP_MSS_rules(mangle_fp);
    /* XDNS - route dns req though dnsmasq */
 #ifdef XDNS_ENABLE
    do_dns_route(nat_fp, 4);
