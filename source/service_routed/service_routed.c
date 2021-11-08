@@ -538,7 +538,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #if defined(MULTILAN_FEATURE)
     char orig_lan_prefix[64];
 #endif
-    char m_flag[16], o_flag[16];
+    char m_flag[16], o_flag[16], ra_mtu[16];
     char rec[256], val[512];
     char buf[6];
     FILE *responsefd = NULL;
@@ -835,6 +835,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
             else if (strcmp(o_flag, "0") == 0)
                 fprintf(fp, "   no ipv6 nd other-config-flag\n");
 #endif
+
+        syscfg_get(NULL, "router_mtu", ra_mtu, sizeof(ra_mtu));
+        if ( (strlen(ra_mtu) > 0) && (strncmp(ra_mtu, "0", sizeof(ra_mtu)) != 0) )
+            fprintf(fp, "   ipv6 nd mtu %s\n", ra_mtu);
+
         syscfg_get(NULL, "dhcpv6s_enable", dh6s_en, sizeof(dh6s_en));
         if (strcmp(dh6s_en, "1") == 0)
             fprintf(fp, "   ipv6 nd other-config-flag\n");
