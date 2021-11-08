@@ -556,6 +556,8 @@ changeFilePermissions $SYSCFG_NEW_FILE 400
 echo "[utopia][init] SEC: Syscfg stored in $SYSCFG_NEW_FILE"
 syscfg unset UpdateNvram
 syscfg commit
+syscfg unset NonRootSupport
+syscfg commit
 if [ -s /nvram/.secure_mount_failure ]; then
      if [ `cat /nvram/.secure_mount_failure` -gt 3 ]; then
            echo "[utopia][init] Device needs to be replaced as it is unable to recover /opt/secure mount issue"

@@ -485,6 +485,8 @@ changeFilePermissions $SYSCFG_BKUP_FILE 400
 echo "[utopia][init] SEC: Syscfg stored in $SYSCFG_BKUP_FILE"
 syscfg unset UpdateNvram
 syscfg commit
+syscfg unset NonRootSupport
+syscfg commit
 
 #Added log to check the DHCP range corruption after system defaults applied.
 lan_ipaddr=`syscfg get lan_ipaddr`
