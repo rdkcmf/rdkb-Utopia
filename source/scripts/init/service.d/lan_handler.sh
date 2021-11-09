@@ -467,8 +467,6 @@ case "$1" in
         #we need to restart necessary application when lan restart
         #monitor will start dibbler
         dibbler-server stop
-        #bridge mode enabled then remove all ethbackhaul interfaces
-        sysevent set meshethbhaul-bridge-setup 0
    ;;
    
    lan-start)
@@ -482,8 +480,6 @@ case "$1" in
         fi
         # TODO call the restart routine
         sysevent set ipv4-up `sysevent get primary_lan_l3net`
-        #router mode  enabled then add all ethbackhaul interfaces
-        sysevent set meshethbhaul-bridge-setup 1
    ;;
    *)   
       echo "Usage: service-${SERVICE_NAME} [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" > /dev/console
