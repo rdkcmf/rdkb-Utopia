@@ -12798,6 +12798,10 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 #else
        fprintf(filter_fp, "-A INPUT ! -i %s -j wan2self_mgmt\n", isBridgeMode == 0 ? lan_ifname : cmdiag_ifname);
 #endif
+
+       // Create iptable chain to ratelimit remote management packets
+       do_webui_rate_limit(filter_fp);
+
        do_remote_access_control(NULL, filter_fp, AF_INET);
    }
 
@@ -12843,9 +12847,6 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (filter_fp);
-   
-   // Create iptable chain to ratelimit remote management packets
-   do_webui_rate_limit(filter_fp);
 
 #if !defined(_COSA_INTEL_XB3_ARM_)
    filterPortMap(filter_fp);
