@@ -316,7 +316,7 @@ int Utopia_GetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
 #endif
 
     Utopia_GetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1),pUserCfg_t->Username,STR_SZ);
-    Utopia_GetIndexed(ctx,UtopiaValue_Password,(ulIndex + 1),pUserCfg_t->Password,STR_SZ);
+    Utopia_GetIndexed(ctx,UtopiaValue_Password,(ulIndex + 1),pUserCfg_t->Password,PWD_SZ);
     Utopia_GetIndexed(ctx,UtopiaValue_User_Language,(ulIndex + 1),pUserCfg_t->Language,sizeof(pUserCfg_t->Language));
 
     Utopia_GetIndexedInt(ctx,UtopiaValue_User_Enabled,(ulIndex + 1),&iVal);

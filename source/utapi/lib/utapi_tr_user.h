@@ -36,7 +36,8 @@
 #ifndef __UTAPI_TR_USER_H__
 #define __UTAPI_TR_USER_H__
 
-#define STR_SZ 64 
+#define STR_SZ 64
+#define PWD_SZ 128
 #define MAX_NUM_INSTANCES 255
 
 #define DELIM_CHAR ','
@@ -62,8 +63,8 @@ userCfg
 
     unsigned char                   bEnabled;
     unsigned char                   RemoteAccessCapable;
-    char                            Username[64];
-    char                            Password[64];
+    char                            Username[STR_SZ];
+    char                            Password[PWD_SZ];
     char                            Language[16];
     char 	                    NumOfFailedAttempts;
     char                            X_RDKCENTRAL_COM_ComparePassword[32];
