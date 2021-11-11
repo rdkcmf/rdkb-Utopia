@@ -400,7 +400,8 @@ dhcp_server_start ()
       rm -f /var/tmp/lan_not_restart
 	  return 0
    fi
-   
+  
+  if [ "$BOX_TYPE" != "rpi" ]; then 
    DHCP_STATE=`sysevent get lan_status-dhcp`
    #if [ "started" != "$CURRENT_LAN_STATE" ] ; then
    if [ "started" != "$DHCP_STATE" ] ; then
@@ -412,6 +413,7 @@ dhcp_server_start ()
          rm -f /var/tmp/lan_not_restart
          exit 0
       fi
+   fi
    fi
 
     dhcp_inprogress_wait_count=0
@@ -545,7 +547,7 @@ dhcp_server_start ()
    if [ $? -eq 0 ]; then
    	echo_t "$SERVER process started successfully"
    else
-   	if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "PUMA7_CGP" ]; then
+   	if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "PUMA7_CGP" ] || [ "$BOX_TYPE" = "rpi" ] ; then
    
         	COUNTER=0
         	while [ $COUNTER -lt 5 ]; do
