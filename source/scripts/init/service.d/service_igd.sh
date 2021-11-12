@@ -206,7 +206,7 @@ case "$1" in
     snmp_subagent-status)
         init_once
         #SKYH4-5296 - IGD process running by default after reboot and FR eventhough upnp is disabled.
-        if [ "x$BOX_TYPE" != "xHUB4" ]; then
+        if [ "x$BOX_TYPE" != "xHUB4" ] || [ "x$BOX_TYPE" != "xSR300" ]; then
             resync_upnp
         fi
    ;;
