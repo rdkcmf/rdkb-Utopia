@@ -8440,12 +8440,11 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 #if 0
 			fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j prerouting_redirect\n",query);
 #else
-			char drop_log[40] = { 0 };
 			fprintf(fp, ":LOG_DeviceBlocked_%d_DROP - [0:0]\n", idx);
-			fprintf(fp, "-A %s -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix %s --log-level %d\n", drop_log, drop_log, syslog_level);
-			fprintf(fp, "-A %s -j prerouting_redirect\n", drop_log);
-            fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j %s\n",query,drop_log);
-            fprintf(fp, "-A prerouting_devices -p udp -m mac --mac-source %s -j %s\n",query,drop_log);            
+			fprintf(fp, "-A LOG_DeviceBlocked_%d_DROP -m limit --limit 1/minute --limit-burst 1  -j LOG --log-prefix LOG_DeviceBlocked_%d_DROP --log-level %d\n", idx, idx, syslog_level);
+			fprintf(fp, "-A LOG_DeviceBlocked_%d_DROP -j prerouting_redirect\n", idx);
+			fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",query,idx);
+			fprintf(fp, "-A prerouting_devices -p udp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",query,idx);
 #endif /* 0 */
 #if defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
            if(MD_flag == TRUE)
