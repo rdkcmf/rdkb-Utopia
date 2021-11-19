@@ -536,7 +536,7 @@ get_expected_if_list() {
                     #Switch port 2 connected to XFinity Private LAN
                     IF_LIST="eth_1 eth_0 $MOCA_INTERFACE l${CMDIAG_IF} lbr0"
                 else
-                    IF_LIST="eth_1 $MOCA_INTERFACE l${CMDIAG_IF} lbr0"
+                    IF_LIST="eth_0 $MOCA_INTERFACE l${CMDIAG_IF} lbr0"
                     #Switch port 2 connected to XFinity Home
                 fi
             else
@@ -547,7 +547,7 @@ get_expected_if_list() {
                     IF_LIST="eth_1 eth_0 $MOCA_INTERFACE ath0 ath1 lbr0"
                 else
                     #Switch port 2 connected to XFinity Home
-                    IF_LIST="eth_1 $MOCA_INTERFACE ath0 ath1 lbr0"
+                    IF_LIST="eth_0 $MOCA_INTERFACE ath0 ath1 lbr0"
                 fi
             fi
 
@@ -561,7 +561,7 @@ get_expected_if_list() {
             if [ "$isport2enable" = "true" ]
             then
                 #Switch port 2 connected to XFinity Home
-                IF_LIST="eth_0 nmoca0.${BRIDGE_VLAN} ath2 ath3"
+                IF_LIST="eth_1 nmoca0.${BRIDGE_VLAN} ath2 ath3"
             else
                 #Switch port 2 connected to XFinity Private LAN
                 IF_LIST="nmoca0.${BRIDGE_VLAN} ath2 ath3"
