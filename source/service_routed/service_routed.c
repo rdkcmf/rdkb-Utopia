@@ -77,6 +77,7 @@
 #define RIPD_PID_FILE   "/var/ripd.pid"
 #define ZEBRA_CONF_FILE "/var/zebra.conf"
 #define RIPD_CONF_FILE  "/etc/ripd.conf"
+#define RA_INTERVAL 60
 
 #ifdef _HUB4_PRODUCT_REQ_
 #define LAN_BRIDGE "brlan0"
@@ -516,6 +517,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
     unsigned int dnssllft = 0;
     char prefix[64], orig_prefix[64], lan_addr[64];
     char preferred_lft[16], valid_lft[16];
+#ifndef _HUB4_PRODUCT_REQ_
+    unsigned int rdnsslft = 0;
+#endif    
 #if defined(MULTILAN_FEATURE)
     char orig_lan_prefix[64];
 #endif
@@ -975,7 +979,8 @@ static int gen_zebra_conf(int sefd, token_t setok)
                             fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
                         }
 #else
-        		fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+                        rdnsslft = 3 * RA_INTERVAL;
+                        fprintf(fp, "   ipv6 nd rdnss %s %d\n", tok, rdnsslft);
 #endif
                 }
 
