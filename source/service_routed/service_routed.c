@@ -545,9 +545,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     unsigned int dnssllft = 0;
     char prefix[64], orig_prefix[64], lan_addr[64];
     char preferred_lft[16], valid_lft[16];
-#ifndef _HUB4_PRODUCT_REQ_
-    unsigned int rdnsslft = 0;
-#endif    
+    unsigned int rdnsslft = 3 * RA_INTERVAL; // as defined in RFC
 #if defined(MULTILAN_FEATURE)
     char orig_lan_prefix[64];
 #endif
@@ -997,7 +995,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #else
                 if (strlen(lan_addr) && ula_enable)
 #endif
-            			fprintf(fp, "   ipv6 nd rdnss %s 86400\n", lan_addr);
+                    fprintf(fp, "   ipv6 nd rdnss %s %d\n", lan_addr, rdnsslft);
 	}
         /* static IPv6 DNS */
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION          
@@ -1052,7 +1050,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
                                 {
                                     char static_dns[256] = {0};
                                     sysevent_get(sefd, setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
-                                    fprintf(fp, "   ipv6 nd rdnss %s 86400\n", static_dns);
+                                    fprintf(fp, "   ipv6 nd rdnss %s %d\n", static_dns, rdnsslft);
                                     if (strlen(name_servs) == 0) {
                                         sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs),
                                                 sizeof(name_servs) - strlen(name_servs));
@@ -1088,10 +1086,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #ifdef _HUB4_PRODUCT_REQ_
                         if (0 == strncmp(lan_addr, tok, strlen(lan_addr)))
                         {
-                            fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+                            fprintf(fp, "   ipv6 nd rdnss %s %d\n", tok, rdnsslft);
                         }
 #else
-                        rdnsslft = 3 * RA_INTERVAL;
                         fprintf(fp, "   ipv6 nd rdnss %s %d\n", tok, rdnsslft);
 #endif
                 }
@@ -1150,7 +1147,8 @@ if(!strncmp(out,"true",strlen(out)))
 	while((token = strtok_r(pt, ",", &pt)))
 	{
 
-        	memset(interface_name,0,sizeof(interface_name));
+                memset(interface_name,0,sizeof(interface_name));
+                memset(name_servs, 0, sizeof(name_servs));
                 #ifdef _COSA_INTEL_XB3_ARM_
                 char LnFIfName[32] = {0} , LnFBrName[32] = {0} ;
                 syscfg_get( NULL, "iot_ifname", LnFIfName, sizeof(LnFIfName));
@@ -1262,7 +1260,7 @@ if(!strncmp(out,"true",strlen(out)))
                                 {
                                     char static_dns[256] = {0};
                                     sysevent_get(sefd, setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
-                                    fprintf(fp, "   ipv6 nd rdnss %s 86400\n", static_dns);
+                                    fprintf(fp, "   ipv6 nd rdnss %s %d\n", static_dns, rdnsslft);
                                     /* DNS from WAN (if no static DNS) */
                                     if (strlen(name_servs) == 0) {
                                         sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs),
@@ -1294,8 +1292,8 @@ if(!strncmp(out,"true",strlen(out)))
 
                         for (start = name_servs; (tok = strtok_r(start, " ", &sp)); start = NULL)
                         {
-                        // Modifying rdnss value to fix the zebra config.
-                        fprintf(fp, "   ipv6 nd rdnss %s 86400\n", tok);
+                            // Modifying rdnss value to fix the zebra config.
+                            fprintf(fp, "   ipv6 nd rdnss %s %d\n", tok, rdnsslft);
                         }
          }
 
