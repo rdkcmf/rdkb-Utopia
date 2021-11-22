@@ -370,9 +370,6 @@ NOT_DEF:
 #include <linux/version.h>
 #endif
 
-#ifdef INCLUDE_BREAKPAD
-#include "breakpad_wrapper.h"
-#endif
 
 #define CCSP_SUBSYS "eRT."
 #define PORTMAPPING_2WAY_PASSTHROUGH
@@ -15319,9 +15316,6 @@ int main(int argc, char **argv)
 	   if(firewallfp == NULL) {
 		firewallfp = fopen ("/rdklogs/logs/FirewallDebug.txt", "a+");
 	} 
-	#ifdef INCLUDE_BREAKPAD
-	breakpad_ExceptionHandler();
-	#endif
 
    FIREWALL_DEBUG("ENTERED FIREWALL, argc = %d \n" COMMA argc);
 
