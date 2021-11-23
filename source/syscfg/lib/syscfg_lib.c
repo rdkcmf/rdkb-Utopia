@@ -1626,6 +1626,7 @@ int backup_file (const char *bkupFile, const char *localFile)
         }
 
 	close(fd_from);
+        fsync(fd_to);
         close(fd_to);
         return -1;
   }
@@ -1635,6 +1636,7 @@ int backup_file (const char *bkupFile, const char *localFile)
        ulog_error(ULOG_SYSTEM, UL_SYSCFG, "munmap failed");
   }
 
+  fsync(fd_to);
   if(close(fd_to) < 0) {
         fd_to = -1;
     	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "closing file descriptor failed during db backup");
@@ -1679,6 +1681,7 @@ int commit_to_file (const char *fname)
     }
     _syscfg_file_unlock(fd);
 
+    fsync(fd);
     close(fd);
 
    ret = access(SYSCFG_BKUP_FILE, F_OK);
