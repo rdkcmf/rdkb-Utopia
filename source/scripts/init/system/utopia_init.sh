@@ -98,7 +98,7 @@ echo "400" > /proc/sys/net/netfilter/nf_conntrack_expect_max
 
 
 if [ "$BOX_TYPE" = "XB3" ];then
-    RESERVED_PORTS="58081"
+    RESERVED_PORTS="58081,50755,50757,50759,50760"
     sysctl -w net.ipv4.ip_local_reserved_ports="$RESERVED_PORTS"
 
 fi
