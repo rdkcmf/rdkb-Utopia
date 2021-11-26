@@ -344,6 +344,7 @@ fi
    rm -f /nvram/bootstrap.json
    rm -f /opt/secure/RFC/tr181store.json
    rm -f /opt/secure/Blocklist_file.txt
+   rm -f /nvram/Blocklist_XB3.txt
    rm -f $SYSCFG_BKUP_FILE
    rm -f $SYSCFG_FILE
    rm -f $SYSCFG_NEW_FILE
@@ -796,6 +797,7 @@ fi
 if [ "$FACTORY_RESET_REASON" = "true" ] && [ "$BOX_TYPE" = "XB3" ];then
         ATOM_RPC_IP=`grep ATOM_ARPING_IP /etc/device.properties | cut -f 2 -d"="`
         rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
+        rpcclient $ATOM_RPC_IP "rm -f /nvram/Blocklist_XB3.txt"
 fi
 #operating rbus based on new naming nomenclature
 if [ -e /nvram/rbus_support_on_pending ]; then
