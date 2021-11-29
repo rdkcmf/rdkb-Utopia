@@ -83,11 +83,11 @@ case "$1" in
 #   ipv6_nameserver|ipv6_dnssl)
 #       service_routed radv-restart
 #       ;;
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
    ipv6_prefix|ipv6_nameserver)
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
        service_routed radv-restart
-       ;;
 fi
+       ;;
    dhcpv6_option_changed)
        service_routed radv-restart
        ;;

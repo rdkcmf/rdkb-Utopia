@@ -262,21 +262,21 @@ service_init
 
 case "$1" in
    ${SERVICE_NAME}-start)
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
       service_ipv6 start
 else
       service_ipv6 dhcpv6s-start
 fi
       ;;
    ${SERVICE_NAME}-stop)
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
       service_ipv6 stop
 else
       service_ipv6 dhcpv6s-stop
 fi
       ;;
    ${SERVICE_NAME}-restart)
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
       service_ipv6 restart
 else
       service_ipv6 dhcpv6s-restart
@@ -289,7 +289,7 @@ fi
 #   ipv6_nameserver|ipv6_dnssl)
 #      service_ipv6 dhcpv6s-restart
    dhcpv6_option_changed)
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
       service_ipv6 restart
 else
       service_ipv6 dhcpv6s-restart
