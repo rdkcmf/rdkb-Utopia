@@ -1086,6 +1086,9 @@ $T2Enable=false
 $T2Version=2.0.1
 $T2ConfigURL=
 
+#Defaults for mTLS in T2
+$T2mTLSEnable=true
+
 #RDM Module Default URL
 $CDLModuleUrl=
 #low_queue_reboot_threshold
