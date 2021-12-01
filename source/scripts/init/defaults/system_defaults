@@ -1169,3 +1169,6 @@ $TDKEnable=false
 
 #CMRouteIsolation is enabled by default
 $CMRouteIsolation_Enable=true
+
+#SHORTS is disabled by default
+$ShortsEnabled=false
