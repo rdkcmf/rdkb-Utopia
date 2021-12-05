@@ -6314,10 +6314,8 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
         }		
         if(!bEthWANEnable)
         {
-        if (rc == 0 && atoi(query) == 0)
-            fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname);
-        if (ret == 0 && atoi(tmpQuery) == 0)
-            fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 -j DROP\n", current_wan_ifname);
+                fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname);
+                fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 -j DROP\n", current_wan_ifname);
         }
     }
     else
