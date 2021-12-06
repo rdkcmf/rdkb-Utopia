@@ -547,7 +547,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     static const char *zebra_conf_base = \
         "!enable password admin\n"
         "!log stdout\n"
-        "log file /var/log/zebra.log errors\n"
+        "log file /var/tmp/zebra.log errors\n"
         "table 255\n";
 #if defined(MULTILAN_FEATURE) || defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
     int i = 0;
@@ -1231,10 +1231,10 @@ static int radv_start(struct serv_routed *sr)
     syscfg_get(NULL, "dhcpv6s00::serverenable", dhcpv6Enable , sizeof(dhcpv6Enable));
     bool bEnabled = (strncmp(dhcpv6Enable,"1",1)==0?true:false);
 
-    v_secure_system("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+    v_secure_system("zebra -d -f %s -P 0", ZEBRA_CONF_FILE);
     printf("DHCPv6 is %s. Starting zebra Process\n", (bEnabled?"Enabled":"Disabled"));
 #else
-    v_secure_system("zebra -d -f %s -u root -P 0", ZEBRA_CONF_FILE);
+    v_secure_system("zebra -d -f %s -P 0", ZEBRA_CONF_FILE);
 #endif
 
     return 0;
