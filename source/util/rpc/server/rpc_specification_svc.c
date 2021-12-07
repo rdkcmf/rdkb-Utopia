@@ -33,7 +33,7 @@ rpc_tool1_1(struct svc_req *rqstp, register SVCXPRT *transp)
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
-		(void) svc_sendreply (transp, (xdrproc_t) xdr_void, (char *)NULL);
+		(void) svc_sendreply (transp, (xdrproc_t) ((void *)xdr_void), (char *)NULL);
 		return;
 
 	case EXECUTECOMMAND:
