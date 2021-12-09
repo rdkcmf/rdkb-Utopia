@@ -107,9 +107,11 @@ int dnsmasq_server_start()
     if (!strncasecmp(g_cXdns_Enabled, "true", 4)) //If XDNS is ENABLED
     {
         char l_cXdnsRefacCodeEnable[8] = {0};
+	char l_cXdnsEnable[8] = {0};
 
         syscfg_get(NULL, "XDNS_RefacCodeEnable", l_cXdnsRefacCodeEnable, sizeof(l_cXdnsRefacCodeEnable));
-        if (!strncmp(l_cXdnsRefacCodeEnable, "1", 1)){
+	syscfg_get(NULL, "X_RDKCENTRAL-COM_XDNS", l_cXdnsEnable, sizeof(l_cXdnsEnable));
+        if (!strncmp(l_cXdnsRefacCodeEnable, "1", 1) && !strncmp(l_cXdnsEnable, "1", 1)){
                 safec_rc = sprintf_s(l_cSystemCmd, sizeof(l_cSystemCmd),"%s -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C %s %s --xdns-refac-code",
                                 SERVER, DHCP_CONF,dnsOption);
                 if(safec_rc < EOK){
