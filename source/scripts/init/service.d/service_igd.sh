@@ -162,27 +162,31 @@ service_stop () {
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
 
-service_init() {
-    FOO=`utctx_cmd get upnp_igd_enabled`
-    eval $FOO
-}
-
 init_once () {
 #    if [ "1" = "$SYSCFG_upnp_igd_enabled" ] ; then
 #        ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
 #        UPNP_TTL=`syscfg get upnp_igd_advr_ttl`
 #        touch $UPNP_TMP
 #        echo "$UPNP_TTL" > $UPNP_TMP
+    IGD_DIR="/var/IGD"
+    if [ ! -d "$IGD_DIR" ]; then
         mkdir -p /var/IGD
         (cd /var/IGD; ln -sf /etc/IGD/* .)
-	chmod 0755 /var/IGD/
+	    chmod 0755 /var/IGD/
+    fi
 #    fi
 }
+
+service_init() {
+    FOO=`utctx_cmd get upnp_igd_enabled`
+    eval $FOO
+    init_once
+}
+
 
 #---------------------------------------------------------------
 
 service_init
-
 
 case "$1" in
   ${SERVICE_NAME}-start)
