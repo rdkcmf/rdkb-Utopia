@@ -1023,6 +1023,10 @@ int do_mapt_rules_v6(FILE *filter_fp)
 #if (IVI_KERNEL_SUPPORT) || (NAT46_KERNEL_SUPPORT)
     /* bypass IPv6 firewall, let IPv4 firewall handle MAP-T packets */
     fprintf(filter_fp, "-I wan2lan -d %s -j ACCEPT\n", ipV6address_str);
+
+    //SKYH4-5461 - ip6tables lan2wan accept for map-t translated packets because it has already been validated in IPv4 tables.
+    fprintf(filter_fp, "-I lan2wan -s %s -j ACCEPT\n", ipV6address_str);
+
 #endif // (IVI_KERNEL_SUPPORT) || (NAT46_KERNEL_SUPPORT)
 END:
     return ret;
