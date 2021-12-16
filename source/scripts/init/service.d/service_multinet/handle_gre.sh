@@ -904,6 +904,12 @@ case "$1" in
     ;;
     
     wan-status)
+
+      WEB_CONF_ENABLE="`psmcli get eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable`"
+
+      if [ "true" = "$WEB_CONF_ENABLE" ] && [ -f /nvram/hotspot_blob ]; then
+            echo_t "wan-status not used for hotspot enabled by webconfig..."
+      else
     # TODO make this multi-instance
         if [ x"started" = x${2} ]; then
             #clients=`sysevent get snooper-wifi-clients`
@@ -922,6 +928,7 @@ case "$1" in
         if [ "$BOX_TYPE" != "XB6" ] && [ "$BOX_TYPE" != "TCCBR" ]; then
            check_ssids
         fi
+      fi
     ;;
     
     snmp_subagent-status)
