@@ -360,6 +360,16 @@ if [ ! -f /nvram/.ovs_upgrade ]; then
     sed -i '/dmsb.l2net.1.Port.5.LinkType/d' $PSM_CUR_XML_CONFIG_FILE_NAME
     touch /nvram/.ovs_upgrade
     echo "OVS upgrade PSM configurations complete."
+
+#RDKB-39475 - Deleting Current IPoE and MAP-T entries and will copied by default psm configurations.
+#One time configurations on upgrade.
+if [ ! -f /nvram/.wanmanager_upgrade ]; then
+    sed -i '/dmsb.wanmanager.if.1.EnableIPoE/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.wanmanager.if.2.EnableIPoE/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.wanmanager.if.1.EnableMAPT/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.wanmanager.if.2.EnableMAPT/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    touch /nvram/.wanmanager_upgrade
+    echo "WanManager upgrade configurations complete."
 fi
 
 # update max number of msg in queue based on system maximum queue memory.
