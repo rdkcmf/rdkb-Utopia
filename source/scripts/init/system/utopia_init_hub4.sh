@@ -348,6 +348,20 @@ elif [ -f $PSM_BAK_XML_CONFIG_FILE_NAME  ]; then
         cp -f $PSM_BAK_XML_CONFIG_FILE_NAME $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
 
+#SKYH4-5841 - LAN ethernet clients are not getting the IP after the image upgrade.
+#brlan0 bridge is missing all Ethernet interfaces
+#One time OVS PSM configurations to handle upgrade scenario.
+if [ ! -f /nvram/.ovs_upgrade ]; then
+    sed -i '/dmsb.l2net.1.Members.SW/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.l2net.1.Members.Eth/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.l2net.1.Members.Link/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.l2net.1.Port.5.Name/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.l2net.1.Port.5.LinkName/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.l2net.1.Port.5.LinkType/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    touch /nvram/.ovs_upgrade
+    echo "OVS upgrade PSM configurations complete."
+fi
+
 # update max number of msg in queue based on system maximum queue memory.
 # This update will be used for presence detection feature.
 MSG_SIZE_MAX=`cat /proc/sys/fs/mqueue/msgsize_max`
