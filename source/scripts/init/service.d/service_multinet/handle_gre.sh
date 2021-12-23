@@ -947,7 +947,7 @@ case "$1" in
             ifconfig ${GRE_IFNAME} down
             sysevent set if_${GRE_IFNAME}-status $IF_DOWN
         fi
-        if [ "$BOX_TYPE" != "XB6" ] && [ "$BOX_TYPE" != "TCCBR" ]; then
+        if [ "$BOX_TYPE" != "XB6" -o "$MODEL_NUM" = "TG4482A" ] && [ "$BOX_TYPE" != "TCCBR" ]; then
            check_ssids
         fi
       fi
