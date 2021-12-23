@@ -86,7 +86,10 @@ service_start ()
       echo "2,12,22,32,42,52 * * * *  execute_dir /etc/cron/cron.every10minute" >> $CRONTAB_FILE
       num1=$RANDOM
       rand1=`expr $num1 % 60`
+      rand4=`expr "$RANDOM" \* 2`
+      rand4=`expr "$rand4" % 60`
       echo "$rand1 * * * * execute_dir /etc/cron/cron.hourly" >> $CRONTAB_FILE
+      echo "$rand4 * * * * /usr/ccsp/tad/xfinity_health_test.sh" >> $CRONTAB_FILE
       echo "1 */6 * * *  /rdklogger/rxtx100.sh" >> $CRONTAB_FILE
       echo "10 */6 * * *  /usr/ccsp/tad/getSsidNames.sh" >> $CRONTAB_FILE
 #rdkb-4297 Runs on the 1st minute of every 12th hour
