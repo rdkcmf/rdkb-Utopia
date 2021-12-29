@@ -75,13 +75,7 @@ const char* const service_ipv6_component_id = "ccsp.ipv6";
 #define PROVISIONED_V6_CONFIG_FILE  "/tmp/ipv6_provisioned.config"
 #define CLI_RECEIVED_OPTIONS_FILE   "/tmp/.dibbler-info/client_received_options"
 #define DHCPV6_SERVER               "dibbler-server"
-
-#if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_)
 #define DHCPV6S_PID_FILE            "/tmp/dibbler/server.pid"
-#else
-#define DHCPV6S_PID_FILE            "/var/lib/dibbler/server.pid"
-#endif
-
 #define DHCPV6S_CONF_FILE           "/etc/dibbler/server.conf"
 #define DHCPV6S_NAME                "dhcpv6s"
 
