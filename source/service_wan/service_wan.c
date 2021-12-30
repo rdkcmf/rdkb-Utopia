@@ -107,7 +107,8 @@ char DHCPC_PID_FILE[100]="";
 
 #define POSTD_START_FILE "/tmp/.postd_started"
 //this value is from erouter0 dhcp client(5*127+10*4)
-#define SW_PROT_TIMO   675 
+#define SW_PROT_TIMO   675
+#define SW_PROT_TIMO_MIN   120
 #define RESOLV_CONF_FILE  "/etc/resolv.conf"
 
 #define WAN_STARTED "/var/wan_started"
@@ -115,6 +116,14 @@ enum wan_prot {
     WAN_PROT_DHCP,
     WAN_PROT_STATIC,
 };
+
+enum wan_mode {
+    WAN_MODE_AUTO,
+    WAN_MODE_ETHWAN,
+    WAN_MODE_DOCSIS
+};
+
+
 
 #ifdef DSLITE_FEATURE_SUPPORT
 // Dslite dhcpv6 option 64 response Maximum wait time in seconds
@@ -1888,7 +1897,30 @@ static int serv_wan_init(struct serv_wan *sw, const char *ifname, const char *pr
         break;
     }
 
+#ifdef FEATURE_RDKB_WAN_MANAGER
+    memset(buf,0,sizeof(buf));
+    syscfg_get(NULL, "selected_wan_mode", buf, sizeof(buf));
+    if (strlen(buf))
+    {
+        int wanmode = atoi(buf);        
+        if (wanmode == WAN_MODE_AUTO)
+        {
+            sw->timo = SW_PROT_TIMO_MIN;
+        }
+        else
+        {
+            sw->timo = SW_PROT_TIMO;
+        }
+    }
+    else
+    {
+        sw->timo = SW_PROT_TIMO;
+    }
+    fprintf(stderr, "proto timeout value: [%d]  wan_mode:%s \n",sw->timo, buf);
+    printf("proto timeout value: [%d]  wan_mode:%s \n",sw->timo, buf);
+#else
     sw->timo = SW_PROT_TIMO;
+#endif
 
     return 0;
 }
