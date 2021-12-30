@@ -9645,16 +9645,26 @@ static int do_lan2wan_misc(FILE *filter_fp)
    }
 
 #if defined(CONFIG_CCSP_VPN_PASSTHROUGH)
-   char query[2] = {'\0'};
+    char query[10] = {'\0'};
+    if(isWanReady)
+    {
+        if((0==syscfg_get(NULL, "blockipsec::result", query, sizeof(query))) && strcmp(query,"DROP") == 0)
+            fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 500  -j DROP\n");
+        query[0] = '\0';
 
-   if(isWanReady) {
-       if((0==syscfg_get(NULL, "IPSecPassthrough", query, sizeof(query))) && (atoi(query)==0))
-           fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 500  -j DROP\n"); // block IPSec
+        if((0==syscfg_get(NULL, "blockl2tp::result", query, sizeof(query))) && strcmp(query,"DROP") == 0)
+            fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 1701  -j DROP\n");
+        query[0] = '\0';
 
-       query[0] = '\0';
-       if((0==syscfg_get(NULL, "PPTPPassthrough", query, sizeof(query))) && (atoi(query)==0))
-           fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 1723 -j DROP\n"); // block PPTP
-   }
+        if((0==syscfg_get(NULL, "blockpptp::result", query, sizeof(query))) && strcmp(query,"DROP") == 0)
+            fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 1723  -j DROP\n");
+        query[0] = '\0';
+
+        if((0==syscfg_get(NULL, "blockssl::result", query, sizeof(query))) && strcmp(query,"DROP") == 0){
+            fprintf(filter_fp, "-A lan2wan_misc -p udp --dport 443  -j DROP\n");
+            fprintf(filter_fp, "-A lan2wan_misc -p tcp --dport 443  -j DROP\n");
+        }
+    }
 #endif
 
    if (isWanReady && strncasecmp(firewall_level, "High", strlen("High")) == 0)
@@ -14219,6 +14229,7 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, ":FORWARD ACCEPT [0:0]\n");
    fprintf(fp, ":OUTPUT ACCEPT [0:0]\n");
    fprintf(fp, ":lan2wan - [0:0]\n");
+   fprintf(fp, ":lan2wan_misc_ipv6 - [0:0]\n");
    fprintf(fp, ":lan2wan_pc_device - [0:0]\n");
    fprintf(fp, ":lan2wan_pc_site - [0:0]\n");
    fprintf(fp, ":lan2wan_pc_service - [0:0]\n");
@@ -15179,6 +15190,46 @@ v6GPFirewallRuleNext:
 #endif
 
    }
+
+#if defined(CONFIG_CCSP_VPN_PASSTHROUGH)
+
+    char queryv6[10] = {'\0'};
+    if((0 == syscfg_get(NULL, "blockipsec::result", queryv6 , sizeof(queryv6))) && strcmp(queryv6,"DROP") == 0){
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 500  -j DROP\n");
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 4500  -j DROP\n");
+    }
+    else {
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 500  -j ACCEPT\n");
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 4500  -j ACCEPT\n");
+    }
+    queryv6[0] = '\0';
+
+    if((0 == syscfg_get(NULL, "blockssl::result", queryv6, sizeof(queryv6))) && strcmp(queryv6,"DROP") == 0){
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 443  -j DROP\n");
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p tcp --dport 443  -j DROP\n");
+    }
+    else {
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 443  -j ACCEPT\n");
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p tcp --dport 443  -j ACCEPT\n");
+    }
+    queryv6[0] = '\0';
+
+    if((0 == syscfg_get(NULL, "blockl2tp::result", queryv6, sizeof(queryv6))) && strcmp(queryv6,"DROP") == 0){
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 1701  -j DROP\n");
+    }
+    else {
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p udp --dport 1701  -j ACCEPT\n");
+    }
+    queryv6[0] = '\0';
+
+    if((0 == syscfg_get(NULL, "blockpptp::result", queryv6, sizeof(queryv6))) && strcmp(queryv6,"DROP") == 0){
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p tcp --dport 1723  -j DROP\n");
+    }
+    else {
+        fprintf(fp, "-A lan2wan_misc_ipv6 -p tcp --dport 1723  -j ACCEPT\n");
+    }
+    fprintf(fp, "-I lan2wan -j lan2wan_misc_ipv6\n");
+#endif
 
 end_of_ipv6_firewall:
 

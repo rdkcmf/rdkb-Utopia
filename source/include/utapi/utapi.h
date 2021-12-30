@@ -901,6 +901,7 @@ typedef struct firewall {
     boolean_t allow_ipsec_passthru;
     boolean_t allow_pptp_passthru;
     boolean_t allow_l2tp_passthru;
+    boolean_t allow_ssl_passthru;
     boolean_t filter_http_from_wan;
     boolean_t filter_http_from_wan_v6;
     boolean_t filter_p2p_from_wan;
