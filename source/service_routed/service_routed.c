@@ -605,7 +605,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
 #else
-    sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
+    sysevent_get(sefd, setok, "lan_prefix", prefix, sizeof(prefix));
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
 #ifndef _HUB4_PRODUCT_REQ_
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
@@ -681,7 +681,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #if defined (_COSA_BCM_MIPS_)
        if (strlen(prefix) == 0)
          {
-           sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
+           sysevent_get(sefd, setok, "lan_prefix", prefix, sizeof(prefix));
          }
 #endif
 
@@ -1382,7 +1382,7 @@ static int serv_routed_start(struct serv_routed *sr)
             return -1;
         }
     } else { /* IPv6-only */
-        sysevent_get(sr->sefd, sr->setok, "ipv6_prefix", prefix, sizeof(prefix));
+        sysevent_get(sr->sefd, sr->setok, "lan_prefix", prefix, sizeof(prefix));
         if (strlen(prefix) == 0) {
             fprintf(stderr, "%s: IPv6-WAN is not ready !\n", __FUNCTION__);
             return -1;
