@@ -612,12 +612,6 @@ int main(int argc, char *argv[])
     mode=atoi(argv[2]);
     printf ("\n service_devicemode arg1 %s arg2 %s\n",argv[1],get_mode(mode));
     
-    if (syscfg_init() != 0)
-    {
-        fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
-        return -1;
-    }
-
     if (syseventInit() < 0)
     {
         return -1;
