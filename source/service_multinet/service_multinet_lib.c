@@ -101,9 +101,6 @@
 
 unsigned char isDaemon;
 char* executableName;
-#if defined MULTILAN_FEATURE || defined(MESH_ETH_BHAUL)
-static int syscfg_init_done = 0;
-#endif
 
 static int add_members(PL2Net network, PMember interfaceBuf, int numMembers);
 static int remove_members(PL2Net network, PMember live_members, int numLiveMembers);
@@ -223,12 +220,6 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
     snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s", brname);
     MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff);
     system(cmdBuff);
-
-    if (!syscfg_init_done)
-    {
-        syscfg_init();
-        syscfg_init_done = 1;
-    }
 
     if (!syscfg_get(NULL, BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY, cmdBuff, sizeof(cmdBuff)))
     {
@@ -854,12 +845,6 @@ int toggle_ethbhaul_ports(BOOL onOff)
 {
     int retVal = 0;
     char eb_enable[20] = {0};
-
-    if (!syscfg_init_done)
-    {
-        syscfg_init();
-        syscfg_init_done = 1;
-    }
 
     /* Determine if Ethernet Backhaul is enabled */
     if (0 == syscfg_get(NULL, "eb_enable", eb_enable, sizeof(eb_enable)))

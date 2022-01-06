@@ -157,10 +157,6 @@ void multinet_log( char* fmt, ...)
      int retval;
     int i;
 
-    syscfg_init();
-
-
-
 #ifdef MULTILAN_FEATURE
 #if defined (INTEL_PUMA7)
 //Puma 7 SoC supports using a different multinet handler for PP on ARM use case

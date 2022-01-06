@@ -128,11 +128,6 @@ int main(int argc, char **argv)
 	    if (getchar() != EOF)
 		printf("System configuration is going to destroy\n");
         }
-        rc = syscfg_init();
-        if (rc != 0) {
-            printf("ERROR: syscfg initialization failure (%d)\n", rc);
-            return 1;
-        }
         syscfg_destroy();
         return rc;
     }
@@ -141,12 +136,6 @@ int main(int argc, char **argv)
         syscfg_usage();
         return 1;
     } 
-    rc = syscfg_init();
-    if (rc != 0) {
-        printf("ERROR: syscfg init (%d)", rc);
-        return 1;
-    }
-
    argc -= 1;
    char **cmd = argv+1;
    char *name = NULL, *value = NULL, *ns = NULL;

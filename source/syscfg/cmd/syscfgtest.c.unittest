@@ -186,7 +186,6 @@ int main(int argc, char *argv[])
 {
     int i, rc = 0, repeat = 1;
 
-    syscfg_init();
 
     if (argc < 2) {
         // run all tests

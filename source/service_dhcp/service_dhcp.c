@@ -406,11 +406,6 @@ int sysevent_syscfg_init()
 		return ERROR;
     }        
 
-    if (syscfg_init() != 0) {
-        fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
-        return ERROR; 
-    }        
-
     /* dbus init based on bus handle value */
     if(g_vBus_handle ==  NULL)
         dbusInit();

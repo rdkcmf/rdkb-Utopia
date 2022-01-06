@@ -1889,11 +1889,6 @@ static int serv_wan_init(struct serv_wan *sw, const char *ifname, const char *pr
         return -1;
     }
 
-    if (syscfg_init() != 0) {
-        fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
-        return -1;
-    }
-
     if (ifname)
         snprintf(sw->ifname, sizeof(sw->ifname), "%s", ifname);
     else

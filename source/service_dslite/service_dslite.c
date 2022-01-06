@@ -153,11 +153,6 @@ static int serv_dslite_init(struct serv_dslite *sd)
         return -1;
     }
 
-    if (syscfg_init() != 0) {
-        fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
-        return -1;
-    }
-
     syscfg_get(NULL, "last_erouter_mode", buf, sizeof(buf));
     switch (atoi(buf)) {
     case 0:

@@ -15667,11 +15667,6 @@ static int service_init (int argc, char **argv)
    //int next_arg = get_options(argc, argv);
    get_options(argc, argv);
 
-   if (0 != (rc = syscfg_init())) {
-      rc = -1;
-      goto ret_err;
-   }
-   
    sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
    if (0 > sysevent_fd) {
       printf("Unable to register with sysevent daemon at %s %u.\n", sysevent_ip, sysevent_port);

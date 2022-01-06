@@ -261,7 +261,6 @@ void srv_register(void) {
       "meshethbhaul-down|/usr/bin/bridgeUtils|NULL|"TUPLE_FLAG_EVENT,
       NULL };
 
-      syscfg_init();
       int ovsEnable = 0 , bridgeUtilEnable=0 ;
       char buf[ 8 ] = { 0 };
       if( 0 == syscfg_get( NULL, "mesh_ovs_enable", buf, sizeof( buf ) ) )

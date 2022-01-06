@@ -66,10 +66,6 @@ char* miInterfaceStrings[] = {"sw_5"};
 #endif
 #endif
 
-#if defined(MESH_ETH_BHAUL)
-static int syscfg_init_nvAccess_done = 0;
-#endif
-
 #if defined(_COSA_INTEL_XB3_ARM_) || defined(INTEL_PUMA7)
 
 static const char* const multinet_component_id = "ccsp.multinet";
@@ -237,12 +233,6 @@ int nv_toggle_ethbhaul_ports(BOOL onOff)
     {
         MNET_DEBUG("nv_get_bridge, Dbus init error\n")
         return 0;
-    }
-
-    if (!syscfg_init_nvAccess_done)
-    {
-        syscfg_init();
-        syscfg_init_nvAccess_done = 1;
     }
 
     /* Determine if any ports need to be skipped */

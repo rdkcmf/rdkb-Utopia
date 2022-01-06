@@ -1822,11 +1822,6 @@ static int serv_routed_init(struct serv_routed *sr)
         return -1;
     }
 
-    if (syscfg_init() != 0) {
-        fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
-        return -1;
-    }
-
 #ifdef RDKB_EXTENDER_ENABLED
     char buf[8] = {0};
     int deviceMode = -1;

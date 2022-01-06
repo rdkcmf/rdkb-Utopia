@@ -1933,10 +1933,6 @@ static int serv_ipv6_init(struct serv_ipv6 *si6)
         return -1;
     }
 
-    if (syscfg_init() != 0) {
-        fprintf(stderr, "%s: fail to init syscfg\n", __FUNCTION__);
-        return -1;
-    }
 #ifdef MULTILAN_FEATURE
     ret = CCSP_Message_Bus_Init((char *)service_ipv6_component_id, pCfg, &bus_handle, (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback, Ansc_FreeMemory_Callback);
     if (ret == -1) {

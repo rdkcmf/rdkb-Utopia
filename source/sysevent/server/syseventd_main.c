@@ -758,16 +758,6 @@ static int initialize_system(void)
    // initialize the data manager
    DATA_MGR_init();
 
-   int rc;
-#ifdef USE_SYSCFG
-   if (0 != (rc = syscfg_init())) {
-      SE_INC_LOG(ERROR,
-         printf("Error %d initializing system configuration store\n", rc);
-      )
-      return(ERR_SYSCFG_FAILURE);
-   }
-#endif
-
    char serialNum[50];
    int  seed = 0;
    struct timeval tv;

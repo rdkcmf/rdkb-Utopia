@@ -2413,7 +2413,6 @@ int main( int argc, char **argv )
    char  PartnerID[ PARTNER_ID_LEN+255 ]  = { 0 };
    int   isNeedToApplyPartnersDefault = 1;
    int   isMigrationReq = 0;
-   int   rc;
    int retryCount = RETRY_COUNT;
 
    t2_init("apply_system_defaults");
@@ -2441,14 +2440,6 @@ int main( int argc, char **argv )
       select(0, NULL, NULL, NULL, &t);
 
       retryCount--;
-   }
-
-   rc = syscfg_init();
-   if ( rc ) 
-   {
-      APPLY_PRINT("[Utopia] %s unable to initialize with syscfg context. Reason (%d)\n", argv[0], rc);
-      sysevent_close(global_fd, global_id);
-      return(-1);
    }
 
    if ( global_fd <= 0 )

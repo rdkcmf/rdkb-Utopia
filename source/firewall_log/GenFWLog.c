@@ -805,7 +805,6 @@ int main(int argc, char** argv){
     memset(FIREWALL_LOG_DIR, 0, sizeof(FIREWALL_LOG_DIR));
     sysevent_get(sysevent_fd, sysevent_token, "FW_LOG_FILE_PATH_V2", FIREWALL_LOG_DIR, sizeof(FIREWALL_LOG_DIR));
     if(FIREWALL_LOG_DIR[0] == '\0' ){
-        syscfg_init();
         syscfg_get(NULL, "FW_LOG_FILE_PATH", FIREWALL_LOG_DIR, sizeof(FIREWALL_LOG_DIR));
         if(FIREWALL_LOG_DIR[0] == '\0' ){
            printf("Not get fw log path\n");

@@ -782,10 +782,6 @@ static int initialize_system(void)
 {
    ulog_init();
    ulog(ULOG_FIREWALL, UL_TRIGGER, "Firewall Trigger process started");
-   if (0 !=  syscfg_init()) {
-      ulog(ULOG_FIREWALL, UL_TRIGGER, "Error syscfg not inited");
-      return(-1);
-   }
    sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
    if (0 > sysevent_fd) {
       ulog(ULOG_FIREWALL, UL_TRIGGER, "Error sysevent not inited");

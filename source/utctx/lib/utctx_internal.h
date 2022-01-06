@@ -129,7 +129,7 @@
 /* SysCfg Macros */
 #ifndef UTCTX_UNITTEST
 #define SysCfg_Commit()      syscfg_commit()
-#define SysCfg_Init()        (syscfg_init() == 0 ? 1 : 0)
+#define SysCfg_Init()        (1)
 #define SysCfg_Free()
 #define SysCfg_Get(w,x,y,z)  (syscfg_get(w,x,y,z) == 0 ? 1 : 0)
 #define SysCfg_GetAll(x,y,z) (syscfg_getall(x,y,z) == 0 ? 1 : 0)
