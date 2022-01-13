@@ -363,10 +363,8 @@ void ipv4_status(int l3_inst, char *status)
 
             if (access(POSTD_START_FILE, F_OK) != 0)
             {
-                    char postd_cmd[128] = {0};
-                    snprintf(postd_cmd,sizeof(postd_cmd),"touch %s ; execute_dir /etc/utopia/post.d/",POSTD_START_FILE);
                     fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
-                    system(postd_cmd);
+                    system("touch " POSTD_START_FILE "; execute_dir /etc/utopia/post.d/");
             }		
         }
 		else if ((strncmp(l_cStart_Misc, "ready", 5)) && 
@@ -401,10 +399,8 @@ void ipv4_status(int l3_inst, char *status)
 
                 if (access(POSTD_START_FILE, F_OK) != 0)
                 {
-                        char postd_cmd[128] = {0};
-                        snprintf(postd_cmd,sizeof(postd_cmd),"touch %s ; execute_dir /etc/utopia/post.d/",POSTD_START_FILE);
                         fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
-                        system(postd_cmd);
+                        system("touch " POSTD_START_FILE "; execute_dir /etc/utopia/post.d/");
                 }   
             }
         else
