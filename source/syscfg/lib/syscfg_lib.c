@@ -1620,7 +1620,7 @@ int backup_file (const char *bkupFile, const char *localFile)
         return -1;
   }
 
-  int fd_to = creat(bkupFile, 0666);
+  int fd_to = open(bkupFile, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
   if(fd_to < 0)
   {
     	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "creat sys call failed during db backup");
@@ -1678,7 +1678,7 @@ int commit_to_file (const char *fname)
     int ret=0;
     syscfg_shm_ctx *ctx = syscfg_ctx;
 
-    fd = open(fname, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    fd = open(fname, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (-1 == fd) {
         return ERR_IO_FILE_OPEN;
     }
