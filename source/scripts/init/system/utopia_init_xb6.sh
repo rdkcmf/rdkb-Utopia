@@ -315,6 +315,13 @@ else
    if [ $? != 0 ]; then
         CheckAndReCreateDB
    fi
+
+if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] ; then
+   # ARRIS ADD - Add a call to reset the CM's factory defaults
+   arris_rpc_client arm nvm_reset
+   # END ARRIS ADD
+fi
+
    #>>zqiu
    echo "[utopia][init] need to reset wifi when ($SYSCFG_NEW_FILE) file is not available"
    syscfg set $FACTORY_RESET_KEY $FACTORY_RESET_WIFI
