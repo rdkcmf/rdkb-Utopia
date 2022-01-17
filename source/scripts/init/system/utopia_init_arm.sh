@@ -532,3 +532,6 @@ if [ "$BOX_TYPE" = "XB3" ];then
         ATOM_RPC_IP=`grep ATOM_ARPING_IP /etc/device.properties | cut -f 2 -d"="`
         rpcclient "$ATOM_RPC_IP" "rm -f /nvram/webconfig_db.bin"
 fi
+
+#set ntp status as unsynchronized on bootup
+syscfg set ntp_status 2

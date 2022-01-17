@@ -586,5 +586,8 @@ fi
 echo "[utopia][init] Mesh Bhaul bridge creation"
 sysevent set meshbhaul-setup 10
 
+#set ntp status as unsynchronized on bootup
+syscfg set ntp_status 2
+
 echo "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited

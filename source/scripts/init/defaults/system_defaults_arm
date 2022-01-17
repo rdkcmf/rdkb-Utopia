@@ -1367,3 +1367,7 @@ $ShortsEnabled=false
 
 #Collectd Enable default value
 $CollectdEnable=false
+
+#NTP status default value set to unsynchronized
+$$ntp_status=2
+@ntp_time_sync=0

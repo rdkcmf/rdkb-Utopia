@@ -53,6 +53,8 @@ NTP_CONF_QUICK_SYNC=/tmp/ntp_quick_sync.conf
 LOCKFILE=/var/tmp/service_ntpd.pid
 BIN=ntpd
 EROUTER_IPV6_UP=0
+QUICK_SYNC_PID=""
+QUICK_SYNC_DONE=0
 
 if [ "x$NTPD_LOG_NAME" == "x" ];then
 NTPD_LOG_NAME=/rdklogs/logs/ntpLog.log
@@ -102,8 +104,82 @@ erouter_wait ()
           break
        fi
     done
-	
-	eval $1=\$EROUTER_UP
+
+ eval $1=\$EROUTER_UP
+}
+
+set_ntp_quicksync_status ()
+{
+    ### -gq the expectation is ntpd exits once it successfully sets the clock, which may happen as quick as 10 sec
+    ### reap the exit code of ntpd quick sync,set the ntp status accordingly..
+    ### in problematic case,wait for 120 seconds,then break off.
+    retry_timeout=1
+    while true
+    do
+       if [ "$retry_timeout" -gt "24" ]; then
+          echo_t "NTP quick sync not succeeded,retry exceeded" >> $NTPD_LOG_NAME
+          break
+       fi
+       if [ ! -d "/proc/$QUICK_SYNC_PID" ]; then
+          wait $QUICK_SYNC_PID
+          ntpd_exit_code=$?
+          if [ "$ntpd_exit_code" -eq 0 ]; then
+             echo_t "NTP quick sync succeeded,set ntp status" >> $NTPD_LOG_NAME
+             syscfg set ntp_status 3
+             #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
+             DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
+             if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
+                FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
+                syscfg set device_first_use_date "$FIRSTUSEDATE"
+             fi
+             sysevent set ntp_time_sync 1
+             QUICK_SYNC_DONE=1
+             break
+          fi
+       else
+         retry_timeout=`expr $retry_timeout + 1`
+         sleep 5
+       fi
+    done
+}
+
+set_ntp_driftsync_status ()
+{
+  ####QUICK SYNC not succeeded,lets wait for ntpd daemon to adjust the clock
+  ####this may slow set compared to ntpd -gq, ntpd takes some ntp poll intervals(def 64s)
+  ####our local clock,stratum will be 16,until synchronised with the server.
+  ####in worst case if we are not synced with server, break the loop after 20 mins
+  #### Note we can't wait more than 300 secs in sysevent context, this supposed to be run
+  #### in background
+   if [ "x$(which ntpq)" != "x" ];then
+      retry=1
+      while true
+      do
+        sync_status=`ntpq -c rv | grep "stratum=16"`
+        if [ "x$sync_status" = "x" ]; then
+           echo_t "SERVICE_NTPD : ntpd time synced , setting the status" >> $NTPD_LOG_NAME
+           syscfg set ntp_status 3
+           sysevent set ntp_time_sync 1
+           #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
+           DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
+           if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
+              FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
+              syscfg set device_first_use_date "$FIRSTUSEDATE"
+           fi
+           break
+        elif [ "$retry" -gt "20" ]; then
+             echo_t "Time is not synced after 20 min retry. Breaking loop" >> $NTPD_LOG_NAME
+             break
+        else
+             echo_t "SERVICE_NTPD : Time not yet synced, Sleeping. Retry:$retry" >> $NTPD_LOG_NAME
+             retry=`expr $retry + 1`
+             sleep 60
+        fi
+      done
+   else
+      echo_t "SERVICE_NTPD : ntpq not available,unable to check sync status" >> $NTPD_LOG_NAME
+   fi
+   exit
 }
 
 service_start ()
@@ -111,8 +187,8 @@ service_start ()
 
     # this needs to be hooked up to syscfg for specific timezone
    if [ -n "$SYSCFG_ntp_enabled" ] && [ "0" = "$SYSCFG_ntp_enabled" ] ; then
-# Setting Time status as disabled
-      syscfg set ntp_status 1
+# RDKB-37275 setting status as unsynchronised.
+      syscfg set ntp_status 2
       sysevent set ${SERVICE_NAME}-status "stopped"
       if [ "x`pidof $BIN`" = "x" ]; then
           if [ "x$MULTI_CORE" = "xyes" ] && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
@@ -136,8 +212,8 @@ service_start ()
    syscfg set ntp_status 2
 
    if [ "started" != "$CURRENT_WAN_STATUS" ] ; then
-# Setting Time status as Error_FailedToSynchronize
-      syscfg set ntp_status 5
+# Setting Time status as unsynchronised,as per RDKB-37275
+      syscfg set ntp_status 2
       sysevent set ${SERVICE_NAME}-status "wan-down"
        return 0
    fi
@@ -295,12 +371,18 @@ service_start ()
            echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
            if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ]; then
                if [ $EROUTER_IPV6_UP -eq 1 ]; then
-                   $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & 
+                   QUICK_SYNC_PID=$!
                else
-                   $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -4 -l $NTPD_LOG_NAME & sleep 120 # We have only v4 IP. Restrict to v4.
+                   $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -4 -l $NTPD_LOG_NAME &
+                   QUICK_SYNC_PID=$!
                fi
            else
-               $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME &
+               QUICK_SYNC_PID=$!
+           fi
+           if [ "x$QUICK_SYNC_PID" != "x" ];then
+              set_ntp_quicksync_status
            fi
        else
            echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
@@ -308,7 +390,6 @@ service_start ()
 
        echo_t "SERVICE_NTPD : Killing All Instances of NTP" >> $NTPD_LOG_NAME
        killall $BIN
-       sysevent set ntp_time_sync 1
 
        echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
        systemctl start $BIN
@@ -332,7 +413,11 @@ service_start ()
            if [ -n "$QUICK_SYNC_WAN_IP" ]; then
                # Try and Force Quick Sync to Run on a single interface
                echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-               $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & sleep 120 # it will ensure that quick sync will exit in 120 seconds and NTP daemon will start and sync the time
+               $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME &
+	       QUICK_SYNC_PID=$!
+	       if [ "x$QUICK_SYNC_PID" != "x" ];then
+                  set_ntp_quicksync_status
+               fi
            else
                echo_t "SERVICE_NTPD : Quick Sync Not Run" >> $NTPD_LOG_NAME
            fi
@@ -345,18 +430,25 @@ service_start ()
        fi
    fi
 
+   if [ "x$BOX_TYPE" = "xXB3" ]; then
+       # Setting Time status as synchronized
+       syscfg set ntp_status 3
+
+       #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
+       DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
+       if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
+           FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
+           syscfg set device_first_use_date "$FIRSTUSEDATE"
+       fi
+   else
+       ####QUICK SYNC not succeeded,lets wait for ntpd daemon to adjust the clock
+       if [ "$QUICK_SYNC_DONE" -eq 0 ];then
+          set_ntp_driftsync_status &
+       fi
+
+   fi
    echo_t "SERVICE_NTPD : ntpd started , setting the status as started" >> $NTPD_LOG_NAME
    sysevent set ${SERVICE_NAME}-status "started"
-# Setting Time status as synchronized
-   syscfg set ntp_status 3
-
-#Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
-   DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
-   if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
-       FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
-       syscfg set device_first_use_date "$FIRSTUSEDATE"
-   fi
-
 }
 
 service_stop ()

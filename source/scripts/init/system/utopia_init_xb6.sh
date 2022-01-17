@@ -748,6 +748,9 @@ elif [ -f $PSM_BAK_XML_CONFIG_FILE_NAME  ]; then
         cp -f $PSM_BAK_XML_CONFIG_FILE_NAME $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
 
+#set ntp status as unsynchronized on bootup
+syscfg set ntp_status 2
+
 #RDKB-24155 - TLVData.bin should not be used in EWAN mode
 eth_wan_enable=`syscfg get eth_wan_enabled`
 if [ "$eth_wan_enable" = "true" ] && [ -f $TR69TLVFILE ]; then

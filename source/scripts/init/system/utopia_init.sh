@@ -759,6 +759,9 @@ if [ -e /nvram/rbus ]; then
     rm /nvram/rbus
 fi
 
+#set ntp status as unsynchronized on bootup
+syscfg set ntp_status 2
+
 echo_t "[utopia][init] setting Multicast MAC before any switch configs"
 $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
 

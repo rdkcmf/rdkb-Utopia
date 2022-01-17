@@ -27,7 +27,7 @@ fi
 if [ -f /etc/utopia/service.d/device_time_sync_peer_wrapper.sh ]; then
 	source /etc/utopia/service.d/device_time_sync_peer_wrapper.sh
 else
-	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh script called after ntpd status change but EXITING due to no Device Wrapper Function" >> "$NTPD_LOG_NAME"
+	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh script called after ntp time sync but EXITING due to no Device Wrapper Function" >> "$NTPD_LOG_NAME"
 	return 0
 fi
 
@@ -114,17 +114,17 @@ case "$1" in
       service_stop
       service_start
       ;;
-  ntpd-status)
-      CURRENT_NTPD_STATUS=`sysevent get ntpd-status`
+  ntp_time_sync)
+      CURRENT_NTPD_STATUS=`sysevent get ntp_time_sync`
 
-      if [ "started" = "$CURRENT_NTPD_STATUS" ] ; then
-         echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh called after ntpd status changed to started" >> "$NTPD_LOG_NAME"
+      if [ "x1" = "x$CURRENT_NTPD_STATUS" ] ; then
+         echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh called after ntp time sync" >> "$NTPD_LOG_NAME"
          service_init
          service_start
       fi
       ;;
   *)
-      echo "Usage: $SELF_NAME [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart | ntpd-status ]" >&2
+      echo "Usage: $SELF_NAME [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart | ntp_time_sync ]" >&2
       exit 3
       ;;
 esac

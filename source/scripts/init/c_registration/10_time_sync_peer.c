@@ -24,7 +24,7 @@ const char* SERVICE_NAME            = "time_sync_peer";
 
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_time_sync_peer.sh";
 
-const char* SERVICE_CUSTOM_EVENTS[] = { "ntpd-status|/etc/utopia/service.d/service_time_sync_peer.sh", NULL };
+const char* SERVICE_CUSTOM_EVENTS[] = { "ntp_time_sync|/etc/utopia/service.d/service_time_sync_peer.sh", NULL };
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
