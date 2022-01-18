@@ -2049,7 +2049,6 @@ int parseProcfileParams(char* lineToParse,ifv6Details *detailsToParse,char* inte
       }
       else
       {
-         ulogf(ULOG_FIREWALL, UL_INFO,"%s,Interface not found\n",__FUNCTION__);
          return 0;
       }
     }
@@ -2096,6 +2095,10 @@ int get_ip6address (char * ifname, char ipArry[][40], int * p_num, unsigned int 
 			}
         } 
     }
+    if(i == 0) {
+      ulogf(ULOG_FIREWALL, UL_INFO,"%s,Interface %s not found in %s\n",__FUNCTION__,ifname,_PROCNET_IFINET6);
+    }
+
     *p_num = i;
 
     fclose(fp);
