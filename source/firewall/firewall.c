@@ -5333,11 +5333,12 @@ static int do_multinet_lan2self_by_wanip(FILE *filter_fp) {
     char* tok = NULL;
     char net_query[MAX_QUERY] = {0};
     char net_resp[MAX_QUERY] = {0};
+    char net_subnet[MAX_QUERY] = {0};
     char inst_resp[MAX_QUERY] = {0};
     char primary_inst[MAX_QUERY] = {0};
 
     // First skip packets destined to primary LAN instance
-    fprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", lan_ipaddr);    
+    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/%s -d %s -j RETURN\n", lan_ipaddr, lan_netmask, lan_ipaddr);
 
     snprintf(net_query, sizeof(net_query), "ipv4-instances");
     sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
@@ -5358,8 +5359,10 @@ static int do_multinet_lan2self_by_wanip(FILE *filter_fp) {
 
         snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4addr", tok);
         sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+        snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4subnet", tok);
+        sysevent_get(sysevent_fd, sysevent_token, net_query, net_subnet, sizeof(net_subnet));
 
-        fprintf(filter_fp, "-A lan2self_by_wanip -d %s -j RETURN\n", net_resp);
+        fprintf(filter_fp, "-A lan2self_by_wanip -s %s/%s -d %s -j RETURN\n", net_resp, net_subnet, net_resp);
 
     } while ((tok = strtok(NULL, " ")) != NULL);
 
