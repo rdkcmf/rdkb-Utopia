@@ -1075,10 +1075,8 @@ fi
                 echo "${PREFIX}""dhcp-option=brlan113,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
             fi
             
-            if [ "$MODEL_NUM" != "TG4482A" ]; then
              echo "interface=brebhaul" >> $LOCAL_DHCP_CONF
              echo "dhcp-range=169.254.85.5,169.254.85.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
-            fi
 
             echo "interface=br403" >> $LOCAL_DHCP_CONF
             echo "dhcp-range=192.168.245.2,192.168.245.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
