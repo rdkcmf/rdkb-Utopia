@@ -1633,6 +1633,11 @@ int backup_file (const char *bkupFile, const char *localFile)
         return -1;
   }
   ssize_t nwritten = write(fd_to, mem, Stat.st_size);
+  if (msync(mem, Stat.st_size, MS_SYNC)) {
+      ulog_error(ULOG_SYSTEM, UL_SYSCFG, "msync call failed during db backup");
+      fprintf(stderr, "%s msync FAILED, errno:%d\n", __func__, errno);
+  }
+
   if(nwritten < Stat.st_size)
   {
     	ulog_error(ULOG_SYSTEM, UL_SYSCFG, "write system call failed during db backup");
