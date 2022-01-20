@@ -88,13 +88,6 @@ if [ -f "$DHCP_SLOW_START_3_FILE" ] ; then
    rm -f $DHCP_SLOW_START_3_FILE
 fi
 
-# for leasing file sync
-if [ -f "/usr/bin/rpcclient" ] ; then
-	DHCP_SCRIPT=""
-else
-	DHCP_SCRIPT=""
-fi
-
 #-----------------------------------------------------------------
 #  dnsserver_start_lxc
 #
