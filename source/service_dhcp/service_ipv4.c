@@ -1637,7 +1637,7 @@ void resync_instance (int l3_inst)
 		fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED is:%s\n", l_cNv_Enabled);
 	}	
 
-	if (0 == l_cNv_Enabled[0] || !strncmp(l_cNv_Enabled, "false", 5))
+	if (0 == l_cNv_Enabled[0] || (!strcmp(l_cNv_Enabled, "false")) || (!strcmp(l_cNv_Enabled, "0")))
 	{
 		fprintf(stderr, "L3 Instance:%d is not enabled\n", l3_inst);
 		teardown_instance(l3_inst); //TODO teardown_instance
