@@ -12455,7 +12455,7 @@ static int do_block_ports(FILE *filter_fp)
    int retPsmGet = CCSP_SUCCESS;
    char *strValue = NULL;
 
-   /* Blocking block page ports except for brlan0 interface */
+   /* Blocking block page ports except for brlan0 interface */ 
    fprintf(filter_fp, "-A INPUT -i brlan0 -p tcp -m tcp --dport 21515 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
    /* Blocking zebra ports except for brlan0 interface */
@@ -12890,6 +12890,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    //DROP incoming  NTP packets on erouter interface
    fprintf(filter_fp, "-A INPUT -i %s -m state --state ESTABLISHED,RELATED -p udp --dport 123 -j ACCEPT \n", get_current_wan_ifname());
    fprintf(filter_fp, "-A INPUT -i %s  -m state --state NEW -p udp --dport 123 -j DROP \n",get_current_wan_ifname());
+
+   //DROP incoming 21515 port on erouter interface
+   fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 21515 -j DROP\n",get_current_wan_ifname());
 
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (filter_fp);
