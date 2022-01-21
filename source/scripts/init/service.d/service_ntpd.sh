@@ -78,7 +78,7 @@ erouter_wait ()
        #Make sure erouter0 has an IPv4 or IPv6 address before telling NTP to listen on Interface
        EROUTER_IPv4=`ifconfig -a "$NTPD_INTERFACE" | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
 
-       if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+       if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
            if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
                EROUTER_IPv6=`ifconfig "$NTPD_IPV6_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | grep -v 'fdd7' | cut -d '/' -f1 | head -n1`
@@ -356,7 +356,7 @@ service_start ()
        cp $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC  
    fi #if [ "$QUICK_SYNC_WAN_IP" != "" ]; then
 
-   if [ "x$BOX_TYPE" != "xHUB4" ]  && [ "x$BOX_TYPE" != "xSR300" ] && [ "x$BOX_TYPE" != "xSE501" ] && [ "x$BOX_TYPE" != "xSR213" ] && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
+   if [ "x$BOX_TYPE" != "xHUB4" ]  && [ "x$BOX_TYPE" != "xSR300" ] && [ "x$BOX_TYPE" != "xSE501" ] && [ "x$BOX_TYPE" != "xSR213" ] && [ "x$BOX_TYPE" != "xWNXL11BWL" ] && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
        echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
    fi
 
@@ -369,7 +369,7 @@ service_start ()
        echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
    fi  
 
-   if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+   if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
        # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
        CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
 
@@ -402,7 +402,7 @@ service_start ()
        if [ -n "$QUICK_SYNC_WAN_IP" ]; then
            # Try and Force Quick Sync to Run on a single interface
            echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-           if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+           if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
                if [ $EROUTER_IPV6_UP -eq 1 ]; then
                    $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & 
                    QUICK_SYNC_PID=$!
@@ -427,7 +427,7 @@ service_start ()
        echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
        systemctl start $BIN
 
-       if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+       if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
            sysevent set firewall-restart
        fi
    fi
@@ -538,7 +538,7 @@ case "$1" in
       ;;
   wan-status)
       if [ "started" = "$CURRENT_WAN_STATUS" ] ; then
-         if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+         if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
             NTPD_PROCESS=`pidof $BIN`
             if [ "x$NTPD_PROCESS" != "x" ];then
                echo_t "SERVICE_NTPD : ntp process is already running and pid is = $NTPD_PROCESS" >> $NTPD_LOG_NAME
