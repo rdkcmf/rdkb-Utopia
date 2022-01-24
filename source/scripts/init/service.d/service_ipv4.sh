@@ -119,7 +119,7 @@ handle_l2_status () {
 		echo_t "service_ipv4 : Triggering RDKB_FIREWALL_RESTART"
 		t2CountNotify "RF_INFO_RDKB_FIREWALL_RESTART"
 				sysevent set firewall-restart
-                if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
+                if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
 				uptime=$(cut -d. -f1 /proc/uptime)
 				if [ -e "/usr/bin/onboarding_log" ]; then
 				    /usr/bin/onboarding_log "RDKB_FIREWALL_RESTART:$uptime"
