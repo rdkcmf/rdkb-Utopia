@@ -757,10 +757,6 @@ static BOOL isEponEnable = TRUE;
 static BOOL isEponEnable = FALSE;
 #endif
 
-#if defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
-static BOOL MD_flag = TRUE;
-#endif
-
 /*
  * For timed internet access rules we use cron 
  */
@@ -8520,14 +8516,6 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
          if(flag == 1)
          {
             fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j ACCEPT\n",query);
-#if defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
-           if(MD_flag == FALSE)
-           {
-           fprintf(fp, "-D INPUT -p tcp -m tcp --dport 21515 -j DROP\n");
-           fprintf(fp, "-D INPUT -p udp -m udp --dport 21515 -j DROP\n");
-           MD_flag = TRUE;
-           }
-#endif
          }
          else
          {
@@ -8541,14 +8529,6 @@ static int do_parcon_mgmt_device(FILE *fp, int iptype, FILE *cron_fp)
 			fprintf(fp, "-A prerouting_devices -p tcp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",query,idx);
 			fprintf(fp, "-A prerouting_devices -p udp -m mac --mac-source %s -j LOG_DeviceBlocked_%d_DROP\n",query,idx);
 #endif /* 0 */
-#if defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
-           if(MD_flag == TRUE)
-           {
-           fprintf(fp, "-I INPUT -p tcp -m tcp --dport 21515 -j DROP\n",query);
-           fprintf(fp, "-I INPUT -p udp -m udp --dport 21515 -j DROP\n",query);
-           MD_flag = FALSE;
-           }
-#endif
             if(cron_fp)
             {
                v_secure_system("echo %s >> /tmp/conn_mac", query);
