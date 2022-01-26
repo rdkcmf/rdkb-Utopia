@@ -203,10 +203,12 @@ create_tunnel () {
     
     # TODO: use assigned lower layer instead
     WAN_IF=`sysevent get current_wan_ifname`
-    
+    echo_t  "WAN_IF:$WAN_IF"
     update_bridge_frag_config $inst $1
     
     isgretap0Present=`ip link show | grep gretap0`
+    echo_t  "isgretap0Present:$isgretap0Present"
+
     if [ "$isgretap0Present" != "" ]; then
         echo "gretap0 is already present rename it before creating"
         ip link set dev $GRE_IFNAME name $GRE_IFNAME_DUMMY
@@ -220,6 +222,11 @@ create_tunnel () {
     	ip link add $2 type gretap remote $1 dev $WAN_IF $extra
     fi
     ifconfig $2 up
+    if [ ! -f /tmp/.gre_flowmanager_enable ]
+    then
+          echo addif $2 wan > /proc/driver/flowmgr/cmd
+	  touch /tmp/.gre_flowmanager_enable
+    fi
     sysevent set gre_current_endpoint $1
     sysevent set if_${2}-status $IF_READY
 }
@@ -244,6 +251,10 @@ destroy_tunnel () {
   if [ "$BOX_TYPE" = "XF3" ] ; then
     sleep 5
     rm "/tmp/destroy_tunnel_lock"
+  fi
+  if [  -f /tmp/.gre_flowmanager_enable ]
+  then
+  rm /tmp/.gre_flowmanager_enable
   fi
  
 }
