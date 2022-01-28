@@ -633,7 +633,7 @@ static unsigned short sysevent_port;
 static char           sysevent_ip[19];
 
 static char default_wan_ifname[50]; // name of the regular wan interface
-static char current_wan_ifname[50]; // name of the ppp interface or the regular wan interface if no ppp
+char current_wan_ifname[50]; // name of the ppp interface or the regular wan interface if no ppp
 static char ecm_wan_ifname[20];
 static char emta_wan_ifname[20];
 static char eth_wan_enabled[20];
@@ -10726,7 +10726,7 @@ static int prepare_ethernetbhaul_greclamp( FILE *mangle_fp) {
     FIREWALL_DEBUG("prepare_ethernetbhaul_greclamp clamping mss since gre present\n");
     fprintf(mangle_fp, "-A PREROUTING -i %s -j MARK --set-mark %d\n", xhs, XHS_EB_MARK);
     fprintf(mangle_fp, "-A POSTROUTING -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d\n", xhs, XHS_GRE_CLAMP_MSS);
-    fprintf(mangle_fp, "-A POSTROUTING -o erouter0 -p tcp -m tcp --tcp-flags SYN,RST SYN -m mark --mark %d -j TCPMSS --set-mss %d\n", XHS_EB_MARK, XHS_GRE_CLAMP_MSS);
+    fprintf(mangle_fp, "-A POSTROUTING -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -m mark --mark %d -j TCPMSS --set-mss %d\n",current_wan_ifname, XHS_EB_MARK, XHS_GRE_CLAMP_MSS);
    } else {
     FIREWALL_DEBUG("prepare_ethernetbhaul_greclamp skip clamping mss since gre not present\n");
    }
@@ -11271,10 +11271,10 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
         {
            FIREWALL_DEBUG("Open the port 3799 in WAN interface for RADIUS GreyList Support\n");
 #if defined(_COSA_INTEL_XB3_ARM_)
-           fprintf(nat_fp, "-A PREROUTING -i erouter0 -p udp --dport 3799 -j DNAT --to 192.168.251.254\n");
+           fprintf(nat_fp, "-A PREROUTING -i %s -p udp --dport 3799 -j DNAT --to 192.168.251.254\n",current_wan_ifname);
 #endif
 #if (defined(_XB6_PRODUCT_REQ_) && !defined(_XB7_PRODUCT_REQ_))
-	   fprintf(nat_fp, "-A PREROUTING -i erouter0 -p udp --dport 3799 -j DNAT --to 192.168.147.100\n");
+	   fprintf(nat_fp, "-A PREROUTING -i %s -p udp --dport 3799 -j DNAT --to 192.168.147.100\n",current_wan_ifname);
 #endif
         }
         else
@@ -11614,11 +11614,11 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    if(bEthWANEnable)
    {
            //ETH WAN is TC XB6 exclusive feature
-           fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+           fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",current_wan_ifname);
    }
    else if (erouterSSHEnable)  // Applicable only for PUMA7 platforms
    {
-       fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+       fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",current_wan_ifname);
        fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    }
    else {
@@ -11660,7 +11660,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        #ifdef _COSA_FOR_BCI_ 
        if (1 == isWanPingDisable)
        {
-           fprintf(filter_fp, "-A INPUT -i erouter0 -p icmp -m icmp --icmp-type 8 -j DROP\n");
+           fprintf(filter_fp, "-A INPUT -i %s -p icmp -m icmp --icmp-type 8 -j DROP\n",current_wan_ifname);
            fprintf(filter_fp, "-A INPUT -i brlan0 -d %s -p icmp -m icmp --icmp-type 8 -j DROP\n",current_wan_ipaddr);
        }
        #endif       
@@ -11971,7 +11971,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 	if(RPsmGet == CCSP_SUCCESS) {
 		if(strvalue != NULL && strncmp("1", strvalue, 1) == 0) {
     			FIREWALL_DEBUG("To Accept the das packet on xb7 RADIUS GreyList Support\n");
-    			fprintf(filter_fp, "-A general_input -i erouter0 -p udp -m udp --dport 3799 -j ACCEPT\n");
+    			fprintf(filter_fp, "-A general_input -i %s -p udp -m udp --dport 3799 -j ACCEPT\n",current_wan_ifname);
 		}
 	 	else
            		FIREWALL_DEBUG("PSM_NAME_RADIUS_GREY_LIST_ENABLED val: %s\n" COMMA strvalue);
@@ -12430,8 +12430,8 @@ static int prepare_MoCA_bridge_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat
           fprintf(filter_fp, "-I INPUT -i %s -j ACCEPT\n", mLan);
           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", pLan,mLan);
           fprintf(filter_fp, "-I FORWARD -i %s -o %s -j ACCEPT\n", mLan,pLan);
-          fprintf(filter_fp, "-A FORWARD -i erouter0 -o %s -j ACCEPT\n",mLan);
-          fprintf(filter_fp, "-A FORWARD -i %s -o erouter0 -j ACCEPT\n", mLan);
+          fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n",current_wan_ifname,mLan);
+          fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", mLan,current_wan_ifname);
           fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", mLan,mLan);
           fprintf(filter_fp, "-A OUTPUT -o %s -j ACCEPT\n",mLan);
           MoCA_AccountIsolation[0] = '\0';
@@ -12763,7 +12763,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    if (erouterSSHEnable)
-       fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+       fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",current_wan_ifname);
    fprintf(filter_fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
    fprintf(filter_fp, "-A LOG_SSH_DROP -j DROP\n");
 
@@ -13532,11 +13532,11 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "%s\n", ":SSH_FILTER - [0:0]");
    if(bEthWANEnable)
    {
-   fprintf(fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+   fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",current_wan_ifname);
    }
    else if (erouterSSHEnable)
    {
-   fprintf(fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 22 -j SSH_FILTER\n");
+   fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",current_wan_ifname);
    fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    }
    else
@@ -14555,7 +14555,7 @@ static int do_blockfragippktsv4(FILE *fp)
         fprintf(fp, "-I FORWARD -m mark --mark 0x0800 -j FRAG_DROP\n");
         fprintf(fp, "-I INPUT -m mark --mark 0x0800 -j FRAG_DROP\n");
         fprintf(fp, "-A FRAG_DROP -i %s -j DROP\n", lan_ifname);
-        fprintf(fp, "-A FRAG_DROP -i erouter0 -o %s -j DROP\n", lan_ifname);
+        fprintf(fp, "-A FRAG_DROP -i %s -o %s -j DROP\n",current_wan_ifname, lan_ifname);
 
     }
     return 0;
@@ -14582,7 +14582,7 @@ static int do_portscanprotectv4(FILE *fp)
         /*Adding rules in new chain */
         fprintf(fp,"-A INPUT -j %s\n",PORT_SCAN_CHECK_CHAIN);
         fprintf(fp,"-A FORWARD -j %s\n",PORT_SCAN_CHECK_CHAIN);
-        fprintf(fp,"-A %s -i erouter0 -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A %s -i %s -j RETURN\n", PORT_SCAN_CHECK_CHAIN,current_wan_ifname);
         fprintf(fp,"-A %s -i lo -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
         fprintf(fp,"-A %s -p udp -m recent --name portscan --rcheck --seconds 86400 -j %s\n", PORT_SCAN_CHECK_CHAIN, PORT_SCAN_DROP_CHAIN);
         fprintf(fp,"-A %s -p tcp -m recent --name portscan --rcheck --seconds 86400 -j %s\n", PORT_SCAN_CHECK_CHAIN, PORT_SCAN_DROP_CHAIN);
@@ -14703,7 +14703,7 @@ static int do_portscanprotectv6(FILE *fp)
         /*Adding rules in new chain */
         fprintf(fp,"-A INPUT -j %s\n", PORT_SCAN_CHECK_CHAIN);
         fprintf(fp,"-A FORWARD -j %s\n", PORT_SCAN_CHECK_CHAIN);
-        fprintf(fp,"-A %s -i erouter0 -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
+        fprintf(fp,"-A %s -i %s -j RETURN\n", PORT_SCAN_CHECK_CHAIN,current_wan_ifname);
         fprintf(fp,"-A %s -i lo -j RETURN\n", PORT_SCAN_CHECK_CHAIN);
     }
     return 0;
