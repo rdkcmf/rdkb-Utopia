@@ -333,37 +333,25 @@ NOT_DEF:
 #define CONFIG_KERNEL_NF_TRIGGER_SUPPORT CONFIG_INTEL_NF_TRIGGER_SUPPORT
 #endif
 
-#include <stdio.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <stdlib.h>
+
+#include"firewall.h"
+
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
-#include <errno.h>
 #include <syslog.h>
 #include <ctype.h>
 #include <ulog/ulog.h>
-#include "syscfg/syscfg.h"
-#include "sysevent/sysevent.h"
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
-#include <string.h>   // strcasestr needs __USE_GNU
-#include <sys/socket.h>
+
+
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/file.h>
 #include <sys/mman.h>
-//#include "utapi.h"
-#include "ccsp_psm_helper.h"
-#include <ccsp_base_api.h>
-#include "ccsp_memory.h"
-#include "firewall_custom.h"
-#include "secure_wrapper.h"
+
 #include "safec_lib_common.h"
 
 #if defined (_PROPOSED_BUG_FIX_)
@@ -639,9 +627,9 @@ struct {
     } ;
 
 
-static int            sysevent_fd = -1;
+int            sysevent_fd = -1;
 static char          *sysevent_name = "firewall";
-static token_t        sysevent_token;
+token_t        sysevent_token;
 static unsigned short sysevent_port;
 static char           sysevent_ip[19];
 
@@ -906,12 +894,6 @@ int greDscp = 44; // Default initialized to 44
  */
 static int do_block_ports(FILE *filter_fp);
 static int isInRFCaptivePortal();
-#ifdef WAN_FAILOVER_SUPPORTED
-typedef enum {
-    Router =0,
-    Extender_Mode,
-} Dev_Mode;
-#endif
 
 #define LOG_BUFF_SIZE 512
 void firewall_log( char* fmt, ...)
@@ -943,10 +925,10 @@ unsigned int Get_Device_Mode()
         Dev_Mode mode;
         if(dev_mode==1)
         {
-          mode =Extender_Mode;
+          mode =EXTENDER_MODE;
         }
         else
-          mode = Router;
+          mode = ROUTER;
 
         return mode;
 
@@ -958,7 +940,7 @@ unsigned int Get_Device_Mode()
 static BOOL isServiceNeeded()
 {
         FIREWALL_DEBUG("Inside isServiceNeeded\n");
-        if (Get_Device_Mode()==Extender_Mode)
+        if (Get_Device_Mode()==EXTENDER_MODE)
         {
 		FIREWALL_DEBUG("Service Not Needed\n");
             return FALSE;
@@ -5633,9 +5615,9 @@ static int do_multinet_wan2self_attack (FILE *filter_fp)
  *                  enable wanattack for all packets so that you have a chance at avoiding attacks
  *                  before interpreting the packets.
  */
-static int do_wan2self_attack(FILE *fp)
+int do_wan2self_attack(FILE *fp,char* wan_ip)
 {
-   if (!isLogEnabled) { 
+   if ( !isLogEnabled || wan_ip == NULL || strlen(wan_ip) == 0 ) { 
       return(0);
    }
 
@@ -5723,24 +5705,24 @@ static int do_wan2self_attack(FILE *fp)
    //LAND Aattack - sending a spoofed TCP SYN pkt with the target host's IP address to an open port as both source and destination
    if(isWanReady) {
        /* Allow multicast packet through */
-       fprintf(fp, "-A wanattack -p udp -s %s -d 224.0.0.0/8 -j RETURN\n", current_wan_ipaddr);
+       fprintf(fp, "-A wanattack -p udp -s %s -d 224.0.0.0/8 -j RETURN\n", wan_ip);
 #if defined(_HUB4_PRODUCT_REQ_) /* ULOG target removed in kernels 3.17+ */
-       fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" --log-level 7\n", current_wan_ipaddr, logRateLimit);
+       fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" --log-level 7\n", wan_ip, logRateLimit);
 #elif defined(_PROPOSED_BUG_FIX_)
        if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0))
        {
-       	fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" --log-level 7\n", current_wan_ipaddr, logRateLimit);
+       	fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" --log-level 7\n", wan_ip, logRateLimit);
        }
        else
        {
-       	fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", current_wan_ipaddr, logRateLimit);
+       	fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", wan_ip, logRateLimit);
        }
 #elif defined(_PLATFORM_RASPBERRYPI_) || defined (_PLATFORM_TURRIS_)
-   fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" \n", current_wan_ipaddr, logRateLimit);
+   fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" \n", wan_ip, logRateLimit);
 #else
-       fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", current_wan_ipaddr, logRateLimit);
+       fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", wan_ip, logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
-       fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", current_wan_ipaddr);
+       fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", wan_ip);
    }
 #if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
    else
@@ -5812,7 +5794,7 @@ static int do_wan2self_attack(FILE *fp)
     sysevent_get(sysevent_fd, sysevent_token, "ipv4_wan_ipaddr", isp_connection, sizeof(isp_connection));
     if ('\0' != isp_connection[0] && 
         0 != strcmp("0.0.0.0", isp_connection) && 
-        0 != strcmp(isp_connection, current_wan_ipaddr)) {
+        0 != strcmp(isp_connection, wan_ip)) {
        fprintf(fp, "-A wanattack -s %s -j xlog_drop_wanattack\n", isp_connection);
     }
 
@@ -6630,7 +6612,7 @@ static int do_wan2self(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
 {
   //       FIREWALL_DEBUG("Entering do_wan2self\n");    
    do_wan2self_allow(filter_fp);
-   do_wan2self_attack(filter_fp);
+   do_wan2self_attack(filter_fp,current_wan_ipaddr);
    do_wan2self_ports(mangle_fp, nat_fp, filter_fp);
    do_mgmt_override(nat_fp);
    WAN_FAILOVER_SUPPORT_CHECK
@@ -13117,9 +13099,17 @@ int prepare_ipv4_firewall(const char *fw_file)
       fclose(filter_fp);
       return(-2);
    }
-  
-   // TODO: possibly remove bridge mode
-   if (isFirewallEnabled && !isBridgeMode ) { fprintf(stderr, "-- prepare_enabled_ipv4_firewall isWanServiceReady=%d\n", isWanServiceReady); //&& isWanServiceReady) {
+
+   
+   #ifdef RDKB_EXTENDER_ENABLED  
+      if (isExtProfile() == 0 )
+      {
+         prepare_ipv4_rule_ex_mode(raw_fp, mangle_fp, nat_fp, filter_fp);
+      }
+      else if (isFirewallEnabled && !isBridgeMode ) { fprintf(stderr, "-- prepare_enabled_ipv4_firewall isWanServiceReady=%d\n", isWanServiceReady); //&& isWanServiceReady) {
+   #else
+      if (isFirewallEnabled && !isBridgeMode ) { fprintf(stderr, "-- prepare_enabled_ipv4_firewall isWanServiceReady=%d\n", isWanServiceReady); //&& isWanServiceReady) {
+   #endif
       prepare_enabled_ipv4_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
    } else {
       prepare_disabled_ipv4_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
@@ -13665,15 +13655,24 @@ int prepare_ipv6_firewall(const char *fw_file)
 		goto clean_up_files;
 	}
 
-#ifdef INTEL_PUMA7
-	fprintf(raw_fp, "*raw\n");
-	do_raw_table_puma7(raw_fp);
-#endif
-   
-	do_ipv6_sn_filter(mangle_fp);
-#if !defined(_PLATFORM_IPQ_)
-	do_ipv6_nat_table(nat_fp);
-#endif
+   #ifdef RDKB_EXTENDER_ENABLED  
+
+   if (isExtProfile() == 0)
+   {
+      prepare_ipv6_rule_ex_mode(raw_fp, mangle_fp, nat_fp, filter_fp);
+   }
+   else
+   {
+   #endif
+      #ifdef INTEL_PUMA7
+         fprintf(raw_fp, "*raw\n");
+         do_raw_table_puma7(raw_fp);
+      #endif
+         
+         do_ipv6_sn_filter(mangle_fp);
+      #if !defined(_PLATFORM_IPQ_)
+         do_ipv6_nat_table(nat_fp);
+      #endif
 
   	if ( bEthWANEnable )
   	{
@@ -13737,7 +13736,10 @@ int prepare_ipv6_firewall(const char *fw_file)
    do_self_heal_rules_v6(mangle_fp);
 #endif
 
-#endif //_HUB4_PRODUCT_REQ_
+      #endif //_HUB4_PRODUCT_REQ_
+   #ifdef RDKB_EXTENDER_ENABLED  
+   }
+   #endif
 	/*add rules before this*/
 #if !defined(_BWG_PRODUCT_REQ_)
 	fprintf(raw_fp, "COMMIT\n");
@@ -15426,6 +15428,12 @@ static int service_restart ()
 // just recalculate the rules - service start does that
 //    (void) service_stop();
 	FIREWALL_DEBUG("Inside Firewall service_restart () \n");
+      #ifdef RDKB_EXTENDER_ENABLED  
+
+   if (isExtProfile() == 0 )
+      return service_start_ext_mode();
+   else
+   #endif
 	return service_start();
 }
 
@@ -15625,7 +15633,13 @@ int error;
 
    switch (event) {
    case SERVICE_EV_START:
-       service_start();
+      #ifdef RDKB_EXTENDER_ENABLED  
+
+       if (isExtProfile() == 0 )
+            service_start_ext_mode();
+       else
+       #endif
+            service_start();
        break;
    case SERVICE_EV_STOP:
        service_stop();

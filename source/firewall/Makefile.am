@@ -23,7 +23,7 @@ AM_LDFLAGS = -lccsp_common -lsecure_wrapper -lnetfilter_queue -lnfnetlink $(DBUS
 
 bin_PROGRAMS = firewall nfq_handler
 
-firewall_SOURCES = firewall.c firewall_priv.c firewall_interface.c
+firewall_SOURCES = firewall.c firewall_priv.c firewall_interface.c  firewall_ext.c
 if CPC_FIREWALL_ENABLE
 firewall_SOURCES += firewall_lib.c firewall_dsl.c rabid.c
 endif
