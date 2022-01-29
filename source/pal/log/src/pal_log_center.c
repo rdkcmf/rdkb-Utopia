@@ -67,17 +67,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#ifdef WIN32
-#include "pthread.h"
-#include <winsock2.h>
-#pragma comment(lib,"WS2_32.LIB")
-#include <wtypes.h>
-#include <winbase.h> 
-#else 
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
-#endif
 
 #include "pal_log.h"
 #include "pal_log_internal.h"
@@ -137,17 +129,10 @@ typedef enum FMODE{
     MAXFMODE
 } E_FMODE;
 
-#ifdef WIN32
-#define CLOSE(fd) {shutdown(fd, 2);	closesocket(fd);}
-#define STRCMP(str1, str2) (stricmp(str1, str2))
-#define WAITINTVL (1000)
-#define SLEEP(s) (Sleep(s)) // unit in micro second
-#else
 #define CLOSE(fd) close(fd)
 #define STRCMP(str1, str2) (strcasecmp(str1, str2))
 #define WAITINTVL (1)
 #define SLEEP(s) (sleep(s)) // unit in second
-#endif
 
 
 INT32 sock_for_net = -1;
@@ -252,11 +237,7 @@ LOCAL VOID _send_cmd_show_module_info_to_router(INT32 module_number, CHAR * inpu
     }
     else
     {
-#ifdef WIN32
-        sprintf(out_buf+OUT_PKT_HEAD_LENGTH,"%s",input_string);
-#else
         snprintf(out_buf+OUT_PKT_HEAD_LENGTH,MAX_BUF_SIZE-OUT_PKT_HEAD_LENGTH,"%s",input_string);
-#endif
     }
     _send_buf_to_router(out_buf,OUT_PKT_HEAD_LENGTH+strlen(out_buf+OUT_PKT_HEAD_LENGTH)+1);
 }
@@ -481,17 +462,7 @@ INT32 main()
     INT32 cmdnum = -1;
     INT32 cmdfound = 0;
     INT32 invalidargs = 0;
-#ifdef WIN32
-    WSADATA wsaData;
-#endif
 
-#ifdef WIN32
-    if (WSAStartup(MAKEWORD(2,1),&wsaData)) {
-        fprintf(stderr, "Winsock init error\n");
-        WSACleanup();
-        return -1;
-    }
-#endif
 
     /* init sock_for_net */
     sock_for_net = socket(PF_INET, SOCK_DGRAM, 0);
@@ -591,9 +562,6 @@ INT32 main()
 
     } 
     _close_sock();
-#ifdef WIN32
-    WSACleanup();
-#endif
 
     SLEEP(WAITINTVL); // for graceful quit
     return 0;

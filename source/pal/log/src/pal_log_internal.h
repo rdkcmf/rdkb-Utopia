@@ -63,7 +63,6 @@
 #include <signal.h>
 
 #include <sys/types.h>
-#ifndef WIN32
 #include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -72,7 +71,6 @@
 #include <unistd.h>
 
 #include "pal_log.h"
-#endif
 
 #define IN 
 #define OUT
