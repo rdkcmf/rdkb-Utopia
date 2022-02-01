@@ -36,6 +36,7 @@ bin_PROGRAMS = \
     02_bridge \
     02_forwarding \
     02_ipv4 \
+    02_ipv6 \
     02_lanHandler \
     02_multinet \
     02_parodus \
