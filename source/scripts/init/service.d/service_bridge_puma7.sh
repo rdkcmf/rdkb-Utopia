@@ -126,6 +126,9 @@ cmdiag_ebtables_rules()
         ebtables -I FORWARD -j BRIDGE_FORWARD_FILTER
         ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o lbr0 -j DROP
         ebtables -A BRIDGE_FORWARD_FILTER -s $MUX_MAC -o lbr0 -j DROP
+        if [ "x$ETHWAN_ENABLED" = "xtrue" ];then
+            ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o nsgmii0 -j DROP
+        fi
         ebtables -A BRIDGE_FORWARD_FILTER -j RETURN
         
         #Redirect traffic destined to lan0 IP to lan0 MAC address
@@ -149,6 +152,7 @@ cmdiag_if()
 {
     if [ "$1" = "enable" ] ; then
         ip link add $CMDIAG_IF type veth peer name l${CMDIAG_IF}
+        echo 1 > /proc/sys/net/ipv6/conf/lan0/disable_ipv6
         echo 1 > /proc/sys/net/ipv6/conf/llan0/disable_ipv6
         echo 1 > /proc/sys/net/ipv6/conf/adp0/disable_ipv6
         echo 1 > /proc/sys/net/ipv6/conf/a-mux/disable_ipv6
