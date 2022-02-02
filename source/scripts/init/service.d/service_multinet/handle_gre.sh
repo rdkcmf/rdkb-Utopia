@@ -54,8 +54,6 @@ THIS=/etc/utopia/service.d/service_multinet/handle_gre.sh
 
 if [ "$BOX_TYPE" = "XB3" ] ; then
    export LOG4C_RCPATH=/rdklogger
-else
-   export LOG4C_RCPATH=/etc
 fi
 
 MTU_VAL=1400
