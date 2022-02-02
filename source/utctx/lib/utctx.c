@@ -1314,6 +1314,12 @@ static int UtopiaTransact_Get(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, c
 {
     UtopiaTransact_Node* pNode;
 
+    /* ensure output buffer is initialised in all cases, including errors */
+    if (pszValue)
+    {
+        *pszValue = 0;
+    }
+
     if (pUtopiaCtx == 0)
     {
         UTCTX_LOG_ERR2("%s: pUtopiaCtx is NULL, ixUtopia= %d\n", __FUNCTION__, (int)ixUtopia);
