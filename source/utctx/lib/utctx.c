@@ -1308,11 +1308,8 @@ static UtopiaTransact_Node* s_UtopiaTransact_Find(UtopiaContext* pUtopiaCtx, Uto
     return 0;
 }
 
-extern int UtopiaTransact_Get(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey,
-                              char* pszValue, unsigned int ccbBuf);
-
 /* Helper function for getting a value from the transaction list */
-int UtopiaTransact_Get(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey,
+static int UtopiaTransact_Get(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey,
                        char* pszValue, unsigned int ccbBuf)
 {
     UtopiaTransact_Node* pNode;
@@ -1372,7 +1369,7 @@ int UtopiaTransact_Get(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* ps
 }
 
 /* Helper function for setting a value into the transaction list */
-int UtopiaTransact_Set(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey,
+static int UtopiaTransact_Set(UtopiaContext* pUtopiaCtx, UtopiaValue ixUtopia, char* pszNamespace, char* pszKey,
                        char* pszValue)
 {
     UtopiaTransact_Node* pNode;
