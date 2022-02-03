@@ -42,14 +42,17 @@
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
 source /etc/device.properties
+source /etc/waninfo.sh
 
-if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ]; then
-   CMINTERFACE="erouter0"
+WAN_INTERFACE=$(getWanInterfaceName)
+
+if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+   CMINTERFACE=$WAN_INTERFACE
 elif ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
-   CMINTERFACE="erouter0"
+	CMINTERFACE=$WAN_INTERFACE
 else
    if [ -f "/nvram/ETHWAN_ENABLE" ];then
-   	CMINTERFACE="erouter0"
+	   CMINTERFACE=$WAN_INTERFACE
    else
    	CMINTERFACE="wan0"
    fi
@@ -76,7 +79,7 @@ get_listen_params() {
         CM_IP4=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
     fi
     if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
-        CM_IP6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+        CM_IP6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -n1`
     fi
     if [ "$CM_IP4" != "" ] ; then
         LISTEN_PARAMS="-p [${CM_IP4}]:22"
@@ -106,16 +109,16 @@ do_start() {
 
     if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
     	get_listen_params
-            CMINTERFACE="erouter0"
+	CMINTERFACE=$WAN_INTERFACE
     fi
 
     CM_IP=""
     if ([ "$BOX_TYPE" = "rpi" ]) ;then
         #for Raspberry-pi, use the ipv4 address as default for ssh
-        CM_IP=`ifconfig ${CMINTERFACE} | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+        CM_IP=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
     else
         #for other devices, use the ipv6 address for ssh, if available
-        CM_IP=`ifconfig ${CMINTERFACE} | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+        CM_IP=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -n1`
     fi
 
    # start a ssh daemon
@@ -127,7 +130,7 @@ do_start() {
    if [ "$CM_IP" = "" ]
    then
       #wan0 should be in v4
-      CM_IP=`ifconfig ${CMINTERFACE} | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+      CM_IP=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
    fi
    DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$"
    DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"
@@ -145,7 +148,7 @@ do_start() {
     else
       echo_t "utopia: dropbear could not be started on erouter0 IPv4 interface."
     fi
-    CM_IP6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    CM_IP6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -n1`
     if [ -n "$CM_IP6" ]; then
       echo_t "[utopia]: dropbear was started on erouter0 IPv6 $CM_IP6 interface."
     else
@@ -194,11 +197,12 @@ service_start() {
 	ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service"
 
    if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
-      CMINTERFACE=erouter0
+	   CMINTERFACE=$WAN_INTERFACE
       ifconfig $CMINTERFACE | grep Global
       ret=$?
       while [ $ret -ne 0 ]; do
         sleep 20
+        CMINTERFACE=$(getWanInterfaceName)
         ifconfig $CMINTERFACE | grep Global
         ret=$?
         if [ $? -eq 0 ] ; then

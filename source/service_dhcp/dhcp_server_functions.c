@@ -38,7 +38,6 @@
 #define HOSTNAME_FILE           "/etc/hostname"
 #define DHCP_STATIC_HOSTS_FILE  "/etc/dhcp_static_hosts"
 #define DHCP_OPTIONS_FILE       "/var/dhcp_options"
-#define WAN_IF_NAME     		"erouter0"
 #define RESOLV_CONF             "/etc/resolv.conf"
 #define BOOL                    int
 #define TRUE                    1
@@ -529,8 +528,11 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 {
 	char l_cRedirect_Url[64] = {0}, l_cCloud_Personal_Url[64] = {0}, l_cUrl[64] = {0};
 	char l_cErouter0_Ipv4Addr[16] = {0}, l_cNsServer4[16] = {0}, l_cLine[255] = {0};
+	char l_cWan_IfName[16] = {0};
 	FILE *l_fStatic_Urls = NULL, *l_fResolv_Conf = NULL;
     char *l_cRemoveHttp = NULL;
+   
+	sysevent_get(g_iSyseventfd, g_tSysevent_token, "current_wan_ifname", l_cWan_IfName, sizeof(l_cWan_IfName));
 	
     // Redirection URL can be get from DML
     syscfg_get(NULL, "redirection_url", l_cRedirect_Url, sizeof(l_cRedirect_Url));
@@ -579,7 +581,7 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 			fprintf(stderr, "CloudPersonalizationURL doesnt contain http / https tag\n");
 		}
 	}
-	iface_get_ipv4addr(WAN_IF_NAME, l_cErouter0_Ipv4Addr, sizeof(l_cErouter0_Ipv4Addr));
+	iface_get_ipv4addr(l_cWan_IfName, l_cErouter0_Ipv4Addr, sizeof(l_cErouter0_Ipv4Addr));
     if (0 != l_cErouter0_Ipv4Addr[0])
    	{
     	//TODO see if getting IPv4 name server can be moved to a function

@@ -40,6 +40,7 @@
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/log_capture_path.sh
 source /etc/log_timestamp.sh    # define 'echo_t' ASAP!
+source /etc/waninfo.sh
 
 if [ -f /etc/device.properties ]; then
 	. /etc/device.properties
@@ -55,6 +56,8 @@ BIN=ntpd
 EROUTER_IPV6_UP=0
 QUICK_SYNC_PID=""
 QUICK_SYNC_DONE=0
+
+WAN_INTERFACE=$(getWanInterfaceName)
 
 if [ "x$NTPD_LOG_NAME" == "x" ];then
 NTPD_LOG_NAME=/rdklogs/logs/ntpLog.log
@@ -94,12 +97,13 @@ erouter_wait ()
           		EROUTER_UP=$EROUTER_IPv4
           	fi
           else
-          	EROUTER_UP="erouter0"
+          	EROUTER_UP=$WAN_INTERFACE
           fi
           break
        fi
        sleep 6
-       if [ "$retry" -eq $MAX_RETRY ];then
+       WAN_INTERFACE=$(getWanInterfaceName)
+       if [ $retry -eq $MAX_RETRY ];then
           echo_t "SERVICE_NTPD : EROUTER IP not acquired after max etries. Exiting !!!" >> $NTPD_LOG_NAME
           break
        fi
@@ -301,7 +305,7 @@ service_start ()
    WAN_IP=""
    QUICK_SYNC_WAN_IP=""
 
-   if [ "$NTPD_INTERFACE" == "erouter0" ]; then
+   if [ "$NTPD_INTERFACE" == $WAN_INTERFACE ]; then
 
        # Enable Basic NTPD Daemon Logging in Newer Devices
        echo "logconfig =syncall +clockall +sysall +peerall" >> $NTP_CONF_TMP

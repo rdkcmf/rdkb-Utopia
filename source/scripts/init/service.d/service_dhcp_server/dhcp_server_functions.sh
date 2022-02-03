@@ -40,6 +40,7 @@ then
 fi
 
 source /lib/rdk/t2Shared_api.sh
+source /etc/waninfo.sh
 
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
@@ -54,6 +55,7 @@ LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts$$
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options$$
 fi
 RESOLV_CONF=/etc/resolv.conf
+WAN_INTERFACE=$(getWanInterfaceName)
 
 # Variables needed for captive portal mode : start
 DEFAULT_RESOLV_CONF="/var/default/resolv.conf"
@@ -643,11 +645,11 @@ prepare_whitelist_urls()
 		CloudPersonalization_URL=`removehttp "$CloudPersonalization_URL"`
 	fi
 
-	#Check in what mode erouter0 is in : ipv4/ipv6
-	isIPv4=`ifconfig erouter0 | grep inet | grep -v inet6`
+	#Check in what mode current wan iterface is in : ipv4/ipv6
+	isIPv4=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
 	if [ "$isIPv4" = "" ]
 	then
-		isIPv6=`ifconfig erouter0 | grep inet6`
+		isIPv6=`ifconfig $WAN_INTERFACE | grep inet6`
 		if [ "$isIPv6" != "" ]
 		then
 			nServer6=`cat $RESOLV_CONF | grep nameserver | grep ":" | head -n 1 | cut -d" " -f2`
