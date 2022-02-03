@@ -217,15 +217,15 @@ struct dhcpv6_tag tag_list[] =
 
 #define DHCPV6S_SYSCFG_GETS(unique_name, table1_name, table1_index, table2_name, table2_index, parameter, out) \
 { \
-    char ns[128] = {0}; \
+    char ns[128]; \
     snprintf(ns, sizeof(ns), "%s%s%lu%s%lu", unique_name, table1_name, (unsigned long)table1_index, table2_name, (unsigned long)table2_index); \
     syscfg_get(ns, parameter, out, sizeof(out)); \
 } \
 
 #define DHCPV6S_SYSCFG_GETI(unique_name, table1_name, table1_index, table2_name, table2_index, parameter, out) \
 { \
-    char ns[128] = {0}; \
-    char val[32] = {0}; \
+    char ns[128]; \
+    char val[16]; \
     snprintf(ns, sizeof(ns), "%s%s%lu%s%lu", unique_name, table1_name, (unsigned long)table1_index, table2_name, (unsigned long)table2_index); \
     syscfg_get(ns, parameter, val, sizeof(val)); \
     if ( strcmp(val,"4294967295") == 0) out = -1; \
@@ -233,7 +233,7 @@ struct dhcpv6_tag tag_list[] =
 } \
 
 
-uint64_t helper_ntoh64(const uint64_t *inputval)
+static uint64_t helper_ntoh64(const uint64_t *inputval)
 {
     uint64_t returnval;
     uint8_t *data = (uint8_t *)&returnval;
@@ -249,10 +249,12 @@ uint64_t helper_ntoh64(const uint64_t *inputval)
 
     return returnval;
 }
+
 uint64_t helper_hton64(const uint64_t *inputval)
 {
     return (helper_ntoh64(inputval));
 }
+
 static int daemon_stop(const char *pid_file, const char *prog)
 {
     FILE *fp;
@@ -382,7 +384,7 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
 #endif
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeBegin", cfg->prefix_range_begin);
     DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "PrefixRangeEnd", cfg->prefix_range_end);
-	DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServers", cfg->X_RDKCENTRAL_COM_DNSServers);
+    DHCPV6S_SYSCFG_GETS(DHCPV6S_NAME, "pool", cfg->index, "", 0, "X_RDKCENTRAL_COM_DNSServers", cfg->X_RDKCENTRAL_COM_DNSServers);
 
 #ifdef MULTILAN_FEATURE
     /* get Interface name from data model: Device.IP.Interface.%d.Name*/
@@ -486,7 +488,7 @@ static int get_ia_info(struct serv_ipv6 *si6, char *config_file, ia_na_t *iana, 
 	}
 #else
     int  fd = 0;
-    char config[1024] = {0};
+    char config[1024];
     char *p= NULL;
     fd = open(config_file, O_RDWR);
 	
@@ -730,37 +732,42 @@ static int get_active_lanif(struct serv_ipv6 *si6, unsigned int insts[], unsigne
 
 static int get_pd_pool(struct serv_ipv6 *si6, pd_pool_t *pool)
 {
-    char evt_val[256] = {0};
+    char evt_val[256];
     errno_t rc = -1;
 
+    evt_val[0] = 0;
     sysevent_get(si6->sefd, si6->setok, "ipv6_subprefix-start", evt_val, sizeof(evt_val));
-    if (! evt_val[0])
+    if (evt_val[0] == 0)
     {
         return -1;
     }
     rc = strcpy_s(pool->start, sizeof(pool->start), evt_val);
     ERR_CHK(rc);
 
-
+    evt_val[0] = 0;
     sysevent_get(si6->sefd, si6->setok, "ipv6_subprefix-end", evt_val, sizeof(evt_val));
-    if (! evt_val[0])
+    if (evt_val[0] == 0)
     {
         return -1;
     }
     rc = strcpy_s(pool->end, sizeof(pool->end), evt_val);
     ERR_CHK(rc);
 
+    evt_val[0] = 0;
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix-length", evt_val, sizeof(evt_val));
-    if (evt_val[0] != '\0')
-        pool->prefix_length = atoi(evt_val);
-    else 
+    if (evt_val[0] == 0)
+    {
         return -1;
+    }
+    pool->prefix_length = atoi(evt_val);
 
+    evt_val[0] = 0;
     sysevent_get(si6->sefd, si6->setok, "ipv6_pd-length", evt_val, sizeof(evt_val));
-    if (evt_val[0] != '\0')
-        pool->pd_length = atoi(evt_val);
-    else 
+    if (evt_val[0] == 0)
+    {
         return -1;
+    }
+    pool->pd_length = atoi(evt_val);
 
     return 0;
 }
