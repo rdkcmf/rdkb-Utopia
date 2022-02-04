@@ -251,13 +251,11 @@ int s_sysevent_connect (token_t *out_se_token)
     static int     sysevent_fd = -1;
     static token_t sysevent_token = 0;
 
-
     if (0 > sysevent_fd) {
         unsigned short sysevent_port = SE_SERVER_WELL_KNOWN_PORT;
-        char           sysevent_ip[19];
+        char          *sysevent_ip = "127.0.0.1";
         char          *sysevent_name = "utapi";
 
-        snprintf(sysevent_ip, sizeof(sysevent_ip), "127.0.0.1");
         sysevent_fd =  sysevent_open(sysevent_ip, sysevent_port, SE_VERSION, sysevent_name, &sysevent_token);
         ulogf(ULOG_CONFIG, UL_UTAPI, "%s: open new sysevent fd %d", __FUNCTION__, sysevent_fd);
     }
