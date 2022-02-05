@@ -266,8 +266,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 		//copy the default netmask
 		safec_rc = strcpy_s(l_cLanNetMask, sizeof(l_cLanNetMask),"255.255.255.0");
 		ERR_CHK(safec_rc);
-		syscfg_set(NULL, "lan_netmask", l_cLanNetMask);
-		syscfg_commit();
+		syscfg_set_commit(NULL, "lan_netmask", l_cLanNetMask);
 	}
 
 	subnet(l_cLanIPAddress, l_cLanNetMask, l_cLanSubnet);
@@ -1022,8 +1021,7 @@ int prepare_dhcp_conf (char *input)
                 {
                     if( ( '\0' == l_cDhcpNs_2[ 0 ] ) || ( 0 == strcmp( l_cDhcpNs_2, "0.0.0.0" ) ) )
                     {
-                        syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
-                        syscfg_commit();
+                        syscfg_set_commit(NULL, "dhcp_nameserver_enabled", "0");
                     }
                 }
             }
@@ -1040,8 +1038,7 @@ int prepare_dhcp_conf (char *input)
             {
                 if( ( '\0' == l_cDhcpNs_2[ 0 ] ) || ( 0 == strcmp( l_cDhcpNs_2, "0.0.0.0" ) ) )
                 {
-                    syscfg_set(NULL, "dhcp_nameserver_enabled", "0");
-                    syscfg_commit();
+                    syscfg_set_commit(NULL, "dhcp_nameserver_enabled", "0");
                 }
              }
          }

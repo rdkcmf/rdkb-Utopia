@@ -353,13 +353,11 @@ static int get_dhcpv6s_pool_cfg(struct serv_ipv6 *si6, dhcpv6s_pool_cfg_t *cfg)
     {
         if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
         {
-            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
-            syscfg_commit();
+            syscfg_set_commit(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
         }
         else
         {
-            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
-            syscfg_commit();
+            syscfg_set_commit(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
         }
     } 
 

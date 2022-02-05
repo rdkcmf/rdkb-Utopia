@@ -584,18 +584,13 @@ static int IsValuePresentinSyscfgDB (char *param)
 
 static int set_syscfg_partner_values (char *pValue, char *param)
 {
-	if ((syscfg_set(NULL, param, pValue) != 0)) 
+	if ((syscfg_set_commit(NULL, param, pValue) != 0)) 
 	{
         	APPLY_PRINT("set_syscfg_partner_values : syscfg_set failed\n");
 		return 1;
 	}
 	else 
 	{
-       	 	if (syscfg_commit() != 0) 
-		{
-			APPLY_PRINT("set_syscfg_partner_values : syscfg_commit failed\n");
-			return 1;
-		}
 		return 0;
 	}
 }

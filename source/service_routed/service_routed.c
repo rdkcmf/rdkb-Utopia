@@ -584,8 +584,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
     if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	
     {
-        syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "1");
-        syscfg_commit();
+        syscfg_set_commit("dhcpv6spool00", "X_RDKCENTRAL_COM_DNSServersEnabled", "1");
          
         FILE *fptr = NULL;
         char loc_domain[128] = {0};
@@ -617,11 +616,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
     else
     {
 	char l_cDhcpv6_Dns[256] = {0};
-        syscfg_get(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServers", l_cDhcpv6_Dns, sizeof(l_cDhcpv6_Dns));
+        syscfg_get("dhcpv6spool00", "X_RDKCENTRAL_COM_DNSServers", l_cDhcpv6_Dns, sizeof(l_cDhcpv6_Dns));
         if ( '\0' == l_cDhcpv6_Dns[ 0 ] )
         {
-            syscfg_set(NULL, "dhcpv6spool00::X_RDKCENTRAL_COM_DNSServersEnabled", "0");
-            syscfg_commit();
+            syscfg_set_commit("dhcpv6spool00", "X_RDKCENTRAL_COM_DNSServersEnabled", "0");
         }
     }
     FILE *fp = NULL;
