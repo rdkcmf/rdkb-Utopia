@@ -1205,8 +1205,13 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
                 strncpy(iapd_vldtm, strtok (action,"'"), sizeof(iapd_vldtm));
         }
 		
+#if defined (INTEL_PUMA7)
+        snprintf(cmd, CMD_BUF_SIZE, "ip -6 addr change %s/%d dev %s valid_lft %s preferred_lft %s",
+                ipv6_addr, prefix_len, iface_name, iapd_vldtm, iapd_preftm);
+#else
         snprintf(cmd, CMD_BUF_SIZE, "ip -6 addr add %s/%d dev %s valid_lft %s preferred_lft %s",
                 ipv6_addr, prefix_len, iface_name, iapd_vldtm, iapd_preftm);
+#endif
 
         vsystem(cmd);
         bzero(ipv6_addr, sizeof(ipv6_addr));
@@ -1757,7 +1762,7 @@ static int serv_ipv6_stop(struct serv_ipv6 *si6)
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
-#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_)
+#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_) && !defined(INTEL_PUMA7)
     if (lan_addr6_unset(si6) !=0) {
         fprintf(stderr, "unset IPv6 address for lan interfaces error!\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
