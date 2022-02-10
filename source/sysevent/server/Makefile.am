@@ -16,25 +16,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_
-AM_CFLAGS += -DIPV6=1
-AM_CFLAGS += -DSET_REPLY_REQUIRED
-AM_CFLAGS += -DUSE_SYSCFG
-AM_CFLAGS += -DSE_SERVER_CODE_DEBUG
-AM_CFLAGS += -DREDIRECT_CODE_DEBUG
-AM_CFLAGS += $(PTHREAD_CFLAGS)
+bin_PROGRAMS = syseventd
+
+AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -DIPV6=1 -DSET_REPLY_REQUIRED -DUSE_SYSCFG -DSE_SERVER_CODE_DEBUG \
+		-DREDIRECT_CODE_DEBUG
+AM_CFLAGS += -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/sysevent/lib
 
 ACLOCAL_AMFLAGS = -I m4
 
-AM_LDFLAGS = $(top_builddir)/source/sysevent/lib/libsysevent.la \
-             $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-             $(top_builddir)/source/ulog/libulog.la \
-             $(PTHREAD_LIBS)
 
-bin_PROGRAMS = syseventd
+AM_LDFLAGS =  -lpthread -lz \
+                $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                $(top_builddir)/source/ulog/libulog.la
 
 syseventd_SOURCES = syseventd_main.c worker_threads.c triggerMgr.c clientsMgr.c dataMgr.c se_debug.c utils.c
 
-syseventd_CPPFLAGS = -I$(top_srcdir)/source/include \
-                     -I$(top_srcdir)/source/util/utils \
-                     -I$(top_srcdir)/source/sysevent/lib

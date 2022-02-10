@@ -16,23 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-
 bin_PROGRAMS = service_wan
 
+AM_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/util/print_uptime 
+
+AM_LDFLAGS =  -lpthread -lz -lsecure_wrapper
+
 service_wan_SOURCES = service_wan.c
-
-service_wan_CPPFLAGS = -I$(top_srcdir)/source/include \
-                       -I$(top_srcdir)/source/util/utils \
-                       -I$(top_srcdir)/source/util/print_uptime
-
-service_wan_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/util/print_uptime -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
 
 service_wan_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                     $(top_builddir)/source/services/lib/libsrvmgr.la \
                     $(top_builddir)/source/sysevent/lib/libsysevent.la \
                     $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                    $(top_builddir)/source/util/print_uptime/libprint_uptime.la \
                     $(top_builddir)/source/ulog/libulog.la \
-                    -ltelemetry_msgsender
+		    $(top_builddir)/source/util/print_uptime/libprint_uptime.la  \
+		    -ltelemetry_msgsender
 
-service_wan_LDFLAGS = -lsecure_wrapper 
+service_wan_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/util/print_uptime -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include

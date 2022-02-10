@@ -72,7 +72,7 @@ AC_ARG_WITH([ccsp-arch],
      ;;
    *)
      AC_MSG_ERROR([$withval is an invalid option to --with-ccsp-arch])
-     ;;
+     ;;  
  esac],
 [CCSP_ARCH=''])
 if test x"${CCSP_ARCH}" != x; then
@@ -84,7 +84,7 @@ AM_CONDITIONAL(CCSP_ARCH_ARM, test "x$CCSP_ARCH" = xarm)
 AM_CONDITIONAL(CCSP_ARCH_ATOM, test "x$CCSP_ARCH" = xatom)
 AM_CONDITIONAL(CCSP_ARCH_PC, test "x$CCSP_ARCH" = xpc)
 AM_CONDITIONAL(CCSP_ARCH_MIPS, test "x$CCSP_ARCH" = xmips)
-AM_CONDITIONAL([PLATFORM_HAL_SYNDICATION], [test "$PLATFORM_HAL_SYNDICATION" = "yes"])
+AM_CONDITIONAL([PLATFORM_HAL_SYNDICATION], [test $PLATFORM_HAL_SYNDICATION = yes])
 
 # Specify ccsp platform (device)
 AC_ARG_WITH([ccsp-platform],
@@ -93,10 +93,10 @@ AC_ARG_WITH([ccsp-platform],
 [case x"$withval" in
    xintel_usg)
      CCSP_PLATFORM=intel_usg
-     ;;
+     ;;  
    xintel_puma7)
      CCSP_PLATFORM=intel_puma7
-     ;;
+     ;;  
    xpc)
      CCSP_PLATFORM=pc
      ;;
@@ -127,8 +127,6 @@ AC_C_INLINE
 # Checks for library functions.
 AC_FUNC_MALLOC
 
-AX_PTHREAD
-
 PKG_CHECK_MODULES([DBUS],[dbus-1 >= 1.6.18])
 
 # Checks for DSLite Feature Support
@@ -147,55 +145,56 @@ AC_CONFIG_FILES([
 ])] )
 
 AC_CONFIG_FILES(
-	Makefile
-	source/Makefile
-	source/dhcpproxy/Makefile
-	source/firewall/Makefile
-	source/firewall_log/Makefile
-	source/igd/Makefile
+	source/util/rpc/client/Makefile
+        source/util/print_uptime/Makefile
 	source/igd/src/Makefile
-	source/macclone/Makefile
+	source/igd/Makefile
+	source/firewall_log/Makefile
+	source/utctx/bin/Makefile
+	source/utctx/lib/Makefile
+	source/utctx/Makefile
+	source/firewall/Makefile
+	source/syscfg/cmd/Makefile
+	source/syscfg/lib/Makefile
+	source/syscfg/Makefile
+	source/ulog/Makefile
 	source/newhost/Makefile
-	source/pal/Makefile
+	source/macclone/Makefile
+	source/dhcpproxy/Makefile
+	source/utapi/cmd/Makefile
+	source/utapi/lib/Makefile
+	source/utapi/Makefile
 	source/pmon/Makefile
-	source/scripts/Makefile
-	source/scripts/init/Makefile
-	source/scripts/init/c_registration/Makefile
+	source/pal/Makefile
+	source/sysevent/lib/Makefile
+	source/sysevent/control/Makefile
+	source/sysevent/fork_helper/Makefile
+	source/sysevent/proxy/Makefile
+	source/sysevent/server/Makefile
+	source/sysevent/Makefile
+	source/services/lib/Makefile
+	source/services/Makefile
+	source/service_wan/Makefile
+    source/service_udhcpc/Makefile
+	source/service_dhcp/Makefile
+	source/service_multinet/Makefile
+	source/service_routed/Makefile
+        source/service_ipv6/Makefile
+        source/util/Makefile
+	source/util/rpc/Makefile
+    source/util/rpc/server/Makefile
+    source/util/utils/Makefile
+	source/trigger/Makefile
+        source/scripts/Makefile
+        source/scripts/init/Makefile
+        source/scripts/init/c_registration/Makefile
 	source/scripts/init/src/Makefile
 	source/scripts/init/src/apply_system_defaults/Makefile
 	source/scripts/init/src/execute_dir/Makefile
-	source/services/Makefile
-	source/services/lib/Makefile
-	source/service_dhcp/Makefile
-	source/service_ipv6/Makefile
-	source/service_multinet/Makefile
-	source/service_routed/Makefile
-	source/service_udhcpc/Makefile
-	source/service_wan/Makefile
-	source/syscfg/Makefile
-	source/syscfg/cmd/Makefile
-	source/syscfg/lib/Makefile
-	source/sysevent/Makefile
-	source/sysevent/control/Makefile
-	source/sysevent/fork_helper/Makefile
-	source/sysevent/lib/Makefile
-	source/sysevent/proxy/Makefile
-	source/sysevent/server/Makefile
-	source/trigger/Makefile
-	source/ulog/Makefile
-	source/utapi/Makefile
-	source/utapi/cmd/Makefile
-	source/utapi/lib/Makefile
-	source/utctx/Makefile
-	source/utctx/bin/Makefile
-	source/utctx/lib/Makefile
-	source/util/Makefile
-	source/util/print_uptime/Makefile
-	source/util/rpc/Makefile
-	source/util/rpc/client/Makefile
-	source/util/rpc/server/Makefile
-	source/util/utils/Makefile
+	source/Makefile
+	Makefile
 )
 
 AC_SUBST(GTEST_ENABLE_FLAG)
 AC_OUTPUT
+
