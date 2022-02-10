@@ -54,7 +54,14 @@
 
 #define ERROR	-1
 #define SUCCESS	0		
-#define ARM_CONSOLE_LOG_FILE	"/rdklogs/logs/ArmConsolelog.txt.0"
+#define IOT_SERVICE_PATH        "/etc/utopia/service.d"
+#define SERVICE_MULTINET_PATH   "/etc/utopia/service.d/service_multinet"
+
+#if defined (_XB6_PRODUCT_REQ_) || defined(_CBR_PRODUCT_REQ_) || defined (_XB7_PRODUCT_REQ_)
+#define CONSOLE_LOG_FILE "/rdklogs/logs/Consolelog.txt.0"
+#else
+#define CONSOLE_LOG_FILE "/rdklogs/logs/ArmConsolelog.txt.0"
+#endif
 
 const char* const g_cComponent_id = "ccsp.servicedhcp";
 void* g_vBus_handle = NULL;
@@ -171,14 +178,16 @@ void get_device_props()
     }   
 }
 
-void executeCmd(char *cmd)
+int executeCmd(char *cmd)
 {
 	int l_iSystem_Res;
 	l_iSystem_Res = system(cmd);
     if (0 != l_iSystem_Res && ECHILD != errno)
     {
         fprintf(stderr, "%s command didnt execute successfully\n", cmd);
+        return l_iSystem_Res;
     }
+    return 0;
 }
 
 void copy_file(char *input_file, char *target_file)
@@ -381,14 +390,14 @@ int sysevent_syscfg_init()
 	g_iSyseventfd = sysevent_open("127.0.0.1", SE_SERVER_WELL_KNOWN_PORT, SE_VERSION,
                                                "service_dhcp", &g_tSysevent_token);
 
-	g_fArmConsoleLog = freopen(ARM_CONSOLE_LOG_FILE, "a+", stderr);
+	g_fArmConsoleLog = freopen(CONSOLE_LOG_FILE, "a+", stderr);
 	if (NULL == g_fArmConsoleLog) //In error case not returning as it is ok to continue
 	{
-		fprintf(stderr, "Error:%d while opening Log file:%s\n", errno, ARM_CONSOLE_LOG_FILE);
+		fprintf(stderr, "Error:%d while opening Log file:%s\n", errno, CONSOLE_LOG_FILE);
 	}
 	else
 	{
-		fprintf(stderr, "Successful in opening while opening Log file:%s\n", ARM_CONSOLE_LOG_FILE);
+		fprintf(stderr, "Successful in opening while opening Log file:%s\n", CONSOLE_LOG_FILE);
 	}	
 
     if (g_iSyseventfd < 0)       
@@ -416,7 +425,7 @@ int sysevent_syscfg_init()
 
 int main(int argc, char *argv[])
 {
-	char l_cL3Inst[8] = {0};
+	char l_cL3Inst[8] = {0}, l_cSysevent_Cmd[255] = {0};
 	int l_iL3Inst;
 
 	if (argc < 2)	
@@ -458,7 +467,7 @@ int main(int argc, char *argv[])
 			lan_status_change(NULL);
 		}
 	}
-	else if (!strncmp(argv[1], "bring-lan", 9))
+	else if (!strncmp(argv[1], "bring-lan", 9) || !strncmp(argv[1], "pnm-status", 10))
 	{
 		bring_lan_up();
 	}
@@ -479,6 +488,47 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Insufficient number of arguments for %s\n", argv[1]);
         }
 	}
+    else if (!strncmp(argv[1], "ipv4-resync", 11))
+    {
+        ipv4_resync(argv[2]);
+    }
+    else if (!strncmp(argv[1], "erouter_mode-updated", 20))
+    {
+        erouter_mode_updated();
+    }
+    else if (!strncmp(argv[1], "multinet-resync", 15))
+    {
+        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool 'true' 'true'");
+        executeCmd(l_cSysevent_Cmd);
+    }
+    else if (!strncmp(argv[1], "iot_status", 10))
+    {
+        fprintf(stderr, "IOT_LOG : lan_handler received %s status\n", argv[2]);
+        if (!strncmp(argv[2],"up",2))
+        {
+            snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"%s/handle_sw.sh %s", SERVICE_MULTINET_PATH, "addIotVlan 0 106 -t");
+            executeCmd(l_cSysevent_Cmd);
+
+            fprintf(stderr, "IOT_LOG : lan_handler done with handle_sw call\n");
+
+            snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"%s/iot_service.sh up", IOT_SERVICE_PATH);
+            executeCmd(l_cSysevent_Cmd);
+        }
+        else if (!strncmp(argv[2],"down",4))
+        {
+            snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"%s/iot_service.sh down", IOT_SERVICE_PATH);
+            executeCmd(l_cSysevent_Cmd);
+        }
+        else if (!strncmp(argv[2],"bootup",6))
+        {
+            snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"%s/iot_service.sh bootup", IOT_SERVICE_PATH);
+            executeCmd(l_cSysevent_Cmd);
+        }
+    }
+    else if (!strncmp(argv[1], "lan-stop", 8))
+    {
+        lan_stop();
+    }
 	else if (!strncmp(argv[1], "lan-start", 9))
 	{
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, 
@@ -512,19 +562,75 @@ int main(int argc, char *argv[])
             printf("Insufficient number of arguments for %s\n", argv[1]);
         }
     }    
+    else if(!strncmp(argv[1], "syslog-status", 13))
+    {
+        char syslog_status_buf[10]={0};
+        sysevent_get(g_iSyseventfd, g_tSysevent_token,
+                     "syslog-status", syslog_status_buf,
+                     sizeof(syslog_status_buf));
+        if(!strncmp(syslog_status_buf, "started", 7))
+        {
+            syslog_restart_request();
+        }
+    }
+    else if(!strncmp(argv[1], "ipv4-set_dyn_config", 19))
+    {
+        if (argc > 2)
+        {
+            apply_config(atoi(argv[2]),0,0);
+        }
+        else
+        {
+            printf("Insufficient number of arguments for %s\n", argv[1]);
+        }
+    }
+    else if(!strncmp(argv[1], "ipv4-sync_tsip_all", 18))
+    {
+        sync_tsip();
+        sync_tsip_asn();
+        sysevent_set(g_iSyseventfd, g_tSysevent_token, "wan_staticip-status", "started", 0);
+    }
+    else if(!strncmp(argv[1], "ipv4-stop_tsip_all", 18))
+    {
+        remove_tsip_config();
+        remove_tsip_asn_config();
+    }
+    else if(!strncmp(argv[1], "ipv4-resync_tsip", 16))
+    {
+        resync_tsip();
+    }
+    else if(!strncmp(argv[1], "ipv4-resync_tsip_asn", 20))
+    {
+        resync_tsip_asn();
+    }
+    else if(!strncmp(argv[1], "ipv4-resyncAll", 14))
+    {
+        resync_all_instance();
+    }
+    else if(!strncmp(argv[1], "dhcp_server-resync", 18))
+    {
+        resync_to_nonvol(NULL);
+    }
     else if((!strncmp(argv[1], "multinet_1-status", 17)) ||  
             (!strncmp(argv[1], "multinet_2-status", 17)) ||  
             (!strncmp(argv[1], "multinet_3-status", 17)) ||
             (!strncmp(argv[1], "multinet_4-status", 17)))
     {   
         int l_iL2Inst, l_iL3Inst;
+        char l_cBridgeMode[2]={0};
         if (argc > 3)
         {   
             sscanf(argv[1], "multinet_%d-status", &l_iL2Inst);
             //handle_l2_status $3 $INST $2
             //$1 - multinet_*-status $2 - status $3 - L3 Instance number
             l_iL3Inst = atoi(argv[3]);
-            handle_l2_status(l_iL3Inst, l_iL2Inst, argv[2], 0); 
+            sysevent_get(g_iSyseventfd, g_tSysevent_token,
+                         "bridge_mode", l_cBridgeMode, sizeof(l_cBridgeMode));
+
+            if (!((l_cBridgeMode[0] > '0') && (l_iL2Inst == 1)))
+            {
+                handle_l2_status(l_iL3Inst, l_iL2Inst, argv[2], 0);
+            }
         }
         else
         {

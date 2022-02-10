@@ -40,7 +40,7 @@ const char* SERVICE_NAME            = "lan";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/lan_handler.sh";
 
 #if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_) && !defined(_PLATFORM_IPQ_)
-const char* SERVICE_CUSTOM_EVENTS[] = { 
+const char* SERVICE_CUSTOM_EVENTS[] = {
     "pnm-status|/etc/utopia/service.d/lan_handler.sh",
     "bring-lan|/usr/bin/service_dhcp",
     "lan-start|/usr/bin/service_dhcp",
@@ -48,6 +48,20 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "iot_status|/etc/utopia/service.d/lan_handler.sh",
     "ipv4-resync|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     "erouter_mode-updated|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
+    NULL };
+#elif defined(CORE_NET_LIB) && \
+        ((defined(_XB6_PRODUCT_REQ_) && !defined (_XB8_PRODUCT_REQ_)) || \
+         (defined(_CBR_PRODUCT_REQ_) && !defined(_CBR2_PRODUCT_REQ_)))
+const char* SERVICE_CUSTOM_EVENTS[] = {
+    "pnm-status|/usr/bin/service_dhcp",
+    "bring-lan|/usr/bin/service_dhcp",
+    "lan-start|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
+    "lan-stop|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
+    "lan-restart|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
+    "iot_status|/usr/bin/service_dhcp",
+    //"multinet-resync|/usr/bin/service_dhcp",
+    "ipv4-resync|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
+    "erouter_mode-updated|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
     NULL };
 #else
 const char* SERVICE_CUSTOM_EVENTS[] = { 
@@ -57,7 +71,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "ipv4-resync|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     "erouter_mode-updated|/etc/utopia/service.d/lan_handler.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
-#endif	
+#endif
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);

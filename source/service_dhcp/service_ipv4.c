@@ -17,7 +17,7 @@
   limitations under the License.
 **************************************************************************/
 
-			#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/sysinfo.h>
@@ -27,6 +27,16 @@
 #include "print_uptime.h"
 #include <telemetry_busmessage_sender.h>
 #include "safec_lib_common.h"
+#include <arpa/inet.h>
+#include <libnet.h>
+
+#ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
+#include <rdk_debug.h>
+#define LOGGING_MODULE "Utopia"
+#define OnboardLog(...)     rdk_log_onboard(LOGGING_MODULE, __VA_ARGS__)
+#else
+#define OnboardLog(...)
+#endif
 
 #define THIS            "/usr/bin/service_dhcp"
 #define LAN_IF_NAME     "brlan0"
@@ -51,19 +61,20 @@
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 
-extern void executeCmd(char *);
+extern int executeCmd(char *);
 extern unsigned int mask2cidr(char *subnetMask);
 extern unsigned int countSetBits(int byte);
 extern void subnet(char *ipv4Addr, 
                    char *ipv4Subnet, char *subnet);
 extern void get_device_props();
+extern void get_dateanduptime(char *buffer, int *uptime);
 
 //=======================
 //service_ipv4.sh conversion
 //======================
 void remove_config(int l3_inst)
 {
-    	fprintf(stderr, "ipv4 remove_config\n");
+    fprintf(stderr, "ipv4 remove_config called with arg %d\n", l3_inst);
 
 	char l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0};
 	char l_cIfName[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cSubnet[16] = {0};
@@ -85,33 +96,65 @@ void remove_config(int l3_inst)
 	l_iCIDR = mask2cidr(l_cCur_Ipv4_Subnet);
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-			 "ip addr del %s/%d dev %s", l_cCur_Ipv4_Addr, l_iCIDR, l_cIfName);
-    
-	executeCmd(l_cSysevent_Cmd);	
+			 "%s/%d dev %s", l_cCur_Ipv4_Addr, l_iCIDR, l_cIfName);
+	addr_delete(l_cSysevent_Cmd);
  
 	// TODO: Fix this static workaround. Should have configurable routing policy.
 	subnet(l_cCur_Ipv4_Addr, l_cCur_Ipv4_Subnet, l_cSubnet);
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-			 "ip rule del from %s lookup %d", l_cCur_Ipv4_Addr, l_iRT_Table);
-	executeCmd(l_cSysevent_Cmd);	
+			 "from %s lookup %d", l_cCur_Ipv4_Addr, l_iRT_Table);
+	rule_delete(l_cSysevent_Cmd);	
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-			 "ip rule del iif %s lookup erouter", l_cIfName);
-	executeCmd(l_cSysevent_Cmd);	
+			 "iif %s lookup erouter", l_cIfName);
+	rule_delete(l_cSysevent_Cmd);	
 	
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-			 "ip rule del iif %s lookup %d", l_cIfName, l_iRT_Table);
-	executeCmd(l_cSysevent_Cmd);	
+			 "iif %s lookup %d", l_cIfName, l_iRT_Table);
+	rule_delete(l_cSysevent_Cmd);	
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-			 "ip route del table %d %s/%d dev %s", l_iRT_Table, l_cSubnet, l_iCIDR, l_cIfName);
-	executeCmd(l_cSysevent_Cmd);	
+			 "table %d %s/%d dev %s", l_iRT_Table, l_cSubnet, l_iCIDR, l_cIfName);
+	route_delete(l_cSysevent_Cmd);	
 	
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
-			 "ip route del table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, l_cIfName);
-	executeCmd(l_cSysevent_Cmd);	
-
+			 "table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, l_cIfName);
+	route_delete(l_cSysevent_Cmd);	
+    if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
+    {
+#if defined (_XB6_PRODUCT_REQ_)
+        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "%s/%d dev %s", "239.255.255.250", 32, l_cIfName);
+        route_delete(l_cSysevent_Cmd);
+#endif
+        char upnp_status[8] = {0};
+        syscfg_get(NULL, "start_upnp_service", upnp_status, sizeof(upnp_status));
+        if (!strncmp(upnp_status, "true", 4))
+        {
+            FILE *file;
+            char start_upnp_service_script[64] = {0};
+            fprintf(stderr, "%s Stopping UPNP Service...\n",__FUNCTION__);
+            snprintf(start_upnp_service_script, sizeof(start_upnp_service_script), "/lib/rdk/start-upnp-service");
+            if ((file = fopen(start_upnp_service_script, "r")))
+            {
+                fclose(file);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "%s stop", start_upnp_service_script);
+                executeCmd(l_cSysevent_Cmd);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "killall xcal-device");
+                executeCmd(l_cSysevent_Cmd);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "killall xdiscovery");
+                executeCmd(l_cSysevent_Cmd);
+            }
+            else
+            {
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "systemctl stop xcal-device &");
+                executeCmd(l_cSysevent_Cmd);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "systemctl stop xupnp &");
+                executeCmd(l_cSysevent_Cmd);
+            }
+            interface_down("brlan0:0");
+        }
+    }
     // del 161/162 port from brlan0 interface when it is teardown
 	/*if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
 	{
@@ -184,16 +227,19 @@ void teardown_instance(int l3_inst)
     }	
 }
 
-void sync_tsip () 
+void remove_tsip_config()
 {
-	char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
 	char l_cNvTsip_IpSubnet[16] = {0}, l_cNvTsip_Gateway[16] = {0};
 	char l_cSubnet[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cPsm_Parameter[255] = {0};
+        char bcast[INET_ADDRSTRLEN];
         char *l_cpPsm_Get = NULL;
 
         int l_iCIDR, l_iRet_Val = 0;
 
-#if !defined (_BWG_PRODUCT_REQ_)
+#if !defined(_BWG_PRODUCT_REQ_) && !defined(_CBR_PRODUCT_REQ_) && !defined(_CBR2_PRODUCT_REQ_)
         int l_iNv_Tsip_Enable = 0;
         l_iNv_Tsip_Enable = atoi(l_cNv_Tsip_Enable);
 #endif
@@ -216,10 +262,286 @@ void sync_tsip ()
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
+	//psm get dmsb.truestaticip.Ipaddress
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_IP);
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRet_Val)
+	{
+		if (l_cpPsm_Get != NULL)
+	    {
+    	    strncpy(l_cNvTsip_IpAddr, l_cpPsm_Get, sizeof(l_cNvTsip_IpAddr));
+	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+    	    l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+
+	//psm get dmsb.truestaticip.Subnetmask
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_SUBNET);
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRet_Val)
+	{
+		if (l_cpPsm_Get != NULL)
+	    {
+            /* CID 162994: BUFFER_SIZE_WARNING */
+            strncpy(l_cNvTsip_IpSubnet, l_cpPsm_Get, sizeof(l_cNvTsip_IpSubnet)-1);
+	        l_cNvTsip_IpSubnet[sizeof(l_cNvTsip_IpSubnet)-1] = '\0';
+	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+    	    l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+
+	//psm get dmsb.truestaticip.Gateway
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+			 "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_GATEWAY);
+
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRet_Val)
+	{
+		if (l_cpPsm_Get != NULL)
+	    {
+            /* CID 135638 : BUFFER_SIZE_WARNING */
+    	    strncpy(l_cNvTsip_Gateway, l_cpPsm_Get, sizeof(l_cNvTsip_Gateway)-1);
+	        l_cNvTsip_Gateway[sizeof(l_cNvTsip_Gateway)-1] = '\0';
+	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+    	    l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+
+	fprintf(stderr, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n",
+		   l_cNv_Tsip_Enable, l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cNvTsip_Gateway);
+
+    fprintf(stderr, "ipv4 remove_tsip_config\n");
+#if defined(_CBR_PRODUCT_REQ_) || defined(_CBR2_PRODUCT_REQ_) || defined(_BWG_PRODUCT_REQ_)
+    if (0 != l_cNv_Tsip_Enable[0])
+#else
+	if (0 != l_cNv_Tsip_Enable[0] && 0 != l_iNv_Tsip_Enable)
+#endif
+    {
+        l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
+		subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);
+		addr_derive_broadcast(l_cNvTsip_IpAddr, l_iCIDR, bcast, INET_ADDRSTRLEN);
+		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                 "%s/%d broadcast %s dev %s", 
+				 l_cNvTsip_IpAddr, l_iCIDR, bcast, LAN_IF_NAME);
+	    addr_delete(l_cSysevent_Cmd);
+
+	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			    "table %d %s/%d dev %s", 14, l_cSubnet, l_iCIDR, LAN_IF_NAME);
+	    route_delete(l_cSysevent_Cmd);
+
+	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			    "table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, LAN_IF_NAME);
+	    route_delete(l_cSysevent_Cmd);
+    }
+
+}
+
+void remove_tsip_asn_config()
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char l_cNv_Tsip_Asn_Ip[16] = {0}, l_cNv_Tsip_Asn_Subnet[16] = {0}, l_cSubnet[16] = {0};
+    char l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
+    unsigned int l_iTs_Asn_Count = 0;
+    unsigned int *l_iTs_Asn_Ins = NULL;
+    char* l_cpPsm_Get = NULL;
+    char bcast[INET_ADDRSTRLEN];
+    int l_iRet_Val = 0, l_iCIDR, l_iIter;
+    errno_t safec_rc = -1;
+    l_iRet_Val = PSM_VALUE_GET_INS(IPV4_TSIP_ASNPREFIX, &l_iTs_Asn_Count, &l_iTs_Asn_Ins);
+    if(l_iRet_Val == CCSP_SUCCESS)
+    {
+		if (l_iTs_Asn_Count != 0)
+		{
+    		if(MAX_TS_ASN_COUNT -1  < l_iTs_Asn_Count)
+			{
+	        	fprintf(stderr, "ERROR Too many Ture static subnet\n");
+    	        l_iTs_Asn_Count = MAX_TS_ASN_COUNT -1;
+	        }
+    	    for(l_iIter = 0; l_iIter < (int)l_iTs_Asn_Count ; l_iIter++)
+			{
+	        	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+						 "%s%d.%s", IPV4_TSIP_ASNPREFIX,
+						 l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_ENABLE);
+
+    	        l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
+        	    if (l_iRet_Val == 0)
+				{
+					if (l_cpPsm_Get != NULL)
+					{
+		            	if(atoi(l_cpPsm_Get) != 1)
+						{
+        		            Ansc_FreeMemory_Callback(l_cpPsm_Get);
+            		        l_cpPsm_Get = NULL;
+                		    continue;
+		                }
+    		            Ansc_FreeMemory_Callback(l_cpPsm_Get);
+        		        l_cpPsm_Get = NULL;
+					}
+					else
+					{
+						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+					}
+            	}
+				else
+				{
+        			fprintf(stderr, "Error:%d while getting parameter:%s\n",
+							l_iRet_Val, l_cPsm_Parameter);
+			    }
+                fprintf(stderr, "%s  Removing for instance: %d\n",__FUNCTION__,l_iIter);
+	            snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+						 "%s%d.%s", IPV4_TSIP_ASNPREFIX,
+						 l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_IP);
+
+    	        l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
+        	    if (l_iRet_Val == 0)
+				{
+					if (l_cpPsm_Get != NULL)
+					{
+				/*CID 163592 : BUFFER_SIZE */
+				strncpy(l_cNv_Tsip_Asn_Ip, l_cpPsm_Get, sizeof(l_cNv_Tsip_Asn_Ip)-1);
+				l_cNv_Tsip_Asn_Ip[sizeof(l_cNv_Tsip_Asn_Ip)-1] = '\0';
+                                Ansc_FreeMemory_Callback(l_cpPsm_Get);
+        		        l_cpPsm_Get = NULL;
+	            	}
+					else
+					{
+						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+					}
+				}
+				else
+				{
+        			fprintf(stderr, "Error:%d while getting parameter:%s\n",
+							l_iRet_Val, l_cPsm_Parameter);
+			    }
+
+    	        safec_rc = sprintf_s(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s",
+						IPV4_TSIP_ASNPREFIX, l_iTs_Asn_Ins[l_iIter],
+						IPV4_TSIP_SUBNET);
+                ERR_CHK(safec_rc);
+
+        	    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
+            	if (l_iRet_Val == 0)
+				{
+					if(l_cpPsm_Get != NULL)
+					{
+    	        		strncpy(l_cNv_Tsip_Asn_Subnet, l_cpPsm_Get,
+								sizeof(l_cNv_Tsip_Asn_Subnet));
+
+	        	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+    	        	    l_cpPsm_Get = NULL;
+					}
+					else
+					{
+						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+					}
+	            }
+				else
+				{
+        			fprintf(stderr, "Error:%d while getting parameter:%s\n",
+							l_iRet_Val, l_cPsm_Parameter);
+			    }
+
+                l_iCIDR = mask2cidr(l_cNv_Tsip_Asn_Subnet);
+				subnet(l_cNv_Tsip_Asn_Ip, l_cNv_Tsip_Asn_Subnet, l_cSubnet);
+
+				addr_derive_broadcast(l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, INET_ADDRSTRLEN);
+		        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                         "%s/%d broadcast %s dev %s", 
+				 l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, LAN_IF_NAME);
+		        addr_delete(l_cSysevent_Cmd);
+
+				snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			 	        "table %d %s/%d dev %s", 14, l_cSubnet, l_iCIDR, LAN_IF_NAME);
+		        route_delete(l_cSysevent_Cmd);
+
+				snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			            "table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, LAN_IF_NAME);
+		        route_delete(l_cSysevent_Cmd);
+    	    }
+        	Ansc_FreeMemory_Callback(l_iTs_Asn_Ins);
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
+    }
+}
+
+void sync_tsip () 
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+	char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
+	char l_cNvTsip_IpSubnet[16] = {0}, l_cNvTsip_Gateway[16] = {0};
+	char l_cSubnet[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cPsm_Parameter[255] = {0};
+        char *l_cpPsm_Get = NULL;
+
+        int l_iCIDR, l_iRet_Val = 0;
+
+#if !defined(_BWG_PRODUCT_REQ_) && !defined(_CBR_PRODUCT_REQ_) && !defined(_CBR2_PRODUCT_REQ_)
+        int l_iNv_Tsip_Enable = 0;
+        l_iNv_Tsip_Enable = atoi(l_cNv_Tsip_Enable);
+#endif
+
+	char bcast[INET_ADDRSTRLEN];
+	//psm get dmsb.truestaticip.Enable
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_ENABLE);
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+	if (CCSP_SUCCESS == l_iRet_Val)
+    {
+		if (l_cpPsm_Get != NULL)
+		{
+			strncpy(l_cNv_Tsip_Enable, l_cpPsm_Get, sizeof(l_cNv_Tsip_Enable));
+        	Ansc_FreeMemory_Callback(l_cpPsm_Get);
+	        l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+    fprintf(stderr, "%s syncing TSIP for instance\n",__FUNCTION__);
 	//psm get dmsb.truestaticip.Ipaddress
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_IP);
     l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
@@ -251,7 +573,7 @@ void sync_tsip ()
 	    {
             /* CID 162994: BUFFER_SIZE_WARNING */
             strncpy(l_cNvTsip_IpSubnet, l_cpPsm_Get, sizeof(l_cNvTsip_IpSubnet)-1);
-	    l_cNvTsip_IpSubnet[sizeof(l_cNvTsip_IpSubnet)-1] = '\0';
+	        l_cNvTsip_IpSubnet[sizeof(l_cNvTsip_IpSubnet)-1] = '\0';
 	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
     	    l_cpPsm_Get = NULL;
 		}
@@ -296,37 +618,40 @@ void sync_tsip ()
 		   l_cNv_Tsip_Enable, l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cNvTsip_Gateway);
 
     // apply the new original true static ip
-#if defined (_BWG_PRODUCT_REQ_)
-        if (0 != l_cNv_Tsip_Enable[0])
+#if defined(_CBR_PRODUCT_REQ_) || defined(_CBR2_PRODUCT_REQ_) || defined(_BWG_PRODUCT_REQ_)
+    if (0 != l_cNv_Tsip_Enable[0])
 #else
 	if (0 != l_cNv_Tsip_Enable[0] && 0 != l_iNv_Tsip_Enable)
 #endif
 	{
 		l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
 		subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);
+        fprintf(stderr, "%s Adding IP routes\n",__FUNCTION__);
+		addr_derive_broadcast(l_cNvTsip_IpAddr, l_iCIDR, bcast, INET_ADDRSTRLEN);
+		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                 "%s/%d broadcast %s dev %s", 
+				 l_cNvTsip_IpAddr, l_iCIDR, bcast, LAN_IF_NAME);
+
+        addr_add(l_cSysevent_Cmd);
 
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "ip addr add %s/%d broadcast + dev %s", 
-				 l_cNvTsip_IpAddr, l_iCIDR, LAN_IF_NAME);
-
-        executeCmd(l_cSysevent_Cmd);
-
-		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "ip route add table 14 %s/%d dev %s", 
+                 "table 14 %s/%d dev %s", 
 				 l_cSubnet, l_iCIDR, LAN_IF_NAME);
 
-        executeCmd(l_cSysevent_Cmd);
+        route_add(l_cSysevent_Cmd);
 
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "ip route add table all_lans %s/%d dev %s", 
+                 "table all_lans %s/%d dev %s", 
 				 l_cSubnet, l_iCIDR, LAN_IF_NAME);
 
-        executeCmd(l_cSysevent_Cmd);
+        route_add(l_cSysevent_Cmd);
     }
 }
 
 void sync_tsip_asn () 
 {
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
 	char l_cNv_Tsip_Asn_Ip[16] = {0}, l_cNv_Tsip_Asn_Subnet[16] = {0}, l_cSubnet[16] = {0};
 	char l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
 	unsigned int l_iTs_Asn_Count = 0;
@@ -334,6 +659,8 @@ void sync_tsip_asn ()
 	char* l_cpPsm_Get = NULL;
 	int l_iRet_Val = 0, l_iCIDR, l_iIter;
     errno_t safec_rc = -1;
+	char bcast[INET_ADDRSTRLEN];
+
     l_iRet_Val = PSM_VALUE_GET_INS(IPV4_TSIP_ASNPREFIX, &l_iTs_Asn_Count, &l_iTs_Asn_Ins);
     if(l_iRet_Val == CCSP_SUCCESS)
 	{
@@ -374,7 +701,8 @@ void sync_tsip_asn ()
         			fprintf(stderr, "Error:%d while getting parameter:%s\n", 
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
- 
+
+                fprintf(stderr, "%s Syncing for instance: %d\n",__FUNCTION__,l_iIter); 
 	            snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), 
 						 "%s%d.%s", IPV4_TSIP_ASNPREFIX, 
 						 l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_IP);
@@ -404,9 +732,7 @@ void sync_tsip_asn ()
     	        safec_rc = sprintf_s(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s", 
 						IPV4_TSIP_ASNPREFIX, l_iTs_Asn_Ins[l_iIter], 
 						IPV4_TSIP_SUBNET);
-                if(safec_rc < EOK){
-                    ERR_CHK(safec_rc);
-                }
+                ERR_CHK(safec_rc);
 
         	    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
             	if (l_iRet_Val == 0)
@@ -432,24 +758,24 @@ void sync_tsip_asn ()
 
 				l_iCIDR = mask2cidr(l_cNv_Tsip_Asn_Subnet);
 				subnet(l_cNv_Tsip_Asn_Ip, l_cNv_Tsip_Asn_Subnet, l_cSubnet);
-	
+				addr_derive_broadcast(l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, INET_ADDRSTRLEN);
 				snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-	    	             "ip addr add %s/%d broadcast + dev %s", 
-						 l_cNv_Tsip_Asn_Ip, l_iCIDR, LAN_IF_NAME);
+	    	             "%s/%d broadcast %s dev %s", 
+						 l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, LAN_IF_NAME);
 
-    	    	executeCmd(l_cSysevent_Cmd);
+    	    	addr_add(l_cSysevent_Cmd);
 
 	        	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-    	        	     "ip route add table 14 %s/%d dev %s", 
+    	        	     "table 14 %s/%d dev %s", 
 						 l_cSubnet, l_iCIDR, LAN_IF_NAME);
 
-		        executeCmd(l_cSysevent_Cmd);
+		        route_add(l_cSysevent_Cmd);
 		
     		    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-        		         "ip route add table all_lans %s/%d dev %s", 
+        		         "table all_lans %s/%d dev %s", 
 						 l_cSubnet, l_iCIDR, LAN_IF_NAME);
 
-		        executeCmd(l_cSysevent_Cmd);
+		        route_add(l_cSysevent_Cmd);
     	    }
         	Ansc_FreeMemory_Callback(l_iTs_Asn_Ins);
 		}
@@ -464,12 +790,342 @@ void sync_tsip_asn ()
     }
 }
 
+void resync_tsip()
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
+	char l_cNvTsip_IpSubnet[16] = {0}, l_cNvTsip_Gateway[16] = {0};
+	char l_cSubnet[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cPsm_Parameter[255] = {0};
+        char *l_cpPsm_Get = NULL;
+        char bcast[INET_ADDRSTRLEN];
+
+        int l_iCIDR, l_iRet_Val = 0;
+
+#if !defined(_BWG_PRODUCT_REQ_) && !defined(_CBR_PRODUCT_REQ_) && !defined(_CBR2_PRODUCT_REQ_)
+        int l_iNv_Tsip_Enable = 0;
+        l_iNv_Tsip_Enable = atoi(l_cNv_Tsip_Enable);
+#endif
+
+	//psm get dmsb.truestaticip.Enable
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_ENABLE);
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+	if (CCSP_SUCCESS == l_iRet_Val)
+    {
+		if (l_cpPsm_Get != NULL)
+		{
+			strncpy(l_cNv_Tsip_Enable, l_cpPsm_Get, sizeof(l_cNv_Tsip_Enable));
+        	Ansc_FreeMemory_Callback(l_cpPsm_Get);
+	        l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+
+	//psm get dmsb.truestaticip.Ipaddress
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_IP);
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRet_Val)
+	{
+		if (l_cpPsm_Get != NULL)
+	    {
+    	    strncpy(l_cNvTsip_IpAddr, l_cpPsm_Get, sizeof(l_cNvTsip_IpAddr));
+	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+    	    l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+
+	//psm get dmsb.truestaticip.Subnetmask
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_SUBNET);
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRet_Val)
+	{
+		if (l_cpPsm_Get != NULL)
+	    {
+            /* CID 162994: BUFFER_SIZE_WARNING */
+            strncpy(l_cNvTsip_IpSubnet, l_cpPsm_Get, sizeof(l_cNvTsip_IpSubnet)-1);
+	    l_cNvTsip_IpSubnet[sizeof(l_cNvTsip_IpSubnet)-1] = '\0';
+	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+    	    l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+
+	//psm get dmsb.truestaticip.Gateway
+	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+			 "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_GATEWAY);
+
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRet_Val)
+	{
+		if (l_cpPsm_Get != NULL)
+	    {
+            /* CID 135638 : BUFFER_SIZE_WARNING */
+    	    strncpy(l_cNvTsip_Gateway, l_cpPsm_Get, sizeof(l_cNvTsip_Gateway)-1);
+	    l_cNvTsip_Gateway[sizeof(l_cNvTsip_Gateway)-1] = '\0';
+	        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+    	    l_cpPsm_Get = NULL;
+		}
+		else
+		{
+			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+		}
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+				l_iRet_Val, l_cPsm_Parameter);
+    }
+
+	fprintf(stderr, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n",
+		   l_cNv_Tsip_Enable, l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cNvTsip_Gateway);
+
+    if (atoi(l_cNv_Tsip_Enable) == 1)
+    {
+        t2_event_d("SYS_INFO_StaticIP_setMso", 1);
+    }
+
+    // apply the new original true static ip
+#if defined(_CBR_PRODUCT_REQ_) || defined(_CBR2_PRODUCT_REQ_) || defined(_BWG_PRODUCT_REQ_)
+        if (0 != l_cNv_Tsip_Enable[0])
+#else
+	if (0 != l_cNv_Tsip_Enable[0] && 0 != l_iNv_Tsip_Enable)
+#endif
+	{
+        fprintf(stderr, "%s Deleting TSIP routes\n",__FUNCTION__);
+        //delete the original true static ip first
+        l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
+		subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);
+
+	    addr_derive_broadcast(l_cNvTsip_IpAddr, l_iCIDR, bcast, INET_ADDRSTRLEN);
+	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                 "%s/%d broadcast %s dev %s", 
+				 l_cNvTsip_IpAddr, l_iCIDR, bcast, LAN_IF_NAME);
+	    addr_delete(l_cSysevent_Cmd);
+
+	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			     "table %d %s/%d dev %s", 14, l_cSubnet, l_iCIDR, LAN_IF_NAME);
+	    route_delete(l_cSysevent_Cmd);
+
+	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			    "table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, LAN_IF_NAME);
+	    route_delete(l_cSysevent_Cmd);
+
+        if (atoi(l_cNv_Tsip_Enable) != 0)
+        {
+            fprintf(stderr, "%s Adding TSIP routes\n",__FUNCTION__);
+            //apply the new original true static ip
+            l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
+	    	subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);
+
+		    addr_derive_broadcast(l_cNvTsip_IpAddr, l_iCIDR, bcast, INET_ADDRSTRLEN);
+	        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                    "%s/%d broadcast %s dev %s", 
+			        l_cNvTsip_IpAddr, l_iCIDR, bcast, LAN_IF_NAME);
+	        addr_add(l_cSysevent_Cmd);
+
+	        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			        "table %d %s/%d dev %s", 14, l_cSubnet, l_iCIDR, LAN_IF_NAME);
+	        route_add(l_cSysevent_Cmd);
+
+	        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+			         "table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, LAN_IF_NAME);
+	        route_add(l_cSysevent_Cmd);
+        }
+    }
+}
+
+void resync_tsip_asn()
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char l_cNv_Tsip_asn_Enable[8] = {0},l_cNv_Tsip_Asn_Ip[16] = {0}, l_cNv_Tsip_Asn_Subnet[16] = {0}, l_cSubnet[16] = {0};
+    char l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
+    unsigned int l_iTs_Asn_Count = 0;
+    unsigned int *l_iTs_Asn_Ins = NULL;
+    char* l_cpPsm_Get = NULL;
+    char bcast[INET_ADDRSTRLEN];
+    int l_iRet_Val = 0, l_iCIDR, l_iIter;
+    errno_t safec_rc = -1;
+    //psm get dmsb.truestaticip.Enable
+    snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_ASNPREFIX, IPV4_TSIP_ENABLE);
+    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRet_Val)
+    {
+        if (l_cpPsm_Get != NULL)
+        {
+            strncpy(l_cNv_Tsip_asn_Enable, l_cpPsm_Get, sizeof(l_cNv_Tsip_asn_Enable));
+            Ansc_FreeMemory_Callback(l_cpPsm_Get);
+            l_cpPsm_Get = NULL;
+        }
+        else
+        {
+            fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+    }
+
+    l_iRet_Val = PSM_VALUE_GET_INS(IPV4_TSIP_ASNPREFIX, &l_iTs_Asn_Count, &l_iTs_Asn_Ins);
+    if(l_iRet_Val == CCSP_SUCCESS)
+    {
+        if (l_iTs_Asn_Count != 0)
+        {
+            if(MAX_TS_ASN_COUNT -1  < l_iTs_Asn_Count)
+            {
+                fprintf(stderr, "ERROR Too many Ture static subnet\n");
+                l_iTs_Asn_Count = MAX_TS_ASN_COUNT -1;
+            }
+            for(l_iIter = 0; l_iIter < (int)l_iTs_Asn_Count ; l_iIter++)
+            {
+                snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s", IPV4_TSIP_ASNPREFIX,l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_ENABLE);
+                l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
+                if (l_iRet_Val == 0)
+                {
+                    if (l_cpPsm_Get != NULL)
+                    {
+                        if(atoi(l_cpPsm_Get) != 1)
+                        {
+                            Ansc_FreeMemory_Callback(l_cpPsm_Get);
+                            l_cpPsm_Get = NULL;
+                            continue;
+                        }
+                        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+                        l_cpPsm_Get = NULL;
+                    }
+                    else
+                    {
+                        fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+                }
+                fprintf(stderr, "%s Syncing for instance: %d\n",__FUNCTION__,l_iIter);
+                snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s", IPV4_TSIP_ASNPREFIX, l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_IP);
+                l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
+                if (l_iRet_Val == 0)
+                {
+                    if (l_cpPsm_Get != NULL)
+                    {
+                        /*CID 163592 : BUFFER_SIZE */
+                        strncpy(l_cNv_Tsip_Asn_Ip, l_cpPsm_Get, sizeof(l_cNv_Tsip_Asn_Ip)-1);
+                        l_cNv_Tsip_Asn_Ip[sizeof(l_cNv_Tsip_Asn_Ip)-1] = '\0';
+                        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+                        l_cpPsm_Get = NULL;
+                    }
+                    else
+                    {
+                        fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+                }
+
+                safec_rc = sprintf_s(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s",IPV4_TSIP_ASNPREFIX, l_iTs_Asn_Ins[l_iIter],IPV4_TSIP_SUBNET);
+                ERR_CHK(safec_rc);
+
+                l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
+                if (l_iRet_Val == 0)
+                {
+                    if(l_cpPsm_Get != NULL)
+                    {
+                        strncpy(l_cNv_Tsip_Asn_Subnet, l_cpPsm_Get,sizeof(l_cNv_Tsip_Asn_Subnet));
+
+                        Ansc_FreeMemory_Callback(l_cpPsm_Get);
+                        l_cpPsm_Get = NULL;
+                    }
+                    else
+                    {
+                        fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+                }
+
+                fprintf(stderr, "%s Deleting TSIP ASN routes\n",__FUNCTION__);
+                //delete the original additional subnet first
+                l_iCIDR = mask2cidr(l_cNv_Tsip_Asn_Subnet);
+                addr_derive_broadcast(l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, INET_ADDRSTRLEN);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "%s/%d broadcast %s dev %s", l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, LAN_IF_NAME);
+                addr_delete(l_cSysevent_Cmd);
+
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "table %d %s/%d dev %s", 14, l_cSubnet, l_iCIDR, LAN_IF_NAME);
+                route_delete(l_cSysevent_Cmd);
+
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, LAN_IF_NAME);
+                route_delete(l_cSysevent_Cmd);
+
+                //apply the new additional subnet
+                if (0 != atoi(l_cNv_Tsip_asn_Enable))
+                {
+                    fprintf(stderr, "%s Adding  TSIP ASN routes\n",__FUNCTION__);
+                    l_iCIDR = mask2cidr(l_cNv_Tsip_Asn_Subnet);
+                    subnet(l_cNv_Tsip_Asn_Ip, l_cNv_Tsip_Asn_Subnet, l_cSubnet);
+                    addr_derive_broadcast(l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, INET_ADDRSTRLEN);
+                    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "%s/%d broadcast %s dev %s", l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, LAN_IF_NAME);
+                    addr_add(l_cSysevent_Cmd);
+
+                    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "table %d %s/%d dev %s", 14, l_cSubnet, l_iCIDR, LAN_IF_NAME);
+                    route_add(l_cSysevent_Cmd);
+
+                    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "table all_lans %s/%d dev %s", l_cSubnet, l_iCIDR, LAN_IF_NAME);
+                    route_add(l_cSysevent_Cmd);
+                }
+            }
+            Ansc_FreeMemory_Callback(l_iTs_Asn_Ins);
+        }
+        else
+        {
+            fprintf(stderr, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
+    }
+}
+
 BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 {
+    fprintf(stderr, "Inside %s called with args l3_inst %d, staticIpv4Addr %s and staticIpv4Subnet %s\n",__FUNCTION__, l3_inst, staticIpv4Addr, staticIpv4Subnet);
 	char l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0}; 
-    char l_cIfName[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cSubnet[16] = {0}; 
+    char l_cIfName[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cSubnet[16] = {0}, l_cDsliteEnabled[8] = {0}; 
 	char l_cArp_Ignore_File[64] = {0};
     int l_iRT_Table, l_iCIDR;   
+        char bcast[INET_ADDRSTRLEN];
+
 	FILE *l_fArp_Ignore = NULL;
 	if (NULL == staticIpv4Addr || 0 == staticIpv4Addr[0])
 	{
@@ -534,70 +1190,77 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	}
     l_iRT_Table = l3_inst + 10;
     l_iCIDR = mask2cidr(l_cCur_Ipv4_Subnet);
-
+    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "dslite_enabled");
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cDsliteEnabled, sizeof(l_cDsliteEnabled));
     //If it's ipv6 only mode, doesn't config ipv4 address. For ipv6 other things, we don't take care.
-	if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
+	if (!strncmp(l_cIfName, LAN_IF_NAME, 6) && strncmp(l_cDsliteEnabled, "1", 1))
 	{
 		char l_cLast_Erouter_Mode[8] = {0};
     	syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
 		if ((!strncmp(l_cLast_Erouter_Mode, "1", 1)) || (!strncmp(l_cLast_Erouter_Mode, "3", 1)))
 		{
+		        addr_derive_broadcast(l_cCur_Ipv4_Addr, l_iCIDR, bcast, INET_ADDRSTRLEN);
 			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "ip addr add %s/%d broadcast + dev %s", l_cCur_Ipv4_Addr, l_iCIDR, l_cIfName);
-	        executeCmd(l_cSysevent_Cmd);
+                 "%s/%d broadcast %s dev %s", l_cCur_Ipv4_Addr, l_iCIDR, bcast, l_cIfName);
+	        addr_add(l_cSysevent_Cmd);
         }
 	}
     else
 	{
+        addr_derive_broadcast(l_cCur_Ipv4_Addr, l_iCIDR, bcast, INET_ADDRSTRLEN);
         snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "ip addr add %s/%d broadcast + dev %s", l_cCur_Ipv4_Addr, l_iCIDR, l_cIfName);
-        executeCmd(l_cSysevent_Cmd);
+                 "%s/%d broadcast %s dev %s", l_cCur_Ipv4_Addr, l_iCIDR, bcast, l_cIfName);
+        addr_add(l_cSysevent_Cmd);
     }  
 
     
     // TODO: Fix this static workaround. Should have configurable routing policy.
 	subnet(l_cCur_Ipv4_Addr, l_cCur_Ipv4_Subnet, l_cSubnet);
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-             "ip rule add from %s lookup %d", 
+             "from %s lookup %d", 
 			 l_cCur_Ipv4_Addr, l_iRT_Table);
 
-    executeCmd(l_cSysevent_Cmd);
+    rule_add(l_cSysevent_Cmd);
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-             "ip rule add iif %s lookup erouter", l_cIfName);
-	executeCmd(l_cSysevent_Cmd);
+             "iif %s lookup erouter", l_cIfName);
+	rule_add(l_cSysevent_Cmd);
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-             "ip rule add iif %s lookup %d", 
+             "iif %s lookup %d", 
 			 l_cIfName, l_iRT_Table);
 
-	executeCmd(l_cSysevent_Cmd);
+	rule_add(l_cSysevent_Cmd);
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-             "ip route add table %d %s/%d dev %s", 
+             "table %d %s/%d dev %s", 
 			 l_iRT_Table, l_cSubnet, l_iCIDR, l_cIfName);
 
-    executeCmd(l_cSysevent_Cmd);
+    route_add(l_cSysevent_Cmd);
 
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-             "ip route add table all_lans %s/%d dev %s", 
+             "table all_lans %s/%d dev %s", 
 			 l_cSubnet, l_iCIDR, l_cIfName);
 
-    executeCmd(l_cSysevent_Cmd);
+    route_add(l_cSysevent_Cmd);
 
     // bind 161/162 port to brlan0 interface
 	// del 161/162 port from brlan0 interface when it is teardown
-    /*if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
+    if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
     {
-		sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4_address", l_cCur_Ipv4_Addr, 0);
-		sysevent_set(g_iSyseventfd, g_tSysevent_token, "snmppa_socket_entry", "add", 0);
-    }*/
-	
+		//sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4_address", l_cCur_Ipv4_Addr, 0);
+		//sysevent_set(g_iSyseventfd, g_tSysevent_token, "snmppa_socket_entry", "add", 0);
+#if defined (_XB6_PRODUCT_REQ_)
+		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "%s/%d dev %s", "239.255.255.250", 32, l_cIfName);
+		route_add(l_cSysevent_Cmd);
+#endif
+    }
 	// assign lan interface a global ipv6 address
     // I can't find other way to do this. Just put here temporarily.
 	char l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[8] = {0}, l_cLan_IpAddrv6[16] = {0};
 	if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
 	{
+        fprintf(stderr, "%s Fetching primary lan IPv6 prefixes\n",__FUNCTION__);
 	    sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 					 "lan_ipaddr_v6_prev", l_cLan_IpAddrv6_prev, 
 					 sizeof(l_cLan_IpAddrv6_prev));
@@ -612,20 +1275,21 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 
 		if (strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64))
 	        {
+                  fprintf(stderr, "%s Assigning primary lan IPv6 address %s\n",__FUNCTION__, l_cLan_IpAddrv6);
                   if (l_cLan_IpAddrv6_prev != NULL)
                   {    
                      snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                         "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
+                         "-6 %s/64 dev %s valid_lft forever preferred_lft forever", 
                                          l_cLan_IpAddrv6_prev, l_cIfName);
  
-                     executeCmd(l_cSysevent_Cmd);
+                     addr_delete(l_cSysevent_Cmd);
                   }
 
 			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-            	     "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
+            	     "-6 %s/64 dev %s valid_lft forever preferred_lft forever", 
 					 l_cLan_IpAddrv6, l_cIfName);
 
-	        executeCmd(l_cSysevent_Cmd);
+	        addr_add(l_cSysevent_Cmd);
         }
     }
 
@@ -642,12 +1306,37 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 
     snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4subnet", l3_inst);
     sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cCur_Ipv4_Subnet, 0);
-
+    if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
+    {
+        char upnp_status[8] = {0};
+        syscfg_get(NULL, "start_upnp_service", upnp_status, sizeof(upnp_status));
+        if (!strncmp(upnp_status, "true", 4))
+        {
+            FILE *file;
+            char start_upnp_service_script[64] = {0};
+            fprintf(stderr, "Starting UPNP service\n");
+            snprintf(start_upnp_service_script, sizeof(start_upnp_service_script), "/lib/rdk/start-upnp-service");
+            if ((file = fopen(start_upnp_service_script, "r")))
+            {
+                fclose(file);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "%s start", start_upnp_service_script);
+                executeCmd(l_cSysevent_Cmd);
+            }
+            else
+            {
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "systemctl restart xcal-device &");
+                executeCmd(l_cSysevent_Cmd);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "systemctl restart xupnp &");
+                executeCmd(l_cSysevent_Cmd);
+            }
+        }
+    }
 	return TRUE;
 }
 
 void load_static_l3 (int l3_inst) 
 {
+    fprintf(stderr, "Inside %s called with arg l3_inst %d\n",__FUNCTION__, l3_inst);
 	char l_cStatic_V4_Addr[16] = {0}, l_cStatic_V4_Subnet[16] = {0};
 	char l_cPsm_Parameter[255] = {0};
 	char l_cSysevent_Cmd[255] = {0};
@@ -655,6 +1344,8 @@ void load_static_l3 (int l3_inst)
 	int l_iRet_Val;
 	BOOL l_bApplyConfig_Res;
 	int fd = 0;
+        int uptime = 0;
+	char buffer[64] = { 0 };
 
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.l3net.%d.V4Addr", l3_inst);
 	l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
@@ -707,7 +1398,7 @@ void load_static_l3 (int l3_inst)
     	// Apply static config if exists
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4_static", l3_inst);
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "1", 0);
-
+                fprintf(stderr, "service_ipv4 : Triggering apply_config\n");
 		//Passing static IPv4 Address and IPv4 subnet to the apply_config
 		//This is different from shell script
 		l_bApplyConfig_Res = apply_config(l3_inst, l_cStatic_V4_Addr, l_cStatic_V4_Subnet);
@@ -727,6 +1418,9 @@ void load_static_l3 (int l3_inst)
 			   sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-restart", "lan_not_restart", 0);
 		       }	
 #endif
+#if !defined (_HUB4_PRODUCT_REQ_) && !defined(_SR300_PRODUCT_REQ_)
+                        get_dateanduptime(buffer,&uptime);
+			OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
 			if (4 == l3_inst)
 			{
             	            fprintf(stderr, "IPv4 address is set for %s interface MOCA interface is UP\n",
@@ -745,6 +1439,7 @@ void load_static_l3 (int l3_inst)
                               print_uptime("boot_to_MOCA_uptime",NULL, NULL);
                           }
                         }
+#endif
         }   
 	}	
     else
@@ -761,6 +1456,8 @@ void load_static_l3 (int l3_inst)
 
 void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input) 
 {
+    fprintf(stderr, "Inside %s called with arg l3_inst %d, l2_inst %d, net_status %s and input %d\n",__FUNCTION__, l3_inst, l2_inst, net_status, input);
+
 	char l_cLocalReady[8] = {0}, l_cSysevent_Cmd[255] = {0}, l_cIpv4_Status[16] = {0};
 	char l_cIfName[16] = {0};
 	char l_cL2Inst[8] = {0};
@@ -811,6 +1508,8 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 // args: l3 instance
 void resync_instance (int l3_inst)
 {
+    fprintf(stderr, "Inside %s called with arg l3_inst %d\n",__FUNCTION__, l3_inst);
+
 	char l_cNv_EthLower[8] = {0}, l_cNv_Ip[16] = {0}, l_cNv_Subnet[16] = {0};
 	char l_cNv_Enabled[8] = {0}, l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
 	char l_cLower[8] = {0}, l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0};
@@ -984,6 +1683,7 @@ void resync_instance (int l3_inst)
     	sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cNv_Lower, 0);
 		if (0 != l_cNv_Lower[0])
 		{
+            fprintf(stderr,"%s setting callback for multinet_%c-status",__FUNCTION__,l_cNv_Lower[0]);
 			int len;
 			int available;
 			char l_cIpv4_Instances[20];
@@ -1067,8 +1767,87 @@ void resync_instance (int l3_inst)
     }
 }
 
+void resync_all_instance()
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char *l_cToken = NULL;
+    int ACTIVE_INST_CNT,NV_INST_CNT,iter=0,to_add_cnt=0,iter1=0,to_rem_cnt=0;
+    int ACTIVE_INST[10]={0},NV_INST[10]={0},TOO_ADD[10]={0},TOO_REMOVE[10]={0};
+    char sg_buff[16]={0};
+
+    // get active and nvram ipv4 instances
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "ipv4-instances", sg_buff, sizeof(sg_buff));
+    l_cToken = strtok(sg_buff, " ");
+    
+    while (l_cToken != NULL)
+    {
+        ACTIVE_INST[iter]=atoi(l_cToken);
+        l_cToken = strtok(NULL, " ");
+        iter++;
+    }
+    ACTIVE_INST_CNT = iter;
+
+    FILE *pipe=popen("psmcli getallinst dmsb.l3net.", "r");
+    if (NULL == pipe)
+    {
+        perror("pipe");
+        exit(1);
+    }
+    iter=0;
+    memset(sg_buff,0,sizeof(sg_buff));
+    while(fgets(sg_buff, sizeof(sg_buff), pipe) != NULL )
+    {
+        fprintf(stderr,"%s - sg_buff=%s",__FUNCTION__,sg_buff);
+        NV_INST[iter]=atoi(sg_buff);
+        iter++;
+    }
+    NV_INST_CNT=iter;
+    pclose(pipe);
+    
+    //Keeping this active instance
+    for (iter=0;iter<ACTIVE_INST_CNT;iter++)
+    {
+       for(iter1=0;iter1<NV_INST_CNT;iter1++)
+       {
+           if(ACTIVE_INST[iter] == NV_INST[iter1])
+           {
+               TOO_ADD[to_add_cnt]=ACTIVE_INST[iter];
+               NV_INST[iter1]=0;
+               to_add_cnt++;
+           }
+       }
+    }
+    
+    //Remove instance
+    for (iter=0;iter<NV_INST_CNT;iter++)
+    {
+        //instance value not be 0.
+        if(NV_INST[iter] != 0)
+        {
+           TOO_REMOVE[to_rem_cnt]=NV_INST[iter];
+           to_rem_cnt++;
+        }
+    }
+    
+    for (iter=0;iter<to_rem_cnt;iter++)
+    {
+        memset(sg_buff,0,sizeof(sg_buff));
+        teardown_instance(TOO_REMOVE[iter]);
+        snprintf(sg_buff, sizeof(sg_buff), "ipv4_%d-status", TOO_REMOVE[iter]);
+        sysevent_set(g_iSyseventfd, g_tSysevent_token, sg_buff, "", 0);
+    }
+
+    for (iter=0;iter<to_add_cnt;iter++)
+    {
+        resync_instance(TOO_ADD[iter]);
+    }
+}
+
 void ipv4_up(char *l3_inst)
 {
+    fprintf(stderr, "Inside %s called with arg l3_inst %s\n",__FUNCTION__, l3_inst);
+
 	char l_cLower[8] = {0}, l_cSysevent_Cmd[64] = {0}, l_cL3Net_Status[16] = {0};
 	int l_iL3Inst, l_iL2Inst;
 	

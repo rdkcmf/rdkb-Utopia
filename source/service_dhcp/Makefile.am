@@ -36,5 +36,5 @@ service_dhcp_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                      $(top_builddir)/source/sysevent/lib/libsysevent.la \
                      $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                      $(top_builddir)/source/util/print_uptime/libprint_uptime.la \
-		     -ltelemetry_msgsender
-
+                     -ltelemetry_msgsender \
+                     -lnet

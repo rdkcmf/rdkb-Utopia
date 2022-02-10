@@ -29,6 +29,7 @@
 #include "print_uptime.h"
 #include <telemetry_busmessage_sender.h>
 #include "safec_lib_common.h"
+#include <libnet.h>
 #ifdef FEATURE_SUPPORT_ONBOARD_LOGGING
 #include <rdk_debug.h>
 #define LOGGING_MODULE "Utopia"
@@ -43,13 +44,16 @@
 #define IPV4_NV_PREFIX  "dmsb.l3net"
 #define IPV4_NV_IP      "V4Addr"
 #define IPV4_NV_SUBNET  "V4SubnetMask"
+#define IPV4_NV_PREFIX_ATOM "dmsb.atom.l3net"
+#define ETH_DM_PREFIX   "dmsb.EthLink"
+#define MAX_TS_ASN_COUNT 64
 
 #define POSTD_START_FILE "/tmp/.postd_started"
 
 extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 
-extern void executeCmd(char *);
+extern int executeCmd(char *);
 
 void get_dateanduptime(char *buffer, int *uptime)
 {
@@ -74,8 +78,192 @@ void get_dateanduptime(char *buffer, int *uptime)
     *uptime= info.uptime;
 }
 
+char * app_addr(char *ip, char *nm)
+{
+
+    if(strlen(nm) == 0)
+    {
+        nm = "255.255.255.0";
+    }
+
+    if(strlen(ip) == 0)
+    {
+        ip = "255.253.252.100";
+    }
+
+    int sep_ip[4];
+    int sep_nm[4];
+    char rest[16] = {0};
+    int i=0;
+    snprintf(rest,sizeof(rest),"%s",ip);
+    char *token,*tmp;
+    token = strtok_r(rest, ".", &tmp);
+    sep_ip[i] = atoi(token);
+    i++;
+    while ( token != NULL)
+    {
+        token = strtok_r(NULL, ".", &tmp);
+        if(token != NULL)
+        {
+            sep_ip[i] = atoi(token);
+            i++;
+        }
+    }
+    i=0;
+    snprintf(rest,sizeof(rest),"%s",nm);
+    token = strtok_r(rest, ".", &tmp);
+    sep_nm[i] = atoi(token);
+    i++;
+    while ( token != NULL)
+    {
+        token = strtok_r(NULL, ".", &tmp);
+        if(token != NULL)
+        {
+            sep_nm[i] = atoi(token);
+            i++;
+        }
+    }
+
+    char c[32]={0},l[32]={0};
+    int r=sep_ip[3], m=0;
+    if(sep_nm[3] == 0)
+    {
+        m = sep_nm[2];
+        snprintf(c, sizeof(c),"%s",".254");
+        snprintf(l, sizeof(l),"%d.%d",sep_ip[0],sep_ip[1]);
+        r = sep_ip[2];
+        if(sep_nm[2] == 0)
+        {
+            snprintf(l, sizeof(l),"%d",sep_ip[0]);
+            m = sep_nm[1];
+            snprintf(c, sizeof(c),"%s",".255.254");
+            r = sep_ip[1];
+            if(sep_nm[1] == 0)
+            {
+                m = sep_nm[0];
+                snprintf(l, sizeof(l),"%d",0);
+                snprintf(c, sizeof(c),"%s",".255.255.254");
+                r=sep_ip[0];
+                sep_ip[0] = 0;
+            }
+        }
+    }
+    else
+    {
+        snprintf(l, sizeof(l),"%d.%d.%d",sep_ip[0],sep_ip[1],sep_ip[2]);
+        m =sep_nm[3] + 1;
+    }
+    int s = 256 - m;
+    r = (r/s)*s;
+    r = r+s-1;
+    static char output[32]={0};
+    int ret = 0;
+    if (sep_ip[0] != 0)
+    {
+        ret = snprintf(output, sizeof(output), "%s.%d%s",l,r,c);
+    }
+    else
+    {
+        ret = snprintf(output, sizeof(output), "%d%s",r,c);
+    }
+    if (ret < 0)
+    {
+        return "\0";
+    }
+    return output;
+}
+
+void find_active_brg_instances()
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char c_l3net_active_list[255] = {0},c_l3net_inst[32] = {0}, l_cPsmEth_inst[8] = {0}, l_cPsmBrg_inst[8] = {0}, l_cPsmisEnabled[8] = {0};
+    char l_cPsm_Parameter[255] = {0}, *l_cpPsm_Get = NULL, c_l_iIter[8] = {0};
+    int  l_iRetVal, l_iRet_Val, l_iIter = 0;
+    unsigned int l_iTs_Asn_Count = 0;
+    unsigned int *l_iTs_Asn_Ins = NULL;
+
+    snprintf(c_l3net_inst, sizeof(c_l3net_inst), "%s.", IPV4_NV_PREFIX);
+    l_iRet_Val = PSM_VALUE_GET_INS(c_l3net_inst, &l_iTs_Asn_Count, &l_iTs_Asn_Ins);
+
+    if(l_iRet_Val == CCSP_SUCCESS)
+    {
+        if (l_iTs_Asn_Count != 0)
+        {
+            if(MAX_TS_ASN_COUNT -1  < l_iTs_Asn_Count)
+            {
+                fprintf(stderr, "ERROR Too many Ture static subnet\n");
+                l_iTs_Asn_Count = MAX_TS_ASN_COUNT -1;
+            }
+            for(l_iIter = 0; l_iIter < (int)l_iTs_Asn_Count ; l_iIter++)
+            {
+                snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+                         "%s.%d.EthLink", IPV4_NV_PREFIX, l_iTs_Asn_Ins[l_iIter]);
+
+                l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+                if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+                {
+                        strncpy(l_cPsmEth_inst, l_cpPsm_Get, sizeof(l_cPsmEth_inst)-1);
+                        l_cPsmEth_inst[sizeof(l_cPsmEth_inst)-1] = '\0';
+                }
+                else
+                {
+                        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                                l_iRetVal, l_cPsm_Parameter);
+                }
+
+                snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+                         "%s.%s.l2net", ETH_DM_PREFIX, l_cPsmEth_inst);
+
+                l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+                if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+                {
+                        strncpy(l_cPsmBrg_inst, l_cpPsm_Get, sizeof(l_cPsmBrg_inst)-1);
+                        l_cPsmBrg_inst[sizeof(l_cPsmBrg_inst)-1] = '\0';
+                }
+                else
+                {
+                        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                        l_iRetVal, l_cPsm_Parameter);
+                }
+
+                snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+                         "dmsb.l2net.%s.Enable",l_cPsmBrg_inst);
+
+                l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+                if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+                {
+                        strncpy(l_cPsmisEnabled, l_cpPsm_Get, sizeof(l_cPsmisEnabled)-1);
+                        l_cPsmisEnabled[sizeof(l_cPsmisEnabled)-1] = '\0';
+                }
+                else
+                {
+                        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                                l_iRetVal, l_cPsm_Parameter);
+                }
+
+                snprintf(c_l_iIter, sizeof(c_l_iIter), "%d ", l_iTs_Asn_Ins[l_iIter]);
+
+                if ((!strncmp(l_cPsmisEnabled, "TRUE", 4)) || (!strncmp(l_cPsmisEnabled, "1", 1)))
+                {
+                    strncat(c_l3net_active_list, c_l_iIter, 3);
+                }
+            }
+
+            sysevent_set(g_iSyseventfd, g_tSysevent_token, "l3net_instances", c_l3net_active_list, 0);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "psmcli get of :%s is empty\n", c_l3net_inst);
+    }
+    Ansc_FreeMemory_Callback(l_iTs_Asn_Ins);
+}
+
 void bring_lan_up()
 {
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
 	char l_cAsyncId[16] = {0}, l_cPsm_Parameter[255] = {0};
 	char l_cPrimaryLan_L3Net[8] = {0}, l_cL2Inst[8] = {0}, l_cLan_Brport[8] = {0};
 	char l_cHomeSecurity_L3net[8] = {0}, l_cEvent_Name[32] = {0};
@@ -85,6 +273,7 @@ void bring_lan_up()
 	char *l_cParam[1] = {0};
 	int uptime = 0;
 	char buffer[64]= { 0 };
+    char l_multilan_feature[8] = {0};
 	get_dateanduptime(buffer,&uptime);
 	print_uptime("Lan_init_start", NULL, NULL);
     OnboardLog("Lan_init_start:%d\n",uptime);
@@ -191,6 +380,7 @@ void bring_lan_up()
 			snprintf(l_cEvent_Name, sizeof(l_cEvent_Name), "ipv4_%s-status", l_cPrimaryLan_L3Net);
 			sysevent_setcallback(g_iSyseventfd, g_tSysevent_token, ACTION_FLAG_NONE,
                              	 l_cEvent_Name, THIS, 1, l_cParam, &l_sAsyncID);
+            fprintf(stderr, "setting sysevent callback for %s\n",l_cEvent_Name);
 
 			snprintf(l_cAsyncId, sizeof(l_cAsyncId), "%d %d", l_sAsyncID.action_id, l_sAsyncID.trigger_id);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_handler_async", l_cAsyncId, 0);
@@ -205,10 +395,20 @@ void bring_lan_up()
 	{
 		fprintf(stderr, "lan_handler_async is not empty returning from bring_lan_up\n");
 	}
+
+    syscfg_get(NULL, "MULTILAN_FEATURE", l_multilan_feature, sizeof(l_multilan_feature));
+
+    if (!strncmp("1", l_multilan_feature, sizeof(l_multilan_feature)))
+    {
+        find_active_brg_instances();
+        fprintf(stderr, "Calling find_active_brg_instances\n");
+    }
 }
 
 void ipv4_status(int l3_inst, char *status)
 {
+    fprintf(stderr, "Inside %s called with arg l3_inst %d and status %s\n",__FUNCTION__,l3_inst,status);
+
 	char l_cSysevent_Cmd[255] = {0}, l_cLanIfName[16] = {0};
 	char l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[8] = {0}; 
 	char l_cLan_IpAddrv6[64] = {0};
@@ -217,7 +417,10 @@ void ipv4_status(int l3_inst, char *status)
 	char l_cLast_Erouter_Mode[8] = {0}, l_cFileName[255] = {0};
 	char l_cDsLite_Enabled[8] = {0}, l_cDhcp_Server_Prog[16] = {0};
 	char l_cIpv6_Prefix[64] = {0}, l_cLan_Uptime[16] = {0};
-	int l_iRes;
+    char l_cPsmGethome_lan_isolation[2] = {0},l_cPsm_Parameter[255] = {0},*l_cpPsm_Get = NULL;
+    char l_nfq_status[8] = {0};
+    int  l_iRetVal;
+    int  l_iRes;
 	struct sysinfo l_sSysInfo;
 	FILE *l_fFp = NULL;	
 	int uptime = 0;
@@ -324,16 +527,16 @@ void ipv4_status(int l3_inst, char *status)
                            if (l_cLan_IpAddrv6_prev != NULL)
                            {  
     	    	             snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-        	    	      "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
+        	    	      "-6 %s/64 dev %s valid_lft forever preferred_lft forever", 
 						 l_cLan_IpAddrv6_prev, l_cLanIfName);
 
-		             executeCmd(l_cSysevent_Cmd);
+			     addr_delete(l_cSysevent_Cmd);
 			   }
     	    
 				snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-            		     "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
+            		     "-6 %s/64 dev %s valid_lft forever preferred_lft forever", 
 						 l_cLan_IpAddrv6, l_cLanIfName);
-				executeCmd(l_cSysevent_Cmd);
+				addr_add(l_cSysevent_Cmd);
 
 			}
 		}
@@ -342,7 +545,10 @@ void ipv4_status(int l3_inst, char *status)
 	    sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, 
 					 l_cCur_Ipv4_Addr, sizeof(l_cCur_Ipv4_Addr));    
 
-    	sysevent_set(g_iSyseventfd, g_tSysevent_token, "current_lan_ipaddr", l_cCur_Ipv4_Addr, 0);
+        if ( l3_inst == 4 )
+        {
+            sysevent_set(g_iSyseventfd, g_tSysevent_token, "current_lan_ipaddr", l_cCur_Ipv4_Addr, 0);
+        }
 
 		char l_cStart_Misc[16] = {0};
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, "start-misc", l_cStart_Misc, sizeof(l_cStart_Misc));
@@ -376,6 +582,23 @@ void ipv4_status(int l3_inst, char *status)
 
 			if (strncmp(l_cParcon_Nfq_Status, "started", 7))
 			{
+                sysevent_get(g_iSyseventfd, g_tSysevent_token, "parcon_nfq_status",
+                                l_nfq_status, sizeof(l_nfq_status));
+
+                if (!strncmp("started", l_nfq_status, sizeof(l_nfq_status)))
+                {
+                    fprintf(stderr, "Calling nfq_handler\n");
+                    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                                "( ( nfq_handler 4 & ) & )");
+                    executeCmd(l_cSysevent_Cmd);
+
+                    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                                "( ( nfq_handler 6 & ) & )");
+                    executeCmd(l_cSysevent_Cmd);
+
+                    sysevent_set(g_iSyseventfd, g_tSysevent_token, "parcon_nfq_status", "started", 0);
+                }
+
 				l_iRes = iface_get_hwaddr(LAN_IF_NAME, l_cBrlan0_Mac, sizeof(l_cBrlan0_Mac));
 				if (0 == l_iRes)
 				{
@@ -449,10 +672,10 @@ void ipv4_status(int l3_inst, char *status)
 		if (0 != l_cIpv6_Prefix[0])	
 		{
     	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-        	         "ip -6 route add %s dev %s", 
+        	         "-6 %s dev %s", 
 					 l_cIpv6_Prefix, l_cLanIfName);
 
-	        executeCmd(l_cSysevent_Cmd);
+	    route_add(l_cSysevent_Cmd);
 		}
 	}	
     else
@@ -477,6 +700,27 @@ void ipv4_status(int l3_inst, char *status)
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "stopped", 0);
 		}
     }
+
+    snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+            "dmsb.l2net.HomeNetworkIsolation");
+    l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+    if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+    {
+        strncpy(l_cPsmGethome_lan_isolation, l_cpPsm_Get, sizeof(l_cPsmGethome_lan_isolation)-1);
+        l_cPsmGethome_lan_isolation[sizeof(l_cPsmGethome_lan_isolation)-1] = '\0';
+    }
+    else
+    {
+        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                l_iRetVal, l_cPsm_Parameter);
+    }
+
+    if (!strncmp("1", l_cPsmGethome_lan_isolation, sizeof(l_cPsmGethome_lan_isolation)))
+    {
+        fprintf(stderr, "Setting up brlan10 for HOME_LAN_ISOLATION\n");
+        sysevent_set(g_iSyseventfd, g_tSysevent_token, "multinet-up", "9", 0);
+    }
+
     fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler\n");
     t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
@@ -489,6 +733,8 @@ void ipv4_status(int l3_inst, char *status)
 
 void lan_restart()
 {
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
 	char l_cLanIpAddr[16] = {0}, l_cLanNetMask[16] = {0};
 	char l_cPsmGetLanIp[16] = {0}, l_cPsmGetLanSubNet[16] = {0};
 	char l_cLanInst[8] = {0}, l_cLanRestarted[8] = {0};
@@ -606,18 +852,170 @@ void lan_restart()
                if ((l_cLan_IpAddrv6_prev != NULL) && (0 != l_cLan_IpAddrv6_prev[0]))
 	       {
         	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-            	     "ip -6 addr del %s/64 dev %s valid_lft forever preferred_lft forever", 
+            	     "-6 %s/64 dev %s valid_lft forever preferred_lft forever", 
                 	 l_cLan_IpAddrv6_prev, l_cLanIfName);
 
-	        executeCmd(l_cSysevent_Cmd);
+	         addr_delete(l_cSysevent_Cmd);
 	       }
    
         snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "ip -6 addr add %s/64 dev %s valid_lft forever preferred_lft forever", 
+                 "-6 %s/64 dev %s valid_lft forever preferred_lft forever", 
                  l_cLan_IpAddrv6, l_cLanIfName);
 
-        executeCmd(l_cSysevent_Cmd);
+        addr_add(l_cSysevent_Cmd);
 	
     }
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_restarted", "done", 0);
+}
+
+void lan_stop()
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char l_cL3Inst[8] = {0}, l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[32] = {0}, l_cLanIfName[16] = {0}, l_cSysevent_Cmd[255] = {0};
+    int l_iL3Inst;
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token,
+                "primary_lan_l3net", l_cL3Inst,
+                 sizeof(l_cL3Inst));
+
+    l_iL3Inst = atoi(l_cL3Inst);
+
+    sprintf(l_cSysevent_Cmd, "ipv4_%d-ifname", l_iL3Inst);
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd,
+                 l_cLanIfName, sizeof(l_cLanIfName));
+
+    sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-down", l_cL3Inst, 0);
+    fprintf(stderr, "Calling ipv4_down with L3 Instance:%d\n", l_iL3Inst);
+
+    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"/proc/sys/net/ipv6/conf/%s/disable_ipv6", l_cLanIfName);
+    write_kernel_param(l_cSysevent_Cmd, "1");
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_ipaddr_v6_prev",
+                 l_cLan_IpAddrv6_prev, sizeof(l_cLan_IpAddrv6_prev));
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_prefix_v6",
+                 l_cLan_PrefixV6, sizeof(l_cLan_PrefixV6));
+
+    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"ip -6 addr flush dev %s", l_cLanIfName);
+    executeCmd(l_cSysevent_Cmd);
+
+    /*we need to restart necessary application when lan restart
+      monitor will start dibbler*/
+    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dibbler-server stop");
+    executeCmd(l_cSysevent_Cmd);
+
+    //bridge mode enabled then remove all ethbackhaul interfaces
+    //sysevent_set(g_iSyseventfd, g_tSysevent_token, "meshethbhaul-bridge-setup", 0, 0); 
+}
+
+void erouter_mode_updated()
+{
+    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+
+    char l_clast_erouter_mode[8], l_cbridge_mode[16], l_ipv4_4_status_configured[8], l_cL3Inst[8] = {0},  l_cLanIfName[16] = {0}, l_cSysevent_Cmd[255] = {0};
+    int l_iL3Inst;
+
+    syscfg_get(NULL, "last_erouter_mode", l_clast_erouter_mode, sizeof(l_clast_erouter_mode));
+
+    syscfg_get(NULL, "bridge_mode", l_cbridge_mode, sizeof(l_cbridge_mode));
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "ipv4_4_status_configured",
+                 l_ipv4_4_status_configured, sizeof(l_ipv4_4_status_configured));
+
+    if (!strncmp(l_cbridge_mode, "0", 1))
+    {
+        if ((strncmp(l_clast_erouter_mode, "0", 1)) && (!strncmp(l_ipv4_4_status_configured, "1", 1)))
+        {
+            sysevent_get(g_iSyseventfd, g_tSysevent_token,
+                        "primary_lan_l3net", l_cL3Inst, sizeof(l_cL3Inst));
+            l_iL3Inst = atoi(l_cL3Inst);
+
+            sprintf(l_cSysevent_Cmd, "ipv4_%d-ifname", l_iL3Inst);
+            sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd,
+                        l_cLanIfName, sizeof(l_cLanIfName));
+
+            sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-down", l_cL3Inst, 0);
+            fprintf(stderr, "Calling ipv4_down with L3 Instance:%d\n", l_iL3Inst);
+
+            sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-up", l_cL3Inst, 0);
+            fprintf(stderr, "Calling ipv4_up with L3 Instance:%d\n", l_iL3Inst);
+        }
+    }
+}
+
+void ipv4_resync(char *lan_inst)
+{
+    fprintf(stderr, "Inside %s called with arg lan_inst %s\n",__FUNCTION__,lan_inst);
+
+    char l_cLanInst[8] = {0}, l_cPsm_Parameter[255] = {0},l_cSysevent_Cmd[255] = {0}, l_cPsmGetLanIp[16] = {0}, l_cPsmGetLanSubNet[16] = {0}, ap_addr_out[32] = {0};
+    char *l_cpPsm_Get = NULL;
+    int  l_iRetVal;
+
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "primary_lan_l3net",
+                 l_cLanInst, sizeof(l_cLanInst));
+    if (!strncmp(lan_inst, l_cLanInst, sizeof(l_cLanInst)))
+    {
+        snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+            "%s.%s.%s", IPV4_NV_PREFIX, l_cLanInst, IPV4_NV_IP);
+        l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+        if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+        {
+            strncpy(l_cPsmGetLanIp, l_cpPsm_Get, sizeof(l_cPsmGetLanIp)-1);
+            l_cPsmGetLanIp[sizeof(l_cPsmGetLanIp)-1] = '\0';
+        }
+        else
+        {
+            fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                    l_iRetVal, l_cPsm_Parameter);
+        }
+
+        snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+            "%s.%s.%s", IPV4_NV_PREFIX, l_cLanInst, IPV4_NV_SUBNET);
+        l_iRetVal = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
+        if (CCSP_SUCCESS == l_iRetVal || l_cpPsm_Get != NULL)
+        {
+            strncpy(l_cPsmGetLanSubNet, l_cpPsm_Get, sizeof(l_cPsmGetLanSubNet)-1);
+            l_cPsmGetLanSubNet[sizeof(l_cPsmGetLanSubNet)-1] = '\0';
+        }
+        else
+        {
+            fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                    l_iRetVal, l_cPsm_Parameter);
+        }
+
+        snprintf(ap_addr_out, sizeof(ap_addr_out), "%s",app_addr(l_cPsmGetLanIp, l_cPsmGetLanSubNet));
+        snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+            "%s.%s.%s", IPV4_NV_PREFIX_ATOM, l_cLanInst, IPV4_NV_IP);
+
+        l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, ap_addr_out);
+        if (CCSP_SUCCESS == l_iRetVal)
+        {
+            fprintf(stderr, "Successful in setting:%s\n",
+                    l_cPsm_Parameter);
+        }
+        else
+        {
+            fprintf(stderr, "Error:%d while Setting:%s\n",
+                    l_iRetVal, l_cPsm_Parameter);
+        }
+
+        snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
+            "%s.%s.%s", IPV4_NV_PREFIX_ATOM, l_cLanInst, IPV4_NV_SUBNET);
+
+        l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, l_cPsmGetLanSubNet);
+        if (CCSP_SUCCESS == l_iRetVal)
+        {
+            fprintf(stderr, "Successful in setting:%s\n",
+                    l_cPsm_Parameter);
+        }
+        else
+        {
+            fprintf(stderr, "Error:%d while Setting:%s\n",
+                    l_iRetVal, l_cPsm_Parameter);
+        }
+
+        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool 'true' 'true'");
+        executeCmd(l_cSysevent_Cmd);
+    }
 }

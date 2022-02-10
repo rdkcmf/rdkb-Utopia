@@ -21,3 +21,5 @@ void dhcp_server_stop();
 int dhcp_server_start (char *);
 int service_dhcp_init();
 void lan_status_change(char *);
+int syslog_restart_request();
+void resync_to_nonvol(char *);

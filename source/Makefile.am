@@ -16,10 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = ulog syscfg sysevent services utctx utapi firewall firewall_log dhcpproxy newhost macclone util pal pmon services service_wan trigger igd service_routed service_ipv6 scripts service_multinet service_dhcp service_udhcpc
+SUBDIRS = ulog syscfg sysevent services utctx utapi firewall firewall_log dhcpproxy newhost macclone util pal pmon services service_wan trigger igd service_routed service_ipv6 scripts service_multinet service_udhcpc
 if DSLITE_FEATURE_SUPPORT
 SUBDIRS += service_dslite
 endif
 if WITH_GTEST_SUPPORT
 SUBDIRS += test
+endif
+
+if CORE_NET_LIB_FEATURE_SUPPORT
+SUBDIRS += service_dhcp
 endif

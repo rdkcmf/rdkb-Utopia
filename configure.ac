@@ -115,6 +115,20 @@ AC_CONFIG_FILES([
    source/service_dslite/Makefile
 ])] )
 
+# Checks for Core net lib Feature Support
+AC_ARG_ENABLE([core_net_lib_feature_support],
+[  --enable-core_net_lib_feature_support=val Turn on core_net_lib Feature, val=true or false],
+[case "${enableval}" in
+  yes) core_net_lib_feature_support=true ;;
+  no)  core_net_lib_feature_support=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-core_net_lib_feature_support]) ;;
+esac],[core_net_lib_feature_support=true])
+AM_CONDITIONAL(CORE_NET_LIB_FEATURE_SUPPORT, test x"$core_net_lib_feature_support" = x"true")
+AM_COND_IF( [CORE_NET_LIB_FEATURE_SUPPORT], [
+AC_CONFIG_FILES([
+   source/service_dhcp/Makefile
+])] )
+
 AC_CONFIG_FILES(
 	Makefile
 	source/Makefile
@@ -135,7 +149,6 @@ AC_CONFIG_FILES(
 	source/scripts/init/src/execute_dir/Makefile
 	source/services/Makefile
 	source/services/lib/Makefile
-	source/service_dhcp/Makefile
 	source/service_ipv6/Makefile
 	source/service_multinet/Makefile
 	source/service_routed/Makefile

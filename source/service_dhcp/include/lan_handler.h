@@ -19,7 +19,7 @@
 
 #include "ccsp_custom.h"
 #include "ccsp_psm_helper.h"
-#include <ccsp_base_api.h>
+#include "ccsp_base_api.h"
 #include "ccsp_memory.h"
 
 extern void* g_vBus_handle;
@@ -32,4 +32,7 @@ extern void* g_vBus_handle;
 void bring_lan_up();
 void ipv4_status(int, char *);
 void lan_restart();
+void lan_stop();
 void teardown_instance(int l3_inst);
+void erouter_mode_updated();
+void ipv4_resync(char *lan_inst);
