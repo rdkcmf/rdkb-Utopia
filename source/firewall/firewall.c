@@ -1493,6 +1493,8 @@ static inline BOOL isMultiLANL3Instance(int instance){
 
 static int privateIpCheck(char *ip_to_check)
 {
+#ifndef MULTILAN_FEATURE
+
     struct in_addr l_sIpValue, l_sDhcpStart, l_sDhcpEnd;
     long int l_iIpValue, l_iDhcpStart, l_iDhcpEnd;
 	char l_cDhcpStart[16] = {0}, l_cDhcpEnd[16] = {0};
@@ -1535,6 +1537,9 @@ static int privateIpCheck(char *ip_to_check)
           printf("inet_pton conversion error:%d\n", errno);
           return 1;
     }
+#else
+   return 1;
+#endif
 }
 
 /*
