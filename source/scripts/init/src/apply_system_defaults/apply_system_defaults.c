@@ -1133,6 +1133,17 @@ void addInSysCfgdDB(char * key, char * value)
        set_syscfg_partner_values( "false","TR104enable" );
    #endif
 
+   #if defined(FEATURE_MAPT) || defined(FEATURE_SUPPORT_MAPT_NAT46)
+   if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.MAP-T.Enable") )
+   {
+       if ( 0 == IsValuePresentinSyscfgDB( "MAPT_Enable" ) )
+       {
+           set_syscfg_partner_values( value,"MAPT_Enable" );
+       }
+   }
+   #endif
+
+
    //Check whether migration needs to be handled or not
    if( 1 == IsPSMMigrationNeeded )
    {
@@ -1227,6 +1238,14 @@ void updateSysCfgdDB(char * key, char * value)
           set_syscfg_partner_values( "false", "TR104enable");
       }
 #endif
+
+#if defined(FEATURE_MAPT) || defined(FEATURE_SUPPORT_MAPT_NAT46)
+      if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.MAP-T.Enable" ) )
+      {
+          set_syscfg_partner_values( value, "MAPT_Enable");
+      }
+#endif
+
    //Check whether migration needs to be handled or not
    if( 1 == IsPSMMigrationNeeded )
    {
@@ -2069,6 +2088,25 @@ if ( paramObjVal != NULL )
     APPLY_PRINT("TR104 is not supported so making TR104 value as false\n");
     set_syscfg_partner_values("false","TR104enable");
 #endif
+
+#if defined(FEATURE_MAPT) || defined(FEATURE_SUPPORT_MAPT_NAT46)
+                                        paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.MAP-T.Enable"), "ActiveValue");
+                                                            if ( paramObjVal != NULL )
+{
+    char *MAPT_Enable = NULL;
+    MAPT_Enable = paramObjVal->valuestring;
+    if(MAPT_Enable != NULL)
+    {
+        set_syscfg_partner_values(MAPT_Enable,"MAPT_Enable");
+        MAPT_Enable = NULL;
+    }
+    else
+    {
+        APPLY_PRINT("%s - MAPT_Enable Value is NULL\n", __FUNCTION__ );
+    }
+}
+#endif
+
 				}
 			}
 			else
