@@ -114,56 +114,8 @@ if [ "$BOX_TYPE" = "XB3" ];then
     fi
 fi
 
-#RDKB-9061 Fix
-#echo 4096 > /proc/sys/net/ipv6/neigh/default/gc_thresh1
-#echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh2
-#echo 8192 > /proc/sys/net/ipv6/neigh/default/gc_thresh3
-
-
-#echo_t "[utopia][init] Loading drivers"
-#MODULE_PATH=/lib/modules/`uname -r`/
-#insmod $MODULE_PATH/drivers/net/erouter_ni.ko netdevname=erouter0
-
 echo_t "Starting log module.."
 /usr/sbin/log_start.sh
-
-#echo_t "[utopia][init]  Starting syslogd"
-#/sbin/syslogd && /sbin/klogd
-
-# echo_t "[utopia][init] Provisioning loopback interface"
-#ip addr add 127.0.0.1/255.0.0.0 dev lo
-#ip link set lo up
-#ip route add 127.0.0.0/8 dev lo
-
-# create our passwd/shadow/group files
-#mkdir -p /tmp/etc/.root
-#chmod 711 /tmp/etc/.root
-
-#chmod 644 /tmp/etc/.root/passwd
-#chmod 600 /tmp/etc/.root/shadow
-#chmod 600 /tmp/etc/.root/group
-
-# create the default profile. This is linked to by /etc/profile 
-#echo "export setenv PATH=/bin:/sbin:/usr/sbin:/usr/bin:/opt/sbin:/opt/bin" > /tmp/profile
-#echo "export setenv LD_LIBRARY_PATH=/lib:/usr/lib:/opt/lib" >> /tmp/profile
-#echo "if [ \$(tty) != \"/dev/console\"  -a  \${USER} != \"root\" ]; then cd /usr/cosa; ./cli_start.sh; fi" >> /tmp/profile
-
-# create other files that are linked to by etc
-#echo -n > /tmp/hosts
-#echo -n > /tmp/hostname
-#echo -n > /tmp/resolv.conf
-#echo -n > /tmp/igmpproxy.conf
-#echo -n > /tmp/ez-ipupdate.conf
-#echo -n > /tmp/ez-ipupdate.out
-#echo -n > /tmp/TZ
-#echo -n > /tmp/.htpasswd
-#echo -n > /tmp/dnsmasq.conf
-#echo -n > /tmp/dhcp_options
-#echo -n > /tmp/dhcp_static_hosts
-#echo -n > /tmp/dnsmasq.leases
-#echo -n > /tmp/zebra.conf
-#echo -n > /tmp/ripd.conf
-#echo -n > /tmp/dhcp6c.conf
 
 mkdir -p /tmp/cron
 
@@ -463,20 +415,6 @@ echo $TOT_MSG_MAX > /proc/sys/fs/mqueue/msg_max
 echo_t "[utopia][init] Starting sysevent subsystem"
 #syseventd --threads 18
 syseventd
-
-# we want plugged in usb devices to propagate events to sysevent
-#echo_t "[utopia][init] Late loading usb drivers"
-#MODULE_PATH=/lib/modules/`uname -r`/
-#insmod $MODULE_PATH/usbcore.ko
-#insmod $MODULE_PATH/ehci-hcd.ko
-#insmod $MODULE_PATH/scsi_mod.ko
-#insmod $MODULE_PATH/sd_mod.ko
-#insmod $MODULE_PATH/libusual.ko
-#insmod $MODULE_PATH/usb-storage.ko
-#insmod $MODULE_PATH/nls_cp437.ko
-#insmod $MODULE_PATH/nls_iso8859-1.ko
-#insmod $MODULE_PATH/fat.ko
-#insmod $MODULE_PATH/vfat.ko
 
 sleep 1 
 echo_t "[utopia][init] Setting any unset system values to default"
@@ -823,9 +761,6 @@ fi
 
 echo_t "[utopia][init] setting Multicast MAC before any switch configs"
 $UTOPIA_PATH/service_multinet_exec set_multicast_mac &
-
-#echo_t "[utopia][init] started dropbear process"
-#/etc/utopia/service.d/service_sshd.sh sshd-start &
 
 if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
 	echo_t "[utopia][init] started dropbear process"
