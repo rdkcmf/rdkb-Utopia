@@ -23,6 +23,3 @@ ACLOCAL_AMFLAGS = -I m4
 bin_PROGRAMS = rpcserver
 
 rpcserver_SOURCES = rpc_specification_server.c rpc_specification_svc.c rpc_specification_xdr.c
-
-rpcserver_LDFLAGS =  -lpthread -lz -lc
-

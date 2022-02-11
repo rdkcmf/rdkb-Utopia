@@ -16,18 +16,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = syseventd_proxy
-
 AM_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_
-AM_CFLAGS += -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/sysevent/lib
+
+AM_LDFLAGS = $(top_builddir)/source/sysevent/lib/libsysevent.la \
+             $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+             $(top_builddir)/source/ulog/libulog.la
 
 ACLOCAL_AMFLAGS = -I m4
 
-
-AM_LDFLAGS =  -lpthread -lz \
-                $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                $(top_builddir)/source/ulog/libulog.la
+bin_PROGRAMS = syseventd_proxy
 
 syseventd_proxy_SOURCES = proxy_main.c
 
+syseventd_proxy_CPPFLAGS = -I$(top_srcdir)/source/include \
+                           -I$(top_srcdir)/source/util/utils \
+                           -I$(top_srcdir)/source/sysevent/lib

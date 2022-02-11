@@ -18,29 +18,23 @@
 ##########################################################################
 bin_PROGRAMS = service_multinet_exec
 
-if MULTILAN_FEATURE
 AUTOMAKE_OPTIONS = subdir-objects
-endif
 
-#AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/Utopia/source/include -I$(top_srcdir)/source/util -I$(top_srcdir)/source/service_multinet/Puma6_plat $(CPPFLAGS)
-AM_CFLAGS = -fno-exceptions
-AM_CFLAGS = -Os
-AM_CFLAGS = -Wall -Wextra
-
-AM_LDFLAGS =  -lpthread -lz -lccsp_common $(DBUS_LIBS)
+AM_LDFLAGS = -lccsp_common $(DBUS_LIBS)
 
 if MULTILAN_FEATURE
 if CCSP_PLATFORM_INTEL_PUMA7
 service_multinet_exec_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/service_multinet/Puma7_plat -I$(top_srcdir)/source/include/service_multinet $(DBUS_CFLAGS) -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
-service_multinet_exec_SOURCES = ep_access.c  ev_access.c  nv_access.c  service_multinet_handler.c  service_multinet_lib.c  service_multinet_main.c  service_multinet_swfab.c  service_multinet_swfab_deps.c  service_multinet_swfab_ep.c service_multinet_swfab_LinIF.c  util/service_multinet_util.c Puma7_plat/puma7_plat_map.c  Puma7_plat/puma7_plat_sw.c
+service_multinet_exec_SOURCES = ep_access.c ev_access.c nv_access.c service_multinet_handler.c service_multinet_lib.c service_multinet_main.c service_multinet_swfab.c service_multinet_swfab_deps.c service_multinet_swfab_ep.c service_multinet_swfab_LinIF.c util/service_multinet_util.c Puma7_plat/puma7_plat_map.c Puma7_plat/puma7_plat_sw.c
 else
 service_multinet_exec_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/service_multinet/Puma6_plat -I$(top_srcdir)/source/include/service_multinet $(DBUS_CFLAGS) -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
-service_multinet_exec_SOURCES = ep_access.c  ev_access.c  nv_access.c  service_multinet_handler.c  service_multinet_lib.c  service_multinet_main.c  service_multinet_swfab.c  service_multinet_swfab_deps.c  service_multinet_swfab_ep.c service_multinet_swfab_LinIF.c  util/service_multinet_util.c Puma6_plat/puma6_plat_map.c  Puma6_plat/puma6_plat_sw.c
+service_multinet_exec_SOURCES = ep_access.c ev_access.c nv_access.c service_multinet_handler.c service_multinet_lib.c service_multinet_main.c service_multinet_swfab.c service_multinet_swfab_deps.c service_multinet_swfab_ep.c service_multinet_swfab_LinIF.c util/service_multinet_util.c Puma6_plat/puma6_plat_map.c Puma6_plat/puma6_plat_sw.c
 endif
 else
 service_multinet_exec_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils -I$(top_srcdir)/source/service_multinet/Puma6_plat -I$(top_srcdir)/source/include/service_multinet $(DBUS_CFLAGS) -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
-service_multinet_exec_SOURCES = ep_access.c  ev_access.c  nv_access.c  service_multinet_handler.c  service_multinet_lib.c  service_multinet_main.c  service_multinet_swfab.c  service_multinet_swfab_deps.c  service_multinet_swfab_ep.c service_multinet_swfab_LinIF.c  util/service_multinet_util.c Puma6_plat/puma6_plat_map.c  Puma6_plat/puma6_plat_sw.c
+service_multinet_exec_SOURCES = ep_access.c ev_access.c nv_access.c service_multinet_handler.c service_multinet_lib.c service_multinet_main.c service_multinet_swfab.c service_multinet_swfab_deps.c service_multinet_swfab_ep.c service_multinet_swfab_LinIF.c util/service_multinet_util.c Puma6_plat/puma6_plat_map.c Puma6_plat/puma6_plat_sw.c
 endif
+
 if !CCSP_PLATFORM_BCM
 if MULTILAN_FEATURE
 if !CCSP_PLATFORM_INTEL_PUMA7
@@ -52,8 +46,8 @@ endif
 endif
 
 service_multinet_exec_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
-                    $(top_builddir)/source/services/lib/libsrvmgr.la \
-                    $(top_builddir)/source/sysevent/lib/libsysevent.la \
-                    $(top_builddir)/source/syscfg/lib/libsyscfg.la \
-                    $(top_builddir)/source/ulog/libulog.la \
-		    -ltelemetry_msgsender
+                              $(top_builddir)/source/services/lib/libsrvmgr.la \
+                              $(top_builddir)/source/sysevent/lib/libsysevent.la \
+                              $(top_builddir)/source/syscfg/lib/libsyscfg.la \
+                              $(top_builddir)/source/ulog/libulog.la \
+                              -ltelemetry_msgsender

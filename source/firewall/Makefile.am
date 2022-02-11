@@ -16,21 +16,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-bin_PROGRAMS = firewall
-bin_PROGRAMS += nfq_handler
 AM_CFLAGS = -D_GNU_SOURCE
-AM_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include $(CPPFLAGS) $(DBUS_CFLAGS)
-AM_LDFLAGS =  -L/var/tmp/pc-rdkb/lib -lpthread -lz -lnetfilter_queue -lnfnetlink -lccsp_common -lsecure_wrapper $(DBUS_LIBS)
-firewall_SOURCES = firewall.c firewall_priv.c firewall_interface.c
-nfq_handler_SOURCES = raw_socket_send.c nfq_handler.c
+AM_CFLAGS += $(PTHREAD_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/source/include $(DBUS_CFLAGS)
+AM_LDFLAGS = -lccsp_common -lsecure_wrapper -lnetfilter_queue -lnfnetlink $(DBUS_LIBS) $(PTHREAD_LIBS) -lrt
 
+bin_PROGRAMS = firewall nfq_handler
+
+firewall_SOURCES = firewall.c firewall_priv.c firewall_interface.c
 if CPC_FIREWALL_ENABLE
 firewall_SOURCES += firewall_lib.c firewall_dsl.c rabid.c
 endif
 
+nfq_handler_SOURCES = raw_socket_send.c nfq_handler.c
+
 firewall_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                  $(top_builddir)/source/sysevent/lib/libsysevent.la \
                  $(top_builddir)/source/ulog/libulog.la
+
 nfq_handler_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                     $(top_builddir)/source/sysevent/lib/libsysevent.la \
                     $(top_builddir)/source/ulog/libulog.la
