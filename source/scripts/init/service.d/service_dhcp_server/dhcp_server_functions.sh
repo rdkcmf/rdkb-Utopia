@@ -960,7 +960,8 @@ fi
   
    if [ "$BOX_TYPE" = "rpi" ]; then                                       
 	   LAN_STATUS=`sysevent get lan-status`
-	   if [ "$LAN_STATUS" = "stopped" ]; then                
+	   BRIDGE_MODE=`syscfg get bridge_mode`
+	   if [ "$LAN_STATUS" = "stopped" ] && [ $BRIDGE_MODE == 0 ]; then                
 		   echo_t "DHCP_SERVER : Starting lan-status"
 		   sysevent set lan-status started
 	   fi                                                  
