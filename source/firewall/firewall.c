@@ -1872,7 +1872,6 @@ int parseProcfileParams(char* lineToParse,ifv6Details *detailsToParse,char* inte
 {
     struct sockaddr_in6 sAddr6;
     char splitv6[8][5];
-    errno_t  safec_rc  = -1;
     ulogf(ULOG_FIREWALL, UL_INFO,"%s, Parse the line read from file\n",__FUNCTION__);
 
     if (lineToParse == NULL)
@@ -1926,11 +1925,7 @@ int parseProcfileParams(char* lineToParse,ifv6Details *detailsToParse,char* inte
                int iCount =0;
                for (iCount=0; (iCount< ( detailsToParse->bitsToMask%16 ? (detailsToParse->bitsToMask/16+1):detailsToParse->bitsToMask/16)) && iCount<8; iCount++)
                {
-                  safec_rc = sprintf_s(detailsToParse->prefix_v6+strlen(detailsToParse->prefix_v6), sizeof(detailsToParse->prefix_v6)-strlen(detailsToParse->prefix_v6),"%s:",splitv6[iCount]);
-                  if(safec_rc < EOK)
-                  {
-                     ERR_CHK(safec_rc);
-                  }
+                   sprintf(detailsToParse->prefix_v6+strlen(detailsToParse->prefix_v6), "%s:",splitv6[iCount]);
                }
                ulogf(ULOG_FIREWALL, UL_INFO,"%s,Interface IPv6 prefix calculation done\n",__FUNCTION__);
             }
