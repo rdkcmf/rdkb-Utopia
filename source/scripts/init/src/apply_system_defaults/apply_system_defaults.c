@@ -1122,14 +1122,14 @@ void addInSysCfgdDB(char * key, char * value)
    #ifdef MTA_TR104SUPPORT
    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable") )
    {
-       if ( 0 == IsValuePresentinSyscfgDB( "TR104Enable" ) )
+     if ( 0 == IsValuePresentinSyscfgDB( "TR104enable" ) )
        {
-           set_syscfg_partner_values( value,"TR104Enable" );
+           set_syscfg_partner_values( value,"TR104enable" );
        }
    }
    #else
        APPLY_PRINT("TR104 is not supported so making TR104 value as false\n");
-       set_syscfg_partner_values( "false","TR104Enable" );
+       set_syscfg_partner_values( "false","TR104enable" );
    #endif
 
    //Check whether migration needs to be handled or not
@@ -1217,13 +1217,13 @@ void updateSysCfgdDB(char * key, char * value)
 #ifdef MTA_TR104SUPPORT
       if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable" ) )
       {
-          set_syscfg_partner_values( value, "TR104Enable");
+          set_syscfg_partner_values( value, "TR104enable");
       }
 #else
       if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable" ) )
       {
           APPLY_PRINT("TR104 is not supported so making TR104 value as false\n");
-          set_syscfg_partner_values( "false", "TR104Enable");
+          set_syscfg_partner_values( "false", "TR104enable");
       }
 #endif
    //Check whether migration needs to be handled or not
@@ -1435,6 +1435,20 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
          APPLY_PRINT("key = %s value = %s\n", key, value);
 
          cJSON *bs_obj = cJSON_GetObjectItem(subitem_nvram_bs, key);
+         if ( !strcmp(key,"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable"))
+         {
+           if(1 == IsValuePresentinSyscfgDB( "TR104Enable" ))
+           {
+              cJSON_DeleteItemFromObject(bs_obj,key);
+              bs_obj = NULL;
+              APPLY_PRINT("deleted entry in partner_default.json under nvram\n");
+              APPLY_PRINT("removing the TR104Enable entry in syscfg\n");
+              if ((syscfg_unset(NULL, "TR104Enable") != 0))
+              {
+                 APPLY_PRINT("syscfg_unset failed\n");
+              }
+           }
+         }
          if (bs_obj == NULL)
          {
             APPLY_PRINT("param %s does not exist in nvram bootstrap json. Adding it...\n", key);
@@ -1466,7 +1480,6 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
                source_bs = source_bs_obj->valuestring;
             else
                return -1;
-
             //printf("value_bs = %s, source_bs = %s\n", value_bs, source_bs);
             if (strcmp(value, value_bs))
             {
@@ -2031,21 +2044,29 @@ if ( paramObjVal != NULL )
                                         paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TR104.Enable"), "ActiveValue");
                                                             if ( paramObjVal != NULL )
 {
-    char *TR104Enable = NULL;
-    TR104Enable = paramObjVal->valuestring;
-    if(TR104Enable != NULL)
+    char *TR104enable = NULL;
+    TR104enable = paramObjVal->valuestring;
+    if(1 == IsValuePresentinSyscfgDB( "TR104Enable" ))
     {
-        set_syscfg_partner_values(TR104Enable,"TR104Enable");
-        TR104Enable = NULL;
+        APPLY_PRINT("removing the TR104Enable entry in syscfg\n");
+        if ((syscfg_unset(NULL, "TR104Enable") != 0))
+        {
+            APPLY_PRINT("syscfg_unset failed\n");
+        }
+    }
+    if(TR104enable != NULL)
+    {
+        set_syscfg_partner_values(TR104enable,"TR104enable");
+        TR104enable = NULL;
     }
     else
     {
-        APPLY_PRINT("%s - TR104Enable Value is NULL\n", __FUNCTION__ );
+        APPLY_PRINT("%s - TR104enable Value is NULL\n", __FUNCTION__ );
     }
 }
 #else
     APPLY_PRINT("TR104 is not supported so making TR104 value as false\n");
-    set_syscfg_partner_values("false","TR104Enable");
+    set_syscfg_partner_values("false","TR104enable");
 #endif
 				}
 			}
