@@ -36,6 +36,7 @@
 #ifndef __UTAPI_TR_DHCP_H__
 #define __UTAPI_TR_DHCP_H__
 
+#include  <stdint.h>
 #define STR_SZ 64 
 #define MAX_NUM_INSTANCES 255
 #define DHCPV4_NUM_SERVER_POOLS 1
@@ -44,7 +45,7 @@
          union                                                               \
          {                                                                   \
             unsigned char           Dot[4];                                  \
-            unsigned long           Value;                                   \
+            uint32_t                Value;                                   \
          }
 
 #define DELIM_CHAR ','
