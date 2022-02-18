@@ -101,9 +101,6 @@ token_t global_id;
    }\
 }\
 
-/* Function Prototypes */
-int IsValuePresentinSyscfgDB( char *param );
-
 /*
  * Procedure     : trim
  * Purpose       : trims a string
@@ -503,7 +500,7 @@ static int parse_command_line(int argc, char **argv)
    return(0);
 }
 
-char * json_file_parse( char *path )
+static char *json_file_parse (char *path)
 {
 	FILE	 	*fileRead 	= NULL;
 	char		*data 		= NULL;
@@ -568,8 +565,7 @@ static int writeToJson(char *data, char *file)
     return 0;
 }
 
-/* IsValuePresentinSyscfgDB() */
-int IsValuePresentinSyscfgDB( char *param )
+static int IsValuePresentinSyscfgDB (char *param)
 {
 	char buf[ 512 ];
 	int  ret;
@@ -586,7 +582,7 @@ int IsValuePresentinSyscfgDB( char *param )
 	return 1;
 }
 
-int set_syscfg_partner_values(char *pValue,char *param)
+static int set_syscfg_partner_values (char *pValue, char *param)
 {
 	if ((syscfg_set(NULL, param, pValue) != 0)) 
 	{
@@ -604,7 +600,7 @@ int set_syscfg_partner_values(char *pValue,char *param)
 	}
 }
 
-int GetDevicePropertiesEntry( char *pOutput, int size, char *sDevicePropContent )
+static int GetDevicePropertiesEntry (char *pOutput, int size, char *sDevicePropContent)
 {
     FILE 	*fp1 		 = NULL;
     char 	 buf[ 1024 ] = { 0 },
@@ -639,10 +635,7 @@ int GetDevicePropertiesEntry( char *pOutput, int size, char *sDevicePropContent 
     return ret;
 }
 
-static int getFactoryPartnerId
-	(
-		char*                       pValue
-	)
+static int getFactoryPartnerId (char *pValue)
 {
 #if defined (_XB6_PRODUCT_REQ_) || defined(_HUB4_PRODUCT_REQ_) || defined(_SR300_PRODUCT_REQ_)
 	if(0 == platform_hal_getFactoryPartnerId(pValue))
@@ -671,9 +664,8 @@ static int getFactoryPartnerId
 	return -1;
 }
 
-int validatePartnerId ( char *PartnerID )
+static int validatePartnerId (char *PartnerID)
 {
-
    char* ptr_etc_jsons = NULL;
    cJSON * subitem_etc = NULL;
    ptr_etc_jsons = json_file_parse( PARTNERS_INFO_FILE_ETC );
@@ -696,7 +688,7 @@ int validatePartnerId ( char *PartnerID )
    return 0;
 }
 
-static int get_PartnerID( char *PartnerID)
+static int get_PartnerID (char *PartnerID)
 {
 	char buf[PARTNER_ID_LEN];
 	memset(buf, 0, sizeof(buf));
@@ -794,7 +786,7 @@ static int get_PartnerID( char *PartnerID)
 	return 0;	
 }
 
-void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram_json, bool *do_compare)
+static void ValidateAndUpdatePartnerVersionParam (cJSON *root_etc_json, cJSON *root_nvram_json, bool *do_compare)
 {
     cJSON *properties_etc = NULL;
     cJSON *properties_nvram = NULL;
@@ -884,7 +876,7 @@ void ValidateAndUpdatePartnerVersionParam(cJSON *root_etc_json,cJSON *root_nvram
     }
 }
 
-char * getBuildTime()
+static char *getBuildTime (void)
 {
     static char buildTime[50] = {0};
     if (buildTime[0] != '\0')
@@ -925,7 +917,8 @@ char * getBuildTime()
     return buildTime;
 }
 
-char * getTime()
+#if 0
+static char *getTime (void)
 {
     time_t timer;
     static char buffer[50];
@@ -935,8 +928,9 @@ char * getTime()
     strftime(buffer, 50, "%Y-%m-%d %H:%M:%S ", tm_info);
     return buffer;
 }
+#endif
 
-int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
+static int addParamInPartnersFile (char *pKey, char *PartnerId, char *pValue)
 {
 	cJSON *partnerObj = NULL;
 	cJSON *json = NULL;
@@ -1037,12 +1031,13 @@ int addParamInPartnersFile(char* pKey, char* PartnerId, char* pValue)
 	 return 0;
 }
 
-void addInSysCfgdDB(char * key, char * value)
+static void addInSysCfgdDB (char *key, char *value)
 {
    /* There are parameters which needs to be available in syscfg/PSM DBs
       Check if all of these parameters are SET into DBs
    */
    int IsPSMMigrationNeeded = 0;
+
    if ( 0 == strcmp ( key, "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark") )
    {
       if ( 0 == IsValuePresentinSyscfgDB( "DSCP_InitialForwardedMark" ) )
@@ -1155,7 +1150,7 @@ void addInSysCfgdDB(char * key, char * value)
    }
 }
 
-void updateSysCfgdDB(char * key, char * value)
+static void updateSysCfgdDB (char *key, char *value)
 {
    /* There are parameters which needs to be available in syscfg/PSM DBs
       Check if all of these parameters are SET into DBs
@@ -1258,7 +1253,7 @@ void updateSysCfgdDB(char * key, char * value)
 }
 
 // This function can be removed after a few release cycles
-int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *PartnerID)
+static int init_bootstrap_json (char *partner_nvram_obj, char *partner_etc_obj, char *PartnerID)
 {
    APPLY_PRINT("%s\n", __FUNCTION__);
 
@@ -1363,7 +1358,7 @@ int init_bootstrap_json(char * partner_nvram_obj, char *partner_etc_obj, char *P
    return 0;
 }
 
-int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,char *PartnerID)
+static int compare_partner_json_param (char *partner_nvram_bs_obj, char *partner_etc_obj, char *PartnerID)
 {
    APPLY_PRINT("%s\n", __FUNCTION__);
 
@@ -1560,7 +1555,7 @@ int compare_partner_json_param(char *partner_nvram_bs_obj,char *partner_etc_obj,
 #endif
 #define RETRY_COUNT 3
 
-int apply_partnerId_default_values(char *data, char *PartnerID)
+static int apply_partnerId_default_values (char *data, char *PartnerID)
 {
 	cJSON 	*partnerObj 	= NULL;
 	cJSON 	*json 			= NULL;
