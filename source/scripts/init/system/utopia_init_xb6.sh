@@ -718,11 +718,14 @@ elif [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]; then
           rm -f /tmp/.secure_mount_flag
      fi
 elif [ "$COLD_REBOOT" == "true" ]; then
-     if [ -e "/usr/bin/onboarding_log" ]; then
+     #Temporarily exclude Arris XB6 Products until ARRISXB6-12791 is fixed
+     if [ "$MODEL_NUM" != "TG3482G" ]; then
+        if [ -e "/usr/bin/onboarding_log" ]; then
          /usr/bin/onboarding_log "[utopia][init] Last reboot reason set as HW or Power-On Reset"
+        fi
+        syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
+        syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
      fi
-     syscfg set X_RDKCENTRAL-COM_LastRebootReason "HW or Power-On Reset"
-     syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 else
    rebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason` 
    reboot_counter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
