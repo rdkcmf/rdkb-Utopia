@@ -791,8 +791,11 @@ case "$1" in
             init_keepalive_sysevents > /dev/null
             init_snooper_sysevents
             sysevent set snooper-log-enable 1
-            echo "Starting hotspot component"
-            $HOTSPOT_COMP -subsys eRT. > /dev/null &
+            HOTSPOT_PID=`pidof CcspHotspot`
+            if [ "$HOTSPOT_PID" = "" ]; then
+               echo_t "Starting hotspot component"
+               $HOTSPOT_COMP -subsys eRT. > /dev/null &
+            fi
             sysevent set ${inst}_keepalive_pid $! > /dev/null
             
             update_bridge_config $3 > /dev/null
