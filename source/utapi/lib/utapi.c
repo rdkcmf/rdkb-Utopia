@@ -331,44 +331,6 @@ int Utopia_SetDeviceSettings (UtopiaContext *ctx, deviceSetting_t *device)
     return SUCCESS;
 }
 
-int Utopia_GetDeviceInfo (UtopiaContext *ctx, deviceInfo_t *info)
-{
-    if (NULL == ctx || NULL == info) {
-        return ERR_INVALID_ARGS;
-    }
-
-    bzero(info, sizeof(deviceInfo_t));
-
-    token_t  se_token;
-    int      se_fd = s_sysevent_connect(&se_token);
-    if (0 > se_fd) {
-        return ERR_SYSEVENT_CONN;
-    }
-    sysevent_get(se_fd, se_token, "firmware_version", info->firmware_version, TOKEN_SZ);
-    sysevent_get(se_fd, se_token, "model_name", info->model_name, NAME_SZ);
-
-    struct timeval cur_time;
-    gettimeofday(&cur_time, NULL);
-    ctime_r(&cur_time.tv_sec, info->current_time);
-
-    char     ifname[IFNAME_SZ];
-    sysevent_get(se_fd, se_token, "wan_ifname", ifname, IFNAME_SZ);
-    s_get_interface_mac(ifname, info->wan_mac_address, MACADDR_SZ);
-
-    FILE *fp;
-    if ((fp = fopen(FIRMWARE_REVISION_FILE, "r"))) {
-        fgets(info->firmware_revision, NAME_SZ, fp);
-        fclose(fp);
-    }
-    if ((fp = fopen(FIRMWARE_BUILDDATE_FILE, "r"))) {
-        fgets(info->firmware_builddate, NAME_SZ, fp);
-        fclose(fp);
-    }
-    // TODO: wan domain 
-    
-    return SUCCESS; 
-}
-
 void get_dhcp_wan_domain(unsigned char *pDomain)
 {
     FILE *f;

@@ -102,9 +102,6 @@ typedef int boolean_t;
 #define CFG_VERSION          0x00000001
 #define CFG_RESTORE_TMP_FILE "/tmp/.cfg_restore_tmp"
 
-#define FIRMWARE_REVISION_FILE "/etc/buildrev"
-#define FIRMWARE_BUILDDATE_FILE "/etc/builddate"
-
 #define DEFAULT_HTTP_ADMIN_PASSWORD "admin"
 
 #define INCOMING_LOG_TMP_FILE      "/tmp/.incoming_log_tmp"
@@ -606,16 +603,6 @@ typedef struct dhcpclientlog {
  * Status Settings
  */
 
-typedef struct deviceInfo {
-    char firmware_version[TOKEN_SZ];
-    char firmware_revision[NAME_SZ];
-    char firmware_builddate[NAME_SZ];
-    char model_name[NAME_SZ];
-    char current_time[TOKEN_SZ];
-    char wan_mac_address[MACADDR_SZ];
-    char wan_domainname[IPHOSTNAME_SZ];
-} deviceInfo_t;
-
 #define NUM_DNS_ENTRIES 3
 
 typedef struct wanConnectionInfo {
@@ -751,7 +738,6 @@ typedef struct dmz {
 
 int Utopia_GetDeviceSettings (UtopiaContext *ctx, deviceSetting_t *device);
 int Utopia_SetDeviceSettings (UtopiaContext *ctx, deviceSetting_t *device);
-int Utopia_GetDeviceInfo (UtopiaContext *ctx, deviceInfo_t *info);
 
 /*
  * LAN Settings
