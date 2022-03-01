@@ -137,9 +137,11 @@ int Utopia_GetBlkURLByIndex(UtopiaContext *ctx, unsigned long ulIndex, blkurl_t 
 
 int Utopia_SetBlkURLByIndex(UtopiaContext *ctx, unsigned long ulIndex, const blkurl_t *blkurl)
 {
+    char tokenbuf[64];
     int index = ulIndex+1;
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "pcms_%d", index);
-    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteBlocked, index, s_tokenbuf);
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "pcms_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteBlocked, index, tokenbuf);
 
     Utopia_SetIndexedInt(ctx, UtopiaValue_ParentalControl_ManagedSiteBlocked_InsNum, index, blkurl->ins_num);
     Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteBlocked_Alias, index, (char*)blkurl->alias);
@@ -304,9 +306,11 @@ static int getmacaddress_fromip(char *ipaddress, int iptype, char *mac, int mac_
 #endif
 int Utopia_SetTrustedUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, const trusted_user_t *trusted_user)
 {
+    char tokenbuf[64];
     int index = ulIndex+1;
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "pcmst_%d", index);
-    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted, index, s_tokenbuf);
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "pcmst_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted, index, tokenbuf);
 
     Utopia_SetIndexedInt(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_InsNum, index, trusted_user->ins_num);
     Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedSiteTrusted_Alias, index, (char*)trusted_user->alias);
@@ -443,9 +447,11 @@ int Utopia_GetMSServByIndex(UtopiaContext *ctx, unsigned long ulIndex, ms_serv_t
 
 int Utopia_SetMSServByIndex(UtopiaContext *ctx, unsigned long ulIndex, const ms_serv_t *ms_serv)
 {
+    char tokenbuf[64];
     int index = ulIndex+1;
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "pcmse_%d", index);
-    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceBlocked, index, s_tokenbuf);
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "pcmse_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceBlocked, index, tokenbuf);
 
     Utopia_SetIndexedInt(ctx, UtopiaValue_ParentalControl_ManagedServiceBlocked_InsNum, index, ms_serv->ins_num);
     Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceBlocked_Alias, index, (char*)ms_serv->alias);
@@ -568,9 +574,11 @@ int Utopia_GetMSTrustedUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, ms
 
 int Utopia_SetMSTrustedUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, const ms_trusteduser_t *ms_trusteduser)
 {
+    char tokenbuf[64];
     int index = ulIndex+1;
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "pcmset_%d", index);
-    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted, index, s_tokenbuf);
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "pcmset_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted, index, tokenbuf);
 
     Utopia_SetIndexedInt(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_InsNum, index, ms_trusteduser->ins_num);
     Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedServiceTrusted_Alias, index, (char*)ms_trusteduser->alias);
@@ -705,9 +713,11 @@ int Utopia_GetMDDevByIndex(UtopiaContext *ctx, unsigned long ulIndex, md_dev_t *
 
 int Utopia_SetMDDevByIndex(UtopiaContext *ctx, unsigned long ulIndex, const md_dev_t *md_dev)
 {
+    char tokenbuf[64];
     int index = ulIndex+1;
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "pcmd_%d", index);
-    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedDevice, index, s_tokenbuf);
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "pcmd_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedDevice, index, tokenbuf);
 
     Utopia_SetIndexedInt(ctx, UtopiaValue_ParentalControl_ManagedDevice_InsNum, index, md_dev->ins_num);
     Utopia_SetIndexed(ctx, UtopiaValue_ParentalControl_ManagedDevice_Alias, index, (char*)md_dev->alias);

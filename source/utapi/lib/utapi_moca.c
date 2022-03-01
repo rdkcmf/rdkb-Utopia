@@ -46,6 +46,7 @@
 
 int Utopia_GetMocaIntf_Static(void *str_handle)
 {
+    char ulog_msg[256];
     Obj_Device_MoCA_Interface_i_static *deviceMocaIntfStatic = NULL;
     errno_t  rc = -1;
 
@@ -79,6 +80,7 @@ int Utopia_GetMocaIntf_Static(void *str_handle)
 
 int Utopia_GetMocaIntf_Dyn(void *str_handle)
 {
+    char ulog_msg[256];
     Obj_Device_MoCA_Interface_i_dyn *deviceMocaIntfDyn = NULL;
     errno_t  rc = -1;
     
@@ -113,6 +115,7 @@ int Utopia_GetMocaIntf_Dyn(void *str_handle)
 
 int Utopia_GetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
 {
+    char ulog_msg[256];
     Obj_Device_MoCA_Interface_i_cfg *deviceMocaIntfCfg = NULL;
     int iVal = -1;
     char buf[64] = {'\0'};
@@ -164,6 +167,7 @@ int Utopia_GetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
 
 int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
 {
+    char ulog_msg[256];
     Obj_Device_MoCA_Interface_i_cfg *deviceMocaIntfCfg = NULL;
     int iVal = -1;
     char buf[64] = {'\0'};
@@ -310,6 +314,7 @@ int Utopia_SetMocaIntf_Cfg(UtopiaContext *pCtx, void *str_handle)
 
 int Utopia_GetMocaIntf_AssociateDevice(void *str_handle, int count)
 {
+    char ulog_msg[256];
     Obj_Device_MoCA_Interface_i_AssociatedDevice_i *mocaIntfAssociatedevice = NULL;
     errno_t  rc = -1;
 

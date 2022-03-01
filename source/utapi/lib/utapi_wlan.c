@@ -46,7 +46,6 @@
 #include "utapi_util.h"
 #include "utapi_wlan.h"
 #include "safec_lib_common.h"
-// extern char ulog_msg[1024];
 
 const wifiPlatformSetup_t wifiPlatform[WIFI_INTERFACE_COUNT] =  
 {
@@ -174,6 +173,7 @@ int Utopia_SetWifiRadioState (UtopiaContext *ctx, wifiInterface_t intf, boolean_
 
 int Utopia_GetWifiRadioState (UtopiaContext *ctx, wifiInterface_t intf, boolean_t *enable)
 {
+    char ulog_msg[256];
     char value[64] = {0};
     char *prefix;
     errno_t safec_rc = -1;
@@ -211,6 +211,7 @@ int Utopia_GetWifiRadioState (UtopiaContext *ctx, wifiInterface_t intf, boolean_
  */
 int Utopia_GetWifiRadioSettings (UtopiaContext *ctx, wifiInterface_t intf, wifiRadioInfo_t *info) 
 {
+    char ulog_msg[256];
     char value[64];
     char *prefix;
     errno_t safec_rc = -1;
@@ -380,6 +381,7 @@ int Utopia_SetWifiRadioSettings (UtopiaContext *ctx, wifiRadioInfo_t *info)
  */
 int Utopia_GetWifiSecuritySettings (UtopiaContext *ctx, wifiInterface_t intf, wifiSecurityInfo_t *info) 
 {
+    char ulog_msg[256];
     char value[64];
     char passphrase[PASSPHRASE_SZ] = {0};
     char encrypt[64] = {0};
@@ -459,6 +461,7 @@ int Utopia_GetWifiSecuritySettings (UtopiaContext *ctx, wifiInterface_t intf, wi
 
 int Utopia_SetWifiSecuritySettings (UtopiaContext *ctx, wifiSecurityInfo_t *info) 
 {
+    char ulog_msg[256];
     char *token, value[64];
     errno_t safec_rc = -1;
 

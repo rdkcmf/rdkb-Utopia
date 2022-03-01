@@ -47,9 +47,11 @@
 
 int Utopia_Get_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *str_handle)
 {
+    char ulog_msg[256];
     char tokenBuf[64] = {'\0'};
     char tokenVal[64] = {'\0'};
     errno_t  rc = -1;
+
     if(!str_handle){
 	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
 	if(rc < EOK)
@@ -103,9 +105,11 @@ int Utopia_Get_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *st
 
 int Utopia_Set_DeviceDnsRelayForwarding(UtopiaContext *pCtx, int index, void *str_handle)
 {
+    char ulog_msg[256];
     char tokenBuf[64] = {'\0'};
     char tokenVal[64] = {'\0'};
     errno_t  rc = -1;
+
     if (!pCtx || !str_handle) {
 	rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: Invalid Input Parameter", __FUNCTION__);
 	if(rc < EOK)

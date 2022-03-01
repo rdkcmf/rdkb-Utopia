@@ -98,6 +98,7 @@ int Utopia_GetWifiRadioInstances()
 {
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -115,6 +116,7 @@ int Utopia_GetWifiRadioEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pE
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -144,6 +146,7 @@ int Utopia_GetIndexedWifiRadioCfg(UtopiaContext *ctx, unsigned long ulIndex, voi
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -182,6 +185,7 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     if (NULL == ctx || NULL == cfg) {
         return ERR_INVALID_ARGS;
     }
+    char ulog_msg[256];
     wifiRadioCfg_t *cfg_t = (wifiRadioCfg_t *)cfg;
     char buf[BUF_SZ] = {'\0'};
     char strbuf[STR_SZ] = {'\0'};
@@ -423,6 +427,7 @@ int Utopia_SetWifiRadioCfg(UtopiaContext *ctx, void *cfg)
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -705,6 +710,7 @@ int Utopia_GetWifiRadioSinfo(unsigned long ulIndex, void *sInfo)
     errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -751,6 +757,7 @@ int Utopia_GetIndexedWifiRadioDinfo(UtopiaContext *ctx, unsigned long ulIndex, v
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -787,8 +794,10 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
     if (NULL == dInfo) {
         return ERR_INVALID_ARGS;
     }
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
+
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
         ERR_CHK(safec_rc);
@@ -862,11 +871,11 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
 
 int Utopia_GetWifiRadioStats(unsigned long instanceNum, void *stats)
 {
-
     if (NULL == stats) {
         return ERR_INVALID_ARGS;
     }
 
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
@@ -959,6 +968,7 @@ int Utopia_WifiRadioSetValues(UtopiaContext *ctx, unsigned long ulIndex, unsigne
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -999,6 +1009,7 @@ int Utopia_GetWifiSSIDInstances(UtopiaContext *ctx)
     errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -1051,6 +1062,7 @@ int Utopia_GetWifiSSIDEntry(UtopiaContext *ctx, unsigned long ulIndex, void *pEn
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -1076,6 +1088,7 @@ int Utopia_GetIndexedWifiSSIDCfg(UtopiaContext *ctx, unsigned long ulIndex, void
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -1118,6 +1131,7 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
         return ERR_INVALID_ARGS;
     }
 
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
@@ -1240,6 +1254,7 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
         return ERR_INVALID_ARGS;
     }
 
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 
 #ifdef _DEBUG_
@@ -1336,6 +1351,7 @@ int Utopia_GetIndexedWifiSSIDDInfo(UtopiaContext *ctx, unsigned long ulIndex, vo
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -1375,6 +1391,7 @@ int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
         return ERR_INVALID_ARGS;
     }
 
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
@@ -1457,6 +1474,7 @@ int Utopia_SetWifiSSIDCfg(UtopiaContext *ctx, void *cfg)
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -1507,6 +1525,7 @@ int Utopia_AddWifiSSID(UtopiaContext *ctx, void *entry)
     }
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -1597,6 +1616,7 @@ int Utopia_DelWifiSSID(UtopiaContext *ctx, unsigned long ulInstanceNumber)
         return ERR_INVALID_ARGS;
     }
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -1650,6 +1670,7 @@ int Utopia_WifiSSIDSetValues(UtopiaContext *ctx, unsigned long ulIndex, unsigned
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -1685,6 +1706,7 @@ int Utopia_GetWifiSSIDStats(unsigned long ulInstanceNum, void *stats)
     }
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -1722,6 +1744,7 @@ int Utopia_GetWifiAPInstances(UtopiaContext *ctx)
 {
     int count = 0;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -1742,6 +1765,7 @@ int Utopia_GetWifiAPEntry(UtopiaContext *ctx, char *pSSID, void *pEntry)
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -1776,6 +1800,7 @@ int Utopia_GetIndexedWifiAPCfg(UtopiaContext *ctx, unsigned long ulIndex, void *
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg,  sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -1819,6 +1844,7 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
     if (NULL == ctx || NULL == cfg) {
         return ERR_INVALID_ARGS;
     }
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
@@ -1947,6 +1973,7 @@ int Utopia_GetWifiAPInfo(UtopiaContext *ctx, char *pSSID, void *info)
     if ((NULL == ctx) || (NULL == info) || (NULL == pSSID)) {
         return ERR_INVALID_ARGS;
     }
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
@@ -2041,6 +2068,7 @@ int Utopia_SetWifiAPCfg(UtopiaContext *ctx, void *cfg)
     }
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -2103,6 +2131,7 @@ int Utopia_WifiAPSetValues(UtopiaContext *ctx, unsigned long ulIndex, unsigned l
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -2132,24 +2161,25 @@ int Utopia_WifiAPSetValues(UtopiaContext *ctx, unsigned long ulIndex, unsigned l
 
 int Utopia_GetWifiAPSecEntry(UtopiaContext *ctx,char *pSSID, void *pEntry)
 {
-   if (NULL == ctx || NULL == pEntry || NULL == pSSID) {
-       return ERR_INVALID_ARGS;
-   }
+    if (NULL == ctx || NULL == pEntry || NULL == pSSID) {
+        return ERR_INVALID_ARGS;
+    }
 
 #ifdef _DEBUG_
-   errno_t safec_rc = -1;
-   safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
-   if(safec_rc < EOK){
-      ERR_CHK(safec_rc);
-   }
-   ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+    char ulog_msg[256];
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    if(safec_rc < EOK){
+        ERR_CHK(safec_rc);
+    }
+    ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
-   wifiAPSecEntry_t *pEntry_t = (wifiAPSecEntry_t *)pEntry;
+    wifiAPSecEntry_t *pEntry_t = (wifiAPSecEntry_t *)pEntry;
   
-   Utopia_GetWifiAPSecCfg(ctx, pSSID, &(pEntry_t->Cfg));
-   Utopia_GetWifiAPSecInfo(ctx, pSSID, &(pEntry_t->Info));
-   return SUCCESS;
+    Utopia_GetWifiAPSecCfg(ctx, pSSID, &(pEntry_t->Cfg));
+    Utopia_GetWifiAPSecInfo(ctx, pSSID, &(pEntry_t->Info));
+    return SUCCESS;
 }
 
 int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
@@ -2157,6 +2187,7 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
     if (NULL == ctx || NULL == cfg || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
@@ -2308,6 +2339,7 @@ int Utopia_GetWifiAPSecInfo(UtopiaContext *ctx,char *pSSID, void *info)
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -2331,6 +2363,7 @@ int Utopia_SetWifiAPSecCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
     }
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
        ERR_CHK(safec_rc);
@@ -2468,27 +2501,27 @@ int Utopia_SetWifiAPSecCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
 
 int Utopia_GetWifiAPWPSEntry(UtopiaContext *ctx, char*pSSID, void *pEntry)
 {
-
-   if (NULL == ctx || NULL == pEntry || NULL == pSSID) {
-       return ERR_INVALID_ARGS;
-   }
+    if (NULL == ctx || NULL == pEntry || NULL == pSSID) {
+        return ERR_INVALID_ARGS;
+    }
 
 #ifdef _DEBUG_
-   errno_t safec_rc = -1;
-   safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
+    char ulog_msg[256];
+    errno_t safec_rc = -1;
+    safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
-      ERR_CHK(safec_rc);
+        ERR_CHK(safec_rc);
     }
-   ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+    ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
-   wifiAPWPSEntry_t *pEntry_t = (wifiAPWPSEntry_t *)pEntry;
+    wifiAPWPSEntry_t *pEntry_t = (wifiAPWPSEntry_t *)pEntry;
 
-   Utopia_GetWifiAPWPSCfg(ctx, pSSID, &(pEntry_t->Cfg));
+    Utopia_GetWifiAPWPSCfg(ctx, pSSID, &(pEntry_t->Cfg));
 
-   pEntry_t->Info.ConfigMethodsSupported = (WIFI_WPS_METHOD_PushButton | WIFI_WPS_METHOD_Pin);
+    pEntry_t->Info.ConfigMethodsSupported = (WIFI_WPS_METHOD_PushButton | WIFI_WPS_METHOD_Pin);
 
-   return SUCCESS;
+    return SUCCESS;
 }
 
 int Utopia_GetWifiAPWPSCfg(UtopiaContext *ctx, char*pSSID, void *cfg)
@@ -2498,6 +2531,7 @@ int Utopia_GetWifiAPWPSCfg(UtopiaContext *ctx, char*pSSID, void *cfg)
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
@@ -2555,6 +2589,7 @@ int Utopia_SetWifiAPWPSCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
     }
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
     if(safec_rc < EOK){
       ERR_CHK(safec_rc);
@@ -2602,6 +2637,7 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
     if (NULL == ctx || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
@@ -2680,6 +2716,7 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
     if (NULL == ctx || NULL == assocDev || NULL == pSSID) {
         return ERR_INVALID_ARGS;
     }
+    char ulog_msg[256];
     errno_t safec_rc = -1;
 #ifdef _DEBUG_
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** !!!", __FUNCTION__);
@@ -2784,6 +2821,7 @@ unsigned long Utopia_GetWifiAPIndex(UtopiaContext *ctx, char *pSSID)
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t safec_rc = -1;
     safec_rc = sprintf_s(ulog_msg, sizeof(ulog_msg),"%s: ********Entered ****** with SSID %s!!!", __FUNCTION__,pSSID);
     if(safec_rc < EOK){
@@ -2861,6 +2899,7 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
         return ERR_INVALID_ARGS;
     }
 
+    char ulog_msg[256];
     wifiMacFilterCfg_t *cfg_t = (wifiMacFilterCfg_t *)cfg;
     char buf[1024] = {'\0'};
     char maclist[1024] = {'\0'};

@@ -55,11 +55,28 @@
 static int g_IndexMapServerPool[MAX_NUM_INSTANCES+1] = {-1};
 static int g_IndexMapStaticAddr[MAX_NUM_INSTANCES+1] = {-1};
 
+/*
+ * find delim, replace with '\0' and return ptr after delim char
+ * returns null if no delim found
+ */
+static char *chop_str (char *str, char delim)
+{
+    char *p;
+
+    if (str && (p = strchr(str, delim))) {
+        *p = '\0';
+        return p+1;
+    }
+    return NULL;
+}
+
 int Utopia_GetDhcpServerEnable(UtopiaContext *ctx, unsigned char *bEnabled)
 {
     int iVal = -1;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
+
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -78,7 +95,9 @@ int Utopia_SetDhcpServerEnable(UtopiaContext *ctx, unsigned char bEnabled)
 {
     int iVal = -1;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
+
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** with !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -94,7 +113,9 @@ int Utopia_GetNumberOfDhcpV4ServerPools()
 {
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
+
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -114,7 +135,9 @@ int Utopia_GetDhcpV4ServerPoolEntry(UtopiaContext *ctx, unsigned long ulIndex, v
     /*char insNum[STR_SZ] = {'\0'};*/
     unsigned long ulInstanceNum = 0;
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
+
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -141,6 +164,7 @@ int Utopia_GetDhcpV4ServerPoolEntry(UtopiaContext *ctx, unsigned long ulIndex, v
 
 int Utopia_GetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
 {
+    char ulog_msg[256];
     int iVal = -1;
     int rc = -1;
     char strVal[STR_SZ] = {'\0'};
@@ -338,6 +362,7 @@ int Utopia_GetDhcpV4ServerPoolInfo(UtopiaContext *ctx, unsigned long ulInstanceN
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
@@ -430,6 +455,7 @@ int Utopia_ValidateLanDhcpPoolRange(UtopiaContext *ctx, const unsigned long mina
 
 int Utopia_SetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
 {
+    char ulog_msg[256];
     int rc = -1;
     errno_t  safec_rc = -1;
     struct in_addr addrVal;
@@ -438,6 +464,7 @@ int Utopia_SetDhcpV4ServerPoolCfg(UtopiaContext *ctx, void *pCfg)
 
     /*lanSetting_t lan;*/
     dhcpServerInfo_t dhcps;
+
     if((NULL == ctx) || (NULL == pCfg)){
         return ERR_INVALID_ARGS;
     }
@@ -562,7 +589,9 @@ int Utopia_SetDhcpV4ServerPoolValues(UtopiaContext *ctx, unsigned long ulIndex, 
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
+
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -588,7 +617,9 @@ int Utopia_GetDhcpV4SPool_NumOfStaticAddress(UtopiaContext *ctx,unsigned long ul
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
+
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -604,6 +635,7 @@ int Utopia_GetDhcpV4SPool_NumOfStaticAddress(UtopiaContext *ctx,unsigned long ul
 
 int Utopia_GetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInstanceNumber,unsigned long ulIndex, void *pSAddr)
 {
+    char ulog_msg[256];
     if((NULL == ctx) || (NULL == pSAddr)){
         return ERR_INVALID_ARGS;
     }
@@ -650,6 +682,7 @@ int Utopia_GetDhcpV4SPool_SAddressByInsNum(UtopiaContext *ctx, unsigned long ulC
     }
 
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
@@ -773,6 +806,7 @@ int Utopia_AddDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
         return ERR_INVALID_ARGS;
     }
 #ifdef _DEBUG_
+    char ulog_msg[256];
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -844,6 +878,7 @@ int Utopia_DelDhcp4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInstan
         return ERR_INVALID_ARGS;
     }
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
@@ -896,6 +931,7 @@ int Utopia_SetDhcpV4SPool_SAddress(UtopiaContext *ctx, unsigned long ulPoolInsta
         return ERR_INVALID_ARGS;
     }
 #ifdef _DEBUG_
+    char ulog_msg[256];
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {
@@ -938,6 +974,7 @@ int Utopia_SetDhcpV4SPool_SAddress_Values(UtopiaContext *ctx, unsigned long ulPo
         return ERR_INVALID_ARGS;
     }
 #ifdef _DEBUG_
+    char ulog_msg[256];
     errno_t  rc = -1;
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
@@ -967,6 +1004,7 @@ int Utopia_GetDhcpV4SPool_SAddressByIndex(UtopiaContext *ctx, unsigned long ulIn
     DHCPMap_t dhcp_static_hosts;
     memset(&dhcp_static_hosts, 0x0, sizeof(dhcp_static_hosts)); //CID 162783: Uninitialized scalar variable
 #ifdef _DEBUG_
+    char ulog_msg[256];
     rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: ********Entered ****** !!!", __FUNCTION__);
     if(rc < EOK)
     {

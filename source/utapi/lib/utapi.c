@@ -271,6 +271,22 @@ static EnumString_Map g_byoi_WanTypeMap[] =
 };
 
 */
+
+/*
+ * find delim, replace with '\0' and return ptr after delim char
+ * returns null if no delim found
+ */
+static char *chop_str (char *str, char delim)
+{
+    char *p;
+
+    if (str && (p = strchr(str, delim))) {
+        *p = '\0';
+        return p+1;
+    }
+    return NULL;
+}
+
 /*
  * ------------------------------------------------------------------------------ 
  */
@@ -280,6 +296,8 @@ static EnumString_Map g_byoi_WanTypeMap[] =
  */
 int Utopia_GetDeviceSettings (UtopiaContext *ctx, deviceSetting_t *device)
 {
+    char tokenbuf[256];
+
     if (NULL == ctx || NULL == device) {
         return ERR_INVALID_ARGS;
     }
@@ -289,22 +307,22 @@ int Utopia_GetDeviceSettings (UtopiaContext *ctx, deviceSetting_t *device)
     Utopia_Get(ctx, UtopiaValue_HostName, device->hostname, IPHOSTNAME_SZ);
     Utopia_Get(ctx, UtopiaValue_Locale, device->lang, LANG_SZ);
     Utopia_GetInt(ctx, UtopiaValue_AutoDST, (int *)&device->auto_dst);
-    Utopia_Get(ctx, UtopiaValue_TZ, s_tokenbuf, TOKEN_SZ);
+    Utopia_Get(ctx, UtopiaValue_TZ, tokenbuf, sizeof(tokenbuf));
 
     timezone_info_t *tz;
 
     for (tz = tz_list; tz->dst_on != NULL && tz->dst_off != NULL; tz++) {
         if ((tz->is_dst_observed
              && device->auto_dst == AUTO_DST_OFF
-             && !strcmp(tz->dst_off, s_tokenbuf))
+             && !strcmp(tz->dst_off, tokenbuf))
             ||
             (tz->is_dst_observed
              && device->auto_dst == AUTO_DST_ON
-             && !strcmp(tz->dst_on, s_tokenbuf))
+             && !strcmp(tz->dst_on, tokenbuf))
             ||
             (!tz->is_dst_observed
              && device->auto_dst == AUTO_DST_NA
-             && !strcmp(tz->dst_off, s_tokenbuf))
+             && !strcmp(tz->dst_off, tokenbuf))
            )
         {
             device->tz_gmt_offset = tz->gmt_offset;
@@ -421,6 +439,8 @@ int Utopia_SetLanSettings (UtopiaContext *ctx, lanSetting_t *lan)
 
 int Utopia_SetDHCPServerSettings (UtopiaContext *ctx, dhcpServerInfo_t *dhcps)
 {
+    char s_intbuf[16];
+
     if (NULL == ctx || NULL == dhcps) {
         return ERR_INVALID_ARGS;
     }
@@ -865,6 +885,7 @@ static int s_GetWANStaticSetting (UtopiaContext *ctx, wan_static_t *wstatic)
 
 static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo_t *wan)
 {
+    char tokenbuf[256];
     int rc = SUCCESS;
     void* pWanIpAddrStatic = NULL;
     void* pWanPPPTime      = NULL;
@@ -875,8 +896,8 @@ static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
     Utopia_Get(ctx, UtopiaValue_WAN_ProtoUsername, wan->ppp.username, USERNAME_SZ);
     Utopia_Get(ctx, UtopiaValue_WAN_ProtoPassword, wan->ppp.password, PASSWORD_SZ);
 
-    Utopia_Get(ctx, UtopiaValue_WAN_PPPConnMethod, s_tokenbuf, sizeof(s_tokenbuf));
-    wan->ppp.conn_method = s_StrToEnum(g_WanConnMap, s_tokenbuf);
+    Utopia_Get(ctx, UtopiaValue_WAN_PPPConnMethod, tokenbuf, sizeof(tokenbuf));
+    wan->ppp.conn_method = s_StrToEnum(g_WanConnMap, tokenbuf);
 
     if (CONNECT_ON_DEMAND == wan->ppp.conn_method) {
         pWanPPPTime = &wan->ppp.max_idle_time;
@@ -911,6 +932,7 @@ static int s_GetWANPPPSetting (UtopiaContext *ctx, wanProto_t wan_proto, wanInfo
 
 int Utopia_GetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
 {
+    char tokenbuf[256];
     int rc = SUCCESS;
     void* pWanMtuSize = NULL;
 
@@ -920,8 +942,8 @@ int Utopia_GetWANSettings (UtopiaContext *ctx, wanInfo_t *wan_info)
 
     memset(wan_info,0,sizeof(wanInfo_t));
 
-    UTOPIA_GET(ctx, UtopiaValue_WAN_Proto, s_tokenbuf, sizeof(s_tokenbuf));
-    wan_info->wan_proto = s_StrToEnum(g_WanTypeMap, s_tokenbuf);
+    UTOPIA_GET(ctx, UtopiaValue_WAN_Proto, tokenbuf, sizeof(tokenbuf));
+    wan_info->wan_proto = s_StrToEnum(g_WanTypeMap, tokenbuf);
 
     Utopia_Get(ctx, UtopiaValue_WAN_ProtoAuthDomain, wan_info->domainname, IPHOSTNAME_SZ);
     pWanMtuSize = &wan_info->mtu_size;
@@ -1017,6 +1039,7 @@ static void s_getWANStaticConnectionInfo (UtopiaContext *ctx, wanConnectionInfo_
 
 int Utopia_GetWANConnectionInfo (UtopiaContext *ctx, wanConnectionInfo_t *wan)
 {
+    char tokenbuf[256];
     token_t        se_token;
 
     if (NULL == ctx || NULL == wan) {
@@ -1033,8 +1056,8 @@ int Utopia_GetWANConnectionInfo (UtopiaContext *ctx, wanConnectionInfo_t *wan)
     sysevent_get(se_fd, se_token, "current_wan_ipaddr", wan->ip_address, IPADDR_SZ);
     sysevent_get(se_fd, se_token, "current_wan_ifname", wan->ifname, IFNAME_SZ);
 
-    UTOPIA_GET(ctx, UtopiaValue_WAN_Proto, s_tokenbuf, sizeof(s_tokenbuf));
-    wanProto_t wan_proto = s_StrToEnum(g_WanTypeMap, s_tokenbuf);
+    UTOPIA_GET(ctx, UtopiaValue_WAN_Proto, tokenbuf, sizeof(tokenbuf));
+    wanProto_t wan_proto = s_StrToEnum(g_WanTypeMap, tokenbuf);
 
     switch (wan_proto) {
     case DHCP:
@@ -1495,12 +1518,14 @@ int Utopia_UpdateDDNSService (UtopiaContext *ctx)
 
 int Utopia_GetDDNSService (UtopiaContext *ctx, ddnsService_t *ddns)
 {
+    char tokenbuf[256];
+
     bzero(ddns, sizeof(ddnsService_t));
 
     Utopia_GetBool(ctx, UtopiaValue_DDNS_Enable, &ddns->enabled);
     if (TRUE == ddns->enabled) {
-        UTOPIA_GET(ctx, UtopiaValue_DDNS_Service, s_tokenbuf, sizeof(s_tokenbuf));
-        ddns->provider = s_StrToEnum(g_DDNSProviderMap, s_tokenbuf);
+        UTOPIA_GET(ctx, UtopiaValue_DDNS_Service, tokenbuf, sizeof(tokenbuf));
+        ddns->provider = s_StrToEnum(g_DDNSProviderMap, tokenbuf);
         UTOPIA_GET(ctx, UtopiaValue_DDNS_Hostname, ddns->hostname, IPHOSTNAME_SZ);
         UTOPIA_GET(ctx, UtopiaValue_DDNS_Username, ddns->username, USERNAME_SZ);
         UTOPIA_GET(ctx, UtopiaValue_DDNS_Password, ddns->password, PASSWORD_SZ);
@@ -1626,18 +1651,17 @@ static int s_get_staticroute (UtopiaContext *ctx, int index, routeStatic_t *srou
 
 static int s_set_staticroute (UtopiaContext *ctx, int index, routeStatic_t *sroute)
 {
-    char buf[128];
+    char tokenbuf[256];
 
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "sroute_%d", index);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_StaticRoute, index, s_tokenbuf);
+    snprintf(tokenbuf, sizeof(tokenbuf), "sroute_%d", index);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_StaticRoute, index, tokenbuf);
 
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SR_Name, index, sroute->name);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SR_Dest, index, sroute->dest_lan_ip);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SR_Netmask, index, sroute->netmask);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_SR_Gateway, index, sroute->gateway);
 
-    strncpy(buf, (INTERFACE_WAN == sroute->dest_intf) ? "wan" : "lan", sizeof(buf));
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_SR_Interface, index, buf);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_SR_Interface, index, (INTERFACE_WAN == sroute->dest_intf) ? "wan" : "lan");
 
     return UT_SUCCESS;
 }
@@ -1987,7 +2011,9 @@ static int unsetFWBlockingRule (UtopiaContext *ctx, int w2l_rule_index)
  */
 static boolean_t getFWBlockingRule (UtopiaContext *ctx, int w2l_rule_index)
 {
-     return Utopia_GetIndexed(ctx, UtopiaValue_FW_W2LWellKnown, w2l_rule_index, s_tokenbuf, sizeof(s_tokenbuf));
+     char tokenbuf[256];
+
+     return Utopia_GetIndexed(ctx, UtopiaValue_FW_W2LWellKnown, w2l_rule_index, tokenbuf, sizeof(tokenbuf));
 }
 #endif
 
@@ -2037,6 +2063,7 @@ int Utopia_SetFirewallSettings (UtopiaContext *ctx, firewall_t fw)
 
 int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw)
 {
+    char tokenbuf[256];
     int rule_count;
     int i;
     
@@ -2085,15 +2112,15 @@ int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw)
     fw->allow_l2tp_passthru = TRUE;
 
     for (i = 0; i < rule_count; i++) {
-        Utopia_GetIndexed(ctx, UtopiaValue_FW_W2LWellKnown, i + 1, s_tokenbuf, sizeof(s_tokenbuf));
+        Utopia_GetIndexed(ctx, UtopiaValue_FW_W2LWellKnown, i + 1, tokenbuf, sizeof(tokenbuf));
 
-        if (0 == strcmp(s_tokenbuf, s_blockipsec)) {
+        if (0 == strcmp(tokenbuf, s_blockipsec)) {
             fw->allow_ipsec_passthru = FALSE;
         }
-        else if (0 == strcmp(s_tokenbuf, s_blockpptp)) {
+        else if (0 == strcmp(tokenbuf, s_blockpptp)) {
             fw->allow_pptp_passthru = FALSE;
         }
-        else if (0 == strcmp(s_tokenbuf, s_blockl2tp)) {
+        else if (0 == strcmp(tokenbuf, s_blockl2tp)) {
             fw->allow_l2tp_passthru = FALSE;
         }
     }
@@ -2106,9 +2133,11 @@ int Utopia_GetFirewallSettings (UtopiaContext *ctx, firewall_t *fw)
  */
 static int s_getportfwd_ruleid (UtopiaContext *ctx, int index)
 {
+    char tokenbuf[256];
     int rule_id = -1;
-    UTOPIA_GETINDEXED(ctx, UtopiaValue_SinglePortForward, index, s_tokenbuf, sizeof(s_tokenbuf));
-    if (sscanf(s_tokenbuf, "spf_%d", &rule_id) == 1)
+
+    UTOPIA_GETINDEXED(ctx, UtopiaValue_SinglePortForward, index, tokenbuf, sizeof(tokenbuf));
+    if (sscanf(tokenbuf, "spf_%d", &rule_id) == 1)
     {
         return rule_id;
     }
@@ -2120,8 +2149,10 @@ static int s_getportfwd_ruleid (UtopiaContext *ctx, int index)
 
 static int s_setportfwd_ruleid (UtopiaContext *ctx, int index, int rule_id)
 {
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "spf_%d", rule_id);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_SinglePortForward, index, s_tokenbuf);
+    char tokenbuf[256];
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "spf_%d", rule_id);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_SinglePortForward, index, tokenbuf);
     return SUCCESS;
 }
 
@@ -2140,7 +2171,8 @@ static int s_getportfwd_index (UtopiaContext *ctx, int rule_id, int count)
 
 static int s_getportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap)
 {
-	boolean_t TempprevRuleEnabledState = FALSE;
+    char tokenbuf[256];
+    boolean_t TempprevRuleEnabledState = FALSE;
 	
     Utopia_GetIndexedBool(ctx, UtopiaValue_SPF_Enabled, index, &portmap->enabled);
 
@@ -2164,8 +2196,8 @@ static int s_getportfwd (UtopiaContext *ctx, int index, portFwdSingle_t *portmap
 //    Utopia_GetIndexedInt(ctx, UtopiaValue_SPF_ToIp, index, &portmap->dest_ip);
     Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIp, index, (char *)&portmap->dest_ip, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_SPF_ToIpV6, index, (char *)&portmap->dest_ipv6, IPADDR_SZ);
-    Utopia_GetIndexed(ctx, UtopiaValue_SPF_Protocol, index, s_tokenbuf, sizeof(s_tokenbuf));
-    portmap->protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
+    Utopia_GetIndexed(ctx, UtopiaValue_SPF_Protocol, index, tokenbuf, sizeof(tokenbuf));
+    portmap->protocol = s_StrToEnum(g_ProtocolMap, tokenbuf);
     
     return SUCCESS;
 }
@@ -2512,6 +2544,7 @@ static int s_get_portmapdyn_count ()
 
 static int s_set_portmapdyn_count (int count)
 {
+    char ulog_msg[256];
     token_t  se_token;
     int      se_fd = s_sysevent_connect(&se_token);
     errno_t   rc = -1;
@@ -2728,6 +2761,7 @@ static int s_get_portmapdyn (int index, portMapDyn_t *portmap)
  */
 static int s_find_portmapdyn (const char *external_host, int external_port, protocol_t proto)
 {
+    char ulog_msg[256];
     int i, count = s_get_portmapdyn_count();
     errno_t  rc = -1;
 
@@ -3025,9 +3059,11 @@ int Utopia_InvalidateDynPortMappings (void)
  */
 static int s_getportfwdrange_ruleid (UtopiaContext *ctx, int index)
 {
+    char tokenbuf[256];
     int rule_id = -1;
-    UTOPIA_GETINDEXED(ctx, UtopiaValue_PortRangeForward, index, s_tokenbuf, sizeof(s_tokenbuf));
-    if (sscanf(s_tokenbuf, "pfr_%d", &rule_id) == 1)
+
+    UTOPIA_GETINDEXED(ctx, UtopiaValue_PortRangeForward, index, tokenbuf, sizeof(tokenbuf));
+    if (sscanf(tokenbuf, "pfr_%d", &rule_id) == 1)
     {
         return rule_id;
     }
@@ -3039,8 +3075,10 @@ static int s_getportfwdrange_ruleid (UtopiaContext *ctx, int index)
 
 static int s_setportfwdrange_ruleid (UtopiaContext *ctx, int index, int rule_id)
 {
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "pfr_%d", rule_id);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_PortRangeForward, index, s_tokenbuf);
+    char tokenbuf[256];
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "pfr_%d", rule_id);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_PortRangeForward, index, tokenbuf);
     return SUCCESS;
 }
 
@@ -3059,8 +3097,9 @@ static int s_getportfwdrange_index (UtopiaContext *ctx, int rule_id, int count)
 
 static int s_getportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *portmap)
 {
+    char tokenbuf[256];
     char *last, port_range[32];
-	boolean_t TempprevRuleEnabledState = FALSE;
+    boolean_t TempprevRuleEnabledState = FALSE;
 
     portmap->internal_port_range_size = 0;
 
@@ -3087,8 +3126,8 @@ static int s_getportfwdrange (UtopiaContext *ctx, int index, portFwdRange_t *por
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIp, index, (char *)&portmap->dest_ip, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_ToIpV6, index, (char *)&portmap->dest_ipv6, IPADDR_SZ);
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_PublicIp, index, (char *)&portmap->public_ip, IPADDR_SZ);
-    Utopia_GetIndexed(ctx, UtopiaValue_PFR_Protocol, index, s_tokenbuf, sizeof(s_tokenbuf));
-    portmap->protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
+    Utopia_GetIndexed(ctx, UtopiaValue_PFR_Protocol, index, tokenbuf, sizeof(tokenbuf));
+    portmap->protocol = s_StrToEnum(g_ProtocolMap, tokenbuf);
 
     *port_range = '\0';
     Utopia_GetIndexed(ctx, UtopiaValue_PFR_ExternalPortRange, index, port_range, sizeof(port_range));
@@ -3396,9 +3435,11 @@ int Utopia_DelPortForwardingRangeByRuleId (UtopiaContext *ctx, int rule_id)
 
 static int s_getporttrigger_ruleid (UtopiaContext *ctx, int index)
 {
+    char tokenbuf[256];
     int rule_id = -1;
-    UTOPIA_GETINDEXED(ctx, UtopiaValue_PortRangeTrigger, index, s_tokenbuf, sizeof(s_tokenbuf));
-    if (sscanf(s_tokenbuf, "prt_%d", &rule_id) == 1)
+
+    UTOPIA_GETINDEXED(ctx, UtopiaValue_PortRangeTrigger, index, tokenbuf, sizeof(tokenbuf));
+    if (sscanf(tokenbuf, "prt_%d", &rule_id) == 1)
     {
         return rule_id;
     }
@@ -3410,8 +3451,10 @@ static int s_getporttrigger_ruleid (UtopiaContext *ctx, int index)
 
 static int s_setporttrigger_ruleid (UtopiaContext *ctx, int index, int rule_id)
 {
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "prt_%d", rule_id);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_PortRangeTrigger, index, s_tokenbuf);
+    char tokenbuf[256];
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "prt_%d", rule_id);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_PortRangeTrigger, index, tokenbuf);
     UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_PRT_TriggerID, index, rule_id);
     return SUCCESS;
 }
@@ -3431,6 +3474,7 @@ static int s_getporttrigger_index (UtopiaContext *ctx, int rule_id, int count)
 
 static int s_getporttrigger (UtopiaContext *ctx, int index, portRangeTrig_t *map)
 {
+    char tokenbuf[256];
     char *last, port_range[32];
     boolean_t  TempprevRuleEnabledState = FALSE;	
 
@@ -3452,11 +3496,11 @@ static int s_getporttrigger (UtopiaContext *ctx, int index, portRangeTrig_t *map
 
     Utopia_GetIndexed(ctx, UtopiaValue_PRT_Name, index, map->name, NAME_SZ);
 
-    Utopia_GetIndexed(ctx, UtopiaValue_PRT_TriggerProtocol, index, s_tokenbuf, sizeof(s_tokenbuf));
-    map->trigger_proto = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
+    Utopia_GetIndexed(ctx, UtopiaValue_PRT_TriggerProtocol, index, tokenbuf, sizeof(tokenbuf));
+    map->trigger_proto = s_StrToEnum(g_ProtocolMap, tokenbuf);
 
-    Utopia_GetIndexed(ctx, UtopiaValue_PRT_ForwardProtocol, index, s_tokenbuf, sizeof(s_tokenbuf));
-    map->forward_proto = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
+    Utopia_GetIndexed(ctx, UtopiaValue_PRT_ForwardProtocol, index, tokenbuf, sizeof(tokenbuf));
+    map->forward_proto = s_StrToEnum(g_ProtocolMap, tokenbuf);
 
     *port_range = '\0';
     Utopia_GetIndexed(ctx, UtopiaValue_PRT_TriggerRange, index, port_range, sizeof(port_range));
@@ -3743,7 +3787,9 @@ int Utopia_DelPortTriggerByRuleId (UtopiaContext *ctx, int rule_id)
 
 #define PORT_OVER_RANGE(n_s, n_e, s, e) ((((n_s) > (e)) || ((n_e) < (s))) ? 0 : 1)
 
-int _check_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int new_end, int new_protocol, UtopiaValue utopia[5], int is_trigger){
+int _check_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int new_end, int new_protocol, UtopiaValue utopia[5], int is_trigger)
+{
+    char tokenbuf[256];
     int count;
     int protocol;
     int start_port;
@@ -3779,8 +3825,8 @@ int _check_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int n
         if(enabled == FALSE)
             continue;
 #endif
-        Utopia_GetIndexed(ctx, utopia[2], i, s_tokenbuf, sizeof(s_tokenbuf));
-        protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
+        Utopia_GetIndexed(ctx, utopia[2], i, tokenbuf, sizeof(tokenbuf));
+        protocol = s_StrToEnum(g_ProtocolMap, tokenbuf);
         if(new_protocol == BOTH_TCP_UDP || protocol == BOTH_TCP_UDP || new_protocol == protocol ){ 
             *port_range = '\0';
             Utopia_GetIndexed(ctx, utopia[3], i, port_range, sizeof(port_range));
@@ -3797,7 +3843,9 @@ int _check_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int n
     return 0;
 }
 
-int _check_single_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int new_end, int new_protocol, UtopiaValue utopia[5], int is_trigger){
+int _check_single_port_range( UtopiaContext *ctx, int new_rule_id, int new_start, int new_end, int new_protocol, UtopiaValue utopia[5], int is_trigger)
+{
+    char tokenbuf[256];
     int count;
     int i;
     /*boolean_t enabled;*/
@@ -3825,8 +3873,8 @@ int _check_single_port_range( UtopiaContext *ctx, int new_rule_id, int new_start
         if(enabled == FALSE)
             continue;
 #endif
-        Utopia_GetIndexed(ctx, utopia[2], i, s_tokenbuf, sizeof(s_tokenbuf));
-        protocol = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
+        Utopia_GetIndexed(ctx, utopia[2], i, tokenbuf, sizeof(tokenbuf));
+        protocol = s_StrToEnum(g_ProtocolMap, tokenbuf);
         
         if(new_protocol == BOTH_TCP_UDP || protocol == BOTH_TCP_UDP || new_protocol == protocol ){ 
             Utopia_GetIndexedInt(ctx, utopia[3], i, &port);
@@ -4260,14 +4308,15 @@ static int s_getiap (UtopiaContext *ctx, int index, iap_entry_t *iap)
  */
 static int s_setiaphosts (UtopiaContext *ctx, int index, lanHosts_t *lanhosts)
 {
+    char tokenbuf[256];
     char buf[128];
     int i;
 
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "iap_%d", index);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_InternetAccessPolicy, index, s_tokenbuf);
+    snprintf(tokenbuf, sizeof(tokenbuf), "iap_%d", index);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_InternetAccessPolicy, index, tokenbuf);
 
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "iap_localhost_%d", index);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_IAP_LocalHostList, index, s_tokenbuf);
+    snprintf(tokenbuf, sizeof(tokenbuf), "iap_localhost_%d", index);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_IAP_LocalHostList, index, tokenbuf);
 
     UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_IAP_IPHostCount, index, lanhosts->ip_count);
     if (lanhosts->ip_count > 0) {
@@ -4307,11 +4356,12 @@ static int s_setiaphosts (UtopiaContext *ctx, int index, lanHosts_t *lanhosts)
 
 static int s_setiap (UtopiaContext *ctx, int index, iap_entry_t *iap)
 {
+    char tokenbuf[256];
     char buf[128];
     int i;
 
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "iap_%d", index);
-    UTOPIA_SETINDEXED(ctx, UtopiaValue_InternetAccessPolicy, index, s_tokenbuf);
+    snprintf(tokenbuf, sizeof(tokenbuf), "iap_%d", index);
+    UTOPIA_SETINDEXED(ctx, UtopiaValue_InternetAccessPolicy, index, tokenbuf);
 
     UTOPIA_SETINDEXEDBOOL(ctx, UtopiaValue_IAP_Enabled, index, iap->enabled);
     UTOPIA_SETINDEXED(ctx, UtopiaValue_IAP_Name, index, iap->policyname);
@@ -4699,6 +4749,7 @@ static boolean_t findQosDefinedPolicyEntry(qosDefinedPolicy_t qoslist[], int cou
 
 int Utopia_GetQoSDefinedPolicyList (int *out_count, qosDefinedPolicy_t const **out_qoslist)
 {
+    char tokenbuf[256];
 
     if (TRUE == g_qosDefinedPolicyInit) {
         *out_count = g_qosDefinedPolicyCount;
@@ -4712,8 +4763,8 @@ int Utopia_GetQoSDefinedPolicyList (int *out_count, qosDefinedPolicy_t const **o
         char *name, *friendly, *type;
 
         int count = 0;
-        while (count < QOS_MAX_DEFINED_POLICY && fgets(s_tokenbuf, sizeof(s_tokenbuf), fp)) {
-            name = strtok_r(s_tokenbuf, "|", &saveptr);
+        while (count < QOS_MAX_DEFINED_POLICY && fgets(tokenbuf, sizeof(tokenbuf), fp)) {
+            name = strtok_r(tokenbuf, "|", &saveptr);
             if (NULL == name) {
                 continue;
             }
@@ -4753,6 +4804,8 @@ int Utopia_GetQoSDefinedPolicyList (int *out_count, qosDefinedPolicy_t const **o
 
 int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
 {
+    char tokenbuf[256];
+
     if (NULL == ctx || NULL == qos || (TRUE == qos->enable && qos->policy_count > 0 && NULL == qos->policy_list)) {
         return ERR_INVALID_ARGS;
     }
@@ -4784,8 +4837,8 @@ int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
         switch (qos->policy_list[i].type) {
         case QOS_APPLICATION:
         case QOS_GAME:
-            snprintf(s_tokenbuf, sizeof(s_tokenbuf), "qdp_%d", dpcount+1);
-            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSDefinedPolicy, dpcount+1, s_tokenbuf);
+            snprintf(tokenbuf, sizeof(tokenbuf), "qdp_%d", dpcount+1);
+            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSDefinedPolicy, dpcount+1, tokenbuf);
 
             UTOPIA_SETINDEXED(ctx, UtopiaValue_QDP_Name, dpcount+1, qos->policy_list[i].name);
             token = s_EnumToStr(g_QoSClassMap, qos->policy_list[i].priority);
@@ -4795,8 +4848,8 @@ int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
             dpcount++;
             break;
         case QOS_MACADDR:
-            snprintf(s_tokenbuf, sizeof(s_tokenbuf), "qma_%d", maccount+1);
-            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSMacAddr, maccount+1, s_tokenbuf);
+            snprintf(tokenbuf, sizeof(tokenbuf), "qma_%d", maccount+1);
+            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSMacAddr, maccount+1, tokenbuf);
 
             UTOPIA_SETINDEXED(ctx, UtopiaValue_QMA_Name, maccount+1, qos->policy_list[i].name);
             UTOPIA_SETINDEXED(ctx, UtopiaValue_QMA_Mac, maccount+1, qos->policy_list[i].mac);
@@ -4807,8 +4860,8 @@ int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
             maccount++;
             break;
         case QOS_VOICE_DEVICE:
-            snprintf(s_tokenbuf, sizeof(s_tokenbuf), "qvd_%d", vdcount+1);
-            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSVoiceDevice, vdcount+1, s_tokenbuf);
+            snprintf(tokenbuf, sizeof(tokenbuf), "qvd_%d", vdcount+1);
+            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSVoiceDevice, vdcount+1, tokenbuf);
 
             UTOPIA_SETINDEXED(ctx, UtopiaValue_QVD_Name, vdcount+1, qos->policy_list[i].name);
             UTOPIA_SETINDEXED(ctx, UtopiaValue_QVD_Mac, vdcount+1, qos->policy_list[i].mac);
@@ -4819,8 +4872,8 @@ int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
             vdcount++;
             break;
         case QOS_CUSTOM:
-            snprintf(s_tokenbuf, sizeof(s_tokenbuf), "qup_%d", customct+1);
-            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSUserDefinedPolicy, customct+1, s_tokenbuf);
+            snprintf(tokenbuf, sizeof(tokenbuf), "qup_%d", customct+1);
+            UTOPIA_SETINDEXED(ctx, UtopiaValue_QoSUserDefinedPolicy, customct+1, tokenbuf);
 
             UTOPIA_SETINDEXED(ctx, UtopiaValue_QUP_Name, customct+1, qos->policy_list[i].name);
             UTOPIA_SETINDEXEDINT(ctx, UtopiaValue_QUP_PortRangeCount, customct+1, qos->policy_list[i].hwport);
@@ -4834,12 +4887,12 @@ int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
                 Utopia_SetIndexed2(ctx, UtopiaValue_QUP_Protocol, customct+1, port_range_idx+1, proto);
                 
                 // Set the custom port range
-                snprintf(s_tokenbuf, sizeof(s_tokenbuf), "%d %d",
+                snprintf(tokenbuf, sizeof(tokenbuf), "%d %d",
                          qos->policy_list[i].custom_port[port_range_idx].start,
                          qos->policy_list[i].custom_port[port_range_idx].end);
                 // Add 1 to the index since syscfg is one-indexed instead of
                 // zero-indexed
-                Utopia_SetIndexed2(ctx, UtopiaValue_QUP_PortRange, customct+1, port_range_idx+1, s_tokenbuf);
+                Utopia_SetIndexed2(ctx, UtopiaValue_QUP_PortRange, customct+1, port_range_idx+1, tokenbuf);
                 
                 // Set the class/priority
                 if (token) {
@@ -4889,6 +4942,8 @@ int Utopia_SetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
 
 int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
 {
+    char tokenbuf[256];
+
     if (NULL == ctx || NULL == qos) {
         return ERR_INVALID_ARGS;
     }
@@ -4923,8 +4978,8 @@ int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
 
     for (i = 0; i < dpcount; i++) {
         Utopia_GetIndexed(ctx, UtopiaValue_QDP_Name, i + 1, policy_list[j].name, NAME_SZ);
-        Utopia_GetIndexed(ctx, UtopiaValue_QDP_Class, i + 1, s_tokenbuf, sizeof(s_tokenbuf));
-        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+        Utopia_GetIndexed(ctx, UtopiaValue_QDP_Class, i + 1, tokenbuf, sizeof(tokenbuf));
+        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
         policy_list[j].type = QOS_APPLICATION; // for both game & app is same
         j++;
     }
@@ -4932,41 +4987,41 @@ int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
     for (i = 0; i < maccount; i++) {
         Utopia_GetIndexed(ctx, UtopiaValue_QMA_Name, i + 1, policy_list[j].name, NAME_SZ);
         Utopia_GetIndexed(ctx, UtopiaValue_QMA_Mac, i + 1, policy_list[j].mac, MACADDR_SZ);
-        Utopia_GetIndexed(ctx, UtopiaValue_QMA_Class, i + 1, s_tokenbuf, sizeof(s_tokenbuf));
-        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+        Utopia_GetIndexed(ctx, UtopiaValue_QMA_Class, i + 1, tokenbuf, sizeof(tokenbuf));
+        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
         policy_list[j].type = QOS_MACADDR;
         j++;
     }
 
 
-    if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort1, s_tokenbuf, sizeof(s_tokenbuf))) {
+    if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort1, tokenbuf, sizeof(tokenbuf))) {
         strncpy(policy_list[j].name, QOS_ETHERNET_PORT_1_POLICY_NAME, NAME_SZ);
         policy_list[j].name[NAME_SZ - 1] = '\0';
-        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
         policy_list[j].type = QOS_ETHERNET_PORT;
         j++;
     }
 
-	if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort2, s_tokenbuf, sizeof(s_tokenbuf))) {
+	if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort2, tokenbuf, sizeof(tokenbuf))) {
         strncpy(policy_list[j].name, QOS_ETHERNET_PORT_2_POLICY_NAME, NAME_SZ);
         policy_list[j].name[NAME_SZ - 1] = '\0';
-        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
         policy_list[j].type = QOS_ETHERNET_PORT;
         j++;
     }
 
-	if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort3, s_tokenbuf, sizeof(s_tokenbuf))) {
+	if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort3, tokenbuf, sizeof(tokenbuf))) {
         strncpy(policy_list[j].name, QOS_ETHERNET_PORT_3_POLICY_NAME, NAME_SZ);
         policy_list[j].name[NAME_SZ - 1] = '\0';
-        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
         policy_list[j].type = QOS_ETHERNET_PORT;
         j++;
     }
 
-	if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort4, s_tokenbuf, sizeof(s_tokenbuf))) {
+	if (Utopia_Get(ctx, UtopiaValue_QoS_EthernetPort4, tokenbuf, sizeof(tokenbuf))) {
         strncpy(policy_list[j].name, QOS_ETHERNET_PORT_4_POLICY_NAME, NAME_SZ);
         policy_list[j].name[NAME_SZ - 1] = '\0';
-        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
         policy_list[j].type = QOS_ETHERNET_PORT;
         j++;
     }
@@ -4974,8 +5029,8 @@ int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
     for (i = 0; i < vdcount; i++) {
         Utopia_GetIndexed(ctx, UtopiaValue_QVD_Name, i + 1, policy_list[j].name, NAME_SZ);
         Utopia_GetIndexed(ctx, UtopiaValue_QVD_Mac, i + 1, policy_list[j].mac, MACADDR_SZ);
-        Utopia_GetIndexed(ctx, UtopiaValue_QVD_Class, i + 1, s_tokenbuf, sizeof(s_tokenbuf));
-        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+        Utopia_GetIndexed(ctx, UtopiaValue_QVD_Class, i + 1, tokenbuf, sizeof(tokenbuf));
+        policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
         policy_list[j].type = QOS_VOICE_DEVICE;
         j++;
     }
@@ -4987,12 +5042,12 @@ int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
         
         for (port_range_idx = 0; port_range_idx < policy_list[i].hwport; port_range_idx++) {
             // Get the custom protocol
-            Utopia_GetIndexed2(ctx, UtopiaValue_QUP_Protocol, i + 1, port_range_idx + 1, s_tokenbuf, sizeof(s_tokenbuf));
-            policy_list[j].custom_proto[port_range_idx] = s_StrToEnum(g_ProtocolMap, s_tokenbuf);
+            Utopia_GetIndexed2(ctx, UtopiaValue_QUP_Protocol, i + 1, port_range_idx + 1, tokenbuf, sizeof(tokenbuf));
+            policy_list[j].custom_proto[port_range_idx] = s_StrToEnum(g_ProtocolMap, tokenbuf);
             
             // Get the custom port range
-            Utopia_GetIndexed2(ctx, UtopiaValue_QUP_PortRange, i + 1, port_range_idx + 1, s_tokenbuf, sizeof(s_tokenbuf));
-            if (sscanf(s_tokenbuf, "%d %d",
+            Utopia_GetIndexed2(ctx, UtopiaValue_QUP_PortRange, i + 1, port_range_idx + 1, tokenbuf, sizeof(tokenbuf));
+            if (sscanf(tokenbuf, "%d %d",
                        &qos->policy_list[j].custom_port[port_range_idx].start,
                        &qos->policy_list[j].custom_port[port_range_idx].end) != 2)
             {
@@ -5004,8 +5059,8 @@ int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
             // Since each set of protocol/port range will have the same class,
             // just retrieve the class from the first one
             if (port_range_idx == 0) {
-                Utopia_GetIndexed2(ctx, UtopiaValue_QUP_Class, i + 1, port_range_idx + 1, s_tokenbuf, sizeof(s_tokenbuf));
-                policy_list[j].priority = s_StrToEnum(g_QoSClassMap, s_tokenbuf);
+                Utopia_GetIndexed2(ctx, UtopiaValue_QUP_Class, i + 1, port_range_idx + 1, tokenbuf, sizeof(tokenbuf));
+                policy_list[j].priority = s_StrToEnum(g_QoSClassMap, tokenbuf);
             }
         }
         // Fill in the remaining custom port ranges with default values
@@ -5017,8 +5072,8 @@ int Utopia_GetQoSSettings (UtopiaContext *ctx, qosInfo_t *qos)
         
         policy_list[j].type = QOS_CUSTOM;
         
-        Utopia_GetIndexed(ctx, UtopiaValue_QUP_Type, i + 1, s_tokenbuf, sizeof(s_tokenbuf));
-        policy_list[j].custom_type = s_StrToEnum(g_QoSCustomTypeMap, s_tokenbuf);
+        Utopia_GetIndexed(ctx, UtopiaValue_QUP_Type, i + 1, tokenbuf, sizeof(tokenbuf));
+        policy_list[j].custom_type = s_StrToEnum(g_QoSCustomTypeMap, tokenbuf);
         
         j++;
     }
@@ -6655,7 +6710,7 @@ int Utopia_Get_Http_User(UtopiaContext *ctx,  http_user_t *httpuser)
     if the status is user - UI page with Cable(primary provider), WAN(byoi) and None(no internet) will be provided*/
 int Utopia_Get_BYOI_allowed(UtopiaContext *ctx,  int *byoi_state)
 {  
-
+    char ulog_msg[256];
     char buf[TOKEN_SZ];
     errno_t  rc = -1;
 
@@ -6852,20 +6907,21 @@ int Utopia_Get_DeviceTime_NTPServer(UtopiaContext *ctx, char *server,int index)
 
 int Utopia_Set_DeviceTime_LocalTZ(UtopiaContext *ctx, char *tz)
 {
-  errno_t  rc = -1;
-  if (NULL == ctx || NULL == tz)
-  {
-     return ERR_UTCTX_INIT;
-  }
+    char ulog_msg[256];
+    errno_t  rc = -1;
+    if (NULL == ctx || NULL == tz)
+    {
+        return ERR_UTCTX_INIT;
+    }
 
-  UTOPIA_SET(ctx, UtopiaValue_TZ, tz);
-  rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: entered ", __FUNCTION__);
-  if(rc < EOK)
-  {
-      ERR_CHK(rc);
-  }
-  ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
-  return SUCCESS;
+    UTOPIA_SET(ctx, UtopiaValue_TZ, tz);
+    rc = sprintf_s(ulog_msg, sizeof(ulog_msg), "%s: entered ", __FUNCTION__);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+    ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
+    return SUCCESS;
 }
 
 int Utopia_Get_DeviceTime_LocalTZ(UtopiaContext *ctx, char *tz)
@@ -6969,6 +7025,7 @@ int Utopia_Get_Mac_MgWan(UtopiaContext *ctx,  char *val)
 
 int Utopia_GetEthAssocDevices(int unitId, int portId ,unsigned char *macAddrList,int *numMacAddr)
 {
+    char ulog_msg[256];
     char line[LINE_SZ];
     char tok[] = "=";
     char *mac = NULL;
@@ -7689,9 +7746,11 @@ int Utopia_GetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex,
 
 int Utopia_SetDynamicDnsClientByIndex(UtopiaContext *ctx, unsigned long ulIndex, const DynamicDnsClient_t *DynamicDnsClient)
 {
+    char tokenbuf[256];
     int index = ulIndex + 1;
-    snprintf(s_tokenbuf, sizeof(s_tokenbuf), "arddnsclient_%d", index);
-    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient, index, s_tokenbuf);
+
+    snprintf(tokenbuf, sizeof(tokenbuf), "arddnsclient_%d", index);
+    Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient, index, tokenbuf);
 
     Utopia_SetIndexedInt(ctx, UtopiaValue_DynamicDnsClient_InsNum, index, DynamicDnsClient->InstanceNumber);
     Utopia_SetIndexed(ctx, UtopiaValue_DynamicDnsClient_Alias, index, (char*)DynamicDnsClient->Alias);
