@@ -134,6 +134,19 @@ static int IsFileExists(char *file_name)
 }
 #endif
 
+#ifdef WAN_FAILOVER_SUPPORTED
+enum ipv6_mode {
+    NO_SWITCHING =0,
+    GLOBAL_IPV6 = 1,
+    ULA_IPV6 = 2,
+};
+
+int gIpv6AddrAssignment = GLOBAL_IPV6 ;
+int gModeSwitched = NO_SWITCHING ;
+
+#define DEF_ULA_PREF_LEN 64
+#endif 
+
 static int fw_restart(struct serv_routed *sr)
 {
     char val[16];
@@ -578,7 +591,15 @@ static int gen_zebra_conf(int sefd, token_t setok)
     int ipv6_enable = 0;
     int ula_enable = 0;
 #endif
-    
+#ifdef WAN_FAILOVER_SUPPORTED
+    char default_wan_interface[64] = {0};
+    char wan_interface[64] = {0};
+
+    sysevent_get(sefd, setok, "current_wan_ifname", wan_interface, sizeof(wan_interface));
+    sysevent_get(sefd, setok, "wan_ifname", default_wan_interface, sizeof(default_wan_interface));
+#endif
+ 
+
     if ((fp = fopen(ZEBRA_CONF_FILE, "wb")) == NULL) {
         fprintf(stderr, "%s: fail to open file %s\n", __FUNCTION__, ZEBRA_CONF_FILE);
         return -1;
@@ -609,11 +630,40 @@ static int gen_zebra_conf(int sefd, token_t setok)
     sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
     sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
 #else
-#ifdef _HUB4_PRODUCT_REQ_
-    sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
-#else
-    sysevent_get(sefd, setok, "lan_prefix", prefix, sizeof(prefix));
-#endif /* _HUB4_PRODUCT_REQ_ */
+
+    #ifdef WAN_FAILOVER_SUPPORTED
+
+    char last_broadcasted_prefix[64] ;
+    memset(last_broadcasted_prefix,0,sizeof(last_broadcasted_prefix));
+    if (gIpv6AddrAssignment == ULA_IPV6)
+    {
+        sysevent_get(sefd, setok, "ipv6_prefix_ula", prefix, sizeof(prefix));
+
+    }
+    else
+    {
+    #endif     
+        #ifdef _HUB4_PRODUCT_REQ_
+            sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
+        #else
+            sysevent_get(sefd, setok, "lan_prefix", prefix, sizeof(prefix));
+        #endif /* _HUB4_PRODUCT_REQ_ */     
+    #ifdef WAN_FAILOVER_SUPPORTED
+    }
+
+    if (gModeSwitched == ULA_IPV6)
+    {
+        #ifdef _HUB4_PRODUCT_REQ_
+            sysevent_get(sefd, setok, "ipv6_prefix", last_broadcasted_prefix, sizeof(last_broadcasted_prefix));
+        #else
+            sysevent_get(sefd, setok, "lan_prefix", last_broadcasted_prefix, sizeof(last_broadcasted_prefix));
+        #endif /* _HUB4_PRODUCT_REQ_ */
+    }
+    else if (gModeSwitched == GLOBAL_IPV6)
+    {
+    	sysevent_get(sefd, setok, "ipv6_prefix_ula", last_broadcasted_prefix, sizeof(last_broadcasted_prefix));
+    }
+    #endif
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
 #ifndef _HUB4_PRODUCT_REQ_
     sysevent_get(sefd, setok, "current_lan_ipv6address", lan_addr, sizeof(lan_addr));
@@ -765,16 +815,31 @@ static int gen_zebra_conf(int sefd, token_t setok)
             //Do not write a config line for the prefix if it's blank
             if (strlen(prefix))
             {
-                //If WAN has stopped, advertise the prefix with lifetime 0 so LAN clients don't use it any more
-                if (strcmp(wan_st, "stopped") == 0)
-                {
-                    fprintf(fp, "   ipv6 nd prefix %s 0 0\n", prefix);
-                }
-                else
+#ifdef WAN_FAILOVER_SUPPORTED
+                if (strcmp(default_wan_interface, wan_interface) != 0)
                 {
                     fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
                 }
+                else
+#endif                    
+                {
+                    //If WAN has stopped, advertise the prefix with lifetime 0 so LAN clients don't use it any more
+                    if (strcmp(wan_st, "stopped") == 0)
+                    {
+                        fprintf(fp, "   ipv6 nd prefix %s 0 0\n", prefix);
+                    }
+                    else
+                    {
+                        fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+                    }
+                }
             }
+#ifdef WAN_FAILOVER_SUPPORTED
+            if(strlen(last_broadcasted_prefix) != 0)
+            {
+                fprintf(fp, "   ipv6 nd prefix %s 0 0\n", last_broadcasted_prefix);
+            }
+#endif
 
 #if defined (MULTILAN_FEATURE)
             if (strlen(orig_lan_prefix))
@@ -804,14 +869,24 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif
 
 #ifndef _HUB4_PRODUCT_REQ_
-            /* If WAN is stopped or not in IPv6 or dual stack mode, send RA with router lifetime of zero */
-            if ( (strcmp(wan_st, "stopped") == 0) || (atoi(rtmod) != 2 && atoi(rtmod) != 3) )
-            {
-                fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
-            }
-            else
+#ifdef WAN_FAILOVER_SUPPORTED
+            if (strcmp(default_wan_interface, wan_interface) != 0)
             {
                 fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+            }
+            else
+#endif
+            {
+
+                /* If WAN is stopped or not in IPv6 or dual stack mode, send RA with router lifetime of zero */
+                if ( (strcmp(wan_st, "stopped") == 0) || (atoi(rtmod) != 2 && atoi(rtmod) != 3) )
+                {
+                    fprintf(fp, "   ipv6 nd ra-lifetime 0\n");
+                }
+                else
+                {
+                    fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
+                }
             }
 #else
 	/* SKYH4-5324 : Selfheal is not working from IPv6 only client.
@@ -987,10 +1062,23 @@ static int gen_zebra_conf(int sefd, token_t setok)
 			}
 			else
 			{
+
 				/* DNS from WAN (if no static DNS) */
 				if (strlen(name_servs) == 0) {
-					sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
-						sizeof(name_servs) - strlen(name_servs));
+                    #ifdef WAN_FAILOVER_SUPPORTED
+                    if ( gIpv6AddrAssignment == ULA_IPV6 )
+                    {
+                            sysevent_get(sefd, setok, "backup_wan_ipv6_nameserver", name_servs + strlen(name_servs), 
+                            sizeof(name_servs) - strlen(name_servs));
+                    }
+                    else
+                    {
+                    #endif 
+                            sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
+                            sizeof(name_servs) - strlen(name_servs));
+                    #ifdef WAN_FAILOVER_SUPPORTED
+                    }
+                    #endif
 				}
 			}
 
@@ -1043,6 +1131,7 @@ char interface_name[32] = {0};
 char *token = NULL; 
 char *pt;
 char pref_rx[16];
+
 int pref_len = 0;
 errno_t  rc = -1;
 memset(out,0,sizeof(out));
@@ -1093,15 +1182,54 @@ if(!strncmp(out,"true",strlen(out)))
                 #endif 
         	fprintf(fp, "interface %s\n", interface_name);
         	fprintf(fp, "   no ipv6 nd suppress-ra\n");
-		rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6");
+
+        #ifdef WAN_FAILOVER_SUPPORTED
+        if (gIpv6AddrAssignment == ULA_IPV6)
+        {
+            rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6_ula");
+        }
+        else
+        {
+        #endif
+            rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6");
+ 
+        #ifdef WAN_FAILOVER_SUPPORTED
+        }
+        #endif
 		if(rc < EOK)
 		{
 			ERR_CHK(rc);
 		}
 		memset(prefix,0,sizeof(prefix));
+
 		sysevent_get(sefd, setok, cmd, prefix, sizeof(prefix));
-        	if (strlen(prefix) != 0)
-            		fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+
+        #ifdef WAN_FAILOVER_SUPPORTED
+
+        memset(last_broadcasted_prefix,0,sizeof(last_broadcasted_prefix));
+        memset(cmd,0,sizeof(cmd));
+
+        if (gModeSwitched == ULA_IPV6 )
+        {
+            rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6");
+        }
+        else if ( gModeSwitched == GLOBAL_IPV6 )
+        {
+            rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6_ula");
+        }
+        sysevent_get(sefd, setok, cmd, last_broadcasted_prefix, sizeof(last_broadcasted_prefix));
+
+        if (strlen(last_broadcasted_prefix) != 0)
+        {
+            fprintf(fp, "   ipv6 nd prefix %s 0 0\n", last_broadcasted_prefix);
+        }
+
+        #endif
+
+       	    if (strlen(prefix) != 0)
+            {
+            	fprintf(fp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+            }
 
         	fprintf(fp, "   ipv6 nd ra-interval 3\n");
         	fprintf(fp, "   ipv6 nd ra-lifetime 180\n");
@@ -1146,8 +1274,21 @@ if(!strncmp(out,"true",strlen(out)))
                         {
                                 /* DNS from WAN (if no static DNS) */
                                 if (strlen(name_servs) == 0) {
-                                        sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs),
+
+                                    #ifdef WAN_FAILOVER_SUPPORTED
+                                    if ( gIpv6AddrAssignment == ULA_IPV6 )
+                                    {
+                                        sysevent_get(sefd, setok, "backup_wan_ipv6_nameserver", name_servs + strlen(name_servs),
                                                 sizeof(name_servs) - strlen(name_servs));
+                                    }
+                                    else
+                                    {
+                                    #endif 
+                                            sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs),
+                                                sizeof(name_servs) - strlen(name_servs));
+                                    #ifdef WAN_FAILOVER_SUPPORTED
+                                    }
+                                    #endif
                                 }
                         }
 
@@ -1177,8 +1318,68 @@ static int gen_ripd_conf(int sefd, token_t setok)
     return 0;
 }
 
-static int radv_start(struct serv_routed *sr)
+#ifdef WAN_FAILOVER_SUPPORTED
+
+// Function to check if ULA is enabled, If ULA is enabled we will broadcast ULA prefix
+static int checkIfULAEnabled(int sefd, token_t setok)
 {
+    // temp check , need to replace with CurrInterface Name or if device is XLE
+     char buf[16]={0};
+
+    sysevent_get(sefd, setok, "ula_ipv6_enabled", buf, sizeof(buf));
+    if ( strlen(buf) != 0 )
+    {   
+        int ulaIpv6Status = atoi(buf);
+        if (ulaIpv6Status)
+        {
+            return 0 ;
+        }
+        else
+        {
+            return -1 ;
+        }
+    }   
+
+      return -1;
+}
+
+// Function to check if IPV6 mode is switched between ULA and Global, If mode is switched we need to broadcast old prefix with 0 lifetime
+
+static void checkIfModeIsSwitched(int sefd, token_t setok)
+{
+    char ipv6_pref_mode[16]={0};
+    char buf[16]={0};
+    memset(ipv6_pref_mode,0,sizeof(ipv6_pref_mode));
+
+    sysevent_get(sefd, setok, "disable_old_prefix_ra", buf, sizeof(buf));
+
+    if ( strcmp(buf,"true") == 0 )
+    {
+       sysevent_get(sefd, setok, "mode_switched", ipv6_pref_mode, sizeof(ipv6_pref_mode));
+
+        if (ipv6_pref_mode[0] != '\0' && strlen(ipv6_pref_mode) != 0 )
+        {
+            if(strncmp(ipv6_pref_mode,"GLOBAL_IPV6",sizeof(ipv6_pref_mode)-1) == 0 )
+            {
+                gModeSwitched = GLOBAL_IPV6;
+            }
+            else if(strncmp(ipv6_pref_mode,"ULA_IPV6",sizeof(ipv6_pref_mode)-1) == 0)
+            {
+                gModeSwitched = ULA_IPV6;
+            }
+        }     
+    }
+    else
+    {
+        gModeSwitched = NO_SWITCHING;
+    }
+
+    return ;
+}
+
+#endif 
+static int radv_start(struct serv_routed *sr)
+{   
 #ifdef _HUB4_PRODUCT_REQ_
     int result;
     int ipv6_enable;
@@ -1220,6 +1421,17 @@ static int radv_start(struct serv_routed *sr)
         return -1;
     }
 #endif
+
+#ifdef WAN_FAILOVER_SUPPORTED
+    if ( 0 == checkIfULAEnabled(sr->sefd, sr->setok)) 
+    {
+        gIpv6AddrAssignment=ULA_IPV6;
+    }
+
+    checkIfModeIsSwitched(sr->sefd, sr->setok);
+
+#endif 
+
     if (gen_zebra_conf(sr->sefd, sr->setok) != 0) {
         fprintf(stderr, "%s: fail to save zebra config\n", __FUNCTION__);
         return -1;
@@ -1501,6 +1713,198 @@ static int serv_routed_term(struct serv_routed *sr)
     return 0;
 }
 
+#ifdef WAN_FAILOVER_SUPPORTED
+static void AssignIpv6Addr(char* ifname , char* ipv6Addr,int prefix_len)
+{
+    v_secure_system("ip -6 addr add %s1/%d dev %s", ipv6Addr,prefix_len,ifname);
+}
+
+static void DelIpv6Addr(char* ifname , char* ipv6Addr,int prefix_len)
+{
+    v_secure_system("ip -6 addr del %s1/%d dev %s", ipv6Addr,prefix_len,ifname);
+}
+
+static void SetV6Route(char* ifname , char* route_addr)
+{
+    v_secure_system("ip -6 route add %s dev %s", route_addr,ifname);
+}
+
+static void UnSetV6Route(char* ifname , char* route_addr)
+{
+    v_secure_system("ip -6 route del %s dev %s", route_addr,ifname);
+}
+
+// Function sets the route and assign the ULA address to lan interfaces
+
+static int routeset_ula(struct serv_routed *sr)
+{
+
+    char prefix[128] ;
+        char lan_if[32] ;
+    char pref_rx[16];
+
+    char cmd[100];
+    char out[100];
+    char interface_name[32] = {0};
+    char *token = NULL; 
+    char *token_pref = NULL ;
+    char *pt;
+
+    memset(prefix,0,sizeof(prefix));
+    memset(lan_if,0,sizeof(lan_if));
+
+    sysevent_get(sr->sefd, sr->setok, "ipv6_prefix_ula", prefix, sizeof(prefix));
+
+    syscfg_get(NULL, "lan_ifname", lan_if, sizeof(lan_if));
+
+    int pref_len = 0;
+    errno_t  rc = -1;
+    memset(out,0,sizeof(out));
+    memset(pref_rx,0,sizeof(pref_rx));
+    sysevent_get(sr->sefd, sr->setok,"backup_wan_prefix_v6_len", pref_rx, sizeof(pref_rx));
+    syscfg_get(NULL, "IPv6subPrefix", out, sizeof(out));
+
+    if ( strlen(pref_rx) != 0 )
+    {
+        pref_len = atoi(pref_rx);
+    }
+    else
+    {
+        pref_len= DEF_ULA_PREF_LEN  ;
+    }
+
+    if (prefix[0] != '\0' && strlen(prefix) != 0 )
+    {
+        SetV6Route(lan_if,prefix);
+        char *token;
+        token = strtok(prefix,"/");
+        AssignIpv6Addr(lan_if,token,pref_len);
+    }
+    
+    if(!strncmp(out,"true",strlen(out)))
+    {
+            memset(out,0,sizeof(out));
+            memset(cmd,0,sizeof(cmd));
+            memset(prefix,0,sizeof(prefix));
+
+            syscfg_get(NULL, "IPv6_Interface", out, sizeof(out));
+            pt = out;
+            while((token = strtok_r(pt, ",", &pt)))
+            {
+                memset(interface_name,0,sizeof(interface_name));
+
+                strncpy(interface_name,token,sizeof(interface_name)-1);
+
+                rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6_ula");
+
+
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+                memset(prefix,0,sizeof(prefix));
+
+                sysevent_get(sr->sefd, sr->setok, cmd, prefix, sizeof(prefix));
+                token_pref= NULL;
+
+                if (prefix[0] != '\0' && strlen(prefix) != 0 )
+                {
+                        SetV6Route(interface_name,prefix);
+                        token_pref = strtok(prefix,"/");
+                        AssignIpv6Addr(interface_name,token_pref,pref_len);
+                }
+            }
+        }
+
+return 0;
+
+}
+
+
+// Function unsets the route and delete the ULA address assigned to lan interfaces
+static int routeunset_ula(struct serv_routed *sr)
+{
+    char prefix[128] ;
+    char lan_if[32] ;
+    char pref_rx[16];
+
+    char cmd[100];
+    char out[100];
+    char interface_name[32] = {0};
+    char *token = NULL; 
+    char *token_pref = NULL ;
+    char *pt;
+
+    memset(prefix,0,sizeof(prefix));
+    memset(lan_if,0,sizeof(lan_if));
+
+    sysevent_get(sr->sefd, sr->setok, "ipv6_prefix_ula", prefix, sizeof(prefix));
+
+    syscfg_get(NULL, "lan_ifname", lan_if, sizeof(lan_if));
+
+    int pref_len = 0;
+    errno_t  rc = -1;
+    memset(out,0,sizeof(out));
+    memset(pref_rx,0,sizeof(pref_rx));
+    sysevent_get(sr->sefd, sr->setok,"backup_wan_prefix_v6_len", pref_rx, sizeof(pref_rx));
+    syscfg_get(NULL, "IPv6subPrefix", out, sizeof(out));
+    if ( strlen(pref_rx) != 0 )
+    {
+        pref_len = atoi(pref_rx);
+    }
+    else
+    {
+        pref_len= DEF_ULA_PREF_LEN  ;
+    }
+  
+
+    if (prefix[0] != '\0' && strlen(prefix) != 0 )
+    {
+        UnSetV6Route(lan_if,prefix);
+        char *token;
+        token = strtok(prefix,"/");
+        DelIpv6Addr(lan_if,token,pref_len);
+    }
+
+    if(!strncmp(out,"true",strlen(out)))
+    {
+            memset(out,0,sizeof(out));
+            memset(cmd,0,sizeof(cmd));
+            memset(prefix,0,sizeof(prefix));
+
+            syscfg_get(NULL, "IPv6_Interface", out, sizeof(out));
+            pt = out;
+            while((token = strtok_r(pt, ",", &pt)))
+            {
+                memset(interface_name,0,sizeof(interface_name));
+
+                strncpy(interface_name,token,sizeof(interface_name)-1);
+
+                rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6_ula");
+
+
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+                memset(prefix,0,sizeof(prefix));
+
+                sysevent_get(sr->sefd, sr->setok, cmd, prefix, sizeof(prefix));
+                token_pref= NULL;
+
+                if (prefix[0] != '\0' && strlen(prefix) != 0 )
+                {
+                        UnSetV6Route(interface_name,prefix);
+                        token_pref = strtok(prefix,"/");
+                        DelIpv6Addr(interface_name,token_pref,pref_len);
+                }
+            }
+        }
+
+    return 0 ;
+}
+#endif
+
 struct cmd_op {
     const char  *cmd;
     int         (*exec)(struct serv_routed *sr);
@@ -1519,6 +1923,11 @@ static struct cmd_op cmd_ops[] = {
     {"radv-start",  radv_start,     "start RA daemon"},
     {"radv-stop",   radv_stop,      "stop RA daemon"},
     {"radv-restart",radv_restart,   "restart RA daemon"},
+    #ifdef WAN_FAILOVER_SUPPORTED
+    {"routeset-ula",routeset_ula,   "route set for ula"},
+    {"routeunset-ula",routeunset_ula,   "route unset for ula"},
+    #endif
+
 };
 
 static void usage(void)

@@ -59,6 +59,10 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "ripd-restart|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
                                         "zebra-restart|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
                                         "staticroute-restart|/etc/utopia/service.d/service_routed.sh|NULL|"TUPLE_FLAG_EVENT,
+                                        #ifdef WAN_FAILOVER_SUPPORTED
+                                        "routeset-ula|/usr/bin/service_routed|NULL|"TUPLE_FLAG_EVENT,
+                                        "routeunset-ula|/usr/bin//service_routed|NULL|"TUPLE_FLAG_EVENT,
+                                        #endif 
                                         NULL
                                       };
 

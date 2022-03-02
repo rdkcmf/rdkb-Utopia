@@ -13244,6 +13244,104 @@ static void do_ipv6_sn_filter(FILE* fp) {
 #endif
      FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
+
+#ifdef WAN_FAILOVER_SUPPORTED
+static int checkIfULAEnabled()
+{
+    // temp check , need to replace with CurrInterface Name or if device is XLE
+        char buf[16]={0};
+
+    sysevent_get(sysevent_fd, sysevent_token, "ula_ipv6_enabled", buf, sizeof(buf));
+    if ( strlen(buf) != 0 )
+    {   
+        int ulaIpv6Status = atoi(buf);
+        if (ulaIpv6Status)
+        {
+            return 0 ;
+        }
+        else
+        {
+            return -1 ;
+        }
+    }   
+
+      return -1;
+}
+
+static void applyIpv6ULARules(FILE* fp)
+{
+   char prefix[64] ;
+   char nat66_ipv6_addr[128] ;
+
+   memset(prefix,0,sizeof(prefix));
+   memset(nat66_ipv6_addr,0,sizeof(nat66_ipv6_addr));
+
+    sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix_ula", prefix, sizeof(prefix));
+    sysevent_get(sysevent_fd, sysevent_token, "nat66_ipv6_addr", nat66_ipv6_addr, sizeof(nat66_ipv6_addr));
+
+   if (strlen(prefix) != 0 && strlen(nat66_ipv6_addr)!= 0 )
+   {
+        char *token_pref =NULL;
+        token_pref = strtok(prefix,"/");
+         fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,nat66_ipv6_addr,token_pref);
+         fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,nat66_ipv6_addr);
+
+
+         char cmd[100];
+          char out[100];
+          char interface_name[32] = {0};
+          char *token = NULL; 
+          char *pt;
+          char pref_rx[16];
+
+          int pref_len = 0;
+          errno_t  rc = -1;
+          memset(out,0,sizeof(out));
+          memset(pref_rx,0,sizeof(pref_rx));
+          sysevent_get(sysevent_fd, sysevent_token,"lan_prefix_v6", pref_rx, sizeof(pref_rx));
+          syscfg_get(NULL, "IPv6subPrefix", out, sizeof(out));
+          pref_len = atoi(pref_rx);
+          if(pref_len < 64)
+          {
+              if(!strncmp(out,"true",strlen(out)))
+              {
+                  memset(out,0,sizeof(out));
+                  memset(cmd,0,sizeof(cmd));
+                  memset(prefix,0,sizeof(prefix));
+
+                  syscfg_get(NULL, "IPv6_Interface", out, sizeof(out));
+                  pt = out;
+                  while((token = strtok_r(pt, ",", &pt)))
+                  {
+                      memset(interface_name,0,sizeof(interface_name));
+
+                      strncpy(interface_name,token,sizeof(interface_name)-1);
+
+                      rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6_ula");
+
+
+                      if(rc < EOK)
+                      {
+                          ERR_CHK(rc);
+                      }
+                      memset(prefix,0,sizeof(prefix));
+
+                      sysevent_get(sysevent_fd, sysevent_token, cmd, prefix, sizeof(prefix));
+                      token_pref= NULL;
+
+                      if (prefix[0] != '\0' && strlen(prefix) != 0 )
+                      {
+                              token_pref = strtok(prefix,"/");
+                              fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,nat66_ipv6_addr,token_pref);
+                              fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,nat66_ipv6_addr);   
+                      }
+                  }
+              }
+          }
+   }
+
+}
+#endif 
 static void do_ipv6_nat_table(FILE* fp)
 {
     char IPv6[INET6_ADDRSTRLEN] = "0";
@@ -13259,6 +13357,13 @@ static void do_ipv6_nat_table(FILE* fp)
    prepare_multinet_prerouting_nat_v6(fp);
 #endif
 
+#ifdef WAN_FAILOVER_SUPPORTED
+   if (0 == checkIfULAEnabled())
+   {
+         applyIpv6ULARules(fp);
+   }
+#endif
+   
    //zqiu: RDKB-7639: block device broken for IPv6
    fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);  
 
