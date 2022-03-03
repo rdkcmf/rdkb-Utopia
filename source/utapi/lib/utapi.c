@@ -61,6 +61,9 @@
 #include "DM_TR181.h"
 #include "secure_wrapper.h"
 #include "safec_lib_common.h"
+#ifdef WAN_FAILOVER_SUPPORTED
+#include "ccsp_psm_helper.h"
+#endif
 #define UTOPIA_TR181_PARAM_SIZE 64
 #define UTOPIA_TR181_PARAM_SIZE1        256
 #define UTOPIA_TR181_PARAM_SIZE2        1024
@@ -146,6 +149,22 @@ static EnumString_Map g_DDNSStatus[] =
     { "error",         DDNS_STATUS_FAILED },
     { 0, 0 }
 };
+#endif
+
+#ifdef WAN_FAILOVER_SUPPORTED
+static char default_wan_ifname[50];
+static char current_wan_ifname[50];
+static int            sysevent_fd = -1;
+static token_t        sysevent_token;
+#endif
+
+#ifdef WAN_FAILOVER_SUPPORTED
+#define WAN_FAILOVER_SUPPORT_CHECK if (isServiceNeeded()) \
+     {
+#define WAN_FAILOVER_SUPPORT_CHECk_END }
+#else
+#define WAN_FAILOVER_SUPPORT_CHECK
+#define WAN_FAILOVER_SUPPORT_CHECk_END
 #endif
 
 const char *g_NetworkServices[] = 
@@ -347,6 +366,22 @@ void get_dhcp_wan_domain(unsigned char *pDomain)
         *pos = '\0';
     pclose(f);
 }
+
+#ifdef WAN_FAILOVER_SUPPORTED
+static BOOL isServiceNeeded()
+{
+  if(strcmp(current_wan_ifname,default_wan_ifname ) != 0)
+  {
+        ulogf(ULOG_CONFIG, UL_UTAPI, "%s:Current Wan interface not equal to default Wan Interface", __FUNCTION__);
+        return FALSE;
+  }
+  else
+  {
+       ulogf(ULOG_CONFIG, UL_UTAPI, "%s:Current Wan interface  equal to default Wan Interface", __FUNCTION__);
+       return TRUE;
+  }
+}
+#endif
 
 /*
  * LAN Settings
@@ -7385,6 +7420,12 @@ int Utopia_privateIpCheck(char *ip_to_check)
 
 int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCallForAdd )
 {
+	#ifdef WAN_FAILOVER_SUPPORTED
+	default_wan_ifname[0] = '\0';
+        current_wan_ifname[0] = '\0';
+        sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
+        sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
+        #endif
 	token_t	se_token;
 	errno_t  safec_rc = -1;
 	int		se_fd 		 = s_sysevent_connect( &se_token ),
@@ -7532,6 +7573,8 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 		 ( !( isBridgeMode && Utopia_privateIpCheck( pmap->internal_host ) ) )
 		)
 	{
+		
+		WAN_FAILOVER_SUPPORT_CHECK
 		if ( isNatReady ) 
 		{
 			v_secure_system("iptables -t nat -%c prerouting_fromwan -p tcp -m tcp -d %s --dport %s -s %s -j DNAT --to-destination %s%s",
@@ -7562,12 +7605,15 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 			v_secure_system("iptables -t filter -%c wan2lan_forwarding_accept -p tcp -m tcp -s %s -d %s --dport %s -j xlog_accept_wan2lan",
 				ciptableOprationCode,external_ip, toip, dport);
 		}
+		WAN_FAILOVER_SUPPORT_CHECk_END
 	}
 
      if ( ( ( BOTH_TCP_UDP == pmap->protocol ) || ( UDP == pmap->protocol ) ) && \
 		  ( !( isBridgeMode && Utopia_privateIpCheck( pmap->internal_host ) ) )
 		)
 	 {
+		
+		WAN_FAILOVER_SUPPORT_CHECK
 		if (isNatReady) 
 		{
            v_secure_system("iptables -t nat -%c prerouting_fromwan -p udp -m udp -d %s --dport %s -s %s -j DNAT --to-destination %s%s",
@@ -7598,6 +7644,7 @@ int Utopia_IPRule_ephemeral_port_forwarding( portMapDyn_t *pmap, boolean_t isCal
 		v_secure_system("iptables -t filter -%c wan2lan_forwarding_accept -p udp -m udp -s %s -d %s --dport %s -j xlog_accept_wan2lan",
 						ciptableOprationCode,external_ip, toip, dport);
 		}
+		WAN_FAILOVER_SUPPORT_CHECk_END
      }
  
   return SUCCESS;

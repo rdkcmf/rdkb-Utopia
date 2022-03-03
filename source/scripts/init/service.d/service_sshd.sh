@@ -45,6 +45,7 @@ source /etc/device.properties
 source /etc/waninfo.sh
 
 WAN_INTERFACE=$(getWanInterfaceName)
+DEFAULT_WAN_INTERFACE="erouter0"
 
 if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "WNXL11BWL" ] || [ "$BOX_TYPE" = "SR213" ]; then
    CMINTERFACE=$WAN_INTERFACE
@@ -72,9 +73,16 @@ fi
 get_listen_params() {
     LISTEN_PARAMS=""
     #Get IPv4 address of wan0
+    if [ "$WAN_INTERFACE" =  "$DEFAULT_WAN_INTERFACE" ] ; then
     CM_IP4=`ip -4 addr show dev wan0 scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
     #Get IPv6 address of wan0
     CM_IP6=`ip -6 addr show dev wan0 scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+   else
+     CM_IP4=`ip -4 addr show dev $WAN_INTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+     #Get IPv6 address of wan0
+     CM_IP6=`ip -6 addr show dev $WAN_INTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    fi
+
     if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
         CM_IP4=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
     fi
@@ -325,6 +333,11 @@ case "$1" in
   bridge-status)
       service_bridge_status
       ;;
+  current_wan_ifname)
+      service_stop
+      service_start
+      ;;
+
   *)
         echo "Usage: $SELF_NAME [${SERVICE_NAME}-start|${SERVICE_NAME}-stop|${SERVICE_NAME}-restart|ssh_server_restart|lan-status|wan-status]" >&2
         exit 3

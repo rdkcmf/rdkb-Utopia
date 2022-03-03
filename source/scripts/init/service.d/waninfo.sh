@@ -27,3 +27,11 @@ getWanInterfaceName()
   fi
   echo "$interface_name"
 }
+getWanMacInterfaceName()
+{
+  mac_interface=`syscfg get wan_physical_ifname`
+  if [ "$mac_interface" = "" ];then
+      mac_interface="erouter0"
+  fi
+  echo "$mac_interface"
+}

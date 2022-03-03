@@ -370,6 +370,17 @@ NOT_DEF:
 #include <linux/version.h>
 #endif
 
+#ifdef WAN_FAILOVER_SUPPORTED
+#define WAN_FAILOVER_SUPPORT_CHECK if (isServiceNeeded()) \
+     {
+
+#define WAN_FAILOVER_SUPPORT_CHECk_END }
+
+#else
+#define WAN_FAILOVER_SUPPORT_CHECK
+#define WAN_FAILOVER_SUPPORT_CHECk_END
+#endif
+
 #define CCSP_SUBSYS "eRT."
 #define PORTMAPPING_2WAY_PASSTHROUGH
 #define MAX_URL_LEN 1024 
@@ -569,9 +580,9 @@ static char firewall_true_static_ip_enable[20];
 //static char firewall_true_static_ip_enablev6[20];
 static int isWanStaticIPReady;
 static int isFWTS_enable = 0;
-
 static int StaticIPSubnetNum = 0;
 staticip_subnet_t StaticIPSubnet[MAX_TS_ASN_COUNT]; 
+
 
 #define MAX_IP4_SIZE 20
 char PfRangeIP[MAX_TS_ASN_COUNT][MAX_IP4_SIZE];
@@ -638,6 +649,10 @@ static char ecm_wan_ifname[20];
 static char emta_wan_ifname[20];
 static char eth_wan_enabled[20];
 static BOOL bEthWANEnable = FALSE;
+#ifdef WAN_FAILOVER_SUPPORTED
+static char dev_type[20];
+#endif
+
 #if defined (INTEL_PUMA7)
 static BOOL erouterSSHEnable = TRUE;
 #else
@@ -886,6 +901,12 @@ int greDscp = 44; // Default initialized to 44
  */
 static int do_block_ports(FILE *filter_fp);
 static int isInRFCaptivePortal();
+#ifdef WAN_FAILOVER_SUPPORTED
+typedef enum {
+    Router =0,
+    Extender_Mode,
+} Dev_Mode;
+#endif
 
 #define LOG_BUFF_SIZE 512
 void firewall_log( char* fmt, ...)
@@ -907,6 +928,51 @@ void firewall_log( char* fmt, ...)
     va_end(args);
     return;
 }
+
+#ifdef WAN_FAILOVER_SUPPORTED
+unsigned int Get_Device_Mode()
+{
+	FIREWALL_DEBUG("Inside Get_Device_Mode\n");
+        syscfg_get(NULL, "Device_Mode", dev_type, sizeof(dev_type));
+        unsigned int dev_mode = atoi(dev_type);
+        Dev_Mode mode;
+        if(dev_mode==1)
+        {
+          mode =Extender_Mode;
+        }
+        else
+          mode = Router;
+
+        return mode;
+
+}
+#endif
+
+
+#ifdef WAN_FAILOVER_SUPPORTED
+static BOOL isServiceNeeded()
+{
+        FIREWALL_DEBUG("Inside isServiceNeeded\n");
+        if (Get_Device_Mode()==Extender_Mode)
+        {
+		FIREWALL_DEBUG("Service Not Needed\n");
+            return FALSE;
+        }
+        else
+        {
+		
+                if(strcmp(current_wan_ifname,default_wan_ifname ) != 0)
+		{
+			FIREWALL_DEBUG("current Wam interface Name is not equal to default wan ifname\n");
+                        return FALSE;
+		}
+        }
+
+      FIREWALL_DEBUG("returning true\n");
+    return TRUE;
+}
+#endif
+
 
 static int IsValidIPv6Addr(char* ip_addr_string)
 {
@@ -2171,7 +2237,14 @@ static int prepare_globals_from_configuration(void)
    if ('\0' == current_wan_ifname[0]) {
       snprintf(current_wan_ifname, sizeof(current_wan_ifname), "%s", default_wan_ifname);
    }
-   sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipaddr", current_wan_ipaddr, sizeof(current_wan_ipaddr));
+   if (strcmp(current_wan_ifname,default_wan_ifname ) == 0)
+   {
+       sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipaddr", current_wan_ipaddr, sizeof(current_wan_ipaddr));
+   }
+   else
+   {
+	 sysevent_get(sysevent_fd, sysevent_token, "current_rwan_ipaddr", current_wan_ipaddr, sizeof(current_wan_ipaddr));
+   }
    sysevent_get(sysevent_fd, sysevent_token, "current_lan_ipaddr", lan_ipaddr, sizeof(lan_ipaddr));
    
 #if defined(CONFIG_CISCO_FEATURE_CISCOCONNECT) || defined(CONFIG_CISCO_PARCON_WALLED_GARDEN) 
@@ -4162,13 +4235,17 @@ static int do_port_forwarding(FILE *nat_fp, FILE *filter_fp)
    {
         FIREWALL_DEBUG("do_port_forwarding : Device is in bridge mode returning\n");  
         return(0);    
-   }      
+   }
+   
+   WAN_FAILOVER_SUPPORT_CHECK
    do_single_port_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_port_range_forwarding(nat_fp, filter_fp, AF_INET, NULL);
    do_wellknown_ports_forwarding(nat_fp, filter_fp);
    do_ephemeral_port_forwarding(nat_fp, filter_fp);
    if (filter_fp)
     do_static_route_forwarding(filter_fp);
+   WAN_FAILOVER_SUPPORT_CHECk_END
+  
         //   FIREWALL_DEBUG("Exiting do_port_forwarding\n");       
    return(0);
 }
@@ -6511,7 +6588,9 @@ static int do_wan2self(FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp)
    do_wan2self_attack(filter_fp);
    do_wan2self_ports(mangle_fp, nat_fp, filter_fp);
    do_mgmt_override(nat_fp);
+   WAN_FAILOVER_SUPPORT_CHECK
    do_remote_access_control(nat_fp, filter_fp, AF_INET);
+   WAN_FAILOVER_SUPPORT_CHECk_END
     //     FIREWALL_DEBUG("Exiting do_wan2self\n");    
    return(0);
 }
@@ -9524,9 +9603,13 @@ static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
    #endif
 #ifdef CONFIG_BUILD_TRIGGER
 #ifdef CONFIG_KERNEL_NF_TRIGGER_SUPPORT
+   WAN_FAILOVER_SUPPORT_CHECK
    do_prepare_port_range_triggers(nat_fp, filter_fp);
+   WAN_FAILOVER_SUPPORT_CHECk_END
 #else
-   do_prepare_port_range_triggers(mangle_fp, filter_fp);
+    WAN_FAILOVER_SUPPORT_CHECK	   
+    do_prepare_port_range_triggers(mangle_fp, filter_fp);
+    WAN_FAILOVER_SUPPORT_CHECk_END
 #endif
 #endif
 
@@ -11622,7 +11705,16 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
        if (isEponEnable) 
            fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j DROP\n", ecm_wan_ifname);
        else
-           fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+         {
+               if (strcmp(current_wan_ifname,default_wan_ifname ) == 0)
+               {
+                  fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+               }
+               else
+               {
+                  fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", current_wan_ifname);
+               }
+         }
    }
 
    //SNMPv3 chains for logging and filtering
@@ -12522,7 +12614,9 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
 
    do_port_forwarding(nat_fp, filter_fp);
    do_nonat(filter_fp);
+   WAN_FAILOVER_SUPPORT_CHECK
    do_dmz(nat_fp, filter_fp);
+   WAN_FAILOVER_SUPPORT_CHECk_END
    do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
 #if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
@@ -12760,8 +12854,9 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 
        // Create iptable chain to ratelimit remote management packets
        do_webui_rate_limit(filter_fp);
-
+       WAN_FAILOVER_SUPPORT_CHECK
        do_remote_access_control(NULL, filter_fp, AF_INET);
+       WAN_FAILOVER_SUPPORT_CHECk_END
    }
 
 #ifdef _COSA_INTEL_XB3_ARM_
@@ -13564,7 +13659,18 @@ static void do_ipv6_filter_table(FILE *fp){
    fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
    }
    else
-   fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+   {
+       if (strcmp(current_wan_ifname,default_wan_ifname ) == 0)
+       {
+        fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", ecm_wan_ifname);
+       }
+       else
+       {
+        fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n", current_wan_ifname);
+       }
+      
+   }
+   
   
    fprintf(fp, "-A LOG_SSH_DROP -m limit --limit 1/minute -j LOG --log-level %d --log-prefix \"SSH Connection Blocked:\"\n",syslog_level);
    fprintf(fp, "-A LOG_SSH_DROP -j DROP\n");
@@ -13588,7 +13694,11 @@ static void do_ipv6_filter_table(FILE *fp){
 
    if (!isFirewallEnabled || isBridgeMode || !isWanServiceReady) {
        if(isBridgeMode || isWanServiceReady)
-           do_remote_access_control(NULL, fp, AF_INET6);
+       {
+	       WAN_FAILOVER_SUPPORT_CHECK
+               do_remote_access_control(NULL, fp, AF_INET6);
+	       WAN_FAILOVER_SUPPORT_CHECk_END
+       }
 
        lan_telnet_ssh(fp, AF_INET6);
        do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
@@ -13846,7 +13956,9 @@ static void do_ipv6_filter_table(FILE *fp){
 	      	fprintf(fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 --tcp-flags FIN,SYN,RST,ACK SYN -m limit --limit 10/sec -j ACCEPT\n", Interface[cnt]);
 		}
 	  }
-      do_remote_access_control(NULL, fp, AF_INET6);
+        WAN_FAILOVER_SUPPORT_CHECK
+        do_remote_access_control(NULL, fp, AF_INET6);
+	WAN_FAILOVER_SUPPORT_CHECk_END
       /* if(isProdImage) {
           do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
       } else {
@@ -14257,9 +14369,10 @@ v6GPFirewallRuleNext:
 			  }
 			}
 		}
-
-      do_single_port_forwarding(NULL, NULL, AF_INET6, fp);
-      do_port_range_forwarding(NULL, NULL, AF_INET6, fp);
+        WAN_FAILOVER_SUPPORT_CHECK
+        do_single_port_forwarding(NULL, NULL, AF_INET6, fp);
+        do_port_range_forwarding(NULL, NULL, AF_INET6, fp);
+	WAN_FAILOVER_SUPPORT_CHECk_END
 
       if (strncasecmp(firewall_levelv6, "High", strlen("High")) == 0)
       {
