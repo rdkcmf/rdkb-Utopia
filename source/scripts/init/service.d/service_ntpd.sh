@@ -215,11 +215,20 @@ service_start ()
 # Setting Time status as Unsynchronized
    syscfg set ntp_status 2
 
-   if [ "started" != "$CURRENT_WAN_STATUS" ] ; then
+   if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
+       WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
+       if [ "xstarted" != "x$CURRENT_WAN_STATUS" ] && [ "xup" != "x$WAN_IPV6_STATUS" ] ; then
+           syscfg set ntp_status 2
+           sysevent set ${SERVICE_NAME}-status "wan-down"
+           return 0
+       fi
+   else
+       if [ "started" != "$CURRENT_WAN_STATUS" ] ; then
 # Setting Time status as unsynchronised,as per RDKB-37275
-      syscfg set ntp_status 2
-      sysevent set ${SERVICE_NAME}-status "wan-down"
-       return 0
+           syscfg set ntp_status 2
+           sysevent set ${SERVICE_NAME}-status "wan-down"
+           return 0
+       fi
    fi
 
    rm -rf $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC
@@ -351,6 +360,9 @@ service_start ()
            CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
            if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
                echo "interface listen $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
+               sysevent set ntp_ipv6_listen "set"
+           else
+               sysevent set ntp_ipv6_listen "unset"
            fi
        fi
    fi
@@ -524,14 +536,18 @@ case "$1" in
       fi
       ;;
   ipv6_connection_state)
-      if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ]; then
-         CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
-         NTP_PREFIX=`sysevent get ntp_prefix`
-         if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ] && [ "x$NTP_PREFIX" != "x$CURRENT_WAN_V6_PREFIX" ] ; then
-            echo_t "SERVICE_NTPD : ipv6_connection_state calling service_start" >> $NTPD_LOG_NAME
-            sysevent set ntp_prefix $CURRENT_WAN_V6_PREFIX
-            service_start
-         fi
+      if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
+          WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
+          if [ "xup" = "x$WAN_IPV6_STATUS" ] ; then
+              CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
+              NTP_PREFIX=`sysevent get ntp_prefix`
+              NTP_IPV6_LISTEN=`sysevent get ntp_ipv6_listen`
+              if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ] && ([ "x$NTP_PREFIX" != "x$CURRENT_WAN_V6_PREFIX" ] || [ "xset" != "x$NTP_IPV6_LISTEN" ]) ; then
+                  echo_t "SERVICE_NTPD : ipv6_connection_state calling service_start" >> $NTPD_LOG_NAME
+                  sysevent set ntp_prefix $CURRENT_WAN_V6_PREFIX
+                  service_start
+              fi
+          fi
       fi
       ;;
   *)
