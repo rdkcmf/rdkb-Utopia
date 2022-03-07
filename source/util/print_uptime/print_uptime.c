@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <telemetry_busmessage_sender.h>
 #include "safec_lib_common.h"
+#include <sys/stat.h>
 
 #define DEVICE_PROPS_FILE	"/etc/device.properties"
 #define DATA_SIZE	1024
@@ -171,6 +172,10 @@ void print_uptime(char *uptimeLog, char *bootfile, char *uptime)
 	}
 
 	l_fBootLogFile = fopen(BOOT_TIME_LOG_FILE, "a+");
+        if (chmod(BOOT_TIME_LOG_FILE, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) < 0)
+        {
+           printf("Could not set mode 0666 on %s\n",BOOT_TIME_LOG_FILE);
+        }
 	if (NULL != l_fBootLogFile)
 	{
 		while(fscanf(l_fBootLogFile,"%s", l_cLine) != EOF)
