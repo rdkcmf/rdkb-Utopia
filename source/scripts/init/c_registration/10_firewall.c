@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include "srvmgr.h"
+#include "ccsp_custom.h"
 #include <stdlib.h>
 
 #define SERVICE_NAME              "firewall"
