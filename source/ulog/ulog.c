@@ -58,72 +58,51 @@
 
 static _sys_Log_Info sys_Log_Info = {"", 0, LOG_INFO, 1, 0, NULL};
 
-typedef struct ucomp {
-    char *name;
-    int   id;
-} ucomp_t;
-
-ucomp_t components[] =
-  {
-    { "system",   ULOG_SYSTEM },
-    { "lan",      ULOG_LAN },
-    { "wan",      ULOG_WAN },
-    { "wlan",     ULOG_WLAN },
-    { "fw",       ULOG_FIREWALL },
-    { "igd",      ULOG_IGD },
-    { "config",   ULOG_CONFIG },
-    { "ipv6",     ULOG_IPV6 },
-    { "service",  ULOG_SERVICE },
-    { "ethswitch",ULOG_ETHSWITCH },
-    { NULL, -1 },
-  };
-
-ucomp_t subcomponents[] =
-  {
-    { "info",     UL_INFO },
-    { "status",   UL_STATUS },
-    { "syscfg",   UL_SYSCFG },
-    { "sysevent", UL_SYSEVENT },
-    { "utctx",    UL_UTCTX },    
-    { "dhcpserver",  UL_DHCPSERVER },
-    { "wmon",     UL_WMON },
-    { "pppoe",    UL_PPPOE },
-    { "pptp",     UL_PPTP },
-    { "l2tp",     UL_L2TP },
-    { "wlancfg",  UL_WLANCFG },
-    { "pktdrop",  UL_PKTDROP },
-    { "trigger",  UL_TRIGGER },
-    { "igd",      UL_IGD },
-    { "webui",    UL_WEBUI },
-    { "utapi",    UL_UTAPI },
-    { "manager",  UL_MANAGER },
-    { "tunnel",   UL_TUNNEL },
-    { "dhcp",     UL_DHCP },
-    { NULL, -1 },
-  };
-
-static const char *getsubcomp (int subcomp)
+static const char *getcomp (UCOMP comp)
 {
-    int i = 0;
-    while (subcomponents[i].name) {
-        if (subcomponents[i].id == subcomp) {
-            return subcomponents[i].name;
-        }
-        i++;
+    switch (comp)
+    {
+        case ULOG_SYSTEM:     return "system";
+        case ULOG_LAN:        return "lan";
+        case ULOG_WAN:        return "wan";
+        case ULOG_WLAN:       return "wlan";
+        case ULOG_FIREWALL:   return "fw";
+        case ULOG_IGD:        return "igd";
+        case ULOG_CONFIG:     return "config";
+        case ULOG_IPV6:       return "ipv6";
+        case ULOG_SERVICE:    return "service";
+        case ULOG_ETHSWITCH:  return "ethswitch";
+
+        default:              return "unknown";
     }
-    return "unknown";
 }
 
-static const char *getcomp (int comp)
+static const char *getsubcomp (USUBCOMP subcomp)
 {
-    int i = 0;
-    while (components[i].name) {
-        if (components[i].id == comp) {
-            return components[i].name;
-        }
-        i++;
+    switch (subcomp)
+    {
+        case UL_INFO:         return "info";
+        case UL_STATUS:       return "status";
+        case UL_SYSEVENT:     return "sysevent";
+        case UL_SYSCFG:       return "syscfg";
+        case UL_UTCTX:        return "utctx";
+        case UL_DHCPSERVER:   return "dhcpserver";
+        case UL_WMON:         return "wmon";
+        case UL_PPPOE:        return "pppoe";
+        case UL_PPTP:         return "pptp";
+        case UL_L2TP:         return "l2tp";
+        case UL_WLANCFG:      return "wlancfg";
+        case UL_PKTDROP:      return "pktdrop";
+        case UL_TRIGGER:      return "trigger";
+        case UL_IGD:          return "igd";
+        case UL_WEBUI:        return "webui";
+        case UL_UTAPI:        return "utapi";
+        case UL_MANAGER:      return "manager";
+        case UL_TUNNEL:       return "tunnel";
+        case UL_DHCP:         return "dhcp";
+
+        default:              return "unknown";
     }
-    return "unknown";
 }
 
 void ulog_init ()
@@ -224,6 +203,7 @@ ulog_get_mesgs (UCOMP comp, USUBCOMP sub, char *mesgbuf, unsigned int size)
 /*
  * Log and Command APIs
  */
+#if 0
 void ulog_runcmd (UCOMP comp, USUBCOMP sub, const char *cmd)
 {
     syslog(LOG_NOTICE, "%s.%s %s", getcomp(comp), getsubcomp(sub), cmd);
@@ -250,6 +230,7 @@ int ulog_runcmdf (UCOMP comp, USUBCOMP sub, const char *fmt, ...)
     va_end(ap_copy);
     return system(sfmt);
 }
+#endif
 
 void ulog_sys_Init(int prior, unsigned int enable)
 {
@@ -388,22 +369,22 @@ void ulog_SetEnable(unsigned int enable)
 
 void ulog_sys(int prior, const char* fileName, int line, const char* fmt, ...)
 {
-    char buf[ULOG_STR_SIZE] = {'\0'};
     struct timeval tv;
     time_t curtime;
     va_list ap;
     char sfmt[512];
+    size_t len;
 
-    /*sprintf(buf, "Process Name	%s\nProcess ID	%d\nsyslog() Level   %s\n", sys_Log_Info.name, sys_Log_Info.pid, sys_Log_Info.prior);
+    /*sprintf(sfmt, "Process Name	%s\nProcess ID	%d\nsyslog() Level   %s\n", sys_Log_Info.name, sys_Log_Info.pid, sys_Log_Info.prior);
     if(sys_Log_Info.stream != NULL && sys_Log_Info.enable == 1)
-        fprintf(sys_Log_Info.stream, "%s", buf);*/
+        fprintf(sys_Log_Info.stream, "%s", sfmt);*/
 
     gettimeofday(&tv, NULL);
-    curtime=tv.tv_sec;
+    curtime = tv.tv_sec;
 
-    strftime(buf, sizeof(buf), "%Y-%m-%d  %T.", (const void *)localtime(&curtime));
+    len = strftime(sfmt, sizeof(sfmt), "%Y-%m-%d  %T.", (const void *)localtime(&curtime));
 
-    snprintf(sfmt, sizeof(sfmt), "%s, %s:%d, %s", buf, fileName, line, fmt);
+    snprintf(sfmt + len, sizeof(sfmt) - len, ", %s:%d, %s", fileName, line, fmt);
 
     va_start(ap, fmt);
     vsyslog(prior, sfmt, ap);

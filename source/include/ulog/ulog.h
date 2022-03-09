@@ -238,6 +238,7 @@ void ulog_errorf (UCOMP comp, USUBCOMP sub, const char *fmt, ...);
  */
 void ulog_get_mesgs (UCOMP comp, USUBCOMP sub, char *mesgbuf, unsigned int size);
 
+#if 0
 /*
  * Procedure     : ulog_runcmd
  * Purpose       : Log and run command string
@@ -263,5 +264,6 @@ void ulog_runcmd (UCOMP comp, USUBCOMP sub, const char *cmd);
  *     uses syslog LOCAL7.NOTICE facility
  */
 int ulog_runcmdf (UCOMP comp, USUBCOMP sub, const char *fmt, ...);
+#endif
 
 #endif /* _ULOG_H_ */
