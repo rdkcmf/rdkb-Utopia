@@ -153,7 +153,7 @@ fi
 if [ -z $LOG_PATH ]; then
     LOG_PATH="$LOG_FOLDER/logs/"
 fi
-if [ -z $PERSISTENT_PATH ]; then
+if [ -z "$PERSISTENT_PATH" ]; then
     PERSISTENT_PATH="/tmp"
 fi
 

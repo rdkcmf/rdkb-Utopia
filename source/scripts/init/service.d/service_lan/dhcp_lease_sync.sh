@@ -37,7 +37,7 @@ if [ ! -f /usr/bin/GetConfigFile ];then
 fi
 
 GetConfigFile $PEER_COMM_ID
-scp -i $PEER_COMM_ID $DHCP_LEASE_FILE_ARM root@$ATOM_IP:$DHCP_LEASE_FILE_ATOM_TMP  > /dev/null 2>&1
-rpcclient $ATOM_ARPING_IP "flock $DHCP_LEASE_FILE_ATOM -c \"cp $DHCP_LEASE_FILE_ATOM_TMP $DHCP_LEASE_FILE_ATOM\""
-rpcclient $ATOM_ARPING_IP "rm -f $DHCP_LEASE_FILE_ATOM_TMP"
+scp -i $PEER_COMM_ID $DHCP_LEASE_FILE_ARM root@"$ATOM_IP":$DHCP_LEASE_FILE_ATOM_TMP  > /dev/null 2>&1
+rpcclient "$ATOM_ARPING_IP" "flock $DHCP_LEASE_FILE_ATOM -c \"cp $DHCP_LEASE_FILE_ATOM_TMP $DHCP_LEASE_FILE_ATOM\""
+rpcclient "$ATOM_ARPING_IP" "rm -f $DHCP_LEASE_FILE_ATOM_TMP"
 rm -f $PEER_COMM_ID

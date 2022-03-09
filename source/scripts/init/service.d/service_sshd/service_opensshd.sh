@@ -42,7 +42,7 @@
 source /etc/utopia/service.d/ulog_functions.sh
 
 SERVICE_NAME="sshd"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 SSHD=/sbin/sshd
 PMON=/etc/utopia/service.d/pmon.sh
@@ -50,7 +50,7 @@ PMON=/etc/utopia/service.d/pmon.sh
 do_start() {
 
    SSHD_PID=`pidof sshd`
-   [ ${SSHD_PID} ] && return 0
+   [ "${SSHD_PID}" ] && return 0
 
    DIR_NAME=/tmp/home/admin
    if [ ! -d $DIR_NAME ] ; then
@@ -80,15 +80,15 @@ do_start() {
    mkdir -p /var/empty
    chown root:root /var/empty
    chmod 700 /var/empty
-   [ -z ${SSHD_PID} ] && ${SSHD} -f /etc/sshd.conf
+   [ -z "${SSHD_PID}" ] && ${SSHD} -f /etc/sshd.conf
    sysevent set ssh_daemon_state up
 }
 
 do_stop() {
    # echo "[utopia] Stopping SSH daemon" > /dev/console
     SSHD_PID=`pidof sshd`
-    [ ! ${SSHD_PID} ] && return 0
-    kill ${SSHD_PID}
+    [ ! "${SSHD_PID}" ] && return 0
+    kill "${SSHD_PID}"
    sysevent set ssh_daemon_state down
 }
 
@@ -139,13 +139,13 @@ service_bridge_status ()
 # Entry
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

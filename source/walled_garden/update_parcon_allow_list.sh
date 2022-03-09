@@ -33,4 +33,4 @@ sysevent set crond-restart 1
 # reload all iptables rules
 firewall
 
-awk -F "[ =]+" /tcp.*$1/'{system("conntrack_delete "$8" "$10" "$12" "$14)}' /proc/net/nf_conntrack
+awk -F "[ =]+" /tcp.*"$1"/'{system("conntrack_delete "$8" "$10" "$12" "$14)}' /proc/net/nf_conntrack

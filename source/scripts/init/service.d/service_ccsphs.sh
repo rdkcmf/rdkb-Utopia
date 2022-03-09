@@ -42,12 +42,12 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/ut_plat.sh
 
 
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 service_start() {
 
 	INST=`sysevent get homesecurity_lan_l3net`	
-    if [ x`sysevent get ipv4_${INST}-status` = x$L3_UP_STATUS  -a x`sysevent get ${SERVICE_NAME}-status` != x"started" ] ; then
+    if [ x"`sysevent get ipv4_"${INST}"-status`" = x"$L3_UP_STATUS"  -a x"`sysevent get ${SERVICE_NAME}-status`" != x"started" ] ; then
         ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
 		CcspHomeSecurity 8081&
         sysevent set ${SERVICE_NAME}-errinfo
@@ -57,15 +57,15 @@ service_start() {
 
 service_stop () {
    ulog ${SERVICE_NAME} status "stopping ${SERVICE_NAME} service" 
-   kill `pidof CcspHomeSecurity`
+   kill "`pidof CcspHomeSecurity`"
    sysevent set ${SERVICE_NAME}-errinfo
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
 
 
 handle_ipv4_status() {
-	if [ x$1 = x`sysevent get homesecurity_lan_l3net` ]; then
-		if [ x$L3_UP_STATUS = x$2 ]; then
+	if [ x"$1" = x"`sysevent get homesecurity_lan_l3net`" ]; then
+		if [ x"$L3_UP_STATUS" = x"$2" ]; then
 			service_start;
 		else
 			service_stop;
@@ -80,13 +80,13 @@ service_init() {
 #---------------------------------------------------------------
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;
@@ -97,7 +97,7 @@ case "$1" in
   ipv4_*-status)
       INST=${1%-*}
       INST=${INST#*_}
-      handle_ipv4_status $INST $2
+      handle_ipv4_status "$INST" "$2"
       ;;
   *)
       echo "Usage: $SELF_NAME [${SERVICE_NAME}-start|${SERVICE_NAME}-stop|${SERVICE_NAME}-restart|lan-status]" >&2

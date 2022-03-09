@@ -47,9 +47,9 @@ source /etc/utopia/service.d/event_flags
 check_err ()
 {
    if [ "${1}" -ne "0" ] ; then
-      ulog $SERVICE_NAME status "PID ($$) Error ($1) $2"
-      sysevent set ${SERVICE_NAME}-status error
-      sysevent set ${SERVICE_NAME}-errinfo "Error ($1) $2"
+      ulog "$SERVICE_NAME" status "PID ($$) Error ($1) $2"
+      sysevent set "${SERVICE_NAME}"-status error
+      sysevent set "${SERVICE_NAME}"-errinfo "Error ($1) $2"
    fi
 }
 
@@ -66,10 +66,10 @@ check_err ()
 check_err_exit ()
 {
    if [ "${1}" -ne "0" ] ; then
-      ulog $SERVICE_NAME status "PID ($$) Error ($1) $2"
-      sysevent set ${SERVICE_NAME}-status error
-      sysevent set ${SERVICE_NAME}-errinfo "Error ($1) $2"
-      exit ${1}
+      ulog "$SERVICE_NAME" status "PID ($$) Error ($1) $2"
+      sysevent set "${SERVICE_NAME}"-status error
+      sysevent set "${SERVICE_NAME}"-errinfo "Error ($1) $2"
+      exit "${1}"
    fi
 }
 
@@ -84,7 +84,7 @@ wait_till_end_state ()
   LSERVICE=$1
   TRIES=1
    while [ "9" -ge "$TRIES" ] ; do
-      LSTATUS=`sysevent get ${LSERVICE}-status`
+      LSTATUS=`sysevent get "${LSERVICE}"-status`
       if [ "starting" = "$LSTATUS" ] || [ "stopping" = "$LSTATUS" ] ; then
          sleep 1
          TRIES=`expr $TRIES + 1`
@@ -106,7 +106,7 @@ wait_till_state ()
    STATE=$2
    TRIES=1
    while [ "9" -ge "$TRIES" ] ; do
-      LSTATUS=`sysevent get ${LSERVICE}-status`
+      LSTATUS=`sysevent get "${LSERVICE}"-status`
       if [ "$STATE" != "$LSTATUS" ] ; then
          sleep 1
          TRIES=`expr $TRIES + 1`

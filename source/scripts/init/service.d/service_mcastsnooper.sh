@@ -41,13 +41,13 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 
 SERVICE_NAME="mcastsnooper"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 do_stop_igmp_snooper() {
    if [ -f /var/run/igmp_snooper.pid ]; then
       LAST_SESSION_PID=`cat /var/run/igmp_snooper.pid`
       if [ -n "$LAST_SESSION_PID" ]; then
-         kill $LAST_SESSION_PID
+         kill "$LAST_SESSION_PID"
       fi
       rm /var/run/igmp_snooper.pid
    fi
@@ -69,7 +69,7 @@ do_start_igmp_snooper () {
 
    do_stop_igmp_snooper
 
-   igmp_snooper $sw_opt $if_opt $querier_opt -v &
+   igmp_snooper "$sw_opt" "$if_opt" "$querier_opt" -v &
    echo $! > /var/run/igmp_snooper.pid
 }
 
@@ -124,13 +124,13 @@ service_stop ()
 service_init
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

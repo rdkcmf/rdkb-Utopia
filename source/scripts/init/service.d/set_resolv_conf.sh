@@ -66,7 +66,7 @@ prepare_resolv_conf () {
    rm -rf $RESOLV_CONF_TMP
 
    
-   if [ x"1" = x`syscfg get staticdns_enable` ];then
+   if [ x"1" = x"`syscfg get staticdns_enable`" ];then
    
          WAN_DNS=
          if [ "" != "$WAN_DOMAIN" ] ; then
@@ -74,15 +74,15 @@ prepare_resolv_conf () {
          fi
          if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
             echo "nameserver $NAMESERVER1" >> $RESOLV_CONF
-            WAN_DNS=`echo $WAN_DNS $NAMESERVER1`
+            WAN_DNS=`echo "$WAN_DNS" "$NAMESERVER1"`
          fi
          if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
             echo "nameserver $NAMESERVER2" >> $RESOLV_CONF
-            WAN_DNS=`echo $WAN_DNS $NAMESERVER2`
+            WAN_DNS=`echo "$WAN_DNS" "$NAMESERVER2"`
          fi
          if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
             echo "nameserver $NAMESERVER3" >> $RESOLV_CONF
-            WAN_DNS=`echo $WAN_DNS $NAMESERVER3`
+            WAN_DNS=`echo "$WAN_DNS" "$NAMESERVER3"`
          fi
 
          sysevent set wan_dhcp_dns "${WAN_DNS}"

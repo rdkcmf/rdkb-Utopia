@@ -56,7 +56,7 @@ else
 fi
     
 SERVICE_NAME="sshd"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 PID_FILE=/var/run/dropbear.pid
 PMON=/etc/utopia/service.d/pmon.sh
@@ -177,12 +177,12 @@ do_stop() {
      #Get the dropbear IPV6 process IDs. There could be more than 1 dropbear IPV6 process running based on number of open ssh connections
      ps | grep 'dropbear -E -s -b /etc/sshbanner.txt' | sed '/grep/d' > $tmp_filename
      while read -r line; do
-       pid=`echo $line | head -n1 |  awk '{print $1;}'`
-       kill -9 $pid
+       pid=`echo "$line" | head -n1 |  awk '{print $1;}'`
+       kill -9 "$pid"
        done < "$tmp_filename"
      rm $tmp_filename  
    else
-     kill -9 `cat $PID_FILE`
+     kill -9 "`cat $PID_FILE`"
    fi
    rm -f $PID_FILE
 #    /etc/init.d/dropbear stop
@@ -292,13 +292,13 @@ echo_t "[utopia] ${SERVICE_NAME} $1 received"
 
 CURRENT_WAN_STATUS=`sysevent get wan-status`
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

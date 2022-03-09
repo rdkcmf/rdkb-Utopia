@@ -39,7 +39,7 @@ CCSP_SUBSYS="eRT"
 CCSP_TYPE="bool"
 CCSP_DM="Device.UPnP.Device.UPnPIGD"
 
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 
 igd_start() {

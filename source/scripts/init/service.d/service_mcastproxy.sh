@@ -41,7 +41,7 @@ source /etc/utopia/service.d/ulog_functions.sh
 source /etc/device.properties
 
 SERVICE_NAME="mcastproxy"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 BIN=igmpproxy
 
@@ -79,7 +79,7 @@ do_start_igmpproxy () {
    # Disable all other interfaces
    for interface in $INTERFACE_LIST
    do
-       if [ $interface != $SYSCFG_lan_ifname ] && [ $interface != $WAN_IFNAME ]; then
+       if [ "$interface" != "$SYSCFG_lan_ifname" ] && [ "$interface" != "$WAN_IFNAME" ]; then
          if [ "$interface" = "$MOCA_INTERFACE" ];then
           echo "phyint $interface downstream" >> $LOCAL_CONF_FILE
           MOCA_LAN_UP=1
@@ -123,7 +123,7 @@ fi
 
 service_init ()
 {
-   eval `utctx_cmd get igmpproxy_enabled lan_ifname`
+   eval "`utctx_cmd get igmpproxy_enabled lan_ifname`"
    WAN_IFNAME=`sysevent get current_wan_ifname`
    HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
    DSLite_Enabled=`syscfg get dslite_enable`
@@ -168,13 +168,13 @@ fi
 service_init
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

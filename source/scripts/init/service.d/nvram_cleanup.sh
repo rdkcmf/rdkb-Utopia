@@ -65,18 +65,18 @@ for i in `cat $NVTEMP_FILE`
 do
     NVDIRTY=1
     # echo "cmd - nvram unset $i"
-    nvram unset $i
+    nvram unset "$i"
 done
 
 # Cleanup all known, unwanted (!!) nvram vars
 if [ -f $NVKNOWN_LIST_FILE ]; then
     for i in `cat $NVKNOWN_LIST_FILE`
     do
-        NVVAL=`nvram get $i`
+        NVVAL=`nvram get "$i"`
         if [ "set" != "set$NVVAL" ]; then
             NVDIRTY=1
             # echo "cmd - nvram unset $i"
-            nvram unset $i
+            nvram unset "$i"
         fi
     done
 fi

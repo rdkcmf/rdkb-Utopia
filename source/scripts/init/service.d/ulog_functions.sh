@@ -49,7 +49,7 @@ ulog () {
     MESG=$3
 
     UL_MESG="$COMP.$SUBCOMP $MESG"
-    /usr/bin/logger -p local7.notice -t UTOPIA $UL_MESG
+    /usr/bin/logger -p local7.notice -t UTOPIA "$UL_MESG"
 }
 
 ulog_error () {
@@ -58,7 +58,7 @@ ulog_error () {
     MESG=$3
 
     UL_MESG="$COMP.$SUBCOMP $MESG"
-    /usr/bin/logger -p local7.error -t UTOPIA $UL_MESG
+    /usr/bin/logger -p local7.error -t UTOPIA "$UL_MESG"
 }
 
 ulog_debug () {
@@ -67,6 +67,6 @@ ulog_debug () {
     MESG=$3
 
     UL_MESG="$COMP.$SUBCOMP $MESG"
-    /usr/bin/logger -p local7.debug -t UTOPIA $UL_MESG
+    /usr/bin/logger -p local7.debug -t UTOPIA "$UL_MESG"
 }
 

@@ -35,7 +35,7 @@
 #######################################################################
 
 /usr/bin/GenFWLog -c
-/usr/bin/firewall $*
+/usr/bin/firewall "$@"
 /usr/bin/GenFWLog -gc
 
 CONN_F=`sysevent get firewall_flush_conntrack`

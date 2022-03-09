@@ -115,21 +115,21 @@ calbits()
 	count=0
 	bitfield=$1
 	while [ $bitfield -ne 0 ]; do
-		bitfield_1=`expr $bitfield - 1`
+		bitfield_1=`expr "$bitfield" - 1`
 		bitfield=$((bitfield & bitfield_1))
 		let count+=1
 	done
-	echo $count
+	echo "$count"
 }
 
 mask2cidr() {
 	numberofbits=0
 	echo "Mask2cidr called on :${1}:" > /dev/console
-	fields=`echo $1 | sed 's/\./ /g'`
+	fields=`echo "$1" | sed 's/\./ /g'`
 	for field in $fields ; do
 		echo "dec:${field}:" > /dev/console
-		if [ `isvalid $field` -eq 1 ]; then
-			numberofbits=$((numberofbits + `calbits $field`))
+		if [ "`isvalid "$field"`" -eq 1 ]; then
+			numberofbits=$((numberofbits + `calbits "$field"`))
 		else
 			echo "Error: $field is not recognised"; exit 1
 		fi
@@ -149,7 +149,7 @@ service_stop () {
 service_init() {
    SYSCFG_FAILED='false'
    FOO=`utctx_cmd get last_erouter_mode`
-   eval $FOO
+   eval "$FOO"
    if [ $SYSCFG_FAILED = 'true' ] ; then
       ulog wan status "$PID utctx failed to get some configuration data"
       ulog wan status "$PID WAN CANNOT BE CONTROLLED"
@@ -159,39 +159,39 @@ service_init() {
 
 #args: l3 instance, l2 instance, l2 status, [flag:bringup lower?]
 handle_l2_status () {
-    if [ x${PARTIAL_STATUS} = x${3} -o x${READY_STATUS} = x${3} ] && [ x1 = x`sysevent get ${L2SERVICE_NAME}_$2-${L2_LOCAL_READY_PARAM}` ]; then
+    if [ x"${PARTIAL_STATUS}" = x"${3}" -o x"${READY_STATUS}" = x"${3}" ] && [ x1 = x"`sysevent get "${L2SERVICE_NAME}"_"$2"-"${L2_LOCAL_READY_PARAM}"`" ]; then
     #l2 up
-        OUR_STATUS=`sysevent get ${SERVICE_NAME}_$1-status`
-        if [ x$OUR_STATUS = x"$L3_UP_STATUS" -o x$OUR_STATUS = x"$L3_AWAITING_STATUS" ]; then
+        OUR_STATUS=`sysevent get ${SERVICE_NAME}_"$1"-status`
+        if [ x"$OUR_STATUS" = x"$L3_UP_STATUS" -o x"$OUR_STATUS" = x"$L3_AWAITING_STATUS" ]; then
             #we're already prepared so nothing needs to be done
             return
         fi
     
-        IFNAME=`sysevent get ${L2SERVICE_NAME}_$2-${L2SERVICE_IFNAME}`
-        sysevent set ${SERVICE_NAME}_$1-ifname $IFNAME
+        IFNAME=`sysevent get "${L2SERVICE_NAME}"_"$2"-"${L2SERVICE_IFNAME}"`
+        sysevent set ${SERVICE_NAME}_"$1"-ifname "$IFNAME"
         
-        load_static_l3 $1
-        if [ x != x${STATIC_IPV4ADDR} -a x != x${STATIC_IPV4SUBNET} ]; then
+        load_static_l3 "$1"
+        if [ x != x"${STATIC_IPV4ADDR}" -a x != x"${STATIC_IPV4SUBNET}" ]; then
             #apply static config if exists
             CUR_IPV4_ADDR=$STATIC_IPV4ADDR
             CUR_IPV4_SUBNET=$STATIC_IPV4SUBNET
-            sysevent set ${SERVICE_NAME}_${1}-ipv4_static 1
-            apply_config $1
+            sysevent set ${SERVICE_NAME}_"${1}"-ipv4_static 1
+            apply_config "$1"
             if [ 0 = $? ]; then
-                sysevent set ${SERVICE_NAME}_${1}-status $L3_UP_STATUS
+                sysevent set ${SERVICE_NAME}_"${1}"-status "$L3_UP_STATUS"
             fi
         else
             #Otherwise, announce readiness for provisioning
             # TODO: consider applying dynamic config currently in sysevent
-            sysevent set ${SERVICE_NAME}_${1}-ipv4_static 0
-            sysevent set ${SERVICE_NAME}_${1}-status $L3_AWAITING_STATUS
+            sysevent set ${SERVICE_NAME}_"${1}"-ipv4_static 0
+            sysevent set ${SERVICE_NAME}_"${1}"-status "$L3_AWAITING_STATUS"
         fi
         
     else
     #l2 down
-        sysevent set ${SERVICE_NAME}_${1}-status pending
-        if [ x = x$3 -o x$STOPPED_STATUS = x$3 ] && [ x != x$4 ] ; then
-            sysevent set ${L2SERVICE_NAME}-up $2
+        sysevent set ${SERVICE_NAME}_"${1}"-status pending
+        if [ x = x"$3" -o x"$STOPPED_STATUS" = x"$3" ] && [ x != x"$4" ] ; then
+            sysevent set "${L2SERVICE_NAME}"-up "$2"
         fi
         
     fi
@@ -200,51 +200,51 @@ handle_l2_status () {
 
 #args: l3 instance
 apply_config () {
-    if [ x = x${IFNAME} ]; then
-        IFNAME=`sysevent get ${SERVICE_NAME}_$1-ifname`
+    if [ x = x"${IFNAME}" ]; then
+        IFNAME=`sysevent get ${SERVICE_NAME}_"$1"-ifname`
     fi
     
-    if [ x = x${CUR_IPV4_ADDR} ]; then
-        CUR_IPV4_ADDR=`sysevent get ${SERVICE_NAME}_${1}-ipv4addr`
+    if [ x = x"${CUR_IPV4_ADDR}" ]; then
+        CUR_IPV4_ADDR=`sysevent get ${SERVICE_NAME}_"${1}"-ipv4addr`
     fi
     
-    if [ x = x${CUR_IPV4_SUBNET} ]; then
-        CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_${1}-ipv4subnet`
+    if [ x = x"${CUR_IPV4_SUBNET}" ]; then
+        CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_"${1}"-ipv4subnet`
     fi
     
-    if [ x = x${CUR_IPV4_ADDR} -o x = x${CUR_IPV4_SUBNET} ]; then 
-        sysevent set ${SERVICE_NAME}_${1}-status error
-        sysevent set ${SERVICE_NAME}_${1}-error "Missing IP or subnet"
+    if [ x = x"${CUR_IPV4_ADDR}" -o x = x"${CUR_IPV4_SUBNET}" ]; then 
+        sysevent set ${SERVICE_NAME}_"${1}"-status error
+        sysevent set ${SERVICE_NAME}_"${1}"-error "Missing IP or subnet"
         return 1
     fi
     
-    echo 2 > /proc/sys/net/ipv4/conf/$IFNAME/arp_ignore
+    echo 2 > /proc/sys/net/ipv4/conf/"$IFNAME"/arp_ignore
     
     #WAN_IFNAME=`sysevent get current_wan_ifname`
     
-    RT_TABLE=`expr $1 + 10`
+    RT_TABLE=`expr "$1" + 10`
     
-    MASKBITS=`mask2cidr $CUR_IPV4_SUBNET`
+    MASKBITS=`mask2cidr "$CUR_IPV4_SUBNET"`
     #If it's ipv6 only mode, doesn't config ipv4 address. For ipv6 other things, we don't take care.
-    if [ xbrlan0 = x${IFNAME} ]; then
+    if [ xbrlan0 = x"${IFNAME}" ]; then
         if [ "1" == "$SYSCFG_last_erouter_mode" ] || [ "3" == "$SYSCFG_last_erouter_mode" ]; then
-	    ip addr add $CUR_IPV4_ADDR/$MASKBITS broadcast + dev $IFNAME
+	    ip addr add "$CUR_IPV4_ADDR"/"$MASKBITS" broadcast + dev "$IFNAME"
         fi
     else
-        ip addr add $CUR_IPV4_ADDR/$MASKBITS broadcast + dev $IFNAME
+        ip addr add "$CUR_IPV4_ADDR"/"$MASKBITS" broadcast + dev "$IFNAME"
     fi
 
     
     # TODO: Fix this static workaround. Should have configurable routing policy.
-    SUBNET=`subnet $CUR_IPV4_ADDR $CUR_IPV4_SUBNET`
+    SUBNET=`subnet "$CUR_IPV4_ADDR" "$CUR_IPV4_SUBNET"`
     #ip route del $SUBNET/$MASKBITS dev $IFNAME
     
-    ip rule add from $CUR_IPV4_ADDR lookup $RT_TABLE
-    ip rule add iif $IFNAME lookup erouter
-    ip rule add iif $IFNAME lookup $RT_TABLE
+    ip rule add from "$CUR_IPV4_ADDR" lookup "$RT_TABLE"
+    ip rule add iif "$IFNAME" lookup erouter
+    ip rule add iif "$IFNAME" lookup "$RT_TABLE"
     #ip rule add iif $WAN_IFNAME lookup $RT_TABLE
-    ip route add table $RT_TABLE $SUBNET/$MASKBITS dev $IFNAME
-    ip route add table all_lans $SUBNET/$MASKBITS dev $IFNAME
+    ip route add table "$RT_TABLE" "$SUBNET"/"$MASKBITS" dev "$IFNAME"
+    ip route add table all_lans "$SUBNET"/"$MASKBITS" dev "$IFNAME"
 
     # bind 161/162 port to brlan0 interface
     #if [ xbrlan0 = x${IFNAME} ]; then
@@ -253,7 +253,7 @@ apply_config () {
     #fi
     
     #I can't find other way to do this. Just put here temporarily.
-    if [ xbrlan0 = x${IFNAME} ]; then
+    if [ xbrlan0 = x"${IFNAME}" ]; then
 
 
         #echo " !!!!!!!!!! Syncing True Static IP !!!!!!!!!!"
@@ -264,8 +264,8 @@ apply_config () {
 
     # END ROUTING TODO
     
-    sysevent set ${SERVICE_NAME}_${1}-ipv4addr $CUR_IPV4_ADDR
-    sysevent set ${SERVICE_NAME}_${1}-ipv4subnet $CUR_IPV4_SUBNET
+    sysevent set ${SERVICE_NAME}_"${1}"-ipv4addr "$CUR_IPV4_ADDR"
+    sysevent set ${SERVICE_NAME}_"${1}"-ipv4subnet "$CUR_IPV4_SUBNET"
    
     sysevent set firewall-restart
     
@@ -273,32 +273,32 @@ apply_config () {
 }
 
 remove_config () {
-    if [ x = x${IFNAME} ]; then
-        IFNAME=`sysevent get ${SERVICE_NAME}_$1-ifname`
+    if [ x = x"${IFNAME}" ]; then
+        IFNAME=`sysevent get ${SERVICE_NAME}_"$1"-ifname`
     fi
     
-    if [ x = x${CUR_IPV4_ADDR} ]; then
-        CUR_IPV4_ADDR=`sysevent get ${SERVICE_NAME}_${1}-ipv4addr`
+    if [ x = x"${CUR_IPV4_ADDR}" ]; then
+        CUR_IPV4_ADDR=`sysevent get ${SERVICE_NAME}_"${1}"-ipv4addr`
     fi
     
-    if [ x = x${CUR_IPV4_SUBNET} ]; then
-        CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_${1}-ipv4subnet`
+    if [ x = x"${CUR_IPV4_SUBNET}" ]; then
+        CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_"${1}"-ipv4subnet`
     fi
     
     #WAN_IFNAME=`sysevent get current_wan_ifname`
     
-    RT_TABLE=`expr $1 + 10`
+    RT_TABLE=`expr "$1" + 10`
     
-    MASKBITS=`mask2cidr $CUR_IPV4_SUBNET`
-    ip addr del $CUR_IPV4_ADDR/$MASKBITS dev $IFNAME
+    MASKBITS=`mask2cidr "$CUR_IPV4_SUBNET"`
+    ip addr del "$CUR_IPV4_ADDR"/"$MASKBITS" dev "$IFNAME"
     # TODO: Fix this static workaround. Should have configurable routing policy.
-    SUBNET=`subnet $CUR_IPV4_ADDR $CUR_IPV4_SUBNET`
-    ip rule del from $CUR_IPV4_ADDR lookup $RT_TABLE
-    ip rule del iif $IFNAME lookup erouter
-    ip rule del iif $IFNAME lookup $RT_TABLE
+    SUBNET=`subnet "$CUR_IPV4_ADDR" "$CUR_IPV4_SUBNET"`
+    ip rule del from "$CUR_IPV4_ADDR" lookup "$RT_TABLE"
+    ip rule del iif "$IFNAME" lookup erouter
+    ip rule del iif "$IFNAME" lookup "$RT_TABLE"
     #ip rule del iif $WAN_IFNAME lookup $RT_TABLE
-    ip route del table $RT_TABLE $SUBNET/$MASKBITS dev $IFNAME
-    ip route del table all_lans $SUBNET/$MASKBITS dev $IFNAME
+    ip route del table "$RT_TABLE" "$SUBNET"/"$MASKBITS" dev "$IFNAME"
+    ip route del table all_lans "$SUBNET"/"$MASKBITS" dev "$IFNAME"
 
     # del 161/162 port from brlan0 interface when it is teardown
     #if [ xbrlan0 = x${IFNAME} ]; then
@@ -307,30 +307,30 @@ remove_config () {
     #fi
 
     # END ROUTING TODO
-    sysevent set ${SERVICE_NAME}_${1}-ipv4addr 
-    sysevent set ${SERVICE_NAME}_${1}-ipv4subnet 
-    sysevent set ${SERVICE_NAME}_${1}-ipv4_static
-    sysevent set ${SERVICE_NAME}_${1}-status down
+    sysevent set ${SERVICE_NAME}_"${1}"-ipv4addr 
+    sysevent set ${SERVICE_NAME}_"${1}"-ipv4subnet 
+    sysevent set ${SERVICE_NAME}_"${1}"-ipv4_static
+    sysevent set ${SERVICE_NAME}_"${1}"-status down
     
 }
 
 #args: 
 load_static_l3 () {
-    eval `psmcli get -e STATIC_IPV4ADDR ${IPV4_NV_PREFIX}.$1.${IPV4_NV_IP} STATIC_IPV4SUBNET ${IPV4_NV_PREFIX}.$1.${IPV4_NV_SUBNET}`
+    eval "`psmcli get -e STATIC_IPV4ADDR "${IPV4_NV_PREFIX}"."$1"."${IPV4_NV_IP}" STATIC_IPV4SUBNET "${IPV4_NV_PREFIX}"."$1"."${IPV4_NV_SUBNET}"`"
 }
 
 #args: l3 instance
 #envin: LOWER
 teardown_instance () {
-    if [ x != x$LOWER ] || [ x != x`sysevent get ${SERVICE_NAME}_${1}-lower` ]; then
-        async="`sysevent get ${SERVICE_NAME}_${1}-l2async`"
-        sysevent rm_async $async
-        remove_config $1
-        sysevent set ${SERVICE_NAME}_${1}-l2async
-        sysevent set ${SERVICE_NAME}_${1}-lower
+    if [ x != x"$LOWER" ] || [ x != x"`sysevent get ${SERVICE_NAME}_"${1}"-lower`" ]; then
+        async="`sysevent get ${SERVICE_NAME}_"${1}"-l2async`"
+        sysevent rm_async "$async"
+        remove_config "$1"
+        sysevent set ${SERVICE_NAME}_"${1}"-l2async
+        sysevent set ${SERVICE_NAME}_"${1}"-lower
         
         ACTIVE_INST="`sysevent get ${SERVICE_NAME}-instances`"
-        ACTIVE_INST="`echo $ACTIVE_INST | sed 's/ *\<'$1'\> */ /'`"
+        ACTIVE_INST="`echo "$ACTIVE_INST" | sed 's/ *\<'"$1"'\> */ /'`"
         sysevent set ${SERVICE_NAME}-instances "$ACTIVE_INST"
     fi
 }
@@ -339,17 +339,17 @@ teardown_instance () {
 
 resync_all_instances () {
     ACTIVE_INST="`sysevent get ${SERVICE_NAME}-instances`"
-    NV_INST="`psmcli getallinst ${IPV4_NV_PREFIX}.`"
+    NV_INST="`psmcli getallinst "${IPV4_NV_PREFIX}".`"
     
     TO_REM=""
     UNCHANGED=""
     TO_ADD="$NV_INST"
     
     for cur_nv_inst in $ACTIVE_INST; do
-        expr match "$TO_ADD" '.*\b\('$cur_nv_inst'\)\b.*' > /dev/null
+        expr match "$TO_ADD" '.*\b\('"$cur_nv_inst"'\)\b.*' > /dev/null
         if [ 0 = $? ]; then
             #Keeping this active instance
-            TO_ADD="`echo $TO_ADD | sed 's/ *\<'$cur_nv_inst'\> */ /'`"
+            TO_ADD="`echo "$TO_ADD" | sed 's/ *\<'"$cur_nv_inst"'\> */ /'`"
             UNCHANGED="${UNCHANGED} $cur_nv_inst"
         else
             #Remove this instance
@@ -361,12 +361,12 @@ resync_all_instances () {
     echo "L3 Resync all instances. TO_REM:$TO_REM , TO_ADD:$TO_ADD"
     
     for inst in $TO_REM; do
-        teardown_instance $inst
-        sysevent set ${SERVICE_NAME}_${inst}-status
+        teardown_instance "$inst"
+        sysevent set ${SERVICE_NAME}_"${inst}"-status
     done
     
     for inst in $TO_ADD; do
-        resync_instance $inst
+        resync_instance "$inst"
     done
     
     #sysevent set ${SERVICE_NAME}-instances "${UNCHANGED}${TO_ADD}"
@@ -378,46 +378,46 @@ resync_all_instances () {
 resync_instance () {
 
     echo "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance."
-    eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
+    eval "`psmcli get -e NV_ETHLOWER "${IPV4_NV_PREFIX}"."${1}".EthLink NV_IP "${IPV4_NV_PREFIX}"."${1}"."${IPV4_NV_IP}" NV_SUBNET "${IPV4_NV_PREFIX}"."${1}"."${IPV4_NV_SUBNET}" NV_ENABLED "${IPV4_NV_PREFIX}"."${1}"."${IPV4_NV_ENABLED}"`"
     
-    if [ x = x$NV_ENABLED -o x$DM_FALSE = x$NV_ENABLED ]; then
-        teardown_instance $1
+    if [ x = x"$NV_ENABLED" -o x"$DM_FALSE" = x"$NV_ENABLED" ]; then
+        teardown_instance "$1"
         return
     fi
     
     #Find l2net instance from EthLink instance.
-    NV_LOWER=`psmcli get ${ETH_DM_PREFIX}.${NV_ETHLOWER}.l2net`
+    NV_LOWER=`psmcli get "${ETH_DM_PREFIX}"."${NV_ETHLOWER}".l2net`
 
-    LOWER=`sysevent get ${SERVICE_NAME}_${1}-lower`
+    LOWER=`sysevent get ${SERVICE_NAME}_"${1}"-lower`
     #IP=`sysevent get ${SERVICE_NAME}_${1}-ipv4addr`
     #SUBNET=`sysevent get ${SERVICE_NAME}_${1}-ipv4subnet`
-    CUR_IPV4_ADDR=`sysevent get ${SERVICE_NAME}_${1}-ipv4addr`
-    CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_${1}-ipv4subnet`
+    CUR_IPV4_ADDR=`sysevent get ${SERVICE_NAME}_"${1}"-ipv4addr`
+    CUR_IPV4_SUBNET=`sysevent get ${SERVICE_NAME}_"${1}"-ipv4subnet`
     
     #DEBUG
     echo "RDKB_SYSTEM_BOOT_UP_LOG : Syncing l3 instance ($1), NV_ETHLOWER:$NV_ETHLOWER, NV_LOWER:$NV_LOWER , NV_ENABLED:$NV_ENABLED , NV_IP:$NV_IP , NV_SUBNET:$NV_SUBNET , LOWER:$LOWER , CUR_IPV4_ADDR:$CUR_IPV4_ADDR , CUR_IPV4_SUBNET:$CUR_IPV4_SUBNET"
     
-    if [ x$NV_LOWER != x$LOWER ]; then
+    if [ x"$NV_LOWER" != x"$LOWER" ]; then
         #different lower layer, teardown and switch
-        if [ x != x$LOWER ]; then
-            teardown_instance $1
+        if [ x != x"$LOWER" ]; then
+            teardown_instance "$1"
         fi
-        sysevent set ${SERVICE_NAME}_${1}-lower "$NV_LOWER"
-        if [ x != x${NV_LOWER} ]; then 
+        sysevent set ${SERVICE_NAME}_"${1}"-lower "$NV_LOWER"
+        if [ x != x"${NV_LOWER}" ]; then 
             ACTIVE_INST="`sysevent get ${SERVICE_NAME}-instances`"
-            ACTIVE_INST="`echo $ACTIVE_INST | sed 's/ *\<'$1'\> */ /'`"
+            ACTIVE_INST="`echo "$ACTIVE_INST" | sed 's/ *\<'"$1"'\> */ /'`"
             sysevent set ${SERVICE_NAME}-instances "$ACTIVE_INST $1"
             
-            async="`sysevent async ${L2SERVICE_NAME}_$NV_LOWER-status $THIS $1`"
-            sysevent set ${SERVICE_NAME}_${1}-l2async "$async"
-            handle_l2_status $1 $NV_LOWER "`sysevent get ${L2SERVICE_NAME}_$NV_LOWER-status`" 1
+            async="`sysevent async "${L2SERVICE_NAME}"_"$NV_LOWER"-status "$THIS" "$1"`"
+            sysevent set ${SERVICE_NAME}_"${1}"-l2async "$async"
+            handle_l2_status "$1" "$NV_LOWER" "`sysevent get "${L2SERVICE_NAME}"_"$NV_LOWER"-status`" 1
         fi
     else 
-        if [ x != x$CUR_IPV4_ADDR ] && [ x1 = x`sysevent get ${SERVICE_NAME}_${1}-ipv4_static` -o x != x${NV_IP} ]; then
-            if [ x$CUR_IPV4_ADDR != x$NV_IP -o x$CUR_IPV4_SUBNET != x$NV_SUBNET ]; then
+        if [ x != x"$CUR_IPV4_ADDR" ] && [ x1 = x"`sysevent get ${SERVICE_NAME}_"${1}"-ipv4_static`" -o x != x"${NV_IP}" ]; then
+            if [ x"$CUR_IPV4_ADDR" != x"$NV_IP" -o x"$CUR_IPV4_SUBNET" != x"$NV_SUBNET" ]; then
                 #Same lower layer, but static IP info changed.
-                remove_config $1
-                handle_l2_status $1 $NV_LOWER "`sysevent get ${L2SERVICE_NAME}_$NV_LOWER-status`"
+                remove_config "$1"
+                handle_l2_status "$1" "$NV_LOWER" "`sysevent get "${L2SERVICE_NAME}"_"$NV_LOWER"-status`"
             fi
         fi
     fi
@@ -425,16 +425,16 @@ resync_instance () {
 
 sync_tsip () {
 
-    eval `psmcli get -e NV_TSIP_ENABLE ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_ENABLE} NV_TSIP_IP ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_IP} NV_TSIP_SUBNET ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_SUBNET} NV_TSIP_GATEWAY ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_GATEWAY}`
+    eval "`psmcli get -e NV_TSIP_ENABLE "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_ENABLE}" NV_TSIP_IP "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_IP}" NV_TSIP_SUBNET "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_SUBNET}" NV_TSIP_GATEWAY "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_GATEWAY}"`"
     echo "Syncing from PSM True Static IP Enable:$NV_TSIP_ENABLE, IP:$NV_TSIP_IP, SUBNET:$NV_TSIP_SUBNET, GATEWAY:$NV_TSIP_GATEWAY"
 
     #apply the new original true static ip
-    if [ x != x$NV_TSIP_ENABLE -a x0 != x$NV_TSIP_ENABLE ]; then
-        MASKBITS=`mask2cidr $NV_TSIP_SUBNET`
-        SUBNET=`subnet $NV_TSIP_IP $NV_TSIP_SUBNET`
-        ip addr add $NV_TSIP_IP/$MASKBITS broadcast + dev brlan0
-        ip route add table 14 $SUBNET/$MASKBITS dev brlan0
-        ip route add table all_lans $SUBNET/$MASKBITS dev brlan0
+    if [ x != x"$NV_TSIP_ENABLE" -a x0 != x"$NV_TSIP_ENABLE" ]; then
+        MASKBITS=`mask2cidr "$NV_TSIP_SUBNET"`
+        SUBNET=`subnet "$NV_TSIP_IP" "$NV_TSIP_SUBNET"`
+        ip addr add "$NV_TSIP_IP"/"$MASKBITS" broadcast + dev brlan0
+        ip route add table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+        ip route add table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
 
         #if [ x != x$NV_TSIP_GATEWAY -a x$EMPTY_IPADDR != x$NV_TSIP_GATEWAY ]; then
             #Override the original gateway
@@ -448,18 +448,18 @@ sync_tsip () {
 
 sync_tsip_asn () {
 
-    NV_INST="`psmcli getallinst ${IPV4_TSIP_ASNPREFIX}.`"
+    NV_INST="`psmcli getallinst "${IPV4_TSIP_ASNPREFIX}".`"
 
     for cur_nv_inst in $NV_INST; do
-        eval `psmcli get -e NV_TSIP_ASN_ENABLE ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_ENABLE} NV_TSIP_ASN_IP ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_IP} NV_TSIP_ASN_SUBNET ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_SUBNET}`
+        eval "`psmcli get -e NV_TSIP_ASN_ENABLE "${IPV4_TSIP_ASNPREFIX}"."${cur_nv_inst}"."${IPV4_TSIP_ENABLE}" NV_TSIP_ASN_IP "${IPV4_TSIP_ASNPREFIX}"."${cur_nv_inst}"."${IPV4_TSIP_IP}" NV_TSIP_ASN_SUBNET "${IPV4_TSIP_ASNPREFIX}"."${cur_nv_inst}"."${IPV4_TSIP_SUBNET}"`"
         echo "Syncing from PSM asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
 
-        if [ x != x$NV_TSIP_ASN_ENABLE -a x0 != x$NV_TSIP_ASN_ENABLE ]; then
-            MASKBITS=`mask2cidr $NV_TSIP_ASN_SUBNET`
-            SUBNET=`subnet $NV_TSIP_ASN_IP $NV_TSIP_ASN_SUBNET`
-            ip addr add $NV_TSIP_ASN_IP/$MASKBITS broadcast + dev brlan0
-            ip route add table 14 $SUBNET/$MASKBITS dev brlan0
-            ip route add table all_lans $SUBNET/$MASKBITS dev brlan0
+        if [ x != x"$NV_TSIP_ASN_ENABLE" -a x0 != x"$NV_TSIP_ASN_ENABLE" ]; then
+            MASKBITS=`mask2cidr "$NV_TSIP_ASN_SUBNET"`
+            SUBNET=`subnet "$NV_TSIP_ASN_IP" "$NV_TSIP_ASN_SUBNET"`
+            ip addr add "$NV_TSIP_ASN_IP"/"$MASKBITS" broadcast + dev brlan0
+            ip route add table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+            ip route add table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
         fi
     done
 }
@@ -467,7 +467,7 @@ sync_tsip_asn () {
 # resync true static ip
 resync_tsip () {
 
-    eval `psmcli get -e NV_TSIP_ENABLE ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_ENABLE} NV_TSIP_IP ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_IP} NV_TSIP_SUBNET ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_SUBNET} NV_TSIP_GATEWAY ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_GATEWAY}`
+    eval "`psmcli get -e NV_TSIP_ENABLE "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_ENABLE}" NV_TSIP_IP "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_IP}" NV_TSIP_SUBNET "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_SUBNET}" NV_TSIP_GATEWAY "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_GATEWAY}"`"
     echo "From PSM True Static IP Enable:${NV_TSIP_ENABLE}, IP:${NV_TSIP_IP}, SUBNET:${NV_TSIP_SUBNET}, GATEWAY:${NV_TSIP_GATEWAY}"
 
     IPV4_ADDR=`sysevent get ipv4-tsip_IPAddress`
@@ -478,12 +478,12 @@ resync_tsip () {
 	t2CountNotify "SYS_INFO_StaticIP_setMso" 
     fi
     #delete the original true static ip first
-    if [ x != x$NV_TSIP_IP -a x != x$NV_TSIP_SUBNET ]; then
-        MASKBITS=`mask2cidr $NV_TSIP_SUBNET`
-        SUBNET=`subnet $NV_TSIP_IP $NV_TSIP_SUBNET`
-        ip addr del $NV_TSIP_IP/$MASKBITS broadcast + dev brlan0
-        ip route del table 14 $SUBNET/$MASKBITS dev brlan0
-        ip route del table all_lans $SUBNET/$MASKBITS dev brlan0
+    if [ x != x"$NV_TSIP_IP" -a x != x"$NV_TSIP_SUBNET" ]; then
+        MASKBITS=`mask2cidr "$NV_TSIP_SUBNET"`
+        SUBNET=`subnet "$NV_TSIP_IP" "$NV_TSIP_SUBNET"`
+        ip addr del "$NV_TSIP_IP"/"$MASKBITS" broadcast + dev brlan0
+        ip route del table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+        ip route del table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
 
         #if [ x != x$NV_TSIP_GATEWAY -a x$EMPTY_IPADDR != x$NV_TSIP_GATEWAY ]; then
             #ip rule del...
@@ -494,12 +494,12 @@ resync_tsip () {
     fi
 
     #apply the new original true static ip
-    if [ x != x$1 -a x0 != x$1 ]; then
-        MASKBITS=`mask2cidr ${IPV4_SUBNET}`
-        SUBNET=`subnet $IPV4_ADDR $IPV4_SUBNET`
-        ip addr add $IPV4_ADDR/$MASKBITS broadcast + dev brlan0
-        ip route add table 14 $SUBNET/$MASKBITS dev brlan0
-        ip route add table all_lans $SUBNET/$MASKBITS dev brlan0
+    if [ x != x"$1" -a x0 != x"$1" ]; then
+        MASKBITS=`mask2cidr "${IPV4_SUBNET}"`
+        SUBNET=`subnet "$IPV4_ADDR" "$IPV4_SUBNET"`
+        ip addr add "$IPV4_ADDR"/"$MASKBITS" broadcast + dev brlan0
+        ip route add table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+        ip route add table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
 
         #if [ x != x${IPV4_GATEWAY} -a x$EMPTY_IPADDR != x${IPV4_GATEWAY} ]; then
             #ip rule add...
@@ -517,7 +517,7 @@ resync_tsip () {
 
 resync_tsip_asn () {
 
-    eval `psmcli get -e NV_TSIP_ASN_ENABLE ${IPV4_TSIP_ASNPREFIX}.${1}.${IPV4_TSIP_ENABLE} NV_TSIP_ASN_IP ${IPV4_TSIP_ASNPREFIX}.${1}.${IPV4_TSIP_IP} NV_TSIP_ASN_SUBNET ${IPV4_TSIP_ASNPREFIX}.${1}.${IPV4_TSIP_SUBNET}`
+    eval "`psmcli get -e NV_TSIP_ASN_ENABLE "${IPV4_TSIP_ASNPREFIX}"."${1}"."${IPV4_TSIP_ENABLE}" NV_TSIP_ASN_IP "${IPV4_TSIP_ASNPREFIX}"."${1}"."${IPV4_TSIP_IP}" NV_TSIP_ASN_SUBNET "${IPV4_TSIP_ASNPREFIX}"."${1}"."${IPV4_TSIP_SUBNET}"`"
     echo "From PSM asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
 
     IPV4_ENABLE=`sysevent get ipv4-tsip_asn_enable`
@@ -526,35 +526,35 @@ resync_tsip_asn () {
     echo "From CL  asn Enable:${IPV4_ENABLE}, IP:${IPV4_ADDR}, SUBNET:${IPV4_SUBNET}"
 
     #delete the original additional subnet first
-    if [ x != x$NV_TSIP_ASN_ENABLE -a x0 != x$NV_TSIP_ASN_ENABLE ]; then
-        MASKBITS=`mask2cidr $NV_TSIP_ASN_SUBNET`
-        SUBNET=`subnet $NV_TSIP_ASN_IP $NV_TSIP_ASN_SUBNET`
-        ip addr del $NV_TSIP_ASN_IP/$MASKBITS broadcast + dev brlan0
-        ip route del table 14 $SUBNET/$MASKBITS dev brlan0
-        ip route del table all_lans $SUBNET/$MASKBITS dev brlan0
+    if [ x != x"$NV_TSIP_ASN_ENABLE" -a x0 != x"$NV_TSIP_ASN_ENABLE" ]; then
+        MASKBITS=`mask2cidr "$NV_TSIP_ASN_SUBNET"`
+        SUBNET=`subnet "$NV_TSIP_ASN_IP" "$NV_TSIP_ASN_SUBNET"`
+        ip addr del "$NV_TSIP_ASN_IP"/"$MASKBITS" broadcast + dev brlan0
+        ip route del table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+        ip route del table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
     fi
 
     #apply the new additional subnet
-    if [ x != x${IPV4_ENABLE} -a x0 != x${IPV4_ENABLE} ]; then
-        MASKBITS=`mask2cidr ${IPV4_SUBNET}`
-        SUBNET=`subnet $IPV4_ADDR $IPV4_SUBNET`
-        ip addr add $IPV4_ADDR/$MASKBITS broadcast + dev brlan0
-        ip route add table 14 $SUBNET/$MASKBITS dev brlan0
-        ip route add table all_lans $SUBNET/$MASKBITS dev brlan0
+    if [ x != x"${IPV4_ENABLE}" -a x0 != x"${IPV4_ENABLE}" ]; then
+        MASKBITS=`mask2cidr "${IPV4_SUBNET}"`
+        SUBNET=`subnet "$IPV4_ADDR" "$IPV4_SUBNET"`
+        ip addr add "$IPV4_ADDR"/"$MASKBITS" broadcast + dev brlan0
+        ip route add table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+        ip route add table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
     fi
 }
 
 remove_tsip_config () {
 
-    eval `psmcli get -e NV_TSIP_ENABLE ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_ENABLE} NV_TSIP_IP ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_IP} NV_TSIP_SUBNET ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_SUBNET} NV_TSIP_GATEWAY ${IPV4_TSIP_PREFIX}.${IPV4_TSIP_GATEWAY}`
+    eval "`psmcli get -e NV_TSIP_ENABLE "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_ENABLE}" NV_TSIP_IP "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_IP}" NV_TSIP_SUBNET "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_SUBNET}" NV_TSIP_GATEWAY "${IPV4_TSIP_PREFIX}"."${IPV4_TSIP_GATEWAY}"`"
     echo "Delete True Static IP Enable:$NV_TSIP_ENABLE, IP:$NV_TSIP_IP, SUBNET:$NV_TSIP_SUBNET, GATEWAY:$NV_TSIP_GATEWAY"
 
-    if [ x != x$NV_TSIP_IP -a x != x$NV_TSIP_SUBNET ]; then
-        MASKBITS=`mask2cidr $NV_TSIP_SUBNET`
-        SUBNET=`subnet $NV_TSIP_IP $NV_TSIP_SUBNET`
-        ip addr del $NV_TSIP_IP/$MASKBITS broadcast + dev brlan0
-        ip route del table 14 $SUBNET/$MASKBITS dev brlan0
-        ip route del table all_lans $SUBNET/$MASKBITS dev brlan0
+    if [ x != x"$NV_TSIP_IP" -a x != x"$NV_TSIP_SUBNET" ]; then
+        MASKBITS=`mask2cidr "$NV_TSIP_SUBNET"`
+        SUBNET=`subnet "$NV_TSIP_IP" "$NV_TSIP_SUBNET"`
+        ip addr del "$NV_TSIP_IP"/"$MASKBITS" broadcast + dev brlan0
+        ip route del table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+        ip route del table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
 
         #if [ x != x$NV_TSIP_GATEWAY -a x$EMPTY_IPADDR != x$NV_TSIP_GATEWAY ]; then
             # Restore defaul gateway of $WAN_IFNAME
@@ -566,18 +566,18 @@ remove_tsip_config () {
         #fi
     fi
 
-    NV_INST="`psmcli getallinst ${IPV4_TSIP_ASNPREFIX}.`"
+    NV_INST="`psmcli getallinst "${IPV4_TSIP_ASNPREFIX}".`"
 
     for cur_nv_inst in $NV_INST; do
-        eval `psmcli get -e NV_TSIP_ASN_ENABLE ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_ENABLE} NV_TSIP_ASN_IP ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_IP} NV_TSIP_ASN_SUBNET ${IPV4_TSIP_ASNPREFIX}.${cur_nv_inst}.${IPV4_TSIP_SUBNET}`
+        eval "`psmcli get -e NV_TSIP_ASN_ENABLE "${IPV4_TSIP_ASNPREFIX}"."${cur_nv_inst}"."${IPV4_TSIP_ENABLE}" NV_TSIP_ASN_IP "${IPV4_TSIP_ASNPREFIX}"."${cur_nv_inst}"."${IPV4_TSIP_IP}" NV_TSIP_ASN_SUBNET "${IPV4_TSIP_ASNPREFIX}"."${cur_nv_inst}"."${IPV4_TSIP_SUBNET}"`"
         echo "Delete asn Enable:${NV_TSIP_ASN_ENABLE}, IP:${NV_TSIP_ASN_IP}, SUBNET:${NV_TSIP_ASN_SUBNET}"
 
-        if [ x0 != x${NV_TSIP_ASN_ENABLE} ]; then
-            MASKBITS=`mask2cidr $NV_TSIP_ASN_SUBNET`
-            SUBNET=`subnet $NV_TSIP_ASN_IP $NV_TSIP_ASN_SUBNET`
-            ip addr del $NV_TSIP_ASN_IP/$MASKBITS broadcast + dev brlan0
-            ip route del table 14 $SUBNET/$MASKBITS dev brlan0
-            ip route del table all_lans $SUBNET/$MASKBITS dev brlan0
+        if [ x0 != x"${NV_TSIP_ASN_ENABLE}" ]; then
+            MASKBITS=`mask2cidr "$NV_TSIP_ASN_SUBNET"`
+            SUBNET=`subnet "$NV_TSIP_ASN_IP" "$NV_TSIP_ASN_SUBNET"`
+            ip addr del "$NV_TSIP_ASN_IP"/"$MASKBITS" broadcast + dev brlan0
+            ip route del table 14 "$SUBNET"/"$MASKBITS" dev brlan0
+            ip route del table all_lans "$SUBNET"/"$MASKBITS" dev brlan0
         fi
     done
 }
@@ -587,13 +587,13 @@ remove_tsip_config () {
 service_init
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;
@@ -603,59 +603,59 @@ case "$1" in
         #args: l2 status value, ipv4 instance
         INST=${1%-*}
         INST=${INST#*_}
-        handle_l2_status $3 $INST $2 
+        handle_l2_status "$3" "$INST" "$2" 
    ;;
    
    #args: none
-   ${SERVICE_NAME}-set_dyn_config)
+   "${SERVICE_NAME}-set_dyn_config")
         #INST=${1%-*}
         #INST=${INST#*_}
-        apply_config $2
+        apply_config "$2"
    ;;
    
-   ${SERVICE_NAME}-resync)
+   "${SERVICE_NAME}-resync")
         #INST=${1%-*}
         #INST=${INST#*_}
-        resync_instance $2
+        resync_instance "$2"
    ;;
    
-   ${SERVICE_NAME}-resyncAll)
+   "${SERVICE_NAME}-resyncAll")
         resync_all_instances
    ;;
 
-   ${SERVICE_NAME}-sync_tsip_all)
+   "${SERVICE_NAME}-sync_tsip_all")
         sync_tsip
         sync_tsip_asn
         sysevent set wan_staticip-status started
    ;;
 
-   ${SERVICE_NAME}-stop_tsip_all)
+   "${SERVICE_NAME}-stop_tsip_all")
         remove_tsip_config
    ;;
 
-   ${SERVICE_NAME}-resync_tsip)
-        resync_tsip $2
+   "${SERVICE_NAME}-resync_tsip")
+        resync_tsip "$2"
    ;;
 
-   ${SERVICE_NAME}-resync_tsip_asn)
-        resync_tsip_asn $2
+   "${SERVICE_NAME}-resync_tsip_asn")
+        resync_tsip_asn "$2"
    ;;
    
-   ${SERVICE_NAME}-up)
+   "${SERVICE_NAME}-up")
         #INST=${1%-*}
         #INST=${INST#*_}
-        LOWER=`sysevent get ${SERVICE_NAME}_${2}-lower`
-        if [ x = x$LOWER ]; then
-            resync_instance $2
+        LOWER=`sysevent get ${SERVICE_NAME}_"${2}"-lower`
+        if [ x = x"$LOWER" ]; then
+            resync_instance "$2"
         else
-            handle_l2_status $2 $LOWER "`sysevent get ${L2SERVICE_NAME}_${LOWER}-status`" 1
+            handle_l2_status "$2" "$LOWER" "`sysevent get "${L2SERVICE_NAME}"_"${LOWER}"-status`" 1
         fi
    ;;
    
-   ${SERVICE_NAME}-down)
+   "${SERVICE_NAME}-down")
         #INST=${1%-*}
         #INST=${INST#*_}
-        teardown_instance $2
+        teardown_instance "$2"
    ;;
    
   *)

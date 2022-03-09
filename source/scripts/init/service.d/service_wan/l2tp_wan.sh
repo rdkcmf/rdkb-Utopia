@@ -80,22 +80,22 @@ WAN_SERVER_IPADDR=`syscfg get wan_proto_server_address`
 unregister_firewall_hooks() {
    NAME=`sysevent get ${SELF_NAME}_gp_fw_1`
    if [ -n "$NAME" ] ; then
-      sysevent set $NAME
+      sysevent set "$NAME"
       sysevent set ${SELF_NAME}_gp_fw_1
    fi
    NAME=`sysevent get ${SELF_NAME}_gp_fw_2`
    if [ -n "$NAME" ] ; then
-      sysevent set $NAME
+      sysevent set "$NAME"
       sysevent set ${SELF_NAME}_gp_fw_2
    fi
    NAME=`sysevent get ${SELF_NAME}_nat_fw_1`
    if [ -n "$NAME" ] ; then
-      sysevent set $NAME
+      sysevent set "$NAME"
       sysevent set ${SELF_NAME}_nat_fw_1
    fi
    NAME=`sysevent get ${SELF_NAME}_nat_fw_2`
    if [ -n "$NAME" ] ; then
-      sysevent set $NAME
+      sysevent set "$NAME"
       sysevent set ${SELF_NAME}_nat_fw_2
    fi
 }
@@ -132,7 +132,7 @@ prepare_l2tp() {
 
    # create the l2tp peers file
 
-   mkdir -p $PPTP_PEERS_DIRECTORY
+   mkdir -p "$PPTP_PEERS_DIRECTORY"
    prepare_pppd_ip_pre_up_script
    prepare_pppd_ip_up_script
    prepare_pppd_ip_down_script

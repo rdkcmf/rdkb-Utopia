@@ -78,18 +78,18 @@ bring_wan_down() {
 bring_wan_up() {
    # sysevent wan_ifname contains the normal wan interface name
    WAN_IFNAME=`sysevent get wan_ifname`
-   sysevent set current_wan_ifname $WAN_IFNAME
+   sysevent set current_wan_ifname "$WAN_IFNAME"
 
    SUBNET=`sysevent get ipv4_wan_subnet`
    if [ -n "$SUBNET" ] ; then
-      sysevent set current_wan_subnet $SUBNET
+      sysevent set current_wan_subnet "$SUBNET"
    else
       sysevent set current_wan_subnet 255.255.255.0
    fi
 
    IP=`sysevent get ipv4_wan_ipaddr`
    if [ -n "$IP" ] ; then
-      sysevent set current_wan_ipaddr $IP
+      sysevent set current_wan_ipaddr "$IP"
    else
       sysevent set current_wan_ipaddr 0.0.0.0
    fi
@@ -104,7 +104,7 @@ bring_wan_up() {
    sysevent set wan-status started
    sysevent set wan_start_time $(cut -d. -f1 /proc/uptime)
    #start ntp time sync
-   if [ x"1" = x`syscfg get ntp_enabled` ] ; then
+   if [ x"1" = x"`syscfg get ntp_enabled`" ] ; then
        dmcli eRT setv Device.Time.Enable bool 1 &
    fi
 }

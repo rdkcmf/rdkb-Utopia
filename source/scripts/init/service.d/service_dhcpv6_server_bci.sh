@@ -62,7 +62,7 @@ SELF="$0[$$]"
 EVENT=$1
 if [ ! -z "$EVENT" ]
 then
-        VALUE=" (=`sysevent get $EVENT`)"
+        VALUE=" (=`sysevent get "$EVENT"`)"
 fi
 
 
@@ -100,7 +100,7 @@ prepare_dhcpv6s_config() {
       CONFIG_EMPTY=no
    fi
 
-   cat $LOCAL_DHCPV6_CONF_FILE > $DHCPV6_CONF_FILE
+   cat $LOCAL_DHCPV6_CONF_FILE > "$DHCPV6_CONF_FILE"
    rm -f $LOCAL_DHCPV6_CONF_FILE
 }
 
@@ -204,7 +204,7 @@ service_start ()
       if [ "$CONFIG_EMPTY" = "no" ]
       then
 	      # dhcp6s [-c configfile] [-dDfi] [-p pid-file] interface [interfaces...]
-	      $DHCPV6_BINARY -P $DHCPV6_PID_FILE $LAN_INTERFACE_NAME >> $LOG 2>&1
+	      $DHCPV6_BINARY -P $DHCPV6_PID_FILE "$LAN_INTERFACE_NAME" >> $LOG 2>&1
 
 	      check_err $? "Couldnt handle start"
 	      sysevent set ${SERVICE_NAME}-status started
@@ -240,7 +240,7 @@ service_stop ()
       # Save the server DUID in NVRAM if not yet done
       if [ ! -f /var/run/dhcp6s_duid_saved -a -f /var/run/dhcp6s_duid ] 
       then
-           syscfg set dhcpv6s_duid `cat /var/run/dhcp6s_duid` >> $LOG 2>&1
+           syscfg set dhcpv6s_duid "`cat /var/run/dhcp6s_duid`" >> $LOG 2>&1
            syscfg commit >> $LOG 2>&1
            echo "$SELF: Saving the DHCPv6 server DUID in NVRAM" >> $LOG
            touch /var/run/dhcp6s_duid_saved
@@ -261,22 +261,22 @@ service_stop ()
 service_init 
 
 case "$1" in
-   ${SERVICE_NAME}-start)
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
+   "${SERVICE_NAME}-start")
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
       service_ipv6 start
 else
       service_ipv6 dhcpv6s-start
 fi
       ;;
-   ${SERVICE_NAME}-stop)
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
+   "${SERVICE_NAME}-stop")
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
       service_ipv6 stop
 else
       service_ipv6 dhcpv6s-stop
 fi
       ;;
-   ${SERVICE_NAME}-restart)
-if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
+   "${SERVICE_NAME}-restart")
+if [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
       service_ipv6 restart
 else
       service_ipv6 dhcpv6s-restart

@@ -52,7 +52,7 @@ overwrite_wandomain () {
        echo "#overwrite domain name start" >> $RESOLV_CONF
        echo "search $WAN_STATIC_DOMAIN" >> $RESOLV_CONF
        echo "#overwrite domain name end" >> $RESOLV_CONF
-       sysevent set dhcp_domain $WAN_STATIC_DOMAIN
+       sysevent set dhcp_domain "$WAN_STATIC_DOMAIN"
        sysevent set dhcp_server-restart
    fi
 }

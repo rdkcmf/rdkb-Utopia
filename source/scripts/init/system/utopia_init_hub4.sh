@@ -41,13 +41,13 @@
 
 changeFilePermissions() {
 
-	if [ -e $1 ]; then 
-		filepermission=$(stat -c %a $1)
+	if [ -e "$1" ]; then 
+		filepermission=$(stat -c %a "$1")
 	
-		if [ $filepermission -ne $2 ] 
+		if [ "$filepermission" -ne "$2" ] 
 		then
 		
-			chmod $2 $1
+			chmod "$2" "$1"
 			echo "[utopia][init] Modified File Permission to $2 for file - $1"
 		fi
 	else
@@ -449,19 +449,19 @@ ecm_wan_ifname=`syscfg get ecm_wan_ifname`
 wan_ifname=`sysevent get wan_ifname`
 
 #disable telnet / ssh ports
-iptables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
-iptables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
-iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
-iptables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+iptables -A INPUT -i "$lan_ifname" -p tcp --dport 23 -j DROP
+iptables -A INPUT -i "$lan_ifname" -p tcp --dport 22 -j DROP
+iptables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 23 -j DROP
+iptables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 22 -j DROP
 
-ip6tables -A INPUT -i $lan_ifname -p tcp --dport 23 -j DROP
-ip6tables -A INPUT -i $lan_ifname -p tcp --dport 22 -j DROP
-ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 23 -j DROP
-ip6tables -A INPUT -i $cmdiag_ifname -p tcp --dport 22 -j DROP
+ip6tables -A INPUT -i "$lan_ifname" -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i "$lan_ifname" -p tcp --dport 22 -j DROP
+ip6tables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 23 -j DROP
+ip6tables -A INPUT -i "$cmdiag_ifname" -p tcp --dport 22 -j DROP
 
 #protect from IPv6 NS flooding
-ip6tables -t mangle -A PREROUTING -i $ecm_wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
-ip6tables -t mangle -A PREROUTING -i $wan_ifname -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
+ip6tables -t mangle -A PREROUTING -i "$ecm_wan_ifname" -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
+ip6tables -t mangle -A PREROUTING -i "$wan_ifname" -d ff00::/8 -p ipv6-icmp -m icmp6 --icmpv6-type 135 -j DROP
 
 echo "[utopia][init] Processing registration"
 INIT_DIR=/etc/utopia/registration.d
@@ -486,7 +486,7 @@ else
 case "$LastRebootReason" in
     PCIEReset | OOPS | BAD | ABORT | POOM | BUG | BADS | BABORT | PANIC | POOM | OOM )
       echo "[utopia][init] Setting last reboot reason as $LastRebootReason"
-      syscfg set X_RDKCENTRAL-COM_LastRebootReason $LastRebootReason
+      syscfg set X_RDKCENTRAL-COM_LastRebootReason "$LastRebootReason"
       syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
    ;;
 
@@ -561,7 +561,7 @@ fi
 if [ "$FACTORY_RESET_REASON" = "true" ]; then
    #brlan0 v4 address check
    LAN_IF_NAME=`syscfg get lan_ifname`
-   LAN_CURRENT_IP=`ifconfig $LAN_IF_NAME | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+   LAN_CURRENT_IP=`ifconfig "$LAN_IF_NAME" | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
    LAN_DEFAULT_IP=`cat /usr/ccsp/config/bbhm_def_cfg.xml | grep dmsb.l3net.4.V4Addr | cut -d ">" -f 2 | cut -d "<" -f 1`
 
    echo "[utopia][init] After FR - LAN_IF_NAME:$LAN_IF_NAME Current LAN_IP:$LAN_CURRENT_IP Default LAN_IP:$LAN_DEFAULT_IP"
@@ -570,9 +570,9 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
        echo "[utopia][init] Current and Default LAN IP mismatch. so needs to change LAN IP as $LAN_DEFAULT_IP"
 
        LAN_DEFAULT_NETMASK=`cat /usr/ccsp/config/bbhm_def_cfg.xml | grep dmsb.l3net.4.V4SubnetMask | cut -d ">" -f 2 | cut -d "<" -f 1`
-       ifconfig $LAN_IF_NAME down
-       ifconfig $LAN_IF_NAME $LAN_DEFAULT_IP netmask $LAN_DEFAULT_NETMASK
-       ifconfig $LAN_IF_NAME up
+       ifconfig "$LAN_IF_NAME" down
+       ifconfig "$LAN_IF_NAME" "$LAN_DEFAULT_IP" netmask "$LAN_DEFAULT_NETMASK"
+       ifconfig "$LAN_IF_NAME" up
    fi
 fi
 

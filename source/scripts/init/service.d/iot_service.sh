@@ -22,7 +22,7 @@ source /etc/utopia/service.d/log_capture_path.sh
 source /lib/rdk/t2Shared_api.sh
 iot_ipaddress=`syscfg get iot_ipaddr`
 iot_interface=`syscfg get iot_ifname`
-if [ $iot_interface == "l2sd0.106" ]; then
+if [ "$iot_interface" == "l2sd0.106" ]; then
  iot_interface=`syscfg get iot_brname`
 fi
 iot_mask=`syscfg get iot_netmask`
@@ -83,27 +83,27 @@ restartServices()
 
 echo_t "IOT_LOG : iot_service received $1"
 
-mask=`subnet $iot_ipaddress $iot_mask`
+mask=`subnet "$iot_ipaddress" "$iot_mask"`
 
 if [ "$1" = "up" ]
 then
    echo_t "IOT_LOG : Add ip rules, ip routes and restart services"
-   ip rule add from $iot_ipaddress lookup $VID
-   ip rule add from all iif $iot_interface lookup erouter
-   ip rule add from all iif $iot_interface lookup $VID
-   ip route add table $VID $mask/24 dev $iot_interface
+   ip rule add from "$iot_ipaddress" lookup $VID
+   ip rule add from all iif "$iot_interface" lookup erouter
+   ip rule add from all iif "$iot_interface" lookup $VID
+   ip route add table $VID "$mask"/24 dev "$iot_interface"
    restartServices
    echo_t "IOT_LOG : Completed ip rules, ip routes and restart services"
 elif [ "$1" = "down" ]
 then
    echo_t "IOT_LOG : Remove ip rules, ip routes and restart services"
-   ip rule del from $iot_ipaddress lookup $VID
-   ip rule del from all iif $iot_interface lookup erouter
-   ip rule del from all iif $iot_interface lookup $VID
-   ip route del table $VID $mask/24 dev $iot_interface
+   ip rule del from "$iot_ipaddress" lookup $VID
+   ip rule del from all iif "$iot_interface" lookup erouter
+   ip rule del from all iif "$iot_interface" lookup $VID
+   ip route del table $VID "$mask"/24 dev "$iot_interface"
 
-   ifconfig $iot_interface down
-   vconfig rem $iot_interface
+   ifconfig "$iot_interface" down
+   vconfig rem "$iot_interface"
 
    restartServices
    echo_t "IOT_LOG : Completed removing ip rules, ip routes and restart services"
@@ -115,10 +115,10 @@ then
    if [ "$isIotEnabled" = "true" ]
    then
       echo_t "IOT_LOG : Add ip rules, ip routes and restart services"
-      ip rule add from $iot_ipaddress lookup $VID
-      ip rule add from all iif $iot_interface lookup erouter
-      ip rule add from all iif $iot_interface lookup $VID
-      ip route add table $VID $mask/24 dev $iot_interface
+      ip rule add from "$iot_ipaddress" lookup $VID
+      ip rule add from all iif "$iot_interface" lookup erouter
+      ip rule add from all iif "$iot_interface" lookup $VID
+      ip route add table $VID "$mask"/24 dev "$iot_interface"
       echo_t "IOT_LOG : Completed ip rules, ip routes and restart services"
    fi
 fi

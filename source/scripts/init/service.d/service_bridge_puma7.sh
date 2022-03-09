@@ -53,7 +53,7 @@ wait_till_steady_state ()
     LSERVICE=$1
     TRIES=1
     while [ "30" -ge "$TRIES" ] ; do
-        LSTATUS=`sysevent get ${LSERVICE}-status`
+        LSTATUS=`sysevent get "${LSERVICE}"-status`
         if [ "starting" = "$LSTATUS" ] || [ "stopping" = "$LSTATUS" ] || [ "partial" = "$LSTATUS" ] ; then
             sleep 1
             TRIES=`expr $TRIES + 1`
@@ -92,7 +92,7 @@ filter_local_traffic(){
         ebtables -I OUTPUT -j BRIDGE_OUTPUT_FILTER
         
         #Don't allow LAN bridge to send traffic to DOCSIS bridge
-        ebtables -A BRIDGE_OUTPUT_FILTER --logical-out $BRIDGE_NAME -j DROP
+        ebtables -A BRIDGE_OUTPUT_FILTER --logical-out "$BRIDGE_NAME" -j DROP
         ebtables -A BRIDGE_OUTPUT_FILTER -o lbr0 -j DROP
         
         #Return from filter chain
@@ -124,10 +124,10 @@ cmdiag_ebtables_rules()
         ebtables -N BRIDGE_FORWARD_FILTER
         ebtables -F BRIDGE_FORWARD_FILTER 2> /dev/null
         ebtables -I FORWARD -j BRIDGE_FORWARD_FILTER
-        ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o lbr0 -j DROP
-        ebtables -A BRIDGE_FORWARD_FILTER -s $MUX_MAC -o lbr0 -j DROP
+        ebtables -A BRIDGE_FORWARD_FILTER -s "$CMDIAG_MAC" -o lbr0 -j DROP
+        ebtables -A BRIDGE_FORWARD_FILTER -s "$MUX_MAC" -o lbr0 -j DROP
         if [ "x$ETHWAN_ENABLED" = "xtrue" ];then
-            ebtables -A BRIDGE_FORWARD_FILTER -s $CMDIAG_MAC -o nsgmii0 -j DROP
+            ebtables -A BRIDGE_FORWARD_FILTER -s "$CMDIAG_MAC" -o nsgmii0 -j DROP
         fi
         ebtables -A BRIDGE_FORWARD_FILTER -j RETURN
         
@@ -135,8 +135,8 @@ cmdiag_ebtables_rules()
         ebtables -t nat -N BRIDGE_REDIRECT
         ebtables -t nat -F BRIDGE_REDIRECT 2> /dev/null
         ebtables -t nat -I PREROUTING -j BRIDGE_REDIRECT
-        ebtables -t nat -A BRIDGE_REDIRECT --logical-in $BRIDGE_NAME -p ipv4 --ip-dst $LAN_IP -j dnat --to-destination $CMDIAG_MAC
-        ebtables -t nat -A BRIDGE_REDIRECT --logical-in $BRIDGE_NAME -p ipv4 --ip-dst $LAN_IP -j forward --forward-dev llan0
+        ebtables -t nat -A BRIDGE_REDIRECT --logical-in "$BRIDGE_NAME" -p ipv4 --ip-dst "$LAN_IP" -j dnat --to-destination "$CMDIAG_MAC"
+        ebtables -t nat -A BRIDGE_REDIRECT --logical-in "$BRIDGE_NAME" -p ipv4 --ip-dst "$LAN_IP" -j forward --forward-dev llan0
         ebtables -t nat -A BRIDGE_REDIRECT -j RETURN
     else
         ebtables -D FORWARD -j BRIDGE_FORWARD_FILTER
@@ -151,24 +151,24 @@ cmdiag_ebtables_rules()
 cmdiag_if()
 {
     if [ "$1" = "enable" ] ; then
-        ip link add $CMDIAG_IF type veth peer name l${CMDIAG_IF}
+        ip link add "$CMDIAG_IF" type veth peer name l"${CMDIAG_IF}"
         echo 1 > /proc/sys/net/ipv6/conf/lan0/disable_ipv6
         echo 1 > /proc/sys/net/ipv6/conf/llan0/disable_ipv6
         echo 1 > /proc/sys/net/ipv6/conf/adp0/disable_ipv6
         echo 1 > /proc/sys/net/ipv6/conf/a-mux/disable_ipv6
-        ifconfig $CMDIAG_IF hw ether $CMDIAG_MAC
+        ifconfig "$CMDIAG_IF" hw ether "$CMDIAG_MAC"
         cmdiag_ebtables_rules enable
-        ifconfig l${CMDIAG_IF} promisc up
-        ifconfig $CMDIAG_IF $LAN_IP netmask $LAN_NETMASK up
-
+        ifconfig l"${CMDIAG_IF}" promisc up
+        ifconfig "$CMDIAG_IF" "$LAN_IP" netmask "$LAN_NETMASK" up
+        
         #add lan0 interface entry to the TOE netdevList for PP on ATOM configuration
         if [ -d /etc/pp_on_atom ] ; then
              echo "ADD $CMDIAG_IF" > /sys/devices/platform/toe/netif_lut
         fi
     else
-        ifconfig $CMDIAG_IF down
-        ifconfig l${CMDIAG_IF} down
-        ip link del $CMDIAG_IF
+        ifconfig "$CMDIAG_IF" down
+        ifconfig l"${CMDIAG_IF}" down
+        ip link del "$CMDIAG_IF"
         #del lan0 interface entry from the TOE netdevList for PP on ATOM configuration
         if [ -d /etc/pp_on_atom ] ; then
              echo 0 > /sys/devices/platform/toe/enable
@@ -187,14 +187,14 @@ add_ebtable_rule()
 {
     # Add the rule to redirect diagnostic traffic to CM-LAN in bridge mode
     cmdiag_if=`syscfg get cmdiag_ifname`
-    cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
+    cmdiag_if_mac=`ip link show "$cmdiag_if" | awk '/link/ {print $2}'`
 
     dst_ip=`syscfg get lan_ipaddr` # RT-10-580 @ XB3 
-    if [ $LAN_IP != $dst_ip ]; then
-        ip addr add $dst_ip/24 dev $cmdiag_if
-        ebtables -t nat -A PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    if [ "$LAN_IP" != "$dst_ip" ]; then
+        ip addr add "$dst_ip"/24 dev "$cmdiag_if"
+        ebtables -t nat -A PREROUTING -p ipv4 --ip-dst "$dst_ip" -j dnat --to-destination "$cmdiag_if_mac"
         echo 2 > /proc/sys/net/ipv4/conf/wan0/arp_announce
-        ip rule add from $dst_ip lookup $BRIDGE_MODE_TABLE
+        ip rule add from "$dst_ip" lookup $BRIDGE_MODE_TABLE
     fi
 }
 
@@ -205,26 +205,26 @@ add_ebtable_rule()
 del_ebtable_rule()
 {
     cmdiag_if=`syscfg get cmdiag_ifname`
-    cmdiag_if_mac=`ip link show $cmdiag_if | awk '/link/ {print $2}'`
+    cmdiag_if_mac=`ip link show "$cmdiag_if" | awk '/link/ {print $2}'`
 
     dst_ip=`syscfg get lan_ipaddr` # RT-10-580 @ XB3 PRD
-    if [ $LAN_IP != $dst_ip ]; then
-        ip addr del $dst_ip/24 dev $cmdiag_if
-        ebtables -t nat -D PREROUTING -p ipv4 --ip-dst $dst_ip -j dnat --to-destination $cmdiag_if_mac
+    if [ "$LAN_IP" != "$dst_ip" ]; then
+        ip addr del "$dst_ip"/24 dev "$cmdiag_if"
+        ebtables -t nat -D PREROUTING -p ipv4 --ip-dst "$dst_ip" -j dnat --to-destination "$cmdiag_if_mac"
         echo 0 > /proc/sys/net/ipv4/conf/wan0/arp_announce
-        ip rule del from $dst_ip lookup $BRIDGE_MODE_TABLE
+        ip rule del from "$dst_ip" lookup $BRIDGE_MODE_TABLE
     fi
 }
 
 routing_rules(){
     if [ "$1" = "enable" ] ; then
         #Send responses from $BRIDGE_NAME IP to a separate bridge mode route table
-        ip rule add from $LAN_IP lookup $BRIDGE_MODE_TABLE
-        ip route add table $BRIDGE_MODE_TABLE default dev $CMDIAG_IF
+        ip rule add from "$LAN_IP" lookup $BRIDGE_MODE_TABLE
+        ip route add table $BRIDGE_MODE_TABLE default dev "$CMDIAG_IF"
         add_ebtable_rule
 		/etc/utopia/service.d/service_dhcp_server.sh dns-restart
     else
-        ip rule del from $LAN_IP lookup $BRIDGE_MODE_TABLE
+        ip rule del from "$LAN_IP" lookup $BRIDGE_MODE_TABLE
         ip route flush table $BRIDGE_MODE_TABLE
         del_ebtable_rule
     fi
@@ -288,8 +288,8 @@ service_start(){
         #Sync bridge ports
         MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
         if [ "$MULTILAN_FEATURE" = "1" ]; then
-            sysevent set multinet-down $INSTANCE
-            sysevent set multinet-up $INSTANCE
+            sysevent set multinet-down "$INSTANCE"
+            sysevent set multinet-up "$INSTANCE"
         else
             sysevent set multinet-syncMembers $INSTANCE
         fi
@@ -326,8 +326,8 @@ service_stop(){
         #Sync bridge members
         MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
         if [ "$MULTILAN_FEATURE" = "1" ]; then
-            sysevent set multinet-down $INSTANCE
-            sysevent set multinet-up $INSTANCE
+            sysevent set multinet-down "$INSTANCE"
+            sysevent set multinet-up "$INSTANCE"
         else
             sysevent set  multinet-syncMembers $INSTANCE
         fi
@@ -366,7 +366,7 @@ service_init ()
     
     SYSCFG_FAILED='false'
     FOO=`utctx_cmd get bridge_mode lan_ifname lan_ethernet_physical_ifnames lan_wl_physical_ifnames wan_physical_ifname bridge_ipaddr bridge_netmask bridge_default_gateway bridge_nameserver1 bridge_nameserver2 bridge_nameserver3 bridge_domain hostname`
-    eval $FOO
+    eval "$FOO"
     if [ $SYSCFG_FAILED = 'true' ] ; then
         ulog bridge status "$PID utctx failed to get some configuration data"
         ulog bridge status "$PID BRIDGE CANNOT BE CONTROLLED"
@@ -401,7 +401,7 @@ LAN_NETMASK=`syscfg get lan_netmask`
 ETHWAN_ENABLED=`syscfg get eth_wan_enabled`
 
 case "$1" in
-    ${SERVICE_NAME}-start)
+    "${SERVICE_NAME}-start")
 
         firewall firewall-stop
         /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_bridged
@@ -415,8 +415,8 @@ case "$1" in
         sysevent set firewall-restart
 
     ;;
-    ${SERVICE_NAME}-stop)
-
+    "${SERVICE_NAME}-stop")
+    
         /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_routed
         service_stop
         if [ ! -f "$POSTD_START_FILE" ];
@@ -426,11 +426,11 @@ case "$1" in
         fi        
         gw_lan_refresh
         sysevent set firewall-restart
-
     ;;
-    ${SERVICE_NAME}-restart)
+    "${SERVICE_NAME}-restart")
+        
         firewall firewall-stop
-        sysevent set lan-restarting $INSTANCE
+        sysevent set lan-restarting "$INSTANCE"
         service_stop
         /etc/rc3.d/setup_docsis_lan0_path.sh lbr0_on_bridged
         service_start

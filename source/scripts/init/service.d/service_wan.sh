@@ -79,13 +79,13 @@ touch /var/tmp/resolv.conf
 SERVICE_NAME=wan
 
 case "$1" in
-    ${SERVICE_NAME}-start)
+    "${SERVICE_NAME}-start")
         nice -n -5 service_wan start
         ;;
-    ${SERVICE_NAME}-stop)
+    "${SERVICE_NAME}-stop")
         service_wan stop
         ;;
-    ${SERVICE_NAME}-restart)
+    "${SERVICE_NAME}-restart")
         service_wan restart
         ;;
     phylink_wan_state)

@@ -46,7 +46,7 @@ fi
 CRON_DIR="/var/spool/cron/crontabs/"
 CRONTAB_FILE=$CRON_DIR"root"
 SERVICE_NAME="ntpclient"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 
 TZ_FILE=/etc/TZ
@@ -61,19 +61,19 @@ prepare_retry_soon_file()
 service_start ()
 {
     # this needs to be hooked up to syscfg for specific timezone
-    if [ "HST10" = $SYSCFG_TZ ] ; then
+    if [ "HST10" = "$SYSCFG_TZ" ] ; then
         ln -sf /usr/share/zoneinfo/HST /etc/localtime
-    elif [ "AKST9" = $SYSCFG_TZ ] || [ "AKST9AKDT,M3.2.0/02:00,M11.1.0/02:00" = $SYSCFG_TZ ] || [ "AKST9AKDT,M3.2.0,M11.1.0" = $SYSCFG_TZ ] ; then
+    elif [ "AKST9" = "$SYSCFG_TZ" ] || [ "AKST9AKDT,M3.2.0/02:00,M11.1.0/02:00" = "$SYSCFG_TZ" ] || [ "AKST9AKDT,M3.2.0,M11.1.0" = "$SYSCFG_TZ" ] ; then
         ln -sf /usr/share/zoneinfo/America/Anchorage /etc/localtime
-    elif [ "PST8" = $SYSCFG_TZ ] || [ "PST8PDT,M3.2.0/02:00,M11.1.0/02:00" = $SYSCFG_TZ ] ; then
+    elif [ "PST8" = "$SYSCFG_TZ" ] || [ "PST8PDT,M3.2.0/02:00,M11.1.0/02:00" = "$SYSCFG_TZ" ] ; then
         ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
-    elif [ "MST7" = $SYSCFG_TZ ] || [ "MST7MDT,M3.2.0/02:00,M11.1.0/02:00" = $SYSCFG_TZ ] ; then
+    elif [ "MST7" = "$SYSCFG_TZ" ] || [ "MST7MDT,M3.2.0/02:00,M11.1.0/02:00" = "$SYSCFG_TZ" ] ; then
         ln -sf /usr/share/zoneinfo/America/Denver /etc/localtime
-    elif [ "CST6" = $SYSCFG_TZ ] || [ "CST6CDT,M3.2.0/02:00,M11.1.0/02:00" = $SYSCFG_TZ ] ; then
+    elif [ "CST6" = "$SYSCFG_TZ" ] || [ "CST6CDT,M3.2.0/02:00,M11.1.0/02:00" = "$SYSCFG_TZ" ] ; then
         ln -sf /usr/share/zoneinfo/America/Chicago /etc/localtime
-    elif [ "EST5" = $SYSCFG_TZ ] || [ "EST5EDT,M3.2.0/02:00,M11.1.0/02:00" = $SYSCFG_TZ ] ; then
+    elif [ "EST5" = "$SYSCFG_TZ" ] || [ "EST5EDT,M3.2.0/02:00,M11.1.0/02:00" = "$SYSCFG_TZ" ] ; then
         ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
-    elif [ "VET4" = $SYSCFG_TZ ] || [ "CLT4" = $SYSCFG_TZ ] || [ "CLT4CLST,M10.2.6/04:00,M3.2.6/03:00" = $SYSCFG_TZ ] ; then
+    elif [ "VET4" = "$SYSCFG_TZ" ] || [ "CLT4" = "$SYSCFG_TZ" ] || [ "CLT4CLST,M10.2.6/04:00,M3.2.6/03:00" = "$SYSCFG_TZ" ] ; then
         ln -sf /usr/share/zoneinfo/America/Caracas /etc/localtime
     else
         ln -sf /usr/share/zoneinfo/UTC /etc/localtime
@@ -114,9 +114,9 @@ service_start ()
    INDEX=`expr $INDEX + 1` 
 
    if [ "1" = "$USE_DHCP" ] ; then
-      NTP_SERVER=`sysevent get dhcpc_ntp_server$INDEX`
+      NTP_SERVER=`sysevent get dhcpc_ntp_server"$INDEX"`
    else
-      eval `echo NTP_SERVER='$'SYSCFG_ntp_server${INDEX}`
+      eval "`echo NTP_SERVER='$'SYSCFG_ntp_server"${INDEX}"`"
    fi
 
 
@@ -125,7 +125,7 @@ service_start ()
       if [ "1" = "$USE_DHCP" ] ; then
          NTP_SERVER=`sysevent get dhcpc_ntp_server$INDEX`
       else
-         eval `echo NTP_SERVER='$'SYSCFG_ntp_server${INDEX}`
+         eval "`echo NTP_SERVER='$'SYSCFG_ntp_server${INDEX}`"
       fi
    fi
 
@@ -155,7 +155,7 @@ service_start ()
    `sysevent set ntp_pool_index $INDEX`
 
    if [ "" != "$SYSCFG_TZ" ] ; then
-      echo $SYSCFG_TZ > $TZ_FILE 
+      echo "$SYSCFG_TZ" > $TZ_FILE
    fi
 
    # if we had been unable to get a response from the ntp server, then we had put
@@ -163,12 +163,12 @@ service_start ()
    removeCron "sysevent set ntpclient-start"
    
    # now try to connect to the ntp server
-   RESULT=`ntpclient -h $NTP_SERVER -i 60 -s`
+   RESULT=`ntpclient -h "$NTP_SERVER" -i 60 -s`
 
    # if there is a transient failure we try again
    if [ "" = "$RESULT" ] ; then
       sleep 10
-      RESULT=`ntpclient -h $NTP_SERVER -i 60 -s`
+      RESULT=`ntpclient -h "$NTP_SERVER" -i 60 -s`
    fi
 
    # if we dont get a result we should force system to try again soon because
@@ -210,7 +210,7 @@ service_stop ()
 service_init ()
 {
     FOO=`utctx_cmd get ntp_server1 ntp_server2 ntp_server3 ntp_enabled TZ InternetAccessPolicyCount`
-    eval $FOO
+    eval "$FOO"
 }
 
 
@@ -220,13 +220,13 @@ service_init
 
 CURRENT_WAN_STATUS=`sysevent get wan-status`
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

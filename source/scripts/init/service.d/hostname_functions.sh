@@ -52,12 +52,12 @@ prepare_hostname () {
       if [ "$MODEL_NUM" == "PX5001B" ] && [ "$SECUREWEBUI_ENABLED" == "true" ]; then
           if [[ $HOSTNAME != *-bci* ]] ; then
               HOSTNAME=$HOSTNAME"-bci"
-              syscfg set hostname $HOSTNAME
+              syscfg set hostname "$HOSTNAME"
               syscfg commit
           fi
       fi
       echo "$HOSTNAME" > $HOSTNAME_FILE
-      hostname $HOSTNAME
+      hostname "$HOSTNAME"
    fi
        
    if [ "" != "$HOSTNAME" ] ; then
@@ -69,11 +69,11 @@ prepare_hostname () {
    echo "127.0.0.1       localhost" >> $HOSTS_FILE
    echo "::1             localhost" >> $HOSTS_FILE
    if [ "$SECUREWEBUI_ENABLED" = "true" ]; then
-       if [ ! -z $LOCDOMAIN_NAME ]; then
-           if [ ! -z $LAN_IPADDR ]; then
+       if [ ! -z "$LOCDOMAIN_NAME" ]; then
+           if [ ! -z "$LAN_IPADDR" ]; then
                echo "$LAN_IPADDR""         ""$LOCDOMAIN_NAME"  >> $HOSTS_FILE
            fi
-           if [ ! -z $SYSEVT_lan_ipaddr_v6 ]; then
+           if [ ! -z "$SYSEVT_lan_ipaddr_v6" ]; then
                echo "$SYSEVT_lan_ipaddr_v6""         ""$LOCDOMAIN_NAME"  >> $HOSTS_FILE
            fi
        fi

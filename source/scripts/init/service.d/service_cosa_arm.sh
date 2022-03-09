@@ -142,13 +142,13 @@ service_stop ()
 
 CURRENT_COSA_STATUS=`sysevent get $SERVICE_NAME -status`
 case "$1" in
-      ${SERVICE_NAME}-start)
+      "${SERVICE_NAME}-start")
       service_start
       ;;
-      ${SERVICE_NAME}-stop)
+      "${SERVICE_NAME}-stop")
       service_stop
       ;;
-      ${SERVICE_NAME}-restart)
+      "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

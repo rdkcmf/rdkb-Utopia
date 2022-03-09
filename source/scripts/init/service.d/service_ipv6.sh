@@ -62,13 +62,13 @@ SERVICE_NAME="ipv6"
 #----------------------------------------------------------------------------------------
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_ipv6 start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_ipv6 stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_ipv6 restart
       ;;
    #----------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ case "$1" in
 
    #currently, leverage this event to represent the enabled lan interfaces
    multinet-instances)
-      if [ x`sysevent get ipv6_prefix` != x"" ]; then
+      if [ x"`sysevent get ipv6_prefix`" != x"" ]; then
           service_ipv6 restart
           service_routed route-unset
           service_routed route-set
@@ -86,7 +86,7 @@ case "$1" in
    multinet_1-status)
       multinet_status=`sysevent get multinet_1-status`
       if [ "ready" = "$multinet_status" ] ; then
-          if [ x`sysevent get ipv6_prefix` != x"" ]; then
+          if [ x"`sysevent get ipv6_prefix`" != x"" ]; then
               service_ipv6 restart multinet
               if [ "$?" = "0" ] ; then
                   service_routed route-unset
@@ -96,14 +96,14 @@ case "$1" in
       fi
       ;;
    erouter_topology-mode)
-      if [ x`sysevent get ipv6_prefix` != x"" ]; then
+      if [ x"`sysevent get ipv6_prefix`" != x"" ]; then
           service_ipv6 restart
       fi
       ;;
 
    ipv6_prefix)
       #service_ipv6 restart
-     if [ x`sysevent get ipv6_prefix` != x"" ]; then
+     if [ x"`sysevent get ipv6_prefix`" != x"" ]; then
          multinet_status=`sysevent get multinet_1-status`
          if [ "ready" = "$multinet_status" ] ; then
            service_ipv6 restart

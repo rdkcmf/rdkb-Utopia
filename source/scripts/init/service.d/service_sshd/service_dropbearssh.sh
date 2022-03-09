@@ -50,7 +50,7 @@ else
 fi
 
 SERVICE_NAME="sshd"
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 PID_FILE=/var/run/dropbear.pid
 PMON=/etc/utopia/service.d/pmon.sh
@@ -97,7 +97,7 @@ do_stop() {
    # echo "[utopia] Stopping SSH daemon" > /dev/console
    sysevent set ssh_daemon_state down
 #   kill -9 dropbear
-   kill -9 `cat $PID_FILE`
+   kill -9 "`cat $PID_FILE`"
    rm -f $PID_FILE
 #    /etc/init.d/dropbear stop
 }
@@ -170,13 +170,13 @@ service_bridge_status ()
 echo_t "[utopia] ${SERVICE_NAME} $1 received"
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

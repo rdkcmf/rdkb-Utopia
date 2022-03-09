@@ -53,7 +53,7 @@ BIN=syseventd_proxy
 service_init ()
 {
    FOO=`utctx_cmd get local_syseventd bootstrap_syseventd secondary_syseventd`
-   eval $FOO
+   eval "$FOO"
    SCRIPT_FILE="/etc/syseventp.conf"
 }
 
@@ -66,14 +66,14 @@ service_start ()
       if [ "$SYSCFG_local_syseventd" = "$SYSCFG_bootstrap_syseventd" ] ; then
          # this is the syseventd on the platform containing dns forwarder
          if [ -n "$SYSCFG_secondary_syseventd" ] ; then
-            /sbin/syseventd_proxy $SYSCFG_secondary_syseventd $SCRIPT_FILE
+            /sbin/syseventd_proxy "$SYSCFG_secondary_syseventd" $SCRIPT_FILE
             $PMON setproc syseventd_proxy $BIN $PID_FILE "/sbin/syseventd_proxy $SYSCFG_secondary_syseventd $SCRIPT_FILE"
          fi
       else
          # every other platform
          # syseventd_proxy monitors connection to remote sysevent daemon and sets sysevent remote_syseventd
          # to progate the connection state
-         /sbin/syseventd_proxy $SYSCFG_bootstrap_syseventd $SCRIPT_FILE remote_syseventd
+         /sbin/syseventd_proxy "$SYSCFG_bootstrap_syseventd" $SCRIPT_FILE remote_syseventd
          $PMON setproc syseventd_proxy $BIN $PID_FILE "/sbin/syseventd_proxy $SYSCFG_bootstrap_syseventd $SCRIPT_FILE remote_syseventd"
       fi
    fi
@@ -87,13 +87,13 @@ service_stop ()
          # this is the syseventd on the platform containing dns forwarder
          if [ -n "$SYSCFG_secondary_syseventd" ] ; then
             $PMON unsetproc syseventd_proxy
-            killall -TERM `cat $PID_FILE`
+            killall -TERM "`cat $PID_FILE`"
             rm $PID_FILE
          fi
       else
          # every other platform
          $PMON unsetproc syseventd_proxy
-         killall -TERM `cat $PID_FILE`
+         killall -TERM "`cat $PID_FILE`"
          rm $PID_FILE
       fi
    fi
@@ -103,19 +103,19 @@ service_stop ()
 service_init
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
       service__start
       ;;
    bootstrap_dns-status)
       B_STATUS=`sysevent get bootstrap_dns-status`
-      STATUS=`sysevent get {SERVICE_NAME}-status`
+      STATUS=`sysevent get "{SERVICE_NAME}"-status`
       if [ "started" = "$B_STATUS" ] ; then
          if [ "started" != "$STATUS" ] ; then
             service_start

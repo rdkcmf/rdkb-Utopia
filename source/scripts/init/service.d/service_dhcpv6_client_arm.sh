@@ -70,7 +70,7 @@ DHCP6C_PROGRESS_FILE=/tmp/dhcpv6c_inprogress
 service_init ()
 {
    # First some SYSCFG
-   eval `utctx_cmd get last_erouter_mode dhcpv6c_enable ipv6_static_enable lan_ipv6addr wan_ipv6addr dhcpv6c_duid lan_ifname`
+   eval "`utctx_cmd get last_erouter_mode dhcpv6c_enable ipv6_static_enable lan_ipv6addr wan_ipv6addr dhcpv6c_duid lan_ifname`"
    LAN_INTERFACE_NAME=$SYSCFG_lan_ifname
 
    if [ -z "$SYSCFG_ipv6_static_enable" ]
@@ -125,7 +125,7 @@ service_start()
 			touch $DHCP6C_PROGRESS_FILE
 			echo_t "SERVICE_DHCP6C : Starting DHCPv6 Client from service_dhcpv6_client"
                         if ([ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) && [[ "$DIBBLER_ENABLED" != "true" ]] ;then
-        			ti_dhcp6c -i $WAN_INTERFACE_NAME -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
+        			ti_dhcp6c -i "$WAN_INTERFACE_NAME" -p $DHCPV6_PID_FILE -plugin /fss/gw/lib/libgw_dhcp6plg.so
 				echo_t "SERVICE_DHCP6C : dhcp6c PID is `cat $DHCPV6_PID_FILE`"
 			else
 				echo_t "SERVICE_DHCP6C : Starting dibbler client"

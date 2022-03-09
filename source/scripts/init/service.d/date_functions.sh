@@ -245,19 +245,19 @@ days_in_months() {
    ACCUMULATOR=0
 
    if [ "$MONTH2" -ge "$MONTH1" ] ; then
-      COUNTER=`expr $MONTH2 - $MONTH1`
-      COUNTER=`expr $COUNTER + 1`
+      COUNTER=`expr "$MONTH2" - "$MONTH1"`
+      COUNTER=`expr "$COUNTER" + 1`
    else
-      COUNTER=`expr $MONTH1 - $MONTH2`
-      COUNTER=`expr 13 - $COUNTER`
+      COUNTER=`expr "$MONTH1" - "$MONTH2"`
+      COUNTER=`expr 13 - "$COUNTER"`
    fi
 
-   while [ $COUNTER -gt 0 ]
+   while [ "$COUNTER" -gt 0 ]
    do
-      MONTH=`days_in_month $MONTH1`
-      ACCUMULATOR=`expr $ACCUMULATOR + $MONTH`
-      COUNTER=`expr $COUNTER - 1`
-      MONTH1=`expr $MONTH1 + 1`
+      MONTH=`days_in_month "$MONTH1"`
+      ACCUMULATOR=`expr $ACCUMULATOR + "$MONTH"`
+      COUNTER=`expr "$COUNTER" - 1`
+      MONTH1=`expr "$MONTH1" + 1`
       if [ "12" -lt "$MONTH1" ] ; then
          MONTH1=1
       fi
@@ -270,23 +270,23 @@ days_from_basedate() {
   YEAR1=00
   MONTH1=01
   DAY1=01
-  YEAR2=`get_year $1`
-  MONTH2=`get_month $1`
-  DAY2=`get_day $1`
+  YEAR2=`get_year "$1"`
+  MONTH2=`get_month "$1"`
+  DAY2=`get_day "$1"`
 
   ACCUMULATOR=0
 
   # figure out the number of days in the whole years between dates
-  MULTIPLIER=`expr $YEAR2 - $YEAR1`
-  PRODUCT=`expr $MULTIPLIER \* 365`
-  ACCUMULATOR=`expr $ACCUMULATOR + $PRODUCT`
+  MULTIPLIER=`expr "$YEAR2" - $YEAR1`
+  PRODUCT=`expr "$MULTIPLIER" \* 365`
+  ACCUMULATOR=`expr $ACCUMULATOR + "$PRODUCT"`
 
   # figure out the days in the whole months between the dates
-  PRODUCT=`days_in_months $MONTH1 $MONTH2`
-  ACCUMULATOR=`expr $ACCUMULATOR + $PRODUCT`
+  PRODUCT=`days_in_months $MONTH1 "$MONTH2"`
+  ACCUMULATOR=`expr "$ACCUMULATOR" + "$PRODUCT"`
 
-  PRODUCT=`expr $DAY2 - $DAY1`
-  ACCUMULATOR=`expr $ACCUMULATOR + $PRODUCT`
+  PRODUCT=`expr "$DAY2" - $DAY1`
+  ACCUMULATOR=`expr "$ACCUMULATOR" + "$PRODUCT"`
 
   echo "$ACCUMULATOR"
 }
@@ -295,28 +295,28 @@ days_from_basedate() {
 # or part thereof
 delta_days() {
 
-   DAYS1=`days_from_basedate $1`
-   DAYS2=`days_from_basedate $2`
+   DAYS1=`days_from_basedate "$1"`
+   DAYS2=`days_from_basedate "$2"`
 
-   CUMMULATIVE_DAYS=`expr $DAYS2 - $DAYS1`
+   CUMMULATIVE_DAYS=`expr "$DAYS2" - "$DAYS1"`
 
    echo "$CUMMULATIVE_DAYS"
 }
 
 mins_from_basedate() {
   HOUR1=00
-  HOUR2=`get_hour $1`
-  MIN2=`get_min $1`
+  HOUR2=`get_hour "$1"`
+  MIN2=`get_min "$1"`
 
   ACCUMULATOR=0
 
   # figure out the number of days in the whole years between dates
-  MULTIPLIER=`expr $HOUR2 - $HOUR1`
-  PRODUCT=`expr $MULTIPLIER \* 60`
-  ACCUMULATOR=`expr $ACCUMULATOR + $PRODUCT`
+  MULTIPLIER=`expr "$HOUR2" - $HOUR1`
+  PRODUCT=`expr "$MULTIPLIER" \* 60`
+  ACCUMULATOR=`expr $ACCUMULATOR + "$PRODUCT"`
 
   # figure out the days in the whole months between the dates
-  ACCUMULATOR=`expr $ACCUMULATOR + $MIN2`
+  ACCUMULATOR=`expr "$ACCUMULATOR" + "$MIN2"`
 
   echo "$ACCUMULATOR"
 }
@@ -325,10 +325,10 @@ mins_from_basedate() {
 # NOTE: It only looks at hours and mins NOT days
 delta_mins() {
 
-   MINS1=`mins_from_basedate $1`
-   MINS2=`mins_from_basedate $2`
+   MINS1=`mins_from_basedate "$1"`
+   MINS2=`mins_from_basedate "$2"`
 
-   CUMMULATIVE_MINS=`expr $MINS2 - $MINS1`
+   CUMMULATIVE_MINS=`expr "$MINS2" - "$MINS1"`
 
    echo "$CUMMULATIVE_MINS"
 }

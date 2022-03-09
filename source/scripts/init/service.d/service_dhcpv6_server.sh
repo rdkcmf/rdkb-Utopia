@@ -61,7 +61,7 @@ SELF="$0[$$]"
 EVENT=$1
 if [ ! -z "$EVENT" ]
 then
-        VALUE=" (=`sysevent get $EVENT`)"
+        VALUE=" (=`sysevent get "$EVENT"`)"
 fi
 
 
@@ -99,7 +99,7 @@ prepare_dhcpv6s_config() {
       CONFIG_EMPTY=no
    fi
 
-   cat $LOCAL_DHCPV6_CONF_FILE > $DHCPV6_CONF_FILE
+   cat $LOCAL_DHCPV6_CONF_FILE > "$DHCPV6_CONF_FILE"
    rm -f $LOCAL_DHCPV6_CONF_FILE
 }
 
@@ -143,7 +143,7 @@ restore_dhcpv6s_duid() {
 service_init ()
 {
    # First some SYSCFG
-   eval `utctx_cmd get dhcpv6s_duid lan_ifname dhcpv6s_enable`
+   eval "`utctx_cmd get dhcpv6s_duid lan_ifname dhcpv6s_enable`"
    LAN_INTERFACE_NAME=$SYSCFG_lan_ifname
 
    # The more information from SYSEVENT
@@ -203,7 +203,7 @@ service_start ()
       if [ "$CONFIG_EMPTY" = "no" ]
       then
 	      # dhcp6s [-c configfile] [-dDfi] [-p pid-file] interface [interfaces...]
-	      $DHCPV6_BINARY -P $DHCPV6_PID_FILE $LAN_INTERFACE_NAME >> $LOG 2>&1
+	      $DHCPV6_BINARY -P $DHCPV6_PID_FILE "$LAN_INTERFACE_NAME" >> $LOG 2>&1
 
 	      check_err $? "Couldnt handle start"
 	      sysevent set ${SERVICE_NAME}-status started
@@ -239,7 +239,7 @@ service_stop ()
       # Save the server DUID in NVRAM if not yet done
       if [ ! -f /var/run/dhcp6s_duid_saved -a -f /var/run/dhcp6s_duid ] 
       then
-           syscfg set dhcpv6s_duid `cat /var/run/dhcp6s_duid` >> $LOG 2>&1
+           syscfg set dhcpv6s_duid "`cat /var/run/dhcp6s_duid`" >> $LOG 2>&1
            syscfg commit >> $LOG 2>&1
            echo "$SELF: Saving the DHCPv6 server DUID in NVRAM" >> $LOG
            touch /var/run/dhcp6s_duid_saved
@@ -260,13 +260,13 @@ service_stop ()
 service_init 
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

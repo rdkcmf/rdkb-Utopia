@@ -55,8 +55,8 @@ service_stop ()
          for loop in $SYSCFG_lan_wl_physical_ifnames
          do
             ulog lan status "wlancfg $loop down"
-            wlancfg $loop down
-            ip link set $loop $down
+            wlancfg "$loop" down
+            ip link set "$loop" "$down"
          done
       fi
 
@@ -89,8 +89,8 @@ service_restart ()
          do
             WL_STATE=`syscfg get wl$(($WIFI_IF_INDEX-1))_state`
             ulog lan status "wlancfg $loop $WL_STATE"
-            wlancfg $loop $WL_STATE
-            ip link set $loop $WL_STATE
+            wlancfg "$loop" "$WL_STATE"
+            ip link set "$loop" "$WL_STATE"
             WIFI_IF_INDEX=`expr $WIFI_IF_INDEX + 1`
          done
       fi
@@ -113,10 +113,10 @@ service_restart ()
 #------------------------------------------------------------------
 
 case "$1" in
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       sysevent set wlan-restarting 1
       service_restart
       sysevent set wlan-restarting 0

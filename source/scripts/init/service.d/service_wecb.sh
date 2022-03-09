@@ -43,12 +43,12 @@ source /etc/utopia/service.d/ut_plat.sh
 
 export LOG4C_RCPATH=/rdklogger
 
-SELF_NAME="`basename $0`"
+SELF_NAME="`basename "$0"`"
 
 service_start() {
 
 	INST=`sysevent get primary_lan_l3net`
-    if [ x`sysevent get ipv4_${INST}-status` = x$L3_UP_STATUS  -a x`sysevent get ${SERVICE_NAME}-status` != x"started"  -a x"completed" = x`sysevent get moca_init` ] ; then
+    if [ x"`sysevent get ipv4_"${INST}"-status`" = x"$L3_UP_STATUS"  -a x"`sysevent get ${SERVICE_NAME}-status`" != x"started"  -a x"completed" = x"`sysevent get moca_init`" ] ; then
         ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service"
 	    ulimit -s 1024 && wecb_master&
 		echo '#!/bin/sh' > /var/volatile/wecb_master.sh
@@ -66,7 +66,7 @@ service_stop () {
    #unregister wecb_master from pmon to let this script to bring it up when lan restart.
    /etc/utopia/service.d/pmon.sh unregister wecb_master 
    #rongwei added
-   kill `pidof wecb_master`
+   kill "`pidof wecb_master`"
    sysevent set ${SERVICE_NAME}-errinfo
    sysevent set ${SERVICE_NAME}-status "stopped"
 }
@@ -78,8 +78,8 @@ service_init() {
 
 handle_ipv4_status() {
 
-	if [ x$1 = x`sysevent get primary_lan_l3net` ] && [ x"completed" = x`sysevent get moca_init` ]; then
-		if [ x$L3_UP_STATUS = x$2 ]; then
+	if [ x"$1" = x"`sysevent get primary_lan_l3net`" ] && [ x"completed" = x"`sysevent get moca_init`" ]; then
+		if [ x"$L3_UP_STATUS" = x"$2" ]; then
 			service_start;
 		else
 			service_stop;
@@ -90,13 +90,13 @@ handle_ipv4_status() {
 #---------------------------------------------------------------
 
 case "$1" in
-  ${SERVICE_NAME}-start)
+  "${SERVICE_NAME}-start")
       service_start
       ;;
-  ${SERVICE_NAME}-stop)
+  "${SERVICE_NAME}-stop")
       service_stop
       ;;
-  ${SERVICE_NAME}-restart)
+  "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;
@@ -110,7 +110,7 @@ case "$1" in
    ipv4_*-status)
         INST=${1%-*}
         INST=${INST#*_}
-        handle_ipv4_status $INST $2
+        handle_ipv4_status "$INST" "$2"
         ;;
    moca_init)
 	service_start

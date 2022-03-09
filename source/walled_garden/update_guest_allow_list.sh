@@ -27,7 +27,7 @@ MAC=`ip neighbor show | awk "/$1/"'{print $5}'`
 TIME=`date '+%Y %m %d %H %M 00'`
 sed "/$MAC/d" -i $ALLOW_LIST
 echo "$MAC,$TIME,$1" >> $ALLOW_LIST
-tail -n $MAX_GUEST $ALLOW_LIST > $ALLOW_LIST_TMP
+tail -n "$MAX_GUEST" $ALLOW_LIST > $ALLOW_LIST_TMP
 rm $ALLOW_LIST
 mv $ALLOW_LIST_TMP $ALLOW_LIST
 
@@ -39,8 +39,8 @@ sysevent set crond-restart 1
 # reload all iptables rules
 firewall
 
-iptables -I FORWARD 1 -s $1 -p tcp --dport 80 -j REJECT
-iptables -I FORWARD 1 -s $1 -p tcp --dport 443 -j REJECT
-awk -F "[ =]+" /tcp.*$1/'{system("conntrack_delete "$8" "$10" "$12" "$14)}' /proc/net/nf_conntrack
-iptables -D FORWARD -s $1 -p tcp --dport 80 -j REJECT
-iptables -D FORWARD -s $1 -p tcp --dport 443 -j REJECT
+iptables -I FORWARD 1 -s "$1" -p tcp --dport 80 -j REJECT
+iptables -I FORWARD 1 -s "$1" -p tcp --dport 443 -j REJECT
+awk -F "[ =]+" /tcp.*"$1"/'{system("conntrack_delete "$8" "$10" "$12" "$14)}' /proc/net/nf_conntrack
+iptables -D FORWARD -s "$1" -p tcp --dport 80 -j REJECT
+iptables -D FORWARD -s "$1" -p tcp --dport 443 -j REJECT

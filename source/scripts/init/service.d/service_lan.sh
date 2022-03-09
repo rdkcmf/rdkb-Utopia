@@ -98,19 +98,19 @@ calbits()
 	count=0
 	bitfield=$1
 	while [ $bitfield -ne 0 ]; do
-		bitfield_1=`expr $bitfield - 1`
+		bitfield_1=`expr "$bitfield" - 1`
 		bitfield=$((bitfield & bitfield_1))
 		let count+=1
 	done
-	echo $count
+	echo "$count"
 }
 
 mask2cidr() {
 	numberofbits=0
-	fields=`echo $1 | sed 's/\./ /g'`
+	fields=`echo "$1" | sed 's/\./ /g'`
 	for field in $fields ; do
-		if [ `isvalid $field` -eq 1 ]; then
-			numberofbits=$((numberofbits + `calbits $field`))
+		if [ "`isvalid "$field"`" -eq 1 ]; then
+			numberofbits=$((numberofbits + `calbits "$field"`))
 		else
 			echo "Error: $field is not recognised"; exit 1
 		fi
@@ -129,7 +129,7 @@ enslave_a_interface() {
    # ulog lan status "Enslaving interface $1 to $2"
 #   echo "[lan] enslave_a_interface called" > /dev/console
    
-   brctl addif $2 $1
+   brctl addif "$2" "$1"
 }
 
 #--------------------------------------------------------------
@@ -142,14 +142,14 @@ bringup_ethernet_interfaces() {
    if [ "" != "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
        for loop in $SYSCFG_lan_ethernet_physical_ifnames
        do
-         config_vlan $loop $SYSCFG_lan_ethernet_virtual_ifnums
+         config_vlan "$loop" "$SYSCFG_lan_ethernet_virtual_ifnums"
        done
    fi
 
    for loop in $SYSCFG_lan_ethernet_physical_ifnames
    do
-      ifconfig $loop 0.0.0.0
-      ip link set $loop allmulticast on
+      ifconfig "$loop" 0.0.0.0
+      ip link set "$loop" allmulticast on
    done
 }
 
@@ -161,14 +161,14 @@ teardown_ethernet_interfaces() {
    if [ "" = "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
       for loop in $SYSCFG_lan_ethernet_physical_ifnames
       do
-         ip link set $loop down
+         ip link set "$loop" down
       done
    else
       # if we are using virtual ethernet interfaces then
       # tear them down
       for loop in $SYSCFG_lan_ethernet_virtual_ifnums
       do
-         unconfig_vlan $loop
+         unconfig_vlan "$loop"
       done
    fi
 }
@@ -186,16 +186,16 @@ bringup_wireless_interfaces() {
             ### Set the main interface (eth*) ###
 
             MAC=`syscfg get macwifi0${WIFI_IF_INDEX}bssid1`
-            OUI=`cat /sys/class/net/$loop/address|awk -F: '{print $1 $2 $3}'`
-            NIC=`cat /sys/class/net/$loop/address|awk -F: '{print $4 $5 $6}'`
+            OUI=`cat /sys/class/net/"$loop"/address|awk -F: '{print $1 $2 $3}'`
+            NIC=`cat /sys/class/net/"$loop"/address|awk -F: '{print $4 $5 $6}'`
             if [ "$MAC" != "" ]; then
                 ulog lan status "setting $loop hw address to $MAC"
             else
                 MAC=$OUI$NIC
                 ulog lan status "setting $loop hw address to default ($MAC)"
             fi
-            ifconfig $loop hw ether $MAC
-            ip link set $loop allmulticast on
+            ifconfig "$loop" hw ether "$MAC"
+            ip link set "$loop" allmulticast on
 
             ### Set the virtual interfaces (wl*.*) ###
 
@@ -206,7 +206,7 @@ bringup_wireless_interfaces() {
                 for vif in $VIFS
                 do
                     # Create a virtual interface in prompt first 
-                    wl -i $loop ssid -C $WIFI_VIF_INDEX "" 
+                    wl -i "$loop" ssid -C $WIFI_VIF_INDEX "" 
 
                     MAC=`syscfg get macwifi0${WIFI_IF_INDEX}bssid$(($WIFI_VIF_INDEX+1))`
                     if [ "$MAC" != "" ]; then
@@ -215,8 +215,8 @@ bringup_wireless_interfaces() {
                         MAC=$OUI`printf "%06x" $((0x$NIC+$WIFI_VIF_INDEX))`
                         ulog lan status "setting $vif hw address to default ($MAC)"
                     fi
-                    ifconfig $vif hw ether $MAC
-                    ip link set $vif allmulticast on
+                    ifconfig "$vif" hw ether "$MAC"
+                    ip link set "$vif" allmulticast on
 
                     WIFI_VIF_INDEX=`expr $WIFI_VIF_INDEX + 1`
                 done
@@ -225,13 +225,13 @@ bringup_wireless_interfaces() {
             ### Bring up the interfaces ###
 
             ulog lan status "wlancfg $loop up"
-            wlancfg $loop up
+            wlancfg "$loop" up
 
-            ip link set $loop up
+            ip link set "$loop" up
             if [ "$VIFS" != "" ] ; then
                 for vif in $VIFS
                 do
-                    ip link set $vif up
+                    ip link set "$vif" up
                 done
             fi
 
@@ -254,13 +254,13 @@ teardown_wireless_interfaces() {
             if [ "$VIFS" != "" ] ; then
                 for vif in $VIFS
                 do
-                    ip link set $vif down
+                    ip link set "$vif" down
                 done
             fi
 
             ulog lan status "wlancfg $loop down"
-            wlancfg $loop down
-            ip link set $loop down
+            wlancfg "$loop" down
+            ip link set "$loop" down
 
             WIFI_IF_INDEX=`expr $WIFI_IF_INDEX + 1`
         done
@@ -308,24 +308,24 @@ do_start()
 
    # For USGv2 Only: setup policy routing for packet from LAN interface
 #song:   ip rule add iif $SYSCFG_lan_ifname lookup erouter
-   ip rule add from $SYSCFG_lan_ipaddr lookup erouter
+   ip rule add from "$SYSCFG_lan_ipaddr" lookup erouter
 
    SYSEVT_lan_ipaddr_v6=`sysevent get lan_ipaddr_v6`
    SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
 
    # bring up the bridge
-   ip addr add $SYSCFG_lan_ipaddr/$SYSCFG_lan_netmask broadcast + dev $SYSCFG_lan_ifname
-   ip -6 addr add $SYSEVT_lan_ipaddr_v6/$SYSEVT_lan_prefix_v6 dev $SYSCFG_lan_ifname valid_lft forever preferred_lft forever
-   ip link set $SYSCFG_lan_ifname up 
-   ip link set $SYSCFG_lan_ifname allmulticast on 
-   echo 1 > /proc/sys/net/ipv6/conf/$SYSCFG_lan_ifname/autoconf
-   echo 1 > /proc/sys/net/ipv6/conf/$SYSCFG_lan_ifname/disable_ipv6
-   echo 0 > /proc/sys/net/ipv6/conf/$SYSCFG_lan_ifname/disable_ipv6
+   ip addr add "$SYSCFG_lan_ipaddr"/"$SYSCFG_lan_netmask" broadcast + dev "$SYSCFG_lan_ifname"
+   ip -6 addr add "$SYSEVT_lan_ipaddr_v6"/"$SYSEVT_lan_prefix_v6" dev "$SYSCFG_lan_ifname" valid_lft forever preferred_lft forever
+   ip link set "$SYSCFG_lan_ifname" up 
+   ip link set "$SYSCFG_lan_ifname" allmulticast on 
+   echo 1 > /proc/sys/net/ipv6/conf/"$SYSCFG_lan_ifname"/autoconf
+   echo 1 > /proc/sys/net/ipv6/conf/"$SYSCFG_lan_ifname"/disable_ipv6
+   echo 0 > /proc/sys/net/ipv6/conf/"$SYSCFG_lan_ifname"/disable_ipv6
 
    # For USGv2 Only: setup policy routing for packet to LAN interface (from eRouter WAN Interface IP address)
-   SUBNET=`subnet $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask`
-   MASKBITS=`mask2cidr $SYSCFG_lan_netmask`
-   ip route add table erouter $SUBNET/$MASKBITS dev $SYSCFG_lan_ifname
+   SUBNET=`subnet "$SYSCFG_lan_ipaddr" "$SYSCFG_lan_netmask"`
+   MASKBITS=`mask2cidr "$SYSCFG_lan_netmask"`
+   ip route add table erouter "$SUBNET"/"$MASKBITS" dev "$SYSCFG_lan_ifname"
 
    ulog lan status "switch off bridge pkts to iptables (bridge-nf-call-arptables)"
    #echo 0 > /proc/sys/net/bridge/bridge-nf-call-arptables
@@ -344,12 +344,12 @@ do_start()
    #lan_if_up_hook
 
    sysevent set desired_moca_link_state up
-   sysevent set current_lan_ipaddr $SYSCFG_lan_ipaddr
+   sysevent set current_lan_ipaddr "$SYSCFG_lan_ipaddr"
    
    #to add ipv6 prefix for this interface
    LAN_IPV6_PREFIX=`sysevent get ipv6_prefix`
    if [ "$LAN_IPV6_PREFIX" != "" ] ; then
-        ip -6 route add $LAN_IPV6_PREFIX dev $SYSCFG_lan_ifname
+        ip -6 route add "$LAN_IPV6_PREFIX" dev "$SYSCFG_lan_ifname"
    fi
 #song:add	
 	ip link set lbr0 up
@@ -367,9 +367,9 @@ do_stop()
 #   echo "[lan] do stop called" > /dev/console
    sysevent set desired_moca_link_state down
    
-   OLDIP=`ip addr show dev $SYSCFG_lan_ifname label $SYSCFG_lan_ifname | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
-   ip link set $SYSCFG_lan_ifname down
-   ip addr flush dev $SYSCFG_lan_ifname
+   OLDIP=`ip addr show dev "$SYSCFG_lan_ifname" label "$SYSCFG_lan_ifname" | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
+   ip link set "$SYSCFG_lan_ifname" down
+   ip addr flush dev "$SYSCFG_lan_ifname"
 
    teardown_wireless_interfaces
    teardown_ethernet_interfaces
@@ -377,7 +377,7 @@ do_stop()
    # remove interfaces from the bridge
    for loop in $LAN_IFNAMES
    do
-      ip link set $loop down
+      ip link set "$loop" down
 #song:      brctl delif $SYSCFG_lan_ifname $loop
    done
 
@@ -395,15 +395,15 @@ do_stop()
 
    # For USGv2 Only: remove policy routing for packet from/to LAN interface
 #song:   ip rule del iif $SYSCFG_lan_ifname lookup erouter
-   ip rule del from $SYSCFG_lan_ipaddr lookup erouter
+   ip rule del from "$SYSCFG_lan_ipaddr" lookup erouter
    # For USGv2 Only: remove old policy route for packet from GW interface
    if [ "$OLDIP" != "$SYSCFG_lan_ipaddr" -a "" != "$OLDIP" ]; then
-      ip rule del from $OLDIP lookup erouter
+      ip rule del from "$OLDIP" lookup erouter
    fi
    
-   SUBNET=`subnet $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask` 
-   MASKBITS=`mask2cidr $SYSCFG_lan_netmask` 
-   ip route del table erouter $SUBNET/$MASKBITS
+   SUBNET=`subnet "$SYSCFG_lan_ipaddr" "$SYSCFG_lan_netmask"` 
+   MASKBITS=`mask2cidr "$SYSCFG_lan_netmask"` 
+   ip route del table erouter "$SUBNET"/"$MASKBITS"
 
 #song   ip link set $SYSCFG_lan_ifname down
 #song:   brctl delbr $SYSCFG_lan_ifname
@@ -424,14 +424,14 @@ do_start_no_bridge()
       ulog lan status "bringing up lan interface"
 
       # bring up without the bridge
-      ip addr add $SYSCFG_lan_ipaddr/$SYSCFG_lan_netmask broadcast + dev $SYSCFG_lan_ifname
-      ip link set $SYSCFG_lan_ifname up 
+      ip addr add "$SYSCFG_lan_ipaddr"/"$SYSCFG_lan_netmask" broadcast + dev "$SYSCFG_lan_ifname"
+      ip link set "$SYSCFG_lan_ifname" up 
       #ip link set $SYSCFG_lan_ifname allmulticast on 
 
       # Maybe this forwarding enable should be in wanControl???
       echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 
-      sysevent set current_lan_ipaddr $SYSCFG_lan_ipaddr
+      sysevent set current_lan_ipaddr "$SYSCFG_lan_ipaddr"
       
       ulog lan status "lan interface up"
    fi
@@ -450,8 +450,8 @@ do_stop_no_bridge()
    else
       sysevent set desired_moca_link_state down
    
-      ip link set $SYSCFG_lan_ifname down
-      ip addr flush dev $SYSCFG_lan_ifname
+      ip link set "$SYSCFG_lan_ifname" down
+      ip addr flush dev "$SYSCFG_lan_ifname"
    fi
 }
 
@@ -460,14 +460,14 @@ do_stop_no_bridge()
 #--------------------------------------------------------------
 do_start_lan_dhcp()
 {
-   ip addr flush dev $SYSCFG_lan_ifname
+   ip addr flush dev "$SYSCFG_lan_ifname"
    
    unregister_lan_dhcp_handler
    register_lan_dhcp_handler
 
    sysevent set current_lan_ipaddr 0.0.0.0
-   ip link set $SYSCFG_lan_ifname up
-   ip link set $SYSCFG_lan_ifname multicast on
+   ip link set "$SYSCFG_lan_ifname" up
+   ip link set "$SYSCFG_lan_ifname" multicast on
 
    echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 
@@ -497,8 +497,8 @@ do_stop_lan_dhcp()
 
    unregister_lan_dhcp_handler
 
-   ip link set $SYSCFG_lan_ifname down
-   ip addr flush dev $SYSCFG_lan_ifname
+   ip link set "$SYSCFG_lan_ifname" down
+   ip addr flush dev "$SYSCFG_lan_ifname"
 }
 
 HANDLER="/etc/utopia/service.d/service_lan/dhcp_lan.sh"
@@ -514,15 +514,15 @@ register_lan_dhcp_handler()
    sysevent set ${SERVICE_NAME}_desired_lan_dhcp_link_asyncid "$asyncid"
    
    asyncid=`sysevent async dhcp_lan-restart "$HANDLER"`
-   sysevent setoptions dhcp_lan-restart $TUPLE_FLAG_EVENT
+   sysevent setoptions dhcp_lan-restart "$TUPLE_FLAG_EVENT"
    sysevent set ${SERVICE_NAME}_dhcp_async_1 "$asyncid"
 
    asyncid=`sysevent async dhcp_lan-renew "$HANDLER"`
-   sysevent setoptions dhcp_lan-renew $TUPLE_FLAG_EVENT
+   sysevent setoptions dhcp_lan-renew "$TUPLE_FLAG_EVENT"
    sysevent set ${SERVICE_NAME}_dhcp_async_2 "$asyncid"
 
    asyncid=`sysevent async dhcp_lan-release "$HANDLER"`
-   sysevent setoptions dhcp_lan-release $TUPLE_FLAG_EVENT
+   sysevent setoptions dhcp_lan-release "$TUPLE_FLAG_EVENT"
    sysevent set ${SERVICE_NAME}_dhcp_async_3 "$asyncid"
 
    asyncid=`sysevent async lan-status "$HANDLER"`
@@ -539,31 +539,31 @@ unregister_lan_dhcp_handler()
 
    asyncid=`sysevent get ${SERVICE_NAME}_desired_lan_dhcp_link_asyncid`;
    if [ -n "$asyncid" ] ; then
-      sysevent rm_async $asyncid
+      sysevent rm_async "$asyncid"
       sysevent set ${SERVICE_NAME}_desired_lan_dhcp_link_asyncid
    fi
    
    asyncid=`sysevent get ${SERVICE_NAME}_dhcp_async_1`;
    if [ -n "$asyncid" ] ; then
-      sysevent rm_async $asyncid
+      sysevent rm_async "$asyncid"
       sysevent set ${SERVICE_NAME}_dhcp_async_1
    fi
 
    asyncid=`sysevent get ${SERVICE_NAME}_dhcp_async_2`;
    if [ -n "$asyncid" ] ; then
-      sysevent rm_async $asyncid
+      sysevent rm_async "$asyncid"
       sysevent set ${SERVICE_NAME}_dhcp_async_2
    fi
 
    asyncid=`sysevent get ${SERVICE_NAME}_dhcp_async_3`;
    if [ -n "$asyncid" ] ; then
-      sysevent rm_async $asyncid
+      sysevent rm_async "$asyncid"
       sysevent set ${SERVICE_NAME}_dhcp_async_3
    fi
 
    asyncid=`sysevent get ${SERVICE_NAME}_dhcp_async_4`;
    if [ -n "$asyncid" ] ; then
-      sysevent rm_async $asyncid
+      sysevent rm_async "$asyncid"
       sysevent set ${SERVICE_NAME}_dhcp_async_4
    fi
 }
@@ -573,20 +573,20 @@ unregister_lan_dhcp_handler()
 #----------------------------------------------------------------------------
 
 lan_create () {
-    brctl addbr $SYSCFG_lan_ifname
-    brctl setfd $SYSCFG_lan_ifname 0
-    brctl stp $SYSCFG_lan_ifname off
+    brctl addbr "$SYSCFG_lan_ifname"
+    brctl setfd "$SYSCFG_lan_ifname" 0
+    brctl stp "$SYSCFG_lan_ifname" off
 
     # enslave interfaces to the bridge
     for loop in $LAN_IFNAMES
     do
       # disable IPv6 for bridge port so it won't interfere bridge interface's DAD procedure
-      echo 1 > /proc/sys/net/ipv6/conf/$loop/disable_ipv6
-      enslave_a_interface $loop $SYSCFG_lan_ifname
+      echo 1 > /proc/sys/net/ipv6/conf/"$loop"/disable_ipv6
+      enslave_a_interface "$loop" "$SYSCFG_lan_ifname"
     done
 
     # For USGv2 Only: setup policy routing for packet from LAN interface
-    ip rule add iif $SYSCFG_lan_ifname lookup erouter
+    ip rule add iif "$SYSCFG_lan_ifname" lookup erouter
     
     register_docsis_handler
     add_docsis_bridge
@@ -613,7 +613,7 @@ service_init ()
 
    SYSCFG_FAILED='false'
    FOO=`utctx_cmd get lan_ifname lan_ethernet_virtual_ifnums lan_ethernet_physical_ifnames lan_wl_physical_ifnames lan_ipaddr lan_netmask lan_dhcp_client`
-   eval $FOO
+   eval "$FOO"
   if [ $SYSCFG_FAILED = 'true' ] ; then
      ulog lan status "$PID utctx failed to get some configuration data"
      ulog lan status "$PID LAN CANNOT BE CONTROLLED"
@@ -740,7 +740,7 @@ add_docsis_bridge ()
 	 		exit
 	 fi
 
-         brctl addif $SYSCFG_lan_ifname lbr0
+         brctl addif "$SYSCFG_lan_ifname" lbr0
 
          # leichen2: move all ebtables rule to ebtable_rules.sh
          #ebtables -A OUTPUT -o lbr0 -j DROP
@@ -771,13 +771,13 @@ register_docsis_handler () {
 service_init 
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       echo "service_init : setting lan-restarting to 1"
       sysevent set lan-restarting 1
       service_stop

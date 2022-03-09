@@ -66,7 +66,7 @@ SELF="$0[$$]"
 EVENT=$1
 if [ ! -z "$EVENT" ]
 then
-	VALUE=" (=`sysevent get $EVENT`)"
+	VALUE=" (=`sysevent get "$EVENT"`)"
 fi
 
 ulog dhcpv6c status "$$: got EVENT=$EVENT$VALUE REASON=$REASON"
@@ -160,7 +160,7 @@ restore_dhcpv6c_duid() {
 service_init ()
 {
    # First some SYSCFG
-   eval `utctx_cmd get dhcpv6c_enable ipv6_static_enable lan_ipv6addr wan_ipv6addr dhcpv6c_duid lan_ifname`
+   eval "`utctx_cmd get dhcpv6c_enable ipv6_static_enable lan_ipv6addr wan_ipv6addr dhcpv6c_duid lan_ifname`"
    LAN_INTERFACE_NAME=$SYSCFG_lan_ifname
 
    if [ -z "$SYSCFG_ipv6_static_enable" ]
@@ -209,12 +209,12 @@ service_start ()
 #      echo "[utopia] Starting dhcpv6 client on WAN ($WAN_INTERFACE_NAME) event=$EVENT" > /dev/console
       echo "$SELF: Starting dhcpv6 client on WAN ($WAN_INTERFACE_NAME) event=$EVENT" >> $LOG
 
-      prepare_dhcpv6c_config $WAN_INTERFACE_NAME
+      prepare_dhcpv6c_config "$WAN_INTERFACE_NAME"
       restore_dhcpv6c_duid
       if [ "$NEED_IA" = "1" -o "$NEED_PD" = "1" ]
       then
 	      # dhcp6c [-c configfile] [-dDfi] [-p pid-file] interface [interfaces...]
-	      $DHCPV6_BINARY -p $DHCPV6_PID_FILE $WAN_INTERFACE_NAME >> $LOG 2>&1
+	      $DHCPV6_BINARY -p $DHCPV6_PID_FILE "$WAN_INTERFACE_NAME" >> $LOG 2>&1
 
 	      check_err $? "Couldnt handle start"
 	      sysevent set ${SERVICE_NAME}-status started
@@ -304,7 +304,7 @@ call_back_nbi ()
 	fi
 	# Last step: save the WAN IPv6 interface name
 	# Cannot save the IPv6 address because not yet set by DHCPv6 Client :-(
-	sysevent set current_wan_ipv6_interface $WAN_INTERFACE_NAME
+	sysevent set current_wan_ipv6_interface "$WAN_INTERFACE_NAME"
 }
 
 
@@ -318,7 +318,7 @@ call_back_add_prefix ()
 #		echo "[Utopia] Got an IPv6 prefix from DHCP for LAN" > /dev/console
 		echo "$SELF: Got an IPv6 prefix from DHCP for LAN" >> $LOG
 		# set the ipv6 prefix for router advertisement on the LAN side
-		save_lan_ipv6_prefix $prefix/$prefix_length
+		save_lan_ipv6_prefix "$prefix"/"$prefix_length"
 		echo "$SELF: sysevent set dhcpv6_client-status add_prefix" >> $LOG
 		sysevent set dhcpv6_client-status add_prefix
 	else	
@@ -328,7 +328,7 @@ call_back_add_prefix ()
 #			echo "[Utopia] Got an IPv6 prefix from DHCP for lo" > /dev/console
 			echo "$SELF: Got an IPv6 prefix from DHCP for lo" >> $LOG
 			echo "$SELF: ip -6 addr add ${prefix}1/$prefix_length dev $interface valid_lft $valid_lifetime preferred_lft $preferred_lifetime" >> $LOG 2>&1
-			ip -6 addr add ${prefix}1/$prefix_length dev $interface valid_lft $valid_lifetime preferred_lft $preferred_lifetime >> $LOG 2>&1
+			ip -6 addr add "${prefix}"1/"$prefix_length" dev "$interface" valid_lft "$valid_lifetime" preferred_lft "$preferred_lifetime" >> $LOG 2>&1
 		else
 			echo "$SELF: Unexpected interface ($interface) when adding a prefix $prefix/$prefix_length" >> $LOG
 		fi
@@ -356,7 +356,7 @@ call_back_remove_prefix ()
 		if [ "$interface" = "lo" ]
 		then
 			echo "$SELF: ip -6 addr del ${prefix}1/$prefix_length dev $interface"  >> $LOG 2>&1
-			ip -6 addr del ${prefix}1/$prefix_length dev $interface  >> $LOG 2>&1
+			ip -6 addr del "${prefix}"1/"$prefix_length" dev "$interface"  >> $LOG 2>&1
 		else
 			echo "$SELF: Unexpected interface ($interface) when removing a prefix" >> $LOG
 		fi
@@ -371,13 +371,13 @@ call_back_remove_prefix ()
 service_init 
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

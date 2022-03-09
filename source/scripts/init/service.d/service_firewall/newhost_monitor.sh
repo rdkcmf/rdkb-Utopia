@@ -62,7 +62,7 @@ service_start()
    ps | awk -v "PID=$$" '/newhost_input/ && !/'"$$"'/  { if ($1<PID) system("kill -9 "$1);}'
 
    # we also remove any lingering files used by that script
-   rm -Rf $TRIGGER_OLDFILES
+   rm -Rf "$TRIGGER_OLDFILES"
    echo "${$}" > $TRIGGER_PIDFILE
 
    # link our file to the log file
@@ -80,13 +80,13 @@ service_stop() {
 }
 
 case "$1" in
-   ${SERVICE_NAME}-start)
+   "${SERVICE_NAME}-start")
       service_start
       ;;
-   ${SERVICE_NAME}-stop)
+   "${SERVICE_NAME}-stop")
       service_stop
       ;;
-   ${SERVICE_NAME}-restart)
+   "${SERVICE_NAME}-restart")
       service_stop
       service_start
       ;;

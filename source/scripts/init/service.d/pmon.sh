@@ -106,15 +106,15 @@ do_check_process() {
 
 	for ct in $(seq 1 $COUNT)
 	do
-		feature=$(sysevent get pmon_feature_$ct)
+		feature=$(sysevent get pmon_feature_"$ct")
 		if [ -n "$feature" ]
 		then
-			PROC_ENTRY=$(sysevent get pmon_proc_$feature)
+			PROC_ENTRY=$(sysevent get pmon_proc_"$feature")
 			if [ -n "$PROC_ENTRY" ]
 			then
-				process_name=$(echo $PROC_ENTRY | cut -d' ' -f1)
-				pid=$(echo $PROC_ENTRY | cut -d' ' -f2)
-				restartcmd=$(echo $PROC_ENTRY | cut -d' ' -f3-)
+				process_name=$(echo "$PROC_ENTRY" | cut -d' ' -f1)
+				pid=$(echo "$PROC_ENTRY" | cut -d' ' -f2)
+				restartcmd=$(echo "$PROC_ENTRY" | cut -d' ' -f3-)
 				if [ -n "$process_name" ] && [ -n "$pid" ] && [ -n "$restartcmd" ]
 				then
 					echo "$process_name $pid $restartcmd" >> $LOCAL_CONF_FILE
@@ -148,7 +148,7 @@ do_register()
 
 	for ct in $(seq 1 $COUNT)
 	do
-		FEATURE=$(sysevent get pmon_feature_$ct)
+		FEATURE=$(sysevent get pmon_feature_"$ct")
 		if [ -z "$FEATURE" ]
 		then
 			FREE_SLOT=$ct
@@ -191,16 +191,17 @@ do_unregister()
 
 	for ct in $(seq 1 $COUNT)
 	do
-		FEATURE=$(sysevent get pmon_feature_$ct)
+		FEATURE=$(sysevent get pmon_feature_"$ct")
 		if [ "$FEATURE" = "$1" ]
 		then
-			sysevent set pmon_feature_$ct
-			sysevent set pmon_proc_$feature
+			sysevent set pmon_feature_"$ct"
+			sysevent set pmon_proc_"$feature"
 			return
 		fi
 	done
 
 	# echo "pmon-unregister: entry for $1 not found" > /dev/console
+        
 }
 
 do_setproc ()
@@ -211,7 +212,7 @@ do_setproc ()
 		return 1
 	fi
 
-	sysevent set pmon_proc_$1 "$2 $3 $4"
+	sysevent set pmon_proc_"$1" "$2 $3 $4"
 }
 
 do_unsetproc ()
@@ -222,13 +223,13 @@ do_unsetproc ()
 		return 1
 	fi
 
-	sysevent set pmon_proc_$1
+	sysevent set pmon_proc_"$1"
 }
 
 case "$1" in
-	register)	do_register $2 $3 "$4" ;;
-	unregister)	do_unregister $2 ;;
-	setproc)	do_setproc $2 $3 $4 "$5" ;;
-	unsetproc)	do_unsetproc $2 ;;
+	register)	do_register "$2" "$3" "$4" ;;
+	unregister)	do_unregister "$2" ;;
+	setproc)	do_setproc "$2" "$3" "$4" "$5" ;;
+	unsetproc)	do_unsetproc "$2" ;;
 	*)		do_check_process ;;
 esac

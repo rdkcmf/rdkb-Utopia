@@ -50,7 +50,7 @@ case "$1" in
 #  Synchronous calls
     #Args: netid, members
     create)
-        echo ${TYPE}_READY=\"$3\"
+        echo ${TYPE}_READY=\""$3"\"
         ;;
     destroy)
         service_stop
@@ -58,7 +58,7 @@ case "$1" in
     #Args: netid, netvid, members
     addVlan|delVlan)
      
-        ${SW_HANDLER} $1 $2 $3 "$4"
+        ${SW_HANDLER} "$1" "$2" "$3" "$4"
     ;;
       
 #  Sysevent calls
