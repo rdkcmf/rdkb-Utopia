@@ -112,7 +112,7 @@ old_sysevtlog_handle(){
         #un-compress log file
         if [ -e "$ZIP" ]
         then
-             $RD_LOCK "$ZIP" "$UNCOMPRESS_CMD" "$ZIP"
+             $RD_LOCK "$ZIP" $UNCOMPRESS_CMD "$ZIP"
              ZIP_SZ=$(ls -l "$ZIP" | awk '{print $5}')
         else
              ZIP_SZ=0;
@@ -330,7 +330,7 @@ compress()
         #un-compress log file
         if [ -e "$ZIP" ]
         then
-            $RD_LOCK "$ZIP" "$UNCOMPRESS_CMD" "$ZIP"
+            $RD_LOCK "$ZIP" $UNCOMPRESS_CMD "$ZIP"
              ZIP_SZ=$(ls -l "$ZIP" | awk '{print $5}')
         else
             ZIP_SZ=0;
@@ -385,7 +385,7 @@ uncompress()
     DIR=$2
     TAR=$1
     cd "$DIR"
-    $RD_LOCK "$TAR" "$UNCOMPRESS_CMD" "$TAR"
+    $RD_LOCK "$TAR" $UNCOMPRESS_CMD "$TAR"
 }
 
 V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
