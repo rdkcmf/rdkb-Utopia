@@ -2878,14 +2878,15 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
    se_get_msg   *send_msg_body;
    int          inbytes;
 
-   if (NULL == inbuf || NULL == outbuf || 0 == (inbytes = strlen(inbuf)) ) {
+   if ((outbuf == NULL) || (outbytes <= 0)) {
       return(ERR_BAD_BUFFER);
    }
-   if (0 == outbytes) {
+   outbuf[0] = '\0';
+
+   if ((inbuf == NULL) || ((inbytes = strlen(inbuf)) == 0)) {
       return(ERR_BAD_BUFFER);
    }
    if (0 > fd) {
-      outbuf[0] = '\0';
       return(ERR_NOT_CONNECTED);
    }
 
@@ -2896,7 +2897,6 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
    // if the se_get_msg will be too long to fit into our buffer
    // then abort
    if (send_msg_size >= sizeof(send_msg_buffer)) {
-      outbuf[0] = '\0';
       return(ERR_MSG_TOO_LONG);
    } 
 
@@ -2905,7 +2905,6 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
       (send_msg_body = (se_get_msg *)SE_msg_prepare (send_msg_buffer, 
                                                      sizeof(send_msg_buffer), 
                                                      SE_MSG_GET, token)) ) {
-      outbuf[0] = '\0';
       return(ERR_MSG_PREPARE); 
    } 
 
@@ -2919,7 +2918,6 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
                                       remaining_buf_bytes,
                                       inbuf);
    if (0 == strsize) {
-      outbuf[0] = '\0';
       return(ERR_CANNOT_SET_STRING);
    }
 
@@ -2936,7 +2934,6 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
 
    // see if the get was received and returned
    if (SE_MSG_GET_REPLY != reply_msg_type) {
-      outbuf[0] = '\0';
       if (SE_MSG_ERRORED == reply_msg_type) {
          return(ERR_CORRUPTED);
       } else {
@@ -2944,7 +2941,6 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
       }
    } 
    if (0 != reply_msg_body->status) {
-      outbuf[0] = '\0';
       return(ERR_SERVER_ERROR);
    } 
 
@@ -2966,15 +2962,14 @@ int sysevent_get (const int fd, const token_t token, const char *inbuf, char *ou
 
    // make sure the caller has enough room in their buffer for the
    // value. If not truncate and notify them via return code
-   if (value_bytes > (outbytes - 1)) {
+   if (value_bytes >= outbytes) {
       memcpy(outbuf, value_str, outbytes-1);
       outbuf[outbytes-1] = '\0';
       return(ERR_INSUFFICIENT_ROOM);
-   } else {
-      memcpy(outbuf, value_str, value_bytes);
-      outbuf[value_bytes] = '\0';
-      return(0);
    }
+
+   memcpy(outbuf, value_str, value_bytes + 1);
+   return 0;
 }
 
 /*
