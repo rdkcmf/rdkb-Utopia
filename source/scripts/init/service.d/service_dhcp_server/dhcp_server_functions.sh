@@ -56,7 +56,9 @@ LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options$$
 fi
 RESOLV_CONF=/etc/resolv.conf
 WAN_INTERFACE=$(getWanInterfaceName)
-
+if [ "$BOX_TYPE" = "SR300" ]; then
+    STATIC_RESOLVE_FILE=/etc/urls_to_ip_resolve
+fi
 # Variables needed for captive portal mode : start
 DEFAULT_RESOLV_CONF="/var/default/resolv.conf"
 DEFAULT_CONF_DIR="/var/default"
@@ -1141,6 +1143,9 @@ fi
 
            if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ]; then
 
+                if [ "$BOX_TYPE" = "SR300" ]; then
+                    do_static_resolution
+                fi
                #SKYH4-952: Sky selfheal support.
                #For Sky selfheal mode, prepare redirection IP for DSN redirection.
                #Here given a static IP returned in selfheal mode in the absense of WAN.
@@ -1194,6 +1199,26 @@ fi
    rm -f $LOCAL_DHCP_CONF
 
    echo "DHCP SERVER : Completed preparing DHCP configuration"
+}
+
+do_static_resolution() {
+    
+    if [ ! -f "$STATIC_RESOLVE_FILE" ] || [ ! -f "$LOCAL_DHCP_CONF" ] ; then
+        return
+    fi
+
+    local url
+    local addr
+
+    #Read url and IP address from file and add the rule in dnsmasq.conf
+    while read -r line; do
+        url=$(echo "$line" | awk -F= '{print $1}')
+        addr=$(echo "$line" | awk -F= '{print $2}')
+        if [ -n "$url" ] && [ -n "$addr" ]; then
+            echo "address=/$url/$addr" >> "$LOCAL_DHCP_CONF"
+        fi
+    done < "$STATIC_RESOLVE_FILE"
+
 }
 
 do_extra_pools () {
