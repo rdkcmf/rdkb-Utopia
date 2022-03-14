@@ -10636,6 +10636,10 @@ static int prepare_multinet_filter_forward(FILE *filter_fp) {
     fprintf(filter_fp, "-A INPUT -i wifi2 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i wifi3 -d 169.254.1.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i wifi3 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i wifi6 -d 169.254.0.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i wifi6 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i wifi7 -d 169.254.1.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i wifi7 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i bhaul -d 169.254.85.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i bhaul -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined(_COSA_BCM_MIPS_)
