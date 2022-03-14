@@ -35,6 +35,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef RDKB_EXTENDER_ENABLED
+#include <string.h>
+#endif
 #include "srvmgr.h"
 
 const char* SERVICE_NAME            = "dhcp_server";
@@ -75,8 +78,75 @@ void srv_register(void) {
    system ("/etc/utopia/service.d/pmon.sh register dhcp_server");
 }
 
+#ifdef RDKB_EXTENDER_ENABLED
+int getcustomServiceFile(char *event,char *out,int outlen)
+{
+    int retvalue = -1;
+    int index = 0;    
+    while (SERVICE_CUSTOM_EVENTS[index] != NULL)
+    {
+        char eventname[128];
+        char *pEnd = strstr(SERVICE_CUSTOM_EVENTS[index],"|");
+        if (!pEnd)
+        {
+            ++index;
+            continue;
+        }
+        memset(eventname,0,sizeof(eventname));
+        if ((pEnd-SERVICE_CUSTOM_EVENTS[index]) < sizeof(eventname))
+        {
+            memcpy(eventname,SERVICE_CUSTOM_EVENTS[index],pEnd-SERVICE_CUSTOM_EVENTS[index]);
+        }
+        if (!strcmp(event,eventname))
+        {
+            char *pServiceFile = pEnd + 1;
+            pEnd =  strstr(pServiceFile,"|");  
+            if (pEnd == NULL )
+            {
+                memcpy(out,pServiceFile,strlen(pServiceFile));
+                return 0;
+            }
+            else if((pEnd-pServiceFile) < outlen)
+            {
+                memcpy(out,pServiceFile,pEnd-pServiceFile);
+                return 0;
+            }
+        }
+        ++index;
+    }
+    return retvalue;
+}
+
+void stop_service()
+{
+    char buf[512];
+    char serviceFile[256];
+    int retvalue = -1;
+    
+    memset(buf,0,sizeof(buf));
+    memset(serviceFile,0,sizeof(serviceFile));
+    snprintf(buf,sizeof(buf),"%s-stop",SERVICE_NAME);
+    retvalue = getcustomServiceFile(buf,serviceFile,sizeof(serviceFile));
+    memset(buf,0,sizeof(buf));
+    //found custom service file
+    if (retvalue == 0)
+    {
+        snprintf(buf,sizeof(buf),"sh %s %s-stop",serviceFile,SERVICE_NAME);
+
+    }
+    else // not found.
+    {
+        snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
+    }
+    system(buf);
+}
+#endif
+
 void srv_unregister(void) {
    system ("/etc/utopia/service.d/pmon.sh unregister dhcp_server");
+   #ifdef RDKB_EXTENDER_ENABLED
+   stop_service();
+   #endif
    sm_unregister(SERVICE_NAME);
 }
 

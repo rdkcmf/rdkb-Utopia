@@ -51,9 +51,11 @@
 #define DEFAULT_RESOLV_CONF     "/var/default/resolv.conf"
 #define DEFAULT_CONF_DIR      	"/var/default"
 #define DEFAULT_FILE            "/etc/utopia/system_defaults"
+#ifdef RDKB_EXTENDER_ENABLED
 #define GRE_VLAN_IFACE_NAME     "eth1"
 #define GRE_VLAN_IFACE_IP       "192.168.245.1"
 #define GRE_VLAN_IFACE_DHCP_OPT "192.168.245.2,192.168.245.254,255.255.255.0,172800"
+#endif
 //#define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
 #define ERROR   		-1
@@ -792,11 +794,10 @@ int prepare_dhcp_conf (char *input)
         char l_cWan_Check[16] = {0};
         char l_statDns_Enabled[ 32 ] = { 0 };
         char l_cDhcpNs_1[ 128 ] = { 0 }, l_cDhcpNs_2[ 128 ] = { 0 };
+	#ifdef RDKB_EXTENDER_ENABLED
     char dev_Mode[20] = {0}; 
-    char buff[256] = {0}; 
-        
-
-
+    char buff[256] = {0};
+    #endif
 	int l_iMkdir_Res, l_iRet_Val;
 	int l_iRetry_Count = 0, ret;
 
@@ -823,6 +824,8 @@ int prepare_dhcp_conf (char *input)
 		return 0;
     }   
 
+#ifdef RDKB_EXTENDER_ENABLED
+
     syscfg_get(NULL, "Device_Mode", dev_Mode, sizeof(dev_Mode));
     if (atoi(dev_Mode) == 1)
     {
@@ -847,7 +850,7 @@ int prepare_dhcp_conf (char *input)
 
         fprintf(l_fLocal_Dhcp_ConfFile, "#We don't want dnsmasq to read /etc/resolv.conf or any other file\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "no-resolv\n\n");
-
+      
         fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces\n");
         memset (buff, 0, sizeof(buff));
         snprintf(buff, sizeof(buff), "interface=%s\n\n", GRE_VLAN_IFACE_NAME);
@@ -911,6 +914,8 @@ int prepare_dhcp_conf (char *input)
 
         return 0;        
     }
+
+#endif
 
     // prepare dhcp config file for GATEWAY mode
 

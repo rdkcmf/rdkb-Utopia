@@ -35,6 +35,10 @@
 
 #include <stdio.h>
 #include "srvmgr.h"
+#ifdef RDKB_EXTENDER_ENABLED
+#include <string.h>
+#include <stdlib.h>
+#endif
 
 const char* SERVICE_NAME            = "dhcpv6_client";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_dhcpv6_client.sh";
@@ -60,7 +64,20 @@ void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
 }
 
+#ifdef RDKB_EXTENDER_ENABLED
+void stop_service()
+{
+    char buf[512];
+    memset(buf,0,sizeof(buf));
+    snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
+    system(buf);
+}
+#endif
+
 void srv_unregister(void) {
+   #ifdef RDKB_EXTENDER_ENABLED
+      stop_service();
+   #endif
    sm_unregister(SERVICE_NAME);
 }
 

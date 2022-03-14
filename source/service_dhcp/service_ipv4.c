@@ -42,6 +42,9 @@
 #define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
 #define XHS_INST         5
+#ifdef RDKB_EXTENDER_ENABLED
+#define PRIVATE_LAN_L3INST         4
+#endif
 
 #define IPV4_TSIP_PREFIX    "dmsb.truestaticip"
 
@@ -1125,7 +1128,10 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	char l_cArp_Ignore_File[64] = {0};
     int l_iRT_Table, l_iCIDR;   
         char bcast[INET_ADDRSTRLEN];
-
+#ifdef RDKB_EXTENDER_ENABLED
+    char deviceMode[8] = {0};
+    int isIpNeedToAssign = 1;
+#endif
 	FILE *l_fArp_Ignore = NULL;
 	if (NULL == staticIpv4Addr || 0 == staticIpv4Addr[0])
 	{
@@ -1192,26 +1198,40 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
     l_iCIDR = mask2cidr(l_cCur_Ipv4_Subnet);
     snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "dslite_enabled");
     sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cDsliteEnabled, sizeof(l_cDsliteEnabled));
-    //If it's ipv6 only mode, doesn't config ipv4 address. For ipv6 other things, we don't take care.
-	if (!strncmp(l_cIfName, LAN_IF_NAME, 6) && strncmp(l_cDsliteEnabled, "1", 1))
-	{
-		char l_cLast_Erouter_Mode[8] = {0};
-    	syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
-		if ((!strncmp(l_cLast_Erouter_Mode, "1", 1)) || (!strncmp(l_cLast_Erouter_Mode, "3", 1)))
-		{
-		        addr_derive_broadcast(l_cCur_Ipv4_Addr, l_iCIDR, bcast, INET_ADDRSTRLEN);
-			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "%s/%d broadcast %s dev %s", l_cCur_Ipv4_Addr, l_iCIDR, bcast, l_cIfName);
-	        addr_add(l_cSysevent_Cmd);
+#ifdef RDKB_EXTENDER_ENABLED
+    syscfg_get(NULL, "Device_Mode", deviceMode, sizeof(deviceMode));
+    if (!strncmp(deviceMode,"1",1))
+    {
+        // Dont assign ip for Private lan and Xhs if device is in extender mode.
+        if ((l3_inst == PRIVATE_LAN_L3INST) || (l3_inst == XHS_INST))
+        {
+            isIpNeedToAssign = 0;
         }
-	}
-    else
-	{
-        addr_derive_broadcast(l_cCur_Ipv4_Addr, l_iCIDR, bcast, INET_ADDRSTRLEN);
-        snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                 "%s/%d broadcast %s dev %s", l_cCur_Ipv4_Addr, l_iCIDR, bcast, l_cIfName);
-        addr_add(l_cSysevent_Cmd);
-    }  
+    }
+    if (isIpNeedToAssign)
+#endif
+    {
+        //If it's ipv6 only mode, doesn't config ipv4 address. For ipv6 other things, we don't take care.
+        if (!strncmp(l_cIfName, LAN_IF_NAME, 6) && strncmp(l_cDsliteEnabled, "1", 1))
+        {
+            char l_cLast_Erouter_Mode[8] = {0};
+            syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
+            if ((!strncmp(l_cLast_Erouter_Mode, "1", 1)) || (!strncmp(l_cLast_Erouter_Mode, "3", 1)))
+            {
+                addr_derive_broadcast(l_cCur_Ipv4_Addr, l_iCIDR, bcast, INET_ADDRSTRLEN);
+                snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                        "%s/%d broadcast %s dev %s", l_cCur_Ipv4_Addr, l_iCIDR, bcast, l_cIfName);
+                addr_add(l_cSysevent_Cmd);
+            }
+        }
+        else
+        {
+            addr_derive_broadcast(l_cCur_Ipv4_Addr, l_iCIDR, bcast, INET_ADDRSTRLEN);
+            snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                    "%s/%d broadcast %s dev %s", l_cCur_Ipv4_Addr, l_iCIDR, bcast, l_cIfName);
+            addr_add(l_cSysevent_Cmd);
+        }  
+    }
 
     
     // TODO: Fix this static workaround. Should have configurable routing policy.

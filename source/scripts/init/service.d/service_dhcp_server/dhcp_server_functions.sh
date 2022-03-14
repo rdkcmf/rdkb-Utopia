@@ -706,6 +706,9 @@ prepare_static_dns_urls()
 #-----------------------------------------------------------------
 prepare_dhcp_conf () {
    echo "DHCP SERVER : Prepare DHCP configuration"
+
+if [ "x$rdkb_extender" = "xtrue" ];then
+   TMP_RESOLVE_CONF=/tmp/lte_resolv.conf   
    DEVICE_MODE=`syscfg get Device_Mode`
    if [ "1" = "$DEVICE_MODE" ] ; then
        GRE_VLAN_IFACE="eth1"
@@ -750,7 +753,8 @@ prepare_dhcp_conf () {
        cat $LOCAL_DHCP_CONF > $DHCP_CONF
        rm -f $LOCAL_DHCP_CONF
        return
-   fi	 
+   fi
+ fi	 
 
    RF_CAPTIVE_PORTAL="false"
    SECWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`

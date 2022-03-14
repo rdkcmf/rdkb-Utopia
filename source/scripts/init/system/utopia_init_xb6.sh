@@ -617,7 +617,29 @@ ip6tables -t mangle -A PREROUTING -i "$wan_ifname" -d ff00::/8 -p ipv6-icmp -m i
 
 
 echo "[utopia][init] Processing registration"
-INIT_DIR=/etc/utopia/registration.d
+
+if [ "x$rdkb_extender" = "xtrue" ];then
+    device_mode=`syscfg get Device_Mode`
+    if [ "x$device_mode" = "x" ]; then
+        device_mode=`cat PSM_BAK_XML_CONFIG_FILE_NAME | grep dmsb.device.NetworkingMode | cut -d ">" -f 2 | cut -d "<" -f 1`
+        if [ "x$device_mode" = "x" ]; then
+        device_mode=`cat /usr/ccsp/config/bbhm_def_cfg.xml | grep dmsb.device.NetworkingMode | cut -d ">" -f 2 | cut -d "<" -f 1`
+        fi
+        if [ "x$device_mode" != "x" ]; then
+            syscfg set Device_Mode $device_mode
+            syscfg commit
+        fi
+    fi
+
+    if [ "x$device_mode" = "x1" ]; then
+        INIT_DIR=/etc/utopia/extender
+    else
+        INIT_DIR=/etc/utopia/registration.d
+    fi
+    echo "[utopia][init] sysevent Init Dir: $INIT_DIR"
+else
+    INIT_DIR=/etc/utopia/registration.d
+fi
 # run all executables in the sysevent registration directory
 # echo "[utopia][init] Running registration using $INIT_DIR"
 execute_dir $INIT_DIR&

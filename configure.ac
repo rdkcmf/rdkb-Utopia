@@ -129,6 +129,25 @@ AC_CONFIG_FILES([
    source/service_dhcp/Makefile
 ])] )
 
+FEATURE_RDKB_EXTENDER=no
+AC_ARG_ENABLE([extender],
+        AS_HELP_STRING([--enable-extender],[enable extender]),
+        [
+          case "${enableval}" in
+           yes) FEATURE_RDKB_EXTENDER=yes ;;
+           no) AC_MSG_ERROR([extender is disabled]) ;;
+          *) AC_MSG_ERROR([bad value ${enableval} for --enable-extender ]) ;;
+           esac
+           ],
+         [echo "extender is disabled."])
+
+AM_CONDITIONAL([FEATURE_RDKB_EXTENDER], [test $FEATURE_RDKB_EXTENDER = yes])
+
+AM_COND_IF( [FEATURE_RDKB_EXTENDER], [
+AC_CONFIG_FILES([
+    source/service_deviceMode/Makefile
+])] )
+
 AC_CONFIG_FILES(
 	Makefile
 	source/Makefile

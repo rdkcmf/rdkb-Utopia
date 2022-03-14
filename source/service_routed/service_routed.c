@@ -589,6 +589,9 @@ static int gen_zebra_conf(int sefd, token_t setok)
     int ipv6_enable = 0;
     int ula_enable = 0;
 #endif
+#ifdef RDKB_EXTENDER_ENABLED
+    int deviceMode = 0;
+#endif
 #ifdef WAN_FAILOVER_SUPPORTED
     char default_wan_interface[64] = {0};
     char wan_interface[64] = {0};
@@ -622,6 +625,24 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fclose(fp);
         return 0;
     }
+#ifdef RDKB_EXTENDER_ENABLED
+    memset(buf,0,sizeof(buf));
+    if ( 0 == syscfg_get(NULL, "Device_Mode", buf, sizeof(buf)))
+    {
+        deviceMode = atoi(buf);
+    }
+
+    /* 0 - router mode      
+     * 1 - Extender mode
+     */
+    if (deviceMode == 1) 
+    {
+        // !!! return if it is extender mode and 
+        //     later need to update with mesh wan interface.
+        fclose(fp);
+        return 0;
+    }
+#endif
     syscfg_get(NULL, "ra_interval", ra_interval, sizeof(ra_interval));
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));

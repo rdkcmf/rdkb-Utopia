@@ -193,6 +193,22 @@ apply_config () {
     MASKBITS=`mask2cidr $CUR_IPV4_SUBNET`
     # dslite_enabled will be set when DSLITE_FEATURE_SUPPORT compilation flag is set
     DSLITE_ENABLED=`sysevent get dslite_enabled`
+
+    ISIPV4NEEDED="TRUE"
+    if [ "x$rdkb_extender" = "xtrue" ];then
+
+      	DEVICE_MODE=`syscfg get Device_Mode`
+        XHS_L3INST=5
+        PRIVATE_LAN_L3INST=4
+
+        #dont assign ipv4 for private lan and xhs interface if device is in extender mode.
+        if [ "1" = "$DEVICE_MODE" ]; then
+            if [ "$1" = "$PRIVATE_LAN_L3INST" ] || [ "$1" = "$XHS_L3INST" ]; then
+                ISIPV4NEEDED="FALSE"
+            fi
+        fi
+    fi
+    if [ "TRUE" = "$ISIPV4NEEDED" ]; then
     #If dslite is disabled and the lan bridge is brlan0, then do not assign IPv4 on brlan0 during ipv6 only mode.
     #For other lan bridges assign IPv4 always.
     if [ xbrlan0 = x${IFNAME} -a x1 != x$DSLITE_ENABLED ]; then
@@ -201,6 +217,7 @@ apply_config () {
         fi
     else
         ip addr add $CUR_IPV4_ADDR/$MASKBITS broadcast + dev $IFNAME
+    fi
     fi
 
     

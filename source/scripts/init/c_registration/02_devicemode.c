@@ -32,40 +32,22 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 **********************************************************************/
-
 #include <stdio.h>
 #include "srvmgr.h"
-#ifdef RDKB_EXTENDER_ENABLED
 #include <string.h>
 #include <stdlib.h>
-#endif
-const char* SERVICE_NAME            = "ccsphs";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ccsphs.sh";
+
+const char* SERVICE_NAME            = "devicemode";
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_devicemode/service_devicemode.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { 
-    "lan-status|/etc/utopia/service.d/service_ccsphs.sh",
-    "multinet_2-status|/etc/utopia/service.d/service_ccsphs.sh",
-    "ipv4_5-status|/etc/utopia/service.d/service_ccsphs.sh",
-    NULL
-};
+     "DeviceMode|/etc/utopia/service.d/service_devicemode/service_devicemode.sh|NULL|"TUPLE_FLAG_EVENT,
+    NULL };
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
 }
 
-#ifdef RDKB_EXTENDER_ENABLED
-void stop_service()
-{
-    char buf[512];
-    memset(buf,0,sizeof(buf));
-    snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
-    system(buf);
-}
-#endif
-
 void srv_unregister(void) {
-   #ifdef RDKB_EXTENDER_ENABLED
-   stop_service();
-   #endif
    sm_unregister(SERVICE_NAME);
 }
 
@@ -90,5 +72,3 @@ int main(int argc, char **argv)
    }   
    return(0);
 }
-
-

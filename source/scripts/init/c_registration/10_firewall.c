@@ -62,6 +62,9 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                       };
 
 void srv_unregister(void) {
+   #ifdef RDKB_EXTENDER_ENABLED
+   system("rm -rf /tmp/lanhosts");
+   #endif
    sm_unregister(SERVICE_NAME);
 }
 

@@ -60,6 +60,10 @@ bin_PROGRAMS = \
     26_potd \
     33_cosa
 
+if FEATURE_RDKB_EXTENDER
+bin_PROGRAMS += 02_devicemode
+endif
+
 
 01_init_SOURCES = 01_init.c
 01_system_SOURCES = 01_system.c
@@ -111,3 +115,7 @@ bin_PROGRAMS = \
 25_crond_SOURCES = 25_crond.c
 26_potd_SOURCES = 26_potd.c
 33_cosa_SOURCES = 33_cosa.c
+
+if FEATURE_RDKB_EXTENDER
+02_devicemode_SOURCES = 02_devicemode.c
+endif

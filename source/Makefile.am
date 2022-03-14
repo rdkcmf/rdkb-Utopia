@@ -27,3 +27,7 @@ endif
 if CORE_NET_LIB_FEATURE_SUPPORT
 SUBDIRS += service_dhcp
 endif
+
+if FEATURE_RDKB_EXTENDER
+SUBDIRS += service_deviceMode
+endif
