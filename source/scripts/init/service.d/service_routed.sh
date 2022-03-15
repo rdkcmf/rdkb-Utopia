@@ -73,7 +73,7 @@ case "$1" in
            service_routed start
        elif [ "$status" == "stopped" ]; then
            # As per Sky requirement, radvd should run with ULA prefix though the wan-status is down
-           if [ "x$BOX_TYPE" != "xHUB4" ] && [ "x$BOX_TYPE" != "xSR300" ] && [ "x$BOX_TYPE" != "xSE501" ]; then
+           if [ "x$BOX_TYPE" != "xHUB4" ] && [ "x$BOX_TYPE" != "xSR300" ] && [ "x$BOX_TYPE" != "xSE501" ] && [ "x$BOX_TYPE" != "xSR213" ]; then
                service_routed stop
            fi
        fi

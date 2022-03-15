@@ -161,7 +161,7 @@ service_start ()
          echo "*/15 * * * * /usr/ccsp/tad/check_fan.sh" >> $CRONTAB_FILE
       fi
 
-      if [ "$BOX_TYPE" == "HUB4" ] || [ "$BOX_TYPE" == "SR300" ] || [ "$BOX_TYPE" == "SE501" ]; then
+      if [ "$BOX_TYPE" == "HUB4" ] || [ "$BOX_TYPE" == "SR300" ] || [ "$BOX_TYPE" == "SE501" ] || [ "$BOX_TYPE" == "SR213" ]; then
           # add syncing the timeoffset everyday at 01:00 AM
           echo "0 1 * * * /etc/sky/sync_timeoffset.sh" >> $CRONTAB_FILE
 

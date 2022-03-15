@@ -64,6 +64,8 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_xb6.sh";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/vlan_util_tchcbr.sh";
 #elif defined (RDKB_EXTENDER)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/bridgeutil.sh";
+#elif defined (_SR213_PRODUCT_REQ_)
+const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/bridgeutil_sr213.sh";
 #elif defined (_SR300_PRODUCT_REQ_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/bridgeutil_sr300.sh";
 #elif defined (_HUB4_PRODUCT_REQ_)
