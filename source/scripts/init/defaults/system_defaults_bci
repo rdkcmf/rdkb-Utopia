@@ -1058,7 +1058,6 @@ $selfheal_ping_DataBlockSize=56
 $X_RDKCENTRAL-COM_LastRebootReason=unknown
 $X_RDKCENTRAL-COM_LastRebootCounter=0
 
-$PeriodicFWCheck_Enable=false
 
 #Minimum memory threshold value
 $MinMemoryThreshold_Value=10
