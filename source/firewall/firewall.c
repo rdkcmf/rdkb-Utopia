@@ -11683,7 +11683,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
    syscfg_set(NULL, "Default_Server_IP", lan_ipaddr);
    fprintf(nat_fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination %s:21515\n",lan_ipaddr);
-   fprintf(nat_fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
+   fprintf(nat_fp, "-A prerouting_redirect -p udp -m multiport ! --dports 53,67 -j DNAT --to-destination %s:21515\n",lan_ipaddr);
    
 #ifdef CONFIG_CISCO_FEATURE_CISCOCONNECT
    if(isGuestNetworkEnabled) {
