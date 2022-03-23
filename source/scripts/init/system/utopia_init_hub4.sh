@@ -358,6 +358,8 @@ if [ ! -f /nvram/.wanmanager_upgrade ]; then
     sed -i '/dmsb.wanmanager.wanpolicy/d' $PSM_CUR_XML_CONFIG_FILE_NAME
     sed -i '/dmsb.wanmanager.if.1.SelectionTimeout/d' $PSM_CUR_XML_CONFIG_FILE_NAME
     sed -i '/dmsb.wanmanager.if.2.SelectionTimeout/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.wanmanager.if.1.RebootOnConfiguration/d' $PSM_CUR_XML_CONFIG_FILE_NAME
+    sed -i '/dmsb.wanmanager.if.2.RebootOnConfiguration/d' $PSM_CUR_XML_CONFIG_FILE_NAME
     touch /nvram/.wanmanager_upgrade
     echo "WanManager upgrade configurations complete."
 fi
