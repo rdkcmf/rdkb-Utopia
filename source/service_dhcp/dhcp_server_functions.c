@@ -51,6 +51,9 @@
 #define DEFAULT_RESOLV_CONF     "/var/default/resolv.conf"
 #define DEFAULT_CONF_DIR      	"/var/default"
 #define DEFAULT_FILE            "/etc/utopia/system_defaults"
+#define GRE_VLAN_IFACE_NAME     "eth1"
+#define GRE_VLAN_IFACE_IP       "192.168.245.1"
+#define GRE_VLAN_IFACE_DHCP_OPT "192.168.245.2,192.168.245.254,255.255.255.0,172800"
 //#define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
 #define ERROR   		-1
@@ -790,6 +793,8 @@ int prepare_dhcp_conf (char *input)
         char l_cWan_Check[16] = {0};
         char l_statDns_Enabled[ 32 ] = { 0 };
         char l_cDhcpNs_1[ 128 ] = { 0 }, l_cDhcpNs_2[ 128 ] = { 0 };
+    char dev_Mode[20] = {0}; 
+    char buff[256] = {0}; 
         
 
 
@@ -808,12 +813,6 @@ int prepare_dhcp_conf (char *input)
 		 l_bIsValidWanDHCPNs = FALSE;
 	errno_t safec_rc = -1;
 
-	if ((NULL != input) && (!strncmp(input, "dns_only", 8)))
-	{
-		fprintf(stderr, "dns_only case prefix is #\n");
-		l_cDns_Only_Prefix[0] = '#';
-	}
-
 	safec_rc = sprintf_s(l_cLocalDhcpConf, sizeof(l_cLocalDhcpConf),"/tmp/dnsmasq.conf%d", getpid());
 	if(safec_rc < EOK){
 		ERR_CHK(safec_rc);
@@ -824,6 +823,96 @@ int prepare_dhcp_conf (char *input)
         fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalDhcpConf, errno);
 		return 0;
     }   
+
+    syscfg_get(NULL, "Device_Mode", dev_Mode, sizeof(dev_Mode));
+    if (atoi(dev_Mode) == 1)
+    {
+        /* 
+         * Modem/Extender mode:
+         * Start dnsmasq to assign IP address for to the tunnel interface
+         */
+
+        // set IP to interface to which dnsmasq should listen
+        memset(buff, 0, sizeof(buff));
+        snprintf(buff, sizeof(buff), "ip addr add %s dev %s", GRE_VLAN_IFACE_IP, GRE_VLAN_IFACE_NAME);
+        if (system(buff) != 0)
+        {
+            fprintf(stderr, "%s %d: unable to set ip to gre-vlan interface\n", __FUNCTION__, __LINE__);
+            fclose (l_fLocal_Dhcp_ConfFile);
+            return -1;
+        }
+
+        // edit the config file
+        fprintf(l_fLocal_Dhcp_ConfFile, "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP.\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "port=0\n\n");
+
+        fprintf(l_fLocal_Dhcp_ConfFile, "#We don't want dnsmasq to read /etc/resolv.conf or any other file\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "no-resolv\n\n");
+
+        fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces\n");
+        memset (buff, 0, sizeof(buff));
+        snprintf(buff, sizeof(buff), "interface=%s\n\n", GRE_VLAN_IFACE_NAME);
+        fprintf(l_fLocal_Dhcp_ConfFile, buff);
+
+        fprintf(l_fLocal_Dhcp_ConfFile, "#We need to supply the range of addresses available for lease and optionally a lease time\n");
+        memset (buff, 0, sizeof(buff));
+        snprintf(buff, sizeof(buff), "dhcp-range=%s\n\n", GRE_VLAN_IFACE_DHCP_OPT);
+        fprintf(l_fLocal_Dhcp_ConfFile, buff);
+
+        bool dns_flag = 0;
+        char dns_ip1[16] = {0};
+        char dns_ip2[16] = {0};
+        struct sockaddr_in sa;
+        memset (buff, 0, sizeof(buff));
+        
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "ipv4_dns_0", dns_ip1, sizeof(dns_ip1));
+        if (inet_pton(AF_INET, dns_ip1, &(sa.sin_addr)))
+        {
+            dns_flag = 1;
+        }
+        else
+        {
+            // nameserver IP not a valid v4 IP, so memset buffer
+            memset(dns_ip1, 0, sizeof(dns_ip1));
+        }
+
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "ipv4_dns_1", dns_ip2, sizeof(dns_ip2));
+        if (inet_pton(AF_INET, dns_ip2, &(sa.sin_addr)))
+        {
+            dns_flag = 1;
+        }
+        else
+        {
+            // nameserver IP not a valid v4 IP, so memset buffer
+            memset(dns_ip2, 0, sizeof(dns_ip2));
+        }
+
+        if (dns_flag)
+        {
+            strcpy(buff, "dhcp-option=6");
+            if (strlen(dns_ip1) > 0)
+            {
+                snprintf (buff, sizeof(buff), ",%s", dns_ip1);
+            }
+            if (strlen(dns_ip2) > 0)
+            {
+                snprintf (buff, sizeof(buff), ",%s", dns_ip2);
+            }
+            strcat (buff, "\n\n");
+            fprintf(l_fLocal_Dhcp_ConfFile, buff);
+        }
+
+        return 0;        
+    }
+
+    // prepare dhcp config file for GATEWAY mode
+
+	if ((NULL != input) && (!strncmp(input, "dns_only", 8)))
+	{
+		fprintf(stderr, "dns_only case prefix is #\n");
+		l_cDns_Only_Prefix[0] = '#';
+	}
+
     syscfg_get(NULL, "SecureWebUI_Enable", l_cSecWebUI_Enabled, sizeof(l_cSecWebUI_Enabled));
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "phylink_wan_state", l_cWan_Check, sizeof(l_cWan_Check));
     if (!strncmp(l_cSecWebUI_Enabled, "true", 4))	

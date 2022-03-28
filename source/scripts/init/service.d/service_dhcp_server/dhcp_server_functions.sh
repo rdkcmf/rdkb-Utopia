@@ -706,6 +706,44 @@ prepare_static_dns_urls()
 #-----------------------------------------------------------------
 prepare_dhcp_conf () {
    echo "DHCP SERVER : Prepare DHCP configuration"
+   DEVICE_MODE=`syscfg get Device_Mode`
+   if [ "1" = "$DEVICE_MODE" ] ; then
+       GRE_VLAN_IFACE="eth1"
+       PRIVATE_NW_DHCP_LEASE_INFO=" 192.168.245.2,192.168.245.254,255.255.255.0,17280"
+       ip addr add 192.168.245.1 dev "$GRE_VLAN_IFACE"
+       echo "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP." >> $LOCAL_DHCP_CONF
+       echo "port=0" >> $LOCAL_DHCP_CONF
+
+       echo "#We don't want dnsmasq to read /etc/resolv.conf or any other file" >> $LOCAL_DHCP_CONF
+       echo "no-resolv" >> $LOCAL_DHCP_CONF
+
+       echo "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces" >> $LOCAL_DHCP_CONF
+       echo "interface=""$GRE_VLAN_IFACE" >> $LOCAL_DHCP_CONF
+
+       echo "#We need to supply the range of addresses available for lease and optionally a lease time" >> $LOCAL_DHCP_CONF
+       echo "dhcp-range=""$PRIVATE_NW_DHCP_LEASE_INFO" >> $LOCAL_DHCP_CONF
+
+       DNS1=`sysevent get ipv4_dns_0`
+       DNS2=`sysevent get ipv4_dns_1`
+
+       if expr "DNS1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+           echo -n "dhcp-option=6,""$DNS1" >> $LOCAL_DHCP_CONF;
+           DNS_FLAG=1
+       fi
+
+       if expr "DNS2" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+           if [ $DNS_FLAG != 1]; then
+               echo -n "dhcp-option=6," >> $LOCAL_DHCP_CONF;
+           fi
+           echo "$DNS2" >> $LOCAL_DHCP_CONF;
+           DNS_FLAG=1
+       fi
+
+       cat $LOCAL_DHCP_CONF > $DHCP_CONF
+       rm -f $LOCAL_DHCP_CONF
+       return
+   fi	 
+
    RF_CAPTIVE_PORTAL="false"
    SECWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
    if [ "$SECWEBUI_ENABLED" = "true" ]; then
