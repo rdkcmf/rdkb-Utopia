@@ -240,6 +240,14 @@ service_start ()
    echo "restrict -6 ::1" >> $NTP_CONF_TMP
 
    if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
+       if [ "x$BOX_TYPE" = "xSR300" ]; then
+            IPV4_CONN_STATE=$(sysevent get ipv4_connection_state)
+            if [ "$IPV4_CONN_STATE" != "up" ]; then
+                SYSCFG_ntp_server1="time.google.com"
+                SYSCFG_ntp_server2="time-e-g.nist.gov"
+                VALID_SEVER="true"
+            fi
+        fi
        # Start NTP Config Creation with Multiple Server Setup
        echo_t "SERVICE_NTPD : Creating NTP config with New NTP Enabled" >> $NTPD_LOG_NAME
        if [ "x$SYSCFG_ntp_server1" != "x" ] && [ "x$SYSCFG_ntp_server1" != "xno_ntp_address" ]; then
@@ -295,6 +303,15 @@ service_start ()
                fi
            fi
        fi
+
+        if [ "x$BOX_TYPE" = "xSR300" ]; then
+            IPV4_CONN_STATE=$(sysevent get ipv4_connection_state)           
+            if [ "$IPV4_CONN_STATE" != "up" ]; then
+                SYSCFG_ntp_server1="time.google.com"
+                SYSCFG_ntp_server2="time-e-g.nist.gov"
+                VALID_SEVER="true"
+            fi
+        fi
 
        # Start NTP Config Creation with Legacy Single Server Setup
        echo_t "SERVICE_NTPD : Creating NTP config" >> $NTPD_LOG_NAME
