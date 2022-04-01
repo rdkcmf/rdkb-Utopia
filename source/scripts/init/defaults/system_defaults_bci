@@ -1287,3 +1287,12 @@ $WebUIRemoteMgtOptionEnable=true
 #Rxtx default interface list,since backhaul will differ between platforms
 #taking most common here,varying platforms override in bb file
 $rxtxstats_interface_list=brlan0,brlan1,brlan2,brlan3,brlan4,brlan5,brebhaul,brlan112,brlan113
+
+#CrashUpload S3SigningUrl
+$CrashUpload_S3SigningUrl=https://secure.ssr.coast.xcal.tv/cgi-bin/upload_dump.cgi
+
+#Dscp Traffic Count Enable Flag
+$DscpEnabledList_1=
+$DscpSleepInterval_1=0
+$DscpEnabledList_2=
+$DscpSleepInterval_2=0
