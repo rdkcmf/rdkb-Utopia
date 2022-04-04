@@ -191,7 +191,7 @@ apply_config () {
     RT_TABLE=`expr $1 + 10`
     
     MASKBITS=`mask2cidr $CUR_IPV4_SUBNET`
-    # dslite_enabled will be set when RDKB_DSLITE compilation flag is set
+    # dslite_enabled will be set when DSLITE_FEATURE_SUPPORT compilation flag is set
     DSLITE_ENABLED=`sysevent get dslite_enabled`
     #If dslite is disabled and the lan bridge is brlan0, then do not assign IPv4 on brlan0 during ipv6 only mode.
     #For other lan bridges assign IPv4 always.
