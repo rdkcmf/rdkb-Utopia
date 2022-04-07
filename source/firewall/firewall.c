@@ -538,7 +538,9 @@ int firewall_lib_init(void *bus_handle, int sysevent_fd, token_t sysevent_token)
 #if defined(CONFIG_KERNEL_NETFILTER_XT_TARGET_CT)
 static int do_lan2wan_helpers(FILE *raw_fp);
 #endif
-
+#ifdef WAN_FAILOVER_SUPPORTED
+static int checkIfULAEnabled();
+#endif
 FILE *firewallfp = NULL;
 
 //#define CONFIG_BUILD_TRIGGER 1
@@ -13184,6 +13186,22 @@ static void do_ipv6_UIoverWAN_filter(FILE* fp) {
             }
 
         }
+        #ifdef WAN_FAILOVER_SUPPORTED
+        /* Blocking UI access on Backup WAN or in case ULA addressing */
+         if (0 == checkIfULAEnabled())
+         {
+               char nat66_ipv6_addr[128];
+               memset(nat66_ipv6_addr,0,sizeof(nat66_ipv6_addr));
+               sysevent_get(sysevent_fd, sysevent_token, "nat66_ipv6_addr", nat66_ipv6_addr, sizeof(nat66_ipv6_addr));
+               if ( strlen(nat66_ipv6_addr)!= 0 )
+               {
+                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname,(char *)nat66_ipv6_addr);
+                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", current_wan_ifname,(char *)nat66_ipv6_addr);
+                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 8080 -j DROP\n", current_wan_ifname,(char *)nat66_ipv6_addr);
+               }
+
+         }
+        #endif
       }
 
         FIREWALL_DEBUG("Exiting do_ipv6_UIoverWAN_filter \n"); 
@@ -13356,13 +13374,13 @@ static void do_ipv6_nat_table(FILE* fp)
 #ifdef MULTILAN_FEATURE
    prepare_multinet_prerouting_nat_v6(fp);
 #endif
-
+/*
 #ifdef WAN_FAILOVER_SUPPORTED
    if (0 == checkIfULAEnabled())
    {
          applyIpv6ULARules(fp);
    }
-#endif
+#endif*/
    
    //zqiu: RDKB-7639: block device broken for IPv6
    fprintf(fp, "-A PREROUTING -i %s -j prerouting_devices\n", lan_ifname);  
@@ -13400,7 +13418,12 @@ static void do_ipv6_nat_table(FILE* fp)
       
    fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:21515\n",IPv6);
    fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:21515\n",IPv6);
-   
+   #ifdef WAN_FAILOVER_SUPPORTED
+   if (0 == checkIfULAEnabled())
+   {
+         applyIpv6ULARules(fp);
+   }
+   #endif
    //RDKB-19893
    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
    if(isDmzEnabled) {
