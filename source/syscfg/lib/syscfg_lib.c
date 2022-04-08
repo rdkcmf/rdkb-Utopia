@@ -912,15 +912,15 @@ static int rw_unlock (syscfg_shm_ctx *ctx)
  *                Internal syscfg library access apis
  *****************************************************************************/
 
-static int make_ht_entry (const char *name, const char *value, shmoff_t *out_offset)
+static int make_ht_entry (const char *name, int namelen, const char *value, shmoff_t *out_offset)
 {
     syscfg_shm_ctx *ctx = syscfg_ctx;
     char *p_entry_name, *p_entry_value;
+    int valuelen = strlen(value);
     int rc = 0;
-    errno_t   safec_rc = -1;
 
-    int size = strlen(name_p) + 1 +
-               strlen(value) + 1 +
+    int size = namelen + 1 +
+               valuelen + 1 +
                sizeof(ht_entry);
 
     rc = shm_malloc(ctx, size, out_offset);
@@ -931,16 +931,13 @@ static int make_ht_entry (const char *name, const char *value, shmoff_t *out_off
     shmoff_t ht_entry_offset = *out_offset;
     if (ht_entry_offset) {
         ht_entry *entry = HT_ENTRY(ctx,ht_entry_offset);
-        entry->name_sz = strlen(name) + 1;
-        entry->value_sz = strlen(value) + 1;
+        entry->name_sz = namelen + 1;
+        entry->value_sz = valuelen + 1;
         entry->next = 0;
         p_entry_name = HT_ENTRY_NAME(ctx,ht_entry_offset);
+        memcpy(p_entry_name, name, namelen + 1);
         p_entry_value = HT_ENTRY_VALUE(ctx,ht_entry_offset);
-        
-        safec_rc = strcpy_s(p_entry_name, HT_ENTRY_NAMESZ(ctx,ht_entry_offset), name);
-        ERR_CHK(safec_rc);
-        safec_rc = strcpy_s(p_entry_value, HT_ENTRY_VALUESZ(ctx,ht_entry_offset), value);
-        ERR_CHK(safec_rc);
+        memcpy(p_entry_value, value, valuelen + 1);
     }
 
     return rc;
@@ -995,7 +992,7 @@ static char* _syscfg_get (const char *ns, const char *name)
  *         Since this routine manipulated ctx object, it should be protected
  *         
  */
-static int check_decr_store_sz (syscfg_shm_ctx *ctx, const char *name, const char *value)
+static int check_decr_store_sz (syscfg_shm_ctx *ctx, int namelen, const char *value)
 {
     shm_cb *cb = &(ctx->cb);
     int entry_sz = 0;
@@ -1003,7 +1000,7 @@ static int check_decr_store_sz (syscfg_shm_ctx *ctx, const char *name, const cha
     // Size is calculated as "sizeof(name) + sizeof('=') + sizeof(value) + sizeof('\n')
     // note: name here includes namespace and NS_SEP string
 
-    entry_sz = (name) ? strlen(name) : 0;
+    entry_sz = namelen;
     entry_sz += (value) ? strlen(value) : 0;
     entry_sz += 2;
 
@@ -1017,7 +1014,7 @@ static int check_decr_store_sz (syscfg_shm_ctx *ctx, const char *name, const cha
     }
 }
 
-static void incr_store_sz (syscfg_shm_ctx *ctx, const char *name, const char *value)
+static void incr_store_sz (syscfg_shm_ctx *ctx, int namelen, const char *value)
 {
     shm_cb *cb = &(ctx->cb);
     int entry_sz = 0;
@@ -1025,7 +1022,7 @@ static void incr_store_sz (syscfg_shm_ctx *ctx, const char *name, const char *va
     // Size is calculated as "sizeof(name) + sizeof('=') + sizeof(value) + sizeof('\n')
     // note: name here includes namespace and NS_SEP string
 
-    entry_sz = (name) ? strlen(name) : 0;
+    entry_sz = namelen;
     entry_sz += (value) ? strlen(value) : 0;
     entry_sz += 2;
 
@@ -1063,34 +1060,36 @@ static int _syscfg_set (const char *ns, const char *name, const char *value, int
 {
     int index, rc = 0;
     syscfg_shm_ctx *ctx = syscfg_ctx;
+    size_t namelen;
 
     if (!nolock) {
         rw_lock(ctx);
     }
 
     if (ns) {
-        snprintf(name_p, sizeof(name_p), "%s" NS_SEP "%s", ns, name);
+        namelen = snprintf(name_p, sizeof(name_p), "%s" NS_SEP "%s", ns, name);
     } else {
-	/*CID 135370 : BUFFER_SIZE_WARNING */
-        strncpy(name_p, name, sizeof(name_p)-1);
-	name_p[sizeof(name_p)-1] = '\0';
+        namelen = snprintf(name_p, sizeof(name_p), "%s", name);
     }
+
+    if (namelen >= sizeof(name_p))
+        namelen = sizeof(name_p) - 1;
 
     index = hash(name_p);
 
     if (0 == ctx->ht[index]) {
-        if (0 == check_decr_store_sz(ctx, name_p, value)) {
+        if (0 == check_decr_store_sz(ctx, namelen, value)) {
             if (!nolock) {
                 rw_unlock(ctx);
             }
             return ERR_NO_SPACE;
         }
         shmoff_t ht_offset;
-        rc = make_ht_entry(name_p, value, &ht_offset);
+        rc = make_ht_entry(name_p, namelen, value, &ht_offset);
         if (0 == rc) {
             ctx->ht[index] = ht_offset;
         } else {
-            incr_store_sz(ctx, name_p, value);
+            incr_store_sz(ctx, namelen, value);
         }
         if (!nolock) {
             rw_unlock(ctx);
@@ -1114,18 +1113,18 @@ static int _syscfg_set (const char *ns, const char *name, const char *value, int
         rc = _syscfg_set(ns, name, value, 1);
     } else { 
         // new entry, attach it to end of linked list
-        if (0 == check_decr_store_sz(ctx, name_p, value)) {
+        if (0 == check_decr_store_sz(ctx, namelen, value)) {
             if (!nolock) {
                 rw_unlock(ctx);
             }
             return ERR_NO_SPACE;
         }
         shmoff_t ht_offset;
-        rc = make_ht_entry(name_p, value, &ht_offset);
+        rc = make_ht_entry(name_p, namelen, value, &ht_offset);
         if (0 == rc) {
             HT_ENTRY_NEXT(ctx,entryoffset) = ht_offset;
         } else {
-            incr_store_sz(ctx, name_p, value);
+            incr_store_sz(ctx, namelen, value);
         }
     }
 
@@ -1143,18 +1142,20 @@ static int _syscfg_unset (const char *ns, const char *name, int nolock)
 {
     int index;
     syscfg_shm_ctx *ctx = syscfg_ctx;
+    size_t namelen;
 
     if (!nolock) {
         rw_lock(ctx);
     }
 
     if (ns) {
-        snprintf(name_p, sizeof(name_p), "%s" NS_SEP "%s", ns, name);
+        namelen = snprintf(name_p, sizeof(name_p), "%s" NS_SEP "%s", ns, name);
     } else {
-	/* CID 135546 : BUFFER_SIZE_WARNING */
-        strncpy(name_p, name, sizeof(name_p)-1);
-	name_p[sizeof(name_p)-1] = '\0';
+        namelen = snprintf(name_p, sizeof(name_p), "%s", name);
     }
+
+    if (namelen >= sizeof(name_p))
+        namelen = sizeof(name_p) - 1;
 
     index = hash(name_p);
 
@@ -1180,7 +1181,7 @@ static int _syscfg_unset (const char *ns, const char *name, int nolock)
         }
         return 0;
     }
-    incr_store_sz(ctx, name_p, HT_ENTRY_VALUE(ctx,entryoffset));
+    incr_store_sz(ctx, namelen, HT_ENTRY_VALUE(ctx,entryoffset));
     if (prev) {
         HT_ENTRY_NEXT(ctx,prev) = HT_ENTRY_NEXT(ctx,entryoffset);
     } else {
