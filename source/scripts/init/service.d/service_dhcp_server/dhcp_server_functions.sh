@@ -727,16 +727,16 @@ prepare_dhcp_conf () {
        DNS1=`sysevent get ipv4_dns_0`
        DNS2=`sysevent get ipv4_dns_1`
 
-       if expr "DNS1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+       if expr "$DNS1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
            echo -n "dhcp-option=6,""$DNS1" >> $LOCAL_DHCP_CONF;
            DNS_FLAG=1
        fi
 
-       if expr "DNS2" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+       if expr "$DNS2" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
            if [ $DNS_FLAG != 1]; then
-               echo -n "dhcp-option=6," >> $LOCAL_DHCP_CONF;
+               echo -n "dhcp-option=6" >> $LOCAL_DHCP_CONF;
            fi
-           echo "$DNS2" >> $LOCAL_DHCP_CONF;
+           echo ",$DNS2" >> $LOCAL_DHCP_CONF;
            DNS_FLAG=1
        fi
 
