@@ -190,6 +190,14 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-up|/etc/utopia/service.d/bridgeutil.sh|NULL|"TUPLE_FLAG_EVENT,
     "meshbhaul-setup|/etc/utopia/service.d/bridgeutil.sh|NULL|"TUPLE_FLAG_EVENT,
     NULL };
+#elif defined (_SR213_PRODUCT_REQ_)
+const char* SERVICE_CUSTOM_EVENTS[] = {
+    "multinet-syncNets|/etc/utopia/service.d/bridgeutil_sr213.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-syncMembers|/etc/utopia/service.d/bridgeutil_sr213.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-down|/etc/utopia/service.d/bridgeutil_sr213.sh|NULL|"TUPLE_FLAG_EVENT,
+    "multinet-up|/etc/utopia/service.d/bridgeutil_sr213.sh|NULL|"TUPLE_FLAG_EVENT,
+    "meshbhaul-setup|/etc/utopia/service.d/bridgeutil_sr213.sh|NULL|"TUPLE_FLAG_EVENT,
+    NULL };
 #elif defined (_SR300_PRODUCT_REQ_)
 const char* SERVICE_CUSTOM_EVENTS[] = {
     "multinet-syncNets|/etc/utopia/service.d/bridgeutil_sr300.sh|NULL|"TUPLE_FLAG_EVENT,
