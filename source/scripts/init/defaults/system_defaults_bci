@@ -1274,3 +1274,6 @@ $$ntp_status=2
 @ntp_time_sync=0
 #mTlsCrashdump is disabled by default.
 $mTlsCrashdumpUpload_Enable=false
+
+#AutoReboot is enabled by default
+$AutoReboot=true
