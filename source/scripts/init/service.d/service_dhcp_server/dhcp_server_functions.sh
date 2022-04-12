@@ -55,6 +55,7 @@ LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts$$
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options$$
 fi
 RESOLV_CONF=/etc/resolv.conf
+TMP_RESOLVE_CONF=/tmp/lte_resolv.conf
 WAN_INTERFACE=$(getWanInterfaceName)
 if [ "$BOX_TYPE" = "SR300" ]; then
     STATIC_RESOLVE_FILE=/etc/urls_to_ip_resolve
@@ -718,8 +719,8 @@ if [ "x$rdkb_extender" = "xtrue" ];then
        echo "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP." >> $LOCAL_DHCP_CONF
        echo "port=0" >> $LOCAL_DHCP_CONF
 
-       echo "#We don't want dnsmasq to read /etc/resolv.conf or any other file" >> $LOCAL_DHCP_CONF
-       echo "no-resolv" >> $LOCAL_DHCP_CONF
+       echo "#We want dnsmasq to read /var/tmp/lte_resolv.conf " >> $LOCAL_DHCP_CONF
+       echo "resolv-file=$TMP_RESOLVE_CONF" >> $LOCAL_DHCP_CONF
 
        echo "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces" >> $LOCAL_DHCP_CONF
        echo "interface=""$GRE_VLAN_IFACE" >> $LOCAL_DHCP_CONF
@@ -729,7 +730,7 @@ if [ "x$rdkb_extender" = "xtrue" ];then
 
        DNS1=`sysevent get ipv4_dns_0`
        DNS2=`sysevent get ipv4_dns_1`
-
+       DNS_FLAG=0
        if expr "$DNS1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
            echo -n "dhcp-option=6,""$DNS1" >> $LOCAL_DHCP_CONF;
            DNS_FLAG=1
@@ -752,6 +753,19 @@ if [ "x$rdkb_extender" = "xtrue" ];then
 
        cat $LOCAL_DHCP_CONF > $DHCP_CONF
        rm -f $LOCAL_DHCP_CONF
+
+      if [ "x$DNS_FLAG" = "x1" ] ; then
+      WAN_DNS=""
+      echo -n "" > $TMP_RESOLVE_CONF
+      if [ "0.0.0.0" != "$DNS1" ] && [ "" != "$DNS1" ] ; then
+         echo "nameserver $DNS1" >> $TMP_RESOLVE_CONF
+         WAN_DNS=`echo "$WAN_DNS" "$DNS1"`
+      fi
+      if [ "0.0.0.0" != "$DNS2" ]  && [ "" != "$DNS2" ]; then
+         echo "nameserver $DNS2" >> $TMP_RESOLVE_CONF
+         WAN_DNS=`echo "$WAN_DNS" "$DNS2"`
+      fi
+      fi
        return
    fi
  fi	 

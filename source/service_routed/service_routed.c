@@ -61,7 +61,7 @@
 #include "util.h"
 #include <telemetry_busmessage_sender.h>
 #include "syscfg/syscfg.h"
-#ifdef _HUB4_PRODUCT_REQ_
+#if defined (_HUB4_PRODUCT_REQ_) || defined (RDKB_EXTENDER_ENABLED)
 #include "utapi.h"
 #include "utapi_util.h"
 #include "ccsp_dm_api.h"
@@ -84,16 +84,17 @@
 #endif
 
 #define RA_INTERVAL 60
+#if defined (_HUB4_PRODUCT_REQ_) || defined (RDKB_EXTENDER_ENABLED)
+#define CCSP_SUBSYS  "eRT."
+#define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
+static void* bus_handle = NULL;
+#endif
 
 #ifdef _HUB4_PRODUCT_REQ_
 #define LAN_BRIDGE "brlan0"
-#define CCSP_SUBSYS  "eRT."
-#define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
 #define PSM_LANMANAGEMENTENTRY_LAN_IPV6_ENABLE "dmsb.lanmanagemententry.lanipv6enable"
 #define PSM_LANMANAGEMENTENTRY_LAN_ULA_ENABLE  "dmsb.lanmanagemententry.lanulaenable"
 #define SYSEVENT_VALID_ULA_ADDRESS "valid_ula_address"
-
-static void* bus_handle = NULL;
 static const char* const service_routed_component_id = "ccsp.routed";
 static int getULAAddressFromInterface(char *ulaAddress);
 #endif
@@ -146,6 +147,14 @@ int gModeSwitched = NO_SWITCHING ;
 
 #define DEF_ULA_PREF_LEN 64
 #endif 
+
+#ifdef RDKB_EXTENDER_ENABLED
+#define PSM_MESH_WAN_IFNAME "dmsb.Mesh.WAN.Interface.Name"
+typedef enum DeviceMode {
+    DEVICE_MODE_ROUTER = 0,
+    DEVICE_MODE_EXTENDER
+}DeviceMode;
+#endif
 
 static int fw_restart(struct serv_routed *sr)
 {
@@ -459,6 +468,7 @@ static int route_set(struct serv_routed *sr)
 #endif
 }
 
+
 static int route_unset(struct serv_routed *sr)
 {
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(MULTILAN_FEATURE)
@@ -489,6 +499,78 @@ static int route_unset(struct serv_routed *sr)
 #endif
     return 0;
 }
+
+#ifdef RDKB_EXTENDER_ENABLED
+static int updateExtenderConf(FILE *pFp, int sefd, token_t setok, int deviceMode, char *pInterface_name)
+{
+ 
+    if (!pFp || !pInterface_name)
+        return -1;
+
+
+    switch(deviceMode)
+    {
+        case DEVICE_MODE_EXTENDER:
+        {
+            char prefix[64] = {0};
+            char m_flag[16] = {0}, o_flag[16] = {0}, ra_mtu[16] = {0};
+            char preferred_lft[16] = {0}, valid_lft[16] = {0};
+            char dh6s_en[16] = {0};
+
+            sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
+            fprintf(pFp, "# Based on prefix=%s\n",prefix);
+
+            sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
+            sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
+
+            if (atoi(preferred_lft) <= 0)
+                snprintf(preferred_lft, sizeof(preferred_lft), "300");
+            if (atoi(valid_lft) <= 0)
+                snprintf(valid_lft, sizeof(valid_lft), "300");
+
+            fprintf(pFp, "interface %s\n", pInterface_name);
+            fprintf(pFp, "   no ipv6 nd suppress-ra\n");
+            fprintf(pFp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+            fprintf(pFp, "   ipv6 nd ra-interval 3\n");
+            fprintf(pFp, "   ipv6 nd ra-lifetime 180\n");
+            syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
+            if (strcmp(m_flag, "1") == 0)
+            {
+                fprintf(pFp, "   ipv6 nd managed-config-flag\n");
+            }
+
+            syscfg_get(NULL, "router_other_flag", o_flag, sizeof(o_flag));
+            if (strcmp(o_flag, "1") == 0)
+            {
+                fprintf(pFp, "   ipv6 nd other-config-flag\n");
+            }
+
+            syscfg_get(NULL, "router_mtu", ra_mtu, sizeof(ra_mtu));
+            if ( (strlen(ra_mtu) > 0) && (strncmp(ra_mtu, "0", sizeof(ra_mtu)) != 0) )
+            {
+                fprintf(pFp, "   ipv6 nd mtu %s\n", ra_mtu);
+            }
+
+            syscfg_get(NULL, "dhcpv6s_enable", dh6s_en, sizeof(dh6s_en));
+            if (strcmp(dh6s_en, "1") == 0) 
+            {
+                fprintf(pFp, "   ipv6 nd other-config-flag\n");
+            }
+
+            fprintf(pFp, "   ipv6 nd router-preference medium\n");
+
+            fprintf(pFp, "interface %s\n", pInterface_name);
+            fprintf(pFp, "   ip irdp multicast\n");
+        }
+        break;
+        default:
+        break;
+    }
+    
+
+    return 0;
+}
+#endif
 
 static int gen_zebra_conf(int sefd, token_t setok)
 {
@@ -581,16 +663,16 @@ static int gen_zebra_conf(int sefd, token_t setok)
     char lan_addr_prefix[64] = {0};
 #endif
     char wan_st[16] = {0};
-
+#ifdef RDKB_EXTENDER_ENABLED
+    char meshWanInterface[128] = {0};
+    int deviceMode = 0;
+#endif
 #ifdef _HUB4_PRODUCT_REQ_
     char server_type[16] = {0};
     char prev_valid_lft[16] = {0};
     int result = 0;
     int ipv6_enable = 0;
     int ula_enable = 0;
-#endif
-#ifdef RDKB_EXTENDER_ENABLED
-    int deviceMode = 0;
 #endif
 #ifdef WAN_FAILOVER_SUPPORTED
     char default_wan_interface[64] = {0};
@@ -625,6 +707,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         fclose(fp);
         return 0;
     }
+    
 #ifdef RDKB_EXTENDER_ENABLED
     memset(buf,0,sizeof(buf));
     if ( 0 == syscfg_get(NULL, "Device_Mode", buf, sizeof(buf)))
@@ -632,13 +715,20 @@ static int gen_zebra_conf(int sefd, token_t setok)
         deviceMode = atoi(buf);
     }
 
-    /* 0 - router mode      
-     * 1 - Extender mode
-     */
-    if (deviceMode == 1) 
+    if (deviceMode == DEVICE_MODE_EXTENDER)
     {
-        // !!! return if it is extender mode and 
-        //     later need to update with mesh wan interface.
+        char *pPsmValString = NULL;
+        if(CCSP_SUCCESS != PSM_VALUE_GET_STRING(PSM_MESH_WAN_IFNAME, pPsmValString)) {
+            Ansc_FreeMemory_Callback(pPsmValString);
+            fclose(fp);
+            return -1;
+        }
+        else
+        {
+            strncpy(meshWanInterface,pPsmValString,sizeof(meshWanInterface));
+        }
+        Ansc_FreeMemory_Callback(pPsmValString);
+        updateExtenderConf(fp,sefd,setok,deviceMode,meshWanInterface);
         fclose(fp);
         return 0;
     }

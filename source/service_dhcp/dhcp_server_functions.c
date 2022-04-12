@@ -52,6 +52,7 @@
 #define DEFAULT_CONF_DIR      	"/var/default"
 #define DEFAULT_FILE            "/etc/utopia/system_defaults"
 #ifdef RDKB_EXTENDER_ENABLED
+#define TMP_RESOLVE_CONF		"/tmp/lte_resolv.conf"
 #define GRE_VLAN_IFACE_NAME     "eth1"
 #define GRE_VLAN_IFACE_IP       "192.168.245.1"
 #define GRE_VLAN_IFACE_DHCP_OPT "192.168.245.2,192.168.245.254,255.255.255.0,172800"
@@ -60,7 +61,7 @@
 #define XHS_IF_NAME     "brlan1"
 #define ERROR   		-1
 #define SUCCESS 		0
-
+ 
 #define PSM_NAME_NOTIFY_WIFI_CHANGES    "eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges"
 #define PSM_NAME_WIFI_RES_MIG           "eRT.com.cisco.spvtg.ccsp.Device.WiFi.WiFiRestored_AfterMigration"
 #define IS_MIG_CHECK_NEEDED(MIG_CHECK)	(!strncmp(MIG_CHECK, "true", 4)) ? (TRUE) : (FALSE)
@@ -797,6 +798,8 @@ int prepare_dhcp_conf (char *input)
 	#ifdef RDKB_EXTENDER_ENABLED
     char dev_Mode[20] = {0}; 
     char buff[256] = {0};
+	char *tok = NULL;
+    char dns[256];
     #endif
 	int l_iMkdir_Res, l_iRet_Val;
 	int l_iRetry_Count = 0, ret;
@@ -837,25 +840,23 @@ int prepare_dhcp_conf (char *input)
         // set IP to interface to which dnsmasq should listen
         memset(buff, 0, sizeof(buff));
         snprintf(buff, sizeof(buff), "ip addr add %s dev %s", GRE_VLAN_IFACE_IP, GRE_VLAN_IFACE_NAME);
-        if (system(buff) != 0)
-        {
-            fprintf(stderr, "%s %d: unable to set ip to gre-vlan interface\n", __FUNCTION__, __LINE__);
-            fclose (l_fLocal_Dhcp_ConfFile);
-            return -1;
-        }
-
+        system(buff);
+        
         // edit the config file
         fprintf(l_fLocal_Dhcp_ConfFile, "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP.\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "port=0\n\n");
-
-        fprintf(l_fLocal_Dhcp_ConfFile, "#We don't want dnsmasq to read /etc/resolv.conf or any other file\n");
-        fprintf(l_fLocal_Dhcp_ConfFile, "no-resolv\n\n");
       
+      
+        fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to read /var/tmp/lte_resolv.conf \n");
+	memset (buff, 0, sizeof(buff)); 
+		snprintf(buff, sizeof(buff), "resolv-file=%s\n\n", TMP_RESOLVE_CONF);
+        fprintf(l_fLocal_Dhcp_ConfFile, buff);     
+       
         fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces\n");
         memset (buff, 0, sizeof(buff));
         snprintf(buff, sizeof(buff), "interface=%s\n\n", GRE_VLAN_IFACE_NAME);
         fprintf(l_fLocal_Dhcp_ConfFile, buff);
-
+       
         fprintf(l_fLocal_Dhcp_ConfFile, "#We need to supply the range of addresses available for lease and optionally a lease time\n");
         memset (buff, 0, sizeof(buff));
         snprintf(buff, sizeof(buff), "dhcp-range=%s\n\n", GRE_VLAN_IFACE_DHCP_OPT);
@@ -894,16 +895,42 @@ int prepare_dhcp_conf (char *input)
             strcpy(buff, "dhcp-option=6");
             if (strlen(dns_ip1) > 0)
             {
-                snprintf (buff, sizeof(buff), ",%s", dns_ip1);
+                strcat(buff,",");
+                strncat(buff,dns_ip1,strlen(dns_ip1));                
             }
             if (strlen(dns_ip2) > 0)
             {
-                snprintf (buff, sizeof(buff), ",%s", dns_ip2);
+                strcat(buff,",");
+                strncat(buff,dns_ip2,strlen(dns_ip2));  
             }
-            strcat (buff, "\n\n");
-            fprintf(l_fLocal_Dhcp_ConfFile, buff);
-        }
+            fprintf(l_fLocal_Dhcp_ConfFile,"%s\n", buff);
 
+#ifdef RDKB_EXTENDER_ENABLED
+            FILE *fp = NULL;
+            snprintf(dns,sizeof(dns),"%s",buff);
+            tok = strtok(dns, ","); // ignore dhcp-option=6
+            tok = strtok(NULL, ","); // first dns ip
+            if (tok)
+            {
+                fp = fopen(TMP_RESOLVE_CONF,"w");
+                if (NULL == fp)
+                {
+                    perror("Error in opening resolv.conf file in write mode");
+                    fclose(l_fLocal_Dhcp_ConfFile);
+                    return -1;
+                }
+
+                while (NULL != tok)
+                {
+                    printf ("\n tok :%s \n",tok);
+                    fprintf(fp,"nameserver %s\n",tok);
+                    tok = strtok(NULL, ",");
+                }
+                fclose(fp);  
+            }
+#endif
+        }
+	
         // Add DHCP option 43: Vendor specific data
         memset (buff, 0, sizeof(buff));
         sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcpv4_option_43", buff, sizeof(buff));
@@ -911,7 +938,11 @@ int prepare_dhcp_conf (char *input)
         {
             fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=43,%s\n", buff);
         }
-
+      
+        remove_file(DHCP_CONF);
+	fclose(l_fLocal_Dhcp_ConfFile);
+	copy_file(l_cLocalDhcpConf, DHCP_CONF);
+	remove_file(l_cLocalDhcpConf);
         return 0;        
     }
 
@@ -1202,7 +1233,8 @@ int prepare_dhcp_conf (char *input)
 
     // Dont add resolv-file if in norf captive portal mode
     if(FALSE == l_bRfCp)
-    {
+    { 
+        
         fprintf(l_fLocal_Dhcp_ConfFile, "domain-needed\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "bogus-priv\n");
 
