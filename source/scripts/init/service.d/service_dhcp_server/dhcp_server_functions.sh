@@ -709,8 +709,9 @@ prepare_dhcp_conf () {
    DEVICE_MODE=`syscfg get Device_Mode`
    if [ "1" = "$DEVICE_MODE" ] ; then
        GRE_VLAN_IFACE="eth1"
-       PRIVATE_NW_DHCP_LEASE_INFO=" 192.168.245.2,192.168.245.254,255.255.255.0,17280"
-       ip addr add 192.168.245.1 dev "$GRE_VLAN_IFACE"
+       PRIVATE_NW_DHCP_LEASE_INFO="192.168.246.2,192.168.246.254,255.255.255.0,17280"
+       brctl delif brlan0 "$GRE_VLAN_IFACE"
+       ifconfig "$GRE_VLAN_IFACE" 192.168.246.1 netmask 255.255.255.0
        echo "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP." >> $LOCAL_DHCP_CONF
        echo "port=0" >> $LOCAL_DHCP_CONF
 
@@ -737,6 +738,13 @@ prepare_dhcp_conf () {
            fi
            echo "$DNS2" >> $LOCAL_DHCP_CONF;
            DNS_FLAG=1
+       fi
+
+       OPT_43=`sysevent get dhcpv4_option_43`
+
+       if [ -n "$OPT_43" ] ; then
+           echo "#Vendor specific option" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=43,""$OPT_43" >> $LOCAL_DHCP_CONF
        fi
 
        cat $LOCAL_DHCP_CONF > $DHCP_CONF

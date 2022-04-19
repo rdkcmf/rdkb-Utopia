@@ -902,6 +902,14 @@ int prepare_dhcp_conf (char *input)
             fprintf(l_fLocal_Dhcp_ConfFile, buff);
         }
 
+        // Add DHCP option 43: Vendor specific data
+        memset (buff, 0, sizeof(buff));
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcpv4_option_43", buff, sizeof(buff));
+        if ((buff != NULL) && strlen(buff) > 0)
+        {
+            fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=43,%s\n", buff);
+        }
+
         return 0;        
     }
 
