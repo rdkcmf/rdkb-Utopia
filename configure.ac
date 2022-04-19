@@ -143,10 +143,29 @@ AC_ARG_ENABLE([extender],
 
 AM_CONDITIONAL([FEATURE_RDKB_EXTENDER], [test $FEATURE_RDKB_EXTENDER = yes])
 
+#FEATURE_RDKB_WANFAILOVER=no
+#AC_ARG_ENABLE([wanfailover],
+#        AS_HELP_STRING([--enable-wanfailover],[enable wanfailover]),
+#        [
+#          case "${enableval}" in
+#           yes) FEATURE_RDKB_WANFAILOVER=yes ;;
+#           no) AC_MSG_ERROR([wanfailover is disabled]) ;;
+#          *) AC_MSG_ERROR([bad value ${enableval} for --enable-wanfailover ]) ;;
+#           esac
+#           ],
+#         [echo "wanfailover is disabled."])
+
+#AM_CONDITIONAL([FEATURE_RDKB_WANFAILOVER], [test $FEATURE_RDKB_WANFAILOVER = yes])
+
 AM_COND_IF( [FEATURE_RDKB_EXTENDER], [
 AC_CONFIG_FILES([
     source/service_deviceMode/Makefile
 ])] )
+
+#AM_COND_IF( [FEATURE_RDKB_WANFAILOVER], [
+#AC_CONFIG_FILES([
+#    source/NetworkMonitor/Makefile
+#])] )
 
 AC_CONFIG_FILES(
 	Makefile

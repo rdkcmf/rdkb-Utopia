@@ -352,7 +352,16 @@ NOT_DEF:
 #include <sys/file.h>
 #include <sys/mman.h>
 
-#include "safec_lib_common.h"
+
+#if defined  (WAN_FAILOVER_SUPPORTED) || defined(RDKB_EXTENDER_ENABLED)
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
+
+#endif
 
 #if defined (_PROPOSED_BUG_FIX_)
 #include <linux/version.h>
@@ -369,10 +378,8 @@ NOT_DEF:
 #define WAN_FAILOVER_SUPPORT_CHECk_END
 #endif
 
-#define CCSP_SUBSYS "eRT."
 #define PORTMAPPING_2WAY_PASSTHROUGH
 #define MAX_URL_LEN 1024 
-#define IF_IPV6ADDR_MAX 16
 
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
 #define PARCON_WALLED_GARDEN_HTTP_PORT_SITEBLK "18080" // the same as the port in lighttpd.conf
@@ -537,8 +544,8 @@ FILE *firewallfp = NULL;
  */
 static char *service_name = "firewall";
 
+void* bus_handle = NULL;
 const char* const firewall_component_id = "ccsp.firewall";
-static void* bus_handle = NULL;
 //pthread_mutex_t firewall_check;
 fw_shm_mutex fwmutex;
 #define SERVICE_EV_COUNT 4
@@ -653,6 +660,16 @@ static char wan_service_status[20];       // wan_service-status
 
 static int ecm_wan_ipv6_num = 0;
 static char ecm_wan_ipv6[IF_IPV6ADDR_MAX][40];
+
+#ifdef WAN_FAILOVER_SUPPORTED
+
+#define PSM_MESH_WAN_IFNAME "dmsb.Mesh.WAN.Interface.Name"
+char mesh_wan_ifname[32];
+
+int mesh_wan_ipv6_num = 0;
+char mesh_wan_ipv6addr[IF_IPV6ADDR_MAX][40];
+
+#endif
 
 static int lan_local_ipv6_num = 0;
 static char lan_local_ipv6[IF_IPV6ADDR_MAX][40];
@@ -819,6 +836,11 @@ static BOOL isDefHttpsPortUsed = FALSE ;
 #define STRLEN_HTTP_URL_PREFIX  (7)
 #define STRLEN_HTTPS_URL_PREFIX (8)
 
+
+#ifdef WAN_FAILOVER_SUPPORTED
+   #define REMOTEWAN_ROUTER_IP "remotewan_router_ip"
+   #define REMOTEWAN_ROUTER_IPv6 "MeshWANInterface_UlaAddr"
+#endif
 /*
  * local date and time
  */
@@ -869,7 +891,6 @@ static inline int SET_IPT_PRI_MODULD(char *s){
 #define PSM_NAME_TRUE_STATIC_ASN_ENABLE "Enable"
 #endif
 
-#define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str)) 
 #define PSM_VALUE_GET_INS(name, pIns, ppInsArry) PsmGetNextLevelInstances(bus_handle, CCSP_SUBSYS, name, pIns, ppInsArry)
 
 #define PSM_NAME_SPEEDTEST_SERVER_CAPABILITY "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Server.Capability"
@@ -935,8 +956,44 @@ unsigned int Get_Device_Mode()
 }
 #endif
 
-
 #ifdef WAN_FAILOVER_SUPPORTED
+
+int create_socket() 
+{
+   int sockfd = 0;
+         sockfd = socket(AF_INET, SOCK_STREAM, 0);
+         if(sockfd == -1){
+         fprintf(stderr, "Could not get socket.\n");
+         return -1;
+         }
+         return sockfd;
+}
+
+char* get_iface_ipaddr(const char* iface_name)
+{
+   if(!iface_name )
+         return NULL;
+      struct ifreq ifr;
+      memset(&ifr,0,sizeof(struct ifreq));
+      int skfd = 0;
+      if ((skfd = create_socket() ) < 0) {
+         printf("socket error %s\n", strerror(errno));
+         return NULL;
+      }
+         
+      ifr.ifr_addr.sa_family = AF_INET   ;
+      strncpy(ifr.ifr_name, iface_name, IFNAMSIZ-1);
+      if ( ioctl(skfd, SIOCGIFADDR, &ifr)  < 0 )
+      {
+         printf("Failed to get %s IP Address\n",iface_name);
+         close(skfd);
+         return NULL;   
+      }
+      close(skfd);
+
+      return (inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+}
+
 static BOOL isServiceNeeded()
 {
         FIREWALL_DEBUG("Inside isServiceNeeded\n");
@@ -1905,12 +1962,6 @@ static int to_syslog_level (int log_leveli)
    }
 }
 
-#define IPV6_ADDR_SCOPE_MASK    0x00f0U
-#define IPV6_ADDR_SCOPE_GLOBAL  0
-#define IPV6_ADDR_SCOPE_LINKLOCAL     0x0020U
-#define _PROCNET_IFINET6  "/proc/net/if_inet6"
-#define MAX_INET6_PROC_CHARS 200
-
 typedef struct v6sample {
            unsigned int bitsToMask;
            char intrName[20];
@@ -2371,6 +2422,24 @@ static int prepare_globals_from_configuration(void)
    get_ip6address(lan_ifname, lan_local_ipv6, &lan_local_ipv6_num,IPV6_ADDR_SCOPE_LINKLOCAL);
    get_ip6address(current_wan_ifname, current_wan_ipv6, &current_wan_ipv6_num,IPV6_ADDR_SCOPE_GLOBAL);
 
+   #if defined  (WAN_FAILOVER_SUPPORTED) || defined(RDKB_EXTENDER_ENABLED)
+
+   if(bus_handle != NULL)
+   {
+         memset(mesh_wan_ifname,0,sizeof(mesh_wan_ifname));
+
+         rc = PSM_VALUE_GET_STRING(PSM_MESH_WAN_IFNAME,pStr);
+         if(rc == CCSP_SUCCESS && pStr != NULL){
+               safec_rc = strcpy_s(mesh_wan_ifname, sizeof(mesh_wan_ifname),pStr);
+               ERR_CHK(safec_rc);
+               Ansc_FreeMemory_Callback(pStr);
+               pStr = NULL;
+         }      
+   }
+   memset(mesh_wan_ipv6addr,0,sizeof(mesh_wan_ipv6addr));
+   get_ip6address(mesh_wan_ifname, mesh_wan_ipv6addr, &mesh_wan_ipv6_num,IPV6_ADDR_SCOPE_GLOBAL);
+   #endif 
+
    if (0 == strcmp("true", container_enabled)) {
       isContainerEnabled = bIsContainerEnabled();
    }
@@ -2443,6 +2512,7 @@ static int prepare_globals_from_configuration(void)
        }
        }   
    }
+
    /* get value from PSM */
    if(bus_handle != NULL && isWanStaticIPReady)
    {
@@ -11180,7 +11250,19 @@ static int prepare_lnf_internet_rules(FILE *mangle_fp,int iptype)
         if (strlen(lnf_ifName) > 0)
         {
             memset(ipv6prefix, 0, sizeof(ipv6prefix));
-            safec_rc = sprintf_s(cmd_buff, sizeof(cmd_buff),"%s_ipaddr_v6",lnf_ifName);
+            #ifdef WAN_FAILOVER_SUPPORTED
+               if (0 == checkIfULAEnabled())
+               {
+                  safec_rc = sprintf_s(cmd_buff, sizeof(cmd_buff),"%s_ipaddr_v6_ula",lnf_ifName);
+               }
+               else
+               {
+                  safec_rc = sprintf_s(cmd_buff, sizeof(cmd_buff),"%s_ipaddr_v6",lnf_ifName);
+               }
+            #else
+               safec_rc = sprintf_s(cmd_buff, sizeof(cmd_buff),"%s_ipaddr_v6",lnf_ifName);
+            #endif
+
             if(safec_rc < EOK)
             {
               ERR_CHK(safec_rc);
@@ -11471,10 +11553,16 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(nat_fp, "%s\n", ":postrouting_tolan - [0:0]");
    fprintf(nat_fp, "%s\n", ":postrouting_plugins - [0:0]");
    fprintf(nat_fp, "%s\n", ":postrouting_ephemeral - [0:0]");
+
 #if defined(_COSA_BCM_MIPS_)
    fprintf(nat_fp, "-A POSTROUTING -m physdev --physdev-in %s -j ACCEPT\n", emta_wan_ifname);
    fprintf(nat_fp, "-A POSTROUTING -m physdev --physdev-out %s -j ACCEPT\n", emta_wan_ifname);
 #endif
+
+#if WAN_FAILOVER_SUPPORTED
+   redirect_dns_to_extender(nat_fp,AF_INET);
+#endif 
+
 #if defined (_XB6_PRODUCT_REQ_)
    do_ipv4_norf_captiveportalrule (nat_fp);
 #endif
@@ -11483,6 +11571,9 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    do_ipv4_selfheal_enable_rule (nat_fp);
 #endif
 #endif
+
+
+
    fprintf(nat_fp, "-A PREROUTING -j prerouting_ephemeral\n");
    fprintf(nat_fp, "-A PREROUTING -j prerouting_mgmt_override\n");
    fprintf(nat_fp, "-A PREROUTING -i %s -j prerouting_fromlan\n", lan_ifname);
@@ -12646,6 +12737,104 @@ static int prepare_MoCA_bridge_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat
 }
 #endif
 
+
+#ifdef WAN_FAILOVER_SUPPORTED
+void  redirect_dns_to_extender(FILE *nat_fp,int family)
+{
+   FIREWALL_DEBUG("Entering redirect_dns_to_extender,current_wan_ifname is %s , default wan is %s\n" COMMA current_wan_ifname COMMA default_wan_ifname);
+   errno_t safec_rc = -1;
+    char* tok = NULL;
+    char net_query[MAX_QUERY] = {0};
+    char net_resp[MAX_QUERY] = {0};
+    char inst_resp[MAX_QUERY] = {0};
+    char iot_enabled[20];
+ 
+   if  ( (Get_Device_Mode() != EXTENDER_MODE ) && strcmp(current_wan_ifname,default_wan_ifname ) != 0 ) 
+   {
+         FIREWALL_DEBUG("Device in wan failover state\n");
+ 
+         char dest_ip[128] = {0};
+         memset(dest_ip,0,sizeof(dest_ip));
+         if(family == AF_INET)
+         {
+               sysevent_get(sysevent_fd, sysevent_token,REMOTEWAN_ROUTER_IP, dest_ip, sizeof(dest_ip));
+               if (dest_ip[0] == '\0'  )
+               {
+                      memset(dest_ip,0,sizeof(dest_ip));
+                      safec_rc = strcpy_s(dest_ip, sizeof(dest_ip),"192.168.246.1");
+                      ERR_CHK(safec_rc);
+               }
+         }
+         else if (family == AF_INET6)
+         {
+               sysevent_get(sysevent_fd, sysevent_token,REMOTEWAN_ROUTER_IPv6, dest_ip, sizeof(dest_ip));
+         }
+         else
+            return;
+
+      if (dest_ip[0] != '\0' && strlen(dest_ip) != 0 )
+      {
+        char *token =NULL ;
+        token = strtok(dest_ip,"/");
+
+         snprintf(net_query, sizeof(net_query), "ipv4-instances");
+         sysevent_get(sysevent_fd, sysevent_token, net_query, inst_resp, sizeof(inst_resp));
+
+         tok = strtok(inst_resp, " ");
+
+         if (tok) 
+         {
+               do {
+                 memset(net_query,0,sizeof(net_query));
+                 memset(net_resp,0,sizeof(net_resp));
+
+                 snprintf(net_query, sizeof(net_query), "ipv4_%s-status", tok);
+                 sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+                 if (strcmp("up", net_resp) != 0)
+                     continue;
+
+                 memset(net_query,0,sizeof(net_query));
+
+                 memset(net_resp,0,sizeof(net_resp));
+                 snprintf(net_query, sizeof(net_query), "ipv4_%s-ifname", tok);
+                 sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
+
+                  if (net_resp[0] != '\0' && strlen(net_resp) != 0 )
+                  {
+                        fprintf(nat_fp, "-A PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",net_resp,token);
+                        fprintf(nat_fp, "-A PREROUTING -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",net_resp,token);
+                  }
+
+               } while ((tok = strtok(NULL, " ")) != NULL);       
+         }
+
+         memset(iot_enabled, 0, sizeof(iot_enabled));
+         syscfg_get(NULL, "lost_and_found_enable", iot_enabled, sizeof(iot_enabled));
+     
+         if(0==strcmp("true",iot_enabled))
+         {
+            memset(iot_ifName, 0, sizeof(iot_ifName));
+            syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
+            if( strstr( iot_ifName, "l2sd0.106")) {
+                     syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
+            }
+
+            if (iot_ifName[0] != '\0' && strlen(iot_ifName) != 0 )
+            {
+               fprintf(nat_fp, "-A PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",iot_ifName,token);
+               fprintf(nat_fp, "-A PREROUTING -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",iot_ifName,token);  
+            }
+
+         }
+         fprintf(nat_fp, "-A PREROUTING -i br403 -p udp --dport 53 -j DNAT --to-destination %s\n",token);
+         fprintf(nat_fp, "-A PREROUTING -i br403 -p tcp --dport 53 -j DNAT --to-destination %s\n",token);  
+      }
+
+   }
+   FIREWALL_DEBUG("Exiting redirect_dns_to_extender\n");
+   return ;
+}
+#endif
 /*
  *  Procedure     : prepare_enabled_ipv4_firewall
  *  Purpose       : prepare ipv4 firewall
@@ -13269,16 +13458,16 @@ static void do_ipv6_UIoverWAN_filter(FILE* fp) {
         /* Blocking UI access on Backup WAN or in case ULA addressing */
          if (0 == checkIfULAEnabled())
          {
-               char nat66_ipv6_addr[128];
-               memset(nat66_ipv6_addr,0,sizeof(nat66_ipv6_addr));
-               sysevent_get(sysevent_fd, sysevent_token, "nat66_ipv6_addr", nat66_ipv6_addr, sizeof(nat66_ipv6_addr));
-               if ( strlen(nat66_ipv6_addr)!= 0 )
+            int i ;
+            for(i = 0; i < mesh_wan_ipv6_num; i++)
+            {
+               if(mesh_wan_ipv6addr[i][0] != '\0' )
                {
-                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname,(char *)nat66_ipv6_addr);
-                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", current_wan_ifname,(char *)nat66_ipv6_addr);
-                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 8080 -j DROP\n", current_wan_ifname,(char *)nat66_ipv6_addr);
+                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname,(char *)mesh_wan_ipv6addr[i]);
+                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", current_wan_ifname,(char *)mesh_wan_ipv6addr[i]);
+                  fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 8080 -j DROP\n", current_wan_ifname,(char *)mesh_wan_ipv6addr[i]);
                }
-
+            }
          }
         #endif
       }
@@ -13368,23 +13557,27 @@ static int checkIfULAEnabled()
 static void applyIpv6ULARules(FILE* fp)
 {
    char prefix[64] ;
-   char nat66_ipv6_addr[128] ;
 
    memset(prefix,0,sizeof(prefix));
-   memset(nat66_ipv6_addr,0,sizeof(nat66_ipv6_addr));
+   int i ;
 
-    sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix_ula", prefix, sizeof(prefix));
-    sysevent_get(sysevent_fd, sysevent_token, "nat66_ipv6_addr", nat66_ipv6_addr, sizeof(nat66_ipv6_addr));
+   sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix_ula", prefix, sizeof(prefix));
 
-   if (strlen(prefix) != 0 && strlen(nat66_ipv6_addr)!= 0 )
+   if (strlen(prefix) != 0 )
    {
         char *token_pref =NULL;
         token_pref = strtok(prefix,"/");
-         fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,nat66_ipv6_addr,token_pref);
-         fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,nat66_ipv6_addr);
 
+            for(i = 0; i < mesh_wan_ipv6_num; i++)
+            {
+               if(mesh_wan_ipv6addr[i][0] != '\0' )
+               {
+                  fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,(char *)mesh_wan_ipv6addr[i],token_pref);
+                  fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,(char *)mesh_wan_ipv6addr[i]);
+               }
+            }
 
-         char cmd[100];
+          char cmd[100];
           char out[100];
           char interface_name[32] = {0};
           char *token = NULL; 
@@ -13429,8 +13622,14 @@ static void applyIpv6ULARules(FILE* fp)
                       if (prefix[0] != '\0' && strlen(prefix) != 0 )
                       {
                               token_pref = strtok(prefix,"/");
-                              fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,nat66_ipv6_addr,token_pref);
-                              fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,nat66_ipv6_addr);   
+                              for(i = 0; i < mesh_wan_ipv6_num; i++)
+                              {
+                                 if(mesh_wan_ipv6addr[i][0] != '\0' )
+                                 {
+                                    fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,(char *)mesh_wan_ipv6addr[i],token_pref);
+                                    fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,(char *)mesh_wan_ipv6addr[i]);
+                                 }
+                              }
                       }
                   }
               }
@@ -13445,6 +13644,10 @@ static void do_ipv6_nat_table(FILE* fp)
     fprintf(fp, "*nat\n");
 	fprintf(fp, "%s\n", ":prerouting_devices - [0:0]");
 	fprintf(fp, "%s\n", ":prerouting_redirect - [0:0]");
+
+#ifdef WAN_FAILOVER_SUPPORTED
+      redirect_dns_to_extender(fp,AF_INET6);
+#endif 
 
 #ifdef MULTILAN_FEATURE
    prepare_multinet_prerouting_nat_v6(fp);
@@ -13685,6 +13888,7 @@ int prepare_ipv6_firewall(const char *fw_file)
 #endif
 	
 	do_ipv6_filter_table(filter_fp);
+
 #if !(defined(_COSA_INTEL_XB3_ARM_) || defined(_COSA_BCM_MIPS_))
         prepare_rabid_rules(filter_fp, mangle_fp, IP_V6);
 #else
@@ -14396,7 +14600,18 @@ v6GPFirewallRuleNext:
       // Basic RPF check on the egress & ingress traffic
       char prefix[129];
       prefix[0] = 0;
-      sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", prefix, sizeof(prefix));
+      #ifdef WAN_FAILOVER_SUPPORTED
+      if (0 == checkIfULAEnabled())
+      {
+         sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix_ula", prefix, sizeof(prefix));
+      }  
+      else
+      {
+         sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", prefix, sizeof(prefix));
+      }
+      #else
+         sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", prefix, sizeof(prefix));
+      #endif
       if ( '\0' != prefix[0] ) {
          //fprintf(fp, "-A FORWARD ! -s %s -i %s -m limit --limit 10/sec -j LOG --log-level %d --log-prefix \"UTOPIA: FW. IPv6 FORWARD anti-spoofing\"\n", prefix, lan_ifname,syslog_level);
          //fprintf(fp, "-A FORWARD ! -s %s -i %s -m limit --limit 10/sec -j REJECT --reject-with icmp6-adm-prohibited\n", prefix, lan_ifname);
@@ -14461,14 +14676,39 @@ v6GPFirewallRuleNext:
                        EvoStreamEnable = FALSE;
 		} 
 		lan_prefix[0] = 0;
-                sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", lan_prefix, sizeof(lan_prefix));
+      #ifdef WAN_FAILOVER_SUPPORTED
+
+      if (0 == checkIfULAEnabled())
+      {
+         sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix_ula", lan_prefix, sizeof(lan_prefix));
+      }
+      else
+      {
+         sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", lan_prefix, sizeof(lan_prefix));
+      }
+
+      #else
+            sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", lan_prefix, sizeof(lan_prefix));
+      #endif
 		for(cnt = 0;cnt < inf_num;cnt++)
 		{
 			if(EvoStreamEnable)
 			{
 		    		if(strcmp(iot_ifName,Interface[cnt]) != 0) // not to add forward rule for LnF
 				{	
-        				snprintf(inf_sysevent, sizeof(inf_sysevent), "%s_ipaddr_v6",Interface[cnt]);
+
+                  #ifdef WAN_FAILOVER_SUPPORTED
+                  if (0 == checkIfULAEnabled())
+                  {
+                     snprintf(inf_sysevent, sizeof(inf_sysevent), "%s_ipaddr_v6_ula",Interface[cnt]);
+                  }
+                  else
+                  {
+                     snprintf(inf_sysevent, sizeof(inf_sysevent), "%s_ipaddr_v6",Interface[cnt]);
+                  }
+                  #else
+                     snprintf(inf_sysevent, sizeof(inf_sysevent), "%s_ipaddr_v6",Interface[cnt]);
+                  #endif
 					inf_prefix[0] = 0;
                 			sysevent_get(sysevent_fd, sysevent_token, inf_sysevent, inf_prefix, sizeof(inf_prefix));
 					if((inf_prefix[0] != '\0') && (lan_prefix[0] != '\0'))

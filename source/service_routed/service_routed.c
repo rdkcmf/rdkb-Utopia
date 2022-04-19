@@ -69,6 +69,7 @@
 #include "ccsp_psm_helper.h"
 #include <ccsp_base_api.h>
 #include "ccsp_memory.h"
+static const char* const service_routed_component_id = "ccsp.routed";
 #endif
 #include "secure_wrapper.h"
 #define PROG_NAME       "SERVICE-ROUTED"
@@ -95,7 +96,6 @@ static void* bus_handle = NULL;
 #define PSM_LANMANAGEMENTENTRY_LAN_IPV6_ENABLE "dmsb.lanmanagemententry.lanipv6enable"
 #define PSM_LANMANAGEMENTENTRY_LAN_ULA_ENABLE  "dmsb.lanmanagemententry.lanulaenable"
 #define SYSEVENT_VALID_ULA_ADDRESS "valid_ula_address"
-static const char* const service_routed_component_id = "ccsp.routed";
 static int getULAAddressFromInterface(char *ulaAddress);
 #endif
 
@@ -175,7 +175,7 @@ static int fw_restart(struct serv_routed *sr)
     return 0;
 }
 
-#ifdef _HUB4_PRODUCT_REQ_
+#if defined (_HUB4_PRODUCT_REQ_) || defined (RDKB_EXTENDER_ENABLED)
 
 static int dbusInit( void )
 {
@@ -205,6 +205,10 @@ static int dbusInit( void )
     }
     return ret;
 }
+
+#endif
+
+#ifdef _HUB4_PRODUCT_REQ_
 
 static int getLanIpv6Info(int *ipv6_enable, int *ula_enable)
 {
@@ -514,12 +518,13 @@ static int updateExtenderConf(FILE *pFp, int sefd, token_t setok, int deviceMode
         {
             char prefix[64] = {0};
             char m_flag[16] = {0}, o_flag[16] = {0}, ra_mtu[16] = {0};
-            char preferred_lft[16] = {0}, valid_lft[16] = {0};
+      //      char preferred_lft[16] = {0}, valid_lft[16] = {0};
             char dh6s_en[16] = {0};
 
             sysevent_get(sefd, setok, "ipv6_prefix", prefix, sizeof(prefix));
             fprintf(pFp, "# Based on prefix=%s\n",prefix);
 
+/*
             sysevent_get(sefd, setok, "ipv6_prefix_prdtime", preferred_lft, sizeof(preferred_lft));
             sysevent_get(sefd, setok, "ipv6_prefix_vldtime", valid_lft, sizeof(valid_lft));
 
@@ -527,10 +532,11 @@ static int updateExtenderConf(FILE *pFp, int sefd, token_t setok, int deviceMode
                 snprintf(preferred_lft, sizeof(preferred_lft), "300");
             if (atoi(valid_lft) <= 0)
                 snprintf(valid_lft, sizeof(valid_lft), "300");
-
+*/
             fprintf(pFp, "interface %s\n", pInterface_name);
             fprintf(pFp, "   no ipv6 nd suppress-ra\n");
-            fprintf(pFp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+ //           fprintf(pFp, "   ipv6 nd prefix %s %s %s\n", prefix, valid_lft, preferred_lft);
+            fprintf(pFp, "   ipv6 nd prefix %s\n", prefix);
             fprintf(pFp, "   ipv6 nd ra-interval 3\n");
             fprintf(pFp, "   ipv6 nd ra-lifetime 180\n");
             syscfg_get(NULL, "router_managed_flag", m_flag, sizeof(m_flag));
@@ -1179,6 +1185,11 @@ static int gen_zebra_conf(int sefd, token_t setok)
                     {
                             sysevent_get(sefd, setok, "backup_wan_ipv6_nameserver", name_servs + strlen(name_servs), 
                             sizeof(name_servs) - strlen(name_servs));
+                            if (strlen(name_servs) == 0 )
+                            {
+                                sysevent_get(sefd, setok, "ipv6_nameserver", name_servs + strlen(name_servs), 
+                                    sizeof(name_servs) - strlen(name_servs));    
+                            }
                     }
                     else
                     {
@@ -1514,6 +1525,7 @@ static int radv_start(struct serv_routed *sr)
         return -1;
     }
 #else
+
     if (!sr->lan_ready) {
         fprintf(stderr, "%s: LAN is not ready !\n", __FUNCTION__);
         return -1;
@@ -1790,7 +1802,7 @@ static int serv_routed_restart(struct serv_routed *sr)
 
 static int serv_routed_init(struct serv_routed *sr)
 {
-    char wan_st[16], lan_st[16];
+    char wan_st[16];
 
     memset(sr, 0, sizeof(struct serv_routed));
 
@@ -1809,10 +1821,14 @@ static int serv_routed_init(struct serv_routed *sr)
     if (strcmp(wan_st, "started") == 0)
         sr->wan_ready = true;
 
-    sysevent_get(sr->sefd, sr->setok, "lan-status", lan_st, sizeof(lan_st));
-    if (strcmp(lan_st, "started") == 0)
+    #ifdef RDKB_EXTENDER_ENABLED
         sr->lan_ready = true;
-
+    #else
+	char lan_st[16];
+        sysevent_get(sr->sefd, sr->setok, "lan-status", lan_st, sizeof(lan_st));
+        if (strcmp(lan_st, "started") == 0)
+            sr->lan_ready = true;
+    #endif
     return 0;
 }
 
@@ -1852,13 +1868,14 @@ static int routeset_ula(struct serv_routed *sr)
         char lan_if[32] ;
     char pref_rx[16];
 
-    char cmd[100];
+    char cmd[256];
     char out[100];
     char interface_name[32] = {0};
     char *token = NULL; 
     char *token_pref = NULL ;
     char *pt;
 
+    char lan_ipv6_addr[128]={0};
     memset(prefix,0,sizeof(prefix));
     memset(lan_if,0,sizeof(lan_if));
 
@@ -1887,6 +1904,16 @@ static int routeset_ula(struct serv_routed *sr)
         SetV6Route(lan_if,prefix);
         char *token;
         token = strtok(prefix,"/");
+        memset(lan_ipv6_addr,0,sizeof(lan_ipv6_addr));
+        sysevent_get(sr->sefd, sr->setok,"lan_ipaddr_v6", lan_ipv6_addr, sizeof(lan_ipv6_addr));
+        if (strlen(lan_ipv6_addr) != 0 )
+        {
+            memset(cmd,0,sizeof(cmd));
+            snprintf(cmd,sizeof(cmd),"ip -6 addr del %s/64 dev %s",lan_ipv6_addr,lan_if);
+        }
+
+        sysevent_set(sr->sefd, sr->setok, "lan_ipaddr_v6",token, 0);
+
         AssignIpv6Addr(lan_if,token,pref_len);
     }
     
@@ -2061,7 +2088,7 @@ int main(int argc, char *argv[])
         usage();
         exit(1);
     }
-#ifdef _HUB4_PRODUCT_REQ_
+#if defined (_HUB4_PRODUCT_REQ_) || defined (RDKB_EXTENDER_ENABLED)
     /* dbus init based on bus handle value */
     if(bus_handle ==  NULL)
         dbusInit();

@@ -839,7 +839,21 @@ int prepare_dhcp_conf (char *input)
 
         // set IP to interface to which dnsmasq should listen
         memset(buff, 0, sizeof(buff));
-        snprintf(buff, sizeof(buff), "ip addr add %s dev %s", GRE_VLAN_IFACE_IP, GRE_VLAN_IFACE_NAME);
+        int ret_val;
+        char *psmStrValue = NULL;
+        char mesh_wan_ifname[16] = {0};
+        memset(mesh_wan_ifname, 0, sizeof(mesh_wan_ifname));
+
+        ret_val = PSM_VALUE_GET_STRING(MESH_WAN_IFNAME, psmStrValue);
+
+        if (CCSP_SUCCESS == ret_val && psmStrValue != NULL)
+        {
+                strncpy(mesh_wan_ifname, psmStrValue, sizeof(mesh_wan_ifname));
+                fprintf(stderr, "mesh_wan_ifname is %s\n", mesh_wan_ifname);
+                Ansc_FreeMemory_Callback(psmStrValue);
+                psmStrValue = NULL;
+        }
+        snprintf(buff, sizeof(buff), "ip addr add %s/24 dev %s", GRE_VLAN_IFACE_IP, mesh_wan_ifname);
         system(buff);
         
         // edit the config file
@@ -854,7 +868,7 @@ int prepare_dhcp_conf (char *input)
        
         fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces\n");
         memset (buff, 0, sizeof(buff));
-        snprintf(buff, sizeof(buff), "interface=%s\n\n", GRE_VLAN_IFACE_NAME);
+        snprintf(buff, sizeof(buff), "interface=%s\n\n", mesh_wan_ifname);
         fprintf(l_fLocal_Dhcp_ConfFile, buff);
        
         fprintf(l_fLocal_Dhcp_ConfFile, "#We need to supply the range of addresses available for lease and optionally a lease time\n");
@@ -865,6 +879,8 @@ int prepare_dhcp_conf (char *input)
         bool dns_flag = 0;
         char dns_ip1[16] = {0};
         char dns_ip2[16] = {0};
+        char dns1_ipv6[128] = {0};
+        char dns2_ipv6[128] = {0};
         struct sockaddr_in sa;
         memset (buff, 0, sizeof(buff));
         
@@ -889,6 +905,23 @@ int prepare_dhcp_conf (char *input)
             // nameserver IP not a valid v4 IP, so memset buffer
             memset(dns_ip2, 0, sizeof(dns_ip2));
         }
+        struct in6_addr ipv6_addr;
+        memset(&ipv6_addr, 0, sizeof(struct in6_addr));
+
+        memset(dns1_ipv6, 0, sizeof(dns1_ipv6));
+        memset(dns_ip2, 0, sizeof(dns_ip2));
+
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "cellular_wan_v6_dns1", dns1_ipv6, sizeof(dns1_ipv6));
+        if (inet_pton(AF_INET6, dns1_ipv6, &ipv6_addr))
+        {
+            dns_flag = 1;
+        }
+
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "cellular_wan_v6_dns2", dns2_ipv6, sizeof(dns2_ipv6));
+        if (inet_pton(AF_INET6, dns2_ipv6, &ipv6_addr))
+        {
+            dns_flag = 1;
+        }
 
         if (dns_flag)
         {
@@ -902,6 +935,18 @@ int prepare_dhcp_conf (char *input)
             {
                 strcat(buff,",");
                 strncat(buff,dns_ip2,strlen(dns_ip2));  
+            }
+
+            if (strlen(dns1_ipv6) > 0)
+            {
+                strcat(buff,",");
+                strncat(buff,dns1_ipv6,strlen(dns1_ipv6));  
+            }
+
+            if (strlen(dns2_ipv6) > 0)
+            {
+                strcat(buff,",");
+                strncat(buff,dns2_ipv6,strlen(dns2_ipv6));  
             }
             fprintf(l_fLocal_Dhcp_ConfFile,"%s\n", buff);
 

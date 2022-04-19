@@ -712,10 +712,10 @@ if [ "x$rdkb_extender" = "xtrue" ];then
    TMP_RESOLVE_CONF=/tmp/lte_resolv.conf   
    DEVICE_MODE=`syscfg get Device_Mode`
    if [ "1" = "$DEVICE_MODE" ] ; then
-       GRE_VLAN_IFACE="eth1"
+       mesh_wan_ifname=$(psmcli get dmsb.Mesh.WAN.Interface.Name)
        PRIVATE_NW_DHCP_LEASE_INFO="192.168.246.2,192.168.246.254,255.255.255.0,17280"
-       brctl delif brlan0 "$GRE_VLAN_IFACE"
-       ifconfig "$GRE_VLAN_IFACE" 192.168.246.1 netmask 255.255.255.0
+       #brctl delif brlan0 "$GRE_VLAN_IFACE"
+       ip addr add 192.168.246.1/24 dev "$mesh_wan_ifname"
        echo "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP." >> $LOCAL_DHCP_CONF
        echo "port=0" >> $LOCAL_DHCP_CONF
 
@@ -723,7 +723,7 @@ if [ "x$rdkb_extender" = "xtrue" ];then
        echo "resolv-file=$TMP_RESOLVE_CONF" >> $LOCAL_DHCP_CONF
 
        echo "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces" >> $LOCAL_DHCP_CONF
-       echo "interface=""$GRE_VLAN_IFACE" >> $LOCAL_DHCP_CONF
+       echo "interface=""$mesh_wan_ifname" >> $LOCAL_DHCP_CONF
 
        echo "#We need to supply the range of addresses available for lease and optionally a lease time" >> $LOCAL_DHCP_CONF
        echo "dhcp-range=""$PRIVATE_NW_DHCP_LEASE_INFO" >> $LOCAL_DHCP_CONF
@@ -766,9 +766,25 @@ if [ "x$rdkb_extender" = "xtrue" ];then
          WAN_DNS=`echo "$WAN_DNS" "$DNS2"`
       fi
       fi
+<<<<<<< HEAD
        return
    fi
  fi	 
+=======
+
+      IPV6_DNS1=`sysevent get cellular_wan_v6_dns1`
+      IPV6_DNS2=`sysevent get cellular_wan_v6_dns2`
+      if [ "x$IPV6_DNS1" != "x" ];then
+            echo "nameserver $IPV6_DNS1" >> $TMP_RESOLVE_CONF
+
+      fi
+      if [ "x$IPV6_DNS2" != "x" ];then
+            echo "nameserver $IPV6_DNS2" >> $TMP_RESOLVE_CONF
+
+      fi
+      return
+   fi	 
+>>>>>>> 9a0e7ea3b... RDKB-41654 : iptables between Primary Gateway's GRE WAN VLAN and wwan0
 
    RF_CAPTIVE_PORTAL="false"
    SECWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`

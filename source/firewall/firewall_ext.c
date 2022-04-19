@@ -3,54 +3,24 @@
 #include "firewall.h"
 #include "firewall_custom.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
 #include<errno.h> 
+
+
 
 extern int  sysevent_fd ;
 extern token_t        sysevent_token;
 
-static char wan_ifname[32] ;
+static char cellular_ifname[32] ;
+static char cellular_ipaddr[32] ;
 
+extern char mesh_wan_ifname[32];
+static char mesh_wan_ipaddr[32];
 
-int create_socket() 
-{
-   int sockfd = 0;
-         sockfd = socket(AF_INET, SOCK_STREAM, 0);
-         if(sockfd == -1){
-         fprintf(stderr, "Could not get socket.\n");
-         return -1;
-         }
-         return sockfd;
-}
+extern int mesh_wan_ipv6_num ;
+extern char mesh_wan_ipv6addr[IF_IPV6ADDR_MAX][40];
 
-char* get_iface_ipaddr(const char* iface_name)
-{
-   if(!iface_name )
-         return NULL;
-      struct ifreq ifr;
-      memset(&ifr,0,sizeof(struct ifreq));
-      int skfd = 0;
-      if ((skfd = create_socket() ) < 0) {
-         printf("socket error %s\n", strerror(errno));
-         return NULL;
-      }
-         
-      ifr.ifr_addr.sa_family = AF_INET;
-      strncpy(ifr.ifr_name, iface_name, IFNAMSIZ-1);
-      if ( ioctl(skfd, SIOCGIFADDR, &ifr)  < 0 )
-      {
-         printf("Failed to get %s IP Address\n",iface_name);
-         close(skfd);
-         return NULL;   
-      }
-      close(skfd);
-      return (inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
-}
+int cellular_wan_ipv6_num = 0;
+char cellular_wan_ipv6addr[IF_IPV6ADDR_MAX][40];
 
 int isExtProfile()
 {
@@ -119,16 +89,31 @@ int prepare_ipv4_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
    FIREWALL_DEBUG("Entering prepare_ipv4_rule_ex_mode \n"); 
    prepare_subtables_ext_mode(raw_fp, mangle_fp, nat_fp, filter_fp);
 
+   if (strlen(cellular_ipaddr) != 0 )
+      fprintf(nat_fp, "-A  POSTROUTING -o %s -j SNAT --to-source %s\n",cellular_ifname,cellular_ipaddr);
 
-   fprintf(filter_fp, "-A INPUT -i %s -j wanattack\n", wan_ifname);
 
-   do_wan2self_attack(filter_fp,get_iface_ipaddr(wan_ifname));
+   if (strlen(mesh_wan_ipaddr) != 0 )
+   {
+      fprintf(nat_fp, "-A  PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",mesh_wan_ifname,mesh_wan_ipaddr);
+      fprintf(nat_fp, "-A  PREROUTING -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",mesh_wan_ifname,mesh_wan_ipaddr);      
+   }
 
-   fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",wan_ifname);
+   fprintf(filter_fp, "-A INPUT -i lo -p udp --dport 53 -j DROP \n");
+   fprintf(filter_fp, "-A INPUT -i lo -p tcp --dport 53 -j DROP \n");
 
-   do_ssh_IpAccessTable(filter_fp, "22", AF_INET, wan_ifname);
+   fprintf(filter_fp, "-A INPUT -i %s -j wanattack\n", cellular_ifname);
+
+   do_wan2self_attack(filter_fp,cellular_ipaddr);
+
+   fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",cellular_ifname);
+
+   do_ssh_IpAccessTable(filter_fp, "22", AF_INET, cellular_ifname);
 
    fprintf(filter_fp, "-A xlog_accept_wan2lan -j ACCEPT\n");
+
+   fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",mesh_wan_ifname,cellular_ifname);
+   fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",cellular_ifname,mesh_wan_ifname);
 
  //  do_logs(filter_fp);
 
@@ -153,8 +138,8 @@ int filter_ipv6_icmp_limit_rules(FILE *fp)
       fprintf(fp, "-A INPUT -p icmpv6 -m icmp6 --icmpv6-type 4/1 -m limit --limit 10/sec -j ACCEPT\n"); // Unknown header type
       fprintf(fp, "-A INPUT -p icmpv6 -m icmp6 --icmpv6-type 4/2 -m limit --limit 10/sec -j ACCEPT\n"); // Unknown option
 
-      fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", wan_ifname); // Echo request
-      fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", wan_ifname); // Echo reply
+      fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 128 -j PING_FLOOD\n", cellular_ifname); // Echo request
+      fprintf(fp, "-A INPUT -i %s -p icmpv6 -m icmp6 --icmpv6-type 129 -m limit --limit 10/sec -j ACCEPT\n", cellular_ifname); // Echo reply
 
       // Should only come from LINK LOCAL addresses, rate limited except 100/second for NA/NS and RS
       fprintf(fp, "-A INPUT -p icmpv6 -m icmp6 --icmpv6-type 135 -m limit --limit 100/sec -j ACCEPT\n"); // Allow NS from any type source address
@@ -226,15 +211,43 @@ int prepare_ipv6_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
       /*
     * filter
     */
+
+   int i ;
+    for(i = 0; i < mesh_wan_ipv6_num; i++){
+
+      if(mesh_wan_ipv6addr[i][0] != '\0' )
+      {
+         fprintf(nat_fp, "-A  PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",mesh_wan_ifname,mesh_wan_ipv6addr[i]);
+         fprintf(nat_fp, "-A  PREROUTING -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",mesh_wan_ifname,mesh_wan_ipv6addr[i]);  
+      }
+    }
+
+   memset(cellular_wan_ipv6addr,0,sizeof(cellular_wan_ipv6addr));
+   get_ip6address(cellular_ifname, cellular_wan_ipv6addr, &cellular_wan_ipv6_num,IPV6_ADDR_SCOPE_GLOBAL);
+
+    for(i = 0; i < cellular_wan_ipv6_num; i++)
+    {
+      if(cellular_wan_ipv6addr[i][0] != '\0' )
+      {
+         fprintf(nat_fp, "-A  POSTROUTING -o %s -j SNAT --to-source %s\n",cellular_ifname,cellular_wan_ipv6addr[i]);
+      }
+    }
+
    fprintf(filter_fp, "%s\n", "*filter");
    fprintf(filter_fp, "%s\n", ":LOG_SSH_DROP - [0:0]");
    fprintf(filter_fp, "%s\n", ":SSH_FILTER - [0:0]");
    fprintf(filter_fp, "%s\n", ":PING_FLOOD - [0:0]");
 
-   fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",wan_ifname);
+   fprintf(filter_fp, "-A INPUT -i lo -p udp --dport 53 -j DROP \n");
+   fprintf(filter_fp, "-A INPUT -i lo -p tcp --dport 53 -j DROP \n");
+   
+   fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 22 -j SSH_FILTER\n",cellular_ifname);
 
    filter_ipv6_icmp_limit_rules(filter_fp);
-   do_ssh_IpAccessTable(filter_fp, "22", AF_INET6, wan_ifname);
+   do_ssh_IpAccessTable(filter_fp, "22", AF_INET6, cellular_ifname);
+
+   fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",mesh_wan_ifname,cellular_ifname);
+   fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",cellular_ifname,mesh_wan_ifname);
 
    return 0;
 }
@@ -253,8 +266,19 @@ int service_start_ext_mode ()
    char *filename1 = "/tmp/.ipt_ext";
    char *filename2 = "/tmp/.ipt_v6_ext";
 
-   memset(wan_ifname,0,sizeof(wan_ifname));
-   sysevent_get(sysevent_fd, sysevent_token, "cellular_ifname", wan_ifname, sizeof(wan_ifname));
+   memset(cellular_ifname,0,sizeof(cellular_ifname));
+   memset(cellular_ipaddr,0,sizeof(cellular_ipaddr));
+   memset(mesh_wan_ipaddr,0,sizeof(mesh_wan_ipaddr));
+
+   sysevent_get(sysevent_fd, sysevent_token, "cellular_ifname", cellular_ifname, sizeof(cellular_ifname));
+   
+   errno_t safec_rc = -1;
+
+   safec_rc = strcpy_s(mesh_wan_ipaddr, sizeof(mesh_wan_ipaddr),get_iface_ipaddr(mesh_wan_ifname));
+   ERR_CHK(safec_rc);
+
+   safec_rc = strcpy_s(cellular_ipaddr, sizeof(cellular_ipaddr),get_iface_ipaddr(cellular_ifname));
+   ERR_CHK(safec_rc);
 
 
    //pthread_mutex_lock(&firewall_check);

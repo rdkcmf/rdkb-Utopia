@@ -31,3 +31,7 @@ endif
 if FEATURE_RDKB_EXTENDER
 SUBDIRS += service_deviceMode
 endif
+
+#if FEATURE_RDKB_WANFAILOVER
+#SUBDIRS += NetworkMonitor
+#endif

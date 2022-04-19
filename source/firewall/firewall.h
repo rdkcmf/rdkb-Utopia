@@ -51,7 +51,7 @@
 
 #include <errno.h>
 
-
+#include "safec_lib_common.h"
 
 #include "syscfg/syscfg.h"
 #include "sysevent/sysevent.h"
@@ -68,7 +68,24 @@ int do_wan2self_attack(FILE *fp,char* wan_ip);
 int prepare_ipv4_firewall(const char *fw_file);
 int prepare_ipv6_firewall(const char *fw_file);
 
+#define CCSP_SUBSYS "eRT."
+
+#define IF_IPV6ADDR_MAX 16
+
+#define IPV6_ADDR_SCOPE_MASK    0x00f0U
+#define IPV6_ADDR_SCOPE_GLOBAL  0
+#define IPV6_ADDR_SCOPE_LINKLOCAL     0x0020U
+#define _PROCNET_IFINET6  "/proc/net/if_inet6"
+#define MAX_INET6_PROC_CHARS 200
+
+extern void* bus_handle ;
+#define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str)) 
+
+int get_ip6address (char * ifname, char ipArry[][40], int * p_num, unsigned int scope_in);
+
 #ifdef WAN_FAILOVER_SUPPORTED
+
+void  redirect_dns_to_extender(FILE *nat_fp,int family);
 
 typedef enum {
     ROUTER =0,
@@ -76,6 +93,8 @@ typedef enum {
 } Dev_Mode;
 
 unsigned int Get_Device_Mode() ;
+
+char* get_iface_ipaddr(const char* iface_name);
 
 #endif
 

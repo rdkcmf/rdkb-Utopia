@@ -76,6 +76,10 @@ $$Version=17
 @desired_ipv4_wan_state=down
 @desired_ipv4_link_state=down
 
+@MeshWANInterface_UlaAddr=fd01:1010:b066:798e:5528:ef02:7af4:e28/64
+@MeshRemoteWANInterface_UlaAddr=fd01:1010:b066:798e:3465:bfff:fe1a:8f46/64
+@MeshWanInterface_UlaPref=fd01:1010:b066:798e::/64
+
 # current hostname is taken from syscfg
 @hostname=$hostname
 
