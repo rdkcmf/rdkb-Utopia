@@ -9446,7 +9446,7 @@ static void do_lan2wan_disable(FILE *filter_fp)
          return ;
 #endif
     if(!isNatReady){
-         fprintf(filter_fp, "-A lan2wan_disable -s %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
+         fprintf(filter_fp, "-A lan2wan_disable -s %s/%s -o %s -j DROP\n", lan_ipaddr, lan_netmask, current_wan_ifname);
 
 #if defined (MULTILAN_FEATURE)
          do_multinet_lan2wan_disable(filter_fp);
@@ -9513,7 +9513,7 @@ static int do_lan2wan_misc(FILE *filter_fp)
         return 0;
 #endif    
    if (!isWanReady) {
-      fprintf(filter_fp, "-I lan2wan_misc 1 -j DROP\n");
+      fprintf(filter_fp, "-I lan2wan_misc 1 -o %s -j DROP\n", current_wan_ifname);
    }
    char mtu[26];
    int tcp_mss_limit;
@@ -9968,7 +9968,7 @@ static int do_wan2lan_disabled(FILE *fp)
     * if the wan is currently unavailable, then drop any packets from wan to lan
     */
    if (!isNatReady ) {
-      fprintf(fp, "-A wan2lan_disabled -d %s/%s -j DROP\n", lan_ipaddr, lan_netmask);
+      fprintf(fp, "-A wan2lan_disabled -i %s -d %s/%s -j DROP\n", current_wan_ifname, lan_ipaddr, lan_netmask);
 
 #if defined (MULTILAN_FEATURE)
       do_multinet_wan2lan_disable(fp);
