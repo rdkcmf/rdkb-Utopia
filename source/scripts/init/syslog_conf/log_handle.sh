@@ -239,7 +239,7 @@ remove_log()
         if [ -d "$DIR" ]
         then
             echo "rm -rf $1*"
-            rm -rf "$1"*
+            rm -rf $1*
         fi
     fi
 }
@@ -378,14 +378,14 @@ compress()
 
 uncompress()
 {
-    if [ -z "$1" ] || [ ! -e "$1" ] || [ -z "$2" ] || [ ! -d "$2" ]
+    if [ -z $1 ] || [ ! -e $1 ] || [ -z $2 ] || [ ! -d $2 ]
     then
         return 0;
     fi
     DIR=$2
     TAR=$1
-    cd "$DIR"
-    $RD_LOCK "$TAR" $UNCOMPRESS_CMD "$TAR"
+    cd $DIR
+    $RD_LOCK $TAR $UNCOMPRESS_CMD $TAR
 }
 
 V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
@@ -408,7 +408,7 @@ then
     old_sysevtlog_handle $DPC3939_OLD_EVTLOG EVT_LOG_F_INSTANCE
     #ARRISXB6-1518 - No Action Needed if Paths are the same
     if [ "$V_FW_LOG_FILE_PATH" != "$DPC3939_OLD_FWLOG_FILE_PATH" ]; then
-        old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH "$V_FW_LOG_FILE_PATH"
+        old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH $V_FW_LOG_FILE_PATH
     fi
     sysevent set R13_LOG_HANDLE_FLG 1
 fi 
@@ -466,8 +466,8 @@ fi
 
 if [ "$1" == "uncompress_evtlog" ]
 then
-    uncompress "$DPC3939_OLD_EVTLOG.tar.bz2" "$2" 
-    uncompress "$V_EVT_LOG_FILE.tar.bz2" "$2"
+    uncompress "$DPC3939_OLD_EVTLOG.tar.bz2" $2 
+    uncompress "$V_EVT_LOG_FILE.tar.bz2" $2
 fi
 
 if [ "$1" == "compress_fwlog" ]
@@ -477,8 +477,8 @@ fi
 
 if [ "$1" == "uncompress_fwlog" ]
 then
-    uncompress "$DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2" "$2"
-    uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" "$2"
+    uncompress "$DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2" $2
+    uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" $2
     if [ "$3" == "$DPC3939_OLD_FWLOG_FILE_PATH" ]
     then
         #RDKB-27198 "cp: can't stat '/nvram/log/firewall/????????': No such file or directory"
@@ -489,8 +489,8 @@ then
         count=`ls -A $DPC3939_OLD_FWLOG_FILE_PATH | wc -l`
         echo "Log_handle.sh uncompress_fwlog count: $count and list: $list"
         if [ "$count" -ge "$list" ]; then
-            cp  $DPC3939_OLD_FWLOG_FILE_PATH/???????? "$2"
-            cat "$2"/* >> $MERGED_FW_LOG_FILE
+            cp  $DPC3939_OLD_FWLOG_FILE_PATH/???????? $2
+            cat $2/* >> $MERGED_FW_LOG_FILE
             grep Time $MERGED_FW_LOG_FILE | sort -r -k2,5 > $SORT_FW_LOG_FILE
         fi
     fi
