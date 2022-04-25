@@ -1195,11 +1195,14 @@ int do_mapt_rules_v4(FILE *nat_fp, FILE *filter_fp, FILE *mangle_fp)
     fprintf(nat_fp, "-A POSTROUTING -o %s -j %s\n", NAT46_INTERFACE, MAPT_NAT_IPV4_POST_ROUTING_TABLE);
 #endif
 
-#if defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+#if defined(NAT46_KERNEL_SUPPORT)
     // TCP MSS RULE - SKYH4-5123 - To improve IPv4 Downstream traffic performance
     fprintf(mangle_fp, "-A FORWARD -p tcp --tcp-flags SYN,RST SYN -o %s -j TCPMSS --set-mss %d\n", NAT46_INTERFACE, NAT46_CLAMP_MSS);
-#endif //NAT46_KERNEL_SUPPORT
-
+#elif defined (FEATURE_SUPPORT_MAPT_NAT46)
+    // RDKB-40515 - [MAP-T] Gw to NOC connectivity failure
+    fprintf(mangle_fp, "-A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o %s -j TCPMSS --set-mss %d"
+                       "\n", NAT46_INTERFACE, NAT46_CLAMP_MSS);
+#endif
     if (mapt_config_ratio == 1) //config all
     {
         /* Set rule. */
