@@ -1614,7 +1614,7 @@ static int privateIpCheck(char *ip_to_check)
 
 	if (NULL == ip_to_check || 0 == ip_to_check[0])
 	{
-		printf("Invalied IP Address to check\n");
+		FIREWALL_DEBUG("Invalied IP Address to check\n");
 		return 1;
 	}
 
@@ -1634,19 +1634,19 @@ static int privateIpCheck(char *ip_to_check)
     	case 1:
         	if (l_iIpValue <= l_iDhcpEnd && l_iIpValue >= l_iDhcpStart)
 		  	{	
-            	printf("IP Address:%s is in private address range\n", ip_to_check); 
+                FIREWALL_DEBUG("IP Address:%s is in private address range\n" COMMA ip_to_check);
 				return 1;
 			}
           	else
 			{
-                printf("IP Address:%s is not in private address range\n", ip_to_check); 
+                FIREWALL_DEBUG("IP Address:%s is not in private address range\n" COMMA ip_to_check);
           		return 0;
 			}
        case 0:
-          printf("invalid input / dhcp start / dhcp end values\n");
+          FIREWALL_DEBUG("invalid input / dhcp start / dhcp end values\n");
           return 1;
        default:
-          printf("inet_pton conversion error:%d\n", errno);
+          FIREWALL_DEBUG("inet_pton conversion error:%d\n" COMMA errno);
           return 1;
     }
 #else
@@ -2595,7 +2595,7 @@ static int prepare_globals_from_configuration(void)
           }
           Ansc_FreeMemory_Callback(ts_asn_ins);
       }else{
-        printf("%d GET INSTERR\n", __LINE__);
+        FIREWALL_DEBUG("%d GET INSTERR\n" COMMA __LINE__);
       }
    }
 
@@ -8419,11 +8419,11 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 	int rc = syscfg_get(NULL, "X_RDKCENTRAL-COM_XDNS", xdnsflag, sizeof(xdnsflag));
 	if (0 != rc || '\0' == xdnsflag[0] ) //if flag not found
 	{
-		printf("### XDNS - Disabled. X_RDKCENTRAL-COM_XDNS not found. ### \n");
+		FIREWALL_DEBUG("### XDNS - Disabled. X_RDKCENTRAL-COM_XDNS not found. ### \n");
 	}
 	else if(0 == strcmp("0", xdnsflag)) //flag set to false
 	{
-		printf("### XDNS - Disabled. X_RDKCENTRAL-COM_XDNS is FALSE ###\n");
+		FIREWALL_DEBUG("### XDNS - Disabled. X_RDKCENTRAL-COM_XDNS is FALSE ###\n");
 	}
 	else if (0 == strcmp("1", xdnsflag)) //if set to true
 	{
@@ -8438,22 +8438,18 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 				// Prerouting is bypassed for the Xi devices (Needed only for XB6)
                                 fprintf(nat_fp, "-A prerouting_fromlan -i %s ! -s 169.254.0.0/16 -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
                                 fprintf(nat_fp, "-A prerouting_fromlan -i %s ! -s 169.254.0.0/16 -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
-                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
                         #else
 
                                 fprintf(nat_fp, "-A prerouting_fromlan -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
                                 fprintf(nat_fp, "-A prerouting_fromlan -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipaddr);
-                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
-                                printf("[XDNS] iptables -t nat -A prerouting_fromlan -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipaddr);
                                 printf("### XDNS : Feature Enabled XDNS ipv4 ### \n");
                         #endif
 
 			}
 			else
 			{
-				printf("### XDNS - Disabled for ipv4. LAN IPv4 not up, iptables rule for xDNS not set!\n");
+				FIREWALL_DEBUG("### XDNS - Disabled for ipv4. LAN IPv4 not up, iptables rule for xDNS not set!\n");
 			}
 		}
 		else if(iptype == 6)
@@ -8461,7 +8457,7 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
 			char lan_ipv6addr[INET6_ADDRSTRLEN] = {0}; // MURUGAN - XDNS : ipv6 address of the lan interface
 			memset(lan_ipv6addr, 0, INET6_ADDRSTRLEN);
 			sysevent_get(sysevent_fd, sysevent_token, "lan_ipaddr_v6", lan_ipv6addr, sizeof(lan_ipv6addr));
-			printf("#########  XDNS : lan_ipv6addr = \"%s\"\n", lan_ipv6addr);
+			printf("#########  XDNS : lan_ipv6addr = \"%s\"\n" COMMA lan_ipv6addr);
 			// Check if lan ipv6 is up.
 			if ('\0' != lan_ipv6addr[0] && 0 != strcmp("", lan_ipv6addr) && 0 != strcmp("::", lan_ipv6addr))
 			{
@@ -8469,30 +8465,26 @@ static int do_dns_route(FILE *nat_fp, int iptype) {
                                 // Prerouting is bypassed for the Xi devices (Needed only for XB6)
                                 fprintf(nat_fp, "-A PREROUTING -i %s ! -s 2603:2000::/20  -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
 			        fprintf(nat_fp, "-A PREROUTING -i %s ! -s 2603:2000::/20  -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
-				printf("[XDNS] ip6tables -t nat -A PREROUTING  -s 2603:2000::/20 -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
-				printf("[XDNS] ip6tables -t nat -A PREROUTING  -s 2603:2000::/20 -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
 				printf("### XDNS : Feature Enabled (XDNS ipv6) ### \n");
                         #else
 				fprintf(nat_fp, "-A PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
                                 fprintf(nat_fp, "-A PREROUTING -i %s -p tcp --dport 53 -j DNAT --to-destination %s\n",lan_ifname,lan_ipv6addr);
-                                printf("[XDNS] ip6tables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
-                                printf("[XDNS] ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to-destination %s\n", lan_ipv6addr);
                                 printf("### XDNS : Feature Enabled (XDNS ipv6) ### \n");
                         #endif
 			}
 			else
 			{
-				printf("######## XDNS - Disabled for Ipv6. LAN IPv6 not up, ip6tables rule for xDNS not set ! ########\n");
+				FIREWALL_DEBUG("######## XDNS - Disabled for Ipv6. LAN IPv6 not up, ip6tables rule for xDNS not set ! ########\n");
 			}
 		}
 		else
 		{
-			printf("### XDNS - Disabled. Invalid iptype!\n");
+			FIREWALL_DEBUG("### XDNS - Disabled. Invalid iptype!\n");
 		}
 	}
 	else
 	{
-		printf("### XDNS - Disabled. Invalid xdnsflag!\n");
+		FIREWALL_DEBUG("### XDNS - Disabled. Invalid xdnsflag!\n");
 	}
 
 	return 0;
@@ -8672,12 +8664,12 @@ memset(buf, 0, sizeof(buf));
    if(fp != NULL)
    {
        if(flock(fileno(fp), LOCK_EX) == -1)
-           printf("Error while locking file\n");
+           FIREWALL_DEBUG("Error while locking file\n");
        while( fgets ( buf, sizeof(buf), fp ) != NULL ) 
        {
            if(count == 0){
                numDev = atoi(buf);            		
-               printf("numDev = %d \n",numDev);
+               printf("numDev = %d \n" COMMA numDev);
                *devCount = numDev;
                devMacs = (devMacSt *)calloc(numDev,sizeof(devMacSt));
                dev = devMacs;
@@ -8686,7 +8678,7 @@ memset(buf, 0, sizeof(buf));
            {
                memset(devMacs->mac, 0, sizeof(devMacs->mac));
                strncpy(devMacs->mac,buf,17);		
-               printf("devMacs->mac = %s \n",devMacs->mac);
+               printf("devMacs->mac = %s \n" COMMA devMacs->mac);
                ++devMacs;
            }
            count++;
@@ -8696,10 +8688,10 @@ memset(buf, 0, sizeof(buf));
     fclose(fp);
    }
    else
-   printf("Error: Not able to read " PCMD_LIST "\n" );
+   FIREWALL_DEBUG("Error: Not able to read " PCMD_LIST "\n" );
 
 
-printf("Exit getPcmdList\n");
+FIREWALL_DEBUG("Exit getPcmdList\n");
 return dev;
 }
 
@@ -11006,7 +10998,6 @@ static int isInCaptivePortal()
    retCode=syscfg_get(NULL, "CaptivePortal_Enable", captivePortalEnabled, sizeof(captivePortalEnabled));  
    if (0 != retCode || '\0' == captivePortalEnabled[0])
    {
-	printf("%s Syscfg read failed to get CaptivePortal_Enable value\n", __FUNCTION__);
  	     	FIREWALL_DEBUG("%s Syscfg read failed to get CaptivePortal_Enable value\n" COMMA __FUNCTION__); 		
    }
    else
@@ -11014,7 +11005,6 @@ static int isInCaptivePortal()
         // Set a flag which we can check later to add DNS redirection
         if(!strcmp("false", captivePortalEnabled))
         {
- 	     printf("CaptivePortal is disabled : Return 0\n"); 
  	     	FIREWALL_DEBUG("CaptivePortal is disabled : Return 0\n"); 	
       	     return 0;
         }
@@ -11023,7 +11013,6 @@ static int isInCaptivePortal()
    retCode=syscfg_get(NULL, "redirection_flag", redirectionFlag, sizeof(redirectionFlag));  
    if (0 != retCode || '\0' == redirectionFlag[0])
    {
-	printf("CP DNS Redirection %s, Syscfg read failed\n", __FUNCTION__);
 	FIREWALL_DEBUG("CP DNS Redirection %s, Syscfg read failed\n"COMMA __FUNCTION__); 	
    }
    else
@@ -11068,13 +11057,11 @@ static int isInCaptivePortal()
 
    if((isRedirectionDefault) && (isNotifyDefault) && (isResponse204))
    {
-      printf("CP DNS Redirection : Return 1\n"); 
          FIREWALL_DEBUG("CP DNS Redirection : Return 1\n"); 	
       return 1;
    }
    else
    {
-      printf("CP DNS Redirection : Return 0\n"); 
        FIREWALL_DEBUG("CP DNS Redirection : Return 0\n"); 
       return 0;
    }
@@ -11089,14 +11076,12 @@ static int isInRFCaptivePortal()
    retCode=syscfg_get(NULL, "rf_captive_portal", rfCaptivePortalEnabled, sizeof(rfCaptivePortalEnabled));
    if (0 != retCode || '\0' == rfCaptivePortalEnabled[0])
    {
-    	printf("%s Syscfg read failed to get rf_captive_portal value\n", __FUNCTION__);
         FIREWALL_DEBUG("%s Syscfg read failed to get rf_captive_portal value\n" COMMA __FUNCTION__);
    }
    else
    {
         if(!strcmp("true", rfCaptivePortalEnabled))
         {
-            printf("RF CaptivePortal is enabled : Return 1\n");
             FIREWALL_DEBUG("RF CaptivePortal is enabled : Return 1\n");
             return 1;
         }
@@ -12142,7 +12127,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
   
    if(0==strcmp("true",iot_enabled))
    {
-      printf("IOT_LOG : Adding iptable rules for IOT\n");
+      FIREWALL_DEBUG("IOT_LOG : Adding iptable rules for IOT\n");
       memset(iot_ifName, 0, sizeof(iot_ifName));
       syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
       if( strstr( iot_ifName, "l2sd0.106")) {
