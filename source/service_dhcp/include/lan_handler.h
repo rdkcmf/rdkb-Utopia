@@ -34,5 +34,6 @@ void ipv4_status(int, char *);
 void lan_restart();
 void lan_stop();
 void teardown_instance(int l3_inst);
+void resync_instance (int l3_inst);
 void erouter_mode_updated();
 void ipv4_resync(char *lan_inst);

@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
 	}
     else if (!strncmp(argv[1], "ipv4-resync", 11))
     {
-        ipv4_resync(argv[2]);
+        resync_instance(atoi(argv[2]));
     }
     else if (!strncmp(argv[1], "erouter_mode-updated", 20))
     {
