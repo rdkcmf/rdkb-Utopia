@@ -137,7 +137,7 @@ void handle_moca(int vlan_id, int *tagged, int add)
 
         	    swctl(16, 3, l_iMoca_UtPort, NATIVE_MODE, 1, -1, NULL, NULL);
     
-            	strncat(l_cMoca_Tports, l_cMoca_Utport, sizeof(l_cMoca_Utport));    
+            	strncat(l_cMoca_Tports, l_cMoca_Utport, (sizeof(l_cMoca_Tports) - sizeof(l_cMoca_Utport)));
 	            sysevent_set(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, 
 							 "sw_moca_tports", l_cMoca_Tports, 0);
 			}
@@ -457,7 +457,7 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 	
 	l_iLen = strlen(vidPorts);		
 	if (0 != vidPorts[0] && vidPorts[l_iLen] != ' ')
-		strncat(vidPorts, " ", 1);
+		strncat(vidPorts, " ", strlen(vidPorts) - 1);
 
 	strncat(vidPorts, ports_add, (size_t)(strlen(ports_add)));
 	snprintf(sysevent_cmd, sizeof(sysevent_cmd), "sw_vid_%d_ports",vlan_id);
@@ -497,7 +497,9 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 						 "sw_ext_vids", l_cExt_Vids, sizeof(l_cExt_Vids));
 			l_iLen = strlen(l_cExt_Vids);    
 		    if (0 != l_cExt_Vids[0] && l_cExt_Vids[l_iLen] != ' ')
-        		strncat(l_cExt_Vids, " ", 1);
+		    {
+        		strncat(l_cExt_Vids, " ", strlen(l_cExt_Vids) - 1);
+		    }
 			
 			rc = sprintf_s(l_cVlan_Id, sizeof(l_cVlan_Id), "%d", vlan_id);
 			if(rc < EOK)
@@ -511,7 +513,7 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 		}
         l_iLen = strlen(ext_vidPorts);
 		if (0 != ext_vidPorts[0] && ext_vidPorts[l_iLen] != ' ')
-        	strncat(ext_vidPorts, " ", 1);
+        	strncat(ext_vidPorts, " ", strlen(ext_vidPorts) - 1);
 
 		snprintf(sysevent_cmd, sizeof(sysevent_cmd), "sw_vid_%d_extports",vlan_id);
 		strncat(ext_vidPorts, ports_add, (size_t)(strlen(ports_add)));
@@ -534,7 +536,7 @@ void addVlan(int net_id, int vlan_id, char *ports_add)
 		}
 		l_iLen = strlen(atom_vidPorts);
         if (0 != atom_vidPorts[0] && atom_vidPorts[l_iLen] != ' ')
-            strncat(atom_vidPorts, " ", 1);
+            strncat(atom_vidPorts, " ", strlen(atom_vidPorts) - 1);
 
 		snprintf(sysevent_cmd, sizeof(sysevent_cmd), "sw_vid_%d_atomports",vlan_id);
 		strncat(atom_vidPorts, ports_add, (size_t)(strlen(ports_add)));

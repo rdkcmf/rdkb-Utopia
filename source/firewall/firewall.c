@@ -15219,11 +15219,11 @@ static int service_start ()
 
    #ifdef _PLATFORM_RASPBERRYPI_
        /* Apply Mac Filtering rules for RPI-Device */
-       system("/bin/sh -c /tmp/mac_filter.sh");
+       v_secure_system("/bin/sh -c /tmp/mac_filter.sh");
    #endif
    #ifdef _PLATFORM_TURRIS_
        /* Apply Mac Filtering rules */
-       system("/bin/sh -c /tmp/mac_filter.sh");
+       v_secure_system("/bin/sh -c /tmp/mac_filter.sh");
    #endif
 
   #if 0

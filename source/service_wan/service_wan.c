@@ -631,7 +631,8 @@ static int start_dhcpv6_client(struct serv_wan *sw)
                     fprintf(stderr, "Starting DHCPv6 Client now\n");
                     system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
                     break;
-
+                case WAN_PROT_STATIC:
+                    break;
             }
         }
     }
@@ -1273,7 +1274,7 @@ static int wan_iface_up(struct serv_wan *sw)
 
 static int wan_iface_down(struct serv_wan *sw)
 {
-    int err;
+    int err = 0;
 #if !defined(_PLATFORM_RASPBERRYPI_)
     err = v_secure_system("ip -4 link set %s down", sw->ifname);
 #endif

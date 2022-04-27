@@ -175,7 +175,7 @@ int Utopia_SetDsliteCfg(UtopiaContext *ctx,DsLiteCfg_t *pDsliteCfg)
 int Utopia_AddDsliteEntry(UtopiaContext *ctx, DsLiteCfg_t *pDsliteCfg)
 {
     unsigned long ulIndex = 0;
-    int count = 0;
+    unsigned long count = 0;
     DsLiteCfg_t DsLiteCfg_tmp;
 
     if((NULL == ctx) || (NULL == pDsliteCfg)){
@@ -211,10 +211,9 @@ int Utopia_AddDsliteEntry(UtopiaContext *ctx, DsLiteCfg_t *pDsliteCfg)
 
 int Utopia_DelDsliteEntry(UtopiaContext *ctx, unsigned long ulInstanceNumber)
 {
-    int count = 0;
+    unsigned long count = 0;
     unsigned long ulIndex = 0;
     DsLiteCfg_t dsliteCfg;
-    char buf[STR_SZ] = {'\0'};
 
     if(NULL == ctx){
         return ERR_INVALID_ARGS;
@@ -245,7 +244,7 @@ int Utopia_DelDsliteEntry(UtopiaContext *ctx, unsigned long ulInstanceNumber)
        for(;ulIndex <= count; ulIndex++)
        {
           Utopia_GetDsliteByIndex(ctx,ulIndex,&dsliteCfg);
-          Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,(ulIndex + 1),&dsliteCfg.InstanceNumber);
+          Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,(ulIndex + 1),(int *)&dsliteCfg.InstanceNumber);
           Utopia_SetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,ulIndex,dsliteCfg.InstanceNumber);
 
           g_IndexMapDslite[dsliteCfg.InstanceNumber] = (ulIndex - 1);
@@ -289,7 +288,7 @@ int Utopia_GetDsliteEntry(UtopiaContext *ctx,unsigned long ulIndex, void *pDslit
 
    memset(&DsLiteCfg_tmp, 0, sizeof(DsLiteCfg_t));
    /* Do we have an InstanceNumber already ? */
-   if(0 != Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,(ulIndex + 1), &(DsLiteCfg_tmp.InstanceNumber))) {
+   if(0 != Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,(ulIndex + 1), (int *)&(DsLiteCfg_tmp.InstanceNumber))) {
        DsLiteCfg_tmp.InstanceNumber = 0;
    } else {
        g_IndexMapDslite[DsLiteCfg_tmp.InstanceNumber] = ulIndex;
@@ -335,7 +334,7 @@ int Utopia_GetDsliteByIndex(UtopiaContext *ctx, unsigned long ulIndex, DsLiteCfg
     }
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
-    Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,(ulIndex + 1),&(pDsLiteCfg_t->InstanceNumber));
+    Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_InsNum,(ulIndex + 1),(int *)&(pDsLiteCfg_t->InstanceNumber));
     Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_Active,(ulIndex + 1),&(pDsLiteCfg_t->active));
     Utopia_GetIndexed(ctx,UtopiaValue_Dslite_Alias,(ulIndex + 1),pDsLiteCfg_t->alias,65);
     Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_Mode,(ulIndex + 1),&(pDsLiteCfg_t->mode));
@@ -343,7 +342,7 @@ int Utopia_GetDsliteByIndex(UtopiaContext *ctx, unsigned long ulIndex, DsLiteCfg
     Utopia_GetIndexed(ctx,UtopiaValue_Dslite_Addr_Fqdn,(ulIndex + 1),pDsLiteCfg_t->addr_fqdn,STR_SZ);
     Utopia_GetIndexed(ctx,UtopiaValue_Dslite_Addr_IPv6,(ulIndex + 1),pDsLiteCfg_t->addr_ipv6,STR_SZ);
     Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_Mss_Clamping_Enable,(ulIndex + 1),&(pDsLiteCfg_t->mss_clamping_enable));
-    Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_Tcpmss,(ulIndex + 1),&(pDsLiteCfg_t->tcpmss));
+    Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_Tcpmss,(ulIndex + 1),(int *)&(pDsLiteCfg_t->tcpmss));
     Utopia_GetIndexedInt(ctx,UtopiaValue_Dslite_IPv6_Frag_Enable,(ulIndex + 1),&(pDsLiteCfg_t->ipv6_frag_enable));
 
     /*Read-only parameters*/
