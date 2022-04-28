@@ -1442,9 +1442,10 @@ static int compare_partner_json_param (char *partner_nvram_bs_obj, char *partner
    APPLY_PRINT("%s\n", __FUNCTION__);
 
    cJSON * root_nvram_bs_json = cJSON_Parse(partner_nvram_bs_obj);
+   cJSON * partnerobj_nvram_bs = cJSON_GetObjectItem(root_nvram_bs_json,PartnerID);
 
    /* The below block of code identifies any unknown/wrong objects in nvram/bootstrap.json and removes them */
-   if (!root_nvram_bs_json)
+   if (!root_nvram_bs_json || !partnerobj_nvram_bs)
    {
       APPLY_PRINT("json parse error for bootstrap.json\n");
       char  cmd[256] = {0};
@@ -2447,6 +2448,12 @@ int main( int argc, char **argv )
 #endif
 
 	}
+  }
+
+  // if the syscfg partnerID is unknown, and we have a valid partnerID file "/nvram/.partner_ID" that was received from XConf, use the valid partnerID.
+  if ( 0 == strcasecmp (PartnerID, "Unknown") && access( PARTNERID_FILE , F_OK ) == 0 ) {
+    APPLY_PRINT("%s - PartnerID :%s. Calling get_PartnerID() to get a valid PartnerID that was received from XConf \n", __FUNCTION__, PartnerID );
+    get_PartnerID ( PartnerID );
   }
 
    APPLY_PRINT("%s - PartnerID :%s\n", __FUNCTION__, PartnerID );
