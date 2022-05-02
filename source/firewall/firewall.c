@@ -2295,14 +2295,9 @@ static int prepare_globals_from_configuration(void)
    if ('\0' == current_wan_ifname[0]) {
       snprintf(current_wan_ifname, sizeof(current_wan_ifname), "%s", default_wan_ifname);
    }
-   if (strcmp(current_wan_ifname,default_wan_ifname ) == 0)
-   {
-       sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipaddr", current_wan_ipaddr, sizeof(current_wan_ipaddr));
-   }
-   else
-   {
-	 sysevent_get(sysevent_fd, sysevent_token, "current_rwan_ipaddr", current_wan_ipaddr, sizeof(current_wan_ipaddr));
-   }
+
+   sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipaddr", current_wan_ipaddr, sizeof(current_wan_ipaddr));
+
    sysevent_get(sysevent_fd, sysevent_token, "current_lan_ipaddr", lan_ipaddr, sizeof(lan_ipaddr));
    
 #if defined(CONFIG_CISCO_FEATURE_CISCOCONNECT) || defined(CONFIG_CISCO_PARCON_WALLED_GARDEN) 
