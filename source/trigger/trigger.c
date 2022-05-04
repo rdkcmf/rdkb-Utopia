@@ -65,8 +65,8 @@ static int                  restart_firewall = 0;
 typedef struct {
    int            active;
    int            protocol; // 1 = tcp, 2 = udp, 3 = both
-   short          low_port;
-   short          high_port;
+   unsigned short low_port;
+   unsigned short high_port;
    int            lifetime; // number of minutes this trigger lives
    int            quanta; // number of minutes left in this triggers lifetime 
    struct in_addr to_host; 
@@ -542,8 +542,8 @@ static int update_trigger_entry(int id, struct in_addr host)
                return(-8);
             }
          }
-         (trigger_info[idx]).low_port = (short) atoi(sdport);
-         (trigger_info[idx]).high_port = (short) atoi(edport);
+         (trigger_info[idx]).low_port = (unsigned short) atoi(sdport);
+         (trigger_info[idx]).high_port = (unsigned short) atoi(edport);
       }
 
       // how many minutes does a trigger last without seeing an interleaving trigger packet
