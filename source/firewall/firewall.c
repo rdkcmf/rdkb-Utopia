@@ -363,6 +363,9 @@ NOT_DEF:
 
 #endif
 
+#if defined(RDKB_EXTENDER_ENABLED)
+char cellular_ifname[32];
+#endif 
 #if defined (_PROPOSED_BUG_FIX_)
 #include <linux/version.h>
 #endif
@@ -2909,6 +2912,11 @@ static int prepare_globals_from_configuration(void)
           pStr = NULL;
        }   
    }
+#ifdef RDKB_EXTENDER_ENABLED
+   memset(cellular_ifname,0,sizeof(cellular_ifname));
+   sysevent_get(sysevent_fd, sysevent_token, "cellular_ifname", cellular_ifname, sizeof(cellular_ifname));
+#endif
+   
     FIREWALL_DEBUG("Exiting prepare_globals_from_configuration\n");       
    return(0);
 }
@@ -12892,6 +12900,9 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
 #ifdef INTEL_PUMA7
    do_raw_table_puma7(raw_fp);
 #endif
+   #ifdef RDKB_EXTENDER_ENABLED
+   add_cellular_if_mss_clamping(mangle_fp,AF_INET);
+   #endif
    add_qos_marking_statements(mangle_fp);
 
    do_port_forwarding(nat_fp, filter_fp);
@@ -13508,7 +13519,11 @@ static void do_ipv6_sn_filter(FILE* fp) {
     fprintf(fp, "*mangle\n");
     
    fprintf(fp, "%s\n", ":postrouting_qos - [0:0]");
-    
+ 
+   #ifdef RDKB_EXTENDER_ENABLED
+      add_cellular_if_mss_clamping(fp,AF_INET6);
+   #endif
+
     for (i = 0; i < numifs; ++i) {
         snprintf(ifIpv6AddrKey, sizeof(ifIpv6AddrKey), "ipv6_%s_dhcp_solicNodeAddr", ifnames[i]);
         sysevent_get(sysevent_fd, sysevent_token, ifIpv6AddrKey, mcastAddrStr, sizeof(mcastAddrStr));
@@ -13897,7 +13912,7 @@ int prepare_ipv6_firewall(const char *fw_file)
          do_raw_table_puma7(raw_fp);
       #endif
          
-         do_ipv6_sn_filter(mangle_fp);
+      do_ipv6_sn_filter(mangle_fp);
       #if !defined(_PLATFORM_IPQ_)
          do_ipv6_nat_table(nat_fp);
       #endif

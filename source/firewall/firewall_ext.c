@@ -6,11 +6,15 @@
 #include<errno.h> 
 
 
+#define IPV4_TOTAL_HEADER_SIZE 40
+#define IPV6_TOTAL_HEADER_SIZE 60
+
+#define MTU_SIZE 1500
 
 extern int  sysevent_fd ;
 extern token_t        sysevent_token;
 
-static char cellular_ifname[32] ;
+extern char cellular_ifname[32] ;
 static char cellular_ipaddr[32] ;
 
 extern char mesh_wan_ifname[32];
@@ -22,6 +26,7 @@ extern char mesh_wan_ipv6addr[IF_IPV6ADDR_MAX][40];
 int cellular_wan_ipv6_num = 0;
 char cellular_wan_ipv6addr[IF_IPV6ADDR_MAX][40];
 
+#define SYSEVENT_IPV4_MTU_SIZE "ipv4_%s_mtu"
 int isExtProfile()
 {
       if ( ( EXTENDER_MODE == Get_Device_Mode() ) )
@@ -30,6 +35,38 @@ int isExtProfile()
       }
       return -1;
 }  
+
+
+void add_cellular_if_mss_clamping(FILE *mangle_fp,int family)
+{
+   char mtu_event_name[128] = {0}, mtu_val[8] = {0};
+   memset(mtu_event_name,0,sizeof(mtu_event_name));
+   memset(mtu_val,0,sizeof(mtu_val));
+   int iMtuVal=0 ,  mss_clamp_val = 0;
+   snprintf(mtu_event_name,sizeof(mtu_event_name),SYSEVENT_IPV4_MTU_SIZE,cellular_ifname);
+
+   sysevent_get(sysevent_fd, sysevent_token, mtu_event_name, mtu_val, sizeof(mtu_val));
+
+   if(mtu_val[0] != '\0' && strlen(mtu_val) != 0 )
+   {
+      iMtuVal = atoi(mtu_val) ;
+      if ( iMtuVal !=0 && iMtuVal != MTU_SIZE )
+      {
+         if(family == AF_INET)
+            mss_clamp_val= iMtuVal - IPV4_TOTAL_HEADER_SIZE ;
+         else if (family == AF_INET6)
+            mss_clamp_val= iMtuVal - IPV6_TOTAL_HEADER_SIZE ;
+         else
+            return;
+
+         fprintf(mangle_fp, "-A FORWARD -p tcp --tcp-flags SYN,RST SYN -o %s -j TCPMSS --set-mss %d\n",cellular_ifname,mss_clamp_val); 
+         fprintf(mangle_fp, "-A POSTROUTING -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d\n",cellular_ifname,mss_clamp_val); 
+      }
+
+   }
+
+   return ;
+}
 /*
  *  Procedure     : prepare_subtables
  *  Purpose       : prepare the iptables-restore file that establishes all
@@ -92,7 +129,7 @@ int prepare_ipv4_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
    if (strlen(cellular_ipaddr) != 0 )
       fprintf(nat_fp, "-A  POSTROUTING -o %s -j SNAT --to-source %s\n",cellular_ifname,cellular_ipaddr);
 
-
+   add_cellular_if_mss_clamping(mangle_fp,AF_INET);
    if (strlen(mesh_wan_ipaddr) != 0 )
    {
       fprintf(nat_fp, "-A  PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",mesh_wan_ifname,mesh_wan_ipaddr);
@@ -212,6 +249,8 @@ int prepare_ipv6_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
     * filter
     */
 
+   add_cellular_if_mss_clamping(mangle_fp,AF_INET6);
+
    int i ;
     for(i = 0; i < mesh_wan_ipv6_num; i++){
 
@@ -266,11 +305,8 @@ int service_start_ext_mode ()
    char *filename1 = "/tmp/.ipt_ext";
    char *filename2 = "/tmp/.ipt_v6_ext";
 
-   memset(cellular_ifname,0,sizeof(cellular_ifname));
    memset(cellular_ipaddr,0,sizeof(cellular_ipaddr));
    memset(mesh_wan_ipaddr,0,sizeof(mesh_wan_ipaddr));
-
-   sysevent_get(sysevent_fd, sysevent_token, "cellular_ifname", cellular_ifname, sizeof(cellular_ifname));
    
    errno_t safec_rc = -1;
 
