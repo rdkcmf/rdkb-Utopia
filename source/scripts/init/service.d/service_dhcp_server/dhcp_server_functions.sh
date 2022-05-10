@@ -1008,7 +1008,7 @@ fi
       fi
    fi
   
-   if [ "$BOX_TYPE" = "rpi" ]; then                                       
+   if [ "$BOX_TYPE" = "rpi" ] || [ "$BOX_TYPE" = "turris" ]; then
 	   LAN_STATUS=`sysevent get lan-status`
 	   BRIDGE_MODE=`syscfg get bridge_mode`
 	   if [ "$LAN_STATUS" = "stopped" ] && [ $BRIDGE_MODE == 0 ]; then                
@@ -1136,6 +1136,28 @@ fi
             if [ "1" == "$NAMESERVERENABLED" ] && [ "$WAN_DHCP_NS" != "" ]; then
                 echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
             fi
+
+       elif [ "$BOX_TYPE" = "turris" ]; then
+           echo "interface=wifi2" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.0.5,169.254.0.126,255.255.255.128,infinite" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi2,3" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi2,6" >> $LOCAL_DHCP_CONF
+
+           echo "interface=wifi3" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.1.5,169.254.1.126,255.255.255.128,infinite" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi3,3" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi3,6" >> $LOCAL_DHCP_CONF
+
+           echo "interface=wifi6" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.0.130,169.254.0.252,255.255.255.128,infinite" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi6,3" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi6,6" >> $LOCAL_DHCP_CONF
+
+           echo "interface=wifi7" >> $LOCAL_DHCP_CONF
+           echo "dhcp-range=169.254.1.130,169.254.1.252,255.255.255.128,infinite" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi7,3" >> $LOCAL_DHCP_CONF
+           echo "dhcp-option=wifi7,6" >> $LOCAL_DHCP_CONF
+           echo "dhcp-script=/etc/dhcp_script.sh" >> $LOCAL_DHCP_CONF
 
        elif [ "$BOX_TYPE" = "XB6" ]; then
            echo "interface=ath12" >> $LOCAL_DHCP_CONF

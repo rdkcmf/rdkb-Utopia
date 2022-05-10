@@ -399,7 +399,7 @@ dhcp_server_start ()
 	  return 0
    fi
   
-  if [ "$BOX_TYPE" != "rpi" ]; then 
+  if [ "$BOX_TYPE" != "rpi" ] && [ "$BOX_TYPE" != "turris" ]; then
    DHCP_STATE=`sysevent get lan_status-dhcp`
    #if [ "started" != "$CURRENT_LAN_STATE" ] ; then
    if [ "started" != "$DHCP_STATE" ] ; then
@@ -537,7 +537,7 @@ dhcp_server_start ()
    if [ $? -eq 0 ]; then
    	echo_t "$SERVER process started successfully"
    else
-   	if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "PUMA7_CGP" ] || [ "$BOX_TYPE" = "rpi" ] ; then
+   	if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "PUMA7_CGP" ] || [ "$BOX_TYPE" = "rpi" ] || [ "$BOX_TYPE" = "turris" ] ; then
    
         	COUNTER=0
         	while [ $COUNTER -lt 5 ]; do

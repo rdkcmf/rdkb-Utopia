@@ -39,7 +39,7 @@
 
 const char* SERVICE_NAME            = "dhcp_server";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_dhcp_server.sh";
-#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_) && !defined(_PLATFORM_IPQ_)
+#if defined(_COSA_INTEL_USG_ARM_) && !defined(INTEL_PUMA7) && !defined(_COSA_BCM_ARM_) && !defined(_PLATFORM_IPQ_) && !defined(_PLATFORM_TURRIS_)
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "syslog-status|/etc/utopia/service.d/service_dhcp_server.sh",
                                         "lan-status|/usr/bin/service_dhcp",
