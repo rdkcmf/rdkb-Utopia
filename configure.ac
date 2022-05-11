@@ -122,7 +122,7 @@ AC_ARG_ENABLE([core_net_lib_feature_support],
   yes) core_net_lib_feature_support=true ;;
   no)  core_net_lib_feature_support=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-core_net_lib_feature_support]) ;;
-esac],[core_net_lib_feature_support=true])
+esac],[core_net_lib_feature_support=false])
 AM_CONDITIONAL(CORE_NET_LIB_FEATURE_SUPPORT, test x"$core_net_lib_feature_support" = x"true")
 AM_COND_IF( [CORE_NET_LIB_FEATURE_SUPPORT], [
 AC_CONFIG_FILES([
