@@ -76,7 +76,11 @@ const char* const service_ipv6_component_id = "ccsp.ipv6";
 #define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
 #define PSM_VALUE_GET_INS(name, pIns, ppInsArry) PsmGetNextLevelInstances(bus_handle, CCSP_SUBSYS, name, pIns, ppInsArry)
 #endif
- 
+
+#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_)
+bool del_addr6_flg = true;
+#endif
+
 #define PROVISIONED_V6_CONFIG_FILE  "/tmp/ipv6_provisioned.config"
 #define CLI_RECEIVED_OPTIONS_FILE   "/tmp/.dibbler-info/client_received_options"
 #define DHCPV6_SERVER               "dibbler-server"
@@ -1429,7 +1433,11 @@ static int lan_addr6_unset(struct serv_ipv6 *si6)
         /*del v6 addr*/
         snprintf(evt_name, sizeof(evt_name), "ipv6_%s-addr", if_name);
         sysevent_get(si6->sefd, si6->setok, evt_name, iface_addr, sizeof(iface_addr));
+#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_)
+        if (iface_addr[0] != '\0' && del_addr6_flg) {
+#else
         if (iface_addr[0] != '\0') {
+#endif
             get_prefix_info(iface_prefix, NULL, 0, &prefix_len);
             v_secure_system("ip -6 addr del %s/%d dev %s", iface_addr, prefix_len, if_name);
         }
@@ -1898,12 +1906,15 @@ static int serv_ipv6_stop(struct serv_ipv6 *si6)
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
         return -1;
     }
-#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_) && !defined(INTEL_PUMA7)
+#if !defined(_CBR_PRODUCT_REQ_) && !defined(_BWG_PRODUCT_REQ_)
+    del_addr6_flg = false;
     if (lan_addr6_unset(si6) !=0) {
         fprintf(stderr, "unset IPv6 address for lan interfaces error!\n");
         sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "error", 0);
+	del_addr6_flg = true;
         return -1;
     }
+    del_addr6_flg = true;
 #endif
     sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "stopped", 0);
     return 0;
