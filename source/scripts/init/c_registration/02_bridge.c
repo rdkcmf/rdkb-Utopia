@@ -42,16 +42,24 @@
 const char* SERVICE_NAME            = "bridge";
 #ifdef INTEL_PUMA7
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_puma7.sh";
+const char* SERVICE_CUSTOM_EVENTS[] = {"wan-start|/etc/utopia/service.d/service_bridge_puma7.sh|NULL|" TUPLE_FLAG_EVENT, NULL};
 #elif defined (_CBR_PRODUCT_REQ_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_tchcbr.sh";
+const char* SERVICE_CUSTOM_EVENTS[] = { NULL };   //has to be commented due to NOT hit for Commscope platform then also added by patches 
 #elif defined (_COSA_BCM_ARM_)  && ! defined (_PLATFORM_IPQ_) && ! defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_tchxb6.sh";
+#if defined(DOCSIS_EXTENDED_MTU_SUPPORT)
+const char* SERVICE_CUSTOM_EVENTS[] = {"wan-start|/etc/utopia/service.d/service_bridge_tchxb6.sh|NULL|" TUPLE_FLAG_EVENT, NULL};
+#else
+const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
+#endif
 #elif defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_rpi.sh";
+//const char* SERVICE_CUSTOM_EVENTS[] = { NULL };  //has to be commented due to NOT hit for Commscope platform then also added by patches 
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge.sh";
-#endif
 const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
+#endif
 
 void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);

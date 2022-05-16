@@ -267,6 +267,48 @@ forward_wan_lan_traffic()
     fi
 
 }
+
+#--------------------------------------------------------------
+# update_bridge_mtu
+# Fetch the max MTU size supported from CM agent DML and apply
+# this MTU setting to the bridge
+#--------------------------------------------------------------
+update_bridge_mtu() {
+    #Check whether in bridged mode
+    MODE=`sysevent get bridge_mode`
+    case $MODE in
+        ''|*[!0-9]*)
+            #Invalid / non-numeric result
+            return
+        ;;
+        *)
+            if [ $MODE -lt 1 ] ; then
+                #Not in bridged mode
+                return
+            fi
+        ;;
+    esac
+
+    #Fetch DOCSIS max supported MTU from DML
+    MAXMTU=`dmcli eRT getv Device.X_RDKCENTRAL-COM_CableModem.MaxMTU | grep value | awk '/value/{print $5}'`
+    if [ $? -ne 0 ] ; then
+        #Error fetching value
+        return
+    fi
+
+    #Check if value returned is a number and whether it is different than last iteration
+    case $MAXMTU in
+        ''|*[!0-9]*)
+            #Invalid / non-numeric result
+            return
+        ;;
+        *)
+            echo "Got MTU value $MAXMTU from CM DML"
+            ifconfig $BRIDGE_NAME mtu $MAXMTU
+        ;;
+    esac
+}
+
 #Enable pseudo bridge mode.  If already enabled, just refresh parameters (in case bridges were torn down and rebuilt)
 service_start(){
     wait_till_steady_state ${SERVICE_NAME}
@@ -287,16 +329,19 @@ service_start(){
         fi
         #Sync bridge ports
         MULTILAN_FEATURE=$(syscfg get MULTILAN_FEATURE)
-        if [ "$MULTILAN_FEATURE" = "1" ]; then
-            sysevent set multinet-down "$INSTANCE"
+        if [ "$MULTILAN_FEATURE" = "1" ]; then            
             sysevent set multinet-up "$INSTANCE"
+            #Sync bridge ports
+            sysevent set multinet-syncMembers "$INSTANCE"
         else
             sysevent set multinet-syncMembers $INSTANCE
         fi
         
-
         #Block traffic coming from the lbr0 connector interfaces at the MUX
         filter_local_traffic enable
+        
+        #Update MTU of bridge
+        update_bridge_mtu
         
         unblock_bridge
         
@@ -414,6 +459,9 @@ case "$1" in
         gw_lan_refresh
         sysevent set firewall-restart
 
+    ;;
+    wan-start)
+        update_bridge_mtu
     ;;
     "${SERVICE_NAME}-stop")
     

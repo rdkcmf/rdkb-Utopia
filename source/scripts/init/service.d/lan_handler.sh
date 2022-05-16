@@ -237,7 +237,17 @@ case "$1" in
                 then
                     touch $POSTD_START_FILE
                     execute_dir /etc/utopia/post.d/
-                fi            
+                fi  
+
+	   elif [ x"ready" != x`sysevent get start-misc` && "$MANUFACTURE" = "Technicolor" ]; then
+               #TCH XBx/TCCBR based startup post.d scripts which includes Firewall restart and dhcp start.
+               sysevent set lan-status started
+               firewall
+               if [ ! -f "$POSTD_START_FILE" ];
+                then
+                    touch $POSTD_START_FILE
+                    execute_dir /etc/utopia/post.d/
+                fi  	
 	   else
 		echo_t "LAN HANDLER : Triggering DHCP server using LAN status"
                 sysevent set lan-status started

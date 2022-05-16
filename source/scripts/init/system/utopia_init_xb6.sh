@@ -336,13 +336,47 @@ if [ "$SYSCFG_LAN_DOMAIN" == "utopia.net" ]; then
    syscfg commit
 fi
 
-# Read reset duration to check if the unit was rebooted by pressing the HW reset button
-if [ -s /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur ]; then
-   #Note: /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is an Arris XB6 File created by Arris and Intel by reading ARM
-   PUNIT_RESET_DURATION=`cat /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur`
+if [ "$MANUFACTURE" = "Technicolor" ]; then
+    BL_LAST_RESET_REASON=$(hexdump -e '16/1 "%02x" "\n"' /proc/device-tree/bolt/reset-history)
+    BL_LAST_RESET_REASON=${BL_LAST_RESET_REASON:0:8} # Strip everything but first four bytes
+
+    if [ "00000003" == ${BL_LAST_RESET_REASON} ] || [ "00000001" == ${BL_LAST_RESET_REASON} ]
+    then
+        if [ "unknown" == $(syscfg get X_RDKCENTRAL-COM_LastRebootReason) ] || [ "0" == $(syscfg get X_RDKCENTRAL-COM_LastRebootCounter) ]
+         then
+             syscfg set X_RDKCENTRAL-COM_LastRebootReason "power-on-reset"
+             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+         fi
+     fi
+     PROCESS_TRACE_FILE="/nvram/process_trace.log"
+     if [ "00002000" == ${BL_LAST_RESET_REASON} ] && [ ! -f $PROCESS_TRACE_FILE ]
+     then
+         syscfg set X_RDKCENTRAL-COM_LastRebootReason "power-restoration"
+         syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+     fi
+     
+    RESET_BUTTON_FILE="/nvram/resetdefaults.rdkb"
+
+    if [ -f $RESET_BUTTON_FILE ]; then
+        echo "[utopia][init] ${RESET_BUTTON_FILE} exists, utopia needs to factory reset"
+        PUNIT_RESET_DURATION=`cat ${RESET_BUTTON_FILE}`
+        echo "[utopia][init] removing ${RESET_BUTTON_FILE}, PUNIT_RESET_DURATION ${PUNIT_RESET_DURATION}"
+        rm -f ${RESET_BUTTON_FILE}
+	if [ "$MODEL_NUM" != “CGM4140COM” ]; then
+           rm -f /nvram/.bcmwifi* 
+	fi   
+    else
+        echo "[utopia][init] No ${RESET_BUTTON_FILE}, assuming non FR init"
+        PUNIT_RESET_DURATION=0
+    fi    
 else
-   echo "[utopia][init] /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is empty or missing"
-   PUNIT_RESET_DURATION=0
+   if [ -s /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur ]; then
+       #Note: /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is an Arris XB6 File created by Arris and Intel by reading ARM
+       PUNIT_RESET_DURATION=`cat /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur`
+    else
+       echo "[utopia][init] /sys/bus/acpi/devices/INT34DB:00/reset_btn_dur is empty or missing"
+       PUNIT_RESET_DURATION=0
+    fi
 fi
 
 #ForwardSSH log print
@@ -762,6 +796,47 @@ if [ "$eth_wan_enable" = "true" ] && [ -f $TR69TLVFILE ]; then
   rm -rf $TR69KEYS
   sed -i '/eRT.com.cisco.spvtg.ccsp.tr069pa.Device.ManagementServer.URL.Value/d' $PSM_CUR_XML_CONFIG_FILE_NAME
 fi
-      
+
+if [ "$MANUFACTURE" = "Technicolor" ]; then
+	/bin/sh -c '(/usr/sbin/tch_traceKernelPanic.sh)'
+fi
+
 echo "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited
+
+if [ "$MANUFACTURE" = "Technicolor" ]; then
+    if [ -f /tmp/.secure_mount_flag ]; then
+        echo "[utopia][init] Detected last reboot reason as secure-mount failure"
+        syscfg set X_RDKCENTRAL-COM_LastRebootReason "secure-mount-failure"
+        syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
+        rm -f /tmp/.secure_mount_flag
+    fi
+fi
+
+if [ "$MODEL_NUM" = "TG3482G" ]; then
+    echo "[utopia][init] completed creating utopia_inited flag"
+    touch /tmp/utopia_inited
+
+    #!/bin/bash
+    RESET_FILE=/nvram/6/arris_reset.log
+    REBOOT_LOG=/nvram/6/atom_reboot_log.txt
+
+    if [ -e $RESET_FILE ]
+    then
+       echo "arris_reset_reason_log:File exists"
+    else
+       echo "arris_reset_reason_log:File does not exist"
+       echo "arris_reset_reason_log:Creating last reset reason log file"
+       mkdir -p /nvram/6
+       echo "" > "$RESET_FILE"
+    fi
+    if [ -e $REBOOT_LOG ]
+    then
+       echo "$REBOOT_LOG:File exists"
+    else
+       echo "$REBOOT_LOG:File does not exist"
+       echo "$REBOOT_LOG:Creating atom reboot log file"
+       mkdir -p /nvram/6
+       echo "" > "$REBOOT_LOG"
+    fi
+fi

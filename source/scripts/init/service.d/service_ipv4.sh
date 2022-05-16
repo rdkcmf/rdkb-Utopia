@@ -224,6 +224,24 @@ apply_config () {
     # TODO: Fix this static workaround. Should have configurable routing policy.
     SUBNET=`subnet $CUR_IPV4_ADDR $CUR_IPV4_SUBNET`
     #ip route del $SUBNET/$MASKBITS dev $IFNAME
+
+    if [ "$BOX_TYPE" = "XB6" ] && [ "$MANUFACTURE" = "Arris" ]; then
+    #Update interface MTU if there was a valid MTU value in PSM
+        case $NV_MTU in
+            ''|*[!0-9]*)
+                #Invalid / non-numeric MTU
+            ;;
+            *)
+                if [ $NV_MTU -gt 0 ] ; then
+                    #If you try to set an MTU that is the same as current Linux MTU
+                    #Linux ignores it, so set the MTU twice to make sure it applies
+                    TMP_MTU=`expr $NV_MTU - 1`
+                    ip link set dev $IFNAME mtu $TMP_MTU
+                    ip link set dev $IFNAME mtu $NV_MTU
+                fi
+            ;;
+        esac
+    fi
     
     ip rule add from $CUR_IPV4_ADDR lookup $RT_TABLE
     ip rule add iif $IFNAME lookup erouter
@@ -350,7 +368,11 @@ remove_config () {
 
 #args: 
 load_static_l3 () {
-    eval `psmcli get -e STATIC_IPV4ADDR ${IPV4_NV_PREFIX}.$1.${IPV4_NV_IP} STATIC_IPV4SUBNET ${IPV4_NV_PREFIX}.$1.${IPV4_NV_SUBNET}`
+    if [ "$BOX_TYPE" = "XB6" ] && [ "$MANUFACTURE" = "Arris" ]; then
+        eval `psmcli get -e STATIC_IPV4ADDR ${IPV4_NV_PREFIX}.$1.${IPV4_NV_IP} STATIC_IPV4SUBNET ${IPV4_NV_PREFIX}.$1.${IPV4_NV_SUBNET} NV_MTU ${IPV4_NV_PREFIX}.$1.${IPV4_NV_MTU}`
+    else
+        eval `psmcli get -e STATIC_IPV4ADDR ${IPV4_NV_PREFIX}.$1.${IPV4_NV_IP} STATIC_IPV4SUBNET ${IPV4_NV_PREFIX}.$1.${IPV4_NV_SUBNET}`
+    fi
 }
 
 #args: l3 instance
@@ -412,7 +434,12 @@ resync_all_instances () {
 resync_instance () {
 
     echo_t "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance."
-    eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
+    if [ "$BOX_TYPE" = "XB6" ] && [ "$MANUFACTURE" = "Arris" ]
+    then
+        eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED} NV_MTU ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_MTU}`
+    else
+        eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
+    fi
 
     if [ "$NV_ETHLOWER" = "" ]
     then
@@ -433,6 +460,15 @@ resync_instance () {
     then
         echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED returned null, retrying"
         NV_ENABLED=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
+    fi
+    
+    if [ "$BOX_TYPE" = "XB6" ] && [ "$MANUFACTURE" = "Arris" ]
+    then
+         if [ "$NV_MTU" = "" ]
+         then
+             echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_MTU returned null, retrying"
+             NV_ENABLED=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_MTU}`
+        fi
     fi
 
     if [ x = x$NV_ENABLED -o x$DM_FALSE = x$NV_ENABLED ]; then

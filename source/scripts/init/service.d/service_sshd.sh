@@ -69,6 +69,12 @@ if [ -f /etc/mount-utils/getConfigFile.sh ];then
      . /etc/mount-utils/getConfigFile.sh
 fi
 
+if [  "$MANUFACTURE" = "Technicolor" ];then
+   ip_to_hex() {
+       printf '%02x' ${1//./ }
+   }
+fi
+
 #Determine which IP addresses on wan0 to listen on (ipv4 and ipv6 if present)
 get_listen_params() {
     LISTEN_PARAMS=""
@@ -120,25 +126,74 @@ do_start() {
 	CMINTERFACE=$WAN_INTERFACE
     fi
 
-    CM_IP=""
-    if ([ "$BOX_TYPE" = "rpi" ]) ;then
-        #for Raspberry-pi, use the ipv4 address as default for ssh
-        CM_IP=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+    if  [ "$MANUFACTURE" = "Technicolor" ]; then
+        # Please refere TCCBR-1607 for architectural information
+        CM_IPV4=""
+        #getting the IPV4 address for V4 CM SSH packets
+        if [ "$WAN_INTERFACE" =  "$DEFAULT_WAN_INTERFACE" ] ; then
+            if [ -f "/nvram/ETHWAN_ENABLE" ];then
+                CM_IPV4=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+            else
+                CM_IPV4=`ifconfig privbr:0 | grep "inet addr" | awk '/inet/{print $2}'  | cut -f2 -d:`
+            fi
+        else
+             CM_IPV4=`ip -4 addr show dev $WAN_INTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+        fi
+        if [ ! -z "$CM_IPV4" ]; then
+            commandString="-p [$CM_IPV4]:22"
+        fi
+        CM_IPV6=""
+        #getting the IPV6 address for V6 CM SSH packets
+        IpCheckVal=$(echo ${CM_IPV4} | tr "." " " | awk '{ print $3"."$4 }')
+        Check=$(ip_to_hex $IpCheckVal)
+        if [ "$WAN_INTERFACE" =  "$DEFAULT_WAN_INTERFACE" ] ; then
+            if [ -f "/nvram/ETHWAN_ENABLE" ];then
+                CM_IPV6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -n1`
+                if [ ! -z "$CM_IPV6" ]; then
+                    commandString="$commandString -p [$CM_IPV6]:22"
+	        fi
+	    else
+      	        echo Look up Global scope inet6 address
+	        CM_IPV6=`ifconfig privbr | grep $Check | grep Global |  awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+	        if [ ! -z "$CM_IPV6" ]; then
+        	    commandString="$commandString -p [$CM_IPV6]:22" 
+	        else
+        	    echo Look up non-Global scope inet6 address
+	            CM_IPV6=`ifconfig privbr | grep $Check |  awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+        	    if [ ! -z "$CM_IPV6" ]; then
+	               commandString="$commandString -p [$CM_IPV6%privbr]:22"
+        	    fi
+	        fi
+	    fi
+	else
+            CM_IPV6=`ip -6 addr show dev $WAN_INTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -n1`
+	    if [ ! -z "$CM_IPV6" ]; then
+                commandString="$commandString -p [$CM_IPV6]:22"
+	    fi
+        fi
     else
-        #for other devices, use the ipv6 address for ssh, if available
-        CM_IP=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -n1`
+        CM_IP=""
+        if ([ "$BOX_TYPE" = "rpi" ]) ;then
+            #for Raspberry-pi, use the ipv4 address as default for ssh
+            CM_IP=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+        else
+            #for other devices, use the ipv6 address for ssh, if available
+            CM_IP=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -n1`
+         fi
     fi
 
    # start a ssh daemon
    # echo "[utopia] Starting SSH daemon" > /dev/console
-#   dropbear -d /etc/dropbear_dss_host_key  -r /etc/dropbear_rsa_host_key
-#   /etc/init.d/dropbear start
+   # dropbear -d /etc/dropbear_dss_host_key  -r /etc/dropbear_rsa_host_key
+   # /etc/init.d/dropbear start
    #dropbear -r /etc/rsa_key.priv
    #dropbear -E -s -b /etc/sshbanner.txt -s -a -p [$CM_IP]:22
-   if [ "$CM_IP" = "" ]
-   then
-      #wan0 should be in v4
-      CM_IP=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+   if  [ "$MANUFACTURE" != "Technicolor" ]; then
+       if [ "$CM_IP" = "" ]
+       then
+          #wan0 should be in v4
+          CM_IP=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
+       fi
    fi
    DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$"
    DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"
@@ -163,7 +218,12 @@ do_start() {
       echo_t "utopia: dropbear could not be started on erouter0 IPv6 interface."
     fi
    else
-   	dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
+       if  [ "$MANUFACTURE" = "Technicolor" ]; then
+	  echo dropbear -E -s -K 60 -b /etc/sshbanner.txt ${commandString} -r ${DROPBEAR_PARAMS_1} -r ${DROPBEAR_PARAMS_2} -a -P ${PID_FILE}
+          dropbear -E -s -K 60 -b /etc/sshbanner.txt $commandString -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -a -P $PID_FILE
+       else
+   	  dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -p [$CM_IP]:22 -P $PID_FILE
+       fi
    fi
 
    # The PID_FILE created after demonize the process. So added delay for 1 sec.

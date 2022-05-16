@@ -519,6 +519,12 @@ void logPrintMain(char* filename, int line, char *fmt,...);
 #define XHS_GRE_CLAMP_MSS   1400
 #define XHS_EB_MARK         4703
 
+#if defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+#define CM_SNMP_AGENT             "172.31.255.45"
+#define kOID_cmRemoteIpAddress    "1.3.6.1.4.1.4413.2.2.2.1.2.12161.1.2.2.0"
+#define kOID_cmRemoteIpv6Address  "1.3.6.1.4.1.4413.2.2.2.1.2.12161.1.3.2.0"
+#endif
+
 static int do_blockfragippktsv4(FILE *fp);
 static int do_ipflooddetectv4(FILE *fp);
 static int do_portscanprotectv4(FILE *fp);
@@ -5720,6 +5726,8 @@ int do_wan2self_attack(FILE *fp,char* wan_ip)
    }
 #elif defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\"\n", logRateLimit);
+#elif defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_))  
+   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j NFLOG --nflog-group 2 --nflog-prefix \"DoS Attack - Smurf Attack\" --nflog-size 50\n", logRateLimit);
 #else
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type address-mask-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -5737,6 +5745,8 @@ int do_wan2self_attack(FILE *fp,char* wan_ip)
    }
 #elif defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_)
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j LOG --log-prefix \"DoS Attack - Smurf Attack\"\n", logRateLimit);
+#elif defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+   fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j NFLOG --nflog-group 2 --nflog-prefix \"DoS Attack - Smurf Attack\" --nflog-size 50\n", logRateLimit);
 #else
    fprintf(fp, "-A wanattack -p icmp -m icmp --icmp-type timestamp-request %s -j ULOG --ulog-prefix \"DoS Attack - Smurf Attack\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -5757,6 +5767,8 @@ int do_wan2self_attack(FILE *fp,char* wan_ip)
    }
 #elif defined(_PLATFORM_RASPBERRYPI_) || defined (_PLATFORM_TURRIS_)
    fprintf(fp, "-A wanattack -p icmp %s -j LOG --log-prefix \"DoS Attack - ICMP Flooding\" \n", logRateLimit);
+#elif defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+   fprintf(fp, "-A wanattack -p icmp %s -j NFLOG --nflog-group 2 --nflog-prefix \"DoS Attack - ICMP Flooding\" --nflog-size 50\n", logRateLimit);
 #else
    fprintf(fp, "-A wanattack -p icmp %s -j ULOG --ulog-prefix \"DoS Attack - ICMP Flooding\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -5777,6 +5789,8 @@ int do_wan2self_attack(FILE *fp,char* wan_ip)
    }
 #elif defined(_PLATFORM_RASPBERRYPI_) || defined (_PLATFORM_TURRIS_)
    fprintf(fp, "-A wanattack -p tcp --syn %s -j LOG --log-prefix \"DoS Attack - TCP SYN Flooding\" \n", logRateLimit);
+#elif defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+   fprintf(fp, "-A wanattack -p tcp --syn %s -j NFLOG --nflog-group 2 --nflog-prefix \"DoS Attack - TCP SYN Flooding\" --nflog-size 50\n", logRateLimit);
 #else
    fprintf(fp, "-A wanattack -p tcp --syn %s -j ULOG --ulog-prefix \"DoS Attack - TCP SYN Flooding\" --ulog-cprange 50\n", logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -5799,6 +5813,8 @@ int do_wan2self_attack(FILE *fp,char* wan_ip)
        }
 #elif defined(_PLATFORM_RASPBERRYPI_) || defined (_PLATFORM_TURRIS_)
    fprintf(fp, "-A wanattack -s %s %s -j LOG --log-prefix \"DoS Attack - LAND Attack\" \n", wan_ip, logRateLimit);
+#elif defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+       fprintf(fp, "-A wanattack -s %s %s -j NFLOG --nflog-group 2 --nflog-prefix \"DoS Attack - LAND Attack\" --nflog-size 50\n", wan_ip, logRateLimit);
 #else
        fprintf(fp, "-A wanattack -s %s %s -j ULOG --ulog-prefix \"DoS Attack - LAND Attack\" --ulog-cprange 50\n", wan_ip, logRateLimit);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -9693,6 +9709,31 @@ static void do_add_TCP_MSS_rules(FILE *mangle_fp)
 static int do_lan2wan(FILE *mangle_fp, FILE *filter_fp, FILE *nat_fp)
 {
    FIREWALL_DEBUG("Entering do_lan2wan\n");
+#if defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+   if (isNatReady)
+   {
+       FILE *f = NULL;
+       char request[256], response[256], cm_ipaddr[20];
+       unsigned int a = 0, b = 0, c = 0, d = 0;
+
+       snprintf(request, 256, "snmpget -cpub -v2c -Ov %s %s", CM_SNMP_AGENT, kOID_cmRemoteIpAddress);
+
+       if ((f = popen(request, "r")) != NULL)
+       {
+           fgets(response, 255, f);
+           sscanf(response, "Hex-STRING: %02x %02x %02x %02x", &a, &b, &c, &d);
+           sprintf(cm_ipaddr, "%d.%d.%d.%d", a, b, c, d);
+
+           if (!(a == 0 && b == 0 && c == 0 && d == 0))
+           {
+               fprintf(filter_fp, "-I lan2wan -d %s -p icmp -m icmp --icmp-type 8 -j DROP\n", cm_ipaddr);
+               fprintf(filter_fp, "-I lan2wan -d %s -p tcp -m tcp --dport 80 -j DROP\n", cm_ipaddr);
+           }
+
+           pclose(f);
+       }
+   }
+#endif
    do_lan2wan_misc(filter_fp);
    //do_lan2wan_IoT_Allow(filter_fp);
    //Not used in USGv2
@@ -10976,7 +11017,36 @@ static int prepare_multinet_mangle(FILE *mangle_fp) {
    return 0;
 }
 
+#if defined (INTEL_PUMA7)
+static int prepare_multinet_mangle_v6(FILE *mangle_fp) {
+   unsigned int iterator;
+   char          name[MAX_QUERY];
+   FILE* fp = mangle_fp;
+   char      rule[MAX_QUERY];
+   char      subst[MAX_QUERY];
+   FIREWALL_DEBUG("Entering prepare_multinet_mangle_v6\n");
+   iterator = SYSEVENT_NULL_ITERATOR;
+   do {
+      name[0] = rule[0] = '\0';
+      sysevent_get_unique(sysevent_fd, sysevent_token,
+                                  "v6GeneralPurposeMangleRule", &iterator,
+                                  name, sizeof(name), rule, sizeof(rule));
+      if ('\0' != rule[0]) {
+         /*
+          * the rule we just got could contain variables that we need to substitute
+          * for runtime/configuration values
+          */
 
+         if (NULL != make_substitutions(rule, subst, sizeof(subst))) {
+            fprintf(fp, "%s\n", subst);
+         }
+      }
+
+   } while (SYSEVENT_NULL_ITERATOR != iterator);
+      FIREWALL_DEBUG("Exiting prepare_multinet_mangle_v6\n");
+    return 0;
+}
+#endif
 //Captive Portal
 static int isInCaptivePortal()
 {
@@ -12113,10 +12183,17 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
    fprintf(filter_fp, "-I FORWARD -m conntrack --ctdir reply -m connbytes --connbytes 0:10 --connbytes-dir reply --connbytes-mode packets -j GWMETA --dis-pp\n");
 #endif
 
-#if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_TURRIS_)
+#if (defined(_COSA_BCM_ARM_) || defined(_PLATFORM_TURRIS_)) && !defined(_CBR_PRODUCT_REQ_)
    fprintf(filter_fp, "-I FORWARD -d 192.168.100.1/32 -i %s -j DROP\n", lan_ifname);
    fprintf(filter_fp, "-I FORWARD -d 172.31.0.0/16 -i %s -j DROP\n", lan_ifname);
 #endif
+
+#if defined(_CBR_PRODUCT_REQ_)
+   fprintf(filter_fp, "-I lan2self -d 172.31.0.0/16 -j DROP\n");
+   fprintf(filter_fp, "-I lan2self -d 192.168.100.1/32 -j DROP\n");
+   fprintf(filter_fp, "-A FORWARD -s 172.31.255.0/24 -j DROP\n");
+#endif
+
 
    do_forwardPorts(filter_fp);
 
@@ -12955,6 +13032,32 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
 #endif
 
+#if defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+ /* To avoid open ssh connection to CM IP TCXB6-2879*/
+   if (!isBridgeMode)
+   {
+       FILE *f = NULL;
+       char request[256], response[256], cm_ipaddr[20];
+       unsigned int a = 0, b = 0, c = 0, d = 0;
+
+       snprintf(request, 256, "snmpget -cpub -v2c -Ov %s %s", CM_SNMP_AGENT, kOID_cmRemoteIpAddress);
+
+       if ((f = popen(request, "r")) != NULL)
+       {
+           fgets(response, 255, f);
+           sscanf(response, "Hex-STRING: %02x %02x %02x %02x", &a, &b, &c, &d);
+           sprintf(cm_ipaddr, "%d.%d.%d.%d", a, b, c, d);
+
+           if (!(a == 0 && b == 0 && c == 0 && d == 0))
+           {
+                fprintf(filter_fp, "-I FORWARD -d %s -i %s -j DROP\n", cm_ipaddr,lan_ifname);
+           }
+
+           pclose(f);
+       }
+   }
+#endif
+   
    do_blockfragippktsv4(filter_fp);
    do_portscanprotectv4(filter_fp);
    do_ipflooddetectv4(filter_fp);
@@ -13212,9 +13315,15 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
        do_tr69_whitelistTable(filter_fp, AF_INET);
    }
 
-   if(!isBridgeMode) //brlan0 exists
+   if(!isBridgeMode) {//brlan0 exists
        fprintf(filter_fp, "-A INPUT -i %s -j lan2self_mgmt\n", lan_ifname);
-
+   }
+#if defined(_CBR_PRODUCT_REQ_)
+   else {
+     	   //TCCBR-2674 - Technicolor CBR Telnet port exposed to Public internet
+	   fprintf(filter_fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 23 -j DROP\n" );
+	 }
+#endif
 
 #if defined (MULTILAN_FEATURE)
    prepare_multinet_disabled_ipv4_firewall(filter_fp);
@@ -13227,6 +13336,31 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    #if defined(CONFIG_CCSP_LAN_HTTP_ACCESS)
    lan_http_access(filter_fp);
    #endif
+
+#if defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+   if (isBridgeMode)
+   {
+       FILE *f = NULL;
+       char request[256], response[256], cm_ipaddr[20];
+       unsigned int a = 0, b = 0, c = 0, d = 0;
+
+       snprintf(request, 256, "snmpget -cpub -v2c -Ov %s %s", CM_SNMP_AGENT, kOID_cmRemoteIpAddress);
+
+       if ((f = popen(request, "r")) != NULL)
+       {
+           fgets(response, 255, f);
+           sscanf(response, "Hex-STRING: %02x %02x %02x %02x", &a, &b, &c, &d);
+           sprintf(cm_ipaddr, "%d.%d.%d.%d", a, b, c, d);
+
+           if (!(a == 0 && b == 0 && c == 0 && d == 0))
+           {
+               fprintf(filter_fp, "-I FORWARD -d %s -i %s -j DROP\n", cm_ipaddr,lan_ifname);
+           }
+
+           pclose(f);
+       }
+   }
+#endif
 
 #ifdef _COSA_INTEL_XB3_ARM_
    fprintf(filter_fp, "-A OUTPUT -p icmp -m icmp --icmp-type 3 -j DROP\n");
@@ -13933,6 +14067,9 @@ int prepare_ipv6_firewall(const char *fw_file)
 #ifdef XDNS_ENABLE
     do_dns_route(nat_fp, 6);
 #endif
+#ifdef INTEL_PUMA7
+    prepare_multinet_mangle_v6(mangle_fp);
+#endif 
 //#if defined(MOCA_HOME_ISOLATION)
   //      prepare_MoCA_bridge_firewall(raw_fp, mangle_fp, nat_fp, filter_fp);
 //#endif
@@ -14045,6 +14182,12 @@ clean_up_files:
 
 static void do_ipv6_filter_table(FILE *fp){
 	FIREWALL_DEBUG("Inside do_ipv6_filter_table \n");
+
+#if defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+   FILE *f = NULL;
+   char request[256], response[256], cm_ipv6addr[40];
+   unsigned int a[16] = {0};
+#endif
 	
    fprintf(fp, "*filter\n");
    fprintf(fp, ":INPUT ACCEPT [0:0]\n");
@@ -14140,6 +14283,28 @@ static void do_ipv6_filter_table(FILE *fp){
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (fp);
 
+#if defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+   /* To avoid open ssh connection to CM IP TCXB6-2879*/
+   snprintf(request, 256, "snmpget -cpub -v2c -Ov %s %s", CM_SNMP_AGENT, kOID_cmRemoteIpv6Address);
+
+   if ((f = popen(request, "r")) != NULL)
+   {
+      fgets(response, 255, f);
+      sscanf(response, "Hex-STRING: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", &a[0], &a[1], &a[2], &a[3], &a[4], &a[5], &a[6], &a[7], &a[8], &a[9], &a[10], &a[11], &a[12], &a[13], &a[14], &a[15]);
+      sprintf(cm_ipv6addr, "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15]);
+
+      if (!(a[0] == 0 && a[1] == 0 && a[2] == 0 && a[3] == 0
+         && a[4] == 0 && a[5] == 0 && a[6] == 0 && a[7] == 0
+         && a[8] == 0 && a[9] == 0 && a[10] == 0 && a[11] == 0
+         && a[12] == 0 && a[13] == 0 && a[14] == 0 && a[15] == 0))
+         {
+            fprintf(fp, "-I FORWARD -d %s -i %s  -j DROP\n", cm_ipv6addr, lan_ifname);
+         }
+
+         pclose(f);
+   }
+#endif
+
    // Create iptable chain to ratelimit remote management packets
    do_webui_rate_limit(fp);
 
@@ -14150,6 +14315,13 @@ static void do_ipv6_filter_table(FILE *fp){
                do_remote_access_control(NULL, fp, AF_INET6);
 	       WAN_FAILOVER_SUPPORT_CHECk_END
        }
+
+#if defined(_CBR_PRODUCT_REQ_)
+       if (isBridgeMode) {
+           //TCCBR-2674 - Technicolor CBR Telnet port exposed to Public internet
+           fprintf(fp, "-A INPUT -i erouter0 -p tcp -m tcp --dport 23 -j DROP\n" );
+       }
+#endif
 
        lan_telnet_ssh(fp, AF_INET6);
        do_ssh_IpAccessTable(fp, "22", AF_INET6, ecm_wan_ifname);
@@ -14663,6 +14835,35 @@ v6GPFirewallRuleNext:
          // Block unicast LAN to WAN traffic from being sent from this bridge if the source address is not within this bridge's allocated prefix
          fprintf(fp, "-A FORWARD -i %s -o %s -m pkttype --pkt-type unicast ! -s %s -j LOG_FORWARD_DROP\n", lan_ifname, wan6_ifname, lan_prefix);
       }
+
+#if defined(_COSA_BCM_ARM_) && (defined(_CBR_PRODUCT_REQ_) || defined(_XB6_PRODUCT_REQ_)) 
+      if (isNatReady)
+      {
+          FILE *f = NULL;
+          char request[256], response[256], cm_ipv6addr[40];
+          unsigned int a[16] = {0};
+
+          snprintf(request, 256, "snmpget -cpub -v2c -Ov %s %s", CM_SNMP_AGENT, kOID_cmRemoteIpv6Address);
+
+          if ((f = popen(request, "r")) != NULL)
+          {
+              fgets(response, 255, f);
+              sscanf(response, "Hex-STRING: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x", &a[0], &a[1], &a[2], &a[3], &a[4], &a[5], &a[6], &a[7], &a[8], &a[9], &a[10], &a[11], &a[12], &a[13], &a[14], &a[15]);
+              sprintf(cm_ipv6addr, "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x", a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15]);
+
+              if (!(a[0] == 0 && a[1] == 0 && a[2] == 0 && a[3] == 0 
+                 && a[4] == 0 && a[5] == 0 && a[6] == 0 && a[7] == 0 
+                 && a[8] == 0 && a[9] == 0 && a[10] == 0 && a[11] == 0 
+                 && a[12] == 0 && a[13] == 0 && a[14] == 0 && a[15] == 0))
+              {
+                  fprintf(fp, "-I lan2wan -d %s -p icmpv6 -m icmpv6 --icmpv6-type 8 -j DROP\n", cm_ipv6addr);
+                  fprintf(fp, "-I lan2wan -d %s -p tcp -m tcp --dport 80 -j DROP\n", cm_ipv6addr);
+              }
+
+              pclose(f);
+          }
+      }
+#endif
 
       fprintf(fp, "-A FORWARD -i %s -o %s -j ACCEPT\n", lan_ifname, lan_ifname);
       fprintf(fp, "-A FORWARD -i %s -o %s -j lan2wan\n", lan_ifname, wan6_ifname);

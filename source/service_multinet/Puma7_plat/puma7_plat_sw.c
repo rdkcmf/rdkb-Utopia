@@ -1,5 +1,5 @@
 /****************************************************************************
-  Copyright 2017 Intel Corporation
+  Copyright 2017-2018 Intel Corporation
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@
 #include "safec_lib_common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <sys/ioctl.h>
@@ -73,7 +74,9 @@
 #define PP_DRIVER_ADD_VPID                          _IOWR (PP_DRIVER_MODULE_ID, 4, pp_dev_ioctl_param_t)
 
 #define MAX_CMD_SIZE 256
-#define GRE_CLAMP_MTU 1400
+#define GRE_IPV4_CLAMP_MTU 1400
+#define GRE_IPV6_CLAMP_MTU 1380
+#define MAX_MTU_STRING_SIZE 5
 
 #define ETHWAN_DEF_INTF_NAME "nsgmii0"
 
@@ -315,6 +318,9 @@ int configVlan_GRE(PSWFabHALArg args, int numArgs, BOOL up)
     char ruleBuff[MAX_CMD_SIZE];
     char temp_ifname[MAX_CMD_SIZE];
     int result = 0;
+    FILE *fp;
+    char str[MAX_MTU_STRING_SIZE];
+    int mtu_value = 0;
 
     for (i = 0; i < numArgs; ++i ) {
         strncpy(temp_ifname, (char*)args[i].portID, sizeof(temp_ifname));
@@ -332,25 +338,75 @@ int configVlan_GRE(PSWFabHALArg args, int numArgs, BOOL up)
         }
 
         /* Handle the iptables rule for TCP MSS clamping */
-        if (0 == result) {
-            /* Generate the MTU clamping rule */
-            snprintf(ruleBuff, MAX_CMD_SIZE, " -A POSTROUTING -o %s -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d", 
-                     args[0].hints.network->name, GRE_CLAMP_MTU);
+        if (0 == result) 
+        {
+            if ((fp = popen("sysevent get mssclamping", "r")) == NULL) {
+                fprintf(stderr, "Error : Fail to  open file to get mssclamping sysevent !!!!\n");
+                return -1;
+            }
 
-            /* Add or delete the rule */
-            snprintf(cmdBuff, MAX_CMD_SIZE, "sysevent %s GeneralPurposeMangleRule \"%s\"", 
-                     (up ? "setunique" : "delunique"), ruleBuff);
+            fgets(str, MAX_MTU_STRING_SIZE, fp);
+            pclose(fp);
 
-            MNET_DEBUG("configVlan_GRE command is %s\n" COMMA cmdBuff);
-            system(cmdBuff);
+            mtu_value = atoi(str);
+            if ( mtu_value > 0 )
+            {
+                if (mtu_value == 1 )
+                {
+                    /* Generate the ipv4 MTU clamping rule */
+                    snprintf(ruleBuff, MAX_CMD_SIZE, " -A POSTROUTING -o %s -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d",
+                             args[0].hints.network->name, GRE_IPV4_CLAMP_MTU);
 
-            /* Restart firewall so rule takes effect */
-            MNET_DEBUG("configVlan_GRE restarting firewall\n");
-            system("sysevent set firewall-restart");
-        }
+                    /* Add or delete the ipv4 rule */
+                    snprintf(cmdBuff, MAX_CMD_SIZE, "sysevent %s GeneralPurposeMangleRule \"%s\"",
+                             (up ? "setunique" : "delunique"), ruleBuff);
+
+                    MNET_DEBUG("configVlan_GRE command is %s\n" COMMA cmdBuff);
+                    system(cmdBuff);
+
+                    /* Generate the ipv6 MTU clamping rule */
+                    snprintf(ruleBuff, MAX_CMD_SIZE, " -A POSTROUTING -o %s -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d",
+                             args[0].hints.network->name, GRE_IPV6_CLAMP_MTU);
+
+                    /* Add or delete the IPv6 rule */
+                    snprintf(cmdBuff, MAX_CMD_SIZE, "sysevent %s v6GeneralPurposeMangleRule \"%s\"",
+                             (up ? "setunique" : "delunique"), ruleBuff);
+
+                    MNET_DEBUG("configVlan_GRE command is %s\n" COMMA cmdBuff);
+                    system(cmdBuff);
+                }
+                else{
+                
+                    /* Generate the ipv4 MTU clamping rule */
+                    snprintf(ruleBuff, MAX_CMD_SIZE, " -A POSTROUTING -o %s -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d",
+                             args[0].hints.network->name, mtu_value);
+
+                    /* Add or delete the ipv4 rule */
+                    snprintf(cmdBuff, MAX_CMD_SIZE, "sysevent %s GeneralPurposeMangleRule \"%s\"",
+                             (up ? "setunique" : "delunique"), ruleBuff);
+
+                    MNET_DEBUG("configVlan_GRE command is %s\n" COMMA cmdBuff);
+                    system(cmdBuff);
+
+                    /* Generate the ipv6 MTU clamping rule */
+                    snprintf(ruleBuff, MAX_CMD_SIZE, " -A POSTROUTING -o %s -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d",
+                             args[0].hints.network->name, mtu_value);
+
+                    /* Add or delete the IPv6 rule */
+                    snprintf(cmdBuff, MAX_CMD_SIZE, "sysevent %s v6GeneralPurposeMangleRule \"%s\"",
+                             (up ? "setunique" : "delunique"), ruleBuff);
+
+                    MNET_DEBUG("configVlan_GRE command is %s\n" COMMA cmdBuff);
+                    system(cmdBuff);
+                }
+                /* Restart firewall so rule takes effect */
+                MNET_DEBUG("configVlan_GRE restarting firewall\n");
+                system("sysevent set firewall-restart");
+            }
         
+        }
     }
-
+  
     return result;
 }
 

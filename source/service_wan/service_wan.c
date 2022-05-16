@@ -1246,9 +1246,21 @@ static int wan_iface_up(struct serv_wan *sw)
 #endif
 
     syscfg_get(NULL, "wan_mtu", mtu, sizeof(mtu));
+#ifdef INTEL_PUMA7
+#if !defined(DOCSIS_EXTENDED_MTU_SUPPORT)
+    if(atoi(mtu) > 1500)
+    {
+	snprintf(mtu, sizeof(mtu), "1500");
+	syscfg_set(NULL, "wan_mtu", mtu);
+    }
+#endif
+    if (atoi(mtu) > 0)
+        v_secure_system("ip -4 link set %s mtu %s", sw->ifname, mtu);
+#else  
     if (atoi(mtu) < 1500 && atoi(mtu) > 0)
         v_secure_system("ip -4 link set %s mtu %s", sw->ifname, mtu);
-
+#endif
+  
     sysctl_iface_set("/proc/sys/net/ipv4/conf/%s/arp_announce", sw->ifname, "1");
     v_secure_system("ip -4 link set %s up", sw->ifname);
 #if PUMA6_OR_NEWER_SOC_TYPE

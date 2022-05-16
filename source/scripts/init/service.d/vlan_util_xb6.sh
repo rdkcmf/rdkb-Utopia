@@ -68,7 +68,11 @@ QTN_BR0_IP="192.168.147.100"
 #Base vlan ID to use internally in QTN
 QTN_VLAN_BASE="2000"
 QTN_STATE="/var/run/.qtn_vlan_enabled"
-UNIQUE_ID=`ncpu_exec -ep "cat /sys/class/net/wan0/address"|egrep -e ".*:.*:.*:.*:.*:.*"|cut -d ":" -f 3-6`
+if [ "$MODEL_NUM" = "TG3482G" ]; then
+    UNIQUE_ID=`$NCPU_EXEC -ep ncpu_exec_oem.sh get_unique_id`
+else    
+    UNIQUE_ID=`ncpu_exec -ep "cat /sys/class/net/wan0/address"|egrep -e ".*:.*:.*:.*:.*:.*"|cut -d ":" -f 3-6`
+fi
 UNIQUE_ID=`echo "${UNIQUE_ID//:}"`
 WAN_MAC=`arris_rpc_client arm nvm_get cm_mac`
 #GRE tunnel information
@@ -289,11 +293,20 @@ qtn_init(){
         $QCSAPI_PCIE set_ip br0 ipaddr $QTN_BR0_IP
         $QCSAPI_PCIE set_ip br0 netmask 255.255.255.0
         $QWCFG_TEST set 0 dft_gw_run_script $BASE_WIFI_IP
+        if [ "$MODEL_NUM" = "TG3482G" ]; then
+            $NCPU_EXEC -e ncpu_exec_oem.sh set_ndp0_mtu
+        else
+            $NCPU_EXEC -e 'ifconfig ndp0 mtu 1600'
+        fi
         $NCPU_EXEC -e 'ifconfig ndp0 mtu 1600'
         # ARRISXB6-6042 workaround to re-enable MTU on wifi driver reload until
         # real fix is available. Set mtu to 1600 on all wifi0.NN interfaces on
         # ARM side.
-        $NCPU_EXEC -e "ifconfig | awk '/^wifi0\.[0-9]/ { printf \"ifconfig %s mtu 1600\n\",\$1 | \"sh\"}'"
+        if [ "$MODEL_NUM" = "TG3482G" ]; then
+            $NCPU_EXEC -e ncpu_exec_oem.sh set_wifi_mtu
+        else
+            $NCPU_EXEC -e "ifconfig | awk '/^wifi0\.[0-9]/ { printf \"ifconfig %s mtu 1600\n\",\$1 | \"sh\"}'"
+        fi
         $IP link add ath12 link host0 type vlan id 2012
         $IP link add ath13 link host0 type vlan id 2013
         $IFCONFIG host0 mtu 1600
@@ -837,7 +850,11 @@ sync_group_settings() {
     #In bridge mode if we reconfigure the ports we need to flush DOCSIS CPE table
      if [ "$BRIDGE_MODE" -gt 0 ]
      then
-         ncpu_exec -e "(echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt)"
+         if [ "$MODEL_NUM" = "TG3482G" ]; then
+             $NCPU_EXEC -e service_bridge.sh clear_cpe_table
+         else
+             ncpu_exec -e "(echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt)"
+         fi
      fi
 
     if [ "$NEED_WIFI_UPDATE" = "true" ]

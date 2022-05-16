@@ -31,7 +31,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #######################################################################
-
+if [ -f /etc/device.properties ]
+then
+     source /etc/device.properties
+fi
 UTOPIAROOT=/etc/utopia/service.d
 SERVICEROOT=$UTOPIAROOT/service_${SERVICE_NAME}
 THIS=$UTOPIAROOT/service_${SERVICE_NAME}.sh
@@ -87,6 +90,9 @@ IPV4_NV_PREFIX=dmsb.l3net
 IPV4_NV_IP=V4Addr
 IPV4_NV_SUBNET=V4SubnetMask
 IPV4_NV_ENABLED=Enable
+if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]; then
+IPV4_NV_MTU=MaxMTU
+fi
 
 #true static ip
 IPV4_TSIP_PREFIX=dmsb.truestaticip

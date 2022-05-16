@@ -354,8 +354,10 @@ int syscfg_commit (void)
 
     commit_unlock(ctx);
     write_unlock(ctx);
-
-    ulog(ULOG_SYSTEM, UL_SYSCFG, "commit to store");
+    
+    #if !defined (_ARRIS_XB6_PRODUCT_REQ_)
+        ulog(ULOG_SYSTEM, UL_SYSCFG, "commit to store");
+    #endif
     return rc;
 }
 

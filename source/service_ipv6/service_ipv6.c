@@ -48,7 +48,7 @@
 #include <sysevent/sysevent.h>
 #include "safec_lib_common.h"
 
-#ifdef MULTILAN_FEATURE
+#if defined(MULTILAN_FEATURE) || defined(INTEL_PUMA7)
 #include "ccsp_psm_helper.h"
 #include <ccsp_base_api.h>
 #include "ccsp_memory.h"
@@ -56,7 +56,7 @@
 
 #define PROG_NAME       "SERVICE-IPV6"
 
-#ifdef MULTILAN_FEATURE
+#if defined(INTEL_PUMA7) || defined(MULTILAN_FEATURE)
 #define CCSP_SUBSYS                 "eRT."
 #define L3_DM_PREFIX                "dmsb.l3net."
 #define L3_DM_IPV6_ENABLE_PREFIX    "IPv6Enable"
@@ -65,20 +65,28 @@
 #define ETHLINK_DM_L2NET_PREFIX     "l2net"
 #define CCSP_CR_COMPONENT_ID        "eRT.com.cisco.spvtg.ccsp.CR"
 #define L3_DM_PRIMARY_INSTANCE      "dmsb.MultiLAN.PrimaryLAN_l3net"
-
+#if defined(INTEL_PUMA7)
+#define L3_MTU_PREFIX               "MaxMTU"
+#define L2_DM_PREFIX                "dmsb.l2net."
+#define L2_NAME_PREFIX              "Name"
+#endif
 static void* bus_handle = NULL;
 const char* const service_ipv6_component_id = "ccsp.ipv6";
 
 #define PSM_VALUE_GET_STRING(name, str) PSM_Get_Record_Value2(bus_handle, CCSP_SUBSYS, name, NULL, &(str))
 #define PSM_VALUE_GET_INS(name, pIns, ppInsArry) PsmGetNextLevelInstances(bus_handle, CCSP_SUBSYS, name, pIns, ppInsArry)
 #endif
-
+ 
 #define PROVISIONED_V6_CONFIG_FILE  "/tmp/ipv6_provisioned.config"
 #define CLI_RECEIVED_OPTIONS_FILE   "/tmp/.dibbler-info/client_received_options"
 #define DHCPV6_SERVER               "dibbler-server"
 #define DHCPV6S_PID_FILE            "/tmp/dibbler/server.pid"
 #define DHCPV6S_CONF_FILE           "/etc/dibbler/server.conf"
 #define DHCPV6S_NAME                "dhcpv6s"
+#define CMD_BUF_SIZE              255
+#if defined(INTEL_PUMA7) || defined(MULTILAN_FEATURE)
+#define BRIDGE_MODE_STRLEN          4
+#endif
 
 #ifndef MULTILAN_FEATURE
 #define MAX_LAN_IF_NUM              3
@@ -89,10 +97,6 @@ const char* const service_ipv6_component_id = "ccsp.ipv6";
 
 #define EROUTER_EVENT_LOG           "/var/log/event/eventlog"
 #define EROUTER_NO_PREFIX_MESSAGE   "/usr/bin/logger -p local4.crit \"72002001 -  LAN Provisioning No Prefix available for eRouter interface\""
-#endif
-
-#if defined(MULTILAN_FEATURE)
-#define BRIDGE_MODE_STRLEN          4
 #endif
 
 /*dhcpv6 client dm related sysevent*/
@@ -1088,6 +1092,126 @@ static void report_no_lan_prefixes(struct serv_ipv6 *si6)
 #endif
 
 /*
+ * Iterate through all enabled L3 IPv6 instances and set the proper MTU for each
+ */
+#if defined(INTEL_PUMA7)
+static void update_mtu(void){
+    int instance_ret = 0;
+    int enable_ret = 0;
+    int mtu_ret = 0;
+    int name_ret = 0;
+    int l3net_ethlink_ret = 0;
+    int ethlink_l2net_ret = 0;
+    unsigned int l3net_count = 0;
+    unsigned int *l3net_ins = NULL;
+    unsigned char psm_param[CMD_BUF_SIZE] = {0};
+    int idx = 0;
+    char *ipv6_enable_string = NULL;
+    char *name_string = NULL;
+    char *mtu_string = NULL;
+    char *primary_l3_instance_string = NULL;
+    int mtu_val = 0;
+    char *l3net_ethlink = NULL;
+    char *ethlink_l2net = NULL;
+    int primary_l3_instance = 0;
+    char bridge_mode_string[BRIDGE_MODE_STRLEN]={0};
+    int bridge_mode = 0;
+
+    /* Get primary L3 network instance */
+    snprintf(psm_param, sizeof(psm_param), "%s", L3_DM_PRIMARY_INSTANCE);
+    instance_ret = PSM_VALUE_GET_STRING(psm_param, primary_l3_instance_string);
+    if((instance_ret == CCSP_SUCCESS) && (primary_l3_instance_string != NULL)) {
+        primary_l3_instance = atoi(primary_l3_instance_string);
+    }
+
+    /* Check whether bridged mode is enabled */
+    syscfg_get(NULL, "bridge_mode", bridge_mode_string, sizeof(bridge_mode_string));
+    bridge_mode = atoi(bridge_mode_string);
+
+    /* Get list of l3 instances */
+    instance_ret = PSM_VALUE_GET_INS(L3_DM_PREFIX , &l3net_count, &l3net_ins);
+
+    /* Iterate through L3 instances in PSM */
+    if((instance_ret == CCSP_SUCCESS) && (l3net_count > 0) && (l3net_ins != NULL)) {
+
+        for (idx = 0; idx < l3net_count; idx++) {
+            /* Do not update MTU of primary l3net when bridge mode is enabled */
+            if ((bridge_mode > 0) && (l3net_ins[idx] == primary_l3_instance))
+                continue;
+
+            /* Check if this instance is enabled */
+            snprintf(psm_param, sizeof(psm_param), "%s%d.%s", L3_DM_PREFIX , l3net_ins[idx], L3_DM_IPV6_ENABLE_PREFIX);
+            enable_ret = PSM_VALUE_GET_STRING(psm_param, ipv6_enable_string);
+          
+            /* Get MTU of instance */
+            snprintf(psm_param, sizeof(psm_param), "%s%d.%s", L3_DM_PREFIX , l3net_ins[idx], L3_MTU_PREFIX);
+            mtu_ret = PSM_VALUE_GET_STRING(psm_param, mtu_string);
+
+            /* Get L3net EthLink */
+            snprintf(psm_param, sizeof(psm_param), "%s%d.%s", L3_DM_PREFIX , l3net_ins[idx], L3_DM_ETHLINK_PREFIX);
+            l3net_ethlink_ret = PSM_VALUE_GET_STRING(psm_param, l3net_ethlink);
+            if ((l3net_ethlink_ret == CCSP_SUCCESS) && l3net_ethlink) {
+                /* Get the L2net instance number from the Ethlink */
+                snprintf(psm_param, sizeof(psm_param), "%s%s.%s", ETHLINK_DM_PREFIX, l3net_ethlink, ETHLINK_DM_L2NET_PREFIX);
+                ethlink_l2net_ret =  PSM_VALUE_GET_STRING(psm_param, ethlink_l2net);
+                if ((ethlink_l2net_ret == CCSP_SUCCESS) && ethlink_l2net) {
+                    /* Get name of instance */
+                    snprintf(psm_param, sizeof(psm_param), "%s%s.%s", L2_DM_PREFIX, ethlink_l2net, L2_NAME_PREFIX);
+                    name_ret = PSM_VALUE_GET_STRING(psm_param, name_string);
+                }
+            }
+
+            /* If IPv6 is enabled and we successfully got the name and MTU, apply the MTU if it's greater than zero */
+            if (
+                ((enable_ret == CCSP_SUCCESS) && (name_ret == CCSP_SUCCESS) && (mtu_ret == CCSP_SUCCESS)) &&
+                ((ipv6_enable_string != NULL) && (name_string != NULL) && (mtu_string != NULL)) &&
+                (!strncmp(ipv6_enable_string, "true", 4) || !strncmp(ipv6_enable_string, "1", 1))
+                ) {
+                /* Apply the MTU setting if there was a valid MTU value in DML */
+                mtu_val = atoi(mtu_string);
+                if (0 != mtu_val)
+                    /* Setting MTU value to same as current MTU has no effect in Linux so set it twice to force it to apply */
+                    v_secure_system("ip link set dev %s mtu %d", name_string, (mtu_val - 1));
+                    v_secure_system("ip link set dev %s mtu %d", name_string, mtu_val);
+            }
+
+            /* Free the memory used to fetch the L3 values */
+            if (ipv6_enable_string != NULL) {
+                Ansc_FreeMemory_Callback(ipv6_enable_string);
+                ipv6_enable_string = NULL;
+            }
+            if (name_string != NULL) {
+                Ansc_FreeMemory_Callback(name_string);
+                name_string = NULL;
+            }
+            if (mtu_string != NULL) {
+                Ansc_FreeMemory_Callback(mtu_string);
+                mtu_string = NULL;
+            }
+            if (l3net_ethlink != NULL) {
+                Ansc_FreeMemory_Callback(l3net_ethlink);
+                l3net_ethlink = NULL;
+            }
+            if (ethlink_l2net != NULL) {
+                Ansc_FreeMemory_Callback(ethlink_l2net);
+                ethlink_l2net = NULL;
+            }
+          }
+    }
+
+    /* Free the memory used to fetch the list of instances */
+    if (l3net_ins != NULL) {
+        Ansc_FreeMemory_Callback(l3net_ins);
+        l3net_ins = NULL;
+    }
+    /* Free the memory used to fetch the primary L3 instance */
+    if (primary_l3_instance_string != NULL){
+        Ansc_FreeMemory_Callback(primary_l3_instance_string);
+        primary_l3_instance_string = NULL;
+    }
+}
+#endif
+/*
  *Assign IPv6 address for lan interface from the corresponding interface-prefix
  */
 static int lan_addr6_set(struct serv_ipv6 *si6)
@@ -1720,6 +1844,13 @@ static int serv_ipv6_start(struct serv_ipv6 *si6)
     }
 
     sysevent_set(si6->sefd, si6->setok, "service_ipv6-status", "starting", 0);
+    
+    /*
+     * Update MTU of all the enabled IPv6 instances
+     */
+#if defined(INTEL_PUMA7)  
+     update_mtu();
+#endif  
 
     /* handle logic:
      *  1) divide the Operator-delegated prefix to sub-prefixes

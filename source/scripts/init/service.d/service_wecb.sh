@@ -38,10 +38,15 @@
 # This script is used to start/stop wecb_master
 #------------------------------------------------------------------
 SERVICE_NAME="wecb"
+source /etc/device.properties
 source /etc/utopia/service.d/ulog_functions.sh
 source /etc/utopia/service.d/ut_plat.sh
 
-export LOG4C_RCPATH=/rdklogger
+if [ "$BOX_TYPE" = "XB6" ] && [ "$MANUFACTURE" = "Arris" ]; then
+	export LOG4C_RCPATH=/etc
+else
+	export LOG4C_RCPATH=/rdklogger
+fi
 
 SELF_NAME="`basename "$0"`"
 
