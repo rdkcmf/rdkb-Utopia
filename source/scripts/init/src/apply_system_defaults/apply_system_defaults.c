@@ -57,6 +57,7 @@
 #include <stdbool.h>
 #include <cjson/cJSON.h>
 
+#include <telemetry_busmessage_sender.h>
 #define PARTNERS_INFO_FILE  							"/nvram/partners_defaults.json"
 #define PARTNERS_INFO_FILE_ETC                                                 "/etc/partners_defaults.json"
 #define BOOTSTRAP_INFO_FILE                                                    "/nvram/bootstrap.json"
@@ -730,6 +731,7 @@ static int getFactoryPartnerId (char *pValue)
 		}
 		//TCCBR-4426 getFactoryPartnerId is implemented for XB6/HUB4 Products as of now
 		APPLY_PRINT("%s - Failed Get factoryPartnerId \n", __FUNCTION__);
+                t2_event_d("SYS_ERROR_Factorypartner_fetch_failed", 1);
 	}
 #endif
 	return -1;
@@ -806,7 +808,10 @@ static int get_PartnerID (char *PartnerID)
 				sprintf( PartnerID, "%s", "comcast" );
 #endif
 				APPLY_PRINT("%s - Failed Get factoryPartnerId so set it PartnerID as: %s\n", __FUNCTION__, PartnerID );
+                                t2_event_d("SYS_ERROR_Factorypartner_fetch_failed", 1);
 
+                                if (strncmp(PartnerID, "comcast", strlen("comcast")) == 0)
+                                        t2_event_d("SYS_ERROR_Factory_partner_set_comcast", 1);
 			}
 		}
 	}
@@ -846,13 +851,16 @@ static int get_PartnerID (char *PartnerID)
 	if( 0 == getFactoryPartnerId( buf ) )
 	{
 		APPLY_PRINT("[GET-PARTNERID] Factory_PartnerID:%s\n", buf );
+                t2_event_s("getfactorypartner_split", buf);
 	}
    	else
     {
        APPLY_PRINT("[GET-PARTNERID] Factory_PartnerID:NULL\n" );
+       t2_event_s("getfactorypartner_split", NULL);
    	}
 
 	APPLY_PRINT("[GET-PARTNERID] Current_PartnerID:%s\n", PartnerID );
+        t2_event_s("getcurrentpartner_split", PartnerID);
 	
 	return 0;	
 }
@@ -2317,6 +2325,7 @@ int main( int argc, char **argv )
    int   rc;
    int retryCount = RETRY_COUNT;
 
+   t2_init("apply_system_defaults");
    //Fill basic contents
    server_port = SE_SERVER_WELL_KNOWN_PORT;
 
@@ -2394,6 +2403,7 @@ int main( int argc, char **argv )
   {
 	  isMigrationReq = 1;
 	  APPLY_PRINT("%s - Device in FR mode :%s\n", __FUNCTION__, PARTNER_DEFAULT_APPLY_FILE );
+          t2_event_d("SYS_INFO_FRMode", 1);
   }
   
   if( (1 == isNeedToApplyPartnersDefault)||(isMigrationReq == 1) )  
