@@ -1227,6 +1227,13 @@ fi
         # In factory default condition, prepare whitelisting and redirection IP
         echo "address=/#/$addr" >> $LOCAL_DHCP_CONF
 
+        # Redirection IPv6
+        if [ "$BOX_TYPE" = "SR300" ]
+        then
+            ip6addr=`ifconfig brlan0 | grep Global | cut -d/ -f1 | awk '{print $3}'`
+            echo "address=/#/$ip6addr" >> $LOCAL_DHCP_CONF
+        fi
+
         if [ "$RF_CAPTIVE_PORTAL" != "true" ]
         then
             echo "dhcp-option=252,\"\n\"" >> $LOCAL_DHCP_CONF
