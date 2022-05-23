@@ -1231,6 +1231,9 @@ $EnableOCSPCA=false
 #Use XPKI certificate
 $UseXPKI_Enable=false
 
+#Use XPKI certificate for lnf
+$LnFUseXPKI=false
+
 # Dynamic DNS
 $dynamic_dns_enable=0
 $ddns_service_providers_list=no-ip,dyndns,duckdns,afraid,easydns
