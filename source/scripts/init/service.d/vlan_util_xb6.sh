@@ -759,14 +759,17 @@ sync_group_settings() {
           newmac="${mac:0:15}`printf '%x\n' $last`"          	
           ifconfig brlan0 hw ether $newmac up  
           echo_t "################SETTING BRLAN0 mac to:$newmac###########"
-          else
-          ##After bridge creation,we are setting up multinet status to partial, which
-          ##actually starts our l3 config, which may not reflect properly if the
-          ##bridge is down. for brlan0 as part of setting the hw mac we already brought
-          ##up the bridge. handling for other bridges here.
-          echo_t "################Bring up bridge:$BRIDGE_NAME###########"
-          $IP link set $BRIDGE_NAME up		
         fi
+    fi
+
+    ##After bridge creation,we are setting up multinet status to partial, which
+    ##actually starts our l3 config, which may not reflect properly if the
+    ##bridge is down. for brlan0 as part of setting the hw mac we already brought
+    ##up the bridge. handling for other bridges here.
+    check_if_bridge_up=$(ip address show $BRIDGE_NAME up)
+    if [ "$check_if_bridge_up" = "" ]; then
+        echo_t "################Bring up bridge:$BRIDGE_NAME###########"
+        $IP link set $BRIDGE_NAME up
     fi
 
     echo_t "Group after $BRIDGE_NAME configuration RAISE_EVENTS:$RAISE_EVENTS" 
