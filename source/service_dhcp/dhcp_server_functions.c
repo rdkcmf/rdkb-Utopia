@@ -522,9 +522,8 @@ void prepare_dhcp_options_wan_dns()
 			fprintf(stderr, "wan_dhcp_dns is empty, so file:%s will be empty \n", DHCP_OPTIONS_FILE);
 		}	
 	}
-	remove_file(DHCP_OPTIONS_FILE);
 	fclose(l_fLocalDhcpOpt);
-	copy_file(l_cLocalDhcpOpt, DHCP_OPTIONS_FILE);
+    copy_file(l_cLocalDhcpOpt, DHCP_OPTIONS_FILE);
 	remove_file(l_cLocalDhcpOpt);
 }
 
@@ -1632,9 +1631,8 @@ int prepare_dhcp_conf (char *input)
 		prepare_static_dns_urls( l_fLocal_Dhcp_ConfFile );
 	}
 		
-	remove_file(DHCP_CONF);
 	fclose(l_fLocal_Dhcp_ConfFile);
-	copy_file(l_cLocalDhcpConf, DHCP_CONF);
+    copy_file(l_cLocalDhcpConf, DHCP_CONF);
 	remove_file(l_cLocalDhcpConf);
 	fprintf(stderr, "DHCP SERVER : Completed preparing DHCP configuration\n");
 	return 0;

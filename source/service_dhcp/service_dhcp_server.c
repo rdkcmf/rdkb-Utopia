@@ -342,7 +342,9 @@ void dhcp_server_stop()
 
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dns-status", "stopped", 0);
    	v_secure_system("killall `basename dnsmasq`");
-	remove_file(PID_FILE);
+    if (access(PID_FILE, F_OK) == 0) {
+        remove_file(PID_FILE);
+    }
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", "stopped", 0);
 
 	memset(l_cSystemCmd, 0x00, sizeof(l_cSystemCmd));
@@ -485,14 +487,19 @@ int syslog_restart_request()
                 }
             }
         }
-        remove_file(DHCP_TMP_CONF);
+        if (access(DHCP_TMP_CONF, F_OK) == 0)
+        {
+            remove_file(DHCP_TMP_CONF);
+        }
         v_secure_system("killall -HUP `basename dnsmasq`");
         if(l_crestart == 0)
         {
             return -1; // or return need to confirm
         }
         v_secure_system("killall `basename dnsmasq`");
-        remove_file(PID_FILE);
+        if (access(PID_FILE, F_OK) == 0) {
+            remove_file(PID_FILE);
+        }
 
         memset(l_cSyscfg_get,0,16);
         syscfg_get(NULL, "dhcp_server_enabled", l_cSyscfg_get, sizeof(l_cSyscfg_get));
@@ -588,7 +595,9 @@ int dhcp_server_start (char *input)
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-errinfo", "", 0);
    
 	strncpy(l_cDhcp_Tmp_Conf, "/tmp/dnsmasq.conf.orig", sizeof(l_cDhcp_Tmp_Conf));
-	copy_file(DHCP_CONF, l_cDhcp_Tmp_Conf);
+    if (access(DHCP_CONF, F_OK) == 0) {
+        copy_file(DHCP_CONF, l_cDhcp_Tmp_Conf);
+    }
 
     prepare_hostname();
     prepare_dhcp_conf();
@@ -659,7 +668,10 @@ int dhcp_server_start (char *input)
             }
 		}
 	}
-	remove_file(l_cDhcp_Tmp_Conf);
+    if (access(l_cDhcp_Tmp_Conf, F_OK) == 0)
+    {
+        remove_file(l_cDhcp_Tmp_Conf);
+    }
    	v_secure_system("killall -HUP `basename dnsmasq`");
 	if (FALSE == l_bRestart)
 	{
@@ -671,7 +683,9 @@ int dhcp_server_start (char *input)
 
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dns-status", "stopped", 0);
    	v_secure_system("killall `basename dnsmasq`");
-	remove_file(PID_FILE);
+    if (access(PID_FILE, F_OK) == 0) {
+        remove_file(PID_FILE);
+    }
 
         /* Kill dnsmasq if its not stopped properly */
 	safec_rc = strcpy_s(l_cCommand, sizeof(l_cCommand),"pidof dnsmasq");
