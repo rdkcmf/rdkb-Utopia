@@ -908,6 +908,8 @@ int greDscp = 44; // Default initialized to 44
 
 /* Configure WiFi flag for captive Portal*/
 #define PSM_NAME_CP_NOTIFY_VALUE "eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges"
+
+#define PSM_IDM_INTERFACE_NAME      "dmsb.interdevicemanager.BroadcastInterface"
 /*
  =================================================================
                      utilities
@@ -12737,6 +12739,26 @@ static int prepare_MoCA_bridge_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat
 }
 #endif
 
+#if defined(FEATURE_RDKB_INTER_DEVICE_MANAGER)
+static void prepare_idm_firewall(FILE * filter_fp)
+{
+
+    char idmInterface[32] = {0};
+    int rc;
+    char *pStr = NULL;
+    errno_t   safec_rc     = -1;
+
+    rc = PSM_VALUE_GET_STRING(PSM_IDM_INTERFACE_NAME,pStr);
+    if(rc == CCSP_SUCCESS && pStr != NULL){
+        safec_rc = strcpy_s(idmInterface, sizeof(idmInterface),pStr);
+        ERR_CHK(safec_rc);
+        Ansc_FreeMemory_Callback(pStr);
+        pStr = NULL;
+
+        fprintf(filter_fp, "-I INPUT -i %s -p udp --dport 1900 -j ACCEPT \n", idmInterface);
+    }
+}
+#endif
 
 #ifdef WAN_FAILOVER_SUPPORTED
 void  redirect_dns_to_extender(FILE *nat_fp,int family)
@@ -12943,6 +12965,9 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
 
    prepare_rabid_rules_for_mapt(filter_fp, IP_V4);
 
+#if defined(FEATURE_RDKB_INTER_DEVICE_MANAGER)
+   prepare_idm_firewall(filter_fp);
+#endif
    fprintf(raw_fp, "%s\n", "COMMIT");
    fprintf(mangle_fp, "%s\n", "COMMIT");
    fprintf(nat_fp, "%s\n", "COMMIT");
