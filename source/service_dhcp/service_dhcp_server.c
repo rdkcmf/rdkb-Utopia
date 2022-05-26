@@ -547,7 +547,6 @@ int dhcp_server_start (char *input)
 	BOOL l_bRestart = FALSE, l_bFiles_Diff = FALSE, l_bPid_Present = FALSE;
 	FILE *l_fFp = NULL;
 	int l_iSystem_Res;
-        int fd = 0;
 
 	char *l_cToken = NULL;
 	errno_t safec_rc = -1;
@@ -788,40 +787,54 @@ int dhcp_server_start (char *input)
 			remove_file("/var/tmp/lan_not_restart");	
 		}
 	}
-        /*  TODO CID 135332: Time of check time of use */
-        if (access("/tmp/dhcp_server_start", F_OK) == -1 && errno == ENOENT) //If file not present
+
+        FILE *fp = fopen( "/tmp/dhcp_server_start", "r");
+        if( NULL == fp )
         {
-    	    print_with_uptime("dhcp_server_start is called for the first time private LAN initization is complete");
-	    if((fd = creat("/tmp/dhcp_server_start", S_IRUSR | S_IWUSR)) == -1)
-	    {
-		fprintf(stderr, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
-	    } else  {
-                close(fd);
-	    }
-	    print_uptime("boot_to_ETH_uptime",NULL, NULL);
-       	
-	    print_with_uptime("LAN initization is complete notify SSID broadcast");
-	    snprintf(l_cRpc_Cmd, sizeof(l_cRpc_Cmd), "rpcclient %s \"/bin/touch /tmp/.advertise_ssids\"", g_cAtom_Arping_IP);
-	    executeCmd(l_cRpc_Cmd);
+            print_with_uptime("dhcp_server_start is called for the first time private LAN initization is complete");
+            fp = fopen( "/tmp/dhcp_server_start", "w+");
+            if ( NULL == fp) // If file not present
+            {
+                fprintf(stderr, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
+
+            }
+            else
+            {
+                fclose(fp);
+            }
+            print_uptime("boot_to_ETH_uptime",NULL, NULL);
+            print_with_uptime("LAN initization is complete notify SSID broadcast");
+            snprintf(l_cRpc_Cmd, sizeof(l_cRpc_Cmd), "rpcclient %s \"/bin/touch /tmp/.advertise_ssids\"", g_cAtom_Arping_IP);
+            executeCmd(l_cRpc_Cmd);
+        }
+        else
+        {
+            fclose(fp);
         }
     // This function is called for brlan0 and brlan1
     // If brlan1 is available then XHS service is available post all DHCP configuration   
     if (is_iface_present(XHS_IF_NAME))
     {   
         fprintf(stderr, "Xfinityhome service is UP\n");
-        if (access("/tmp/xhome_start", F_OK) == -1 && errno == ENOENT)
+        FILE *fp = fopen( "/tmp/xhome_start", "r");
+        if( NULL == fp )
         {
-            if((fd = creat("/tmp/xhome_start", S_IRUSR | S_IWUSR)) == -1)
+            fp = fopen( "/tmp/xhome_start", "w+");
+            if ( NULL == fp)
             {
                 fprintf(stderr, "File: /tmp/xhome_start creation failed with error:%d\n", errno);
             }
             else
             {
-                close(fd);
-            }
+                fclose(fp);
+            }				
             print_uptime("boot_to_XHOME_uptime",NULL, NULL);
         }
-    }   
+        else
+        {
+            fclose(fp);
+        }
+    }
     else
     {   
         fprintf(stderr, "Xfinityhome service is not UP yet\n");

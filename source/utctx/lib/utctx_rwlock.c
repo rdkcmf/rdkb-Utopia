@@ -220,7 +220,8 @@ static int s_RWLock_Init(UtopiaRWLock* pLock)
     key_t key;
 
     /* First off, need to check for existance of utopia sysv semaphore file */
-    if (access(UTCTX_SYSV_SEMAPHORE, F_OK) == -1)
+    FILE *fp_sysv = fopen(UTCTX_SYSV_SEMAPHORE, "r");;
+    if (NULL == fp_sysv)
     {
         /* Create the file */
         FILE* fp = fopen(UTCTX_SYSV_SEMAPHORE, "w");
@@ -235,6 +236,11 @@ static int s_RWLock_Init(UtopiaRWLock* pLock)
         fputs("creating...", fp);
         fclose(fp);
     }
+    else
+    {
+         fclose(fp_sysv);
+    }
+    
 
     /* Create semaphore key, unique to libutctx */
     if ((key = ftok(UTCTX_SYSV_SEMAPHORE, UTCTX_SYSV_PROJID)) == -1)
