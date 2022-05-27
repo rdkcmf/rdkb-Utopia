@@ -1403,9 +1403,30 @@ static int wan_addr_set(struct serv_wan *sw)
 	count=0; 
         printf("Setting current_wan_ipaddr  %s\n",val);     
    	if (strlen(val))
-       		 sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", val, 0);
-	else
-	        sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
+    {
+        sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", val, 0);
+    }
+    else
+    {
+#ifdef WAN_FAILOVER_SUPPORTED
+        char bkup_wan_status[16] = {0};
+        unsigned int uiNeedstoAvoidIPConfig = 0;
+
+        sysevent_get(sw->sefd, sw->setok, "backup-wan-status", bkup_wan_status, sizeof(bkup_wan_status));
+
+        if(( bkup_wan_status[0] != '\0' ) &&
+           ( strlen(bkup_wan_status) > 0 ) &&
+           ( strcmp(bkup_wan_status,"started") == 0 ))
+        {
+            uiNeedstoAvoidIPConfig = 1;
+        }
+
+        if( 0 == uiNeedstoAvoidIPConfig )
+#endif /* * WAN_FAILOVER_SUPPORTED */
+        {
+            sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
+        }
+    }
      }
 
     memset(val, 0 ,sizeof(val));
@@ -1479,6 +1500,10 @@ static int wan_addr_set(struct serv_wan *sw)
 
 static int wan_addr_unset(struct serv_wan *sw)
 {
+#ifdef WAN_FAILOVER_SUPPORTED
+    char bkup_wan_status[16] = {0};
+    unsigned int uiNeedstoAvoidIPConfig = 0;
+#endif /* * WAN_FAILOVER_SUPPORTED */
 
     sysevent_set(sw->sefd, sw->setok, "wan-status", "stopping", 0);
     sysevent_set(sw->sefd, sw->setok, "wan-errinfo", NULL, 0);
@@ -1486,8 +1511,23 @@ static int wan_addr_unset(struct serv_wan *sw)
     sysevent_get(sw->sefd, sw->setok, "current_wan_ipaddr",prev_ip, sizeof(prev_ip));
     sysevent_set(sw->sefd, sw->setok, "previous_wan_ipaddr", prev_ip, sizeof(prev_ip));
 
-    sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
-    sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", "0.0.0.0", 0);
+#ifdef WAN_FAILOVER_SUPPORTED
+    sysevent_get(sw->sefd, sw->setok, "backup-wan-status", bkup_wan_status, sizeof(bkup_wan_status));
+
+    if(( bkup_wan_status[0] != '\0' ) &&
+       ( strlen(bkup_wan_status) > 0 ) && 
+       ( strcmp(bkup_wan_status,"started") == 0 ))
+    {
+        uiNeedstoAvoidIPConfig = 1;
+    }
+
+    if( 0 == uiNeedstoAvoidIPConfig )
+#endif /* * WAN_FAILOVER_SUPPORTED */
+    {
+       sysevent_set(sw->sefd, sw->setok, "current_wan_ipaddr", "0.0.0.0", 0);
+    }
+   
+    sysevent_set(sw->sefd, sw->setok, "current_wan_subnet", "0.0.0.0", 0); 
     sysevent_set(sw->sefd, sw->setok, "current_wan_state", "down", 0);
 
 #if defined (EROUTER_DHCP_OPTION_MTA)      
