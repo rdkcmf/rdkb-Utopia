@@ -139,6 +139,8 @@ service_start ()
       # update mso potd every midnight at 00:05
       echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE 
 
+      echo "*/15 * * * * /bin/sh /usr/ccsp/tad/gui_session_expiry.sh" >> $CRONTAB_FILE
+
       # Generate Firewall statistics hourly
       if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
       	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
@@ -171,13 +173,13 @@ service_start ()
           #To monitor all wifi interface dhd dump in every 1hour
           addCron "48 * * * *  sh /etc/sky/monitor_dhd_dump.sh &"
       fi
-
+ 
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
       MODEL="`grep MODEL_NUM /etc/device.properties | cut -d "=" -f2`"
       if [ -n "$(echo "$MODEL" | grep 3941)" ]; then
          echo "1 */12 * * *  rpcclient 169.254.101.2 \"/etc/ath/CurrentChainMask_Logging.sh\"" >> $CRONTAB_FILE
       fi
-
+    
       # Add Unique Telemetry ID if enabled
       telemtery_enable=`syscfg get unique_telemetry_enable`
       telemtery_time_interval=`syscfg get unique_telemetry_interval`
