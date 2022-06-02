@@ -1361,6 +1361,13 @@ static int gen_dibbler_conf(struct serv_ipv6 *si6)
     int                 ret = 0;
     int                 colon_count = 0;
     char                bridge_mode[4] = {0};
+    bool                isInCaptivePortal = false;
+    char                buf[20]={0};
+    int                 inWifiCp=0;
+    FILE                *responsefd=NULL;
+    char                *networkResponse = "/var/tmp/networkresponse.txt";
+    int                 iresCode = 0;
+    char                responseCode[10];
     unsigned long T1 = 0;
     unsigned long T2 = 0;
     FILE *ifd=NULL;
@@ -1575,51 +1582,116 @@ OPTIONS:
                 }
             }
             if (tag_index >= NELEMS(tag_list)) continue;
+            // During captive portal no need to pass DNS
+            // Check the reponse code received from Web Service
+            iresCode = 0;
+            if((responsefd = fopen(networkResponse, "r")) != NULL)
+            {
+                if(fgets(responseCode, sizeof(responseCode), responsefd) != NULL)
+                {
+                    iresCode = atoi(responseCode);
+                }
+                /* RDKB-6780, CID-33149, free unused resources before return */
+                //ARRISXB6-7321
+                fclose(responsefd);
+                responsefd = NULL;
+            }
+
+            // Get value of redirection_flag
+            if(!syscfg_get( NULL, "redirection_flag", buf, sizeof(buf)))
+            {
+                if ((strncmp(buf,"true",4) == 0) && iresCode == 204)
+                {
+                        inWifiCp = 1;
+                        fprintf(stderr, " gen_dibbler_conf -- Box is in captive portal mode \n");
+                }
+                else
+                {
+                        //By default isInCaptivePortal is false
+                        fprintf(stderr, " gen_dibbler_conf -- Box is not in captive portal mode \n");
+                }
+            }
+
+            char rfCpEnable[6] = {0};
+            char rfCpMode[6] = {0};
+            int inRfCaptivePortal = 0;
+            /* CID: 55578 Array compared against 0*/
+            if(!syscfg_get(NULL, "enableRFCaptivePortal", rfCpEnable, sizeof(rfCpEnable)))
+            {
+                if (strncmp(rfCpEnable,"true",4) == 0)
+                {
+                    /* CID: 55578 Array compared against 0*/
+                    if(!syscfg_get(NULL, "rf_captive_portal", rfCpMode,sizeof(rfCpMode)))
+                    {
+                        if (strncmp(rfCpMode,"true",4) == 0)
+                        {
+                            inRfCaptivePortal = 1;
+                            fprintf(stderr, " gen_dibbler_conf -- Box is in RF captive portal mode \n");
+                        }
+                    }
+                }
+            }
+ 
+            if((inWifiCp == 1) || (inRfCaptivePortal == 1))
+            {
+                isInCaptivePortal = true;
+            }
 
             if (opt.pt_client[0]) {
                 if (opt.tag == 23) {//dns
                     char dns_str[256] = {0};
 
-					/* Static DNS */
-					if( 1 == dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled )	
-					{
-
-						memset( dns_str, 0, sizeof( dns_str ) );
-                                                if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
-                                                {
-                                                    char static_dns[256] = {0};
-                                                    sysevent_get(si6->sefd, si6->setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
-                                                    if ( '\0' != static_dns[ 0 ] )
-                                                    {
-                                                        strcpy( dns_str, static_dns );
-                                                        strcat(dns_str," ");
-                                                    }
-                                                }
-                                                strcat(dns_str,dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers);
+                    /* Static DNS */
+                    if( 1 == dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled )
+                    {
+                        memset( dns_str, 0, sizeof( dns_str ) );
+                        if (!strncmp(l_cSecWebUI_Enabled, "true", 4))
+                        {
+                            char static_dns[256] = {0};
+                            sysevent_get(si6->sefd, si6->setok, "lan_ipaddr_v6", static_dns, sizeof(static_dns));
+                            if ( '\0' != static_dns[ 0 ] )
+                            {
+                                strcpy( dns_str, static_dns );
+                                strcat(dns_str," ");
+                            }
+                        }
+                        strcat(dns_str,dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers);
                                             
-						fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__, 
-																						  __LINE__,
-																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled,
-																						  dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+                        fprintf(stderr,"%s %d - DNSServersEnabled:%d DNSServers:%s\n", __FUNCTION__,
+                         __LINE__,dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServersEnabled,dhcpv6s_pool_cfg.X_RDKCENTRAL_COM_DNSServers );
+                   }
+                   else
+                   {
+                       sysevent_get(si6->sefd, si6->setok, "ipv6_nameserver", dns_str, sizeof(dns_str));
+                   }
 
-                                        
-					}
-					else
-					{
-						sysevent_get(si6->sefd, si6->setok, "ipv6_nameserver", dns_str, sizeof(dns_str));
-					}
-					
-                    if (dns_str[0] != '\0') { 
+                    if (dns_str[0] != '\0') {
+
                         format_dibbler_option(dns_str);
-                        fprintf(fp, "     option %s %s\n", tag_list[tag_index].opt_str, dns_str);
+                        // Check device is in captive portal mode or not
+                        if( 1 == isInCaptivePortal )
+                        {
+                            fprintf(fp, "#     option %s %s\n", tag_list[tag_index].opt_str, dns_str);
+                        }
+                        else
+                        {
+                            fprintf(fp, "     option %s %s\n", tag_list[tag_index].opt_str, dns_str);
+                        }
                     }
-                }
+                } //dns
                 else if (opt.tag == 24) {//domain
                     char domain_str[256] = {0};
                     sysevent_get(si6->sefd, si6->setok, "ipv6_dnssl", domain_str, sizeof(domain_str));
-                    if (domain_str[0] != '\0') { 
+                    if (domain_str[0] != '\0') {
                         format_dibbler_option(domain_str);
-                        fprintf(fp, "     option %s %s\n", tag_list[tag_index].opt_str, domain_str);
+                        if( 1 == isInCaptivePortal )
+                        {
+                            fprintf(fp, "#     option %s %s\n", tag_list[tag_index].opt_str, domain_str);
+                        }
+                        else
+                        {
+                            fprintf(fp, "     option %s %s\n", tag_list[tag_index].opt_str, domain_str);
+                        }
                     }
                 }
             } else {
@@ -1632,20 +1704,20 @@ OPTIONS:
 
         if (dhcpv6s_pool_cfg.opts != NULL) {
             free(dhcpv6s_pool_cfg.opts);
-	   dhcpv6s_pool_cfg.opts = NULL; /*RDKB-12965 & CID:-34148*/
+            dhcpv6s_pool_cfg.opts = NULL; /*RDKB-12965 & CID:-34148*/
             dhcpv6s_pool_cfg.opt_num = 0;
-	}
+        }
     }
 
     fclose(fp);
     if (stat(DHCPV6S_CONF_FILE, &check_ConfigFile) == -1) {
-	sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "", 0);
+        sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "", 0);
     }
     else if (check_ConfigFile.st_size == 0) {
-	sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "empty", 0);
+        sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "empty", 0);
     }
     else {
-	sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "ready", 0);
+        sysevent_set(si6->sefd, si6->setok, "dibbler_server_conf-status", "ready", 0);
     }     
     return 0;
 }
