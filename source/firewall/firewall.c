@@ -6049,7 +6049,7 @@ static void do_container_allow(FILE *pFilter, FILE *pMangle, FILE *pNat, int fam
 	ret =  syscfg_get(NULL, "mgmt_wan_httpsaccess", tmpQuery, sizeof(tmpQuery));
 	if ((ret == 0) && atoi(tmpQuery) == 0){
 	    syscfg_get(NULL, "mgmt_wan_httpsport", httpsportno, sizeof(httpsportno));
-	    if('\0' != httpsportno[0]) {
+	    if(('\0' != httpsportno[0]) && ('\0' != current_wan_ip6_addr[0])) {
 	    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport %s -d %s -j DROP\n", current_wan_ifname, httpsportno, current_wan_ip6_addr );
 	    }
 	}
@@ -6070,7 +6070,7 @@ static void do_container_allow(FILE *pFilter, FILE *pMangle, FILE *pNat, int fam
 #else
         syscfg_get(NULL, "mgmt_wan_httpport", httpportno, sizeof(httpportno));
 #endif
-	if('\0' != httpportno[0]) {
+	if(('\0' != httpportno[0]) && ('\0' != current_wan_ip6_addr[0])) {
 	    fprintf(filter_fp, "-A INPUT -i %s  -p tcp -m tcp --dport %s -d %s -j DROP\n", current_wan_ifname, httpportno, current_wan_ip6_addr );
 	}
 	}
