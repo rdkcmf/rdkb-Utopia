@@ -1386,3 +1386,6 @@ $mTlsCrashdumpUpload_Enable=false
 
 #AutoReboot is enabled by default
 $AutoReboot=true
+
+#WebUIRemoteMgtOption is Enabled by default.
+$WebUIRemoteMgtOptionEnable=true
