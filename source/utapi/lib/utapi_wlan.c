@@ -46,6 +46,7 @@
 #include "utapi_util.h"
 #include "utapi_wlan.h"
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 const wifiPlatformSetup_t wifiPlatform[WIFI_INTERFACE_COUNT] =  
 {
@@ -789,36 +790,22 @@ int Utopia_SetWifiConfigMode (UtopiaContext *ctx, wifiConfigMode_t config_mode)
 
 int Utopia_WPSPushButtonStart (void)
 {
-    char cmd[512];
-
-    snprintf(cmd, sizeof(cmd), "wlancfg eth0 wps-stop");
-    cmd[sizeof(cmd) - 1] = '\0';
-    system(cmd);
-    snprintf(cmd, sizeof(cmd), "wlancfg eth0 wps-pbc-start");
-    cmd[sizeof(cmd) - 1] = '\0';
-    system(cmd);
+    v_secure_system("wlancfg eth0 wps-stop");
+    v_secure_system("wlancfg eth0 wps-pbc-start");
 
     return SUCCESS;
 }
 
 int Utopia_WPSPinStart (int pin)
 {
-    char cmd[512];
-
-    snprintf(cmd, sizeof(cmd), "wlancfg eth0 wps-pin-start %d", pin);
-    cmd[sizeof(cmd) - 1] = '\0';
-    system(cmd);
+    v_secure_system("wlancfg eth0 wps-pin-start %d", pin);
 
     return SUCCESS;
 }
 
 int Utopia_WPSStop (void)
 {
-    char cmd[512];
-
-    snprintf(cmd, sizeof(cmd), "wlancfg eth0 wps-stop");
-    cmd[sizeof(cmd) - 1] = '\0';
-    system(cmd);
+    v_secure_system("wlancfg eth0 wps-stop");
 
     return SUCCESS;
 }
@@ -829,28 +816,24 @@ int Utopia_GetWPSStatus (wpsStatus_t *wps_status)
         return ERR_INVALID_ARGS;
     }
     
-    char cmd[512];
     FILE *fp;
     char wps_status_str[32];
-    errno_t safec_rc = -1;
 
-    safec_rc = strcpy_s(cmd, sizeof(cmd),"wlancfg eth0 wps-status");
-    ERR_CHK(safec_rc);
-    fp = popen(cmd, "r");
+    fp = v_secure_popen("r","wlancfg eth0 wps-status");
     
     if (NULL == fp) {
         return ERR_FILE_NOT_FOUND;
     }
     
     if (NULL == fgets(wps_status_str, sizeof(wps_status_str), fp)) {
-        pclose(fp);
+        v_secure_pclose(fp);
         return ERR_INVALID_VALUE;
     }
     
     int len = strlen(wps_status_str);
     
     if (len <= 0) {
-        pclose(fp);
+        v_secure_pclose(fp);
         return ERR_INVALID_VALUE;
     }
     
@@ -872,7 +855,7 @@ int Utopia_GetWPSStatus (wpsStatus_t *wps_status)
         *wps_status = WPS_FAILED;
     }
     
-    pclose(fp);
+    v_secure_pclose(fp);
 
     return SUCCESS;
 }

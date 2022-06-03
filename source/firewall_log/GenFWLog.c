@@ -49,6 +49,7 @@
 #include "safec_lib_common.h"
 #define _XOPEN_SOURCE
 #include <time.h>
+#include "secure_wrapper.h"
 //#define _NO_MMAP__
 #ifndef CONFIG_CISCO_PARCON_WALLED_GARDEN
  #define CONFIG_CISCO_PARCON_WALLED_GARDEN
@@ -540,7 +541,7 @@ void clean_log(void){
     int flag = 0;
     char cmd[256];
     char name[20];
-    system("ls /var/log/firewall >" TEMP_LOG_LIST);
+    v_secure_system("ls /var/log/firewall >" TEMP_LOG_LIST);
     fp = fopen(TEMP_LOG_LIST, "r");
     if(fp == NULL)
         return;
@@ -555,13 +556,13 @@ void clean_log(void){
             
                 if(count > LOG_FILE_COUNT_MAX){
                     fseek(fp, 0, SEEK_SET);
-                    safec_rc = sprintf_s(cmd, sizeof(cmd),"rm %s/%s", FIREWALL_LOG_DIR, get_old(fp,name));
+                    safec_rc = sprintf_s(cmd, sizeof(cmd),"%s/%s", FIREWALL_LOG_DIR, get_old(fp,name));
                     if(safec_rc < EOK)
                     {
                       ERR_CHK(safec_rc);
                     }
                     printf("%s\n", cmd);
-                    system(cmd);    
+                    unlink(cmd);    
                     break;
                 }
             }
@@ -631,12 +632,10 @@ void merger_rule(FILE* fd, int *num){
 }
 
 void get_rule_time(int count){
-    char cmd[120];
     char *line = NULL;
     char today[32];
     int i = 0;
     rule_info_t *tbl = g_p_rule_tbl;
-    errno_t safec_rc = -1;
 #ifndef _NO_MMAP__
     int fd;
     struct stat statbuf;
@@ -646,13 +645,7 @@ void get_rule_time(int count){
     FILE *fd;
 #endif
     strftime(today, sizeof(today), "%b %d", g_ptime);
-    safec_rc = sprintf_s(cmd, sizeof(cmd),"grep -h -e \"%s\"  %s %s  > %s 2>/dev/null", today, ORG_LOG_NAME_2, ORG_LOG_NAME_1, FW_ORG_LOG_NAME);
-    if(safec_rc < EOK)
-    {
-        ERR_CHK(safec_rc);
-    }
-//    printf("%s\n", cmd);
-    system(cmd);
+    v_secure_system("grep -h -e '%s'  "ORG_LOG_NAME_2" "ORG_LOG_NAME_1"  > "FW_ORG_LOG_NAME" 2>/dev/null",today);
 #ifdef _NO_MMAP__
     size_t size;
     fd = fopen(FW_ORG_LOG_NAME,"r");
@@ -780,10 +773,8 @@ int main(int argc, char** argv){
     int opt = 0;
     rule_info_t rule;
     char *iptables_flage = "";
-    char cmd[128];
     int i=0;
     char *fFlag = "w";
-    char temp[100];
     int            sysevent_fd = -1;
     char          *sysevent_name = "GenFWLog";
     token_t        sysevent_token;
@@ -840,12 +831,8 @@ int main(int argc, char** argv){
 
     if( -1 == access(FIREWALL_LOG_DIR, 0))
     {
-        safec_rc = sprintf_s(temp, sizeof(temp),"mkdir -p %s", FIREWALL_LOG_DIR);
-        if(safec_rc < EOK)
-        {
-            ERR_CHK(safec_rc);
-        }
-         system(temp);
+      
+         mkdir(FIREWALL_LOG_DIR,S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     }
     
     g_p_rule_tbl = NULL;
@@ -857,37 +844,33 @@ int main(int argc, char** argv){
     }
 
     if(opt != 2){
-        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s > %s", IPT_COUNT_CMD, iptables_flage, TEMP_FILE);
-        if(safec_rc < EOK)
-        {
-            ERR_CHK(safec_rc);
+        if(strlen(iptables_flage) != 0) {
+            v_secure_system(IPT_COUNT_CMD"%s > "TEMP_FILE,iptables_flage);
         }
-        printf("%s\n",cmd);
-        system(cmd);
+        else {
+            v_secure_system(IPT_COUNT_CMD"> "TEMP_FILE);
+        }
 #ifdef CONFIG_CISCO_PARCON_WALLED_GARDEN
-        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s >> %s", IPT_NAT_COUNT_CMD , iptables_flage, TEMP_FILE);
-        if(safec_rc < EOK)
-        {
-            ERR_CHK(safec_rc);
+        if(strlen(iptables_flage) !=0) {
+            v_secure_system(IPT_NAT_COUNT_CMD"%s >> "TEMP_FILE,iptables_flage);
         }
-        printf("%s\n",cmd);
-        system(cmd);
+        else {
+            v_secure_system(IPT_NAT_COUNT_CMD">> "TEMP_FILE);
+        }
 #endif
-        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s >> %s", IP6T_COUNT_CMD, iptables_flage, TEMP_FILE);
-        if(safec_rc < EOK)
-        {
-            ERR_CHK(safec_rc);
+        if(strlen(iptables_flage) !=0) {
+            v_secure_system(IP6T_COUNT_CMD"%s >> "TEMP_FILE,iptables_flage);
         }
-        printf("%s\n",cmd);
-        system(cmd);
+        else {
+            v_secure_system(IP6T_COUNT_CMD">> "TEMP_FILE);
+        }       
 #if defined (CONFIG_CISCO_PARCON_WALLED_GARDEN) && defined(_HUB4_PRODUCT_REQ_)
-        safec_rc = sprintf_s(cmd, sizeof(cmd),"%s%s >> %s", IP6T_NAT_COUNT_CMD , iptables_flage, TEMP_FILE);
-        if(safec_rc < EOK)
-        {
-            ERR_CHK(safec_rc);
+        if(strlen(iptables_flage) !=0) {
+            v_secure_system(IP6T_NAT_COUNT_CMD"%s >> "TEMP_FILE,iptables_flage);
         }
-        printf("%s\n",cmd);
-        system(cmd);
+        else {
+            v_secure_system(IP6T_NAT_COUNT_CMD">> "TEMP_FILE);
+        }
 #endif
     }
     

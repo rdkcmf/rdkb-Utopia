@@ -26,6 +26,8 @@ GenFWLog_SOURCES = GenFWLog.c
 
 GenFWLog_CPPFLAGS = -I$(top_srcdir)/source/include
 
+GenFWLog_LDFLAGS = -lsecure_wrapper
+
 GenFWLog_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                  $(top_builddir)/source/sysevent/lib/libsysevent.la \
                  $(top_builddir)/source/ulog/libulog.la

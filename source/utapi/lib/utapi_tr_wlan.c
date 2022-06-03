@@ -69,7 +69,7 @@ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.*/
 #include <arpa/inet.h>
 #include "utapi_tr_wlan.h"
 #include "safec_lib_common.h"
-
+#include "secure_wrapper.h"
 const wifiTRPlatformSetup_t wifiTRPlatform[] =
 {
     {FREQ_2_4_GHZ, "wl0", "eth0", "SSID0", "ap0"},
@@ -187,7 +187,6 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
     }
     char ulog_msg[256];
     wifiRadioCfg_t *cfg_t = (wifiRadioCfg_t *)cfg;
-    char buf[BUF_SZ] = {'\0'};
     char strbuf[STR_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
@@ -219,13 +218,9 @@ int Utopia_GetWifiRadioCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
  
     prefix =  wifiTRPlatform[ulIndex].syscfg_namespace_prefix ;
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
-    if(safec_rc < EOK){
-        ERR_CHK(safec_rc);
-    }
-    system(buf);
-    system("cat " WLANCFG_RADIO_FULL_FILE " | grep Extensions | cut -d. -f2- -s > " WLANCFG_RADIO_EXTN_FILE);
-    system("cat " WLANCFG_RADIO_FULL_FILE " | sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > " WLANCFG_RADIO_FILE);
+    v_secure_system("wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > "WLANCFG_RADIO_FULL_FILE,wifiTRPlatform[ulIndex].ifconfig_interface);
+    v_secure_system("cat " WLANCFG_RADIO_FULL_FILE " | grep Extensions | cut -d. -f2- -s > " WLANCFG_RADIO_EXTN_FILE);
+    v_secure_system("cat " WLANCFG_RADIO_FULL_FILE " | sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > " WLANCFG_RADIO_FILE);
 
     retVal = file_parse(WLANCFG_RADIO_FILE, &head);
 
@@ -806,7 +801,6 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
 #endif
 
     wifiRadioDinfo_t *dInfo_t = (wifiRadioDinfo_t *)dInfo;
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -820,17 +814,8 @@ int Utopia_GetWifiRadioDinfo(unsigned long ulInstanceNum, void *dInfo)
         return ERR_INVALID_ARGS;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
-    if(safec_rc < EOK){
-        ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    safec_rc = sprintf_s(buf, sizeof(buf),"cat %s |  sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_FILE );
-    if(safec_rc < EOK){
-        ERR_CHK(safec_rc);
-    }
-    system(buf);
+    v_secure_system("wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > "WLANCFG_RADIO_FULL_FILE, wifiTRPlatform[ulIndex].ifconfig_interface);
+    v_secure_system("cat "WLANCFG_RADIO_FULL_FILE"|  sed -e '/Extensions/{N;d;}'|sed -e '/Stats/{N;d;}' > "WLANCFG_RADIO_FILE);
     
     retVal = file_parse(WLANCFG_RADIO_FILE, &head);
 
@@ -887,7 +872,6 @@ int Utopia_GetWifiRadioStats(unsigned long instanceNum, void *stats)
 #endif
 
     wifiRadioStats_t *stats_t = (wifiRadioStats_t *)stats;
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -901,17 +885,8 @@ int Utopia_GetWifiRadioStats(unsigned long instanceNum, void *stats)
         return ERR_INVALID_ARGS;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform[ulIndex].ifconfig_interface, WLANCFG_RADIO_FULL_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-    safec_rc = sprintf_s(buf, sizeof(buf),"cat %s | grep Stats | cut -d. -f2- -s > %s", WLANCFG_RADIO_FULL_FILE, WLANCFG_RADIO_STATS_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
+    v_secure_system("wlancfg_tr %s | grep Radio |cut -d'}' -f2- -s |cut -d. -f2- -s > "WLANCFG_RADIO_FULL_FILE,wifiTRPlatform[ulIndex].ifconfig_interface);
+    v_secure_system("cat "WLANCFG_RADIO_FULL_FILE" | grep Stats | cut -d. -f2- -s > "WLANCFG_RADIO_STATS_FILE);
 
     retVal = file_parse(WLANCFG_RADIO_STATS_FILE, &head);
 
@@ -1143,7 +1118,6 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
 #endif
 
     wifiSSIDCfg_t *cfg_t = (wifiSSIDCfg_t *)cfg;
-    char buf[BUF_SZ] = {'\0'};
     char state[STR_SZ] = {'\0'};
     char tmpBuf[STR_SZ] = {'\0'};
     param_node *ptr = NULL;
@@ -1174,12 +1148,7 @@ int Utopia_GetWifiSSIDCfg(UtopiaContext *ctx, int dummyInstanceNum, void *cfg)
             vif_num = 0;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
+    v_secure_system("wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s > "WLANCFG_SSID_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
 
     retVal = file_parse(WLANCFG_SSID_FILE, &head);
 
@@ -1266,7 +1235,6 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
 #endif
 
     wifiSSIDSInfo_t *sInfo_t = (wifiSSIDSInfo_t *)sInfo;
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -1284,12 +1252,7 @@ int Utopia_GetWifiSSIDSInfo(unsigned long ulIndex, void *sInfo)
             vif_num = 0;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
+    v_secure_system("wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > "WLANCFG_SSID_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
 
     retVal = file_parse(WLANCFG_SSID_FILE, &head);
 
@@ -1402,7 +1365,6 @@ int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
 #endif
 
     wifiSSIDDInfo_t *dInfo_t = (wifiSSIDDInfo_t *)dInfo;
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -1426,14 +1388,7 @@ int Utopia_GetWifiSSIDDInfo(unsigned long ulInstanceNum, void *dInfo)
         else
             vif_num = 0;
     }
-	
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_SSID_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
-
+    v_secure_system("wlancfg_tr %s %d | grep SSID |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > "WLANCFG_SSID_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
     retVal = file_parse(WLANCFG_SSID_FILE, &head);
 
     if(retVal != SUCCESS){
@@ -1855,7 +1810,6 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
 #endif
 
     wifiAPCfg_t *cfg_t = (wifiAPCfg_t *)cfg;
-    char buf[BUF_SZ] = {'\0'};
     char state[STR_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
@@ -1884,13 +1838,8 @@ int Utopia_GetWifiAPCfg(UtopiaContext *ctx,int dummyInstanceNum, void *cfg)
         else
             vif_num = 0;
     }
- 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
+
+    v_secure_system("wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > "WLANCFG_AP_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
     
     retVal = file_parse(WLANCFG_AP_FILE, &head);
 
@@ -1984,7 +1933,6 @@ int Utopia_GetWifiAPInfo(UtopiaContext *ctx, char *pSSID, void *info)
 #endif
 
     wifiAPInfo_t *info_t = (wifiAPInfo_t *)info;
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -2009,12 +1957,7 @@ int Utopia_GetWifiAPInfo(UtopiaContext *ctx, char *pSSID, void *info)
             vif_num = 0;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
+    v_secure_system("wlancfg_tr %s %d | grep AccessPoint |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > "WLANCFG_AP_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
 
     retVal = file_parse(WLANCFG_AP_FILE, &head);
 
@@ -2198,7 +2141,6 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
 #endif
 
     wifiAPSecCfg_t *cfg_t = (wifiAPSecCfg_t *)cfg;
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -2223,12 +2165,7 @@ int Utopia_GetWifiAPSecCfg(UtopiaContext *ctx,char *pSSID, void *cfg)
             vif_num = 0;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep Security |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_SEC_FILE);
-    if(safec_rc < EOK){
-      ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
+    v_secure_system("wlancfg_tr %s %d | grep Security |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > "WLANCFG_AP_SEC_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
 
     retVal = file_parse(WLANCFG_AP_SEC_FILE, &head);
 
@@ -2647,7 +2584,6 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
 
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -2672,12 +2608,7 @@ unsigned long Utopia_GetAssociatedDevicesCount(UtopiaContext *ctx, char *pSSID)
             vif_num = 0;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AssociatedDevice |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WLANCFG_AP_ASSOC_DEV_FILE);
-    if(safec_rc < EOK){
-      ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
+    v_secure_system("wlancfg_tr %s %d | grep AssociatedDevice |cut -d'}' -f2- -s |cut -d. -f2- -s | awk '{print $1$2}' > "WLANCFG_AP_ASSOC_DEV_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
 
     retVal = file_parse(WLANCFG_AP_ASSOC_DEV_FILE, &head);
 
@@ -2726,7 +2657,6 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
     ulog_error(ULOG_CONFIG, UL_UTAPI, ulog_msg);
 #endif
     wifiAPAssocDevice_t *assocDev_t = (wifiAPAssocDevice_t *)assocDev;
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -2750,12 +2680,7 @@ int Utopia_GetAssocDevice(UtopiaContext *ctx, char *pSSID, unsigned long ulIndex
             vif_num = 0;
     }
  
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep AssociatedDevice_%lu |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > %s ", wifiTRPlatform_multiSSID[ulAPIndex].ifconfig_interface, vif_num, ulIndex, WLANCFG_AP_ASSOC_DEV_FILE);
-    if(safec_rc < EOK){
-      ERR_CHK(safec_rc);
-    }
-    system(buf);
-    memset(buf, 0, sizeof(buf));
+    v_secure_system("wlancfg_tr %s %d | grep AssociatedDevice_%lu |cut -d'}' -f2- -s |cut -d. -f3- -s | awk '{print $1$2}' > "WLANCFG_AP_ASSOC_DEV_FILE,wifiTRPlatform_multiSSID[ulAPIndex].ifconfig_interface, vif_num, ulIndex);
 
     retVal = file_parse(WLANCFG_AP_ASSOC_DEV_FILE, &head);
 
@@ -2901,7 +2826,6 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
 
     char ulog_msg[256];
     wifiMacFilterCfg_t *cfg_t = (wifiMacFilterCfg_t *)cfg;
-    char buf[1024] = {'\0'};
     char maclist[1024] = {'\0'};
     unsigned long numlist = 0;
     param_node *ptr = NULL;
@@ -2938,11 +2862,7 @@ int Utopia_GetWifiAPMFCfg(UtopiaContext *ctx, char *pSSID, void *cfg)
             vif_num = 0;
     }
 
-    safec_rc = sprintf_s(buf, sizeof(buf),"wlancfg_tr %s %d | grep Filter | cut -d. -f5- -s | sed 's/ //' | sed 's/ /,/g' > %s", wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num, WIFI_MACFILTER_FILE);
-    if(safec_rc < EOK){
-       ERR_CHK(safec_rc);
-    }
-    system(buf);
+    v_secure_system("wlancfg_tr %s %d | grep Filter | cut -d. -f5- -s | sed 's/ //' | sed 's/ /,/g' > "WIFI_MACFILTER_FILE,wifiTRPlatform_multiSSID[ulIndex].ifconfig_interface, vif_num);
 
     retVal = file_parse(WIFI_MACFILTER_FILE, &head);
 

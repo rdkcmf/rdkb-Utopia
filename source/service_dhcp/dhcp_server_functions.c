@@ -34,6 +34,7 @@
 #include "dhcp_server_functions.h"
 #include <telemetry_busmessage_sender.h>
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 #define HOSTS_FILE              "/etc/hosts"
 #define HOSTNAME_FILE           "/etc/hostname"
@@ -984,7 +985,6 @@ int prepare_dhcp_conf (char *input)
          */
 
         // set IP to interface to which dnsmasq should listen
-        memset(buff, 0, sizeof(buff));
         int ret_val;
         char *psmStrValue = NULL;
         char mesh_wan_ifname[16] = {0};
@@ -999,8 +999,7 @@ int prepare_dhcp_conf (char *input)
                 Ansc_FreeMemory_Callback(psmStrValue);
                 psmStrValue = NULL;
         }
-        snprintf(buff, sizeof(buff), "ip addr add %s/24 dev %s", GRE_VLAN_IFACE_IP, mesh_wan_ifname);
-        system(buff);
+        v_secure_system("ip addr add "GRE_VLAN_IFACE_IP"/24 dev %s", mesh_wan_ifname);
         
         // edit the config file
         fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to read /var/tmp/lte_resolv.conf \n");

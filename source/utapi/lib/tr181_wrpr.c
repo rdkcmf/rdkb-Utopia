@@ -39,26 +39,26 @@
 #include <unistd.h>
 #include "DM_TR181.h"
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 static void create_file()
 {
-    system("cat " MOCACFG_FILE_NAME "|grep MOCASTATS|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_STATS_FILE);
+    v_secure_system("cat " MOCACFG_FILE_NAME "|grep MOCASTATS|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_STATS_FILE);
 
-    system("cat " MOCACFG_FILE_NAME "|grep SUMMARY|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_SUM_FILE);
+    v_secure_system("cat " MOCACFG_FILE_NAME "|grep SUMMARY|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_SUM_FILE);
 
-    system("cat " MOCACFG_FILE_NAME "|grep PHYCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_PHY_FILE);
+    v_secure_system("cat " MOCACFG_FILE_NAME "|grep PHYCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_PHY_FILE);
 
-    system("cat " MOCACFG_FILE_NAME "|grep MACCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_MAC_FILE);
+    v_secure_system("cat " MOCACFG_FILE_NAME "|grep MACCTRL|cut -d: -f2- -s|awk '{print $1$2,$3,$4}'|sed 's/^[ ]*//;s/[ ]*$//' > " MOCA_MAC_FILE);
 
-    system("cat " MOCA_MAC_FILE " | sed -n '1,10p' > " MOCA_MAC_FILE_1);
+    v_secure_system("cat " MOCA_MAC_FILE " | sed -n '1,10p' > " MOCA_MAC_FILE_1);
 
-    system("cat " MOCA_MAC_FILE " | sed '1,/AssociatedDeviceNumberOfEntries/d' > " MOCA_ASSOC_DEV);
+    v_secure_system("cat " MOCA_MAC_FILE " | sed '1,/AssociatedDeviceNumberOfEntries/d' > " MOCA_ASSOC_DEV);
 }
 
 int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_static *deviceMocaIntfStatic)
 {
     char ulog_msg[256];
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -134,12 +134,8 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
     retVal = ERR_GENERAL;
     ptr = head = NULL;
 
-    rc = sprintf_s (buf, sizeof(buf), "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, nodeId, MOCA_MAC_NODE);
-    if(rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    system(buf);
+    
+    v_secure_system("cat " MOCA_ASSOC_DEV "|grep -A %d 'NodeID:%d' > "MOCA_MAC_NODE,INST_SIZE,nodeId);
     
     retVal = file_parse(MOCA_MAC_NODE, &head);
     if(retVal != SUCCESS){
@@ -231,7 +227,6 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Static(Obj_Device_MoCA_Interface_i_
 int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn *deviceMocaIntfDyn)
 {
     char ulog_msg[256];
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -298,14 +293,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_Dyn(Obj_Device_MoCA_Interface_i_dyn
     free_paramList(head);
     retVal = ERR_GENERAL;
     ptr = head = NULL;
-    
-    memset(buf, 0, BUF_SZ);
-    rc = sprintf_s (buf, sizeof(buf), "cat %s|grep -A %d 'NodeID:%d' > %s", MOCA_ASSOC_DEV, INST_SIZE, (int)deviceMocaIntfDyn->NodeID, MOCA_MAC_NODE);
-    if(rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    system(buf);
+    v_secure_system("cat " MOCA_ASSOC_DEV "|grep -A %d 'NodeID:%d' > "MOCA_MAC_NODE,INST_SIZE,(int)deviceMocaIntfDyn->NodeID);
     
     retVal = file_parse(MOCA_MAC_NODE, &head);
     if(retVal != SUCCESS){
@@ -470,7 +458,6 @@ int Utopia_Count_AssociateDeviceEntry(int *devCount)
 int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Interface_i_AssociatedDevice_i *mocaIntfAssociatedevice, int count)
 {
     char ulog_msg[256];
-    char buf[BUF_SZ] = {'\0'};
     param_node *ptr = NULL;
     param_node *head = NULL;
     int retVal = ERR_GENERAL;
@@ -490,12 +477,7 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
     }
     create_file();    
 
-    rc = sprintf_s(buf, sizeof(buf), "cat %s|sed -n '%d,%d p'> %s", MOCA_ASSOC_DEV, i, j, MOCA_ASS_INST);
-    if(rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    system(buf);
+    v_secure_system("cat " MOCA_ASSOC_DEV "|sed -n '%d,%d p'> "MOCA_ASS_INST,i,j);
 
     retVal = file_parse(MOCA_ASS_INST, &head);
     if(retVal != SUCCESS){
@@ -593,16 +575,11 @@ int Utopia_Get_TR181_Device_MoCA_Interface_i_AssociateDevice(Obj_Device_MoCA_Int
     ptr = head = NULL;
     i = 0;
 
-    system("cp " MOCA_STATS_FILE " " MOCA_STATS_FILE_TEMP);
+    v_secure_system("cp " MOCA_STATS_FILE " " MOCA_STATS_FILE_TEMP);
     if(count == 0){
-        system("cat " MOCA_STATS_FILE_TEMP "| sed -n '1,3 p' > " MOCA_STATS_FILE_1);
+        v_secure_system("cat " MOCA_STATS_FILE_TEMP "| sed -n '1,3 p' > " MOCA_STATS_FILE_1);
     }else{
-	rc = sprintf_s(buf, sizeof(buf), "cat %s| grep -A 2 'NodeID:%d' > %s", MOCA_STATS_FILE, mocaIntfAssociatedevice->NodeID, MOCA_STATS_FILE_1);
-	if(rc < EOK)
-	{
-	    ERR_CHK(rc);
-	}
-	system(buf);
+	v_secure_system("cat "MOCA_STATS_FILE"| grep -A 2 'NodeID:%d' > "MOCA_STATS_FILE_1,mocaIntfAssociatedevice->NodeID);
     }
 
     retVal = file_parse(MOCA_STATS_FILE_1, &head);

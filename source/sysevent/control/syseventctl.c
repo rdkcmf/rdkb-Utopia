@@ -39,6 +39,7 @@
 #include <getopt.h>
 #include <unistd.h>
 #include "sysevent/sysevent.h"
+#include "secure_wrapper.h"
 
 #define SE_NAME             "sectl"
 
@@ -233,11 +234,9 @@ static int handle_set_data(char *target, char *value)
    int fileread = access("/tmp/sysevent_debug", F_OK);
    if (fileread == 0)
    {
-       char buf[256] = {0};
           unsigned int bin_size = sysevent_get_binmsg_maxsize();
-       snprintf(buf,sizeof(buf),"echo fname %s: length %d bin size %u datafd %d >> /tmp/sys_d.txt",__FUNCTION__,length,bin_size,fd);
 
-       system(buf);
+       v_secure_system("echo fname %s: length %d bin size %u datafd %d >> /tmp/sys_d.txt",__FUNCTION__,length,bin_size,fd);
    }
    rc = sysevent_set_data(fd, token, target, valp, length);
 
@@ -830,7 +829,6 @@ int main(int argc, char **argv)
  if (!strcmp(argv[next_arg], "setdata")) {
 
       char *val;
-      char buf[256] = {0};
       int fileread = access("/tmp/sysevent_debug", F_OK);
       if (argc <= next_arg+2                ||
           NULL == (val = argv[next_arg+2])  ||
@@ -839,8 +837,7 @@ int main(int argc, char **argv)
       }
       if (fileread == 0)
       {
-          snprintf(buf,sizeof(buf),"echo fname %s: arg.count %d index %d >>  /tmp/sys_d.txt",__FUNCTION__,argc,next_arg);
-          system(buf);
+          v_secure_system("echo fname %s: arg.count %d index %d >>  /tmp/sys_d.txt",__FUNCTION__,argc,next_arg);
       }
       if ((argc-1) != next_arg+1 && (argc-1) != next_arg+2) {
          printhelp(argv[0]);

@@ -46,6 +46,7 @@
 #include "utapi_tr_user.h"
 #include "DM_TR181.h"
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 static int g_IndexMapUser[MAX_NUM_INSTANCES+1] = {-1};
 
@@ -193,8 +194,6 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
     int count = 0;
     unsigned long ulIndex = 0;
     userCfg_t userCfg;
-    char buf[STR_SZ+8] = {'\0'};
-    errno_t rc = -1;
 
     if(NULL == ctx){
         return ERR_INVALID_ARGS;
@@ -222,12 +221,7 @@ int Utopia_DelUser(UtopiaContext *ctx, unsigned long ulInstanceNumber)
     /* Delete user from Linux DB if user is added there */
     if((TRUE == userCfg.bEnabled) && (TRUE == userCfg.RemoteAccessCapable)) {
 	if( (access( "/usr/sbin/deluser", F_OK ) != -1) || (access( "/usr/bin/deluser", F_OK ) != -1) ) {
-		rc = sprintf_s(buf, sizeof(buf), "deluser %s",userCfg.Username);
-		if(rc < EOK)
-		{
-		    ERR_CHK(rc);
-		}
-		system(buf);
+		v_secure_system("deluser %s",userCfg.Username);
 	}
     }
 
@@ -345,9 +339,7 @@ int Utopia_GetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
 int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *pUserCfg_t)
 {
     int iVal = 0;
-    char buf[BUF_SZ] = {'\0'};
     char tmpBuf[STR_SZ] = {'\0'};
-    errno_t  rc = -1;
 
 #ifdef _DEBUG_
     char ulog_msg[256];
@@ -363,13 +355,7 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
     /* This is required to take care of the change in username itself */
     if(0 != Utopia_GetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1),tmpBuf,STR_SZ)) {
     if( (access( "/usr/sbin/deluser", F_OK ) != -1) || (access( "/usr/bin/deluser", F_OK ) != -1) ) {
-		rc = sprintf_s(buf,sizeof(buf),"deluser %s",tmpBuf);
-		if(rc < EOK)
-		{
-		    ERR_CHK(rc);
-		}
-		system(buf);
-		memset(buf,0,BUF_SZ);
+		v_secure_system("deluser %s",tmpBuf);
 	}
     }
     Utopia_SetIndexed(ctx,UtopiaValue_UserName,(ulIndex + 1), pUserCfg_t->Username);
@@ -390,30 +376,8 @@ int Utopia_SetUserByIndex(UtopiaContext *ctx, unsigned long ulIndex, userCfg_t *
 
     if((TRUE == pUserCfg_t->bEnabled) && (TRUE == pUserCfg_t->RemoteAccessCapable)) {
         /* Add the user with a home directory */
-        rc = sprintf_s(buf,sizeof(buf),"adduser -h /tmp/home/%s %s",pUserCfg_t->Username,pUserCfg_t->Username);
-        if(rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-        system(buf);
-        rc = sprintf_s(buf,sizeof(buf),"echo %s:%s > %s",pUserCfg_t->Username,pUserCfg_t->Password,TMP_FILE);
-        if(rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-        system(buf);
-        rc = sprintf_s(buf,sizeof(buf),"chpasswd < %s ",TMP_FILE);
-        if(rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-        system(buf);
-        rc = sprintf_s(buf,sizeof(buf),"rm %s ",TMP_FILE);
-        if(rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-        system(buf);
+        v_secure_system("adduser -h /tmp/home/%s %s",pUserCfg_t->Username,pUserCfg_t->Username);
+        v_secure_system("echo %s:%s | chpasswd", pUserCfg_t->Username,pUserCfg_t->Password);
     }
 
     return SUCCESS;

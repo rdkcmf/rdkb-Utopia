@@ -48,6 +48,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include "secure_wrapper.h"
 
 /*
  * Config file format
@@ -171,18 +172,15 @@ static int proc_mon (const char *proc_name, const char *pid_file, const char *cm
 {
     int pid;
 
-    char syscmd[350] = {0} ;
     if (find_process(proc_name,pid_file)) {
         // process exists, nothing to do
         printf("pmon: %s process exists, nothing to do\n", proc_name);
         return 0;
     }
-
-    snprintf(syscmd, sizeof(syscmd), "echo \" RDKB_PROCESS_CRASHED : %s is not running, need restart \" >> /rdklogs/logs/SelfHeal.txt.0 ",proc_name);
-	system(syscmd);
-
+    v_secure_system("echo ' RDKB_PROCESS_CRASHED : %s is not running, need restart ' >> /rdklogs/logs/SelfHeal.txt.0 ",proc_name);
     //dnsmasq selfheal mechanism is in Aggresive Selfheal for DHCP Manager
     #if !defined (FEATURE_RDKB_DHCP_MANAGER)
+
     if(!strcmp(proc_name,"dnsmasq")) {
         t2_event_d("SYS_SH_dnsmasq_restart",1);
     }

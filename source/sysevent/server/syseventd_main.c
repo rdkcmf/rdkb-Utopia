@@ -78,6 +78,7 @@
 #include "clientsMgr.h"
 #include "triggerMgr.h"
 #include "dataMgr.h"
+#include "secure_wrapper.h"
 #ifdef USE_SYSCFG
 #include <syscfg/syscfg.h>
 #endif
@@ -245,9 +246,7 @@ static int deinitialize_system(void)
 {
 
    // stop the fork helper process
-   char str[256];
-   snprintf(str, sizeof(str), "killall -TERM %s", SYSEVENTD_FORK_HELPER_PROCESS);
-   system(str);
+   v_secure_system("killall -TERM "SYSEVENTD_FORK_HELPER_PROCESS);
    close(fork_helper_pipe[0]);
    close(fork_helper_pipe[1]);
 
@@ -1284,9 +1283,7 @@ int main (int argc, char **argv)
    }
 
    // just in case syseventd had been killed uncleanly remove old fork_helper process
-   char str[256];
-   snprintf(str, sizeof(str), "killall -TERM %s", SYSEVENTD_FORK_HELPER_PROCESS);
-   system(str);
+   v_secure_system("killall -TERM "SYSEVENTD_FORK_HELPER_PROCESS);
 
    pthread_attr_t thread_attr;
    pthread_attr_init(&thread_attr);
@@ -1476,10 +1473,7 @@ int main (int argc, char **argv)
                    if (SE_MSG_OPEN_CONNECTION_DATA == msgtype)
                    {
                        new_client->isData = 1;
-                       char buf[256] = {0};
-                       snprintf(buf,sizeof(buf),"echo fname %s: new fd %d dataclient %d msgtype %d >> /tmp/sys_d.txt",__FUNCTION__,newsockfd, new_client->isData, msgtype);
-                       system(buf);
-
+                       v_secure_system("echo fname %s: new fd %d dataclient %d msgtype %d >> /tmp/sys_d.txt",__FUNCTION__,newsockfd, new_client->isData, msgtype);
                    }                  
 
                   // first inform the workers about the new client. then ack the new client

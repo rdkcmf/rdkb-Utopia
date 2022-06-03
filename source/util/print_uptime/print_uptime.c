@@ -24,6 +24,7 @@
 #include <telemetry_busmessage_sender.h>
 #include "safec_lib_common.h"
 #include <sys/stat.h>
+#include "secure_wrapper.h"
 
 #define DEVICE_PROPS_FILE	"/etc/device.properties"
 #define DATA_SIZE	1024
@@ -66,7 +67,6 @@ int getValueFromDeviceProperties(char *value, int size,char *name)
 void print_uptime(char *uptimeLog, char *bootfile, char *uptime)
 {
 #if defined(_COSA_INTEL_USG_ATOM_)
-	char cmd[256]={0};
 	char armArpingIp[128]="";
 	if ( (getValueFromDeviceProperties(armArpingIp, 128,"ARM_ARPING_IP") == 0) && armArpingIp[0] != 0 && strlen(armArpingIp) > 0)
 	{
@@ -74,25 +74,24 @@ void print_uptime(char *uptimeLog, char *bootfile, char *uptime)
 		{
 			if(uptime != NULL)
 			{
-				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s %s -u %s\" &", armArpingIp, uptimeLog, bootfile, uptime);
+				v_secure_system("/usr/bin/rpcclient %s 'print_uptime %s %s -u %s' &", armArpingIp, uptimeLog, bootfile, uptime);
 			}
 			else
 			{
-				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s %s\" &", armArpingIp, uptimeLog, bootfile);
+				v_secure_system("/usr/bin/rpcclient %s 'print_uptime %s %s' &", armArpingIp, uptimeLog, bootfile);
 			}
 		}
 		else
 		{
 			if(uptime != NULL)
 			{
-				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s -u %s\" &", armArpingIp, uptimeLog, uptime);
+				v_secure_system("/usr/bin/rpcclient %s 'print_uptime %s -u %s' &", armArpingIp, uptimeLog, uptime);
 			}
 			else
 			{
-				snprintf(cmd, 256, "/usr/bin/rpcclient %s \"print_uptime %s\" &", armArpingIp, uptimeLog);
+		        	v_secure_system("/usr/bin/rpcclient %s 'print_uptime %s' &", armArpingIp, uptimeLog);
 			}
 		}
-		system(cmd);
 	}
 #else
     	struct sysinfo l_sSysInfo;

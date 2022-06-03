@@ -84,7 +84,7 @@ Author: mark enright
 #endif
 
 #include "ulog/ulog.h"
-
+#include "secure_wrapper.h"
 
 static const char *emptystr = "";
 
@@ -780,9 +780,7 @@ static int handle_set_request_data(const int fd, const token_t who, se_set_msg *
    if (!rc) {
        if (fileread == 0)
        {
-          char buf[256] = {0};
-         snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,value_bytes);
-         system(buf);
+         v_secure_system("echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,value_bytes);
        }
       rc = DATA_MGR_set_bin( subject_str, value_str, value_bytes, source, tid); 
       if (0 != rc) {
@@ -3122,10 +3120,7 @@ SE_INC_LOG(SEMAPHORE,
 
           if ((fileread == 0) && dataClient)
           {
-              char buf[256] = {0};
-              snprintf(buf,sizeof(buf),"echo fname %s: fd %d dataclient %d >> /tmp/sys_d.txt",__FUNCTION__,cur_read_fd,dataClient);
-              system(buf);
-
+              v_secure_system("echo fname %s: fd %d dataclient %d >> /tmp/sys_d.txt",__FUNCTION__,cur_read_fd,dataClient);
           }
 
           if (dataClient == 1)

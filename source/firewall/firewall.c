@@ -351,7 +351,7 @@ NOT_DEF:
 #include <netinet/in.h>
 #include <sys/file.h>
 #include <sys/mman.h>
-
+#include "secure_wrapper.h"
 
 #if defined  (WAN_FAILOVER_SUPPORTED) || defined(RDKB_EXTENDER_ENABLED)
 
@@ -2400,10 +2400,7 @@ static int prepare_globals_from_configuration(void)
    if ( ('\0' == current_wan_ip6_addr[0] ) && ( 0 == strlen(current_wan_ip6_addr) ) ) {
 
         FILE *ipAddrFp = NULL;
-        char buf[256] = {0};
-        memset(buf,0,sizeof(buf));
-        snprintf(buf, sizeof(buf), "ifconfig erouter0 | grep Global |  awk '/inet6/{print $3}' | cut -d '/' -f1");
-        ipAddrFp = popen(buf, "r") ;
+        ipAddrFp = v_secure_popen("r","ifconfig erouter0 | grep Global |  awk '/inet6/{print $3}' | cut -d '/' -f1");
         if (ipAddrFp != NULL )
         {
             if(fgets(current_wan_ip6_addr, sizeof(current_wan_ip6_addr), ipAddrFp)!=NULL)
@@ -2415,7 +2412,7 @@ static int prepare_globals_from_configuration(void)
                       current_wan_ip6_addr[ipAddr_len - 1] = '\0';
                   }
             }
-            pclose(ipAddrFp);
+            v_secure_pclose(ipAddrFp);
             ipAddrFp = NULL;
           }
 
@@ -3224,17 +3221,16 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
           if (isBothProtocol == TRUE)
           {
 #if defined(IVI_KERNEL_SUPPORT) 
-              char cmdIvictlPf[MAX_QUERY] = {0};
               int both_protocol = 110;
-
-              snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
-                      "ivictl -p -a %s -p %s -q %s -P %d ",
-                      toip, external_port, external_port, both_protocol);
-
+              int ret =0;
 #ifdef FEATURE_MAPT_DEBUG
-              LOG_PRINT_MAIN("ivictl: %s",cmdIvictlPf);
+              LOG_PRINT_MAIN("ivictl: ivictl -p -a %s -p %s -q %s -P %d ",
+                      toip, external_port, external_port, both_protocol);
 #endif
-              system(cmdIvictlPf);
+              ret = v_secure_system("ivictl -p -a %s -p %s -q %s -P %d ",
+                      toip, external_port, external_port, both_protocol);
+              FIREWALL_DEBUG("ret val of v_secure_system %d\n",ret);
+              
 #elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
           {
 
@@ -3261,19 +3257,19 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)              
-             char cmdIvictlPf[MAX_QUERY] = {0};
+      
              int tcp_protocol = 100;
-
+             int ret =0;
              fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
              if (isBothProtocol == FALSE)
              {
-                 snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
-                     "ivictl -p -a %s -p %s -q %s -P %d ",
-                     toip, external_port, external_port, tcp_protocol);
 #ifdef FEATURE_MAPT_DEBUG
-                 LOG_PRINT_MAIN("ivictl: %s",cmdIvictlPf);
+                 LOG_PRINT_MAIN("ivictl: ivictl -p -a %s -p %s -q %s -P %d ",
+                     toip, external_port, external_port, tcp_protocol);
 #endif
-                 system(cmdIvictlPf);
+                 ret = v_secure_system("ivictl -p -a %s -p %s -q %s -P %d ",
+                     toip, external_port, external_port, tcp_protocol);
+                 FIREWALL_DEBUG("ret val of v_secure_system %d\n",ret);
             }
 #elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
             if (isBothProtocol == FALSE)
@@ -3353,19 +3349,18 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)
-             char cmdIvictlPf[MAX_QUERY] = {0};
              char udp_protocol[BUFLEN_8] = "010";
- 
+             int ret = 0;
              fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s -j DNAT --to-destination %s%s\n", mapt_ip_address, external_port, toip, port_modifier);
              if (isBothProtocol == FALSE)
              {
-                 snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
-                         "ivictl -p -a %s -p %s -q %s -P %s ",
-                         toip, external_port, external_port, udp_protocol);
 #ifdef FEATURE_MAPT_DEBUG
-                 LOG_PRINT_MAIN("ivictl: %s",cmdIvictlPf);
+                 LOG_PRINT_MAIN("ivictl: ivictl -p -a %s -p %s -q %s -P %s ",
+                         toip, external_port, external_port, udp_protocol);
 #endif                
-                 system(cmdIvictlPf);
+                 ret = v_secure_system("ivictl -p -a %s -p %s -q %s -P %s ",
+                         toip, external_port, external_port, udp_protocol);
+                 FIREWALL_DEBUG("ret val of v_secure_system %d\n",ret);
              }
 #elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
              if (isBothProtocol == FALSE)
@@ -3704,21 +3699,20 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
           if (isBothProtocol == TRUE)
           {
 #if defined(IVI_KERNEL_SUPPORT)
-              char cmdIvictlPf[MAX_QUERY] = {0};
               int both_protocol = 110;
               int index;
               int range = 0;
-
+              int ret =0;
               range = atoi(edport) - atoi(sdport);
               for (index = 0; index <= range ; index++)
               {
-                  snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
-                          "ivictl -p -a %s -p %d -q %d -P %d ",
-                          toip, atoi(sdport) + index, atoi(sdport) + index, both_protocol);
 #ifdef FEATURE_MAPT_DEBUG
-                  LOG_PRINT_MAIN("ivictl: %s",cmdIvictlPf);
+                  LOG_PRINT_MAIN("ivictl: ivictl -p -a %s -p %d -q %d -P %d ",
+                          toip, atoi(sdport) + index, atoi(sdport) + index, both_protocol);
 #endif
-                  system(cmdIvictlPf);
+                  ret = v_secure_system("ivictl -p -a %s -p %d -q %d -P %d ",
+                          toip, atoi(sdport) + index, atoi(sdport) + index, both_protocol);
+                  
                   memset(cmdIvictlPf, 0, sizeof(cmdIvictlPf));
               }
 #elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
@@ -3743,25 +3737,23 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)
-            char cmdIvictlPf[MAX_QUERY] = {0};
             int tcp_protocol = 100;
             int index;
             int range = 0;
-
+            int ret =0;
             fprintf(nat_fp, "-A prerouting_fromwan -p tcp -m tcp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
             if (isBothProtocol == FALSE)
             {
                     range = atoi(edport) - atoi(sdport);
                     for (index = 0; index <= range ; index++)
                     {
-                        snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
-                                "ivictl -p -a %s -p %d -q %d -P %d ",
-                                toip, atoi(sdport) + index, atoi(sdport) + index, tcp_protocol);
 #ifdef FEATURE_MAPT_DEBUG
-                        LOG_PRINT_MAIN("ivictl: %s",cmdIvictlPf);
+                        LOG_PRINT_MAIN("ivictl: ivictl -p -a %s -p %d -q %d -P %d ",
+                                toip, atoi(sdport) + index, atoi(sdport) + index, tcp_protocol);
 #endif
-                        system(cmdIvictlPf);
-                        memset(cmdIvictlPf, 0, sizeof(cmdIvictlPf));
+                        ret = v_secure_system("ivictl -p -a %s -p %d -q %d -P %d ",
+                                toip, atoi(sdport) + index, atoi(sdport) + index, tcp_protocol);
+                        FIREWALL_DEBUG("ret val of v_secure_system %d\n",ret);
                     }
             }
 #elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
@@ -3819,11 +3811,10 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
          if(isMAPTReady)
          {
 #if defined(IVI_KERNEL_SUPPORT)              
-            char cmdIvictlPf[MAX_QUERY] = {0};
             char udp_protocol[BUFLEN_8] = "010";
             int range = 0;
             int index;
-             
+            int ret =0;
             fprintf(nat_fp, "-A prerouting_fromwan -p udp -m udp -d %s --dport %s:%s -j DNAT --to-destination %s%s\n", mapt_ip_address, sdport, edport, toip, target_internal_port);
               
             if (isBothProtocol == FALSE )
@@ -3831,14 +3822,13 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
                 range = atoi(edport) - atoi(sdport); 
                 for (index = 0; index <= range ; index++)
                 {    
-                    snprintf(cmdIvictlPf, sizeof(cmdIvictlPf),
-                        "ivictl -p -a %s -p %d -q %d -P %s",
-                        toip, atoi(sdport) + index, atoi(sdport) + index, udp_protocol);
 #ifdef FEATURE_MAPT_DEBUG
-                    LOG_PRINT_MAIN("ivictl: %s",cmdIvictlPf);
+                    LOG_PRINT_MAIN("ivictl: ivictl -p -a %s -p %d -q %d -P %s",
+                        toip, atoi(sdport) + index, atoi(sdport) + index, udp_protocol);
 #endif
-                    system(cmdIvictlPf);
-                    memset(cmdIvictlPf, 0, sizeof(cmdIvictlPf));
+                    ret = v_secure_system("ivictl -p -a %s -p %d -q %d -P %s",
+                        toip, atoi(sdport) + index, atoi(sdport) + index, udp_protocol);
+                   FIREWALL_DEBUG("ret val of v_secure_system %d\n",ret);
                 }
             }
 #elif defined(NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
@@ -15399,13 +15389,10 @@ void RmConntrackEntry(char *IPaddr)
 int CleanIPConntrack(char *physAddress)
 {
     FILE *fp = NULL;
-    char buf[200] = {0};
     char output[50] = {0};
-    memset(buf,0,200);
     memset(output,0,50);
-    snprintf(buf, sizeof(buf), "ip nei show | grep brlan0 | grep -i %s | awk '{print $1}' ", physAddress);
     v_secure_system("ip nei show | grep brlan0 | grep -i %s | awk '{print $1}' ", physAddress);
-      if(!(fp = popen(buf, "r")))
+      if(!(fp = v_secure_popen("r","ip nei show | grep brlan0 | grep -i %s | awk '{print $1}' ", physAddress)))
         {
             return -1;
         }
@@ -15419,7 +15406,7 @@ int CleanIPConntrack(char *physAddress)
     	else
    		 RmConntrackEntry(output);
     }
-    pclose(fp);
+    v_secure_pclose(fp);
     return 0;
 }
 int IsFileExists(const char *fname)

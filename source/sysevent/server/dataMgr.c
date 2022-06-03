@@ -74,6 +74,7 @@
 #include <syscfg/syscfg.h>
 #endif
 #include "ulog/ulog.h"
+#include "secure_wrapper.h"
 
 // data manager inited 
 static int DATA_MGR_inited = 0;
@@ -1107,13 +1108,11 @@ int DATA_MGR_set(char *name, char *value, int source, int tid)
 
 int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int tid)
 {
-
    if (!DATA_MGR_inited) {
       return(ERR_NOT_INITED);
    }
 
    char *local_value = NULL;
-   char buf[256] = {0};
    int fileret = access("/tmp/sysevent_debug", F_OK);
 
    if (NULL == value || val_length == 0) {
@@ -1127,8 +1126,7 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
 
     if (0 == fileret)
     {
-         snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,val_length);
-         system(buf);
+         v_secure_system("echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,val_length);
     }
    SE_INC_LOG(MUTEX,
       int id = thread_get_id(worker_data_key);
@@ -1208,8 +1206,7 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
         
        if (0 == fileret)
        {
-         snprintf(buf,sizeof(buf),"echo fname %s: unset changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
-         system(buf);
+         v_secure_system("echo fname %s: unset changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
        }
  
    } else if (NULL != local_value && NULL == element->value) {
@@ -1237,16 +1234,13 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
                 changed = 1;
                 if (0 == fileret)
                 {
-                    snprintf(buf,sizeof(buf),"echo fname %s: content not same changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
-                    system(buf);
+                    v_secure_system("echo fname %s: content not same changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
                 }
  
             }
             else if (0 == fileret)
             {
-                snprintf(buf,sizeof(buf),"echo fname %s: content same changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
-                system(buf);
-
+                v_secure_system("echo fname %s: content same changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
             }
        }
       if (changed) {
@@ -1254,8 +1248,7 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
              sysevent_free((void **)&(element->value), __FILE__,__LINE__);
              if (0 == fileret)
              {
-                 snprintf(buf,sizeof(buf),"echo fname %s: freed prev .changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
-                 system(buf);
+                 v_secure_system("echo fname %s: freed prev .changed flag %d >> /tmp/sys_d.txt",__FUNCTION__,changed);
              }
              element->value = sysevent_malloc(val_length, __FILE__, __LINE__);
          }  
@@ -1273,8 +1266,7 @@ int DATA_MGR_set_bin(char *name, char *value, int val_length, int source, int ti
    } 
    if (0 == fileret)
    {
-         snprintf(buf,sizeof(buf),"echo fname %s: changed flag %d  before setdata >> /tmp/sys_d.txt",__FUNCTION__,changed);
-         system(buf);
+         v_secure_system("echo fname %s: changed flag %d  before setdata >> /tmp/sys_d.txt",__FUNCTION__,changed);
  
       FILE *pFile = fopen("/tmp/setdata.bin","wb");
       if (pFile == NULL)

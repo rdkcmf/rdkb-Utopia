@@ -68,6 +68,7 @@
 #include <fcntl.h>
 #include "libsysevent_internal.h"
 #include <stdlib.h>
+#include "secure_wrapper.h"
 
 // how many times does library attempt to connect to a non blocking socket returning EINPROGRESS
 #define NUM_CONNECT_ATTEMPTS 10   
@@ -1298,9 +1299,7 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
          int fileread = access("/tmp/sysevent_debug", F_OK);
          if (fileread == 0)
          {
-             char buf[256] = {0};
-             snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,datasize);
-             system(buf);
+             v_secure_system("echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,datasize);
          }
          msg_bytes   = sizeof(se_msg_hdr) + sizeof(se_set_msg) +
                        datasize - sizeof(void *);
@@ -1519,9 +1518,7 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
              int fileread = access("/tmp/sysevent_debug", F_OK);
              if (fileread == 0)
              {
-                 char buf[256] = {0};
-                 snprintf(buf,sizeof(buf),"echo SE_MSG_SEND_NOTIFICATION_DATA fname %s: %d msgbytes %d >> /tmp/sys_d.txt",__FUNCTION__,datasize,msg_bytes);
-                 system(buf);
+                 v_secure_system("echo SE_MSG_SEND_NOTIFICATION_DATA fname %s: %d msgbytes %d >> /tmp/sys_d.txt",__FUNCTION__,datasize,msg_bytes);
              }
          }
          break;
@@ -1565,9 +1562,7 @@ int  SE_msg_hdr_mbytes_fixup (se_msg_hdr *hdr)
              int fileread = access("/tmp/sysevent_debug", F_OK);
              if (fileread == 0)
              {
-                 char buf[256] = {0};
-                 snprintf(buf,sizeof(buf),"echo SE_MSG_NOTIFICATION_DATA fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,datasize);
-                 system(buf);
+                 v_secure_system("echo SE_MSG_NOTIFICATION_DATA fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,datasize);
              }
          }
 
@@ -1785,7 +1780,6 @@ int SE_msg_send (int fd, char *sendmsg)
 int SE_msg_send_data (int fd, char *sendmsg,int msgsize)
 {
    se_msg_hdr *msg_hdr = (se_msg_hdr *)sendmsg;
-   char buf_t[256] = {0};
    int fileread = access("/tmp/sysevent_debug", F_OK);
    SE_msg_hdr_mbytes_fixup(msg_hdr);
 
@@ -1798,9 +1792,7 @@ int SE_msg_send_data (int fd, char *sendmsg,int msgsize)
    } else {
        if (fileread == 0)
        {
-           snprintf(buf_t,sizeof(buf_t),"echo fname %s: bytestowrite %d before msg copy >> /tmp/sys_d.txt",__FUNCTION__,bytes_to_write);
-           system(buf_t);
-
+           v_secure_system("echo fname %s: bytestowrite %d before msg copy >> /tmp/sys_d.txt",__FUNCTION__,bytes_to_write);
        }
       // add a transport message footer to help ensure message integrity during transport
       se_msg_footer footer;
@@ -1815,8 +1807,7 @@ int SE_msg_send_data (int fd, char *sendmsg,int msgsize)
    int rc;
    if (fileread == 0)
    {
-       snprintf(buf_t,sizeof(buf_t),"echo fname before write %s: %d >> /tmp/sys_d.txt",__FUNCTION__, bytes_to_write);
-       system(buf_t);
+       v_secure_system("echo fname before write %s: %d >> /tmp/sys_d.txt",__FUNCTION__, bytes_to_write);
    }
    while (0 < bytes_to_write && 0 < num_retries) {
       rc = write(fd, send_msg_buffer+bytes_sent, bytes_to_write);
@@ -1836,8 +1827,7 @@ int SE_msg_send_data (int fd, char *sendmsg,int msgsize)
    }
    if (fileread == 0)
    {
-       snprintf(buf_t,sizeof(buf_t),"echo fname after write %s: %d >> /tmp/sys_d.txt",__FUNCTION__, bytes_to_write);
-       system(buf_t);
+       v_secure_system("echo fname after write %s: %d >> /tmp/sys_d.txt",__FUNCTION__, bytes_to_write);
    }
    if (0 == bytes_to_write) {
       return(0);
@@ -2525,10 +2515,7 @@ int sysevent_open_data (char *ip, unsigned short port, int version, char *id, to
    // this is an opaque value
    
    *token = ntohl(reply_msg_body->token_id);
-   char buf[256] = {0};
-   snprintf(buf,sizeof(buf),"echo fname %s: fd %d >> /tmp/sys_d.txt",__FUNCTION__,sockfd);
-   system(buf);
-
+   v_secure_system("echo fname %s: fd %d >> /tmp/sys_d.txt",__FUNCTION__,sockfd);
 
    return(sockfd);
 }
@@ -2607,10 +2594,7 @@ int sysevent_local_open_data (char *target, int version, char *id, token_t *toke
    // this is an opaque value
    
    *token = ntohl(reply_msg_body->token_id);
-   char buf[256] = {0};
-   snprintf(buf,sizeof(buf),"echo fname %s: fd %d >> /tmp/sys_d.txt",__FUNCTION__,sockfd);
-   system(buf);
-
+   v_secure_system("echo fname %s: fd %d >> /tmp/sys_d.txt",__FUNCTION__,sockfd);
    return(sockfd);
 }
 
@@ -3295,9 +3279,7 @@ static int sysevent_set_data_private (const int fd, const token_t token, const c
 
       if (fileread == 0)
       {
-          char buf[256] = {0};
-          snprintf(buf,sizeof(buf),"echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,value_length);
-          system(buf);
+          v_secure_system("echo fname %s: %d >> /tmp/sys_d.txt",__FUNCTION__,value_length);
       }
 #ifndef SET_REPLY_REQUIRED
    SE_msg_send_data(fd, send_msg_buffer,bin_size);
