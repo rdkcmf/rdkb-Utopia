@@ -132,9 +132,9 @@ int ep_get_entity_vid_portMembers(int vid, int entity, char* memberPortNames[], 
     
     while (token) {
 			
-	if((int)numPorts == MAX_ADD_PORTS )
+	if((long int)numPorts == MAX_ADD_PORTS )
 	{
-		MNET_DEBUG("ep_get_entity_vid_portMembers  numPorts is exceeded [%d]\n"COMMA (int)numPorts)
+		MNET_DEBUG("ep_get_entity_vid_portMembers  numPorts is exceeded [%ld]\n"COMMA (long int)numPorts)
 		break;
 	}
         memberPortNames[*numPorts] = buf + offset;
@@ -210,9 +210,9 @@ int ep_get_trunkPort_vidMembers(int vid, char* portNames[], int* numPorts, char 
     *numPorts = 0;
     while (token) {
 			
-	if((int)numPorts == MAX_ADD_PORTS )
+	if((long int)numPorts == MAX_ADD_PORTS )
 	{
-		MNET_DEBUG("ep_get_entity_vid_portMembers numPorts is exceeded[%d]\n"COMMA (int)numPorts)
+		MNET_DEBUG("ep_get_entity_vid_portMembers numPorts is exceeded[%ld]\n"COMMA (long int)numPorts)
 		break;
 	}
         portNames[*numPorts] = buf + offset;

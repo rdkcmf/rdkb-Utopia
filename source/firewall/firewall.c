@@ -13751,7 +13751,7 @@ static void do_ipv6_filter_table(FILE *fp);
 
 #define MAX_NO_IPV6_INF 10
 #define MAX_LEN_IPV6_INF 32
-#define MAX_BUFF_LEN 100
+#define MAX_BUFF_LEN 350
 void getIpv6Interfaces(char Interface[MAX_NO_IPV6_INF][MAX_LEN_IPV6_INF],int *len)
 {
 char *token = NULL;char *pt;

@@ -616,7 +616,7 @@ void add_rule(rule_info_t *rule, int *num, int flag){
 void merger_rule(FILE* fd, int *num){
     char *line = NULL;
     int ret = 0;
-    int size = 0;
+    size_t size = 0;
     rule_info_t info = {{0},{0},{0},{0},0}; /*RDKB-7143, CID-33545; init before use */
 
     while(-1 != getline(&line, &size, fd)){
