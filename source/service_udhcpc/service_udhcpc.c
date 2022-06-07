@@ -714,7 +714,7 @@ void compare_and_delete_old_dns(udhcpc_script_t *pinfo)
       for(i=0;i<dns_server_no;i++)
       {
               char* ipv4_dns_match = NULL;
-              ipv4_dns_match = (char *)(strstr(buffer,dns_server_list[i].data) || strstr(buffer,"nameserver 127.0.0.1"));
+              ipv4_dns_match = (char*)((long int)(strstr(buffer,dns_server_list[i].data) || strstr(buffer,"nameserver 127.0.0.1")));
               if(ipv4_dns_match !=NULL)
               {
                       search_ipv4_dns=1;

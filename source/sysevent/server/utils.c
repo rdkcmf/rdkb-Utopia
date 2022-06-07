@@ -149,7 +149,7 @@ void *sysevent_malloc(size_t size, char* file, int line)
    void *store = malloc(size);
 
    SE_INC_LOG(ALLOC_FREE,
-      printf("+allocating: %6d @ %8p %s:%d\n", size, store, file, line);
+      printf("+allocating: %6ld @ %8p %s:%d\n", (long int)size, store, file, line);
    )
    if (NULL == store) {
       SE_INC_LOG(ALLOC_FREE,
@@ -175,7 +175,7 @@ void *sysevent_realloc(void* ptr, size_t size, char* file, int line)
    void *store = realloc(ptr, size);
 
    SE_INC_LOG(ALLOC_FREE,
-      printf("+reallocating %8p: %6d @ %8p %s:%d\n", orig, size, store, file, line);
+      printf("+reallocating %8p: %6ld @ %8p %s:%d\n", orig, (long int)size, store, file, line);
    )
    if (NULL == store) {
       SE_INC_LOG(ALLOC_FREE,

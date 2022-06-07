@@ -5827,7 +5827,7 @@ static int s_get_service_name (int port, protocol_t protocol, char *return_buf, 
             snprintf(needle_str, sizeof(needle_str), "\t%d/udp", port);
         }
         if (strstr(line_buf, needle_str)) {
-            snprintf(return_buf, buf_len, "%.*s", strcspn(line_buf, "\t"), line_buf);
+            snprintf(return_buf, buf_len, "%.*s", (int)strcspn(line_buf, "\t"), line_buf);
             was_a_match_found = 1;
             break;
         }
@@ -5877,13 +5877,13 @@ static boolean_t s_parse_log_entry (logentry_t *log_entry,
     str_pos = strstr(log_str, "SRC=");
     if (str_pos) {
         str_pos += strlen("SRC=");
-        snprintf(log_entry->src, URL_SZ, "%.*s", strcspn(str_pos, " "), str_pos);
+        snprintf(log_entry->src, URL_SZ, "%.*s", (int)strcspn(str_pos, " "), str_pos);
     }
     
     str_pos = strstr(log_str, "DST=");
     if (str_pos) {
         str_pos += strlen("DST=");
-        snprintf(log_entry->dst, URL_SZ, "%.*s", strcspn(str_pos, " "), str_pos);
+        snprintf(log_entry->dst, URL_SZ, "%.*s", (int)strcspn(str_pos, " "), str_pos);
         
         if (do_reverse_dns_lookup) {
             // Do a reverse DNS lookup
@@ -5901,7 +5901,7 @@ static boolean_t s_parse_log_entry (logentry_t *log_entry,
     str_pos = strstr(log_str, "DPT=");
     if (str_pos) {
         str_pos += strlen("DPT=");
-        snprintf(log_entry->service_port, TOKEN_SZ, "%.*s", strcspn(str_pos, " "), str_pos);
+        snprintf(log_entry->service_port, TOKEN_SZ, "%.*s", (int)strcspn(str_pos, " "), str_pos);
         
         if (do_service_name_lookup) {
             if (1 != s_get_service_name(atoi(log_entry->service_port), proto, log_entry->service_port, TOKEN_SZ)) {
@@ -6090,7 +6090,7 @@ static boolean_t s_parse_dhcp_log_msg (dhcpclientlog_t *dhcp_data, char *dhcp_lo
         str_pos++;
         
         // Copy the IP address up to a space or newline
-        snprintf(dhcp_data->ipaddr, IPADDR_SZ, "%.*s", strcspn(str_pos, " \n"), str_pos);
+        snprintf(dhcp_data->ipaddr, IPADDR_SZ, "%.*s", (int)strcspn(str_pos, " \n"), str_pos);
         dhcp_data->ipaddr[IPADDR_SZ - 1] = 0;
         
         // Fall through
@@ -6107,7 +6107,7 @@ static boolean_t s_parse_dhcp_log_msg (dhcpclientlog_t *dhcp_data, char *dhcp_lo
         str_pos++;
         
         // Copy the MAC address up to a space or newline
-        snprintf(dhcp_data->macaddr, MACADDR_SZ, "%.*s", strcspn(str_pos, " \n"), str_pos);
+        snprintf(dhcp_data->macaddr, MACADDR_SZ, "%.*s", (int)strcspn(str_pos, " \n"), str_pos);
         dhcp_data->macaddr[MACADDR_SZ - 1] = 0;
         break;
     default:
