@@ -779,6 +779,9 @@ static BOOL isEponEnable = TRUE;
 static BOOL isEponEnable = FALSE;
 #endif
 
+static BOOL isDefHttpPortUsed = FALSE ;
+static BOOL isDefHttpsPortUsed = FALSE ;
+
 /*
  * For timed internet access rules we use cron 
  */
@@ -3109,6 +3112,11 @@ static int do_single_port_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, 
       if (0 != rc || '\0' == internal_port[0]) {
          snprintf(internal_port, sizeof(internal_port), "%s", external_port);
       }
+
+      if ( 80 == atoi(external_port)  )
+         isDefHttpPortUsed = TRUE ;
+      else if ( 443 == atoi(external_port) )
+         isDefHttpsPortUsed = TRUE ;
 #if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
       FIREWALL_DEBUG("PortMapping:Internal Port %s\n" COMMA internal_port);
 #endif
@@ -11264,8 +11272,11 @@ static void do_ipv4_UIoverWAN_filter(FILE* fp) {
  FIREWALL_DEBUG("Inside do_ipv4_UIoverWAN_filter \n"); 
       if(strlen(current_wan_ipaddr)>0)
       {
-        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,current_wan_ipaddr);
-        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,current_wan_ipaddr);
+         if (!isDefHttpPortUsed)
+            fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,current_wan_ipaddr);
+
+         if (!isDefHttpsPortUsed)
+            fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,current_wan_ipaddr);
         int rc = 0;
         char buf[16] ;
         memset(buf,0,sizeof(buf));
@@ -11392,7 +11403,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #endif
 #endif
 
-   do_ipv4_UIoverWAN_filter(mangle_fp);
    fprintf(mangle_fp, "-A PREROUTING -j prerouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_qos\n");
    fprintf(mangle_fp, "-A POSTROUTING -j postrouting_lan2lan\n");
@@ -12692,6 +12702,8 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    add_qos_marking_statements(mangle_fp);
 
    do_port_forwarding(nat_fp, filter_fp);
+   do_ipv4_UIoverWAN_filter(mangle_fp);
+
    do_nonat(filter_fp);
    WAN_FAILOVER_SUPPORT_CHECK
    do_dmz(nat_fp, filter_fp);
@@ -12865,6 +12877,7 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    }
 #endif
    do_port_forwarding(nat_fp, NULL);
+   do_ipv4_UIoverWAN_filter(mangle_fp);
    do_nat_ephemeral(nat_fp);
    do_wan_nat_lan_clients(nat_fp);
 #if defined (FEATURE_MAPT)
@@ -13231,8 +13244,11 @@ static void do_ipv6_UIoverWAN_filter(FILE* fp) {
  FIREWALL_DEBUG("Inside do_ipv6_UIoverWAN_filter \n"); 
  if(strlen(current_wan_ipv6[0]) > 0)
       {
-        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,(char *)current_wan_ipv6);
-        fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,(char *)current_wan_ipv6);
+        if(!isDefHttpPortUsed)
+            fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 80 -j DROP\n", lan_ifname,(char *)current_wan_ipv6);
+        
+        if(!isDefHttpPortUsed)
+            fprintf(fp, "-A PREROUTING -i %s -d %s -p tcp -m tcp --dport 443 -j DROP\n", lan_ifname,(char *)current_wan_ipv6);
         int rc = 0;
         char buf[16] ;
         memset(buf,0,sizeof(buf));
@@ -13602,7 +13618,6 @@ int prepare_ipv6_firewall(const char *fw_file)
    if (NULL == fp) {
       return(-2);
    }
-   
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipv6_interface", wan6_ifname, sizeof(wan6_ifname));
    
    errno_t safec_rc = -1;
