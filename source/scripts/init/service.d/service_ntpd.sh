@@ -53,63 +53,64 @@ NTP_CONF_TMP=/tmp/ntp.conf
 NTP_CONF_QUICK_SYNC=/tmp/ntp_quick_sync.conf
 LOCKFILE=/var/tmp/service_ntpd.pid
 BIN=ntpd
-EROUTER_IPV6_UP=0
+WAN_IPv6_UP=0
 QUICK_SYNC_PID=""
 QUICK_SYNC_DONE=0
 
+STATIC_INTERFACE=$NTPD_INTERFACE
 WAN_INTERFACE=$(getWanInterfaceName)
 
 if [ "x$NTPD_LOG_NAME" == "x" ];then
 NTPD_LOG_NAME=/rdklogs/logs/ntpLog.log
 fi
 
-erouter_wait () 
+wan_wait () 
 {
-    local EROUTER_UP=""
-    local EROUTER_IPv4=""
-    local EROUTER_IPv6=""
+    local WAN_UP=""
+    local WAN_IPv4=""
+    local WAN_IPv6=""
     retry=0
     MAX_RETRY=20
 
-    while [ ! "$EROUTER_UP" ]
+    while [ ! "$WAN_UP" ]
     do
        retry=`expr $retry + 1`
 
-       #Make sure erouter0 has an IPv4 or IPv6 address before telling NTP to listen on Interface
-       EROUTER_IPv4=`ifconfig -a "$NTPD_INTERFACE" | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
+       #Make sure WAN interface has an IPv4 or IPv6 address before telling NTP to listen on Interface
+       WAN_IPv4=`ifconfig -a "$WAN_INTERFACE" | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
 
        if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
            if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
-               EROUTER_IPv6=`ifconfig "$NTPD_IPV6_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | grep -v 'fdd7' | cut -d '/' -f1 | head -n1`
-               EROUTER_IPV6_UP=1
+               WAN_IPv6=`ifconfig "$NTPD_IPV6_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | grep -v 'fdd7' | cut -d '/' -f1 | head -n1`
+               WAN_IPv6_UP=1
            fi
        else
-           EROUTER_IPv6=`ifconfig "$NTPD_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
+           WAN_IPv6=`ifconfig "$WAN_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1 | head -n1`
        fi
 
-       if [ -n "$EROUTER_IPv4" ] || [ -n "$EROUTER_IPv6" ]; then
+       if [ -n "$WAN_IPv4" ] || [ -n "$WAN_IPv6" ]; then
           if [ "x$2" = "xquickSync" ];then
           	# Quick Sync Needs an IP and Not Interface As changes in Interface as Quick Sync Runs Causes Errors
-          	if [ "x$EROUTER_IPv6" != "x" ];then
-          		EROUTER_UP=$EROUTER_IPv6
+          	if [ "x$WAN_IPv6" != "x" ];then
+          		WAN_UP=$WAN_IPv6
           	else
-          		EROUTER_UP=$EROUTER_IPv4
+          		WAN_UP=$WAN_IPv4
           	fi
           else
-          	EROUTER_UP=$WAN_INTERFACE
+          	WAN_UP=$WAN_INTERFACE
           fi
           break
        fi
        sleep 6
        WAN_INTERFACE=$(getWanInterfaceName)
        if [ $retry -eq $MAX_RETRY ];then
-          echo_t "SERVICE_NTPD : EROUTER IP not acquired after max etries. Exiting !!!" >> $NTPD_LOG_NAME
+          echo_t "SERVICE_NTPD : WAN IP not acquired after max etries. Exiting !!!" >> $NTPD_LOG_NAME
           break
        fi
     done
 
- eval $1=\$EROUTER_UP
+ eval $1=\$WAN_UP
 }
 
 set_ntp_quicksync_status ()
@@ -331,22 +332,24 @@ service_start ()
    WAN_IP=""
    QUICK_SYNC_WAN_IP=""
 
-   if [ "$NTPD_INTERFACE" == $WAN_INTERFACE ]; then
+   # Enable Basic NTPD Daemon Logging in Newer Devices
+   echo "logconfig =syncall +clockall +sysall +peerall" >> $NTP_CONF_TMP
 
-       # Enable Basic NTPD Daemon Logging in Newer Devices
-       echo "logconfig =syncall +clockall +sysall +peerall" >> $NTP_CONF_TMP
+   sleep 30
+   wan_wait QUICK_SYNC_WAN_IP quickSync
+   wan_wait WAN_IP
 
-       sleep 30
-       erouter_wait QUICK_SYNC_WAN_IP quickSync
-       erouter_wait WAN_IP
-   else
+   # If WAN_IP is still empty potentially Database of WAN Interface Failed. As one last ditch effort try legacy device.properties interface
+   if [ "$WAN_IP" = "" ]; then
        PROVISIONED_TYPE=""
        PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
 
+       echo_t "SERVICE_NTPD : WAN_IP Empty Trying device.properties interface: $STATIC_INTERFACE" >> $NTPD_LOG_NAME
+
        if [ "$PROVISIONED_TYPE" == "IPV4" ]; then
-           WAN_IP=`ifconfig -a $NTPD_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
+           WAN_IP=`ifconfig -a $STATIC_INTERFACE | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1`
        else
-           WAN_IP=`ifconfig $NTPD_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
+           WAN_IP=`ifconfig $STATIC_INTERFACE | grep inet6 | grep Global | awk '/inet6/{print $3}' | cut -d '/' -f1`
        fi
    fi
 
@@ -403,7 +406,7 @@ service_start ()
            # Try and Force Quick Sync to Run on a single interface
            echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
            if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
-               if [ $EROUTER_IPV6_UP -eq 1 ]; then
+               if [ $WAN_IPv6_UP -eq 1 ]; then
                    $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & 
                    QUICK_SYNC_PID=$!
                else
