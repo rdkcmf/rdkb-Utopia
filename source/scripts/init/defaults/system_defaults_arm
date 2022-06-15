@@ -102,6 +102,7 @@ $$Version=17
 @brlan1_ipaddr_v6_ula=fd01:646:8a00:bee4::/64
 @br106_ipaddr_v6_ula=fd01:646:8a00:bee5::/64
 @br403_ipaddr_v6_ula=fd01:646:8a00:bee6::/64
+@brlan10_ipaddr_v6_ula=fd01:646:8a00:bee7::/64
 
 #-------------------------------------------------------------------
 #     syscfg namespace
