@@ -18,7 +18,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ################################################################################
-
 NVRAM2_SUPPORTED="no"
 ATOM_IP=""
 UPLOAD_THRESHOLD=""
@@ -44,9 +43,6 @@ LOG_PATH="$LOG_FOLDER/logs/"
 ATOM_LOG_PATH="/rdklogs/logs/"
 
 backupenable=`syscfg get logbackup_enable`
-
-
-
 #dmesg sync
 DMESG_FILE="/rdklogs/logs/messages.txt"
 lastdmesgsync="/tmp/lastdmesgsynctime"
@@ -136,18 +132,6 @@ MAXLINESIZE=2
 if [ "$LOG_UPLOAD_THRESHOLD" != "" ]
 then
 	MAXSIZE=$LOG_UPLOAD_THRESHOLD
-fi
-
-URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb.cgi"
-if [ -f /tmp/DCMSettings.conf ]; then
-
-      URL=`grep 'LogUploadSettings:UploadRepository:URL' /tmp/DCMSettings.conf | cut -d '=' -f2`
-      if [ -z "$URL" ]; then
-            echo "urn:settings:LogUploadSettings:UploadRepository' is not found in DCMSettings.conf"
-            URL="https://ssr.ccp.xcal.tv/cgi-bin/rdkb.cgi"
-      else
-            echo "upload URL is $URL in DCMSettings.conf"
-      fi
 fi    
 
 if [ -z $LOG_PATH ]; then
