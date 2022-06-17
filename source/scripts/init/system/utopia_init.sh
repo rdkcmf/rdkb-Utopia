@@ -117,8 +117,6 @@ fi
 echo_t "Starting log module.."
 /usr/sbin/log_start.sh
 
-mkdir -p /tmp/cron
-
 BUTTON_THRESHOLD=15
 FACTORY_RESET_KEY=factory_reset
 FACTORY_RESET_RGWIFI=y
