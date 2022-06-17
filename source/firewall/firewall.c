@@ -14421,24 +14421,13 @@ static void do_ipv6_filter_table(FILE *fp){
 #ifdef MULTILAN_FEATURE
    prepare_multinet_filter_forward_v6(fp);
    prepare_multinet_filter_output_v6(fp);
-#else
+#endif
 #if defined (INTEL_PUMA7)
-   //ARRISXB6-8739
    //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
    fprintf(fp, "-A FORWARD -i brlan2 -j ACCEPT\n");
    fprintf(fp, "-A FORWARD -i brlan3 -j ACCEPT\n");
-#endif
 #endif
 
-#ifdef MULTILAN_FEATURE
-   prepare_multinet_filter_forward_v6(fp);
-   prepare_multinet_filter_output_v6(fp);
-#endif
-#if defined (INTEL_PUMA7)
-   //Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-   fprintf(fp, "-A FORWARD -i brlan2 -j ACCEPT\n");
-   fprintf(fp, "-A FORWARD -i brlan3 -j ACCEPT\n");
-#endif
    //ban telnet and ssh from lan side
    lan_telnet_ssh(fp, AF_INET6);
 
