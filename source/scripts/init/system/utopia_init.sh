@@ -489,17 +489,6 @@ ip6tables -t mangle -A PREROUTING -i "$wan_ifname" -d ff00::/8 -p ipv6-icmp -m i
 
 #/sbin/ulogd -c /etc/ulogd.conf -d
 
-#echo_t "[utopia][init] Starting telnetd"
-#TELNET_ENABLE=`syscfg get mgmt_wan_telnetaccess`
-#if [ "$TELNET_ENABLE" = "1" ]; then
-#    if [ -e /bin/login ]; then
-#        /usr/sbin/telnetd -l /bin/login
-#    else
-#        /usr/sbin/telnetd
-#    fi
-#fi
-
-
 echo_t "[utopia][init] Processing registration"
 # run all executables in the sysevent registration directory
 # echo_t "[utopia][init] Running registration using $INIT_DIR"
