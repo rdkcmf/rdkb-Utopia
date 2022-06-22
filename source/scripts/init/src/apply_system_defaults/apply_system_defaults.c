@@ -1182,6 +1182,30 @@ static void addInSysCfgdDB (char *key, char *value)
          IsPSMMigrationNeeded = 1;
       }
    }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_Webpa.Server.URL") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "WEBPA_SERVER_URL" ) )
+      {
+         set_syscfg_partner_values( value,"WEBPA_SERVER_URL" );
+         IsPSMMigrationNeeded = 1;
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_Webpa.TokenServer.URL") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "TOKEN_SERVER_URL" ) )
+      {
+         set_syscfg_partner_values( value,"TOKEN_SERVER_URL" );
+         IsPSMMigrationNeeded = 1;
+      }
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_Webpa.DNSText.URL") )
+   {
+      if ( 0 == IsValuePresentinSyscfgDB( "DNS_TEXT_URL" ) )
+      {
+         set_syscfg_partner_values( value,"DNS_TEXT_URL" );
+         IsPSMMigrationNeeded = 1;
+      }
+   }
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6SecondaryDhcpServerOptions") )
    {
       if ( 0 == IsValuePresentinSyscfgDB( "IPv6SecondaryDhcpServerOptions" ) )
@@ -1269,6 +1293,21 @@ static void updateSysCfgdDB (char *key, char *value)
          set_syscfg_partner_values( value,"TELEMETRY_INIT_URL" );
          IsPSMMigrationNeeded = 1;
    }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_Webpa.Server.URL") )
+   {
+         set_syscfg_partner_values( value,"WEBPA_SERVER_URL" );
+         IsPSMMigrationNeeded = 1;
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_Webpa.TokenServer.URL") )
+   {
+         set_syscfg_partner_values( value,"TOKEN_SERVER_URL" );
+         IsPSMMigrationNeeded = 1;
+   }
+   if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_Webpa.DNSText.URL") )
+   {
+         set_syscfg_partner_values( value,"DNS_TEXT_URL" );
+         IsPSMMigrationNeeded = 1;
+   }   
    if ( 0 == strcmp ( key, "Device.X_RDKCENTRAL-COM_EthernetWAN_MTA.IPv6PrimaryDhcpServerOptions") )
    {
          set_syscfg_partner_values( value,"IPv6PrimaryDhcpServerOptions" );
@@ -1935,6 +1974,57 @@ static int apply_partnerId_default_values (char *data, char *PartnerID)
 							APPLY_PRINT("%s - telemetryurl Value is NULL\n", __FUNCTION__ );
 						}
 					}
+
+                                        paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_Webpa.Server.URL"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+                                                char *webpaurl = NULL;
+                                                webpaurl = paramObjVal->valuestring;
+
+                                                if (webpaurl != NULL)
+                                                {
+                                                         set_syscfg_partner_values(webpaurl,"WEBPA_SERVER_URL");
+                                                        webpaurl = NULL;
+                                                }
+                                                else
+                                                {
+                                                        APPLY_PRINT("%s - webpaurl Value is NULL\n", __FUNCTION__ );
+                                                }
+                                        }
+
+                                        paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_Webpa.TokenServer.URL"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+                                                char *tokenurl = NULL;
+                                                tokenurl = paramObjVal->valuestring;
+
+                                                if (tokenurl != NULL)
+                                                {
+                                                         set_syscfg_partner_values(tokenurl,"TOKEN_SERVER_URL");
+                                                        tokenurl = NULL;
+                                                }
+                                                else
+                                                {
+                                                        APPLY_PRINT("%s - tokenurl Value is NULL\n", __FUNCTION__ );
+                                                }
+                                        }	
+				
+                                        paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.X_RDKCENTRAL-COM_Webpa.DNSText.URL"), "ActiveValue");
+                                        if ( paramObjVal != NULL )
+                                        {
+                                                char *dnsurl = NULL;
+                                                dnsurl = paramObjVal->valuestring;
+
+                                                if (dnsurl != NULL)
+                                                {
+                                                         set_syscfg_partner_values(dnsurl,"DNS_TEXT_URL");
+                                                        dnsurl = NULL;
+                                                }
+                                                else
+                                                {
+                                                        APPLY_PRINT("%s - dnsurl Value is NULL\n", __FUNCTION__ );
+                                                }
+                                        }					
 
 					paramObjVal = cJSON_GetObjectItem(cJSON_GetObjectItem( partnerObj, "Device.DeviceInfo.X_RDKCENTRAL-COM_Syndication.HomeSec.SSIDprefix"), "ActiveValue");
                                         if ( paramObjVal != NULL )
