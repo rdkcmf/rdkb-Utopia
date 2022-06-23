@@ -766,12 +766,7 @@ if [ "x$rdkb_extender" = "xtrue" ];then
          WAN_DNS=`echo "$WAN_DNS" "$DNS2"`
       fi
       fi
-<<<<<<< HEAD
-       return
-   fi
- fi	 
-=======
-
+      
       IPV6_DNS1=`sysevent get cellular_wan_v6_dns1`
       IPV6_DNS2=`sysevent get cellular_wan_v6_dns2`
       if [ "x$IPV6_DNS1" != "x" ];then
@@ -783,8 +778,8 @@ if [ "x$rdkb_extender" = "xtrue" ];then
 
       fi
       return
-   fi	 
->>>>>>> 9a0e7ea3b... RDKB-41654 : iptables between Primary Gateway's GRE WAN VLAN and wwan0
+   fi
+ fi	 
 
    RF_CAPTIVE_PORTAL="false"
    SECWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
