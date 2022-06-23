@@ -458,6 +458,7 @@ int service_start(int mode)
             runCommandInShellBlocking(buf);
             sleep(5);
             sysevent_set(sysevent_fd, sysevent_token, "lan-start", "", 0);
+            sysevent_set(sysevent_fd, sysevent_token, "lan_status-dhcp", "started", 0);
 // Do wan start only in XB technicolor for xb->xb backup wan testing.
 #if defined (_COSA_BCM_ARM_)
             sysevent_set(sysevent_fd, sysevent_token, "wan-start", "", 0);
