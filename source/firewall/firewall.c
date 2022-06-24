@@ -4136,7 +4136,7 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
          } 
 
          char port_modifier[10];
-         if ('\0' == dport[0] || 0 == strcmp(dport, fromport) ) {
+         if ('\0' == dport[0] || 0 == strcmp(dport, fromport) || 0 == strcmp(dport, "0")) {
            port_modifier[0] = '\0';
          } else {
            snprintf(port_modifier, sizeof(port_modifier), ":%s", dport);
