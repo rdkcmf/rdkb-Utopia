@@ -140,24 +140,19 @@ static char *trim(char *in)
  * Return Value  : 0 if ok -1 if not
  * Note          : This function will change the contents of in
  */
-static int parse_line(char *in, char **name, char **value)
+static int parse_line (char *in, char **name, char **value)
 {
-   // look for the separator token
-   if (NULL == in) {
-      return(-1);
-   } else {
-      *name = *value = NULL;
-   }
+   char *tok;
 
-   char *tok = strchr(in, '=');
-   if (NULL == tok) {
-      return(-1);
-   } else {
-      *name=(in + 1);
-      *value=(tok + 1); 
-      *tok='\0';
-   } 
-   return(0);
+   tok = strchr(in, '=');
+   if (tok == NULL)
+      return -1;
+
+   *tok = '\0';
+   *name = in;
+   *value = tok + 1;
+
+   return 0;
 }
 
 /*
@@ -170,31 +165,43 @@ static int parse_line(char *in, char **name, char **value)
  */
 static int set_sysevent(char *name, char *value, int flags) 
 {
-   int   rc = 0;
    char get_val[512];
-   rc = sysevent_get(global_fd, global_id, name, get_val, sizeof(get_val));
-   if ('\0' == get_val[0]) {
-      if (0x00000000 != flags) {
-         rc = sysevent_set_options(global_fd, global_id, name, flags);
+   int rc;
+
+   get_val[0] = 0;
+
+   rc = sysevent_get (global_fd, global_id, name, get_val, sizeof(get_val));
+
+   if (get_val[0] == 0)
+   {
+      if (flags != 0x00000000)
+      {
+         rc = sysevent_set_options (global_fd, global_id, name, flags);
       }
 
       // if the value is prefaced by '$' then we use the
       // current value of syscfg
       char *trimmed_val = trim(value);
-      if ('$' == trimmed_val[0]) {
-         get_val[0] = '\0';
-         rc = syscfg_get(NULL, trimmed_val+1, get_val, sizeof(get_val));
-         rc = sysevent_set(global_fd, global_id, name, get_val, 0);
-//         printf("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, get_val, flags);
-      } else {
-         rc = sysevent_set(global_fd, global_id, name, value, 0);
-         APPLY_PRINT("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, value, flags);
-         printf("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, value, flags);
+
+      if (trimmed_val[0] == '$')
+      {
+         syscfg_get (NULL, trimmed_val+1, get_val, sizeof(get_val));
+         rc = sysevent_set (global_fd, global_id, name, get_val, 0);
+//       printf("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, get_val, flags);
       }
-   } else {
+      else
+      {
+         rc = sysevent_set (global_fd, global_id, name, value, 0);
+         APPLY_PRINT("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, value, flags);
+         printf ("[utopia] [init] apply_system_defaults set <@%s, %s, 0x%x>\n", name, value, flags);
+      }
+   }
+   else
+   {
       rc = 0;
    }
-   return(rc);
+
+   return rc;
 }
 
 /*
@@ -205,71 +212,87 @@ static int set_sysevent(char *name, char *value, int flags)
  *    value      : the value to set the tuple to
  * Return Value  : 0 if ok, -1 if not
  */
-static int set_syscfg(char *name, char *value) 
+static int set_syscfg (char *name, char *value) 
 {
-   int rc = 0, force = 0;
-   char get_val[512];
-   char *ns = NULL;
-   char *ns_delimiter;
+    char get_val[512];
+    int force = 0;
+    int rc;
+
+    if ((value == NULL) || (value[0] == 0))
+    {
+        return 0;
+    }
    
+    //Note to force write if the value does not match and is marked, and increment past the mark.
+    if (name[0] == '$')
+    {
+        if (convert)
+            force = 1;
+        name ++;
+    }
 
-   if (NULL == value || 0 == strlen(value)) {
-      return(0);
-   }
-   
-   //Note to force write if the value does not match and is marked, and increment past the mark.
-   if (name[0] == '$') {
-       if (convert)
-           force = 1;
-       name ++;
-   }
+    if (force)
+    {
+        printf ("[utopia] [init] apply_system_defaults set <$%s, %s> force=1\n", name, value);
+        rc = syscfg_set (NULL, name, value);
+        syscfg_dirty++;
+    }
+    else
+    {
+        syscfg_get (NULL, name, get_val, sizeof(get_val));
 
-   ns_delimiter = strstr(name, "::");
-   if (ns_delimiter)
-   {
-      *ns_delimiter = '\0';
-      ns = name;
-      name = ns_delimiter+2;
-   }
-   else
-   {
-      ns = NULL;
-   }
+        if (get_val[0] == 0)
+        {
+            printf ("[utopia] [init] apply_system_defaults set <$%s, %s> force=0\n", name, value);
+            rc = syscfg_set (NULL, name, value);
+            syscfg_dirty++;
+        }
+        else
+        {
+            printf ("[utopia] [init] syscfg_get <$%s, %s>\n", name, get_val);
+            rc = 0;
+        }
+    }
 
-   get_val[0] = '\0';
-   rc = syscfg_get(ns, name, get_val, sizeof(get_val));
-   if (0 != rc || 0 == strlen(get_val) || (force && strcmp(get_val, value)) ) {
-      rc = syscfg_set(ns, name, value);
-      printf("[utopia] [init] apply_system_defaults set <$%s::%s, %s> set(rc=%d) get_val %s force %d  \n", ns, name, value, rc,get_val,force);
-      syscfg_dirty++;
-   } else {
-      rc = 0;
-      printf("[utopia] [init] syscfg_get <$%s::%s> \n", name,get_val);
-   }
-   return(rc);
+    return rc;
 }
 
-static int handle_version(char* name, char* value) {
+static int handle_version (char* name, char* value)
+{
+    char get_val[128];
     int ret = 0;
     int rc;
-    char get_val[512];
-    
-    if (!strcmp(name, "$Version")) {
+
+    if (strcmp (name, "$Version") == 0)
+    {
         ret = 1;
         name++;
-        rc = syscfg_get(NULL, name, get_val, sizeof(get_val));
-        if (rc != 0 || 0 == strlen(get_val) || strcmp(value, get_val))
+
+        rc = syscfg_get (NULL, name, get_val, sizeof(get_val));
+
+        if ((rc != 0) || (get_val[0] == 0) || (strcmp (value, get_val) != 0))
+        {
             convert = 1;
+        }
     }
 
     return ret;
 }
 
-static int check_version(void) {
-   FILE *fp = fopen(default_file, "r");
-   if (NULL == fp) {
-      printf("[utopia] no system default file (%s) found\n", default_file);
-      return(-1);
+static int check_version (void)
+{
+   char buf[1024];
+   char *line; 
+   char *name;
+   char *value;
+   FILE *fp;
+
+   fp = fopen (default_file, "r");
+
+   if (fp == NULL)
+   {
+      printf ("[utopia] no system default file (%s) found\n", default_file);
+      return -1;
    }
 
    /*
@@ -279,35 +302,47 @@ static int check_version(void) {
     * If the default is for a sysevent tuple, then name must be preceeded with a @
     * If the first character in the line is # then the line will be ignored
     */
-   
-   char buf[1024];
-   char *line; 
-   char *name;
-   char *value;
-   while (NULL != fgets(buf, sizeof(buf)-1, fp)) {
-      line = trim(buf);
-      if ('#' == line[0]) {
+
+   while (fgets (buf, sizeof(buf), fp) != NULL)
+   {
+      line = trim (buf);
+
+      if (line[0] == '#')
+      {
          // this is a comment
-      } else if (0x00 == line[0]) {
+      }
+      else if (line[0] == 0)
+      {
          // this is an empty line
-      } else if ('$' == line[0]) {
-         if (0 !=  parse_line(line, &name, &value)) {
+      }
+      else if (line[0] == '$')
+      {
+         if (parse_line (line + 1, &name, &value) != 0)
+	 {
             printf("[utopia] [error] set_defaults failed to set syscfg (%s)\n", line);
-         } else { 
-            if ( handle_version(trim(name), trim(value)) ) {
+         }
+	 else
+	 { 
+            if (handle_version (trim(name), trim(value)))
+	    {
                 break;
             }
          }
-      } else if ('@' == line[0]) {
+      }
+      else if (line[0] == '@')
+      {
          // this is a sysevent line
-      } else {
+      }
+      else
+      {
          // this is a malformed line
          printf("[utopia] set_defaults found a malformed line (%s)\n", line);
       }
    }
 
-   fclose(fp); 
-   return(0);
+   fclose (fp);
+
+   return 0;
 }
 
 /*
@@ -319,10 +354,18 @@ static int check_version(void) {
  */
 static int set_syscfg_defaults (void)
 {
-   FILE *fp = fopen(default_file, "r");
-   if (NULL == fp) {
-      printf("[utopia] no system default file (%s) found\n", default_file);
-      return(-1);
+   char buf[1024];
+   char *line; 
+   char *name;
+   char *value;
+   FILE *fp;
+
+   fp = fopen (default_file, "r");
+
+   if (fp == NULL)
+   {
+      printf ("[utopia] no system default file (%s) found\n", default_file);
+      return -1;
    }
 
    /*
@@ -333,31 +376,43 @@ static int set_syscfg_defaults (void)
     * If the first character in the line is # then the line will be ignored
     */
    
-   char buf[1024];
-   char *line; 
-   char *name;
-   char *value;
-   while (NULL != fgets(buf, sizeof(buf)-1, fp)) {
-      line = trim(buf);
-      if ('#' == line[0]) {
+   while (fgets (buf, sizeof(buf), fp) != NULL)
+   {
+      line = trim (buf);
+
+      if (line[0] == '#')
+      {
          // this is a comment
-      } else if (0x00 == line[0]) {
+      }
+      else if (line[0] == 0)
+      {
          // this is an empty line
-      } else if ('$' == line[0]) {
-         if (0 !=  parse_line(line, &name, &value)) {
+      }
+      else if (line[0] == '$')
+      {
+         if (parse_line (line + 1, &name, &value) != 0)
+	 {
             printf("[utopia] [error] set_syscfg_defaults failed to set syscfg (%s)\n", line);
-         } else { 
+         }
+	 else
+	 { 
             set_syscfg(trim(name), trim(value));
          }
-      } else if ('@' == line[0]) {
+      }
+      else if (line[0] == '@')
+      {
          // this is a sysevent line
-      } else {
+      }
+      else
+      {
          // this is a malformed line
          printf("[utopia] set_syscfg_defaults found a malformed line (%s)\n", line);
       }
    }
-   fclose(fp); 
-   return(0);
+
+   fclose (fp); 
+
+   return 0;
 }
 
 /*
@@ -369,10 +424,18 @@ static int set_syscfg_defaults (void)
  */
 static int set_sysevent_defaults (void)
 {
-   FILE *fp = fopen(default_file, "r");
-   if (NULL == fp) {
-      printf("[utopia] no system default file (%s) found\n", default_file);
-      return(-1);
+   char buf[1024];
+   char *line; 
+   char *name;
+   char *value;
+   FILE *fp;
+
+   fp = fopen (default_file, "r");
+
+   if (fp == NULL)
+   {
+      printf ("[utopia] no system default file (%s) found\n", default_file);
+      return -1;
    }
 
    /*
@@ -383,22 +446,30 @@ static int set_sysevent_defaults (void)
     * If the first character in the line is # then the line will be ignored
     */
    
-   char buf[1024];
-   char *line; 
-   char *name;
-   char *value;
-   while (NULL != fgets(buf, sizeof(buf)-1, fp)) {
-      line = trim(buf);
-      if ('#' == line[0]) {
+   while (fgets (buf, sizeof(buf), fp) != NULL)
+   {
+      line = trim (buf);
+
+      if (line[0] == '#')
+      {
          // this is a comment
-      } else if (0x00 == line[0]) {
+      }
+      else if (line[0] == 0)
+      {
          // this is an empty line
-      } else if ('$' == line[0]) {
+      }
+      else if (line[0] == '$')
+      {
          // this is a syscfg line
-      } else if ('@' == line[0]) {
-         if (0 !=  parse_line(line, &name, &value)) {
+      }
+      else if (line[0] == '@')
+      {
+         if (parse_line (line + 1, &name, &value) != 0)
+	 {
             printf("[utopia] set_sysevent_defaults failed to set sysevent (%s)\n", line);
-         } else { 
+         }
+	 else
+	 {
             char *val = trim(value);
             char *flagstr;
             int flags = 0x00000000;
@@ -415,13 +486,17 @@ static int set_sysevent_defaults (void)
             } 
             set_sysevent(trim(name), val, flags);
          }
-      } else {
+      }
+      else
+      {
          // this is a malformed line
          printf("[utopia] set_sysevent_defaults found a malformed line (%s)\n", line);
       }
    }
-   fclose(fp); 
-   return(0);
+
+   fclose (fp);
+
+   return 0;
 }
 
 /*
@@ -440,8 +515,9 @@ static int set_defaults(void)
    return(0);
 }
 
-static void printhelp(char *name) {
-      printf ("Usage %s --file default_file --port syseventd_port --ip syseventd_ip --help command params\n", name);
+static void printhelp(char *name)
+{
+    printf ("Usage %s --file default_file --port syseventd_port --ip syseventd_ip --help command params\n", name);
 }
 
 /*
@@ -450,7 +526,7 @@ static void printhelp(char *name) {
  * Parameters    :
  * Return Value  : 0 if ok, -1 if not
  */
-static int parse_command_line(int argc, char **argv)
+static int parse_command_line (int argc, char **argv)
 {
    int c;
    while (1) {
