@@ -11901,8 +11901,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if defined(_COSA_BCM_ARM_) && !defined(_PLATFORM_RASPBERRYPI_) && !defined(_PLATFORM_TURRIS_)
    fprintf(filter_fp, "-A INPUT -s 172.31.255.40/32 -p tcp -m tcp --dport 9000 -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -s 172.31.255.40/32 -p udp -m udp --dport 9000 -j ACCEPT\n");
-   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 9000 -j REJECT\n");
-   fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 9000 -j REJECT\n");
+   fprintf(filter_fp, "-A INPUT -p tcp -m tcp --dport 9000 -j DROP\n");
+   fprintf(filter_fp, "-A INPUT -p udp -m udp --dport 9000 -j DROP\n");
 #endif
 
    // Allow local loopback traffic 
