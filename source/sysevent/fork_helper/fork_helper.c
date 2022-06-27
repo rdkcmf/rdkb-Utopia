@@ -424,6 +424,11 @@ static pid_t _eval(char *const prog, char *argv[], pid_t *pid)
          sigaction(SIGINT, &saveintr, NULL);
          sigaction(SIGQUIT, &savequit, NULL);
          sigprocmask(SIG_SETMASK, &savemask, NULL);
+       /* syseventd_fork_helper currently have SIGCHLD configured to SIG_IGN,
+        * On Linux system such configuration is inherited by child process (look at execve(2))
+        * and as a result it breaks wait() calls and effectively breaks system() calls (look into the NOTES in wait(2))
+        * So we need to restore default SIGCHLD handler for child process: */
+         signal(SIGCHLD, SIG_DFL);
 
         /*
          * set up the environment so binaries and libraries can also be found in packages in the /opt subsystem
