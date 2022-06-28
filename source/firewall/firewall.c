@@ -13690,7 +13690,7 @@ static void do_ipv6_sn_filter(FILE* fp) {
      FIREWALL_DEBUG("Exiting do_ipv6_sn_filter \n"); 
 }
 
-#ifdef WAN_FAILOVER_SUPPORTED
+#if defined  (WAN_FAILOVER_SUPPORTED) || defined(RDKB_EXTENDER_ENABLED)
 static int checkIfULAEnabled()
 {
     // temp check , need to replace with CurrInterface Name or if device is XLE
@@ -13715,86 +13715,92 @@ static int checkIfULAEnabled()
 
 static void applyIpv6ULARules(FILE* fp)
 {
-   char prefix[64] ;
+   #ifdef RDKB_EXTENDER_ENABLED  
+      if(strlen(current_wan_ipv6[0]) > 0)
+      {
+          FIREWALL_DEBUG("Source natting all traffic on %s interface to %s address\n" COMMA current_wan_ifname COMMA current_wan_ipv6); 
+         fprintf(fp, "-A POSTROUTING -o %s -j SNAT --to-source %s\n",current_wan_ifname,(char *)current_wan_ipv6);
+      }
+   #else
+      char prefix[64] ;
+      memset(prefix,0,sizeof(prefix));
+      int i ;
 
-   memset(prefix,0,sizeof(prefix));
-   int i ;
+      sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix_ula", prefix, sizeof(prefix));
 
-   sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix_ula", prefix, sizeof(prefix));
+      if (strlen(prefix) != 0 )
+      {
+           char *token_pref =NULL;
+           token_pref = strtok(prefix,"/");
 
-   if (strlen(prefix) != 0 )
-   {
-        char *token_pref =NULL;
-        token_pref = strtok(prefix,"/");
-
-            for(i = 0; i < mesh_wan_ipv6_num; i++)
-            {
-               if(mesh_wan_ipv6addr[i][0] != '\0' )
+               for(i = 0; i < mesh_wan_ipv6_num; i++)
                {
-                  fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,(char *)mesh_wan_ipv6addr[i],token_pref);
-                  fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,(char *)mesh_wan_ipv6addr[i]);
-               }
-            }
-
-          char cmd[100];
-          char out[100];
-          char interface_name[32] = {0};
-          char *token = NULL; 
-          char *pt;
-          char pref_rx[16];
-
-          int pref_len = 0;
-          errno_t  rc = -1;
-          memset(out,0,sizeof(out));
-          memset(pref_rx,0,sizeof(pref_rx));
-          sysevent_get(sysevent_fd, sysevent_token,"lan_prefix_v6", pref_rx, sizeof(pref_rx));
-          syscfg_get(NULL, "IPv6subPrefix", out, sizeof(out));
-          pref_len = atoi(pref_rx);
-          if(pref_len < 64)
-          {
-              if(!strncmp(out,"true",strlen(out)))
-              {
-                  memset(out,0,sizeof(out));
-                  memset(cmd,0,sizeof(cmd));
-                  memset(prefix,0,sizeof(prefix));
-
-                  syscfg_get(NULL, "IPv6_Interface", out, sizeof(out));
-                  pt = out;
-                  while((token = strtok_r(pt, ",", &pt)))
+                  if(mesh_wan_ipv6addr[i][0] != '\0' )
                   {
-                      memset(interface_name,0,sizeof(interface_name));
-
-                      strncpy(interface_name,token,sizeof(interface_name)-1);
-
-                      rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6_ula");
-
-
-                      if(rc < EOK)
-                      {
-                          ERR_CHK(rc);
-                      }
-                      memset(prefix,0,sizeof(prefix));
-
-                      sysevent_get(sysevent_fd, sysevent_token, cmd, prefix, sizeof(prefix));
-                      token_pref= NULL;
-
-                      if (prefix[0] != '\0' && strlen(prefix) != 0 )
-                      {
-                              token_pref = strtok(prefix,"/");
-                              for(i = 0; i < mesh_wan_ipv6_num; i++)
-                              {
-                                 if(mesh_wan_ipv6addr[i][0] != '\0' )
-                                 {
-                                    fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,(char *)mesh_wan_ipv6addr[i],token_pref);
-                                    fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,(char *)mesh_wan_ipv6addr[i]);
-                                 }
-                              }
-                      }
+                     fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,(char *)mesh_wan_ipv6addr[i],token_pref);
+                     fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,(char *)mesh_wan_ipv6addr[i]);
                   }
-              }
-          }
-   }
+               }
 
+             char cmd[100];
+             char out[100];
+             char interface_name[32] = {0};
+             char *token = NULL; 
+             char *pt;
+             char pref_rx[16];
+
+             int pref_len = 0;
+             errno_t  rc = -1;
+             memset(out,0,sizeof(out));
+             memset(pref_rx,0,sizeof(pref_rx));
+             sysevent_get(sysevent_fd, sysevent_token,"lan_prefix_v6", pref_rx, sizeof(pref_rx));
+             syscfg_get(NULL, "IPv6subPrefix", out, sizeof(out));
+             pref_len = atoi(pref_rx);
+             if(pref_len < 64)
+             {
+                 if(!strncmp(out,"true",strlen(out)))
+                 {
+                     memset(out,0,sizeof(out));
+                     memset(cmd,0,sizeof(cmd));
+                     memset(prefix,0,sizeof(prefix));
+
+                     syscfg_get(NULL, "IPv6_Interface", out, sizeof(out));
+                     pt = out;
+                     while((token = strtok_r(pt, ",", &pt)))
+                     {
+                         memset(interface_name,0,sizeof(interface_name));
+
+                         strncpy(interface_name,token,sizeof(interface_name)-1);
+
+                         rc = sprintf_s(cmd, sizeof(cmd), "%s%s",interface_name,"_ipaddr_v6_ula");
+
+
+                         if(rc < EOK)
+                         {
+                             ERR_CHK(rc);
+                         }
+                         memset(prefix,0,sizeof(prefix));
+
+                         sysevent_get(sysevent_fd, sysevent_token, cmd, prefix, sizeof(prefix));
+                         token_pref= NULL;
+
+                         if (prefix[0] != '\0' && strlen(prefix) != 0 )
+                         {
+                                 token_pref = strtok(prefix,"/");
+                                 for(i = 0; i < mesh_wan_ipv6_num; i++)
+                                 {
+                                    if(mesh_wan_ipv6addr[i][0] != '\0' )
+                                    {
+                                       fprintf(fp, "-A PREROUTING -i %s -d %s -j DNAT --to-destination %s1\n",current_wan_ifname,(char *)mesh_wan_ipv6addr[i],token_pref);
+                                       fprintf(fp, "-A POSTROUTING -o %s -s %s1/64 -j SNAT --to-source %s\n",current_wan_ifname,token_pref,(char *)mesh_wan_ipv6addr[i]);
+                                    }
+                                 }
+                         }
+                     }
+                 }
+             }
+      }
+      #endif
 }
 #endif 
 static void do_ipv6_nat_table(FILE* fp)
@@ -13859,7 +13865,7 @@ static void do_ipv6_nat_table(FILE* fp)
       
    fprintf(fp, "-A prerouting_redirect -p tcp -j DNAT --to-destination [%s]:21515\n",IPv6);
    fprintf(fp, "-A prerouting_redirect -p udp ! --dport 53 -j DNAT --to-destination [%s]:21515\n",IPv6);
-   #ifdef WAN_FAILOVER_SUPPORTED
+   #if defined  (WAN_FAILOVER_SUPPORTED) || defined(RDKB_EXTENDER_ENABLED)
    if (0 == checkIfULAEnabled())
    {
          applyIpv6ULARules(fp);
