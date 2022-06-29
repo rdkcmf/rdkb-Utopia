@@ -45,7 +45,7 @@ source /etc/waninfo.sh
 DHCP_CONF=/etc/dnsmasq.conf
 DHCP_STATIC_HOSTS_FILE=/etc/dhcp_static_hosts
 DHCP_OPTIONS_FILE=/var/dhcp_options
-if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ]; then
 LOCAL_DHCP_CONF=/tmp/dnsmasq.conf
 LOCAL_DHCP_STATIC_HOSTS_FILE=/tmp/dhcp_static_hosts
 LOCAL_DHCP_OPTIONS_FILE=/tmp/dhcp_options
@@ -1030,7 +1030,7 @@ fi
 	  prepare_dhcp_options_wan_dns	
    fi
    
-   if [ "x$BOX_TYPE" != "xHUB4" ] && [ "x$BOX_TYPE" != "xSR300" ] && [ "x$BOX_TYPE" != "xSE501" ] && [ "x$BOX_TYPE" != "xSR213" ] && [ "x$BOX_TYPE" != "xWNXL11BWL" ]; then
+   if [ "x$BOX_TYPE" != "xHUB4" ] && [ "x$BOX_TYPE" != "xSR300" ] && [ "x$BOX_TYPE" != "xSE501" ] && [ "x$BOX_TYPE" != "xSR213" ]; then
       nameserver=`grep "nameserver" $RESOLV_CONF | awk '{print $2}'|grep -v ":"|tr '\n' ','| sed -e 's/,$//'`
       if [ "" != "$nameserver" ]; then
          echo "option:dns-server,$nameserver" >> $DHCP_OPTIONS_FILE
@@ -1141,7 +1141,7 @@ fi
 			   echo "${PREFIX}""dhcp-option=l2sd0.4090,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
 
-        elif [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+        elif [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
             echo "interface=brlan112" >> $LOCAL_DHCP_CONF
             echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
 
@@ -1213,7 +1213,7 @@ fi
 			   echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
 		   fi
 
-       elif [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+       elif [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ]; then
            echo "interface=brlan6" >> $LOCAL_DHCP_CONF
            echo "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite" >> $LOCAL_DHCP_CONF
 
@@ -1238,7 +1238,7 @@ fi
                            echo "${PREFIX}""dhcp-option=br403,6,$WAN_DHCP_NS" >> $LOCAL_DHCP_CONF
                    fi
 
-           if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+           if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ]; then
 
                 if [ "$BOX_TYPE" = "SR300" ]; then
                     do_static_resolution
@@ -1253,7 +1253,7 @@ fi
                isItLocalHost=`cat /etc/resolv.conf | grep "127.0.0.1" | cut -d " " -f2`
                if [ "$resolv_conf_entry_cnt" == "1" ] && [ "$isItLocalHost" == "127.0.0.1" ]
                then
-                   if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+                   if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]; then
                    #If wan is down and if captive portal is enabled, set cpative portal mode
                    #Once captive portal mode is set, it will set lan IP for DNS in dnsmasq.conf
                         if [ "$CAPTIVEPORTAL_ENABLED" == "true" ]; then
