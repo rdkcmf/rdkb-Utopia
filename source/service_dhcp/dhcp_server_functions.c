@@ -1739,7 +1739,7 @@ int prepare_dhcp_conf (char *input)
         }
 #endif
 
-#if defined (_XB7_PRODUCT_REQ_)
+#if defined (_XB7_PRODUCT_REQ_) || defined(_WNXL11BWL_PRODUCT_REQ_)
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan112\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n");
 

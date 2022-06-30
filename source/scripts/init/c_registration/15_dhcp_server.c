@@ -56,7 +56,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         NULL 
                                       };
 #elif defined(CORE_NET_LIB) && \
-        ((defined(_XB6_PRODUCT_REQ_) && !defined (_XB8_PRODUCT_REQ_)) || \
+        ((defined(_XB6_PRODUCT_REQ_) && !defined (_XB8_PRODUCT_REQ_)) || (defined(_WNXL11BWL_PRODUCT_REQ_)) || \
          (defined(_CBR_PRODUCT_REQ_) && !defined(_CBR2_PRODUCT_REQ_)))
 const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "syslog-status|/usr/bin/service_dhcp",
