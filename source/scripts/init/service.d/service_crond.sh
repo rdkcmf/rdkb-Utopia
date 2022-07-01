@@ -90,7 +90,7 @@ service_start ()
       rand4=`expr "$rand4" % 60`
       echo "$rand1 * * * * execute_dir /etc/cron/cron.hourly" >> $CRONTAB_FILE
       echo "$rand4 * * * * /usr/ccsp/tad/xfinity_health_test.sh" >> $CRONTAB_FILE
-      echo "1 */6 * * *  /rdklogger/rxtx100.sh" >> $CRONTAB_FILE
+      echo "1 */1 * * *  /usr/bin/RxTx100" >> $CRONTAB_FILE
       echo "10 */6 * * *  /usr/ccsp/tad/getSsidNames.sh" >> $CRONTAB_FILE
 #rdkb-4297 Runs on the 1st minute of every 12th hour
       echo "1 */12 * * *  /usr/ccsp/pam/moca_status.sh" >> $CRONTAB_FILE
