@@ -53,7 +53,7 @@
 #define DEFAULT_FILE            "/etc/utopia/system_defaults"
 #ifdef RDKB_EXTENDER_ENABLED
 #define TMP_RESOLVE_CONF		"/tmp/lte_resolv.conf"
-#define GRE_VLAN_IFACE_NAME     "eth1"
+#define MESH_WAN_IFNAME         "dmsb.Mesh.WAN.Interface.Name"
 #define GRE_VLAN_IFACE_IP       "192.168.245.1"
 #define GRE_VLAN_IFACE_DHCP_OPT "192.168.245.2,192.168.245.254,255.255.255.0,172800"
 #endif
