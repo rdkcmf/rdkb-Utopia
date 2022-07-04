@@ -226,7 +226,7 @@ static struct in6_addr *dslite_resolve_fqdn_to_ipv6addr (const char *name, unsig
     return in6_addrs;
 }
 
-static int get_aftr (char *DSLITE_AFTR, char *dslite_mode, char *dslite_addr_type, int size_aftr)
+static int get_aftr (struct serv_dslite *sd, char *DSLITE_AFTR, char *dslite_mode, char *dslite_addr_type, int size_aftr)
 {
     int retvalue = -1;
 
@@ -234,7 +234,7 @@ static int get_aftr (char *DSLITE_AFTR, char *dslite_mode, char *dslite_addr_typ
 
     if (strcmp (dslite_mode, "1") == 0) //AFTR got from DCHP mode
     {
-        syscfg_get (NULL, "dslite_addr_fqdn_1", DSLITE_AFTR, size_aftr);
+        sysevent_get (sd->sefd, sd->setok, "dslite_dhcpv6_endpointname", DSLITE_AFTR, size_aftr);
         retvalue = 1;
     }
     else if (strcmp (dslite_mode, "2") == 0) //AFTR got from static mode
@@ -254,6 +254,32 @@ static int get_aftr (char *DSLITE_AFTR, char *dslite_mode, char *dslite_addr_typ
     }
 
     return retvalue;
+}
+
+static void wan_dhcp_stop (void)
+{
+    char pid_str[12];
+    int pid = -1;
+    FILE *fp;
+
+    if ((fp = fopen("/tmp/udhcpc.erouter0.pid", "rb")) != NULL)
+    {
+        if (fgets(pid_str, sizeof(pid_str), fp) != NULL && atoi(pid_str) > 0)
+        {
+            pid = atoi(pid_str);
+        }
+        fclose(fp);
+    }
+
+    if (pid > 0)
+    {
+        kill(pid, SIGUSR2); // triger DHCP release
+        sleep(1);
+        kill(pid, SIGTERM); // terminate DHCP client
+    }
+
+    unlink("/tmp/udhcpc.erouter0.pid");
+    unlink("/tmp/udhcp.log");
 }
 
 static void restart_zebra (struct serv_dslite *sd)
@@ -311,7 +337,6 @@ static int dslite_start (struct serv_dslite *sd)
     char rule[256];
     char rule2[256];
     char return_buffer[256];
-    FILE *fptmp = NULL;
     char dslite_mode[16], dslite_addr_type[16];
     size_t len;
     
@@ -343,7 +368,7 @@ static int dslite_start (struct serv_dslite *sd)
     }
 
     /* get the WAN side IPv6 global address */
-    sysevent_get (sd->sefd, sd->setok, "tr_" ER_NETDEVNAME "_dhcpv6_client_v6addr", gw_ipv6, sizeof(gw_ipv6));
+    sysevent_get (sd->sefd, sd->setok, "wan6_ipaddr", gw_ipv6, sizeof(gw_ipv6));
     fprintf (fp_dslt_dbg, "%s: The GW IPv6 address is %s\n", __FUNCTION__, gw_ipv6);
 
     /*
@@ -371,7 +396,7 @@ static int dslite_start (struct serv_dslite *sd)
     syscfg_get (NULL, "dslite_mode_1", dslite_mode, sizeof(dslite_mode));
     syscfg_get (NULL, "dslite_addr_type_1", dslite_addr_type, sizeof(dslite_addr_type));
 
-    dhcp_mode = get_aftr (DSLITE_AFTR, dslite_mode, dslite_addr_type, sizeof(DSLITE_AFTR));
+    dhcp_mode = get_aftr (sd, DSLITE_AFTR, dslite_mode, dslite_addr_type, sizeof(DSLITE_AFTR));
 
     if ((strlen (DSLITE_AFTR) == 0) || (strcmp (DSLITE_AFTR, "none") == 0))
     {
@@ -382,25 +407,17 @@ static int dslite_start (struct serv_dslite *sd)
     }
     fprintf (fp_dslt_dbg, "%s: AFTR address is %s\n", __FUNCTION__, DSLITE_AFTR);
 
-    /* Filter and store the WAN public IPv6 DNS server to a separate file */
-    vsystem ("cat /etc/resolv.conf | grep nameserver | grep : | grep -v \"nameserver ::1\" | awk '/nameserver/{print $2}' > /tmp/ipv6_dns_server.conf");
-    fptmp = fopen ("/tmp/ipv6_dns_server.conf", "r");
-    if (fptmp == NULL)
+    sysevent_get (sd->sefd, sd->setok, "ipv6_nameserver", buf, sizeof(buf));
+    if (buf[0] == 0)
     {
         sysevent_set (sd->sefd, sd->setok, "dslite_service-status", "error", 0);
-        fprintf (fp_dslt_dbg, "%s: IPv6 DNS server isn't present !\n", __FUNCTION__);
+        fprintf (fp_dslt_dbg, "%s: ipv6_nameserver is empty !\n", __FUNCTION__);
         SEM_POST;
         return 1;
     }
 
-    if (fgets (buf, sizeof(buf), fptmp) != NULL)
-    {
-        len = strlen (buf);
-        if ((len > 0) && (buf[len - 1] == '\n'))
-            buf[len - 1] = 0;
-    }
-
-    fclose (fptmp);
+    // ipv6_nameserver sysevent can have multiple namesevers. use the first one.
+    strtok(buf, " ");
 
     resolved_ipv6[0] = 0;
 
@@ -458,9 +475,7 @@ static int dslite_start (struct serv_dslite *sd)
 
     //Stop WAN IPv4 service
     route_deconfig (sd);
-
-    vsystem ("service_wan dhcp-release" "; "
-             "service_wan dhcp-stop");
+    wan_dhcp_stop();
 
     sysevent_set (sd->sefd, sd->setok, "current_wan_ipaddr", "0.0.0.0", 0);
 
@@ -500,9 +515,7 @@ static int dslite_start (struct serv_dslite *sd)
     // If GW is the IPv6 only mode, we need to start the LAN to WAN IPv4 function
     if (sd->rtmod == WAN_RTMOD_IPV6)
     {
-        vsystem ("echo 1 > /proc/sys/net/ipv4/ip_forward" "; "                  // Enable the IPv4 forwarding
-                 "/etc/utopia/service.d/service_igd.sh lan-status" "; "         // Start Upnp & IGMP proxy
-                 "/etc/utopia/service.d/service_mcastproxy.sh lan-status");
+        sysctl_iface_set ("/proc/sys/net/ipv4/ip_forward", NULL, "1");
     }
     else
     {
@@ -650,9 +663,7 @@ static int dslite_stop (struct serv_dslite *sd)
     //if GW is the IPv6 only mode, we need to shutdown the LAN to WAN IPv4 function
     if (sd->rtmod == WAN_RTMOD_IPV6)
     {
-        vsystem ("echo 0 > /proc/sys/net/ipv4/ip_forward" "; "                  //Disable the IPv4 forwarding
-                 "/etc/utopia/service.d/service_igd.sh igd-stop" "; "           //Stop Upnp & IGMP proxy
-                 "/etc/utopia/service.d/service_mcastproxy.sh mcastproxy-stop");
+        sysctl_iface_set ("/proc/sys/net/ipv4/ip_forward", NULL, "0");
     }
     else
     {
