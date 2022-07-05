@@ -142,7 +142,7 @@ int send_msg_to_fork_helper(int fd, const void *buf, size_t count, int *error)
             *error = EWOULDBLOCK;
             SE_INC_LOG(ERROR,
                  int id = thread_get_id(worker_data_key);
-                 printf("Thread %d Write to fork helper process incomplete  %d != %d\n", id, rc, count);
+                 printf("Thread %d Write to fork helper process incomplete  %d != %ld\n", id, rc, (long int)count);
             )
             return(-1);
          } else {
@@ -2385,7 +2385,7 @@ static int handle_messagedata_from_client(const int fd)
     * The multi threaded nature of syseventd requires us to ensure that the fd hasn't
     * been reused already by the main thread
     */ 
-   if (TOKEN_INVALID == (int)CLI_MGR_fd2id) {
+   if (TOKEN_INVALID == (long int)CLI_MGR_fd2id) {
       int id = thread_get_id(worker_data_key);
       SE_INC_LOG(ERROR,
         printf("Thread %d: fd %d represents a stale client. Handled correctly\n", id, fd);
@@ -2554,7 +2554,7 @@ static int handle_message_from_client(const int fd)
     * The multi threaded nature of syseventd requires us to ensure that the fd hasn't
     * been reused already by the main thread
     */ 
-   if (TOKEN_INVALID == (int)CLI_MGR_fd2id) {
+   if (TOKEN_INVALID == (long int)CLI_MGR_fd2id) {
       int id = thread_get_id(worker_data_key);
       SE_INC_LOG(ERROR,
         printf("Thread %d: fd %d represents a stale client. Handled correctly\n", id, fd);

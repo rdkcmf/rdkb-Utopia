@@ -2727,7 +2727,7 @@ int sysevent_close (int fd, token_t token)
                                                                 token)) ) {
       return(ERR_MSG_PREPARE);
    } 
-   send_message_body->reserved = (void *)htonl(0);
+   send_message_body->reserved = (void *)((long int) htonl(0));
 
    // send the message, but we dont really care about the reply
    SE_msg_send(fd, send_msg_buffer);
@@ -2762,7 +2762,7 @@ int sysevent_ping (int fd, token_t token)
                                                                 token)) ) {
       return(ERR_MSG_PREPARE);
    } 
-   send_message_body->reserved = (void *)htonl(0);
+   send_message_body->reserved = (void *)((long int) htonl(0));
 
    // send the message, but we dont really care about the reply
    SE_msg_send(fd, send_msg_buffer);

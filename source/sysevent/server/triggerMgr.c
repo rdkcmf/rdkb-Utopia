@@ -948,7 +948,7 @@ static int execute_trigger_actions_data(const trigger_t *tr, const char* const n
                   char buf_t[256] = {0};
                   if (0 == fileread)
                   {
-                      snprintf(buf_t,sizeof(buf_t),"echo fname %s: sizeofmsgbuf %d msgbufp %p valuep %p before prepare >> /tmp/sys_d.txt",__FUNCTION__,sizeof(send_msg_buffer),send_msg_buffer,value);
+                      snprintf(buf_t,sizeof(buf_t),"echo fname %s: sizeofmsgbuf %ld msgbufp %p valuep %p before prepare >> /tmp/sys_d.txt",__FUNCTION__,(long int)sizeof(send_msg_buffer),send_msg_buffer,value);
                       system(buf_t);
                   }
                   if (0 == prepare_action_type_message_msg_data(send_msg_buffer,bin_size, tr->trigger_id, action, name, value, value_length, source, tid)) {

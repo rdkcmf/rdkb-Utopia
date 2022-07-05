@@ -1617,8 +1617,8 @@ INT32 IGD_pii_get_lan_reserved_addr_list(IN INT32 LanDeviceIndex, OUT CHAR *rese
                 first = 0;
             }
             PAL_LOG("igd_platform", "debug", "%s: index [%d], name [%s], host_ip [%d], mac [%s]", __FUNCTION__, i, dhcp_static_hosts[i].client_name, dhcp_static_hosts[i].host_ip, dhcp_static_hosts[i].macaddr);
-            snprintf(ipaddr, sizeof(ipaddr), "%d.%d.%d.%d", 
-                     octet1, octet2, octet3, (int)dhcp_static_hosts[i].host_ip);
+            snprintf(ipaddr, sizeof(ipaddr), "%d.%d.%d.%ld", 
+                     octet1, octet2, octet3, (long int)dhcp_static_hosts[i].host_ip);
             strncat(reserved_list, ipaddr, max_list_sz);
         }
     }

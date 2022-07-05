@@ -306,20 +306,20 @@ int main(int argc, char** argv)
 
          if (from_addr.sll_pkttype == PACKET_OUTGOING)
          {
-            printf("Discard %d bytes outgoing message from interface %d\n\n",
-                   recv_size, from_addr.sll_ifindex);
+            printf("Discard %ld bytes outgoing message from interface %d\n\n",
+                   (long int)recv_size, from_addr.sll_ifindex);
             continue;
          }
 
          if (!from_intf)
          {
-            printf("Discard %d bytes message from unknown interface %d\n\n",
-                   recv_size, from_addr.sll_ifindex);
+            printf("Discard %ld bytes message from unknown interface %d\n\n",
+                   (long int)recv_size, from_addr.sll_ifindex);
             continue;
          }
 
-         printf("Receive %d bytes from interface=%s %d\n",
-                recv_size, from_intf->ifname, from_intf->iftype);
+         printf("Receive %ld bytes from interface=%s %d\n",
+                (long int)recv_size, from_intf->ifname, from_intf->iftype);
 
          recv_dhcp_msg = (struct dhcp_msg*) parse_and_validate_ethernet_packet(
                                recv_buf, recv_size,
