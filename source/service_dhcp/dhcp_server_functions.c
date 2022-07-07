@@ -54,8 +54,8 @@
 #ifdef RDKB_EXTENDER_ENABLED
 #define TMP_RESOLVE_CONF		"/tmp/lte_resolv.conf"
 #define MESH_WAN_IFNAME         "dmsb.Mesh.WAN.Interface.Name"
-#define GRE_VLAN_IFACE_IP       "192.168.245.1"
-#define GRE_VLAN_IFACE_DHCP_OPT "192.168.245.2,192.168.245.254,255.255.255.0,172800"
+#define GRE_VLAN_IFACE_IP       "192.168.246.1"
+#define GRE_VLAN_IFACE_DHCP_OPT "192.168.246.2,192.168.246.254,255.255.255.0,172800"
 #endif
 //#define LAN_IF_NAME     "brlan0"
 #define XHS_IF_NAME     "brlan1"
