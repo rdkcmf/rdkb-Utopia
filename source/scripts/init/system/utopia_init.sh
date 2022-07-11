@@ -697,27 +697,6 @@ if [ "$FACTORY_RESET_REASON" = "true" ] && [ "$BOX_TYPE" = "XB3" ];then
         rpcclient $ATOM_RPC_IP "rm -f /nvram/webconfig_db.bin"
         rpcclient $ATOM_RPC_IP "rm -f /nvram/Blocklist_XB3.txt"
 fi
-#operating rbus based on new naming nomenclature
-if [ -e /nvram/rbus_support_on_pending ]; then
-    touch /nvram/rbus_support
-    rm /nvram/rbus_support_on_pending
-elif [ -e /nvram/rbus_support_off_pending ]; then
-    if [ -e /nvram/rbus_support ]; then
-        rm /nvram/rbus_support
-    fi
-    rm /nvram/rbus_support_off_pending
-fi
-
-#removing older nomenclature files
-if [ -e /nvram/rbus_on_pending ]; then
-    rm /nvram/rbus_on_pending
-fi
-if [ -e /nvram/rbus_off_pending ]; then
-    rm /nvram/rbus_off_pending
-fi
-if [ -e /nvram/rbus ]; then
-    rm /nvram/rbus
-fi
 
 #set ntp status as unsynchronized on bootup
 syscfg set ntp_status 2
