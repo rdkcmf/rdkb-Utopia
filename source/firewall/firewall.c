@@ -14724,11 +14724,11 @@ v6GPFirewallRuleNext:
       }
       else
       {
-         sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", lan_prefix, sizeof(lan_prefix));
+         sysevent_get(sysevent_fd, sysevent_token, "lan_prefix", lan_prefix, sizeof(lan_prefix));
       }
 
       #else
-            sysevent_get(sysevent_fd, sysevent_token, "ipv6_prefix", lan_prefix, sizeof(lan_prefix));
+            sysevent_get(sysevent_fd, sysevent_token, "lan_prefix", lan_prefix, sizeof(lan_prefix));
       #endif
 		for(cnt = 0;cnt < inf_num;cnt++)
 		{
