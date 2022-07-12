@@ -427,7 +427,6 @@ int main(int argc, char *argv[])
 {
 	char l_cL3Inst[8] = {0}, l_cSysevent_Cmd[255] = {0};
 	int l_iL3Inst;
-
 	if (argc < 2)	
 	{
 		fprintf(stderr, "Insufficient number of args return\n");
@@ -475,18 +474,42 @@ int main(int argc, char *argv[])
 	{
 		lan_restart();
 	}
-	else if ((!strncmp(argv[1], "ipv4_4-status", 17)) ||
-             (!strncmp(argv[1], "ipv4_5-status", 17)))
-	{
-		if (argc > 2) 
-        {			
-            sscanf(argv[1], "ipv4_%d-status", &l_iL3Inst);
-        	ipv4_status(l_iL3Inst, argv[2]);			
-        }
-        else
+        else if ((!strncmp(argv[1], "ipv4_4-status", 13)) ||
+             (!strncmp(argv[1], "ipv4_5-status", 13)))
         {
-            fprintf(stderr, "Insufficient number of arguments for %s\n", argv[1]);
-        }
+                if (argc > 2)
+                {
+                        char buf[32] = {0};
+                        char l_cL2Inst[8] = {0};
+                        int l_iL2Inst;
+
+                        sscanf(argv[1], "ipv4_%d-status", &l_iL3Inst);
+                        if (4 == l_iL3Inst)
+                        {
+                                sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_handler_async",
+                                             l_cL3Inst, sizeof(l_cL3Inst));
+                                if (l_cL3Inst[0] != '\0')
+                                {
+                                        ipv4_status(l_iL3Inst, argv[2]);
+                                }
+                        }
+
+                        snprintf(buf, sizeof(buf), "ipv4_%d-lower", l_iL3Inst);
+                        sysevent_get(g_iSyseventfd, g_tSysevent_token, buf,
+                                     l_cL2Inst, sizeof(l_cL2Inst));
+                        l_iL2Inst = atoi(l_cL2Inst);
+                        snprintf(buf, sizeof(buf), "dhcp_server_%d-ipv4async", l_iL2Inst);
+                        sysevent_get(g_iSyseventfd, g_tSysevent_token,
+                                     buf, l_cL2Inst, sizeof(l_cL2Inst));
+                        if (l_cL2Inst[0] != '\0')
+                        {
+                                lan_status_change("lan_not_restart");
+                        }
+                }
+                else
+                {
+                        fprintf(stderr, "Insufficient number of arguments for %s\n", argv[1]);
+                }
 	}
     else if (!strncmp(argv[1], "ipv4-resync", 11))
     {
