@@ -239,7 +239,7 @@ void ulog_sys_Init(int prior, unsigned int enable)
     errno_t  rc = -1;
 
     //ulog_GetGlobalPrior();
-    ulog_GetPrior();
+    //ulog_GetPrior();
     ulog_SetPrior(prior);
     ulog_SetEnable(enable);
 
@@ -311,6 +311,7 @@ int ulog_GetProcId(size_t size, char *name, pid_t *pid)
     return 0;
 }
 
+#if 0
 int ulog_GetGlobalPrior(void)
 {
      int             mask;                                                           // current priority mask
@@ -340,7 +341,7 @@ void ulog_SetGlobalPrior(int prior)
     setlogmask(LOG_UPTO(prior));
     sys_Log_Info.gPrior = prior;
 }
-
+#endif
 
 int ulog_GetPrior(void)
 {

@@ -43,19 +43,19 @@
 #ifndef _ULOG_H_
 #define _ULOG_H_
 
-#include <stdio.h>                                                              // FILE
-#include <sys/types.h>                                                  // pid_t
-#include <sys/syslog.h> 
+#include <stdio.h>              // FILE
+#include <sys/types.h>          // pid_t
+#include <sys/syslog.h>
 
 #define ULOG_STR_SIZE  64
 
 typedef struct _sys_log_info{
     char         name[ULOG_STR_SIZE]; // process name
-    pid_t        pid;            // process ID
-    int          gPrior;          // global log priority
-    int          prior;          // log priority
-    unsigned int enable;         // logging enabled 
-    FILE*        stream;         // stream of log file
+    pid_t        pid;                 // process ID
+    int          gPrior;              // global log priority
+    int          prior;               // log priority
+    unsigned int enable;              // logging enabled 
+    FILE*        stream;              // stream of log file
 }_sys_Log_Info;
 
 
@@ -68,17 +68,6 @@ typedef struct _sys_log_info{
 #define ulog_LOG_Info(format, ...)    ulog_sys(LOG_INFO, __FILE__, __LINE__, format, ##__VA_ARGS__)
 #define ulog_LOG_Dbg(format, ...)     ulog_sys(LOG_DEBUG, __FILE__, __LINE__, format, ##__VA_ARGS__)
 
-
-#define ulog_log_Emerg    ulog_LOG_Emerg
-#define ulog_log_Alert    ulog_LOG_Alert
-#define ulog_log_Crit     ulog_LOG_Crit
-#define ulog_log_Err      ulog_LOG_Err
-#define ulog_log_Warn     ulog_LOG_Warn
-#define ulog_log_Note     ulog_LOG_Note
-#define ulog_log_Info     ulog_LOG_Info
-#define ulog_log_Dbg      ulog_LOG_Dbg
-
-void ulog_log_Init(int, unsigned int);
 int ulog_GetGlobalPrior(void);
 void ulog_SetGlobalPrior(int prior);
 int ulog_GetPrior(void);
