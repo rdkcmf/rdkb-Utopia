@@ -1240,7 +1240,7 @@ fi
 
            if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ]; then
 
-                if [ "$BOX_TYPE" = "SR300" ]; then
+                if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]; then
                     do_static_resolution
                 fi
                #SKYH4-952: Sky selfheal support.
@@ -1249,7 +1249,8 @@ fi
                #So instead of DNS refused, all the DNS queires resolved and returned this static IP.
                #Define static IPv4 and IPv6 address to resolve IPv4 and IPv6 hosts.
                #Also check /etc/resolv.conf contains either 127.0.0.1 or empty, then we add static ip configuration.
-               resolv_conf_entry_cnt=`cat /etc/resolv.conf  | wc -l`
+               # Also ignore any options entry for the check.
+               resolv_conf_entry_cnt=`cat /etc/resolv.conf  | grep -v "options" | wc -l`
                isItLocalHost=`cat /etc/resolv.conf | grep "127.0.0.1" | cut -d " " -f2`
                if [ "$resolv_conf_entry_cnt" == "1" ] && [ "$isItLocalHost" == "127.0.0.1" ]
                then
@@ -1279,7 +1280,7 @@ fi
         echo "address=/#/$addr" >> $LOCAL_DHCP_CONF
 
         # Redirection IPv6
-        if [ "$BOX_TYPE" = "SR300" ]
+        if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]
         then
             ip6addr=`ifconfig brlan0 | grep Global | cut -d/ -f1 | awk '{print $3}'`
             echo "address=/#/$ip6addr" >> $LOCAL_DHCP_CONF
