@@ -212,6 +212,18 @@ create_tunnel () {
     isgretap0Present=`ip link show | grep gretap0`
     echo_t  "isgretap0Present:$isgretap0Present"
 
+    LOCAL_IP=''
+    local flags=''
+    GRETYPE=gretap
+    if [ "$1" != "${1#*[0-9].[0-9]}" ]; then
+        GRETYPE=gretap
+        LOCAL_IP=`ip a l $WAN_IF | awk '/inet/ {print $2}' | cut -d/ -f1 >&1 | sed '1q;d'`
+        flags='nopmtudisc'
+    elif [ "$1" != "${1#*:[0-9a-fA-F]}" ]; then
+        GRETYPE=ip6gretap
+        LOCAL_IP=`ip a l $WAN_IF | awk '/inet6/ {print $2}' | cut -d/ -f1 >&1 | sed '1q;d'`
+    fi
+
     if [ "$isgretap0Present" != "" ]; then
         echo "gretap0 is already present rename it before creating"
         ip link set dev $GRE_IFNAME name $GRE_IFNAME_DUMMY
@@ -219,10 +231,10 @@ create_tunnel () {
 
     if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
     	#Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-    	ip link add $2 type gretap remote $1 dev $WAN_IF $extra nopmtudisc
-    	ip link set $2 txqueuelen 1000 mtu 1500
+        ip link add $2 type $GRETYPE remote $1 local $LOCAL_IP dev $WAN_IF $extra $flags
+        ip link set $2 txqueuelen 1000 mtu 1500
     else
-    	ip link add $2 type gretap remote $1 dev $WAN_IF $extra
+        ip link add $2 type $GRETYPE remote $1 local $LOCAL_IP dev $WAN_IF $extra
     fi
     ifconfig $2 up
     if [ ! -f /tmp/.gre_flowmanager_enable ]
