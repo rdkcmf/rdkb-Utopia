@@ -4075,6 +4075,13 @@ static int do_ephemeral_port_forwarding(FILE *nat_fp, FILE *filter_fp)
    int count = 0,
    	   index = 1;
    char buf[128] = {0};
+   char upnpEnabled[16] = {0};
+   syscfg_get(NULL, "upnp_igd_enabled", upnpEnabled, sizeof(upnpEnabled));
+   if (!atoi(upnpEnabled))
+   {
+        FIREWALL_DEBUG("Upnp is Disabled");
+        return(0);
+   }
 
    sysevent_get(sysevent_fd, sysevent_token, "portmap_dyn_count", buf, sizeof(buf));
    if (*buf) {
@@ -4317,7 +4324,8 @@ static int do_port_forwarding(FILE *nat_fp, FILE *filter_fp)
    {
         FIREWALL_DEBUG("do_port_forwarding : Device is in bridge mode returning\n");  
         return(0);    
-   }
+   
+   }  
    
    WAN_FAILOVER_SUPPORT_CHECK
    do_single_port_forwarding(nat_fp, filter_fp, AF_INET, NULL);
