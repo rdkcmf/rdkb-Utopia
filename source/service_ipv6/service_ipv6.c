@@ -1339,14 +1339,13 @@ static int lan_addr6_set(struct serv_ipv6 *si6)
         }
 		
 #if defined (INTEL_PUMA7)
-        snprintf(cmd, CMD_BUF_SIZE, "ip -6 addr change %s/%d dev %s valid_lft %s preferred_lft %s",
+        v_secure_system("ip -6 addr change %s/%d dev %s valid_lft %s preferred_lft %s",
                 ipv6_addr, prefix_len, iface_name, iapd_vldtm, iapd_preftm);
 #else
-        snprintf(cmd, CMD_BUF_SIZE, "ip -6 addr add %s/%d dev %s valid_lft %s preferred_lft %s",
+        v_secure_system("ip -6 addr add %s/%d dev %s valid_lft %s preferred_lft %s",
                 ipv6_addr, prefix_len, iface_name, iapd_vldtm, iapd_preftm);
 #endif
 
-        vsystem(cmd);
         bzero(ipv6_addr, sizeof(ipv6_addr));
 #else
         if (v_secure_system("ip -6 addr add %s/%d dev %s valid_lft forever preferred_lft forever", 

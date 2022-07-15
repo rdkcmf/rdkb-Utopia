@@ -39,7 +39,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <fcntl.h>
+#include <sys/stat.h>
+#include "secure_wrapper.h"
 const char* SERVICE_NAME            = "multinet";
 
 #ifdef MULTILAN_FEATURE
@@ -349,16 +351,16 @@ void srv_register(void) {
   #endif
 #ifdef MULTILAN_FEATURE
 #if !defined(_COSA_BCM_ARM_) || defined(INTEL_PUMA7) || !defined(_CBR_PRODUCT_REQ_)
-   system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
+   v_secure_system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
 #endif
 #else
 #if !defined(_COSA_BCM_ARM_) || !defined(INTEL_PUMA7) || !defined(_CBR_PRODUCT_REQ_) || defined(_PLATFORM_RASPBERRYPI_)
-   system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
+   v_secure_system("/etc/utopia/service.d/service_multinet/handle_sw.sh initialize");
 #endif
 #endif
 #ifdef MULTILAN_FEATURE
 #if defined (INTEL_PUMA7)
-   system("touch /var/multinet_exec_enabled");
+   creat("/var/multinet_exec_enabled",S_IRUSR |S_IWUSR |S_IRGRP |S_IROTH);
 #endif
 #endif
 }

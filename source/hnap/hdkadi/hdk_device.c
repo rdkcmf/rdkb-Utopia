@@ -2690,7 +2690,6 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
 #ifndef HNAP_DEBUG
                 if (!(ipAddress.a || ipAddress.b || ipAddress.c || ipAddress.d))
                 {
-                    char pszCmd[64] = {'\0'};
                     char pszLine[UTOPIA_BUF_SIZE] = {'\0'};
                     HDK_XML_IPAddress wanIP;
                     FILE* fp;
@@ -2701,13 +2700,8 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
 
                     if (wanIP.a || wanIP.b || wanIP.c || wanIP.d)
                     {
-                        safec_rc = sprintf_s(pszCmd, sizeof(pszCmd),"/sbin/route -n | grep %u.%u.%u 2> /dev/null", wanIP.a, wanIP.b, wanIP.c);
-                        if(safec_rc < EOK)
-                        {
-                           ERR_CHK(safec_rc);
-                        }
                         /* Spawn process to get the netmask */
-                        fp = popen(pszCmd, "r");
+                        fp = v_secure_popen("r","/sbin/route -n | grep %u.%u.%u 2> /dev/null", wanIP.a, wanIP.b, wanIP.c);
                         if (fp != 0)
                         {
                             /* Read the output a line at a time, parsing the dest, gateway, and subnet ips */
@@ -2728,7 +2722,7 @@ static HDK_XML_Member* s_HNAP12_SRV_Device_ADIGet(HDK_MOD_MethodContext* pMethod
                                     }
                                 }
                             }
-                            pclose(fp);
+                            v_secure_pclose(fp);
                         }
                     }
                 }

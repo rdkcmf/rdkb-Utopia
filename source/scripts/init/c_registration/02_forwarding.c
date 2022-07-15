@@ -35,12 +35,13 @@
 
 #include <stdio.h>
 #include "srvmgr.h"
+#include "secure_wrapper.h"
 #ifdef RDKB_EXTENDER_ENABLED
 #include <string.h>
 #include <stdlib.h>
 #endif
-const char* SERVICE_NAME            = "forwarding";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_forwarding.sh";
+#define SERVICE_NAME "forwarding"
+#define SERVICE_DEFAULT_HANDLER "/etc/utopia/service.d/service_forwarding.sh"
 const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
 
 void srv_register(void) {
@@ -49,10 +50,7 @@ void srv_register(void) {
 #ifdef RDKB_EXTENDER_ENABLED
 void stop_service()
 {
-    char buf[512];
-    memset(buf,0,sizeof(buf));
-    snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
-    system(buf);
+    v_secure_system(SERVICE_DEFAULT_HANDLER " " SERVICE_NAME "-stop");
 }
 #endif
 void srv_unregister(void) {

@@ -35,12 +35,13 @@
 
 #include <stdio.h>
 #include "srvmgr.h"
+#include "secure_wrapper.h"
 #ifdef RDKB_EXTENDER_ENABLED
 #include <string.h>
 #include <stdlib.h>
 #endif
-const char* SERVICE_NAME            = "ccsphs";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ccsphs.sh";
+#define SERVICE_NAME "ccsphs"
+#define SERVICE_DEFAULT_HANDLER "/etc/utopia/service.d/service_ccsphs.sh"
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "lan-status|/etc/utopia/service.d/service_ccsphs.sh",
     "multinet_2-status|/etc/utopia/service.d/service_ccsphs.sh",
@@ -55,10 +56,7 @@ void srv_register(void) {
 #ifdef RDKB_EXTENDER_ENABLED
 void stop_service()
 {
-    char buf[512];
-    memset(buf,0,sizeof(buf));
-    snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
-    system(buf);
+    v_secure_system(SERVICE_DEFAULT_HANDLER " " SERVICE_NAME "-stop");
 }
 #endif
 

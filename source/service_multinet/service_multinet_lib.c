@@ -52,6 +52,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "errno.h"
+#include "secure_wrapper.h"
 //#include "nethelper.h"
 #define LOCAL_BRLAN1UP_FILE "/tmp/brlan1_up"
 #if defined(MOCA_HOME_ISOLATION)
@@ -86,7 +87,7 @@
 #define CLEAR_CPE_TABLE_COMMAND "ncpu_exec -e service_bridge.sh clear_cpe_table"
 #elif defined (_COSA_INTEL_XB3_ARM_)
 /* Command for clearing CPE table on Puma 6 */
-#define CLEAR_CPE_TABLE_COMMAND "echo \"LearnFrom=CPE_DYNAMIC\" > /proc/net/dbrctl/delalt"
+#define CLEAR_CPE_TABLE_COMMAND "echo 'LearnFrom=CPE_DYNAMIC' > /proc/net/dbrctl/delalt"
 #endif
 
 #if defined MULTILAN_FEATURE && defined(MESH_ETH_BHAUL)
@@ -190,10 +191,8 @@ int getIfName(char *ifName, char *port)
 #ifndef MULTILAN_FEATURE
 static int nethelper_bridgeCreate(char* brname) {
     
-    char cmdBuff[80];
-    snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s; ifconfig %s up", brname, brname);
-    MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff)
-    system(cmdBuff);
+    MNET_DEBUG("SYSTEM CALL: brctl addbr %s; ifconfig %s up" COMMA brname COMMA brname); 
+    v_secure_system("brctl addbr %s; ifconfig %s up", brname, brname);
     return 0;
 }
 #endif
@@ -217,9 +216,8 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
     int got_base_mac = 0;
 
     /* Create bridge */
-    snprintf(cmdBuff, sizeof(cmdBuff), "brctl addbr %s", brname);
-    MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff);
-    system(cmdBuff);
+    MNET_DEBUG("SYSTEM CALL: brctl addbr %s" COMMA brname);
+    v_secure_system("brctl addbr %s", brname);
 
     if (!syscfg_get(NULL, BASE_MAC_BRIDGE_OFFSET_SYSCFG_KEY, cmdBuff, sizeof(cmdBuff)))
     {
@@ -243,10 +241,10 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
                 /* Set as a local mac address using combination of BIT_MASK and MAC_ADDRESS_LOCAL_MASK */
                 mac[0] = (mac[0] & ~BIT_MASK) | (id << MAC_ADDRESS_LOCAL_MASK) | MAC_ADDRESS_LOCAL_MASK;
                 /* Set the newly-generated mac address to the bridge */
-                snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x",
+                MNET_DEBUG("SYSTEM CALL: ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x" COMMA
+                    brname COMMA mac[0] COMMA mac[1] COMMA mac[2] COMMA mac[3] COMMA mac[4] COMMA mac[5]);
+                v_secure_system("ifconfig %s hw ether %02x:%02x:%02x:%02x:%02x:%02x",
                     brname, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-                MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff);
-                system(cmdBuff);
             }
         }
         else
@@ -262,25 +260,19 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
     /* Workaround, Linux will not generate a link-local address if no switch ports connected */
     if (got_base_mac)
     {
-        snprintf(cmdBuff, sizeof(cmdBuff), "ip link add tmp%d type dummy", id);
-        system(cmdBuff);
-        snprintf(cmdBuff, sizeof(cmdBuff), "echo 1 > /proc/sys/net/ipv6/conf/tmp%d/disable_ipv6", id);
-        system(cmdBuff);
-        snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig tmp%d up", id);
-        system(cmdBuff);
-        snprintf(cmdBuff, sizeof(cmdBuff), "brctl addif %s tmp%d", brname, id);
-        system(cmdBuff);
+        v_secure_system("ip link add tmp%d type dummy", id);
+        v_secure_system("echo 1 > /proc/sys/net/ipv6/conf/tmp%d/disable_ipv6", id);
+        v_secure_system("ifconfig tmp%d up", id);
+        v_secure_system("brctl addif %s tmp%d", brname, id);
     }
 
     /* Bring bridge up */
-    snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s up", brname);
-    MNET_DEBUG("SYSTEM CALL: \"%s\"\n" COMMA cmdBuff);
-    system(cmdBuff);
+    MNET_DEBUG("SYSTEM CALL: ifconfig %s up" COMMA brname);
+    v_secure_system("ifconfig %s up", brname);
 
     if (got_base_mac)
     {
-        snprintf(cmdBuff, sizeof(cmdBuff), "ip link del tmp%d", id);
-        system(cmdBuff);
+        v_secure_system("ip link del tmp%d", id);
     }
 
     return result;
@@ -288,30 +280,26 @@ static int nethelper_bridgeCreateUniqueMac(char* brname, int id) {
 #endif
 static int nethelper_bridgeDestroy(char* brname) {
     
-    char cmdBuff[80];
-    snprintf(cmdBuff, sizeof(cmdBuff), "ifconfig %s down; brctl delbr %s", brname, brname);
-    system(cmdBuff);
+    v_secure_system("ifconfig %s down; brctl delbr %s", brname, brname);
     return 0;
 }
 #if defined(MOCA_HOME_ISOLATION)
 void ConfigureMoCABridge(L2Net l2net)
 {
-    char cmdBuff[512];
-    snprintf(cmdBuff, sizeof(cmdBuff), "ip link set %s allmulticast on; ifconfig %s %s;ip link set %s up",l2net.name, l2net.name, MOCA_BRIDGE_IP,l2net.name);
-    system(cmdBuff);
-    system("echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts");
-    system("sysctl -w net.ipv4.conf.all.arp_announce=3");
-    system("ip rule add from all iif brlan10 lookup all_lans");
+    v_secure_system("ip link set %s allmulticast on; ifconfig %s "MOCA_BRIDGE_IP ";ip link set %s up",l2net.name, l2net.name,l2net.name);
+    v_secure_system("echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts");
+    v_secure_system("sysctl -w net.ipv4.conf.all.arp_announce=3");
+    v_secure_system("ip rule add from all iif brlan10 lookup all_lans");
 
 #if defined(MULTILAN_FEATURE)
-    system("echo 0 > /proc/sys/net/ipv4/conf/brlan10/rp_filter");
+    v_secure_system("echo 0 > /proc/sys/net/ipv4/conf/brlan10/rp_filter");
 #if defined(INTEL_PUMA7)
-    system("ip rule add from 169.254.0.0/16 iif brlan0 lookup moca");
+    v_secure_system("ip rule add from 169.254.0.0/16 iif brlan0 lookup moca");
 #else
-    system("ip rule add from all iif brlan0 lookup moca");
+    v_secure_system("ip rule add from all iif brlan0 lookup moca");
 #endif
 #else
-    system("ip rule add from all iif brlan0 lookup moca");
+    v_secure_system("ip rule add from all iif brlan0 lookup moca");
 #endif
 
 }
@@ -396,9 +384,9 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
         if (1 == l2netInst)
         {
            MNET_DEBUG("brlan0 up: disabling multicast_snooping\n")
-           system("echo 0 > /sys/devices/virtual/net/brlan0/bridge/multicast_snooping");
-           system("echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter");
-           system("echo 0 > /proc/sys/net/ipv4/conf/brlan0/rp_filter");
+           v_secure_system("echo 0 > /sys/devices/virtual/net/brlan0/bridge/multicast_snooping");
+           v_secure_system("echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter");
+           v_secure_system("echo 0 > /proc/sys/net/ipv4/conf/brlan0/rp_filter");
         }
 
 #endif
@@ -437,7 +425,7 @@ int multinet_bridgeUpInst(int l2netInst, int bFirewallRestart){
 #if defined (CLEAR_CPE_TABLE_COMMAND)
     //If this is the primary instance and bridge mode is enabled, clear CPE table
     if (l2netInst == nv_get_primary_l2_inst() && ep_get_bridge_mode() != 0)
-        system(CLEAR_CPE_TABLE_COMMAND); 
+        v_secure_system(CLEAR_CPE_TABLE_COMMAND); 
 #endif
 
     return 0;
@@ -604,7 +592,7 @@ int multinet_SyncInst(int l2netInst){
 #if defined (CLEAR_CPE_TABLE_COMMAND)
     //If this is the primary instance and bridge mode is enabled, clear CPE table
     if (l2netInst == nv_get_primary_l2_inst() && ep_get_bridge_mode() != 0)
-        system(CLEAR_CPE_TABLE_COMMAND); 
+        v_secure_system(CLEAR_CPE_TABLE_COMMAND); 
 #endif
 
     return result;
@@ -811,7 +799,6 @@ static int resolve_member_diff(PL2Net network,
 // Assign an address in CIDR format to a bridge instance
 int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion) {
     L2Net l2net;
-    char cmdBuff[CMD_STRING_LEN] = {'\0'};
 
     memset(&l2net,0,sizeof(l2net));
 
@@ -823,8 +810,8 @@ int multinet_assignBridgeCIDR(int l2netInst, char *CIDR, int IPVersion) {
     {
         MNET_DEBUG("About to assign CIDR address %s to instance %d. Name: %s\n" COMMA CIDR COMMA l2netInst COMMA l2net.name);
         if (IPVersion == 4 || IPVersion == 6) {
-            snprintf(cmdBuff, CMD_STRING_LEN, "ip -%d addr change %s dev %s", IPVersion, CIDR, l2net.name);
-            system(cmdBuff);
+            v_secure_system("ip -%d addr change %s dev %s", IPVersion, CIDR, l2net.name);
+
         }
         else {
             MNET_DEBUG("Unknown IP version %d\n" COMMA IPVersion);
@@ -871,7 +858,7 @@ int toggle_ethbhaul_ports(BOOL onOff)
     }
 
     multinet_assignBridgeCIDR(11, MESHETHBHAUL_IPV4_CIDR, 4);
-    system("sysevent set firewall-restart");
+    v_secure_system("sysevent set firewall-restart");
 
     retVal = nv_toggle_ethbhaul_ports(onOff);
 

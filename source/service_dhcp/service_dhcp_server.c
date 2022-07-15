@@ -60,7 +60,7 @@
 
 static char dnsOption[8] = "";
 
-extern void copy_command_output(char *, char *, int);
+extern void copy_command_output(FILE *, char *, int);
 extern void print_with_uptime(const char*);
 extern BOOL compare_files(char *, char *);
 extern void wait_till_end_state (char *);
@@ -155,15 +155,14 @@ static int getValueFromDevicePropsFile(char *str, char **value)
     return ret;
 }
 
-int get_Pool_cnt(char arr[15][2],char *cmd)
+int get_Pool_cnt(char arr[15][2],FILE *pipe)
 {
-    fprintf(stderr,"\nInside %s - with arg=%s\n",__FUNCTION__,cmd);
+    fprintf(stderr,"\nInside %s - \n",__FUNCTION__);
     int iter=0;
     char sg_buff[2]={0};
-    FILE *pipe=popen(cmd, "r");
     if (NULL == pipe)
     {
-        fprintf(stderr,"\n Unable to open pipe for get_Pool_cnt cmd=%s",cmd);
+        fprintf(stderr,"\n Unable to open pipe for get_Pool_cnt pipe\n");
         return -1;
     }
     while(fgets(sg_buff, sizeof(sg_buff), pipe) != NULL )
@@ -175,7 +174,6 @@ int get_Pool_cnt(char arr[15][2],char *cmd)
             iter++;
         }
     }
-    pclose(pipe);
     fprintf(stderr,"\n%s ENDS ..... with Pool_Count=%d\n",__FUNCTION__,iter);
     return iter;
 }
@@ -487,10 +485,20 @@ int syslog_restart_request()
         }
         else
         {
-            char l_cCommand[128] = {0}, l_cBuf[128] = {0};
+            char l_cBuf[128] = {0};
             char *l_cToken = NULL;
-            sprintf(l_cCommand, "pidof dnsmasq");
-            copy_command_output(l_cCommand, l_cBuf, sizeof(l_cBuf));
+            FILE *fp1 = NULL;
+	    fp1 = v_secure_popen("r","pidof dnsmasq");
+	    if(!fp1)
+            {
+		    fprintf(stderr, "%s Failed in opening pipe \n", __FUNCTION__);
+	    }
+	    else
+	    {
+                copy_command_output(fp1, l_cBuf, sizeof(l_cBuf));
+		v_secure_pclose(fp1);
+	    }
+
             l_cBuf[strlen(l_cBuf)] = '\0';
 
             if ('\0' == l_cBuf[0] || 0 == l_cBuf[0])
@@ -575,7 +583,7 @@ int dhcp_server_start (char *input)
 	char l_cSystemCmd[255] = {0}, l_cPsm_Mode[8] = {0}, l_cStart_Misc[8] = {0};
 	char l_cPmonCmd[255] = {0}, l_cDhcp_Tmp_Conf[32] = {0};
 	char l_cCurrent_PID[8] = {0}, l_cRpc_Cmd[64] = {0};
-	char l_cCommand[128] = {0}, l_cBuf[128] = {0};
+	char l_cBuf[128] = {0};
     char l_cBridge_Mode[8] = {0};
     char l_cDhcp_Server_Prog[16] = {0};
     int dhcp_server_progress_count = 0;
@@ -583,7 +591,7 @@ int dhcp_server_start (char *input)
 	BOOL l_bRestart = FALSE, l_bFiles_Diff = FALSE, l_bPid_Present = FALSE;
 	FILE *l_fFp = NULL;
 	int l_iSystem_Res;
-
+        FILE *fptr = NULL;
 	char *l_cToken = NULL;
 	errno_t safec_rc = -1;
 
@@ -686,10 +694,17 @@ int dhcp_server_start (char *input)
 	}	
 	else
 	{
-	    safec_rc = strcpy_s(l_cCommand, sizeof(l_cCommand),"pidof dnsmasq");
-		ERR_CHK(safec_rc);
-    	copy_command_output(l_cCommand, l_cBuf, sizeof(l_cBuf));
-	    l_cBuf[strlen(l_cBuf)] = '\0';
+		fptr = v_secure_popen("r","pidof dnsmasq");
+		if(!fptr)
+	        {
+			fprintf(stderr, "%s Error in opening pipe\n",__FUNCTION__);
+		}
+		else
+		{
+                     copy_command_output(fptr, l_cBuf, sizeof(l_cBuf));
+		     v_secure_pclose(fptr);
+		}
+	        l_cBuf[strlen(l_cBuf)] = '\0';
 
 		if ('\0' == l_cBuf[0] || 0 == l_cBuf[0])
 		{
@@ -739,10 +754,17 @@ int dhcp_server_start (char *input)
     }
 
         /* Kill dnsmasq if its not stopped properly */
-	safec_rc = strcpy_s(l_cCommand, sizeof(l_cCommand),"pidof dnsmasq");
-	ERR_CHK(safec_rc);
+	fptr = v_secure_popen("r","pidof dnsmasq");
         memset (l_cBuf, '\0',  sizeof(l_cBuf));
-    	copy_command_output(l_cCommand, l_cBuf, sizeof(l_cBuf));
+	if(!fptr)
+	{
+		fprintf(stderr, "%s Error in opening pipe\n",__FUNCTION__);
+	}
+	else
+	{
+            copy_command_output(fptr, l_cBuf, sizeof(l_cBuf));
+	    v_secure_pclose(fptr);
+	}
 	l_cBuf[strlen(l_cBuf)] = '\0';
 
 	if ('\0' != l_cBuf[0] && 0 != l_cBuf[0])
@@ -929,10 +951,29 @@ void resync_to_nonvol(char *RemPools)
     char CUR_IPV4[16]={0},sg_buff[100]={0};
     char asyn[100]={0};
     char l_sAsyncString[120];
+    FILE *pipe =NULL;
     if (RemPools == NULL)
     {
-        CURRENT_POOLS_cnt=get_Pool_cnt(CURRENT_POOLS,"sysevent get dhcp_server_current_pools");
-        NV_INST_cnt=get_Pool_cnt(NV_INST,"psmcli getallinst dmsb.dhcpv4.server.pool.");
+	pipe = v_secure_popen("r","sysevent get dhcp_server_current_pools");
+        if(!pipe)
+        {
+            fprintf(stderr, "%s Failed in opening pipe \n", __FUNCTION__);
+	}
+        else
+        {  
+            CURRENT_POOLS_cnt=get_Pool_cnt(CURRENT_POOLS,pipe);
+	    v_secure_pclose(pipe);
+        }
+	pipe = v_secure_popen("r","psmcli getallinst dmsb.dhcpv4.server.pool.");
+        if(!pipe)
+        {
+            fprintf(stderr, "%s Failed in opening pipe \n", __FUNCTION__);
+	}
+        else
+        {
+            NV_INST_cnt=get_Pool_cnt(NV_INST,pipe);
+	    v_secure_pclose(pipe);
+        }
         if(CURRENT_POOLS_cnt != -1 || NV_INST_cnt != -1)
         {
             memcpy(REM_POOLS,CURRENT_POOLS,sizeof(CURRENT_POOLS[0][0])*15*2);

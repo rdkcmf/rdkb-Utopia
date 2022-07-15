@@ -34,14 +34,15 @@
 **********************************************************************/
 
 #include <stdio.h>
+#include "secure_wrapper.h"
 #ifdef RDKB_EXTENDER_ENABLED
 #include <string.h>
 #endif
 #include <stdlib.h>
 #include "srvmgr.h"
 
-const char* SERVICE_NAME            = "crond";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_crond.sh";
+#define SERVICE_NAME "crond"
+#define SERVICE_DEFAULT_HANDLER "/etc/utopia/service.d/service_crond.sh"
 const char* SERVICE_CUSTOM_EVENTS[] = { "ntpclient-status|/etc/utopia/service.d/service_crond.sh", 
                                         NULL 
                                       };
@@ -58,20 +59,17 @@ void srv_register(void) {
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
 
    // we also want to start crond here so do so
-   system ("/etc/utopia/service.d/service_crond.sh crond-start");
+   v_secure_system("/etc/utopia/service.d/service_crond.sh crond-start");
 
    // we want cron_every_minute to be an event
    // this will generate a sysevent event every minute
-   system("sysevent setoptions cron_every_minute " TUPLE_FLAG_EVENT);
+   v_secure_system("sysevent setoptions cron_every_minute " TUPLE_FLAG_EVENT);
 }
 
 #ifdef RDKB_EXTENDER_ENABLED
 void stop_service()
 {
-    char buf[512];
-    memset(buf,0,sizeof(buf));
-    snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
-    system(buf);
+    v_secure_system(SERVICE_DEFAULT_HANDLER " " SERVICE_NAME "-stop");
 }
 #endif
 

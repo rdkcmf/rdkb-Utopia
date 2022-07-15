@@ -42,6 +42,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "secure_wrapper.h"
+
 extern int sysevent_fd_interactive;
 extern token_t sysevent_token_interactive;
 void delVlan(int net_id, int vlan_id, char *ports_add);
@@ -72,9 +74,6 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
 {
     int i;
     PSwPortState portState;
-#if !defined(_COSA_INTEL_XB3_ARM_)
-    char cmdBuff[180];
-#endif
     char ifname[80];
     char temp_ifname[80];
     errno_t  rc = -1;
@@ -111,14 +110,10 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
 	}
 #else
     //Rag: netid and vlanid is same for all the args, so index zero is being used.
-    rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
-			args[0].hints.network->inst, args[0].vidParams.vid, ifname);
-    if(rc < EOK)
-    {
-       ERR_CHK(rc);
-    }
-    MNET_DEBUG("configVlan_ESW, command is %s\n" COMMA cmdBuff)
-    system(cmdBuff);
+    MNET_DEBUG("configVlan_ESW, command is %s %s %d %d \"%s\"" COMMA SERVICE_MULTINET_DIR "/handle_sw.sh" COMMA up ? "addVlan" : "delVlan" COMMA
+                        args[0].hints.network->inst COMMA args[0].vidParams.vid COMMA ifname)
+    v_secure_system(SERVICE_MULTINET_DIR "/handle_sw.sh  %s %d %d '%s'",up ? "addVlan" : "delVlan",
+                        args[0].hints.network->inst, args[0].vidParams.vid, ifname);
 #endif
     return 0;
 }
@@ -126,9 +121,6 @@ int configVlan_ESW(PSWFabHALArg args, int numArgs, BOOL up)
 int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up) 
 {
     int i;
-#if !defined(_COSA_INTEL_XB3_ARM_)
-    char cmdBuff[150];
-#endif
     char portID[80];
     memset(portID, 0, 80);
     errno_t  rc = -1;
@@ -160,14 +152,10 @@ int configVlan_WiFi(PSWFabHALArg args, int numArgs, BOOL up)
     }
 #else 
     //Rag: netid and vlanid is same for all the args, so index zero is being used. 
-    rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s %s %d %d \"%s\"", SERVICE_MULTINET_DIR "/handle_wifi.sh", up ? "addVlan" : "delVlan", 
-			args[0].hints.network->inst, args[0].vidParams.vid, portID);
-    if(rc < EOK)
-    {
-       ERR_CHK(rc);
-    }
-    MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s\n" COMMA portID COMMA cmdBuff)
-    system(cmdBuff);
+    MNET_DEBUG("configVlan_WiFi, portId is:%s command is %s %s %d %d \"%s\"" COMMA portID COMMA SERVICE_MULTINET_DIR "/handle_wifi.sh" COMMA up ? "addVlan" : "delVlan" COMMA
+                        args[0].hints.network->inst COMMA args[0].vidParams.vid COMMA portID);
+    v_secure_system(SERVICE_MULTINET_DIR "/handle_wifi.sh %s %d %d '%s'",up ? "addVlan" : "delVlan",
+                        args[0].hints.network->inst, args[0].vidParams.vid, portID);
 #endif
     return 0;
 }
@@ -199,10 +187,6 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
 {
     int i;
     PSwPortState portState;
-    errno_t  rc = -1;
-#if !defined(_COSA_INTEL_XB3_ARM_)
-    char cmdBuff[180];
-#endif
     char ifname[80];
     
     for (i = 0; i < numArgs; ++i ) 
@@ -227,13 +211,9 @@ int configVlan_ISW(PSWFabHALArg args, int numArgs, BOOL up)
 			delVlan(args[i].hints.network->inst, args[i].vidParams.vid, ifname);
 		}
 #else
-		rc = sprintf_s(cmdBuff, sizeof(cmdBuff), "%s %s %d %d \"%s%s\"", SERVICE_MULTINET_DIR "/handle_sw.sh", up ? "addVlan" : "delVlan", 
-				args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
-		if(rc < EOK)
-		{
-			ERR_CHK(rc);
-		}
-    	system(cmdBuff);
+		
+    	v_secure_system(SERVICE_MULTINET_DIR "/handle_sw.sh %s %d %d '%s%s'",up ? "addVlan" : "delVlan",
+                                args[i].hints.network->inst, args[i].vidParams.vid, ifname, args[i].vidParams.tagging ? "-t" : "");
 #endif
 	}
 	return 0;

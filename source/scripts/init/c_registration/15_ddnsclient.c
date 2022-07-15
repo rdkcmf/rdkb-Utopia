@@ -39,9 +39,10 @@
 #include <string.h>
 #include <stdlib.h>
 #endif
+#include "secure_wrapper.h"
 
-const char* SERVICE_NAME            = "ddns";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_ddns.sh";
+#define SERVICE_NAME "ddns"
+#define SERVICE_DEFAULT_HANDLER "/etc/utopia/service.d/service_ddns.sh"
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "wan-status|/etc/utopia/service.d/service_ddns.sh",
                                         "current_wan_ipaddr|/etc/utopia/service.d/service_ddns.sh",
@@ -55,10 +56,7 @@ void srv_register(void) {
 #ifdef RDKB_EXTENDER_ENABLED
 void stop_service()
 {
-    char buf[512];
-    memset(buf,0,sizeof(buf));
-    snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
-    system(buf);
+    v_secure_system(SERVICE_DEFAULT_HANDLER " " SERVICE_NAME "-stop");
 }
 #endif
 

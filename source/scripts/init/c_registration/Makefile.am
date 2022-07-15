@@ -29,6 +29,8 @@ AM_LDFLAGS = $(top_builddir)/source/util/utils/libutopiautil.la \
              $(top_builddir)/source/sysevent/lib/libsysevent.la \
              $(top_builddir)/source/syscfg/lib/libsyscfg.la \
              $(top_builddir)/source/ulog/libulog.la
+             
+LDFLAGS += -lsecure_wrapper
 
 bin_PROGRAMS = \
     02_bridge \

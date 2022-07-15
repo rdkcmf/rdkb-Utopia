@@ -46,14 +46,14 @@
 
 #include "service_multinet_swfab_LinIF.h"
 #include "service_multinet_swfab_gre.h"
+#include "secure_wrapper.h"
 
 //TODO, move what we can to a common handler library
 
 int greIfInit(PSWFabHALArg args, int numArgs, BOOL up) {
-    char cmdbuf[256];
-    snprintf(cmdbuf, sizeof(cmdbuf), "%s create %d \"%s\"", SERVICE_MULTINET_DIR "/handle_gre.sh", args[0].hints.network->inst, (char*)args[0].portID);
-    MNET_DEBUG("greIfInit running: %s" COMMA cmdbuf);
-    system(cmdbuf);
+    
+    MNET_DEBUG("greIfInit running: %s create %d \"%s\"" COMMA SERVICE_MULTINET_DIR "/handle_gre.sh" COMMA args[0].hints.network->inst COMMA (char*)args[0].portID);
+    v_secure_system(SERVICE_MULTINET_DIR "/handle_gre.sh create %d '%s'",args[0].hints.network->inst, (char*)args[0].portID);
     return 0;
 }
 

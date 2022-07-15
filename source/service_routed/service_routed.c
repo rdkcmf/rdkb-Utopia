@@ -53,6 +53,7 @@
 #include <net/if.h>
 #include <signal.h>
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 #if defined (_CBR_PRODUCT_REQ_) || defined (_BWG_PRODUCT_REQ_) || defined (_CBR2_PRODUCT_REQ_)
 #include <sys/stat.h>
@@ -247,10 +248,9 @@ static int getULAAddressFromInterface(char *ulaAddress)
 {
     int status = FALSE;
     FILE *fpStream = NULL;
-    char cmd[128] = "ifconfig brlan0 | grep inet6 | grep Global| awk '/inet6/{print $3}' | cut -d\"/\" -f1";
     char line[128] = {0};
 
-    fpStream = popen(cmd,"r");
+    fpStream = v_secure_popen("r","ifconfig brlan0 | grep inet6 | grep Global| awk '/inet6/{print $3}' | cut -d'/' -f1");
     if (fpStream != NULL)
     {
         while ( NULL != fgets ( line, sizeof (line), fpStream ) )
@@ -271,7 +271,7 @@ static int getULAAddressFromInterface(char *ulaAddress)
             }
             memset (line,0, sizeof(line));
         }
-        pclose(fpStream);
+        v_secure_pclose(fpStream);
     }
     else
     {

@@ -54,7 +54,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/ether.h>
-
+#include "secure_wrapper.h"
 /*
  * Defines and static variables
  */
@@ -99,8 +99,7 @@ int addr_set(const char *intf, const char *addr)
     /*
      * Setting MAC address to interface.
      */ 
-    snprintf(command, sizeof(command), "ifconfig %s down", intf);
-    system(command); /* bring down interface */
+    v_secure_system("ifconfig %s down", intf); /* bring down interface */
 
     memset(&ifr, 0, sizeof(struct ifreq));
     strncpy(ifr.ifr_name, intf, 8);
@@ -126,8 +125,7 @@ int addr_set(const char *intf, const char *addr)
     } else {
         DEBUG("macclone: invalid hardware address\n");
     }
-    snprintf(command, sizeof(command), "ifconfig %s up", intf);
-    system(command); /* bring up interface */
+    v_secure_system("ifconfig %s up", intf); /* bring up interface */
 
     close(fd);
 

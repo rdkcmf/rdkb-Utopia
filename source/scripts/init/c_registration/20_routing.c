@@ -39,9 +39,10 @@
 #include <string.h>
 #endif
 #include "srvmgr.h"
+#include "secure_wrapper.h"
 
-const char* SERVICE_NAME            = "routed";
-const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_routed.sh";
+#define SERVICE_NAME "routed"
+#define SERVICE_DEFAULT_HANDLER "/etc/utopia/service.d/service_routed.sh"
 
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
 const char* SERVICE_CUSTOM_EVENTS[] = { 
@@ -76,17 +77,14 @@ void srv_register(void) {
    // system("rm -Rf /etc/iproute2/rt_tables");
    DBG_PRINT("20_routing : %s Entry\n", __FUNCTION__);
    sm_register(SERVICE_NAME, SERVICE_DEFAULT_HANDLER, SERVICE_CUSTOM_EVENTS);
-   system("sysevent set rip-status stopped");
+   v_secure_system("sysevent set rip-status stopped");
    DBG_PRINT("20_routing : %s Exit\n", __FUNCTION__);
 }
 
 #ifdef RDKB_EXTENDER_ENABLED
 void stop_service()
 {
-    char buf[512];
-    memset(buf,0,sizeof(buf));
-    snprintf(buf,sizeof(buf),"sh %s %s-stop",SERVICE_DEFAULT_HANDLER,SERVICE_NAME);
-    system(buf);
+    v_secure_system(SERVICE_DEFAULT_HANDLER " " SERVICE_NAME "-stop");
 }
 #endif
 

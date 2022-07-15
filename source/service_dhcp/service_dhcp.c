@@ -245,21 +245,18 @@ void print_file(char *to_print_file)
     }
 }
 
-void copy_command_output(char *cmd, char *out, int len)
+void copy_command_output(FILE *fp, char *out, int len)
 {
-    FILE *l_fFp = NULL; 
-    char l_cBuf[256];
     char *l_cP = NULL;
-    l_fFp = popen(cmd, "r");
-    if (l_fFp)
+    if (fp)
     {   
-        fgets(l_cBuf, sizeof(l_cBuf), l_fFp);
+        fgets(out, len, fp);
 
         /*we need to remove the \n char in buf*/
-        if ((l_cP = strchr(l_cBuf, '\n'))) *l_cP = 0;
-
-        strncpy(out, l_cBuf, len-1);
-        pclose(l_fFp);
+        if ((l_cP = strchr(out, '\n'))) 
+        {
+	    *l_cP = 0;
+	}
     }   
 }
 

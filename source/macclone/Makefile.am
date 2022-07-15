@@ -31,7 +31,7 @@ macclone_CPPFLAGS = -I$(top_srcdir)/source/pal/upnp/include \
                     -I$(top_srcdir)/source/pal/log/include \
                     $(DBUS_CFLAGS)
 
-macclone_LDFLAGS = $(DBUS_LIBS)
+macclone_LDFLAGS = $(DBUS_LIBS) -lsecure_wrapper
 
 macclone_LDADD = $(top_builddir)/source/syscfg/lib/libsyscfg.la \
                  $(top_builddir)/source/sysevent/lib/libsysevent.la \

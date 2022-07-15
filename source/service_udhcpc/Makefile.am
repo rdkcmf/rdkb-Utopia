@@ -35,4 +35,4 @@ service_udhcpc_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                        $(top_builddir)/source/ulog/libulog.la \
                        -ltelemetry_msgsender
 
-service_udhcpc_LDFLAGS = -lnanomsg
+service_udhcpc_LDFLAGS = -lnanomsg -lsecure_wrapper

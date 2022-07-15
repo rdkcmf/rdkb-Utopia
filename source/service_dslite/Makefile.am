@@ -18,7 +18,7 @@ bin_PROGRAMS = service_dslite
 
 service_dslite_SOURCES = service_dslite.c
 service_dslite_CFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/include -I$(top_srcdir)/source/util/utils
-service_dslite_LDFLAGS = -levent -levent_core -levent_extra -lpthread
+service_dslite_LDFLAGS = -levent -levent_core -levent_extra -lpthread -lsecure_wrapper
 service_dslite_LDADD = $(top_builddir)/source/util/utils/libutopiautil.la \
                        $(top_builddir)/source/services/lib/libsrvmgr.la \
                        $(top_builddir)/source/sysevent/lib/libsysevent.la \

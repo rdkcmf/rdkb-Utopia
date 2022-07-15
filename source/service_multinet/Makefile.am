@@ -20,7 +20,7 @@ bin_PROGRAMS = service_multinet_exec
 
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_LDFLAGS = -lccsp_common $(DBUS_LIBS)
+AM_LDFLAGS = -lccsp_common -lsecure_wrapper $(DBUS_LIBS)
 
 if MULTILAN_FEATURE
 if CCSP_PLATFORM_INTEL_PUMA7

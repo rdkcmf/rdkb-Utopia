@@ -28,6 +28,7 @@
 #include "service_multinet_base.h"
 #include "errno.h"
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 #define MOCACTL 	"/usr/sbin/mocactl"
 #define IPC_VLAN	500	
@@ -92,7 +93,6 @@ void handle_moca(int vlan_id, int *tagged, int add)
 {
 	char l_cMoca_Tports[16] = {0}, l_cMoca_Utport[8] = {0}, l_cMoca_Tport[8] = {0};
 	int l_iMoca_UtPort = 100;
-	char l_cSystem_Cmd[128] = {0};
 	errno_t  rc  = -1;
 
 	sysevent_get(hdl_sw_sysevent_fd, hdl_sw_sysevent_token, "sw_moca_tports", l_cMoca_Tports, sizeof(l_cMoca_Tports));
@@ -124,9 +124,7 @@ void handle_moca(int vlan_id, int *tagged, int add)
     	            MNET_DEBUG("--SW handler mocactl -c 8 -e 1 -v %d \n" 
 						       COMMA l_iMoca_UtPort);
 
-        	        snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), 
-							 "mocactl -c 8 -e 1 -v %d", l_iMoca_UtPort);
-            	    system(l_cSystem_Cmd);
+            	    v_secure_system("mocactl -c 8 -e 1 -v %d", l_iMoca_UtPort);
 	            }   
     	        else
         	    {   
@@ -165,8 +163,7 @@ void handle_moca(int vlan_id, int *tagged, int add)
 				if (access(MOCACTL, F_OK) == 0)
 				{
 					MNET_DEBUG("--SW handler mocactl -c 8 -e 1 -v %d \n" COMMA vlan_id);
-					snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), "mocactl -c 8 -e 1 -v %d", vlan_id);
-					system(l_cSystem_Cmd);
+					v_secure_system("mocactl -c 8 -e 1 -v %d", vlan_id);
 				}
 				else
 				{
@@ -212,9 +209,7 @@ void handle_moca(int vlan_id, int *tagged, int add)
                 {   
                     MNET_DEBUG("--SW handler mocactl -c 8 -e 0 -v %d \n" 
 							   COMMA l_iMoca_UtPort);
-                    snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), 
-							 "mocactl -c 8 -e 1 -v %d", l_iMoca_UtPort);
-                    system(l_cSystem_Cmd);
+                    v_secure_system("mocactl -c 8 -e 1 -v %d", l_iMoca_UtPort);
                 }   
                 else
                 {   
@@ -236,8 +231,7 @@ void handle_moca(int vlan_id, int *tagged, int add)
 				if (access(MOCACTL, F_OK) == 0)
                 {
                     MNET_DEBUG("--SW handler mocactl -c 8 -e 0 -v %d \n" COMMA vlan_id);
-                    snprintf(l_cSystem_Cmd, sizeof(l_cSystem_Cmd), "mocactl -c 8 -e 0 -v %d", vlan_id);
-                    system(l_cSystem_Cmd);
+                    v_secure_system("mocactl -c 8 -e 0 -v %d", vlan_id);
                 }
                 else
                 {
@@ -696,18 +690,13 @@ void addMeshBhaulVlan()
 
 void createMeshVlan()
 {
-	char cmdBuff[255] = {0};
 	
 	swctl(16, 0, 112, TAGGING_MODE, 1, -1, NULL, NULL);
 	swctl(16, 7, 112, TAGGING_MODE, 1, -1, NULL, NULL);
-	snprintf(cmdBuff, sizeof(cmdBuff), 
-			 "vconfig add l2sd0 112; ifconfig l2sd0.112 169.254.0.254 netmask 255.255.255.0 up");
-    system(cmdBuff);
+        v_secure_system("vconfig add l2sd0 112; ifconfig l2sd0.112 169.254.0.254 netmask 255.255.255.0 up");
 	
 	swctl(16, 0, 113, TAGGING_MODE, 1, -1, NULL, NULL);
 	swctl(16, 7, 113, TAGGING_MODE, 1, -1, NULL, NULL);
-	snprintf(cmdBuff, sizeof(cmdBuff), 
-			 "vconfig add l2sd0 113; ifconfig l2sd0.113 169.254.1.254 netmask 255.255.255.0 up");
-    system(cmdBuff);
+    v_secure_system("vconfig add l2sd0 113; ifconfig l2sd0.113 169.254.1.254 netmask 255.255.255.0 up");
 }
 #endif

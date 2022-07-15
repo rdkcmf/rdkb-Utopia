@@ -37,6 +37,7 @@
 #include <event2/event.h>
 #include "time.h"
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 #define PROG_NAME       "SERVICE-DSLITE"
 #define ER_NETDEVNAME   "erouter0"
@@ -89,17 +90,12 @@ static sem_t *sem = NULL;
 #define SEM_WAIT do { sem_wait(sem); } while (0)
 #define SEM_POST do { sem_post(sem); } while (0)
 
-static void _get_shell_output (char *cmd, char *buf, size_t len)
+static void _get_shell_output (FILE *fp, char *buf, size_t len)
 {
-    FILE *fp;
 
     if (len > 0)
         buf[0] = 0;
-    fp = popen (cmd, "r");
-    if (fp == NULL)
-        return;
     buf = fgets (buf, len, fp);
-    pclose (fp);
     if ((len > 0) && (buf != NULL)) {
         len = strlen (buf);
         if ((len > 0) && (buf[len - 1] == '\n'))
@@ -589,6 +585,7 @@ static int dslite_stop (struct serv_dslite *sd)
     char remote_addr[64];
     char local_addr[64];
     char return_buffer[256];
+    FILE *fp = NULL;
 
     SEM_WAIT;
 
@@ -608,9 +605,16 @@ static int dslite_stop (struct serv_dslite *sd)
     sysevent_set (sd->sefd, sd->setok, "dslite_service-status", "stopping", 0);
 
     //Stop the IPv4-in-IPv6 tunnel
-    _get_shell_output ("ip -6 tunnel show | grep " TNL_NETDEVNAME " | awk '/remote/{print $4}'", remote_addr, sizeof(remote_addr));
-    _get_shell_output ("ip -6 tunnel show | grep " TNL_NETDEVNAME " | awk '/remote/{print $6}'", local_addr, sizeof(local_addr));
-
+    fp = v_secure_popen("r","ip -6 tunnel show | grep " TNL_NETDEVNAME " | awk '/remote/{print $4}'");
+    if(fp) {
+        _get_shell_output (fp, remote_addr, sizeof(remote_addr));
+        v_secure_pclose(fp);
+    }
+    fp = v_secure_popen("r","ip -6 tunnel show | grep " TNL_NETDEVNAME " | awk '/remote/{print $6}'");
+    if(fp) {
+        _get_shell_output(fp, local_addr, sizeof(local_addr));
+        v_secure_pclose(fp);
+    }
     fprintf (fp_dslt_dbg, "%s: Remote address is %s\n", __FUNCTION__, remote_addr);
     fprintf (fp_dslt_dbg, "%s: Local address is %s\n", __FUNCTION__, local_addr);
 
