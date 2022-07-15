@@ -38,6 +38,7 @@
 #include "syscfg/syscfg.h"
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 const char* SERVICE_NAME            = "multinet";
 
@@ -239,6 +240,9 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
     NULL };
 #endif
 #endif
+
+#define ONEWIFI_ENABLED "/etc/onewifi_enabled"
+
 void srv_register(void) {
 
   #if defined (_BRIDGE_UTILS_BIN_)
@@ -272,6 +276,11 @@ void srv_register(void) {
       {
           printf("syscfg_get failed to retrieve ovs_enable\n");
 
+      }
+
+      if( 0 == access( ONEWIFI_ENABLED, F_OK ) )
+      {
+          ovsEnable = 1;
       }
 
       memset(buf,0,sizeof(buf));
