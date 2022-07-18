@@ -241,8 +241,12 @@ service_start() {
 	    	do_start
 		fi
    fi
-		$PMON setproc ssh dropbear $PID_FILE "/etc/utopia/service.d/service_sshd.sh sshd-restart"
+   #Disable monitoring dropbear as we don't have a seperate dropbear process running always
+   #dropbear process would be running on demand basis
+   if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$BOX_TYPE" != "SR213" ]; then
 
+                $PMON setproc ssh dropbear $PID_FILE "/etc/utopia/service.d/service_sshd.sh sshd-restart"
+    fi
 		sysevent set ${SERVICE_NAME}-errinfo
 		sysevent set ${SERVICE_NAME}-status "started"
 		rm -rf /tmp/.dropbear/*
