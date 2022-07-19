@@ -1901,6 +1901,8 @@ static int serv_ipv6_init(struct serv_ipv6 *si6)
     sysevent_get(si6->sefd, si6->setok, "ipv6_prefix", si6->mso_prefix, sizeof(si6->mso_prefix));
     if (strlen(si6->mso_prefix))
         si6->wan_ready = true;
+    else
+        return -1;
 
     sysevent_get(si6->sefd, si6->setok, "erouter_topology-mode", buf, sizeof(buf));
     switch(atoi(buf)) {
