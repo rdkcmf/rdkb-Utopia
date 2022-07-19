@@ -149,7 +149,7 @@ int gModeSwitched = NO_SWITCHING ;
 #endif 
 
 #ifdef RDKB_EXTENDER_ENABLED
-#define PSM_MESH_WAN_IFNAME "dmsb.Mesh.WAN.Interface.Name"
+//#define PSM_MESH_WAN_IFNAME "dmsb.Mesh.WAN.Interface.Name"
 typedef enum DeviceMode {
     DEVICE_MODE_ROUTER = 0,
     DEVICE_MODE_EXTENDER
@@ -504,6 +504,7 @@ static int route_unset(struct serv_routed *sr)
     return 0;
 }
 
+#if 0
 #ifdef RDKB_EXTENDER_ENABLED
 static int updateExtenderConf(FILE *pFp, int sefd, token_t setok, int deviceMode, char *pInterface_name)
 {
@@ -576,6 +577,7 @@ static int updateExtenderConf(FILE *pFp, int sefd, token_t setok, int deviceMode
 
     return 0;
 }
+#endif
 #endif
 
 static int gen_zebra_conf(int sefd, token_t setok)
@@ -668,8 +670,10 @@ static int gen_zebra_conf(int sefd, token_t setok)
 #endif
     char wan_st[16] = {0};
 #ifdef RDKB_EXTENDER_ENABLED
+    #if 0
     char meshWanInterface[128] = {0};
     int deviceMode = 0;
+    #endif
 #endif
 #if defined (_HUB4_PRODUCT_REQ_) && !defined (_WNXL11BWL_PRODUCT_REQ_)
     char server_type[16] = {0};
@@ -713,6 +717,8 @@ static int gen_zebra_conf(int sefd, token_t setok)
     }
     
 #ifdef RDKB_EXTENDER_ENABLED
+#if 0
+
     memset(buf,0,sizeof(buf));
     if ( 0 == syscfg_get(NULL, "Device_Mode", buf, sizeof(buf)))
     {
@@ -737,6 +743,8 @@ static int gen_zebra_conf(int sefd, token_t setok)
         return 0;
     }
 #endif
+#endif
+
     syscfg_get(NULL, "ra_interval", ra_interval, sizeof(ra_interval));
 #ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
     sysevent_get(sefd, setok, "previous_ipv6_prefix", orig_prefix, sizeof(orig_prefix));
@@ -1504,7 +1512,8 @@ static void checkIfModeIsSwitched(int sefd, token_t setok)
 
 #endif 
 static int radv_start(struct serv_routed *sr)
-{   
+{
+
 #if defined (_HUB4_PRODUCT_REQ_) && !defined (_WNXL11BWL_PRODUCT_REQ_)
     int result;
     int ipv6_enable;
@@ -1803,7 +1812,7 @@ static int serv_routed_restart(struct serv_routed *sr)
 
 static int serv_routed_init(struct serv_routed *sr)
 {
-    char wan_st[16];
+    char wan_st[16], lan_st[16];
 
     memset(sr, 0, sizeof(struct serv_routed));
 
@@ -1818,18 +1827,29 @@ static int serv_routed_init(struct serv_routed *sr)
         return -1;
     }
 
+#ifdef RDKB_EXTENDER_ENABLED
+    char buf[8] = {0};
+    int deviceMode = -1;
+    memset(buf,0,sizeof(buf));
+    if ( 0 == syscfg_get(NULL, "Device_Mode", buf, sizeof(buf)))
+    {
+        deviceMode = atoi(buf);
+        if ( DEVICE_MODE_EXTENDER == deviceMode )
+        {
+            fprintf(stderr, "Device is EXT mode , no need of running zebra for radv\n");
+            return -1;
+        }
+    }
+#endif
+
     sysevent_get(sr->sefd, sr->setok, "wan-status", wan_st, sizeof(wan_st));
     if (strcmp(wan_st, "started") == 0)
         sr->wan_ready = true;
-
-    #ifdef RDKB_EXTENDER_ENABLED
+    
+    sysevent_get(sr->sefd, sr->setok, "lan-status", lan_st, sizeof(lan_st));
+    if (strcmp(lan_st, "started") == 0)
         sr->lan_ready = true;
-    #else
-	char lan_st[16];
-        sysevent_get(sr->sefd, sr->setok, "lan-status", lan_st, sizeof(lan_st));
-        if (strcmp(lan_st, "started") == 0)
-            sr->lan_ready = true;
-    #endif
+
     return 0;
 }
 

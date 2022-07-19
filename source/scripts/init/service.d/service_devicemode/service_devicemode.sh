@@ -52,6 +52,82 @@ Ipv6_Gateway_Addr=""
 DEVICE_MODE=`syscfg get Device_Mode`
 mesh_wan_ifname=$(psmcli get dmsb.Mesh.WAN.Interface.Name)
 
+cellular_ifname=$(sysevent get cellular_ifname)
+
+MESH_IFNAME_DEF_ROUTE=$(psmcli get dmsb.l3net.9.V4Addr)
+update_v4route_for_dns_res()
+{
+    backup_v4_dns1=$(sysevent get backup_cellular_wan_v4_dns1)
+    backup_v4_dns2=$(sysevent get backup_cellular_wan_v4_dns2)
+    backup_wan_v4_gw=$(sysevent get backup_cellular_wan_v4_gw)
+
+    cellular_manager_gw=$(sysevent get cellular_wan_v4_gw)
+    cellular_manager_dns1=$(sysevent get cellular_wan_v4_dns1)
+    cellular_manager_dns2=$(sysevent get cellular_wan_v4_dns2)
+    if [ "x$cellular_manager_gw" = "x0.0.0.0" ] || [ "x$cellular_manager_gw" = "x" ] ;then
+        # delete route
+        ip route del "$backup_v4_dns1" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
+        ip route del "$backup_v4_dns2" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
+    else
+        if [ "x$cellular_manager_gw" != "x$backup_wan_v4_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v4_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v4_dns2" ];
+        then
+            if [ "x$backup_wan_v4_gw" != "x" ] || [ "x$backup_wan_v4_gw" != "x0.0.0.0" ];then
+
+                if [ "$backup_v4_dns1" != "" ];then
+                    ip route del "$backup_v4_dns1" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
+                fi
+                if [ "$backup_v4_dns2" != "" ];then
+                    ip route del "$backup_v4_dns2" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
+                fi
+            fi
+            ip route add "$cellular_manager_dns1" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
+            ip route add "$cellular_manager_dns2" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
+        fi
+    fi
+
+    sysevent set backup_cellular_wan_v4_gw "$cellular_manager_gw"
+    sysevent set backup_cellular_wan_v4_dns1 "$cellular_manager_dns1"
+    sysevent set backup_cellular_wan_v4_dns2 "$cellular_manager_dns2"
+
+}
+
+update_v6route_for_dns_res()
+{
+    backup_v6_dns1=$(sysevent get backup_cellular_wan_v6_dns1)
+    backup_v6_dns2=$(sysevent get backup_cellular_wan_v6_dns2)
+    backup_wan_v6_gw=$(sysevent get backup_cellular_wan_v6_gw)
+
+    cellular_manager_v6_gw=$(sysevent get cellular_wan_v6_gw | cut -d "/" -f 1)
+
+    cellular_manager_dns1=$(sysevent get cellular_wan_v6_dns1)
+    cellular_manager_dns2=$(sysevent get cellular_wan_v6_dns2)
+    if [ "x$cellular_manager_v6_gw" = "x0.0.0.0" ] || [ "x$cellular_manager_v6_gw" = "x" ] ;then
+        # delete route
+        ip -6 route del "$backup_v6_dns1" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
+        ip -6 route del "$backup_v6_dns2" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
+
+    else
+        if [ "x$cellular_manager_v6_gw" != "x$backup_wan_v6_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v6_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v6_dns2" ];
+        then
+            if [ "x$backup_wan_v6_gw" != "x" ] || [ "x$backup_wan_v6_gw" != "x0.0.0.0" ];then
+
+                if [ "$backup_v6_dns1" != "" ];then
+                    ip -6 route del "$backup_v6_dns1" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
+                fi
+                if [ "$backup_v6_dns2" != "" ];then
+                    ip -6 route del "$backup_v6_dns2" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
+                fi
+            fi
+            ip -6 route add "$cellular_manager_dns1" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
+            ip -6 route add "$cellular_manager_dns2" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
+        fi
+    fi
+
+    sysevent set backup_cellular_wan_v6_gw "$cellular_manager_v6_gw"
+    sysevent set backup_cellular_wan_v6_dns1 "$cellular_manager_dns1"
+    sysevent set backup_cellular_wan_v6_dns2 "$cellular_manager_dns2"
+
+}
 
 update_ipv6_dns()
 {
@@ -123,7 +199,6 @@ case "$1" in
         ;;
     DeviceMode)
         service_devicemode DeviceMode $2
-        cellular_ifname=`sysevent get cellular_ifname`
 
         if [ "$2" = "1" ];then
 
@@ -131,7 +206,7 @@ case "$1" in
             echo "Adding rule to resolve dns packets"
         	if_status=`ifconfig "$cellular_ifname" | grep UP`
                 if [ "x$if_status" != "x" ];then
-               	    ip rule add from all dport 53 lookup 12
+               	    #ip rule add from all dport 53 lookup 12
                     ip rule add iif "$cellular_ifname" lookup 11
 
                    	Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
@@ -142,7 +217,7 @@ case "$1" in
                         	ip route add default dev "$cellular_ifname" table 12
                    	fi
 
-                   	ip -6 rule add from all dport 53 lookup 12
+                   	#ip -6 rule add from all dport 53 lookup 12
                         ip -6 rule add iif "$cellular_ifname" lookup 11
 
                    	Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
@@ -156,7 +231,7 @@ case "$1" in
                 fi
        	elif [ "$2" = "0" ];then
                	echo "Deleting rule to resolve dns packets"
-                ip rule del from all dport 53 lookup 12
+                #ip rule del from all dport 53 lookup 12
                 ip rule del iif "$cellular_ifname" lookup 11
                 Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
                 if [ "x$Ipv4_Gateway_Addr" != "x" ];then
@@ -165,7 +240,7 @@ case "$1" in
              		ip route del default dev "$cellular_ifname" table 12
                 fi
 
-                ip -6 rule del from all dport 53 lookup 12
+                #ip -6 rule del from all dport 53 lookup 12
                 ip -6 rule del iif "$cellular_ifname" lookup 11
                 Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
                 if [ "x$Ipv6_Gateway_Addr" != "x" ];then
@@ -184,7 +259,7 @@ case "$1" in
 
             	if [ "$2" = "started" ];then
                		echo "Adding rule to resolve dns packets"
-               		ip rule add from all dport 53 lookup 12
+               		#ip rule add from all dport 53 lookup 12
                     	ip rule add iif "$cellular_ifname" lookup 11
                    	Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
                    	if [ "x$Ipv4_Gateway_Addr" != "x" ];then
@@ -193,7 +268,7 @@ case "$1" in
                 	else
                         	ip route add default dev "$cellular_ifname" table 12
                 	fi
-                	ip -6 rule add from all dport 53 lookup 12
+                	#ip -6 rule add from all dport 53 lookup 12
                     ip -6 rule add iif "$cellular_ifname" lookup 11
                 	#Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
                		#if [ "x$Ipv6_Gateway_Addr" != "x" ];then
@@ -203,9 +278,18 @@ case "$1" in
                 	#else
                         	#ip -6 route add default dev "$cellular_ifname" table 12
                 	#fi
+
+                    mesh_wan_status=$(sysevent get mesh_wan_linkstatus)
+                    if [ "x$mesh_wan_status" = "xup" ];then
+                        def_gateway=$(ip route show | grep default | cut -d " " -f 3)
+                        if [ "x$def_gateway" = "x" ];then
+                            def_gateway=$MESH_IFNAME_DEF_ROUTE
+                        fi
+                        echo "nameserver $def_gateway" > /etc/resolv.conf
+                    fi
                 elif [ "$2" = "stopped" ];then
                 	echo "Deleting rule to resolve dns packets"
-                	ip rule del from all dport 53 lookup 12
+                	#ip rule del from all dport 53 lookup 12
                     	ip rule del iif "$cellular_ifname" lookup 11
                 	Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
                 	if [ "x$Ipv4_Gateway_Addr" != "x" ];then
@@ -214,7 +298,7 @@ case "$1" in
                     		ip route del default dev "$cellular_ifname" table 12
                 	fi
 
-                	ip -6 rule del from all dport 53 lookup 12
+                	#ip -6 rule del from all dport 53 lookup 12
                     	ip -6 rule del iif "$cellular_ifname" lookup 11
                  	#Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
 
@@ -231,8 +315,14 @@ case "$1" in
 
         if [ "1" = "$DEVICE_MODE" ] ; then
 
+
         sysevent set dhcp_server-restart
         sleep 2
+        def_gateway=$(ip route show | grep default | cut -d " " -f 3)
+        if [ "x$def_gateway" = "x" ];then
+            def_gateway=$MESH_IFNAME_DEF_ROUTE
+        fi
+        echo "nameserver $def_gateway" > /etc/resolv.conf
         mesh_wan_ifname_ipaddr=$(ip -4 addr show dev "$mesh_wan_ifname" scope global | awk '/inet/{print $2}' | cut -d '/' -f1)
         if [ "x$mesh_wan_ifname_ipaddr" = "x" ];then
             mesh_wan_ifname_ipaddr="192.168.246.1"
@@ -251,8 +341,9 @@ case "$1" in
                 fi
                 #ip -6 route add default dev "$mesh_wan_ifname" table 11
 
-                sysevent set ipv6_prefix "$mesh_wan_ula_pref"
-                sysevent set zebra-restart
+                # we don't need zebra in ext mode, mesh bridges have static ula ip
+                #sysevent set ipv6_prefix "$mesh_wan_ula_pref"
+                #sysevent set zebra-restart
             elif [ "$2" = "down" ];then
                 ip rule del from all iif "$mesh_wan_ifname" lookup 12
                 ip route del default via "$mesh_wan_ifname_ipaddr" dev "$mesh_wan_ifname" table 11
@@ -273,6 +364,12 @@ case "$1" in
         if [ "$2" != "" ];then
             update_ipv6_dns "$2"
         fi
+    ;;
+    cellular_wan_v4_ip)
+        update_v4route_for_dns_res
+    ;;  
+    cellular_wan_v6_ip)
+        update_v6route_for_dns_res
     ;; 
     *)
         echo "Usage: service-${SERVICE_NAME} [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" > /dev/console

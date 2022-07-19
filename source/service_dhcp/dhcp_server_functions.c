@@ -890,9 +890,9 @@ int prepare_dhcp_conf (char *input)
         char l_cDhcpNs_1[ 128 ] = { 0 }, l_cDhcpNs_2[ 128 ] = { 0 };
 	#ifdef RDKB_EXTENDER_ENABLED
     char dev_Mode[20] = {0}; 
-    char buff[256] = {0};
+    char buff[512] = {0};
 	char *tok = NULL;
-    char dns[256];
+    char dns[512];
     #endif
 	int l_iMkdir_Res, l_iRet_Val;
 	int l_iRetry_Count = 0, ret;
@@ -1004,7 +1004,6 @@ int prepare_dhcp_conf (char *input)
         memset(&ipv6_addr, 0, sizeof(struct in6_addr));
 
         memset(dns1_ipv6, 0, sizeof(dns1_ipv6));
-        memset(dns_ip2, 0, sizeof(dns_ip2));
 
         sysevent_get(g_iSyseventfd, g_tSysevent_token, "cellular_wan_v6_dns1", dns1_ipv6, sizeof(dns1_ipv6));
         if (inet_pton(AF_INET6, dns1_ipv6, &ipv6_addr))
@@ -1032,6 +1031,8 @@ int prepare_dhcp_conf (char *input)
                 strncat(buff,dns_ip2,strlen(dns_ip2));  
             }
 
+            fprintf(l_fLocal_Dhcp_ConfFile,"%s\n", buff);
+
             if (strlen(dns1_ipv6) > 0)
             {
                 strcat(buff,",");
@@ -1043,9 +1044,7 @@ int prepare_dhcp_conf (char *input)
                 strcat(buff,",");
                 strncat(buff,dns2_ipv6,strlen(dns2_ipv6));  
             }
-            fprintf(l_fLocal_Dhcp_ConfFile,"%s\n", buff);
-
-#ifdef RDKB_EXTENDER_ENABLED
+            
             FILE *fp = NULL;
             snprintf(dns,sizeof(dns),"%s",buff);
             tok = strtok(dns, ","); // ignore dhcp-option=6
@@ -1068,7 +1067,6 @@ int prepare_dhcp_conf (char *input)
                 }
                 fclose(fp);  
             }
-#endif
         }
 	
         // Add DHCP option 43: Vendor specific data
