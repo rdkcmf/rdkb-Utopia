@@ -251,6 +251,7 @@ do_start() {
             ulog ddns status "$PID ddns update required but we are in a quiet period. Will retry later"
             sysevent set ${SERVICE_NAME}-errinfo "mandated quiet period"
             sysevent set ${SERVICE_NAME}-status error
+	    removeCron "sysevent set ddns-start"
             addCron "1,6,11,16,21,26,31,36,41,46,51,56 * * * * sysevent set ddns-start"
          else 
             sysevent set ddns_failure_time
