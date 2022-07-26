@@ -344,9 +344,8 @@ case "$1" in
     mesh_wan_linkstatus)
         DEVICE_MODE=`syscfg get Device_Mode`
         if [ "1" = "$DEVICE_MODE" ] ; then
-
-
-        sysevent set dhcp_server-restart
+            sysevent set lan_status-dhcp "started"
+            sysevent set dhcp_server-restart
         sleep 2
         def_gateway=$(ip route show | grep default | grep "$mesh_bhaul_ifname" | cut -d " " -f 3)
         if [ "x$def_gateway" = "x" ];then
