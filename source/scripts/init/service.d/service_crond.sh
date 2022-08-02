@@ -172,6 +172,10 @@ service_start ()
           addCron "48 * * * *  sh /etc/sky/monitor_dhd_dump.sh &"
       fi
 
+      if [ "$BOX_TYPE" == "HUB4" ]; then
+	      addCron "51 * * * *  sh /etc/utopia/service.d/handle_log_monitor_pause.sh &"
+      fi
+ 
       # Logging current chain mask value of 2G - runs on 1st minute of every 12th hour - only for 3941 box
       MODEL="`grep MODEL_NUM /etc/device.properties | cut -d "=" -f2`"
       if [ -n "$(echo "$MODEL" | grep 3941)" ]; then
