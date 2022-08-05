@@ -890,9 +890,8 @@ int prepare_dhcp_conf (char *input)
         char l_cDhcpNs_1[ 128 ] = { 0 }, l_cDhcpNs_2[ 128 ] = { 0 };
 	#ifdef RDKB_EXTENDER_ENABLED
     char dev_Mode[20] = {0}; 
-    char buff[512] = {0};
-	char *tok = NULL;
-    char dns[512];
+    char buff[512] = {0}; 
+
     #endif
 	int l_iMkdir_Res, l_iRet_Val;
 	int l_iRetry_Count = 0, ret;
@@ -971,6 +970,7 @@ int prepare_dhcp_conf (char *input)
 
         UpdateConfigListintoConfFile(l_fLocal_Dhcp_ConfFile);
 
+    #if 0
 	bool dns_flag = 0;
         char dns_ip1[16] = {0};
         char dns_ip2[16] = {0};
@@ -1068,7 +1068,7 @@ int prepare_dhcp_conf (char *input)
                 fclose(fp);  
             }
         }
-	
+	#endif
         // Add DHCP option 43: Vendor specific data
         memset (buff, 0, sizeof(buff));
         sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcpv4_option_43", buff, sizeof(buff));

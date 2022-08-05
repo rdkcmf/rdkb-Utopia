@@ -787,22 +787,6 @@ if [ "x$rdkb_extender" = "xtrue" ];then
   		fi
        done
 
-       DNS1=`sysevent get ipv4_dns_0`
-       DNS2=`sysevent get ipv4_dns_1`
-       DNS_FLAG=0
-       if expr "$DNS1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
-           echo -n "dhcp-option=6,""$DNS1" >> $LOCAL_DHCP_CONF;
-           DNS_FLAG=1
-       fi
-
-       if expr "$DNS2" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
-           if [ $DNS_FLAG != 1]; then
-               echo -n "dhcp-option=6" >> $LOCAL_DHCP_CONF;
-           fi
-           echo ",$DNS2" >> $LOCAL_DHCP_CONF;
-           DNS_FLAG=1
-       fi
-
        OPT_43=`sysevent get dhcpv4_option_43`
 
        if [ -n "$OPT_43" ] ; then
@@ -812,30 +796,6 @@ if [ "x$rdkb_extender" = "xtrue" ];then
 
        cat $LOCAL_DHCP_CONF > $DHCP_CONF
        rm -f $LOCAL_DHCP_CONF
-
-      if [ "x$DNS_FLAG" = "x1" ] ; then
-      WAN_DNS=""
-      echo -n "" > $TMP_RESOLVE_CONF
-      if [ "0.0.0.0" != "$DNS1" ] && [ "" != "$DNS1" ] ; then
-         echo "nameserver $DNS1" >> $TMP_RESOLVE_CONF
-         WAN_DNS=`echo "$WAN_DNS" "$DNS1"`
-      fi
-      if [ "0.0.0.0" != "$DNS2" ]  && [ "" != "$DNS2" ]; then
-         echo "nameserver $DNS2" >> $TMP_RESOLVE_CONF
-         WAN_DNS=`echo "$WAN_DNS" "$DNS2"`
-      fi
-      fi
-      
-      IPV6_DNS1=`sysevent get cellular_wan_v6_dns1`
-      IPV6_DNS2=`sysevent get cellular_wan_v6_dns2`
-      if [ "x$IPV6_DNS1" != "x" ];then
-            echo "nameserver $IPV6_DNS1" >> $TMP_RESOLVE_CONF
-
-      fi
-      if [ "x$IPV6_DNS2" != "x" ];then
-            echo "nameserver $IPV6_DNS2" >> $TMP_RESOLVE_CONF
-
-      fi
       return
    fi
  fi	 

@@ -43,18 +43,24 @@ source /etc/utopia/service.d/log_capture_path.sh
 echo_t "---------------------------------------------------------"
 echo_t "-------------------- service_devicemode.sh ---------------------"
 echo_t "---------------------------------------------------------"
-set -x
 
 SERVICE_NAME=devicemode
 
+echo "service_devicemode.sh arg1 is $1 arg2 is $2"
 Ipv4_Gateway_Addr=""
 Ipv6_Gateway_Addr=""
-DEVICE_MODE=`syscfg get Device_Mode`
 mesh_wan_ifname=$(psmcli get dmsb.Mesh.WAN.Interface.Name)
 
 cellular_ifname=$(sysevent get cellular_ifname)
 
 MESH_IFNAME_DEF_ROUTE=$(psmcli get dmsb.l3net.9.V4Addr)
+
+DEF_RESOLV_CONF="/etc/resolv.conf"
+TMP_RESOLV_CONF="/tmp/lte_resolv.conf"
+
+v6_dns_configured="/tmp/.v6dnsconfigured"
+v4_dns_configured="/tmp/.v4dnsconfigured"
+
 update_v4route_for_dns_res()
 {
     backup_v4_dns1=$(sysevent get backup_cellular_wan_v4_dns1)
@@ -129,10 +135,12 @@ update_v6route_for_dns_res()
 
 }
 
-update_ipv6_dns()
+update_dns_conf()
 {
+  devMode=`syscfg get Device_Mode`
+
   RESOLV_CONF_override_needed=0
-    if [ "1" = "$DEVICE_MODE" ] ; then
+    if [ "1" = "$devMode" ] ; then
         RESOLV_CONF=/tmp/lte_resolv.conf   
     else
         RESOLV_CONF="/etc/resolv.conf"
@@ -140,11 +148,12 @@ update_ipv6_dns()
 
   RESOLV_CONF_TMP="/tmp/resolv_tmp.conf"
 
-  ipv6_dns="$1"
+    ip_dns="$2"
     cp $RESOLV_CONF $RESOLV_CONF_TMP
     echo "comapring old and new dns IPV6 configuration " 
      RESOLV_CONF_override_needed=0
-     for i in "ipv6_dns"; do
+     for i in $ip_dns
+     do
         new_ipv6_dns_server="nameserver $i"
         dns_matched=`grep "$new_ipv6_dns_server" "$RESOLV_CONF_TMP"`
         if [ "$dns_matched" = "" ]; then
@@ -152,11 +161,18 @@ update_ipv6_dns()
                 RESOLV_CONF_override_needed=1
                 break
         fi
-     done  
+     done
 
      if [ "$RESOLV_CONF_override_needed" -eq 1 ]; then
      sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
-     dns=`sysevent get wan6_ns_backup`
+     if [ "$1" = "ipv6" ];then
+        dns=$(sysevent get wan6_ns_backup)
+     elif [ "$1" = "ipv4" ];then  
+        dns=$(sysevent get wan4_ns_backup)
+     else
+        return
+     fi
+
      if [ "$dns" != "" ]; then
         echo "Removing old DNS IPV6 SERVER configuration from resolv.conf " 
         for i in $dns; do
@@ -164,13 +180,13 @@ update_ipv6_dns()
                 sed -i "/$dns_server/d" "$RESOLV_CONF_TMP"
         done
      fi
-        for i in $ipv6_dns; do
+        for i in $ip_dns; do
          R="${R}nameserver $i
 "
         done
 
         echo -n "$R" >> "$RESOLV_CONF_TMP"
-        echo "Adding new IPV6 DNS SERVER to resolv.conf" 
+        echo "Adding new DNS SERVER to resolv.conf" 
         N=""
         while read line; do
         N="${N}$line
@@ -179,13 +195,32 @@ update_ipv6_dns()
         echo -n "$N" > "$RESOLV_CONF"
 
    else
-        echo "Old and New IPv6 dns are same" 
+        echo "Old and New dns are same" 
    fi
-    rm -rf $RESOLV_CONF_TMP
-    sysevent set wan6_ns_backup "$ipv6_dns"
 
+    rm -rf $RESOLV_CONF_TMP
+        if [ "$1" = "ipv6" ];then
+            sysevent set wan6_ns_backup "$ip_dns"
+            touch "$v6_dns_configured"
+        elif [ "$1" = "ipv4" ];then  
+            sysevent set wan4_ns_backup "$ip_dns"
+            touch "$v4_dns_configured"
+        fi
 }
 
+sync_dns()
+{
+    echo "Syncing v4 and v6 dns"
+    ipv4_dns=$(sysevent get ipv4_nameserver)
+    if [ "$ipv4_dns" != "" ];then
+        update_dns_conf "ipv4" "$ipv4_dns"
+    fi
+    ipv6_dns=$(sysevent get ipv6_nameserver)
+    if [ "$ipv6_dns" != "" ];then
+        update_dns_conf "ipv6" "$ipv6_dns"
+    fi
+}
+                    
 case "$1" in
     "${SERVICE_NAME}-start")
         service_devicemode start $2
@@ -199,10 +234,25 @@ case "$1" in
         ;;
     DeviceMode)
         service_devicemode DeviceMode $2
-
         if [ "$2" = "1" ];then
 
             sysevent set routeunset-ula
+
+            if [ ! -f "$v6_dns_configured" ] || [ ! -f "$v4_dns_configured" ];then
+                sync_dns
+            else
+                cp "$DEF_RESOLV_CONF" "$TMP_RESOLV_CONF"
+            fi
+            # write null to DEF RESOLV CONF
+            > "$DEF_RESOLV_CONF"
+            mesh_wan_status=$(sysevent get mesh_wan_linkstatus)
+            if [ "x$mesh_wan_status" = "xup" ];then
+                def_gateway=$(ip route show | grep default | grep "$mesh_wan_ifname" | cut -d " " -f 3)
+                if [ "x$def_gateway" = "x" ];then
+                    def_gateway=$MESH_IFNAME_DEF_ROUTE
+                fi
+                echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
+            fi
             echo "Adding rule to resolve dns packets"
         	if_status=`ifconfig "$cellular_ifname" | grep UP`
                 if [ "x$if_status" != "x" ];then
@@ -249,10 +299,21 @@ case "$1" in
                 else
                         ip -6 route del default dev "$cellular_ifname" table 12
                 fi
+
+
+                if [ ! -f "$v6_dns_configured" ] || [ ! -f "$v4_dns_configured" ];then
+                    sync_dns
+                else
+                    if [ -f "$TMP_RESOLV_CONF" ];then
+                        cat "$TMP_RESOLV_CONF" > "$DEF_RESOLV_CONF" 
+                    fi                
+                fi
+
                 sysevent set routeset-ula
    	fi
         ;;
     wan-status)
+        DEVICE_MODE=`syscfg get Device_Mode`
 
         if [ "1" = "$DEVICE_MODE" ] ; then
         	cellular_ifname=`sysevent get cellular_ifname`
@@ -281,11 +342,11 @@ case "$1" in
 
                     mesh_wan_status=$(sysevent get mesh_wan_linkstatus)
                     if [ "x$mesh_wan_status" = "xup" ];then
-                        def_gateway=$(ip route show | grep default | cut -d " " -f 3)
+                        def_gateway=$(ip route show | grep default | grep "$mesh_wan_ifname" | cut -d " " -f 3)
                         if [ "x$def_gateway" = "x" ];then
                             def_gateway=$MESH_IFNAME_DEF_ROUTE
                         fi
-                        echo "nameserver $def_gateway" > /etc/resolv.conf
+                        echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
                     fi
                 elif [ "$2" = "stopped" ];then
                 	echo "Deleting rule to resolve dns packets"
@@ -312,17 +373,17 @@ case "$1" in
         fi
         ;;
     mesh_wan_linkstatus)
-
+        DEVICE_MODE=`syscfg get Device_Mode`
         if [ "1" = "$DEVICE_MODE" ] ; then
 
 
         sysevent set dhcp_server-restart
         sleep 2
-        def_gateway=$(ip route show | grep default | cut -d " " -f 3)
+        def_gateway=$(ip route show | grep default | grep "$mesh_wan_ifname" | cut -d " " -f 3)
         if [ "x$def_gateway" = "x" ];then
             def_gateway=$MESH_IFNAME_DEF_ROUTE
         fi
-        echo "nameserver $def_gateway" > /etc/resolv.conf
+        echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
         mesh_wan_ifname_ipaddr=$(ip -4 addr show dev "$mesh_wan_ifname" scope global | awk '/inet/{print $2}' | cut -d '/' -f1)
         if [ "x$mesh_wan_ifname_ipaddr" = "x" ];then
             mesh_wan_ifname_ipaddr="192.168.246.1"
@@ -361,8 +422,13 @@ case "$1" in
         ;;
 
     ipv6_nameserver)
-        if [ "$2" != "" ];then
-            update_ipv6_dns "$2"
+        if [ "$2" != "" ] && [ "$2" != "NULL" ] ;then
+            update_dns_conf "ipv6" "$2"
+        fi
+    ;;
+    ipv4_nameserver)
+        if [ "$2" != "" ] && [ "$2" != "NULL" ] ;then
+            update_dns_conf "ipv4" "$2"
         fi
     ;;
     cellular_wan_v4_ip)
