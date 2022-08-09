@@ -718,7 +718,6 @@ service_start ()
    sysevent set ddns_failure_time 0
 
    DSLITE_ENABLE=`syscfg get dslite_enable`
-   DDNS_ENABLE=`syscfg get dynamic_dns_enable`
    if [ "$DSLITE_ENABLE" == "1" ] || [ "$DDNS_ENABLE" == "0" ]; then
       exit 0
    fi
