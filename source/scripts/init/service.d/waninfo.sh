@@ -19,6 +19,8 @@
 # limitations under the License.
 ##################################################################################
 
+source /etc/device.properties
+
 getWanInterfaceName()
 {
   interface_name=`sysevent get current_wan_ifname`
@@ -29,9 +31,13 @@ getWanInterfaceName()
 }
 getWanMacInterfaceName()
 {
-  mac_interface=`syscfg get wan_physical_ifname`
-  if [ "$mac_interface" = "" ];then
-      mac_interface="erouter0"
+  if [ "x$rdkb_extender" = "xtrue" ];then
+        mac_interface="eth0"
+  else
+    mac_interface=`syscfg get wan_physical_ifname`
+    if [ "$mac_interface" = "" ];then
+        mac_interface="erouter0"
+    fi  
   fi
   echo "$mac_interface"
 }
