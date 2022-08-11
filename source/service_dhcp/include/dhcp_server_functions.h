@@ -29,4 +29,5 @@ int prepare_dhcp_conf();
 void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns );
 void get_dhcp_option_for_brlan0( char *pDhcpNs_OptionString );
 void prepare_static_dns_urls(FILE *fp_local_dhcp_conf);
+void UpdateDhcpConfChangeBasedOnEvent();
 #endif /* _DHCP_SERVER_FUNCTIONS_H */

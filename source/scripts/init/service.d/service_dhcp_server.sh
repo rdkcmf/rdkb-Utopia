@@ -811,6 +811,13 @@ case "$1" in
    dns-restart)
       dns_start
       ;;
+   dhcp_conf_change)
+   if [ "x$rdkb_extender" = "xtrue" ];then
+      echo_t "SERVICE DHCP : Got restart with $2.. Call dhcp_server_start"
+      UpdateDhcpConfChangeBasedOnEvent
+      dhcp_server_start $2
+   fi
+      ;;
    lan-status)
 	  echo_t "SERVICE DHCP : Got lan_status"
       lan_status_change $CURRENT_LAN_STATE

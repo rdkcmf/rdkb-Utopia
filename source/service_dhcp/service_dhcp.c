@@ -470,6 +470,13 @@ int main(int argc, char *argv[])
 	{
 		bring_lan_up();
 	}
+	#ifdef RDKB_EXTENDER_ENABLED
+    	else if(!strncmp(argv[1], "dhcp_conf_change", 16))
+    	{
+      		UpdateDhcpConfChangeBasedOnEvent();
+		dhcp_server_start(NULL);
+    	}
+      	#endif
 	else if (!strncmp(argv[1], "lan-restart", 11))
 	{
 		lan_restart();

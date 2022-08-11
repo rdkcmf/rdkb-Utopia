@@ -698,6 +698,45 @@ prepare_static_dns_urls()
   fi
 }
 
+UpdateDhcpConfChangeBasedOnEvent()
+{
+       CONF_CHANGE=`sysevent get dhcp_conf_change`
+       dhcp_dyn_cnfig_counter=`sysevent get dhcp_conf_change_counter`
+       flag="false"
+       if [ -z "$dhcp_dyn_cnfig_counter" ];
+       then
+    	   dhcp_dyn_cnfig_counter="0"
+           a="1"
+           count=$(($a + $dhcp_dyn_cnfig_counter))
+           sysevent set dhcp_conf_change_counter $count
+           sysevent set dhcp_dyn_conf_change_$count $CONF_CHANGE
+           flag="true"
+       else
+           for ((i=1; i<=dhcp_dyn_cnfig_counter; i++ ));
+           do
+      		dhcp_conf_list=`sysevent get dhcp_dyn_conf_change_$i`
+      		echo "\$ config lis  $dhcp_conf_list"
+      		if [ $dhcp_conf_list == $CONF_CHANGE ];
+      		then
+        		flag="true"
+        		echo "\$ Already present present in the list"
+        		break
+      		else
+        		echo "\$ Not present in the list"
+      		fi
+   	   done
+       fi
+       echo "\$ flag  $flag"
+       if [ $flag == "false" ];
+       then
+   		dhcp_dyn_cnfig_counter=`sysevent get dhcp_conf_change_counter`
+   		a="1"
+   		count=$(($a + $dhcp_dyn_cnfig_counter))
+   		sysevent set dhcp_conf_change_counter $count
+   		sysevent set dhcp_dyn_conf_change_$count $CONF_CHANGE
+       fi
+}
+
 #-----------------------------------------------------------------
 # set the dhcp config file which is also the dns forwarders file
 #  Parameters:
@@ -727,6 +766,26 @@ if [ "x$rdkb_extender" = "xtrue" ];then
 
        echo "#We need to supply the range of addresses available for lease and optionally a lease time" >> $LOCAL_DHCP_CONF
        echo "dhcp-range=""$PRIVATE_NW_DHCP_LEASE_INFO" >> $LOCAL_DHCP_CONF
+       
+       dhcp_dyn_cnfig_counter=`sysevent get dhcp_conf_change_counter`
+       for (( i=1; i <= dhcp_dyn_cnfig_counter; i++ ))
+       do
+  		dhcp_conf_list=`sysevent get dhcp_dyn_conf_change_$i`
+  		echo "\$list $i $dhcp_conf_list"
+  		if [ -z "$dhcp_conf_list" ]
+  		then
+     			echo "\$Not able to set the value as sysevent is NULL"
+  		else
+      			arr=(${dhcp_conf_list//"|"/ })
+      			CONF_CHANGE_INTF=$arr
+      			for val in "${arr[@]}";
+      			do
+         			CONF_CHANGE_RANGE=$val
+      			done
+      			echo "$CONF_CHANGE_INTF" >> $LOCAL_DHCP_CONF
+      			echo "$CONF_CHANGE_RANGE" >> $LOCAL_DHCP_CONF
+  		fi
+       done
 
        DNS1=`sysevent get ipv4_dns_0`
        DNS2=`sysevent get ipv4_dns_1`

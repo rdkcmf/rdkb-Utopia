@@ -770,6 +770,100 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix, unsigned char bDhc
 	}
 }
 
+void UpdateConfigListintoConfFile(FILE *l_fLocal_Dhcp_ConfFile)
+{
+    char count[12];
+    int dhcp_dyn_cnfig_counter=0;
+    char dhcp_dyn_conf_change[1024] = {0};
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change_counter", count,sizeof(count));
+    dhcp_dyn_cnfig_counter = atoi(count);
+    for(int i=1; i<= dhcp_dyn_cnfig_counter; i++)
+    {
+        char dynConfChange[256]  = {0};
+        snprintf(dhcp_dyn_conf_change,sizeof(dynConfChange), "dhcp_dyn_conf_change_%d",i);
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, dhcp_dyn_conf_change, dynConfChange, sizeof(dynConfChange));
+        if(dynConfChange[0] != '\0' )
+        {
+            char confInterface[32] = {0};
+            char confDhcprange[128] = {0};
+            char * token = strtok(dynConfChange, "|");
+            strncpy(confInterface,token,(sizeof(confInterface)-1));
+            while( token != NULL )
+            {
+                strncpy(confDhcprange,token,(sizeof(confDhcprange)-1));
+                token = strtok(NULL, " ");
+            }
+            fprintf(l_fLocal_Dhcp_ConfFile, "%s\n", confInterface);
+            fprintf(l_fLocal_Dhcp_ConfFile, "%s\n", confDhcprange);
+        }
+        else
+        {
+                printf("Not able to set the value as sysevent set is null");
+        }
+
+    }
+}
+
+void UpdateConfList(char *confToken)
+{
+    char count[12];
+    int dhcp_dyn_cnfig_counter=0;
+    char dhcp_dyn_conf_change[1024];
+    char conf[256]={'\0'};
+    strncpy(conf, confToken, sizeof(conf)-1);
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change_counter", count,sizeof(count));
+    dhcp_dyn_cnfig_counter = atoi(count);
+    snprintf(dhcp_dyn_conf_change, sizeof(conf), "dhcp_dyn_conf_change_%d",dhcp_dyn_cnfig_counter+1);
+    sysevent_set(g_iSyseventfd, g_tSysevent_token, dhcp_dyn_conf_change , conf, 0);
+    dhcp_dyn_cnfig_counter++;
+    sprintf(count, "%d", dhcp_dyn_cnfig_counter);
+    sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change_counter", count, 0);
+}
+
+bool IsEventExist(char *confToken)
+{
+    char count[12];
+    int dhcp_dyn_cnfig_counter=0;
+    char dhcp_dyn_conf_change[1024] = {0};
+    char conf[256]={'\0'};
+    strncpy(conf, confToken, sizeof(conf)-1);
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change_counter", count,sizeof(count));
+    dhcp_dyn_cnfig_counter = atoi(count);
+    if(dhcp_dyn_cnfig_counter ==0)
+    {
+        return false;
+    }
+    else
+    {
+        printf("event exist else aprt\n");
+        for(int i=1; i<= dhcp_dyn_cnfig_counter; i++)
+        {
+            char dynConfChange[256]  = {0};
+            snprintf(dhcp_dyn_conf_change,sizeof(dynConfChange), "dhcp_dyn_conf_change_%d",i);
+            sysevent_get(g_iSyseventfd, g_tSysevent_token, dhcp_dyn_conf_change, dynConfChange, sizeof(dynConfChange));
+            if(strcmp(dynConfChange,conf)==0)
+            {
+                return true;
+            }
+            else
+            {
+                printf("event not present in the list hence update it\n");
+            }
+        }
+    }
+    return false;
+}
+
+void UpdateDhcpConfChangeBasedOnEvent()
+{
+    char confToken[256]  = {0};
+    sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change", confToken, sizeof(confToken));
+    if(IsEventExist(confToken) == false)
+    {
+        UpdateConfList(confToken);
+    }
+
+}
 //Input to this function
 //1st Input Lan IP Address and 2nd Input LAN Subnet Mask
 int prepare_dhcp_conf (char *input)
@@ -875,7 +969,9 @@ int prepare_dhcp_conf (char *input)
         snprintf(buff, sizeof(buff), "dhcp-range=%s\n\n", GRE_VLAN_IFACE_DHCP_OPT);
         fprintf(l_fLocal_Dhcp_ConfFile, buff);
 
-        bool dns_flag = 0;
+        UpdateConfigListintoConfFile(l_fLocal_Dhcp_ConfFile);
+
+	bool dns_flag = 0;
         char dns_ip1[16] = {0};
         char dns_ip2[16] = {0};
         char dns1_ipv6[128] = {0};

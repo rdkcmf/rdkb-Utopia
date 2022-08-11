@@ -50,6 +50,9 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "dhcp_server-start|/usr/bin/service_dhcp",
                                         "dhcp_server-stop|/usr/bin/service_dhcp",
                                         "dhcp_server-resync|/etc/utopia/service.d/service_dhcp_server.sh|NULL|"TUPLE_FLAG_EVENT,
+					#ifdef RDKB_EXTENDER_ENABLED
+                                        "dhcp_conf_change|/usr/bin/service_dhcp",
+                                        #endif
                                         NULL 
                                       };
 #elif defined(CORE_NET_LIB) && \
@@ -62,6 +65,9 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "dhcp_server-start|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
                                         "dhcp_server-stop|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
                                         "dhcp_server-resync|/usr/bin/service_dhcp|NULL|"TUPLE_FLAG_EVENT,
+					#ifdef RDKB_EXTENDER_ENABLED
+                                        "dhcp_conf_change|/usr/bin/service_dhcp",
+                                        #endif
                                         NULL 
                                       };
 #else
@@ -69,6 +75,9 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "syslog-status|/etc/utopia/service.d/service_dhcp_server.sh",
                                         "lan-status|/etc/utopia/service.d/service_dhcp_server.sh",
                                         "dhcp_server-resync|/etc/utopia/service.d/service_dhcp_server.sh|NULL|"TUPLE_FLAG_EVENT,
+					#ifdef RDKB_EXTENDER_ENABLED
+                                        "dhcp_conf_change|/etc/utopia/service.d/service_dhcp_server.sh",
+                                        #endif
                                         NULL 
                                       };
 #endif
