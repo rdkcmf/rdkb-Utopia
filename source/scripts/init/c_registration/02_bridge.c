@@ -55,7 +55,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
 #endif
 #elif defined (_PLATFORM_RASPBERRYPI_)
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge_rpi.sh";
-//const char* SERVICE_CUSTOM_EVENTS[] = { NULL };  //has to be commented due to NOT hit for Commscope platform then also added by patches 
+const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
 #else
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_bridge.sh";
 const char* SERVICE_CUSTOM_EVENTS[] = { NULL };
