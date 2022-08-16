@@ -54,6 +54,7 @@ mesh_wan_ifname=$(psmcli get dmsb.Mesh.WAN.Interface.Name)
 cellular_ifname=$(sysevent get cellular_ifname)
 
 MESH_IFNAME_DEF_ROUTE=$(psmcli get dmsb.l3net.9.V4Addr)
+DEVICE_MODE=$(syscfg get Device_Mode)
 
 DEF_RESOLV_CONF="/etc/resolv.conf"
 TMP_RESOLV_CONF="/tmp/lte_resolv.conf"
@@ -61,7 +62,7 @@ TMP_RESOLV_CONF="/tmp/lte_resolv.conf"
 v6_dns_configured="/tmp/.v6dnsconfigured"
 v4_dns_configured="/tmp/.v4dnsconfigured"
 
-update_v4route_for_dns_res()
+update_v4route()
 {
     backup_v4_dns1=$(sysevent get backup_cellular_wan_v4_dns1)
     backup_v4_dns2=$(sysevent get backup_cellular_wan_v4_dns2)
@@ -70,11 +71,21 @@ update_v4route_for_dns_res()
     cellular_manager_gw=$(sysevent get cellular_wan_v4_gw)
     cellular_manager_dns1=$(sysevent get cellular_wan_v4_dns1)
     cellular_manager_dns2=$(sysevent get cellular_wan_v4_dns2)
-    if [ "x$cellular_manager_gw" = "x0.0.0.0" ] || [ "x$cellular_manager_gw" = "x" ] ;then
+    if [ "$cellular_manager_gw" = "0.0.0.0" ] || [ "x$cellular_manager_gw" = "x" ] ;then
         # delete route
+        echo "Deleting rule to resolve dns packets"
         ip route del "$backup_v4_dns1" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
         ip route del "$backup_v4_dns2" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
+
+        if [ "1" = "$DEVICE_MODE" ] ; then
+            #ip rule del from all dport 53 lookup 12
+            ip rule del iif "$cellular_ifname" lookup 11
+            ip route del default via $backup_wan_v4_gw dev "$cellular_ifname" table 12
+        fi
+
     else
+        echo "Adding rule to resolve dns packets"
+
         if [ "x$cellular_manager_gw" != "x$backup_wan_v4_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v4_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v4_dns2" ];
         then
             if [ "x$backup_wan_v4_gw" != "x" ] || [ "x$backup_wan_v4_gw" != "x0.0.0.0" ];then
@@ -89,6 +100,12 @@ update_v4route_for_dns_res()
             ip route add "$cellular_manager_dns1" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
             ip route add "$cellular_manager_dns2" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
         fi
+        if [ "1" = "$DEVICE_MODE" ] ; then
+            #ip rule add from all dport 53 lookup 12
+            ip rule add iif "$cellular_ifname" lookup 11
+            ip route del default dev "$cellular_ifname" table 12 > /dev/null
+            ip route add default via $cellular_manager_gw dev "$cellular_ifname" table 12
+        fi
     fi
 
     sysevent set backup_cellular_wan_v4_gw "$cellular_manager_gw"
@@ -97,7 +114,7 @@ update_v4route_for_dns_res()
 
 }
 
-update_v6route_for_dns_res()
+update_v6route()
 {
     backup_v6_dns1=$(sysevent get backup_cellular_wan_v6_dns1)
     backup_v6_dns2=$(sysevent get backup_cellular_wan_v6_dns2)
@@ -107,11 +124,14 @@ update_v6route_for_dns_res()
 
     cellular_manager_dns1=$(sysevent get cellular_wan_v6_dns1)
     cellular_manager_dns2=$(sysevent get cellular_wan_v6_dns2)
-    if [ "x$cellular_manager_v6_gw" = "x0.0.0.0" ] || [ "x$cellular_manager_v6_gw" = "x" ] ;then
+    if [ "$cellular_manager_v6_gw" = "::" ] || [ "x$cellular_manager_v6_gw" = "x" ] ;then
         # delete route
         ip -6 route del "$backup_v6_dns1" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
         ip -6 route del "$backup_v6_dns2" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
 
+        if [ "1" = "$DEVICE_MODE" ] ; then
+            ip -6 rule del iif "$cellular_ifname" lookup 11
+        fi
     else
         if [ "x$cellular_manager_v6_gw" != "x$backup_wan_v6_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v6_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v6_dns2" ];
         then
@@ -126,6 +146,10 @@ update_v6route_for_dns_res()
             fi
             ip -6 route add "$cellular_manager_dns1" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
             ip -6 route add "$cellular_manager_dns2" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
+        fi
+        
+        if [ "1" = "$DEVICE_MODE" ] ; then
+            ip -6 rule add iif "$cellular_ifname" lookup 11
         fi
     fi
 
@@ -312,66 +336,6 @@ case "$1" in
                 sysevent set routeset-ula
    	fi
         ;;
-    wan-status)
-        DEVICE_MODE=`syscfg get Device_Mode`
-
-        if [ "1" = "$DEVICE_MODE" ] ; then
-        	cellular_ifname=`sysevent get cellular_ifname`
-
-            	if [ "$2" = "started" ];then
-               		echo "Adding rule to resolve dns packets"
-               		#ip rule add from all dport 53 lookup 12
-                    	ip rule add iif "$cellular_ifname" lookup 11
-                   	Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
-                   	if [ "x$Ipv4_Gateway_Addr" != "x" ];then
-                            ip route del default dev "$cellular_ifname" table 12 > /dev/null
-                        	ip route add default via $Ipv4_Gateway_Addr dev "$cellular_ifname" table 12
-                	else
-                        	ip route add default dev "$cellular_ifname" table 12
-                	fi
-                	#ip -6 rule add from all dport 53 lookup 12
-                    ip -6 rule add iif "$cellular_ifname" lookup 11
-                	#Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
-               		#if [ "x$Ipv6_Gateway_Addr" != "x" ];then
-                		#Ipv6_Gateway_Addr=$(echo $Ipv6_Gateway_Addr | cut -d "/" -f 1)
-                         #   ip -6 route del default dev "$cellular_ifname" table 12 > /dev/null
-                        	#ip -6 route add default via $Ipv6_Gateway_Addr dev "$cellular_ifname" table 12
-                	#else
-                        	#ip -6 route add default dev "$cellular_ifname" table 12
-                	#fi
-
-                    mesh_wan_status=$(sysevent get mesh_wan_linkstatus)
-                    if [ "x$mesh_wan_status" = "xup" ];then
-                        def_gateway=$(ip route show | grep default | grep "$mesh_wan_ifname" | cut -d " " -f 3)
-                        if [ "x$def_gateway" = "x" ];then
-                            def_gateway=$MESH_IFNAME_DEF_ROUTE
-                        fi
-                        echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
-                    fi
-                elif [ "$2" = "stopped" ];then
-                	echo "Deleting rule to resolve dns packets"
-                	#ip rule del from all dport 53 lookup 12
-                    	ip rule del iif "$cellular_ifname" lookup 11
-                	Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
-                	if [ "x$Ipv4_Gateway_Addr" != "x" ];then
-                        	ip route del default via $Ipv4_Gateway_Addr dev "$cellular_ifname" table 12
-                	else
-                    		ip route del default dev "$cellular_ifname" table 12
-                	fi
-
-                	#ip -6 rule del from all dport 53 lookup 12
-                    	ip -6 rule del iif "$cellular_ifname" lookup 11
-                 	#Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
-
-                   	#if [ "x$Ipv6_Gateway_Addr" != "x" ];then
-                        	#Ipv6_Gateway_Addr=$(echo $Ipv6_Gateway_Addr | cut -d "/" -f 1)
-                        	#ip -6 route del default via $Ipv6_Gateway_Addr dev "$cellular_ifname" table 12
-                   	#else
-                        	#ip -6 route del default dev "$cellular_ifname" table 12
-                	#fi       
-		fi
-        fi
-        ;;
     mesh_wan_linkstatus)
         DEVICE_MODE=`syscfg get Device_Mode`
         if [ "1" = "$DEVICE_MODE" ] ; then
@@ -432,10 +396,10 @@ case "$1" in
         fi
     ;;
     cellular_wan_v4_ip)
-        update_v4route_for_dns_res
+        update_v4route
     ;;  
     cellular_wan_v6_ip)
-        update_v6route_for_dns_res
+        update_v6route
     ;; 
     *)
         echo "Usage: service-${SERVICE_NAME} [ ${SERVICE_NAME}-start | ${SERVICE_NAME}-stop | ${SERVICE_NAME}-restart]" > /dev/console
