@@ -166,11 +166,13 @@ static int wan_iface_down(struct serv_wan *sw);
 static int wan_addr_set(struct serv_wan *sw);
 static int wan_addr_unset(struct serv_wan *sw);
 
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 static int wan_dhcp_start(struct serv_wan *sw);
 static int wan_dhcp_stop(struct serv_wan *sw);
 static int wan_dhcp_restart(struct serv_wan *sw);
 static int wan_dhcp_release(struct serv_wan *sw);
 static int wan_dhcp_renew(struct serv_wan *sw);
+#endif
 
 #if !defined(_WAN_MANAGER_ENABLED_)
 static int wan_static_start(struct serv_wan *sw);
@@ -189,14 +191,17 @@ static struct cmd_op cmd_ops[] = {
     {"addr-set",    wan_addr_set,   "set IP address with specific protocol"},
     {"addr-unset",  wan_addr_unset, "unset IP address with specific protocol"},
 
+ #if !defined (FEATURE_RDKB_DHCP_MANAGER)
     /* protocol specific */
     {"dhcp-start",  wan_dhcp_start, "trigger DHCP procedure"},
     {"dhcp-stop",   wan_dhcp_stop,  "stop DHCP procedure"},
     {"dhcp-restart",wan_dhcp_restart, "restart DHCP procedure"},
     {"dhcp-release",wan_dhcp_release,"trigger DHCP release"},
     {"dhcp-renew",  wan_dhcp_renew, "trigger DHCP renew"},
+#endif
 };
 
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 static int Getdhcpcpidfile(char *pidfile,int size )
 {
 #if defined(_PLATFORM_IPQ_)
@@ -495,6 +500,7 @@ static int dhcp_start(struct serv_wan *sw)
    }
     return err == 0 ? 0 : -1;
 }
+#endif   /* FEATURE_RDKB_DHCP_MANAGER */
 
 static int route_config(const char *ifname)
 {
@@ -1334,10 +1340,14 @@ static int wan_addr_set(struct serv_wan *sw)
 #if !defined(_WAN_MANAGER_ENABLED_)
     switch (sw->prot) {
     case WAN_PROT_DHCP:
+        #if !defined (FEATURE_RDKB_DHCP_MANAGER)
         if (wan_dhcp_start(sw) != 0) {
             fprintf(stderr, "%s: wan_dhcp_start error\n", __FUNCTION__);
             return -1;
         }
+        #else
+        sysevent_set(sw->sefd, sw->setok, "dhcp_client-start", "", 0);
+        #endif
 
         break;
     case WAN_PROT_STATIC:
@@ -1559,10 +1569,14 @@ static int wan_addr_unset(struct serv_wan *sw)
 #if !defined(_WAN_MANAGER_ENABLED_)
     switch (sw->prot) {
     case WAN_PROT_DHCP:
+        #if !defined (FEATURE_RDKB_DHCP_MANAGER)
         if (wan_dhcp_stop(sw) != 0) {
             fprintf(stderr, "%s: wan_dhcp_stop error\n", __FUNCTION__);
             return -1;
         }
+        #else
+        sysevent_set(sw->sefd, sw->setok, "dhcp_client-stop", "", 0);
+        #endif
 
         break;
     case WAN_PROT_STATIC:
@@ -1594,6 +1608,7 @@ static int wan_addr_unset(struct serv_wan *sw)
     return 0;
 }
 
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 static int wan_dhcp_start(struct serv_wan *sw)
 {
     int pid; 
@@ -1714,6 +1729,7 @@ static int wan_dhcp_renew(struct serv_wan *sw)
 
     return 0;
 }
+#endif    /* FEATURE_RDKB_DHCP_MANAGER */
 
 #if !defined(_WAN_MANAGER_ENABLED_)
 static int resolv_static_config(struct serv_wan *sw)
