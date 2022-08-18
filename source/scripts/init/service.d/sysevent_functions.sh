@@ -77,8 +77,8 @@ unregister_sysevent_handler()
    SERVICE_NAME=$1
    EVENT_NAME=$2
 
-   asyncid=`sysevent get "${SERVICE_NAME}"_"${EVENT_NAME}"_asyncid`
-   if [ -n "$asyncid" ] ; then
+   asyncid="`sysevent get "${SERVICE_NAME}"_"${EVENT_NAME}"_asyncid`"
+   if [ -z "$asyncid" ] ; then              #using -z where -n counts new line char too RDKB-43982
       sysevent rm_async "$asyncid"
       sysevent set "${SERVICE_NAME}"_"${EVENT_NAME}"_asyncid
    fi
