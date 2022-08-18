@@ -43,8 +43,21 @@
 const char* SERVICE_NAME            = "dhcpv6_client";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_dhcpv6_client.sh";
 
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
-const char* SERVICE_CUSTOM_EVENTS[] = { 
+#if defined(CORE_NET_LIB)
+const char* SERVICE_CUSTOM_EVENTS[] = {
+                                        "dhcpv6_client-start|/usr/bin/service_dhcpv6_client",
+                                        "dhcpv6_client-stop|/usr/bin/service_dhcpv6_client",
+                                        "dhcpv6_client-restart|/usr/bin/service_dhcpv6_client",
+                                        "erouter_mode-updated|/usr/bin/service_dhcpv6_client",
+                                        "phylink_wan_state|/usr/bin/service_dhcpv6_client",
+                                        "current_wan_ifname|/usr/bin/service_dhcpv6_client",
+                                        "bridge_mode|/usr/bin/service_dhcpv6_client",
+                                        "current_ipv4_link_state|/usr/bin/service_dhcpv6_client",
+                                        "lan-status|/usr/bin/service_dhcpv6_client",
+                                        NULL
+                                      };
+#elif defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
+const char* SERVICE_CUSTOM_EVENTS[] = {
                                         "erouter_mode-updated|/etc/utopia/service.d/service_dhcpv6_client.sh",
                                         "phylink_wan_state|/etc/utopia/service.d/service_dhcpv6_client.sh",
                                         "current_wan_ifname|/etc/utopia/service.d/service_dhcpv6_client.sh",

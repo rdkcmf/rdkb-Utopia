@@ -127,6 +127,7 @@ AM_CONDITIONAL(CORE_NET_LIB_FEATURE_SUPPORT, test x"$core_net_lib_feature_suppor
 AM_COND_IF( [CORE_NET_LIB_FEATURE_SUPPORT], [
 AC_CONFIG_FILES([
    source/service_dhcp/Makefile
+   source/service_dhcpv6_client/Makefile
 ])] )
 
 FEATURE_RDKB_EXTENDER=no

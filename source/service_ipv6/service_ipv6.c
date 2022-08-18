@@ -2000,6 +2000,12 @@ struct cmd_op {
 };
 
 static struct cmd_op cmd_ops[] = {
+#if defined(_CBR_PRODUCT_REQ_) && !defined(_CBR2_PRODUCT_REQ_)
+    {"dhcpv6_server-start", serv_ipv6_start,   "start DHCPv6 Server"},
+    {"dhcpv6_server-stop", serv_ipv6_stop,   "stop DHCPv6 Server"},
+    {"dhcpv6_server-restart", serv_ipv6_restart,   "restart DHCPv6 Server"},
+    {"dhcpv6_option_changed", serv_ipv6_restart,   "restart DHCPv6 Server"},
+#endif
     {"start",       serv_ipv6_start,  "start service ipv6"},
     {"stop",        serv_ipv6_stop,   "stop service ipv6"},
     {"restart",     serv_ipv6_restart,"restart service ipv6"},

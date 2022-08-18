@@ -636,7 +636,12 @@ static int start_dhcpv6_client(struct serv_wan *sw)
                     sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
                     sysevent_set(sw->sefd, sw->setok, "dslite_option64-status", "", 0);
                     fprintf(stderr, "Starting DHCPv6 Client now\n");
+#if defined(CORE_NET_LIB)
+                    system("/usr/bin/service_dhcpv6_client dhcpv6_client_service_enable");
+                    fprintf(stderr, "%s  Calling service_dhcpv6_client.c with dhcpv6_client_service_enable from service_wan.c\n",__func__);
+#else
                     system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
+#endif
                     break;
                 case WAN_PROT_STATIC:
                     break;
@@ -911,9 +916,15 @@ static int wan_start(struct serv_wan *sw)
                    if (sw->rtmod == WAN_RTMOD_IPV6) 
                         sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
 
-                   v_secure_system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
+#if defined(CORE_NET_LIB)
+                    v_secure_system("/usr/bin/service_dhcpv6_client dhcpv6_client_service_enable");
+                    fprintf(stderr, "%s  Calling service_dhcpv6_client.c with dhcpv6_client_service_enable from service_wan.c\n",__func__);
+#else
+                    v_secure_system("/etc/utopia/service.d/service_dhcpv6_client.sh enable");
+#endif
+
 #ifdef DSLITE_FEATURE_SUPPORT
-                 wait_till_dhcpv6_client_reply(sw);
+                   wait_till_dhcpv6_client_reply(sw);
 #endif
                    break;
              case WAN_PROT_STATIC:
@@ -1117,7 +1128,12 @@ static int wan_stop(struct serv_wan *sw)
     if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS) {
        if (sw->prot == WAN_PROT_DHCP) {
                fprintf(stderr, "Disabling DHCPv6 Client\n");
-               v_secure_system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");
+#if defined(CORE_NET_LIB)
+                    v_secure_system("/usr/bin/service_dhcpv6_client dhcpv6_client_service_disable");
+                    fprintf(stderr, "%s  Calling service_dhcpv6_client.c with dhcpv6_client_service_disable from service_wan.c\n",__func__);
+#else
+                    v_secure_system("/etc/utopia/service.d/service_dhcpv6_client.sh disable");
+#endif
        } else if (sw->prot == WAN_PROT_STATIC) {
                if (wan_static_stop_v6(sw) != 0) {
                        fprintf(stderr, "%s: wan_static_stop_v6 error\n", __FUNCTION__);

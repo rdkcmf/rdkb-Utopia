@@ -26,6 +26,7 @@ endif
 
 if CORE_NET_LIB_FEATURE_SUPPORT
 SUBDIRS += service_dhcp
+SUBDIRS += service_dhcpv6_client
 endif
 
 if FEATURE_RDKB_EXTENDER

@@ -39,7 +39,15 @@
 const char* SERVICE_NAME            = "dhcpv6_server";
 const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_dhcpv6_server.sh";
 
-#ifdef CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION
+#if defined(_CBR_PRODUCT_REQ_) && !defined(_CBR2_PRODUCT_REQ_)
+const char* SERVICE_CUSTOM_EVENTS[] = {
+                                        "dhcpv6_option_changed|/usr/bin/service_ipv6",
+                                        "dhcpv6_server-start|/usr/bin/service_ipv6",
+                                        "dhcpv6_server-stop|/usr/bin/service_ipv6",
+                                        "dhcpv6_server-restart|/usr/bin/service_ipv6",
+                                        NULL
+                                      };
+#elif defined (CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION)
 const char* SERVICE_CUSTOM_EVENTS[] = { 
                                         "dhcpv6_option_changed|/etc/utopia/service.d/service_dhcpv6_server.sh|NULL|"TUPLE_FLAG_EVENT,
                                         NULL
