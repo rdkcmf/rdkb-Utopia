@@ -1407,3 +1407,5 @@ $DscpEnabledList_1=
 $DscpSleepInterval_1=0
 $DscpEnabledList_2=
 $DscpSleepInterval_2=0
+#Ccsp CMagent Docsis linkdown timeout default value is 900sec
+$DocsisLinkDownTimeOut=900
