@@ -805,6 +805,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
     result = getLanIpv6Info(&ipv6_enable, &ula_enable);
     if(result != 0) {
         fprintf(stderr, "getLanIpv6Info failed");
+        fclose(fp);
         return -1;
     }
     sysevent_get(sefd, setok, "previous_ipv6_prefix_vldtime", prev_valid_lft, sizeof(prev_valid_lft));
