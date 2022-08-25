@@ -137,7 +137,9 @@ service_start ()
       echo "$rand1 $rand2 $rand3 * * execute_dir /etc/cron/cron.monthly" >> $CRONTAB_FILE
       
       # update mso potd every midnight at 00:05
-      echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE 
+      echo "5 0 * * * sysevent set potd-start" >> $CRONTAB_FILE
+
+      echo "*/15 * * * * /bin/sh /usr/ccsp/tad/gui_session_expiry.sh" >> $CRONTAB_FILE 
 
       # Generate Firewall statistics hourly
       if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
