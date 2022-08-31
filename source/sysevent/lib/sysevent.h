@@ -74,6 +74,7 @@ extern "C" {
 #define SE_MAX_MSG_SIZE 1023
 #define SE_MAX_MSG_DATA_SIZE 40960 /* 40K Max */
 #define SE_MAX_MSG_DATA_SIZE_READ_FILE "/tmp/sysevent_binsize_max"
+
 /*
  * null async_id_t
  */
@@ -164,8 +165,7 @@ typedef enum
    SE_MSG_SET_ASYNC_MESSAGE_DATA      = 38,
    SE_MSG_NOTIFICATION_DATA           = 39,
    SE_MSG_RUN_EXTERNAL_EXECUTABLE_DATA = 40,
-   SE_MSG_OPEN_CONNECTION_DATA = 41
-
+   SE_MSG_OPEN_CONNECTION_DATA        = 41,
 } se_msg_type;
 
 typedef unsigned int token_t;
@@ -1004,7 +1004,6 @@ int sysevent_ping_test (int fd, token_t token, struct timeval* tv);
  */
 int sysevent_get(const int fd, const token_t token, const char *inbuf, char *outbuf, int outbytes);
 
-
 /*
  * Procedure     : sysevent_get_data
  * Purpose       : Send a get to the sysevent daemon and receive reply
@@ -1043,7 +1042,6 @@ int sysevent_get_data(const int fd, const token_t token, const char *inbuf, char
 
 int sysevent_set(const int fd, const token_t token, const char *name, const char *value, int conf_req);
 
-
 /*
  * Procedure     : sysevent_set_data
  * Purpose       : Send a set to the sysevent daemon
@@ -1059,7 +1057,6 @@ int sysevent_set(const int fd, const token_t token, const char *name, const char
  *    !0            : Some error
  */
 int sysevent_set_data(const int fd, const token_t token, const char *name, const char *value, int value_length);
-
 
 /*
  * Procedure     : sysevent_unset
@@ -1283,7 +1280,6 @@ int sysevent_rmnotification(const int fd, const token_t token, async_id_t async_
  *   This will block
  */
 int sysevent_getnotification (const int fd, const token_t token, char *namebuf, int *namebytes, char *valbuf, int *valbytes, async_id_t *async_id);
-
 
 /*
  * Procedure     : sysevent_getnotification_data

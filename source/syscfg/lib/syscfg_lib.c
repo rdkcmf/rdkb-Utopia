@@ -69,9 +69,8 @@ static int syscfg_initialized = 0;
 
 static char name_p[MAX_NAME_LEN+1];                      // internal temp name buffer
 
-int load_from_file (const char *fname);
-int commit_to_file (const char *fname);
-int backup_file (const char *bkupFile, const char *localFile);
+static int load_from_file (const char *fname);
+static int commit_to_file (const char *fname);
 
 /******************************************************************************
  *                External syscfg library access apis
@@ -1572,7 +1571,7 @@ static void _syscfg_file_unlock (int fd)
      }
 }
 
-int load_from_file (const char *fname)
+static int load_from_file (const char *fname)
 {
     int fd;
     ssize_t count;
@@ -1622,7 +1621,7 @@ int load_from_file (const char *fname)
 }
 
 /* Taking backup of file */
-int backup_file (const char *bkupFile, const char *localFile)
+static int backup_file (const char *bkupFile, const char *localFile)
 {
    int fd_from = open(localFile, O_RDONLY);
    int rc=0;
@@ -1702,7 +1701,7 @@ int backup_file (const char *bkupFile, const char *localFile)
  * Notes
  *    syscfg space is locked by the caller (for write & commit)
  */
-int commit_to_file (const char *fname)
+static int commit_to_file (const char *fname)
 {
     int fd;
     int i, ct;
