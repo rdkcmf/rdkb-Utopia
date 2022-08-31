@@ -253,9 +253,8 @@ HOTSPOT_BLOB="/nvram/hotspot_blob"
 
 if [ -d $SYSCFG_ENCRYPTED_PATH ]; then
        if [ ! -d $SYSCFG_PERSISTENT_PATH ]; then
-               echo "$SYSCFG_PERSISTENT_PATH path not available creating directory and touching $SYSCFG_NEW_FILE file"
+               echo "$SYSCFG_PERSISTENT_PATH path not available creating directory"
                mkdir $SYSCFG_PERSISTENT_PATH
-               touch $SYSCFG_NEW_FILE
        fi
 fi
 
