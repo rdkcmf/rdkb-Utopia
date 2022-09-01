@@ -83,6 +83,12 @@ extern unsigned int mask2cidr(char *subnetMask);
 
 static unsigned int isValidSubnetMask(char *subnetMask);
 
+enum interface{
+    ExistWithSameRange,
+    ExistWithDifferentRange,
+    NotExists
+};
+
 /*
  * A subnet mask should only have continuous 1s starting from MSB (Most Significant Bit).
  * Like 11111111.11111111.11100000.00000000. 
@@ -804,7 +810,7 @@ void UpdateConfigListintoConfFile(FILE *l_fLocal_Dhcp_ConfFile)
     }
 }
 
-void UpdateConfList(char *confToken)
+void AddConfList(char *confToken)
 {
     char count[12];
     int dhcp_dyn_cnfig_counter=0;
@@ -820,49 +826,97 @@ void UpdateConfList(char *confToken)
     sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change_counter", count, 0);
 }
 
-bool IsEventExist(char *confToken)
+void UpdateConfList(char *confTok, int ct)
+{
+
+    char conf[256]={'\0'};
+    char dhcp_dyn_conf_change[1024] = {0};
+    strncpy(conf, confTok, sizeof(conf)-1);
+    snprintf(dhcp_dyn_conf_change, sizeof(conf), "dhcp_dyn_conf_change_%d",ct);
+    printf("sysevent set dhcp_dyn_conf_change_%d: %s\n",ct,conf);
+    sysevent_set(g_iSyseventfd, g_tSysevent_token, dhcp_dyn_conf_change , conf, 0);
+}
+
+enum interface IsInterfaceExists(char *confTok, char * confInf, int* inst)
 {
     char count[12];
     int dhcp_dyn_cnfig_counter=0;
     char dhcp_dyn_conf_change[1024] = {0};
     char conf[256]={'\0'};
-    strncpy(conf, confToken, sizeof(conf)-1);
+    char infc[32]={'\0'};
+    strncpy(conf, confTok, sizeof(conf)-1);
+    strncpy(infc, confInf, sizeof(infc)-1);
+
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change_counter", count,sizeof(count));
     dhcp_dyn_cnfig_counter = atoi(count);
     if(dhcp_dyn_cnfig_counter ==0)
     {
-        return false;
+        return NotExists;
     }
     else
     {
-        printf("event exist else aprt\n");
         for(int i=1; i<= dhcp_dyn_cnfig_counter; i++)
         {
             char dynConfChange[256]  = {0};
+            char dynConfChag[256]  = {0};
             snprintf(dhcp_dyn_conf_change,sizeof(dynConfChange), "dhcp_dyn_conf_change_%d",i);
             sysevent_get(g_iSyseventfd, g_tSysevent_token, dhcp_dyn_conf_change, dynConfChange, sizeof(dynConfChange));
-            if(strcmp(dynConfChange,conf)==0)
+            strncpy(dynConfChag, dynConfChange, sizeof(dynConfChag)-1);
+            char dynInf[32] = {0};
+            if(dynConfChag[0] != '\0' )
             {
-                return true;
+                char * tokenInf = strtok(dynConfChag, "|");
+                strncpy(dynInf,tokenInf,(sizeof(dynInf)-1));
+            }
+            if (strcmp(infc,dynInf)==0)
+            {
+                if (strcmp(conf,dynConfChange)==0)
+                {
+                        return ExistWithSameRange;
+                }
+                else
+                {
+                 	*inst =i;
+                  	return ExistWithDifferentRange;
+                }
             }
             else
             {
                 printf("event not present in the list hence update it\n");
             }
+
         }
     }
-    return false;
+    return NotExists;
 }
-
 void UpdateDhcpConfChangeBasedOnEvent()
 {
     char confToken[256]  = {0};
+    char confTok[256]  = {0};
+    enum interface inf;
+    char confInface[32] = {0};
+    int instance;
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_conf_change", confToken, sizeof(confToken));
-    if(IsEventExist(confToken) == false)
+    strncpy(confTok, confToken, sizeof(confTok)-1);
+    if(confTok[0] != '\0' )
     {
-        UpdateConfList(confToken);
+        char * token = strtok(confTok, "|");
+        strncpy(confInface,token,(sizeof(confInface)-1));
     }
-
+    inf= IsInterfaceExists(confToken,confInface,&instance);
+    switch(inf){
+        case ExistWithSameRange:
+            printf("No change\n");
+            break;
+        case ExistWithDifferentRange:
+            printf("upadte the list\n");
+            UpdateConfList(confToken,instance);
+            break;
+        case NotExists:
+            printf("add to list\n");
+            AddConfList(confToken);
+            break;
+    }
 }
 //Input to this function
 //1st Input Lan IP Address and 2nd Input LAN Subnet Mask

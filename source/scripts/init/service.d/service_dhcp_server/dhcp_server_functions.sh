@@ -703,9 +703,16 @@ UpdateDhcpConfChangeBasedOnEvent()
        CONF_CHANGE=`sysevent get dhcp_conf_change`
        dhcp_dyn_cnfig_counter=`sysevent get dhcp_conf_change_counter`
        flag="false"
+       if [ -z "$CONF_CHANGE" ]
+       then
+                echo "\$Not able to set the value as sysevent is NULL"
+       else
+                inf=(${CONF_CHANGE//"|"/ })
+                confInf=$inf
+       fi
        if [ -z "$dhcp_dyn_cnfig_counter" ];
        then
-    	   dhcp_dyn_cnfig_counter="0"
+           dhcp_dyn_cnfig_counter="0"
            a="1"
            count=$(($a + $dhcp_dyn_cnfig_counter))
            sysevent set dhcp_conf_change_counter $count
@@ -714,26 +721,38 @@ UpdateDhcpConfChangeBasedOnEvent()
        else
            for ((i=1; i<=dhcp_dyn_cnfig_counter; i++ ));
            do
-      		dhcp_conf_list=`sysevent get dhcp_dyn_conf_change_$i`
-      		echo "\$ config lis  $dhcp_conf_list"
-      		if [ $dhcp_conf_list == $CONF_CHANGE ];
-      		then
-        		flag="true"
-        		echo "\$ Already present present in the list"
-        		break
-      		else
-        		echo "\$ Not present in the list"
-      		fi
-   	   done
+                dhcp_conf_list=`sysevent get dhcp_dyn_conf_change_$i`
+                echo "\$ config lis  $dhcp_conf_list"
+                inf1=(${dhcp_conf_list//"|"/ })
+                dynInf=$inf1
+                if [ $confInf == $dynInf ];
+                then
+                        if [ $dhcp_conf_list == $CONF_CHANGE ];
+                        then
+                                flag="true"
+                                echo "\$ Already present present in the list"
+                                break
+                        else
+                                a="0"
+                                count=$(($a + $i))
+                                flag="true"
+                                echo "\$ replace dhcp_conf_change $count $CONF_CHANGE"
+                                sysevent set dhcp_dyn_conf_change_$count $CONF_CHANGE
+                                break
+                        fi
+                else
+                        echo "\$ Not present in the list"
+                fi
+            done
        fi
        echo "\$ flag  $flag"
        if [ $flag == "false" ];
        then
-   		dhcp_dyn_cnfig_counter=`sysevent get dhcp_conf_change_counter`
-   		a="1"
-   		count=$(($a + $dhcp_dyn_cnfig_counter))
-   		sysevent set dhcp_conf_change_counter $count
-   		sysevent set dhcp_dyn_conf_change_$count $CONF_CHANGE
+                dhcp_dyn_cnfig_counter=`sysevent get dhcp_conf_change_counter`
+                a="1"
+                count=$(($a + $dhcp_dyn_cnfig_counter))
+                sysevent set dhcp_conf_change_counter $count
+                sysevent set dhcp_dyn_conf_change_$count $CONF_CHANGE
        fi
 }
 
