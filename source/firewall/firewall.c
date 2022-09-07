@@ -11187,8 +11187,7 @@ static int do_ipv4_norf_captiveportalrule(FILE *nat_fp)
 }
 #endif
 
-#if defined (_SR300_PRODUCT_REQ_)
-#ifdef SR300_FEATURE_SELFHEAL
+#if defined (SR300_FEATURE_SELFHEAL) || defined (HUB4_FEATURE_SELFHEAL)
 static int do_ipv4_selfheal_enable_rule(FILE *nat_fp)
 {
     char captivePortalEnabled[16] = { 0 };
@@ -11225,7 +11224,6 @@ static int do_ipv4_selfheal_enable_rule(FILE *nat_fp)
     }
     return 0;
 }
-#endif
 #endif
 
 /*
@@ -11592,10 +11590,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if defined (_XB6_PRODUCT_REQ_)
    fprintf(nat_fp, "%s\n", ":prerouting_noRFCP_redirect - [0:0]");
 #endif
-#if defined (_SR300_PRODUCT_REQ_)
-#ifdef SR300_FEATURE_SELFHEAL
+#if defined (SR300_FEATURE_SELFHEAL) || defined (HUB4_FEATURE_SELFHEAL)
    fprintf(nat_fp, "%s\n", ":prerouting_selfheal_redirect - [0:0]");
-#endif
 #endif
    fprintf(nat_fp, "%s\n", ":prerouting_ephemeral - [0:0]");
    fprintf(nat_fp, "%s\n", ":prerouting_fromwan - [0:0]");
@@ -11629,10 +11625,8 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 #if defined (_XB6_PRODUCT_REQ_)
    do_ipv4_norf_captiveportalrule (nat_fp);
 #endif
-#if defined (_SR300_PRODUCT_REQ_)
-#ifdef SR300_FEATURE_SELFHEAL
+#if defined (SR300_FEATURE_SELFHEAL) || defined (HUB4_FEATURE_SELFHEAL)
    do_ipv4_selfheal_enable_rule (nat_fp);
-#endif
 #endif
 
 

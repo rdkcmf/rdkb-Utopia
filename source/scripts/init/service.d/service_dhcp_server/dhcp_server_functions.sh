@@ -1299,7 +1299,7 @@ fi
                isItLocalHost=`cat /etc/resolv.conf | grep "127.0.0.1" | cut -d " " -f2`
                if [ "$resolv_conf_entry_cnt" == "1" ] && [ "$isItLocalHost" == "127.0.0.1" ]
                then
-                   if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]; then
+                   if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "HUB4" ]; then
                    #If wan is down and if captive portal is enabled, set cpative portal mode
                    #Once captive portal mode is set, it will set lan IP for DNS in dnsmasq.conf
                         if [ "$CAPTIVEPORTAL_ENABLED" == "true" ]; then
@@ -1325,7 +1325,7 @@ fi
         echo "address=/#/$addr" >> $LOCAL_DHCP_CONF
 
         # Redirection IPv6
-        if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]
+        if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "HUB4" ]
         then
             ip6addr=`ifconfig brlan0 | grep Global | cut -d/ -f1 | awk '{print $3}'`
             echo "address=/#/$ip6addr" >> $LOCAL_DHCP_CONF

@@ -563,6 +563,8 @@ case "$LastRebootReason" in
 
 esac
 fi
+echo_t "[utopia][init] setting captiveportal enable by default"
+syscfg set CaptivePortal_Enable "true"
 
 #Needs to commit DB value after set
 syscfg commit
