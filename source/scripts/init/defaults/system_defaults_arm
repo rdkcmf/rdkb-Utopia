@@ -220,6 +220,16 @@ $pppoe_access_concentrator_name=
 $wan_proto_server_address=
 $wan_domain=
 $pptp_address_static=0
+$IHC_Mode=Monitor
+$IHC_ssid_change_spublic=
+$IHC_5G_MAC_POD=
+$IHC_ETH_MAC_POD=
+$IHC_pass_change=
+$IHC_Mode=
+$IHC_2G_MAC_POD=
+$IHC_ssid_change_private=
+$IHC_ssid_change_public=
+$IHC_Clients_count=
 
 # if wan_proto=l2tp then
 #    -------------
