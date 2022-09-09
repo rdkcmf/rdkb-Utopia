@@ -110,6 +110,24 @@ resync_upnp() {
     sysevent set resync_upnp_process completed    
 }
 
+check_IGD_is_up() {
+
+    try=0
+    while [ $try -lt 12 ]
+    do
+	#Waiting for IGD process to initialise
+        sleep 5
+        count=`ps | grep -c IGD`
+        if [ $count -lt 2 ]; then
+           IGD `sysevent get ipv4_${1}-ifname ` &
+           sysevent set ${SERVICE_NAME}_${1}-pid $!
+        else
+           break
+        fi
+        try=`expr $try + 1`
+    done
+}
+
 handle_ipv4_status() {
     
     CUR_IGD_PID=`sysevent get ${SERVICE_NAME}_${1}-pid`
@@ -117,6 +135,10 @@ handle_ipv4_status() {
         if [ "1" = "$SYSCFG_upnp_igd_enabled" -a x = x$CUR_IGD_PID ] ; then
             IGD `sysevent get ipv4_${1}-ifname` &
             sysevent set ${SERVICE_NAME}_${1}-pid $!
+            #RDKB-44364:To avoid IGD process init failure due to UPNP_E_SOCKET_BIND [-203] error
+	    if [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+               check_IGD_is_up ${1}
+            fi
         fi
     else
         if [ x != x$CUR_IGD_PID ]; then
