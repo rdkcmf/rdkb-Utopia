@@ -50,6 +50,7 @@ echo "service_devicemode.sh arg1 is $1 arg2 is $2"
 Ipv4_Gateway_Addr=""
 Ipv6_Gateway_Addr=""
 mesh_wan_ifname=$(psmcli get dmsb.Mesh.WAN.Interface.Name)
+mesh_bhaul_ifname="br-home"
 
 cellular_ifname=$(sysevent get cellular_ifname)
 
@@ -258,8 +259,10 @@ case "$1" in
         ;;
     DeviceMode)
         service_devicemode DeviceMode $2
-        if [ "$2" = "1" ];then
+        cell_manager_gw_addr=$(sysevent get cellular_wan_v4_gw)
 
+        if [ "$2" = "1" ];then
+            ip route del default via $cell_manager_gw_addr dev "$cellular_ifname" > /dev/null
             sysevent set routeunset-ula
 
             if [ ! -f "$v6_dns_configured" ] || [ ! -f "$v4_dns_configured" ];then
@@ -271,7 +274,7 @@ case "$1" in
             > "$DEF_RESOLV_CONF"
             mesh_wan_status=$(sysevent get mesh_wan_linkstatus)
             if [ "x$mesh_wan_status" = "xup" ];then
-                def_gateway=$(ip route show | grep default | grep "$mesh_wan_ifname" | cut -d " " -f 3)
+                def_gateway=$(ip route show | grep default | grep "$mesh_bhaul_ifname" | cut -d " " -f 3)
                 if [ "x$def_gateway" = "x" ];then
                     def_gateway=$MESH_IFNAME_DEF_ROUTE
                 fi
@@ -313,6 +316,9 @@ case "$1" in
                 else
              		ip route del default dev "$cellular_ifname" table 12
                 fi
+                
+                ip route del default via "$MESH_IFNAME_DEF_ROUTE" dev "$mesh_bhaul_ifname"
+                ip route add default via "$cell_manager_gw_addr" dev "$cellular_ifname"
 
                 #ip -6 rule del from all dport 53 lookup 12
                 ip -6 rule del iif "$cellular_ifname" lookup 11
@@ -323,7 +329,6 @@ case "$1" in
                 else
                         ip -6 route del default dev "$cellular_ifname" table 12
                 fi
-
 
                 if [ ! -f "$v6_dns_configured" ] || [ ! -f "$v4_dns_configured" ];then
                     sync_dns
@@ -343,7 +348,7 @@ case "$1" in
 
         sysevent set dhcp_server-restart
         sleep 2
-        def_gateway=$(ip route show | grep default | grep "$mesh_wan_ifname" | cut -d " " -f 3)
+        def_gateway=$(ip route show | grep default | grep "$mesh_bhaul_ifname" | cut -d " " -f 3)
         if [ "x$def_gateway" = "x" ];then
             def_gateway=$MESH_IFNAME_DEF_ROUTE
         fi
