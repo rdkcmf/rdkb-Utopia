@@ -17,6 +17,15 @@
   limitations under the License.
 **************************************************************************/
 
+#ifdef RDKB_EXTENDER_ENABLED
+typedef enum {
+    ROUTER =0,
+    EXTENDER_MODE,
+} Dev_Mode;
+
+unsigned int Get_Device_Mode();
+#endif
+
 void dhcp_server_stop();
 int dhcp_server_start (char *);
 int service_dhcp_init();

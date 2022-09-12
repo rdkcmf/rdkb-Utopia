@@ -80,6 +80,26 @@ extern char g_cXdns_Enabled[8];
 extern char g_cAtom_Arping_IP[16];
 extern int executeCmd(char *);
 
+#ifdef RDKB_EXTENDER_ENABLED
+unsigned int Get_Device_Mode()
+{
+  	char dev_type[16] = {0};
+    
+        syscfg_get(NULL, "Device_Mode", dev_type, sizeof(dev_type));
+        unsigned int dev_mode = atoi(dev_type);
+        Dev_Mode mode;
+        if(dev_mode==1)
+        {
+          mode =EXTENDER_MODE;
+        }
+        else
+          mode = ROUTER;
+
+        return mode;
+
+}
+#endif
+
 void _get_shell_output(FILE *fp, char *buf, int len)
 {
     char * p;
@@ -326,6 +346,22 @@ void dhcp_server_stop()
 		return;
 	}
 
+#ifdef RDKB_EXTENDER_ENABLED
+    if (Get_Device_Mode() == EXTENDER_MODE)
+    {
+        // Device is extender, check if ipv4 and mesh link are ready
+        char l_cMeshWanLinkStatus[16] = {0};
+
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "mesh_wan_linkstatus", l_cMeshWanLinkStatus, sizeof(l_cMeshWanLinkStatus));
+
+        if ( strncmp(l_cMeshWanLinkStatus, "up", 2) != 0 )
+        {
+            fprintf(stderr, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
+            return;
+        }
+    }
+#endif
+
 	//dns is always running
    	prepare_hostname();
    	prepare_dhcp_conf("dns_only");
@@ -570,6 +606,22 @@ int dhcp_server_start (char *input)
 					 "dhcp_server-errinfo", "dhcp server is disabled by configuration", 0);
       	return 0;
 	}
+	
+#ifdef RDKB_EXTENDER_ENABLED
+    if (Get_Device_Mode() == EXTENDER_MODE)
+    {
+        // Device is extender, check if ipv4 and mesh link are ready
+        char l_cMeshWanLinkStatus[16] = {0};
+
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "mesh_wan_linkstatus", l_cMeshWanLinkStatus, sizeof(l_cMeshWanLinkStatus));	
+    
+        if ( strncmp(l_cMeshWanLinkStatus, "up", 2) != 0 )
+        {
+            fprintf(stderr, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
+            return 1;
+        }
+    }
+#endif
 	
 	//LAN Status DHCP
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_status-dhcp", l_cLanStatusDhcp, sizeof(l_cLanStatusDhcp));	
@@ -1266,6 +1318,22 @@ int service_dhcp_init()
 
 void lan_status_change(char *input)
 {
+
+#ifdef RDKB_EXTENDER_ENABLED
+    if (Get_Device_Mode() == EXTENDER_MODE)
+    {
+        // Device is extender, check if ipv4 and mesh link are ready
+        char l_cMeshWanLinkStatus[16] = {0};
+
+        sysevent_get(g_iSyseventfd, g_tSysevent_token, "mesh_wan_linkstatus", l_cMeshWanLinkStatus, sizeof(l_cMeshWanLinkStatus));
+
+        if ( strncmp(l_cMeshWanLinkStatus, "up", 2) != 0 ) 
+        {
+            fprintf(stderr, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
+            return;
+        }
+    }
+#endif 
         fprintf(stderr,"\nInside %s function with arg=%s\n",__FUNCTION__,input);
 	char l_cLan_Status[16] = {0}, l_cDhcp_Server_Enabled[8] = {0};
 	int l_iSystem_Res;

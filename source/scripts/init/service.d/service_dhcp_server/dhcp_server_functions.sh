@@ -755,8 +755,6 @@ if [ "x$rdkb_extender" = "xtrue" ];then
        PRIVATE_NW_DHCP_LEASE_INFO="192.168.246.2,192.168.246.254,255.255.255.0,17280"
        #brctl delif brlan0 "$GRE_VLAN_IFACE"
        ip addr add 192.168.246.1/24 dev "$mesh_wan_ifname"
-       echo "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP." >> $LOCAL_DHCP_CONF
-       echo "port=0" >> $LOCAL_DHCP_CONF
 
        echo "#We want dnsmasq to read /var/tmp/lte_resolv.conf " >> $LOCAL_DHCP_CONF
        echo "resolv-file=$TMP_RESOLVE_CONF" >> $LOCAL_DHCP_CONF

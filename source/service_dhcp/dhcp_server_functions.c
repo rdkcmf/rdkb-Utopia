@@ -949,10 +949,6 @@ int prepare_dhcp_conf (char *input)
         system(buff);
         
         // edit the config file
-        fprintf(l_fLocal_Dhcp_ConfFile, "#Setting this to zero completely disables DNS function, leaving only DHCP and/or TFTP.\n");
-        fprintf(l_fLocal_Dhcp_ConfFile, "port=0\n\n");
-      
-      
         fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to read /var/tmp/lte_resolv.conf \n");
 	memset (buff, 0, sizeof(buff)); 
 		snprintf(buff, sizeof(buff), "resolv-file=%s\n\n", TMP_RESOLVE_CONF);
@@ -1004,6 +1000,7 @@ int prepare_dhcp_conf (char *input)
         memset(&ipv6_addr, 0, sizeof(struct in6_addr));
 
         memset(dns1_ipv6, 0, sizeof(dns1_ipv6));
+        memset(dns2_ipv6, 0, sizeof(dns2_ipv6));
 
         sysevent_get(g_iSyseventfd, g_tSysevent_token, "cellular_wan_v6_dns1", dns1_ipv6, sizeof(dns1_ipv6));
         if (inet_pton(AF_INET6, dns1_ipv6, &ipv6_addr))

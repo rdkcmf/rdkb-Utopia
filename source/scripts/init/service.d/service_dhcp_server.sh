@@ -88,6 +88,21 @@ if [ -f "$DHCP_SLOW_START_3_FILE" ] ; then
    rm -f $DHCP_SLOW_START_3_FILE
 fi
 
+is_device_extender () {
+    DEVICE_MODE=`syscfg get Device_Mode`
+    return $DEVICE_MODE
+}
+
+is_mesh_ready() {
+    MESH_WAN_STATUS=`sysevent get mesh_wan_linkstatus`
+    if [ "up" != "$MESH_WAN_STATUS" ]; then
+        echo "Extender: Mesh not ready. MESH_WAN_STATUS:$MESH_WAN_STATUS"
+        return 0
+    fi
+    return 1
+}
+
+
 #-----------------------------------------------------------------
 #  dnsserver_start_lxc
 #
@@ -155,6 +170,11 @@ lan_status_change ()
 #         sysevent set dhcp_server-status stopped
 #   elif [ "started" = "$1" -a "started" = "$CURRENT_LAN_STATE" ] ; then
       if [ "0" = "$SYSCFG_dhcp_server_enabled" ] ; then
+         # if device is extender, ipv4_connection_state and mesh_wan_linkstatus should be up
+         if [ "$EXT_DHCP_READY" != "1" ]; then
+             echo "Extender not ready. cannot start dnsmasq."
+             return
+         fi
          # set hostname and /etc/hosts cause we are the dns forwarder
          prepare_hostname
          # also prepare dns part of dhcp conf cause we are the dhcp server too
@@ -197,6 +217,13 @@ restart_request ()
    if [ "started" != "`sysevent get dhcp_server-status`" ] ; then
       exit 0
    fi
+
+   # if device is extender, ipv4_connection_state and mesh_wan_linkstatus should be up
+   if [ "$EXT_DHCP_READY" != "1" ]; then
+       echo "Extender not ready. cannot start dnsmasq."
+       return
+   fi
+
    sysevent set dns-errinfo
    sysevent set dhcp_server_errinfo
 
@@ -398,6 +425,12 @@ dhcp_server_start ()
       rm -f /var/tmp/lan_not_restart
 	  return 0
    fi
+  
+    # if device is extender, ipv4_connection_state and mesh_wan_linkstatus should be up
+    if [ "$EXT_DHCP_READY" != 1 ]; then 
+        echo "extender not ready to start dnsmasq"
+        return 1
+    fi
   
   if [ "$BOX_TYPE" != "rpi" ] && [ "$BOX_TYPE" != "turris" ]; then
    DHCP_STATE=`sysevent get lan_status-dhcp`
@@ -650,6 +683,12 @@ dhcp_server_stop ()
       return 0
    fi
    
+   # if device is extender, ipv4_connection_state and mesh_wan_linkstatus should be up
+   if [ "$EXT_DHCP_READY" != "1" ]; then
+       echo "Extender not ready. cannot start dnsmasq."
+       return
+   fi
+   
    #dns is always running
    prepare_hostname
    prepare_dhcp_conf $SYSCFG_lan_ipaddr $SYSCFG_lan_netmask dns_only
@@ -699,6 +738,12 @@ dns_start ()
    byoi_bridge_mode=`sysevent get byoi_bridge_mode`
    if [ "0" = "$SYSCFG_dhcp_server_enabled" ] || [ "1" = "$byoi_bridge_mode" ] ; then
       DHCP_STATE=stopped
+   fi
+
+   # if device is extender, ipv4_connection_state and mesh_wan_linkstatus should be up 
+   if [ "$EXT_DHCP_READY" != "1" ]; then
+       echo "Extender not ready. cannot start dnsmasq."
+       return
    fi
 
    # since sighup doesnt reread dnsmasq.conf, we have to stop the
@@ -787,6 +832,16 @@ dns_start ()
 #-----------------------------------------------------------------------
 
 service_init
+
+EXT_DHCP_READY=1
+# if device is extender, ipv4_connection_state and mesh_wan_linkstatus should be up 
+is_device_extender
+if [ $? = "1" ]; then
+    is_mesh_ready
+    if [ $? != "1" ]; then
+        EXT_DHCP_READY=0
+    fi
+fi
 
 case "$1" in
    ${SERVICE_NAME}-start)
