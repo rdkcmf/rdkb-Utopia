@@ -191,7 +191,7 @@ static struct cmd_op cmd_ops[] = {
     {"addr-set",    wan_addr_set,   "set IP address with specific protocol"},
     {"addr-unset",  wan_addr_unset, "unset IP address with specific protocol"},
 
- #if !defined (FEATURE_RDKB_DHCP_MANAGER)
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
     /* protocol specific */
     {"dhcp-start",  wan_dhcp_start, "trigger DHCP procedure"},
     {"dhcp-stop",   wan_dhcp_stop,  "stop DHCP procedure"},
@@ -450,13 +450,12 @@ static int dhcp_start(struct serv_wan *sw)
     err = v_secure_system("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 4",
                  sw->ifname, DHCPC_PID_FILE);
-/*
-#else
-    err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
+
+//#else
+    /*err = vsystem("ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i %s "
                  "-H DocsisGateway -p %s -B -b 1",
-                 sw->ifname, DHCPC_PID_FILE);   
-#endif
-*/
+                 sw->ifname, DHCPC_PID_FILE);*/
+//#endif
    }
    }
 #else
@@ -638,7 +637,10 @@ static int start_dhcpv6_client(struct serv_wan *sw)
                     sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
                     sysevent_set(sw->sefd, sw->setok, "dslite_option64-status", "", 0);
                     fprintf(stderr, "Starting DHCPv6 Client now\n");
-#if defined(CORE_NET_LIB)
+#if defined (FEATURE_RDKB_DHCP_MANAGER)
+                    sysevent_set(sw->sefd, sw->setok, "dhcpv6_client-start", "", 0);
+                    fprintf(stderr, "%s  Calling sysevent dhcpv6_client-start , RDKB_WAN_MANAGER Enabled\n",__func__);
+#elif defined(CORE_NET_LIB)
                     system("/usr/bin/service_dhcpv6_client dhcpv6_client_service_enable");
                     fprintf(stderr, "%s  Calling service_dhcpv6_client.c with dhcpv6_client_service_enable from service_wan.c\n",__func__);
 #else
@@ -915,10 +917,13 @@ static int wan_start(struct serv_wan *sw)
 
                    fprintf(stderr, "Starting DHCPv6 Client now\n");
                     /* In IPv6 or dual mode, raise wan-status event here */
-                   if (sw->rtmod == WAN_RTMOD_IPV6) 
+                   if (sw->rtmod == WAN_RTMOD_IPV6)
                         sysevent_set(sw->sefd, sw->setok, "wan-status", "starting", 0);
 
-#if defined(CORE_NET_LIB)
+#if defined (FEATURE_RDKB_DHCP_MANAGER)
+                    sysevent_set(sw->sefd, sw->setok, "dhcpv6_client-start", "", 0);
+                    fprintf(stderr, "%s  Calling sysevent dhcpv6_client-start , RDKB_WAN_MANAGER Enabled\n",__func__);
+#elif defined(CORE_NET_LIB)
                     v_secure_system("/usr/bin/service_dhcpv6_client dhcpv6_client_service_enable");
                     fprintf(stderr, "%s  Calling service_dhcpv6_client.c with dhcpv6_client_service_enable from service_wan.c\n",__func__);
 #else
@@ -1130,7 +1135,10 @@ static int wan_stop(struct serv_wan *sw)
     if (sw->rtmod == WAN_RTMOD_IPV6 || sw->rtmod == WAN_RTMOD_DS) {
        if (sw->prot == WAN_PROT_DHCP) {
                fprintf(stderr, "Disabling DHCPv6 Client\n");
-#if defined(CORE_NET_LIB)
+#if defined (FEATURE_RDKB_DHCP_MANAGER)
+                    sysevent_set(sw->sefd, sw->setok, "dhcpv6_client-stop", "", 0);
+                    fprintf(stderr, "%s  Calling sysevent dhcpv6_client-stop , RDKB_WAN_MANAGER Enabled\n",__func__); 
+#elif defined(CORE_NET_LIB)
                     v_secure_system("/usr/bin/service_dhcpv6_client dhcpv6_client_service_disable");
                     fprintf(stderr, "%s  Calling service_dhcpv6_client.c with dhcpv6_client_service_disable from service_wan.c\n",__func__);
 #else

@@ -180,10 +180,13 @@ static int proc_mon (const char *proc_name, const char *pid_file, const char *cm
 
     snprintf(syscmd, sizeof(syscmd), "echo \" RDKB_PROCESS_CRASHED : %s is not running, need restart \" >> /rdklogs/logs/SelfHeal.txt.0 ",proc_name);
 	system(syscmd);
+
+    //dnsmasq selfheal mechanism is in Aggresive Selfheal for DHCP Manager
+    #if !defined (FEATURE_RDKB_DHCP_MANAGER)
     if(!strcmp(proc_name,"dnsmasq")) {
         t2_event_d("SYS_SH_dnsmasq_restart",1);
     }
-    
+    #endif
     printf("pmon: attempting to restart '%s' using '%s'\n", proc_name, cmd);
     if (pid_file) {
         printf("pmon: removing pid file %s\n", pid_file);

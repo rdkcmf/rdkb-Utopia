@@ -329,6 +329,8 @@ int dnsmasq_server_start()
 #endif
     return executeCmd(l_cSystemCmd);
 }
+
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 void dhcp_server_stop()
 {
         char l_cDhcp_Status[16] = {0}, l_cSystemCmd[255] = {0};
@@ -394,6 +396,7 @@ void dhcp_server_stop()
         fprintf(stderr, "dns-server didnt start\n");
 	}
 }
+#endif
 
 BOOL IsDhcpConfHasInterface(void)
 {
@@ -575,6 +578,7 @@ int syslog_restart_request()
     return 0;
 }
 
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 int dhcp_server_start (char *input)
 {
         fprintf(stderr, "\nInside  %s function with arg %s\n", __FUNCTION__,input);
@@ -931,6 +935,7 @@ int dhcp_server_start (char *input)
         fprintf(stderr,"\n %s function ENDS\n",__FUNCTION__);
 	return 0;
 }
+#endif
 
 void resync_to_nonvol(char *RemPools)
 {
@@ -1357,6 +1362,7 @@ int service_dhcp_init()
     return SUCCESS;
 }
 
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 void lan_status_change(char *input)
 {
 
@@ -1420,3 +1426,4 @@ void lan_status_change(char *input)
 		}
 	}
 }
+#endif

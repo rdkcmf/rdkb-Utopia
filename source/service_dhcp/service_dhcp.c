@@ -432,6 +432,7 @@ int main(int argc, char *argv[])
 	if ((!strncmp(argv[1], "dhcp_server-start", 17)) ||
 		(!strncmp(argv[1], "dhcp_server-restart", 19)))
 	{
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 		if (3 == argc)
 		{	
 			dhcp_server_start(argv[2]);
@@ -440,13 +441,17 @@ int main(int argc, char *argv[])
 		{
 			dhcp_server_start(NULL);
 		}
+#endif
 	}
         else if(!strncmp(argv[1],"dhcp_server-stop",16))
         {
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
              dhcp_server_stop();
+#endif
         }
         else if (!strncmp(argv[1], "lan-status", 10))
 	{
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
 		//If lan-status is called with lan_not_restart then 
 		//the same is used in further function calls
 		if (4 == argc)
@@ -457,6 +462,7 @@ int main(int argc, char *argv[])
 		{
 			lan_status_change(NULL);
 		}
+#endif
 	}
 	else if (!strncmp(argv[1], "bring-lan", 9) || !strncmp(argv[1], "pnm-status", 10))
 	{
@@ -502,7 +508,13 @@ int main(int argc, char *argv[])
                                      buf, l_cL2Inst, sizeof(l_cL2Inst));
                         if (l_cL2Inst[0] != '\0')
                         {
+                                #if !defined (FEATURE_RDKB_DHCP_MANAGER)
                                 lan_status_change("lan_not_restart");
+                                #else
+                                //Setting an event to start dhcp server with brlan1 as code is moved to CcspDHCPMgr component
+                                //Further modifications will be taken care later
+                                sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-start", "lan_not_restart", 0);
+                                #endif
                         }
                 }
                 else
@@ -583,7 +595,8 @@ int main(int argc, char *argv[])
         {
             printf("Insufficient number of arguments for %s\n", argv[1]);
         }
-    }    
+    }   
+#if !defined (FEATURE_RDKB_DHCP_MANAGER) 
     else if(!strncmp(argv[1], "syslog-status", 13))
     {
         char syslog_status_buf[10]={0};
@@ -595,6 +608,7 @@ int main(int argc, char *argv[])
             syslog_restart_request();
         }
     }
+#endif
     else if(!strncmp(argv[1], "ipv4-set_dyn_config", 19))
     {
         if (argc > 2)
@@ -629,10 +643,12 @@ int main(int argc, char *argv[])
     {
         resync_all_instance();
     }
+#if !defined (FEATURE_RDKB_DHCP_MANAGER)
     else if(!strncmp(argv[1], "dhcp_server-resync", 18))
     {
         resync_to_nonvol(NULL);
     }
+#endif
     else if((!strncmp(argv[1], "multinet_1-status", 17)) ||  
             (!strncmp(argv[1], "multinet_2-status", 17)) ||  
             (!strncmp(argv[1], "multinet_3-status", 17)) ||
