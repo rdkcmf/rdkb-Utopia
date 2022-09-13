@@ -51,8 +51,6 @@
 
 #include <errno.h>
 
-#include "safec_lib_common.h"
-
 #include "syscfg/syscfg.h"
 #include "sysevent/sysevent.h"
 
