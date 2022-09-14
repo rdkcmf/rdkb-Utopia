@@ -57,7 +57,7 @@ fi
 RESOLV_CONF=/etc/resolv.conf
 TMP_RESOLVE_CONF=/tmp/lte_resolv.conf
 WAN_INTERFACE=$(getWanInterfaceName)
-if [ "$BOX_TYPE" = "SR300" ]; then
+if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "HUB4" ]; then
     STATIC_RESOLVE_FILE=/etc/urls_to_ip_resolve
 fi
 # Variables needed for captive portal mode : start
@@ -1285,7 +1285,7 @@ fi
 
            if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ]; then
 
-                if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]; then
+                if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "HUB4" ]; then
                     do_static_resolution
                 fi
                #SKYH4-952: Sky selfheal support.
