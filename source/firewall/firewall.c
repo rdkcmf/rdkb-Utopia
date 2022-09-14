@@ -3546,7 +3546,6 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
              continue;
           }
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP 
-
           strncpy(PfRangeIP[PfRangeCount],toip,MAX_IP4_SIZE-1);
           PfRangeCount++ ;
 #endif
@@ -3911,7 +3910,8 @@ PortRangeForwardNext:
           FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA FALSE);
       }
 #endif
-          FIREWALL_DEBUG("Exiting do_port_range_forwarding\n");
+
+         FIREWALL_DEBUG("Exiting do_port_range_forwarding\n");
 
    return(0);
 }
@@ -10201,7 +10201,7 @@ static void do_wan2lan_staticip(FILE *filter_fp)
 #define PT_MGMT_PREFIX "tsip_pm_"
 static void do_wan2lan_tsip_pm(FILE *filter_fp)
 {
-    int rc, i, count;
+    int rc, i, count, j;
     char query[MAX_QUERY], countStr[16], utKey[64];
     char startIP[sizeof("255.255.255.255")], endIP[sizeof("255.255.255.255")];
     char startPort[sizeof("65535")], endPort[sizeof("65535")];
@@ -10259,16 +10259,16 @@ static void do_wan2lan_tsip_pm(FILE *filter_fp)
         if(strcmp("tcp", query) == 0 || strcmp("both", query) == 0)
         {
             fprintf(filter_fp, "-A wan2lan_staticip_pm -p tcp -m tcp --dport %s:%s -m iprange --dst-range %s-%s -j %s\n", startPort, endPort, startIP, endIP, type == 0 ? "ACCEPT" : "DROP");
-            for(i = 0; i < PfRangeCount; i++) {
-                  fprintf(filter_fp, "-A wan2lan_staticip_pm -d %s -p tcp -m tcp --dport %s:%s -j %s\n",  PfRangeIP[i], startPort, endPort, type == 0 ? "ACCEPT" : "DROP");
+            for(j = 0; j < PfRangeCount; j++) {
+                  fprintf(filter_fp, "-A wan2lan_staticip_pm -d %s -p tcp -m tcp --dport %s:%s -j %s\n",  PfRangeIP[j], startPort, endPort, type == 0 ? "ACCEPT" : "DROP");
              }
         }
         if(strcmp("udp", query) == 0 || strcmp("both", query) == 0)
         {
             fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -m udp --dport %s:%s -m iprange --dst-range %s-%s -j %s\n", startPort, endPort, startIP, endIP, type == 0 ? "ACCEPT" : "DROP");
 
-            for(i = 0; i < PfRangeCount; i++) {
-                  fprintf(filter_fp, "-A wan2lan_staticip_pm -d %s -p udp -m udp --dport %s:%s -j %s\n",  PfRangeIP[i], startPort, endPort, type == 0 ? "ACCEPT" : "DROP");
+            for(j = 0; j < PfRangeCount; j++) {
+                  fprintf(filter_fp, "-A wan2lan_staticip_pm -d %s -p udp -m udp --dport %s:%s -j %s\n",  PfRangeIP[j], startPort, endPort, type == 0 ? "ACCEPT" : "DROP");
              }
         }
     }
@@ -10278,9 +10278,9 @@ static void do_wan2lan_tsip_pm(FILE *filter_fp)
         fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -d %s/%s -j %s\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask, type == 0 ? "DROP" : "ACCEPT");
     }
 
-   for(i = 0; i < PfRangeCount; i++) {
-        fprintf(filter_fp, "-A wan2lan_staticip_pm -p tcp -d %s -j %s\n",  PfRangeIP[i], type == 0 ? "DROP" : "ACCEPT");
-        fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -d %s -j %s\n", PfRangeIP[i], type == 0 ? "DROP" : "ACCEPT");
+   for(j = 0; j < PfRangeCount; i++) {
+        fprintf(filter_fp, "-A wan2lan_staticip_pm -p tcp -d %s -j %s\n",  PfRangeIP[j], type == 0 ? "DROP" : "ACCEPT");
+        fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -d %s -j %s\n", PfRangeIP[j], type == 0 ? "DROP" : "ACCEPT");
     }
 
    FIREWALL_DEBUG("Exiting do_wan2lan_tsip_pm\n"); 	  
