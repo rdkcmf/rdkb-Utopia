@@ -346,6 +346,7 @@ int service_stop(int mode)
         case DEVICE_MODE_ROUTER:
         {
             sysevent_set(sysevent_fd, sysevent_token, "lan-stop", "", 0);
+            sysevent_set(sysevent_fd, sysevent_token, "ipv4-down", "5", 0);
 #if defined (_COSA_BCM_ARM_)
             sysevent_set(sysevent_fd, sysevent_token, "wan-stop", "", 0);
 #endif
@@ -363,6 +364,7 @@ int service_stop(int mode)
             sysevent_set(sysevent_fd, sysevent_token, "wan-stop", "", 0);
 #endif
             sysevent_set(sysevent_fd, sysevent_token, "lan-stop", "", 0);
+            sysevent_set(sysevent_fd, sysevent_token, "ipv4-down", "5", 0);
             sleep(5);
             snprintf(buf,sizeof(buf),"execute_dir %s stop", EXTWAN_MODE_SERVICES_PATH_1);
             runCommandInShellBlocking(buf);
