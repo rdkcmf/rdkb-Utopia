@@ -1791,7 +1791,7 @@ int prepare_dhcp_conf (char *input)
         }
 #endif
 
-#if defined (_XB7_PRODUCT_REQ_) || defined(_WNXL11BWL_PRODUCT_REQ_)
+#if defined(_XB7_PRODUCT_REQ_)
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan112\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n");
 
@@ -1805,6 +1805,28 @@ int prepare_dhcp_conf (char *input)
 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan113\n");
         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.1.5,169.254.1.253,255.255.255.0,infinite\n");
+
+                // Add brlan113 custom dns server configuration
+                if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+                {
+                        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(stderr, "DHCP_SERVER : [brlan113] dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
+                }
+#endif
+#if defined(_WNXL11BWL_PRODUCT_REQ_)
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan112\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.70.5,169.254.70.253,255.255.255.0,infinite\n");
+
+
+                // Add brlan112 custom dns server configuration
+                if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
+                {
+                        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(stderr, "DHCP_SERVER : [brlan112] dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
+                }
+
+        fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan113\n");
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.71.5,169.254.71.253,255.255.255.0,infinite\n");
 
                 // Add brlan113 custom dns server configuration
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )

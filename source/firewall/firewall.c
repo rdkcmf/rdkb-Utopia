@@ -5511,9 +5511,13 @@ static int do_lan2self_by_wanip(FILE *filter_fp, int family)
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 192.168.101.1/32 -j xlog_drop_lan2self\n", lan_ipaddr);
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 169.254.101.1/32 -j xlog_drop_lan2self\n", lan_ipaddr);
    //<<
-
+#if defined(_WNXL11BWL_PRODUCT_REQ_)
+   fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 169.254.70.254/32 -j xlog_drop_lan2self\n", lan_ipaddr);
+   fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 169.254.71.254/32 -j xlog_drop_lan2self\n", lan_ipaddr);
+#else
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 169.254.0.254/32 -j xlog_drop_lan2self\n", lan_ipaddr);
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 169.254.1.254/32 -j xlog_drop_lan2self\n", lan_ipaddr);
+#endif
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 172.16.12.1/32 -j xlog_drop_lan2self\n", lan_ipaddr);
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 192.168.106.1/32 -j xlog_drop_lan2self\n", lan_ipaddr);
    fprintf(filter_fp, "-A lan2self_by_wanip -s %s/24 -d 192.168.251.1/32 -j xlog_drop_lan2self\n", lan_ipaddr);
@@ -9561,10 +9565,14 @@ static int do_multinet_lan2wan_disable (FILE *filter_fp)
  */
 static void do_lan2wan_disable(FILE *filter_fp)
 {
-   FIREWALL_DEBUG("Entering do_lan2wan_disable\n"); 
-
+   FIREWALL_DEBUG("Entering do_lan2wan_disable\n");
+#if defined (_WNXL11BWL_PRODUCT_REQ_)
+   fprintf(filter_fp, "-A lan2wan_disable -d 169.254.70.0/16 -j DROP\n");
+   fprintf(filter_fp, "-A lan2wan_disable -s 169.254.70.0/16 -j DROP\n");
+#else
    fprintf(filter_fp, "-A lan2wan_disable -d 169.254.0.0/16 -j DROP\n");
    fprintf(filter_fp, "-A lan2wan_disable -s 169.254.0.0/16 -j DROP\n");
+#endif
 
    /* if nat is disable or
      * wan is not ready or
@@ -10890,6 +10898,13 @@ static int prepare_multinet_filter_forward (FILE *filter_fp)
     //RDKB-15951
     fprintf(filter_fp, "-A INPUT -i br403 -d 192.168.245.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i br403 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -d 169.254.85.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brebhaul -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+#elif defined(_WNXL11BWL_PRODUCT_REQ_)
+    fprintf(filter_fp, "-A INPUT -i brlan112 -d 169.254.70.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brlan112 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brlan113 -d 169.254.71.0/24 -j ACCEPT\n");
+    fprintf(filter_fp, "-A INPUT -i brlan113 -m pkttype ! --pkt-type unicast -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brebhaul -d 169.254.85.0/24 -j ACCEPT\n");
     fprintf(filter_fp, "-A INPUT -i brebhaul -m pkttype ! --pkt-type unicast -j ACCEPT\n");
 #elif defined(_XB7_PRODUCT_REQ_)
