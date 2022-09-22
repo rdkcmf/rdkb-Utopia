@@ -36,8 +36,7 @@ int isExtProfile()
       return -1;
 }  
 
-
-void add_cellular_if_mss_clamping(FILE *mangle_fp,int family)
+void add_if_mss_clamping(FILE *mangle_fp,int family)
 {
    char mtu_event_name[128] = {0}, mtu_val[8] = {0};
    memset(mtu_event_name,0,sizeof(mtu_event_name));
@@ -61,6 +60,12 @@ void add_cellular_if_mss_clamping(FILE *mangle_fp,int family)
 
          fprintf(mangle_fp, "-A FORWARD -p tcp --tcp-flags SYN,RST SYN -o %s -j TCPMSS --set-mss %d\n",cellular_ifname,mss_clamp_val); 
          fprintf(mangle_fp, "-A POSTROUTING -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d\n",cellular_ifname,mss_clamp_val); 
+         if ( 0 == isExtProfile())
+         {
+            fprintf(mangle_fp, "-A FORWARD -p tcp --tcp-flags SYN,RST SYN -o %s -j TCPMSS --set-mss %d\n",mesh_wan_ifname,mss_clamp_val); 
+            fprintf(mangle_fp, "-A POSTROUTING -o %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %d\n",mesh_wan_ifname,mss_clamp_val);      
+         }
+
       }
 
    }
@@ -129,7 +134,7 @@ int prepare_ipv4_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
    if (strlen(cellular_ipaddr) != 0 )
       fprintf(nat_fp, "-A  POSTROUTING -o %s -j SNAT --to-source %s\n",cellular_ifname,cellular_ipaddr);
 
-   add_cellular_if_mss_clamping(mangle_fp,AF_INET);
+   add_if_mss_clamping(mangle_fp,AF_INET);
    if (strlen(mesh_wan_ipaddr) != 0 )
    {
       fprintf(nat_fp, "-A  PREROUTING -i %s -p udp --dport 53 -j DNAT --to-destination %s\n",mesh_wan_ifname,mesh_wan_ipaddr);
@@ -249,7 +254,7 @@ int prepare_ipv6_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
     * filter
     */
 
-   add_cellular_if_mss_clamping(mangle_fp,AF_INET6);
+   add_if_mss_clamping(mangle_fp,AF_INET6);
 
    int i ;
     for(i = 0; i < mesh_wan_ipv6_num; i++){

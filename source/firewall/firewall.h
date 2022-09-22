@@ -100,7 +100,7 @@ char* get_iface_ipaddr(const char* iface_name);
 
 #ifdef RDKB_EXTENDER_ENABLED
 
-void add_cellular_if_mss_clamping(FILE *mangle_fp,int family);
+void add_if_mss_clamping(FILE *mangle_fp,int family);
 int service_start_ext_mode () ;
 
 int prepare_ipv4_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *filter_fp);

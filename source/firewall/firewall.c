@@ -12989,7 +12989,7 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
    do_raw_table_puma7(raw_fp);
 #endif
    #ifdef RDKB_EXTENDER_ENABLED
-   add_cellular_if_mss_clamping(mangle_fp,AF_INET);
+   add_if_mss_clamping(mangle_fp,AF_INET);
    #endif
    add_qos_marking_statements(mangle_fp);
 
@@ -13677,7 +13677,7 @@ static void do_ipv6_sn_filter(FILE* fp) {
    fprintf(fp, "%s\n", ":postrouting_qos - [0:0]");
  
    #ifdef RDKB_EXTENDER_ENABLED
-      add_cellular_if_mss_clamping(fp,AF_INET6);
+      add_if_mss_clamping(fp,AF_INET6);
    #endif
 
     for (i = 0; i < numifs; ++i) {
