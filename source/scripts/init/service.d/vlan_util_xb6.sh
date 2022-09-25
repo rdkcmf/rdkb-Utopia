@@ -33,6 +33,20 @@ SYSEVENT="sysevent"
 KILLALL="killall"
 LOCKFILE=/var/tmp/vlan_util.pid
 
+#Get VLANID from hotspot.json file
+WEB_CONF_ENABLE="`psmcli get eRT.com.cisco.spvtg.ccsp.webpa.WebConfigRfcEnable`"
+if [ "true" = "$WEB_CONF_ENABLE" ] && [ -f /nvram/hotspot_blob ] && [ -f /nvram/hotspot.json ]; then
+     brlan2_VLANID=`cat /nvram/hotspot.json | sed 's/, "/\n\"/g' | grep wan_vlan | sed 's/\[\|\]\|,\|{\|}//g' | awk '{ print $2}'`
+     brlan3_VLANID=`cat /nvram/hotspot.json | sed 's/, "/\n\"/g' | grep wan_vlan | sed 's/\[\|\]\|,\|{\|}//g' | awk '{ print $3}'`
+     brlan4_VLANID=`cat /nvram/hotspot.json | sed 's/, "/\n\"/g' | grep wan_vlan | sed 's/\[\|\]\|,\|{\|}//g' | awk '{ print $4}'`
+     brlan5_VLANID=`cat /nvram/hotspot.json | sed 's/, "/\n\"/g' | grep wan_vlan | sed 's/\[\|\]\|,\|{\|}//g' | awk '{ print $5}'`
+else
+     brlan2_VLANID=102
+     brlan3_VLANID=103
+     brlan4_VLANID=104
+     brlan5_VLANID=105
+fi
+
 #Initial state variable values (will get reset later)
 IF_LIST=""
 CURRENT_IF_LIST=""
@@ -1028,12 +1042,12 @@ case $INSTANCE in
     3)
         #Public wifi 2.4GHz
         BRIDGE_NAME="brlan2"
-        BRIDGE_VLAN=102
+        BRIDGE_VLAN=brlan2_VLANID
     ;;
     4)
         #Public wifi 5GHz
         BRIDGE_NAME="brlan3"
-        BRIDGE_VLAN=103
+        BRIDGE_VLAN=brlan3_VLANID
     ;;
     6)
         BRIDGE_NAME="br106"
@@ -1045,11 +1059,11 @@ case $INSTANCE in
     ;;
     7)
         BRIDGE_NAME="brlan4"
-        BRIDGE_VLAN=104
+        BRIDGE_VLAN=brlan4_VLANID
     ;;
     8)
         BRIDGE_NAME="brlan5"
-        BRIDGE_VLAN=105
+        BRIDGE_VLAN=brlan5_VLANID
     ;;
     65)
         BRIDGE_NAME="br65"
@@ -1260,12 +1274,12 @@ case $INSTANCE in
     3)
         #Public wifi 2.4GHz
         BRIDGE_NAME="brlan2"
-        BRIDGE_VLAN=102
+        BRIDGE_VLAN=brlan2_VLANID
     ;;
     4)
         #Public wifi 5GHz
         BRIDGE_NAME="brlan3"
-        BRIDGE_VLAN=103
+        BRIDGE_VLAN=brlan3_VLANID
     ;;
     6)
         BRIDGE_NAME="br106"
@@ -1277,11 +1291,11 @@ case $INSTANCE in
     ;;
     7)
         BRIDGE_NAME="brlan4"
-        BRIDGE_VLAN=104
+        BRIDGE_VLAN=brlan4_VLANID
     ;;
     8)
         BRIDGE_NAME="brlan5"
-        BRIDGE_VLAN=105
+        BRIDGE_VLAN=brlan5_VLANID
     ;;
     65)
         BRIDGE_NAME="br65"
