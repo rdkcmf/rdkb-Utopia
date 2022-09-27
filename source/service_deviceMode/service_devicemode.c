@@ -84,9 +84,7 @@
 #define MSECS_IN_SEC  1000
 
 #define COLLECT_WAIT_INTERVAL_MS 40
-#define ROUTER_MODE_SERVICES_PATH_1 "/etc/utopia/registration.d/"
-#define ROUTER_MODE_SERVICES_PATH_2 "/etc/utopia/post.d/"
-#define EXTWAN_MODE_SERVICES_PATH_1 "/etc/utopia/extender/"
+#define ROUTER_MODE_SERVICES_PATH_1 "/etc/utopia/svc_router/"
 #define PSM_NAME_NETWORKING_DEVICE_MODE "dmsb.device.NetworkingMode"
 #define CCSP_SUBSYS     "eRT."
 #define PRIVLAN_L3INST 4
@@ -350,10 +348,7 @@ int service_stop(int mode)
 #if defined (_COSA_BCM_ARM_)
             sysevent_set(sysevent_fd, sysevent_token, "wan-stop", "", 0);
 #endif
-            sleep(5);
             snprintf(buf,sizeof(buf),"execute_dir %s stop", ROUTER_MODE_SERVICES_PATH_1);
-            runCommandInShellBlocking(buf);
-            snprintf(buf,sizeof(buf),"execute_dir %s stop", ROUTER_MODE_SERVICES_PATH_2);
             runCommandInShellBlocking(buf);
             runCommandInShellBlocking("systemctl stop CcspLMLite.service");
         }
@@ -365,10 +360,6 @@ int service_stop(int mode)
 #endif
             sysevent_set(sysevent_fd, sysevent_token, "lan-stop", "", 0);
             sysevent_set(sysevent_fd, sysevent_token, "ipv4-down", "5", 0);
-            sleep(5);
-            snprintf(buf,sizeof(buf),"execute_dir %s stop", EXTWAN_MODE_SERVICES_PATH_1);
-            runCommandInShellBlocking(buf);
-
         }
         break;
         default:
@@ -428,9 +419,6 @@ int service_start(int mode)
             }
             snprintf(buf,sizeof(buf),"execute_dir %s", ROUTER_MODE_SERVICES_PATH_1);
             runCommandInShellBlocking(buf);
-            snprintf(buf,sizeof(buf),"execute_dir %s", ROUTER_MODE_SERVICES_PATH_2);
-            runCommandInShellBlocking(buf);
-            sleep(10);
             if (bridgemode == 0)
             {
                 sysevent_set(sysevent_fd, sysevent_token, "lan-start", "", 0);
@@ -456,9 +444,6 @@ int service_start(int mode)
         case DEVICE_MODE_EXTENDER:
         {
             char tmpbuf[64] = {0};
-            snprintf(buf,sizeof(buf),"execute_dir %s", EXTWAN_MODE_SERVICES_PATH_1);
-            runCommandInShellBlocking(buf);
-            sleep(5);
             sysevent_set(sysevent_fd, sysevent_token, "lan-start", "", 0);
             sysevent_set(sysevent_fd, sysevent_token, "lan_status-dhcp", "started", 0);
 // Do wan start only in XB technicolor for xb->xb backup wan testing.
