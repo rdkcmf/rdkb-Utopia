@@ -103,7 +103,7 @@ old_sysevtlog_handle(){
         #un-compress log file
         if [ -e "$ZIP" ]
         then
-             $RD_LOCK "$ZIP" -c $UNCOMPRESS_CMD "$ZIP" 
+             $RD_LOCK "$ZIP" -c "$UNCOMPRESS_CMD" "$ZIP" 
              ZIP_SZ=$(ls -l "$ZIP" | awk '{print $3}')
         else
              ZIP_SZ=0;
@@ -228,7 +228,7 @@ remove_log()
         if [ -d "$DIR" ]
         then
             echo "rm -rf $1*"
-            rm -rf $1*
+            rm -rf "$1"*
         fi
     fi
 }
@@ -319,7 +319,7 @@ compress()
         #un-compress log file
         if [ -e "$ZIP" ]
         then
-             $RD_LOCK "$ZIP" -c $UNCOMPRESS_CMD "$ZIP" 
+             $RD_LOCK "$ZIP" -c "$UNCOMPRESS_CMD" "$ZIP" 
              ZIP_SZ=$(ls -l "$ZIP" | awk '{print $3}')
         else
             ZIP_SZ=0;
@@ -364,14 +364,14 @@ compress()
 
 uncompress()
 {
-    if [ -z $1 ] || [ ! -e $1 ] || [ -z $2 ] || [ ! -d $2 ]
+    if [ -z "$1" ] || [ ! -e "$1" ] || [ -z "$2" ] || [ ! -d "$2" ]
     then
         return 0;
     fi
     DIR=$2
     TAR=$1
-    cd $DIR
-    $RD_LOCK $TAR -c $UNCOMPRESS_CMD $TAR 
+    cd "$DIR"
+    $RD_LOCK "$TAR" -c "$UNCOMPRESS_CMD" "$TAR" 
 }
 
 V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
@@ -392,7 +392,7 @@ if [ -z "$V_HANDLE_OLD_LOG_13_FLG" ]
 then
     old_sysevtlog_handle $DPC3939_OLD_SYSTERMLOG SYS_LOG_F_INSTANCE 
     old_sysevtlog_handle $DPC3939_OLD_EVTLOG EVT_LOG_F_INSTANCE 
-    old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH $V_FW_LOG_FILE_PATH 
+    old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH "$V_FW_LOG_FILE_PATH" 
     sysevent set R13_LOG_HANDLE_FLG 1
 fi 
 
@@ -438,8 +438,8 @@ fi
 
 if [ "$1" == "uncompress_syslog" ]
 then
-    uncompress "$DPC3939_OLD_SYSTERMLOG.tar.bz2" $2
-    uncompress "$V_SYS_LOG_FILE.tar.bz2" $2
+    uncompress "$DPC3939_OLD_SYSTERMLOG.tar.bz2" "$2"
+    uncompress "$V_SYS_LOG_FILE.tar.bz2" "$2"
 fi
 
 if [ "$1" == "compress_evtlog" ]
@@ -449,8 +449,8 @@ fi
 
 if [ "$1" == "uncompress_evtlog" ]
 then
-    uncompress "$DPC3939_OLD_EVTLOG.tar.bz2" $2 
-    uncompress "$V_EVT_LOG_FILE.tar.bz2" $2
+    uncompress "$DPC3939_OLD_EVTLOG.tar.bz2" "$2" 
+    uncompress "$V_EVT_LOG_FILE.tar.bz2" "$2"
 fi
 
 if [ "$1" == "compress_fwlog" ]
@@ -460,8 +460,8 @@ fi
 
 if [ "$1" == "uncompress_fwlog" ]
 then
-    uncompress "$DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2" $2
-    uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" $2
+    uncompress "$DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2" "$2"
+    uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" "$2"
 fi
 
 if [ -z "$1" ]
