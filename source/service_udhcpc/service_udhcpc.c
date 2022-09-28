@@ -130,6 +130,8 @@ typedef struct udhcpc_script_t
 #define DHCP_TIMEOFFSET "timeoffset"
 #define DHCP_LEASETIME "lease"
 #define DHCP_RENEWL_TIME "renewaltime"
+#define DHCP_ACK_OPT58 "opt58"
+#define DHCP_ACK_OPT59 "opt59"
 #define DHCP_REBINDING_TIME "rebindingtime"
 #define DHCP_SERVER_ID "serverid"
 
@@ -1138,6 +1140,32 @@ int init_udhcpc_script_info(udhcpc_script_t *pinfo, char *option)
     return 0;
 }
 #ifdef FEATURE_RDKB_WAN_MANAGER
+static uint32_t hex2dec(char *hex)
+{
+    uint32_t decimal = 0, base = 1;
+    int length = strlen(hex);
+    for(int i = length--; i >= 0; i--)
+    {
+        if(hex[i] >= '0' && hex[i] <= '9')
+        {
+            decimal += (hex[i] - 48) * base;
+            base *= 16;
+        }
+        else if(hex[i] >= 'A' && hex[i] <= 'F')
+        {
+            decimal += (hex[i] - 55) * base;
+            base *= 16;
+        }
+        else if(hex[i] >= 'a' && hex[i] <= 'f')
+        {
+            decimal += (hex[i] - 87) * base;
+            base *= 16;
+        }
+    }
+    OnboardLog("hex[%s] decimal[%u]\n", hex, decimal);
+    return decimal;
+}
+
 static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_t* pinfo)
 {
     if (dhcpv4_data == NULL || pinfo == NULL)
@@ -1247,6 +1275,10 @@ static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_
         {
             dhcpv4_data->renewalTime = (uint32_t) atoi(getenv(DHCP_RENEWL_TIME));
         }
+        else if (getenv(DHCP_ACK_OPT58) != NULL)
+        {
+            dhcpv4_data->renewalTime = (uint32_t) hex2dec(getenv(DHCP_ACK_OPT58));
+        }
         else
         {
             OnboardLog("[%s-%d] Renewl time is not available in dhcp ack \n",  __FUNCTION__,__LINE__);
@@ -1256,6 +1288,10 @@ static int get_and_fill_env_data (ipc_dhcpv4_data_t *dhcpv4_data, udhcpc_script_
         if (getenv(DHCP_REBINDING_TIME) != NULL)
         {
             dhcpv4_data->rebindingTime = (uint32_t) atoi(getenv(DHCP_REBINDING_TIME));
+        }
+        else if (getenv(DHCP_ACK_OPT59) != NULL)
+        {
+            dhcpv4_data->rebindingTime = (uint32_t) hex2dec(getenv(DHCP_ACK_OPT59));
         }
         else
         {
