@@ -28,6 +28,7 @@ int cellular_wan_ipv6_num = 0;
 char cellular_wan_ipv6addr[IF_IPV6ADDR_MAX][40];
 
 #define SYSEVENT_IPV4_MTU_SIZE "ipv4_%s_mtu"
+
 int isExtProfile()
 {
       if ( ( EXTENDER_MODE == Get_Device_Mode() ) )
@@ -111,6 +112,10 @@ static int prepare_subtables_ext_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_f
     * filter
     */
    fprintf(filter_fp, "%s\n", "*filter");
+   fprintf(filter_fp, "%s\n", ":INPUT ACCEPT [0:0]");
+   fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
+   fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
+
    fprintf(filter_fp, "%s\n", ":wanattack - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlog_drop_wanattack - [0:0]");
    fprintf(filter_fp, "%s\n", ":xlog_accept_wan2lan - [0:0]");
