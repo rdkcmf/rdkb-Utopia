@@ -568,21 +568,13 @@ int handleDeviceModeUpdate (int newMode)
         }
     }
 
-    if (syscfg_set(NULL, "Device_Mode", buf) != 0)
+    if (syscfg_set_commit(NULL, "Device_Mode", buf) != 0)
     {
         printf("\n Device_Mode set syscfg failed\n");       
     }
     else
     {
-        if (syscfg_commit() != 0)
-        {
-            printf("\nDevice_Mode syscfg_commit failed\n");
-
-        }
-        else
-        {
-            updatedDb = 1;
-        }
+        updatedDb = 1;
     }
 
     // Switch mode only if db update is success.
