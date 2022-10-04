@@ -860,7 +860,7 @@ if [ "x$rdkb_extender" = "xtrue" ];then
        result=$(grep '$lan_ipaddr\|$lan_netmask\|$dhcp_start\|$dhcp_end' $DEFAULT_FILE | awk '/\$lan_ipaddr/ {split($1,ip, "=");} /\$lan_netmask/ {split($1,mask, "=");} /\$dhcp_start/ {split($1,start, "=");} /\$dhcp_end/ {split($1,end, "=");} END {print ip[2], mask[2], start[2], end[2]}')
        OIFS=$IFS
        IFS=' '
-       set -- "$result"
+       set -- $result
        lanIP="$1"
        lanNetMask="$2"
        dhcpStart="$3"
