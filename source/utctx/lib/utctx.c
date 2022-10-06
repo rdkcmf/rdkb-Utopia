@@ -34,8 +34,8 @@
 **********************************************************************/
 
 #include "autoconf.h"
-#include "utctx.h"
-#include "utctx_api.h"
+#include <utctx/utctx.h>
+#include <utctx/utctx_api.h>
 #include "utctx_internal.h"
 #include "safec_lib_common.h"
 

@@ -82,7 +82,7 @@
 #ifdef USE_SYSCFG
 #include <syscfg/syscfg.h>
 #endif
-#include "ulog/ulog.h"
+#include <ulog/ulog.h>
 
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"

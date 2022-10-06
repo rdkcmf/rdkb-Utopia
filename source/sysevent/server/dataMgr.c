@@ -73,7 +73,7 @@
 #ifdef USE_SYSCFG
 #include <syscfg/syscfg.h>
 #endif
-#include "ulog/ulog.h"
+#include <ulog/ulog.h>
 #include "secure_wrapper.h"
 
 // data manager inited 

@@ -41,7 +41,7 @@
 #define __UTCTX_API_H__
 
 #include "autoconf.h"
-#include "utctx.h"
+#include <utctx/utctx.h>
 
 /* Utopia defines  */
 #define UTOPIA_STATE_SIZE           (32 * (1024))

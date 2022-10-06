@@ -37,7 +37,7 @@
 
 #include "hdk_device.h"
 #include "hnap12.h"
-#include "utctx_api.h"
+#include <utctx/utctx_api.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -39,7 +39,7 @@
 #include "hdk_srv.h"
 #include "hnap12.h"
 #include "hotspot.h"
-#include "utctx_api.h"
+#include <utctx/utctx_api.h>
 #include "safec_lib_common.h"
 
 #include <stdlib.h>

@@ -72,7 +72,7 @@
 
 #include "sysevent.h"
 #include "libsysevent_internal.h"
-#include "ulog/ulog.h"
+#include <ulog/ulog.h>
 
 #define SERVICE_NAME "syseventd_proxy"
 #define SYSEVENT_PROXY_PID_FILE "/var/run/syseventd_proxy.pid"

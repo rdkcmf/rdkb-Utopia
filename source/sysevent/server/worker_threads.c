@@ -83,7 +83,7 @@ Author: mark enright
 #include <syscfg/syscfg.h>
 #endif
 
-#include "ulog/ulog.h"
+#include <ulog/ulog.h>
 #include "secure_wrapper.h"
 
 static const char *emptystr = "";

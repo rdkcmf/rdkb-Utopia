@@ -35,7 +35,7 @@
 
 #include "hdk_device.h"
 
-#include "utctx_api.h"
+#include <utctx/utctx_api.h>
 
 
 #ifdef HDK_LOGGING

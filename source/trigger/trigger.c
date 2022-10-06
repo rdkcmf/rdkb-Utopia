@@ -47,7 +47,7 @@
 #include <linux/ip.h>  /* for iphdr */
 #include <linux/netfilter.h>            /* for NF_ACCEPT */
 #include <libnetfilter_queue/libnetfilter_queue.h>
-#include "ulog.h"
+#include <ulog/ulog.h>
 #include "syscfg/syscfg.h"
 #include "sysevent/sysevent.h"
 #include <telemetry_busmessage_sender.h>

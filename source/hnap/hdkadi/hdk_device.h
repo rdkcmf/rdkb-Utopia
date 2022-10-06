@@ -40,7 +40,7 @@
 #include "hdk_srv.h"
 #include "hdk_xml.h"
 
-#include "utctx.h"
+#include <utctx/utctx.h>
 
 #ifdef HNAP_DEBUG
 #include <stdio.h>

@@ -29,7 +29,6 @@ trigger_CPPFLAGS = -I$(top_srcdir)/source/pal/upnp/include \
                    -I$(top_srcdir)/source/pal/kernel/include \
                    -I$(top_srcdir)/source/pal/include \
                    -I$(top_srcdir)/source/pal/log/include \
-                   -I$(top_srcdir)/source/ulog \
                    -I$(top_srcdir)/source/include \
                    -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/dbus-1.0 \
                    -I${PKG_CONFIG_SYSROOT_DIR}$(libdir)/dbus-1.0/include
