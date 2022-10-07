@@ -64,59 +64,59 @@ old_sysevtlog_handle(){
     then
         FILE=""
         DIR=/tmp/`date +%Y%m%d%H%M%s`
-        mkdir -p "$DIR"
-        cd "$DIR"
-        NEW_NAME=`syscfg get "$2"`
+        mkdir -p $DIR
+        cd $DIR
+        NEW_NAME=`syscfg get $2`
 
-        if [ -z "$NEW_NAME" ]
+        if [ -z $NEW_NAME ]
         then
-            syscfg set "$2" 1
+            syscfg set $2 1
             syscfg commit
             NEW_NAME=1
         else
             let "NEW_NAME++"
-            syscfg set "$2" "$NEW_NAME"
+            syscfg set $2 $NEW_NAME
             syscfg commit
         fi
 
         if [ -e "$1"".0" ]
         then
 
-            cp "$1".0 "$NEW_NAME"
+            cp $1.0 $NEW_NAME
             FILE="$1.0"
             let "NEW_NAME++"
-            syscfg set "$2" "$NEW_NAME"
+            syscfg set $2 $NEW_NAME
             syscfg commit
         fi
 
         if [ -e "$1" ]
         then
-            cp "$1" "$NEW_NAME"
+            cp $1 $NEW_NAME
             FILE="$FILE"" $1"
             let "NEW_NAME++"
-            syscfg set "$2" "$NEW_NAME"
+            syscfg set $2 $NEW_NAME
             syscfg commit
         fi
 
         ZIP="$1.$POSTFIX"
         NEW_ZIP="${1##*/}.$POSTFIX"
         #un-compress log file
-        if [ -e "$ZIP" ]
+        if [ -e $ZIP ]
         then
-             $RD_LOCK "$ZIP" -c "$UNCOMPRESS_CMD" "$ZIP" 
-             ZIP_SZ=$(ls -l "$ZIP" | awk '{print $3}')
+             $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP 
+             ZIP_SZ=$(ls -l $ZIP | awk '{print $3}')
         else
              ZIP_SZ=0;
         fi
-        $COMPRESS_CMD "$NEW_ZIP" ./* 
-        $WT_LOCK "$ZIP" -c mv "$NEW_ZIP" "$ZIP"
+        $COMPRESS_CMD $NEW_ZIP ./* 
+        $WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
         for oldfile in $FILE ;
         do
             echo "$WT_LOCK $oldfile -c rm -r $oldfile"
-            $WT_LOCK "$oldfile" -c rm -r "$oldfile"
+            $WT_LOCK $oldfile -c rm -r $oldfile
         done;
 
-        rm -rf "$DIR"     
+        rm -rf $DIR     
     fi
 }
 
@@ -125,7 +125,7 @@ old_fwlog_handle(){
     # find old log path
     if [ -e "$1" ]
     then 
-        for filename in `ls "$1"`;
+        for filename in `ls $1`;
         do
             if [ "$filename" != "fwlog.$POSTFIX" ]
             then
@@ -136,21 +136,21 @@ old_fwlog_handle(){
         if [ "$MERGE" == "1" ]
         then
             echo "merge log"
-            for filename in `ls "$2"`;
+            for filename in `ls $2`;
             do
                 if [ "$filename" != "fwlog.$POSTFIX" ]
                 then
                     tmp_file="$1/${filename##*/}"
-                    cat "$2"/"$filename" >> "$tmp_file"
+                    cat $2/$filename >> $tmp_file
                 fi
             done
             echo "Move all txt log to new location"
-            for filename in `ls "$1"` ;
+            for filename in `ls $1` ;
             do
                 if [ "$filename" != "fwlog.$POSTFIX" ]
                 then
-                    cp -f "$1"/"$filename" "$2"
-                    $WT_LOCK "$1"/"$filename" -c rm -r "$1"/"$filename"
+                    cp -f $1/$filename $2
+                    $WT_LOCK $1/$filename -c rm -r $1/$filename
                 fi
             done
         fi
@@ -181,16 +181,16 @@ start_syslog(){
     EVENTLOG=$(grep -e "eventlog" /etc/syslog.conf | awk '{print $2}')
 
     SYSTEMLOG_DIR=${SYSTEMLOG%/*}
-    if [ ! -d "$SYSTEMLOG_DIR" ]
+    if [ ! -d $SYSTEMLOG_DIR ]
     then
-        mkdir -p "$SYSTEMLOG_DIR"
+        mkdir -p $SYSTEMLOG_DIR
     fi
 
     EVENTLOG_DIR=${EVENTLOG%/*}
-    if [ ! -d "$EVENTLOG_DIR" ]
+    if [ ! -d $EVENTLOG_DIR ]
     then
 	echo "mkdir -p $EVENTLOG_DIR"
-        mkdir -p "$EVENTLOG_DIR"
+        mkdir -p $EVENTLOG_DIR
     fi
 
     echo "klogd -c $level"
@@ -202,30 +202,30 @@ start_syslog(){
 get_log_file()
 {
 #TEMP=`syscfg get $1`
-TEMP=`sysevent get "$1"`
+TEMP=`sysevent get $1`
 if [ "$TEMP" == "" ]
 then
-    TEMP=$(grep -e "$2" /etc/syslog.conf | awk '{print $2}')
+    TEMP=$(grep -e $2 /etc/syslog.conf | awk '{print $2}')
     if [ "$TEMP" != "" ]
     then
         #syscfg set $1 $TEMP
         #syscfg commit
-        sysevent set "$1" "$TEMP"
+        sysevent set $1 $TEMP
     fi
 fi
 # !
-echo "$TEMP" 
+echo $TEMP 
 }
 
 remove_log()
 {
     FILE="$1"
 
-    if [ ! -z "$FILE" ]
+    if [ ! -z $FILE ]
     then
         DIR=${FILE%/*}
 
-        if [ -d "$DIR" ]
+        if [ -d $DIR ]
         then
             echo "rm -rf $1*"
             rm -rf "$1"*
@@ -239,14 +239,14 @@ compress()
     then
         FILE="$V_SYS_LOG_FILE.0" 
         NEW_NAME=`syscfg get SYS_LOG_F_INSTANCE`
-        if [ -z "$NEW_NAME" ]
+        if [ -z $NEW_NAME ]
         then
             syscfg set SYS_LOG_F_INSTANCE 1
             syscfg commit
             NEW_NAME=1
         else
             let "NEW_NAME++"
-            syscfg set SYS_LOG_F_INSTANCE "$NEW_NAME"
+            syscfg set SYS_LOG_F_INSTANCE $NEW_NAME
             syscfg commit
         fi
         ZIP="$V_SYS_LOG_FILE.$POSTFIX"
@@ -264,14 +264,14 @@ compress()
     then
         FILE="$V_EVT_LOG_FILE.0"
         NEW_NAME=`syscfg get EVT_LOG_F_INSTANCE`   
-        if [ -z "$NEW_NAME" ]
+        if [ -z $NEW_NAME ]
         then
             syscfg set EVT_LOG_F_INSTANCE 1 
             syscfg commit
             NEW_NAME=1
         else
             let "NEW_NAME++"
-            syscfg set EVT_LOG_F_INSTANCE "$NEW_NAME"
+            syscfg set EVT_LOG_F_INSTANCE $NEW_NAME
             syscfg commit
         fi
 
@@ -287,13 +287,13 @@ compress()
     elif [ "$1" == "fwlog" ]
     then
         FILE=""
-        if [ ! -d "$V_FW_LOG_FILE_PATH" ]
+        if [ ! -d $V_FW_LOG_FILE_PATH ]
         then
             exit 0;
         fi
-        for filename in `ls "$V_FW_LOG_FILE_PATH"`;
+        for filename in `ls $V_FW_LOG_FILE_PATH`;
         do
-            if [ "$filename" != "fwlog.$POSTFIX" -a "$filename" != "`date +%Y%m%d`" ];
+            if [ "$filename" != "fwlog.$POSTFIX" -a "$filename" != `date +%Y%m%d` ];
             then
                 FILE="$FILE""$V_FW_LOG_FILE_PATH/$filename "
             fi
@@ -312,29 +312,29 @@ compress()
     fi
 
         DIR=/tmp/`date +%Y%m%d%H%M%s`_$1
-        mkdir -p "$DIR"
-        cd "$DIR"
-        cp "$FILE" $NEW_NAME
+        mkdir -p $DIR
+        cd $DIR
+        cp $FILE $NEW_NAME
          FILE_SZ=$(ls -l | awk 'BEGIN {SUM=0}{SUM+=$3}END {print SUM}')
         #un-compress log file
-        if [ -e "$ZIP" ]
+        if [ -e $ZIP ]
         then
-             $RD_LOCK "$ZIP" -c "$UNCOMPRESS_CMD" "$ZIP" 
-             ZIP_SZ=$(ls -l "$ZIP" | awk '{print $3}')
+             $RD_LOCK $ZIP -c $UNCOMPRESS_CMD $ZIP 
+             ZIP_SZ=$(ls -l $ZIP | awk '{print $3}')
         else
             ZIP_SZ=0;
         fi
 
         OLD_FILE=""
         # clean old log file
-        if [ "$(expr $(($FILE_SZ + 9)) / 10 + $ZIP_SZ)" -ge "$(expr "$ZIP_SZ_MAX" \* 1024)" ]
+        if [ $(expr $(($FILE_SZ + 9)) / 10 + $ZIP_SZ) -ge $(expr "$ZIP_SZ_MAX" \* 1024) ]
         then
             OLD_FILE_SIZE=0
             for filename in `ls ./`;
             do
-                 let "OLD_FILE_SIZE=$OLD_FILE_SIZE + $(ls -l "$filename" | awk '{print $3}')"
+                 let "OLD_FILE_SIZE=$OLD_FILE_SIZE + $(ls -l $filename | awk '{print $3}')"
                 OLD_FILE="$OLD_FILE $filename"
-                if [ "$OLD_FILE_SIZE" -ge "$FILE_SZ"  ]
+                if [ $OLD_FILE_SIZE -ge $FILE_SZ  ]
                 then
                     break;
                 fi
@@ -343,7 +343,7 @@ compress()
 
         if [ ! -z "$OLD_FILE" ]
         then
-            rm "$OLD_FILE"
+            rm $OLD_FILE
             # Remove old R1.3 log under /nvram
             if [ -e $OLD_LOG_DIR_13 ]
             then
@@ -352,14 +352,14 @@ compress()
         fi
 
         $COMPRESS_CMD $NEW_ZIP ./* 
-        $WT_LOCK "$ZIP" -c mv $NEW_ZIP "$ZIP"
+        $WT_LOCK $ZIP -c mv $NEW_ZIP $ZIP
         for oldfile in $FILE ;
         do
             echo "$WT_LOCK $oldfile -c rm -r $oldfile"
-            $WT_LOCK "$oldfile" -c rm -r "$oldfile"
+            $WT_LOCK $oldfile -c rm -r $oldfile
         done;
 
-        rm -rf "$DIR"       
+        rm -rf $DIR       
 }
 
 uncompress()
@@ -375,20 +375,20 @@ uncompress()
 }
 
 V_FW_LOG_FILE_PATH=`sysevent get FW_LOG_FILE_PATH_V2`
-if [ -z "$V_FW_LOG_FILE_PATH" ]
+if [ -z $V_FW_LOG_FILE_PATH ]
 then
     V_FW_LOG_FILE_PATH=`syscfg get FW_LOG_FILE_PATH`
 fi
 
 V_EVT_LOG_FILE="$(get_log_file EVT_LOG_FILE_V2 eventlog)"
 V_SYS_LOG_FILE="$(get_log_file SYS_LOG_FILE_V2 systemlog)"
-if [ -z "$V_FW_LOG_FILE_PATH" ] || [ -z "$V_EVT_LOG_FILE" ] || [ -z "$V_FW_LOG_FILE_PATH" ]
+if [ -z $V_FW_LOG_FILE_PATH ] || [ -z $V_EVT_LOG_FILE ] || [ -z $V_FW_LOG_FILE_PATH ]
 then
     exit 0;
 fi
 
 V_HANDLE_OLD_LOG_13_FLG=`sysevent get R13_LOG_HANDLE_FLG`
-if [ -z "$V_HANDLE_OLD_LOG_13_FLG" ]
+if [ -z $V_HANDLE_OLD_LOG_13_FLG ]
 then
     old_sysevtlog_handle $DPC3939_OLD_SYSTERMLOG SYS_LOG_F_INSTANCE 
     old_sysevtlog_handle $DPC3939_OLD_EVTLOG EVT_LOG_F_INSTANCE 
@@ -404,11 +404,11 @@ then
     killall klogd >/dev/null 2>/dev/null
     killall GenFWLog >/dev/null 2>/dev/null
     #delete log file
-    remove_log "$V_EVT_LOG_FILE"
-    remove_log "$V_SYS_LOG_FILE"
-    if [ ! -z "$V_FW_LOG_FILE_PATH" ]
+    remove_log $V_EVT_LOG_FILE
+    remove_log $V_SYS_LOG_FILE
+    if [ ! -z $V_FW_LOG_FILE_PATH ]
     then
-        remove_log "$V_FW_LOG_FILE_PATH"/*
+        remove_log $V_FW_LOG_FILE_PATH/*
     fi
 
     #rm -rf /nvram2/log
@@ -438,8 +438,8 @@ fi
 
 if [ "$1" == "uncompress_syslog" ]
 then
-    uncompress "$DPC3939_OLD_SYSTERMLOG.tar.bz2" "$2"
-    uncompress "$V_SYS_LOG_FILE.tar.bz2" "$2"
+    uncompress $DPC3939_OLD_SYSTERMLOG.tar.bz2 $2
+    uncompress $V_SYS_LOG_FILE.tar.bz2 $2
 fi
 
 if [ "$1" == "compress_evtlog" ]
@@ -449,8 +449,8 @@ fi
 
 if [ "$1" == "uncompress_evtlog" ]
 then
-    uncompress "$DPC3939_OLD_EVTLOG.tar.bz2" "$2" 
-    uncompress "$V_EVT_LOG_FILE.tar.bz2" "$2"
+    uncompress $DPC3939_OLD_EVTLOG.tar.bz2 $2 
+    uncompress $V_EVT_LOG_FILE.tar.bz2 $2
 fi
 
 if [ "$1" == "compress_fwlog" ]
@@ -460,32 +460,32 @@ fi
 
 if [ "$1" == "uncompress_fwlog" ]
 then
-    uncompress "$DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2" "$2"
-    uncompress "$V_FW_LOG_FILE_PATH/fwlog.tar.bz2" "$2"
+    uncompress $DPC3939_OLD_FWLOG_FILE_PATH/fwlog.tar.bz2 $2
+    uncompress $V_FW_LOG_FILE_PATH/fwlog.tar.bz2 $2
 fi
 
-if [ -z "$1" ]
+if [ -z $1 ]
 then
     evt="$V_EVT_LOG_FILE.0"
     sys="$V_SYS_LOG_FILE.0"
-    if [ -e "$evt" ]
+    if [ -e $evt ]
     then
         log_handle.sh compress_evtlog &
     fi
 
-    if [ -e "$sys" ]
+    if [ -e $sys ]
     then
         log_handle.sh compress_syslog &
     fi
 
-    if [ ! -d "$V_FW_LOG_FILE_PATH" ]
+    if [ ! -d $V_FW_LOG_FILE_PATH ]
     then
         exit 0
     fi
 
-    for fw in `ls "$V_FW_LOG_FILE_PATH"`;
+    for fw in `ls $V_FW_LOG_FILE_PATH`;
     do
-        if [ "$fw" != "fwlog.$POSTFIX" -a "$filename" != "`date +%Y%m%d`" ];
+        if [ "$fw" != "fwlog.$POSTFIX" -a "$filename" != `date +%Y%m%d` ];
         then
             log_handle.sh compress_fwlog &
             break
