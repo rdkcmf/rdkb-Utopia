@@ -6462,15 +6462,17 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
                 fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname);
                 fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 -j DROP\n", current_wan_ifname);
         }
-	memset(iot_ifName, 0, sizeof(iot_ifName));
-        syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
-        if( strstr( iot_ifName, "l2sd0.106")) {
-            syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
-        }
-	fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
-        fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
-	fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
-        fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
+        #if !defined(_CBR_PRODUCT_REQ_) && !defined (_BWG_PRODUCT_REQ_) && !defined (_CBR2_PRODUCT_REQ_)
+	    memset(iot_ifName, 0, sizeof(iot_ifName));
+            syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
+            if( strstr( iot_ifName, "l2sd0.106")) {
+                syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
+            }
+	    fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
+            fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
+	    fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
+            fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
+        #endif
     }
     else
 #endif
@@ -12248,11 +12250,12 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       }
       memset(iot_primaryAddress, 0, sizeof(iot_primaryAddress));
       syscfg_get(NULL, "iot_ipaddr", iot_primaryAddress, sizeof(iot_primaryAddress));
-      
-      fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
-      fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
-      fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
-      fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
+      #if !defined(_CBR_PRODUCT_REQ_) && !defined (_BWG_PRODUCT_REQ_) && !defined (_CBR2_PRODUCT_REQ_)
+          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
+          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
+          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
+          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
+      #endif
       fprintf(filter_fp,"-A INPUT -d %s/24 -i %s -j ACCEPT\n",iot_primaryAddress,iot_ifName);
       fprintf(filter_fp,"-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n",iot_ifName);
       //fprintf(filter_fp,"-A FORWARD -i %s -o %s -j ACCEPT\n",iot_ifName,iot_ifName);
@@ -13330,15 +13333,17 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 21515 -j DROP\n",get_current_wan_ifname());
      
    //DROP br106 admin requests
-   memset(iot_ifName, 0, sizeof(iot_ifName));
-   syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
-   if( strstr( iot_ifName, "l2sd0.106")) {
-       syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
-   }
-   fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
-   fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
-   fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
-   fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
+   #if !defined(_CBR_PRODUCT_REQ_) && !defined (_BWG_PRODUCT_REQ_) && !defined (_CBR2_PRODUCT_REQ_)
+       memset(iot_ifName, 0, sizeof(iot_ifName));
+       syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
+       if( strstr( iot_ifName, "l2sd0.106")) {
+           syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
+       }
+       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
+       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
+       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
+       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
+   #endif
 
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (filter_fp);
