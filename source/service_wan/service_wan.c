@@ -111,6 +111,7 @@ char DHCPC_PID_FILE[100]="";
 #define SW_PROT_TIMO_MIN   120
 #define RESOLV_CONF_FILE  "/etc/resolv.conf"
 #define ONEWIFI_ENABLED "/etc/onewifi_enabled"
+#define OPENVSWITCH_LOADED "/sys/module/openvswitch"
 
 #define WAN_STARTED "/var/wan_started"
 enum wan_prot {
@@ -718,12 +719,13 @@ static int wan_start(struct serv_wan *sw)
         {
             if( 0 == syscfg_get( NULL, "mesh_ovs_enable", ovs_enable, sizeof( ovs_enable ) ) )
             {
-                if ((strcmp(ovs_enable,"true") == 0) || (0 == access(ONEWIFI_ENABLED, F_OK)))
+                if ((strcmp(ovs_enable,"true") == 0) || (0 == access(ONEWIFI_ENABLED, F_OK)) ||
+                                                        (0 == access(OPENVSWITCH_LOADED, F_OK)))
                 {
                     v_secure_system("/usr/bin/bridgeUtils add-port brlan0 llan0 &");
                 }
             }
-            else if (0 == access(ONEWIFI_ENABLED, F_OK))
+            else if ((0 == access(ONEWIFI_ENABLED, F_OK)) || (0 == access(OPENVSWITCH_LOADED, F_OK)))
             {
                 v_secure_system("/usr/bin/bridgeUtils add-port brlan0 llan0 &");
             }

@@ -244,6 +244,7 @@ const char* SERVICE_CUSTOM_EVENTS[] = {
 #endif
 
 #define ONEWIFI_ENABLED "/etc/onewifi_enabled"
+#define OPENVSWITCH_LOADED "/sys/module/openvswitch"
 
 void srv_register(void) {
 
@@ -279,7 +280,7 @@ void srv_register(void) {
 
       }
 
-      if( 0 == access( ONEWIFI_ENABLED, F_OK ) )
+      if( (0 == access( ONEWIFI_ENABLED, F_OK )) || (0 == access( OPENVSWITCH_LOADED, F_OK )) )
       {
           ovsEnable = 1;
       }
