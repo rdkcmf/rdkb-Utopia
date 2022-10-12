@@ -3,6 +3,7 @@
 #include "firewall.h"
 #include "firewall_custom.h"
 
+#define DEVICE_RECOVERY_INTERFACE "eth0"
 #include<errno.h> 
 
 
@@ -162,10 +163,40 @@ int prepare_ipv4_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
 
    fprintf(filter_fp, "-A xlog_accept_wan2lan -j ACCEPT\n");
 
-   fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",mesh_wan_ifname,cellular_ifname);
-   fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",cellular_ifname,mesh_wan_ifname);
+   // allow mesh wan and mesh bridge private ip range
+   fprintf(filter_fp, "-A INPUT -s 192.168.245.0/24 -j ACCEPT\n");
+   fprintf(filter_fp, "-A FORWARD -s 192.168.245.0/24 -j ACCEPT\n");
+   fprintf(filter_fp, "-A OUTPUT -s 192.168.245.0/24 -j ACCEPT\n");
+
+   fprintf(filter_fp, "-A INPUT -s 192.168.246.0/24 -j ACCEPT\n");
+   fprintf(filter_fp, "-A FORWARD -s 192.168.246.0/24 -j ACCEPT\n");
+   fprintf(filter_fp, "-A OUTPUT -s 192.168.246.0/24 -j ACCEPT\n");
+
+   fprintf(filter_fp, "-A INPUT -i %s -s 192.168.1.0/28 -j ACCEPT\n",DEVICE_RECOVERY_INTERFACE);
+   fprintf(filter_fp, "-A OUTPUT -o %s -s 192.168.1.0/28 -j ACCEPT\n",DEVICE_RECOVERY_INTERFACE);
+
+// Dropping packets from private ip range 
+   fprintf(filter_fp, "-A INPUT -s 10.0.0.0/8 -j DROP\n");
+   fprintf(filter_fp, "-A FORWARD -s 10.0.0.0/8 -j DROP\n");
+   fprintf(filter_fp, "-A OUTPUT -s 10.0.0.0/8 -j DROP\n");
+
+   fprintf(filter_fp, "-A INPUT -s 192.168.0.0/16 -j DROP\n");
+   fprintf(filter_fp, "-A FORWARD -s 192.168.0.0/16 -j DROP\n");
+   fprintf(filter_fp, "-A OUTPUT -s 192.168.0.0/16 -j DROP\n");
+
+   for (int i=16;i<=31 ;i++)
+   {
+      fprintf(filter_fp, "-A INPUT -s 172.%d.0.0/16 -j DROP\n",i);
+      fprintf(filter_fp, "-A FORWARD -s 172.%d.0.0/16 -j DROP\n",i);
+      fprintf(filter_fp, "-A OUTPUT -s 172.%d.0.0/16 -j DROP\n",i);
+   }
+
+   fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n",mesh_wan_ifname,cellular_ifname);
+   fprintf(filter_fp, "-A FORWARD -i %s -o %s -j ACCEPT\n",cellular_ifname,mesh_wan_ifname);
 
  //  do_logs(filter_fp);
+
+   fprintf(filter_fp, "-I FORWARD -o %s -m state --state INVALID -j DROP\n",cellular_ifname);
 
    fprintf(raw_fp, "%s\n", "COMMIT");
    fprintf(mangle_fp, "%s\n", "COMMIT");
@@ -300,6 +331,7 @@ int prepare_ipv6_rule_ex_mode(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE 
 
    fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",mesh_wan_ifname,cellular_ifname);
    fprintf(filter_fp, "-A  FORWARD -i %s -o %s -j ACCEPT\n",cellular_ifname,mesh_wan_ifname);
+   fprintf(filter_fp, "-I FORWARD -o %s -m state --state INVALID -j DROP\n",cellular_ifname);
 
    return 0;
 }

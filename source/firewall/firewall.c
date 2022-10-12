@@ -13080,6 +13080,19 @@ static int prepare_enabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *na
 #if defined(FEATURE_RDKB_INTER_DEVICE_MANAGER)
    prepare_idm_firewall(filter_fp);
 #endif
+
+   #ifdef WAN_FAILOVER_SUPPORTED
+         if ( strcmp(current_wan_ifname,default_wan_ifname) != 0 )
+         {
+            fprintf(filter_fp, "-I FORWARD -i %s -p tcp --tcp-flags RST RST -j DROP\n",current_wan_ifname);
+            fprintf(filter_fp, "-I FORWARD -i %s -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/sec --limit-burst 2 -j ACCEPT\n",current_wan_ifname);
+            fprintf(filter_fp, "-I FORWARD -o %s -p tcp --tcp-flags RST RST -j DROP\n",current_wan_ifname);
+            fprintf(filter_fp, "-I FORWARD -o %s -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/sec --limit-burst 2 -j ACCEPT\n",current_wan_ifname);
+            fprintf(filter_fp, "-I OUTPUT -o %s -p tcp --tcp-flags RST RST -j DROP\n",current_wan_ifname);
+            fprintf(filter_fp, "-I OUTPUT -o %s -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/sec --limit-burst 2 -j ACCEPT\n",current_wan_ifname);
+         }
+         fprintf(filter_fp, "-I FORWARD -o %s -m state --state INVALID -j DROP\n",current_wan_ifname);
+   #endif
    fprintf(raw_fp, "%s\n", "COMMIT");
    fprintf(mangle_fp, "%s\n", "COMMIT");
    fprintf(nat_fp, "%s\n", "COMMIT");
@@ -14138,10 +14151,26 @@ int prepare_ipv6_firewall(const char *fw_file)
    #ifdef RDKB_EXTENDER_ENABLED  
    }
    #endif
+
+   #ifdef WAN_FAILOVER_SUPPORTED
+         if ( strcmp(current_wan_ifname,default_wan_ifname) != 0 )
+         {
+            fprintf(filter_fp, "-I FORWARD -i %s -p tcp --tcp-flags RST RST -j DROP\n",current_wan_ifname);
+            fprintf(filter_fp, "-I FORWARD -i %s -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/sec --limit-burst 2 -j ACCEPT\n",current_wan_ifname);
+            fprintf(filter_fp, "-I FORWARD -o %s -p tcp --tcp-flags RST RST -j DROP\n",current_wan_ifname);
+            fprintf(filter_fp, "-I FORWARD -o %s -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/sec --limit-burst 2 -j ACCEPT\n",current_wan_ifname);
+            fprintf(filter_fp, "-I OUTPUT -o %s -p tcp --tcp-flags RST RST -j DROP\n",current_wan_ifname);
+            fprintf(filter_fp, "-I OUTPUT -o %s -p tcp -m tcp --tcp-flags RST RST -m limit --limit 2/sec --limit-burst 2 -j ACCEPT\n",current_wan_ifname);
+         }
+         fprintf(filter_fp, "-I FORWARD -o %s -m state --state INVALID -j DROP\n",current_wan_ifname);
+
+   #endif
+
 	/*add rules before this*/
 #if !defined(_BWG_PRODUCT_REQ_)
 	fprintf(raw_fp, "COMMIT\n");
 #endif
+
 
 	fprintf(mangle_fp, "COMMIT\n");
 #if !defined(_PLATFORM_IPQ_)
