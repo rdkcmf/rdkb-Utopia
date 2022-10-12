@@ -1078,6 +1078,8 @@ $PasswordLoginCounts_3=0
 $NumOfFailedAttempts_3=0
 $HTTPSecurityHeaderEnable=true
 
+$Speedtest_SubUnPauseTimeOut=45
+
 #WiFi password Get/Set disabled by default
 $SNMPPSWDCTRLFLAG=false
 $TR069PSWDCTRLFLAG=false
