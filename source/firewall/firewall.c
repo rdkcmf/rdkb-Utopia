@@ -9646,11 +9646,7 @@ static int do_lan2wan_misc(FILE *filter_fp)
    FIREWALL_DEBUG("Entering do_lan2wan_misc\n");
    /*
     * if the wan is currently unavailable, then drop any packets from lan to wan
-    */
-#if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
-    if (isMAPTReady)
-        return 0;
-#endif    
+    */ 
    if (!isWanReady) {
       fprintf(filter_fp, "-I lan2wan_misc 1 -o %s -j DROP\n", current_wan_ifname);
    }
