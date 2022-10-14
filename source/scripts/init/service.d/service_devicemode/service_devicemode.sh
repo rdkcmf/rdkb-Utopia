@@ -88,6 +88,10 @@ update_v4route()
     else
         echo "Adding rule to resolve dns packets"
 
+        route_table=$(ip route show)
+        dns1_missing=$(echo "$route_table" | grep $cellular_manager_dns1)
+        dns2_missing=$(echo "$route_table" | grep $cellular_manager_dns2)
+
         if [ "x$cellular_manager_gw" != "x$backup_wan_v4_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v4_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v4_dns2" ];
         then
             if [ "x$backup_wan_v4_gw" != "x" ] || [ "x$backup_wan_v4_gw" != "x0.0.0.0" ];then
@@ -99,6 +103,9 @@ update_v4route()
                     ip route del "$backup_v4_dns2" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
                 fi
             fi
+            ip route add "$cellular_manager_dns1" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
+            ip route add "$cellular_manager_dns2" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
+        elif [ "$dns1_missing" = "" ] || [ "$dns2_missing" = "" ] ;then
             ip route add "$cellular_manager_dns1" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
             ip route add "$cellular_manager_dns2" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
         fi
@@ -126,6 +133,7 @@ update_v6route()
 
     cellular_manager_dns1=$(sysevent get cellular_wan_v6_dns1)
     cellular_manager_dns2=$(sysevent get cellular_wan_v6_dns2)
+
     if [ "$cellular_manager_v6_gw" = "::" ] || [ "x$cellular_manager_v6_gw" = "x" ] ;then
         # delete route
         ip -6 route del "$backup_v6_dns1" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
@@ -135,6 +143,13 @@ update_v6route()
             ip -6 rule del iif "$cellular_ifname" lookup 11
         fi
     else
+
+        routev6_table=$(ip -6 route show)
+        dns1_missing=$(echo "$routev6_table" | grep $cellular_manager_dns1)
+        dns2_missing=$(echo "$routev6_table" | grep $cellular_manager_dns2)
+
+        echo "Adding v6 rule to resolve dns packets"
+
         if [ "x$cellular_manager_v6_gw" != "x$backup_wan_v6_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v6_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v6_dns2" ];
         then
             if [ "x$backup_wan_v6_gw" != "x" ] || [ "x$backup_wan_v6_gw" != "x0.0.0.0" ];then
@@ -146,6 +161,9 @@ update_v6route()
                     ip -6 route del "$backup_v6_dns2" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
                 fi
             fi
+            ip -6 route add "$cellular_manager_dns1" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
+            ip -6 route add "$cellular_manager_dns2" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
+        elif [ "$dns1_missing" = "" ] || [ "$dns2_missing" = "" ] ;then
             ip -6 route add "$cellular_manager_dns1" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
             ip -6 route add "$cellular_manager_dns2" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
         fi
