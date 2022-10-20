@@ -14739,6 +14739,7 @@ static void do_ipv6_filter_table(FILE *fp){
 
       //SNMP
       //fprintf(fp, "-A INPUT -i %s -p udp --dport 161 -j ACCEPT\n", ecm_wan_ifname);
+      fprintf(fp, "-A INPUT -i %s -p udp --dport 161 -j DROP\n", current_wan_ifname);
       fprintf(fp, "-A INPUT ! -i %s -p udp --dport 161 -j ACCEPT\n", lan_ifname);
 #if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_TURRIS_)
 	  //SSH and HTTP port open for IPv6
