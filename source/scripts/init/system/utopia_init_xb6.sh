@@ -745,13 +745,6 @@ elif [ -f /nvram/restore_reboot ]; then
      fi
      rm -f /nvram/restore_reboot
      rm -f /nvram/syscfg.db.prev
-elif [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]; then
-     if [ -f /tmp/.secure_mount_flag ]; then
-          echo "[utopia][init] Detected last reboot reason as secure-mount failure"
-          syscfg set X_RDKCENTRAL-COM_LastRebootReason "secure-mount-failure"
-          syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-          rm -f /tmp/.secure_mount_flag
-     fi
 elif [ "$COLD_REBOOT" == "true" ]; then
      #Temporarily exclude Arris XB6 Products until ARRISXB6-12791 is fixed
      if [ "$MODEL_NUM" != "TG3482G" ]; then
@@ -803,7 +796,7 @@ fi
 echo "[utopia][init] completed creating utopia_inited flag"
 touch /tmp/utopia_inited
 
-if [ "$MANUFACTURE" = "Technicolor" ]; then
+if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MANUFACTURE" = "Technicolor" ]; then
     if [ -f /tmp/.secure_mount_flag ]; then
         echo "[utopia][init] Detected last reboot reason as secure-mount failure"
         syscfg set X_RDKCENTRAL-COM_LastRebootReason "secure-mount-failure"
