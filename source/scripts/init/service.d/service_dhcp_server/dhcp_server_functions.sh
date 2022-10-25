@@ -1053,7 +1053,7 @@ fi
    #fi
 
    #Option for parsing plume vendor code
-   if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ]; then
+   if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]; then
      echo "dhcp-option=vendor:Plume,43,tag=123" >> $LOCAL_DHCP_CONF 
      echo "dhcp-option=vendor:PP203X,43,tag=123" >> $LOCAL_DHCP_CONF
      echo "dhcp-option=vendor:SE401,43,tag=123" >> $LOCAL_DHCP_CONF
