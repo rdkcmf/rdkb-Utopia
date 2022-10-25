@@ -913,6 +913,10 @@ int greDscp = 44; // Default initialized to 44
 #define PSM_NAME_CP_NOTIFY_VALUE "eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges"
 
 #define PSM_IDM_INTERFACE_NAME      "dmsb.interdevicemanager.BroadcastInterface"
+
+#if defined(FEATURE_RDKB_INTER_DEVICE_MANAGER)
+    char idmInterface[32] = {0};
+#endif
 /*
  =================================================================
                      utilities
@@ -2912,6 +2916,20 @@ static int prepare_globals_from_configuration(void)
    sysevent_get(sysevent_fd, sysevent_token, "cellular_ifname", cellular_ifname, sizeof(cellular_ifname));
 #endif
    
+
+#if defined(FEATURE_RDKB_INTER_DEVICE_MANAGER)
+   memset(idmInterface,0,sizeof(idmInterface));
+    pStr = NULL;
+    rc = PSM_VALUE_GET_STRING(PSM_IDM_INTERFACE_NAME,pStr);
+    if(rc == CCSP_SUCCESS && pStr != NULL){
+        safec_rc = strcpy_s(idmInterface, sizeof(idmInterface),pStr);
+        FIREWALL_DEBUG("PSM_IDM_INTERFACE_NAME is %s\n" COMMA idmInterface);       
+        ERR_CHK(safec_rc);
+        Ansc_FreeMemory_Callback(pStr);
+        pStr = NULL;
+   }
+#endif
+
     FIREWALL_DEBUG("Exiting prepare_globals_from_configuration\n");       
    return(0);
 }
@@ -10922,6 +10940,14 @@ static int prepare_multinet_filter_forward (FILE *filter_fp)
 #endif
     //<<
 
+      #ifdef GATEWAY_FAILOVER_SUPPORTED
+        if ( idmInterface[0] != '\0'  && (strcmp(idmInterface,"br403") != 0 ) )
+        {
+            fprintf(filter_fp, "-A INPUT -i %s -d 192.168.245.0/24 -j ACCEPT\n",idmInterface);
+            fprintf(filter_fp, "-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n", idmInterface);
+        }
+      #endif
+
     inst_resp[0] = 0;
     sysevent_get(sysevent_fd, sysevent_token, "multinet-instances", inst_resp, sizeof(inst_resp));
     
@@ -12809,21 +12835,8 @@ static int prepare_MoCA_bridge_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *nat
 #if defined(FEATURE_RDKB_INTER_DEVICE_MANAGER)
 static void prepare_idm_firewall(FILE * filter_fp)
 {
-
-    char idmInterface[32] = {0};
-    int rc;
-    char *pStr = NULL;
-    errno_t   safec_rc     = -1;
-
-    rc = PSM_VALUE_GET_STRING(PSM_IDM_INTERFACE_NAME,pStr);
-    if(rc == CCSP_SUCCESS && pStr != NULL){
-        safec_rc = strcpy_s(idmInterface, sizeof(idmInterface),pStr);
-        ERR_CHK(safec_rc);
-        Ansc_FreeMemory_Callback(pStr);
-        pStr = NULL;
-
-        fprintf(filter_fp, "-I INPUT -i %s -p udp --dport 1900 -j ACCEPT \n", idmInterface);
-    }
+      if(idmInterface[0] != '\0' )
+         fprintf(filter_fp, "-I INPUT -i %s -p udp --dport 1900 -j ACCEPT \n", idmInterface);
 }
 #endif
 
