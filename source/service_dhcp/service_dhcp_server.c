@@ -635,9 +635,13 @@ int dhcp_server_start (char *input)
     }
 #endif
 	
+        sysevent_get(g_iSyseventfd, g_tSysevent_token,
+                         "bridge_mode", l_cBridge_Mode,
+                         sizeof(l_cBridge_Mode));
+
 	//LAN Status DHCP
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_status-dhcp", l_cLanStatusDhcp, sizeof(l_cLanStatusDhcp));	
-	if (strncmp(l_cLanStatusDhcp, "started", 7))
+	if (strncmp(l_cLanStatusDhcp, "started", 7) && ( 0 == atoi(l_cBridge_Mode) ) )
 	{
 		fprintf(stderr, "lan_status-dhcp is not started return without starting DHCP server\n");
 		remove_file("/var/tmp/lan_not_restart");
@@ -776,9 +780,6 @@ int dhcp_server_start (char *input)
             fprintf(stderr, "kill dnsmasq with SIGKILL if its still running \n");
             v_secure_system("kill -KILL `pidof dnsmasq`");
         }
-    sysevent_get(g_iSyseventfd, g_tSysevent_token,
-                         "bridge_mode", l_cBridge_Mode,
-                         sizeof(l_cBridge_Mode));
 
     // TCCBR:4710- In Bridge mode, Dont run dnsmasq when there is no interface in dnsmasq.conf
     if ((strncmp(l_cBridge_Mode, "0", 1)) && (FALSE == IsDhcpConfHasInterface()))

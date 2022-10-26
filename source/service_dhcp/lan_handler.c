@@ -426,6 +426,11 @@ void ipv4_status(int l3_inst, char *status)
 	int uptime = 0;
 	char buffer[64] = { 0 };
 	errno_t safec_rc = -1;
+    char primary_l3net[8] = {0};
+
+            sysevent_get(g_iSyseventfd, g_tSysevent_token, "primary_lan_l3net",
+                     primary_l3net, sizeof(primary_l3net));
+
 	if (!strncmp(status, "up", 2))
 	{	
     	syscfg_get(NULL, "last_erouter_mode", l_cLast_Erouter_Mode, sizeof(l_cLast_Erouter_Mode));
@@ -561,43 +566,50 @@ void ipv4_status(int l3_inst, char *status)
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, "parcon_nfq_status",
                      l_cParcon_Nfq_Status, sizeof(l_cParcon_Nfq_Status));
 
+
 		if ((!strncmp(l_cLast_Erouter_Mode, "2", 1)) && (strncmp(l_cStart_Misc, "ready", 5))) 
 		{
-			fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2");
-    		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
-            system("firewall");
+            		if ( l3_inst == atoi(primary_l3net))
+            		{
+                		fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2");
+                		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
+            		}
+            		system("firewall");
 
-            if (access(POSTD_START_FILE, F_OK) != 0)
-            {
-                    fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
-                    system("touch " POSTD_START_FILE "; execute_dir /etc/utopia/post.d/");
-            }		
-        }
+            		if (access(POSTD_START_FILE, F_OK) != 0)
+            		{
+                    		fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
+                    		system("touch " POSTD_START_FILE "; execute_dir /etc/utopia/post.d/");
+            		}		
+        	}
 		else if ((strncmp(l_cStart_Misc, "ready", 5)) && 
 				 (0 != l_cCurrentWan_IpAddr[0]) &&
 				 (strncmp(l_cCurrentWan_IpAddr, "0.0.0.0", 7)))
 		{
-			fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status based on start misc\n");
-    		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
 
+            		if ( l3_inst == atoi(primary_l3net))
+            		{
+                		fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status based on start misc\n");
+                		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
+            		}
 			if (strncmp(l_cParcon_Nfq_Status, "started", 7))
 			{
-                sysevent_get(g_iSyseventfd, g_tSysevent_token, "parcon_nfq_status",
+                		sysevent_get(g_iSyseventfd, g_tSysevent_token, "parcon_nfq_status",
                                 l_nfq_status, sizeof(l_nfq_status));
 
-                if (!strncmp("started", l_nfq_status, sizeof(l_nfq_status)))
-                {
-                    fprintf(stderr, "Calling nfq_handler\n");
-                    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                                "( ( nfq_handler 4 & ) & )");
-                    executeCmd(l_cSysevent_Cmd);
+                		if (!strncmp("started", l_nfq_status, sizeof(l_nfq_status)))
+                		{
+                    			fprintf(stderr, "Calling nfq_handler\n");
+                    			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                                	"( ( nfq_handler 4 & ) & )");
+                    			executeCmd(l_cSysevent_Cmd);
 
-                    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
-                                "( ( nfq_handler 6 & ) & )");
-                    executeCmd(l_cSysevent_Cmd);
+                    			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
+                                	"( ( nfq_handler 6 & ) & )");
+                    			executeCmd(l_cSysevent_Cmd);
 
-                    sysevent_set(g_iSyseventfd, g_tSysevent_token, "parcon_nfq_status", "started", 0);
-                }
+                    		sysevent_set(g_iSyseventfd, g_tSysevent_token, "parcon_nfq_status", "started", 0);
+                		}
 
 				l_iRes = iface_get_hwaddr(LAN_IF_NAME, l_cBrlan0_Mac, sizeof(l_cBrlan0_Mac));
 				if (0 == l_iRes)
@@ -610,7 +622,7 @@ void ipv4_status(int l3_inst, char *status)
 					fprintf(stderr, "Un-Successful in getting %s MAC address\n", 
 									LAN_IF_NAME);
 				}
-            }
+            		}
 
 			if (is_iface_present(XHS_IF_NAME))
 			{
@@ -627,9 +639,12 @@ void ipv4_status(int l3_inst, char *status)
                 }   
             }
         else
-		{
-			fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status\n");
-			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
+	{
+            if ( l3_inst == atoi(primary_l3net))
+            {
+                fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status\n");
+                sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
+            }
 			fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART\n");
                         t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
@@ -680,25 +695,31 @@ void ipv4_status(int l3_inst, char *status)
 	}	
     else
 	{
-		sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan-status",
+        if ( l3_inst == atoi(primary_l3net))
+        {
+            sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan-status",
                      l_cLan_Status, sizeof(l_cLan_Status));
 
-		if (!strncmp(l_cLan_Status, "started", 7))
-		{
-			char bridge_mode[16] = {0};
-			static int isBridgeMode;
-			sysevent_get(g_iSyseventfd, g_tSysevent_token, "bridge_mode", bridge_mode, sizeof(bridge_mode));
-			isBridgeMode        = (0 == strcmp("0", bridge_mode)) ? 0 : 1;
-			if(!isBridgeMode)
-			{
-			    fprintf(stderr, "LAN HANDLER : Device in Router mode and lan-status: stopped\n");
-			}
-			else
-			{
-			    fprintf(stderr, "LAN HANDLER : Device in Bridge mode and lan-status: stopped\n");
-			}
-			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "stopped", 0);
-		}
+            if (!strncmp(l_cLan_Status, "started", 7))
+            {
+                char bridge_mode[16] = {0};
+                static int isBridgeMode;
+                sysevent_get(g_iSyseventfd, g_tSysevent_token, "bridge_mode", bridge_mode, sizeof(bridge_mode));
+                isBridgeMode        = (0 == strcmp("0", bridge_mode)) ? 0 : 1;
+                if(!isBridgeMode)
+                {
+                    fprintf(stderr, "LAN HANDLER : Device in Router mode and lan-status: stopped\n");
+                }
+                else
+                {
+                    fprintf(stderr, "LAN HANDLER : Device in Bridge mode and lan-status: stopped\n");
+                }
+
+                sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "stopped", 0);
+            }      
+        }
+
+
     }
 
     snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
