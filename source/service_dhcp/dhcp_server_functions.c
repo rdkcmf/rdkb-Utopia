@@ -1007,7 +1007,7 @@ int prepare_dhcp_conf (char *input)
 	memset (buff, 0, sizeof(buff)); 
 		snprintf(buff, sizeof(buff), "resolv-file=%s\n\n", TMP_RESOLVE_CONF);
         fprintf(l_fLocal_Dhcp_ConfFile, buff);     
-       
+        fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-leasefile=%s\n", DHCP_LEASE_FILE); 
         fprintf(l_fLocal_Dhcp_ConfFile, "#We want dnsmasq to listen for DHCP and DNS requests only on specified interfaces\n");
         memset (buff, 0, sizeof(buff));
         snprintf(buff, sizeof(buff), "interface=%s\n\n", mesh_wan_ifname);
