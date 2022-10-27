@@ -12229,6 +12229,7 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
              fprintf(filter_fp, "-A wan2lan  -j wan2lan_nonat\n");
              fprintf(filter_fp, "-A wan2lan -m state --state RELATED,ESTABLISHED -j ACCEPT\n");
              fprintf(filter_fp, "-A wan2lan  -j host_detect\n");
+             fprintf(filter_fp, "-I FORWARD -p udp --dport=53 -j NFQUEUE --queue-bypass --queue-num 9\n");
 #ifdef CISCO_CONFIG_TRUE_STATIC_IP
              /* TODO: next time change to USE IPT_PRI flag */
              fprintf(filter_fp, "-A wan2lan  -j wan2lan_staticip_post\n");
