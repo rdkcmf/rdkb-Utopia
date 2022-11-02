@@ -139,6 +139,7 @@ set_ntp_quicksync_status ()
              fi
              sysevent set ntp_time_sync 1
              QUICK_SYNC_DONE=1
+	     touch /tmp/clock-event
              break
           fi
        else
@@ -165,6 +166,7 @@ set_ntp_driftsync_status ()
            echo_t "SERVICE_NTPD : ntpd time synced , setting the status" >> $NTPD_LOG_NAME
            syscfg set ntp_status 3
            sysevent set ntp_time_sync 1
+	   touch /tmp/clock-event
            #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
            DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
            if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
