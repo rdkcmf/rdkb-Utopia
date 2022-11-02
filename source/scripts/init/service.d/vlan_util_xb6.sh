@@ -1042,12 +1042,12 @@ case $INSTANCE in
     3)
         #Public wifi 2.4GHz
         BRIDGE_NAME="brlan2"
-        BRIDGE_VLAN=brlan2_VLANID
+        BRIDGE_VLAN=$brlan2_VLANID
     ;;
     4)
         #Public wifi 5GHz
         BRIDGE_NAME="brlan3"
-        BRIDGE_VLAN=brlan3_VLANID
+        BRIDGE_VLAN=$brlan3_VLANID
     ;;
     6)
         BRIDGE_NAME="br106"
@@ -1059,11 +1059,11 @@ case $INSTANCE in
     ;;
     7)
         BRIDGE_NAME="brlan4"
-        BRIDGE_VLAN=brlan4_VLANID
+        BRIDGE_VLAN=$brlan4_VLANID
     ;;
     8)
         BRIDGE_NAME="brlan5"
-        BRIDGE_VLAN=brlan5_VLANID
+        BRIDGE_VLAN=$brlan5_VLANID
     ;;
     65)
         BRIDGE_NAME="br65"
@@ -1274,12 +1274,12 @@ case $INSTANCE in
     3)
         #Public wifi 2.4GHz
         BRIDGE_NAME="brlan2"
-        BRIDGE_VLAN=brlan2_VLANID
+        BRIDGE_VLAN=$brlan2_VLANID
     ;;
     4)
         #Public wifi 5GHz
         BRIDGE_NAME="brlan3"
-        BRIDGE_VLAN=brlan3_VLANID
+        BRIDGE_VLAN=$brlan3_VLANID
     ;;
     6)
         BRIDGE_NAME="br106"
@@ -1291,11 +1291,11 @@ case $INSTANCE in
     ;;
     7)
         BRIDGE_NAME="brlan4"
-        BRIDGE_VLAN=brlan4_VLANID
+        BRIDGE_VLAN=$brlan4_VLANID
     ;;
     8)
         BRIDGE_NAME="brlan5"
-        BRIDGE_VLAN=brlan5_VLANID
+        BRIDGE_VLAN=$brlan5_VLANID
     ;;
     65)
         BRIDGE_NAME="br65"
