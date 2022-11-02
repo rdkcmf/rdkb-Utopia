@@ -621,6 +621,10 @@ enum{
    IPT_PRI_MAX = IPT_PRI_DMZ,
 };
 
+#ifdef FEATURE_RDKB_CONFIGURABLE_WAN_INTERFACE
+static void wanmgr_get_wan_interface(char *wanInterface);
+#endif
+
 /*
  * Service event mapping table
  */
@@ -2400,12 +2404,18 @@ static int prepare_globals_from_configuration(void)
     
    memset(current_wan_ip6_addr, 0, sizeof(current_wan_ip6_addr)); 
    sysevent_get(sysevent_fd, sysevent_token, "tr_erouter0_dhcpv6_client_v6addr", current_wan_ip6_addr, sizeof(current_wan_ip6_addr));
-   
+
    if ( ('\0' == current_wan_ip6_addr[0] ) && ( 0 == strlen(current_wan_ip6_addr) ) ) {
 
         FILE *ipAddrFp = NULL;
+#ifdef FEATURE_RDKB_CONFIGURABLE_WAN_INTERFACE
+	char wanInterface[BUFLEN_64] = {'\0'};
+	wanmgr_get_wan_interface(wanInterface);
+	ipAddrFp = v_secure_popen("r","ifconfig %s | grep Global |  awk '/inet6/{print $3}' | cut -d '/' -f1", wanInterface);
+#else
         ipAddrFp = v_secure_popen("r","ifconfig erouter0 | grep Global |  awk '/inet6/{print $3}' | cut -d '/' -f1");
-        if (ipAddrFp != NULL )
+#endif
+	if (ipAddrFp != NULL )
         {
             if(fgets(current_wan_ip6_addr, sizeof(current_wan_ip6_addr), ipAddrFp)!=NULL)
             {
@@ -16263,6 +16273,16 @@ static void add_dslite_mss_clamping(FILE *fp)
         }
     }
     FIREWALL_DEBUG("Exiting add_dslite_mss_clamping\n");
+}
+#endif
+#ifdef FEATURE_RDKB_CONFIGURABLE_WAN_INTERFACE
+static void wanmgr_get_wan_interface(char *wanInterface)
+{
+    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", wanInterface, BUFLEN_64);
+    if(wanInterface[0] == '\0' ||  strlen(wanInterface) == 0)
+    {
+        strcpy(wanInterface,"erouter0"); // default wan interface
+    }
 }
 #endif
 
