@@ -166,50 +166,6 @@ old_fwlog_handle(){
     fi
 }
 
-start_syslog(){
-    if [ -e $SYSLOG_CONF_FILE ]
-    then
-        rm $SYSLOG_CONF_FILE
-    fi
-
-    if [ -e $LOG_CONF_FILE ]
-    then
-        ln -s $LOG_CONF_FILE $SYSLOG_CONF_FILE
-    else
-        ln -s $SYSLOG_DEFAULT_CONF_FILE $SYSLOG_CONF_FILE
-    fi
-
-    if [ -e $LOG_LEVEL_FILE ]
-    then 
-        level=`awk '$1 <= 8 && $1 >= 1' $LOG_LEVEL_FILE`
-    else
-        level=6
-    fi
-
-    SYSTEMLOG=$(grep -e "systemlog" /etc/syslog.conf | awk '{print $2}') 
-    EVENTLOG=$(grep -e "eventlog" /etc/syslog.conf | awk '{print $2}')
-
-    SYSTEMLOG_DIR=${SYSTEMLOG%/*}
-    if [ ! -d $SYSTEMLOG_DIR ]
-    then
-        mkdir -p $SYSTEMLOG_DIR
-    fi
-
-    EVENTLOG_DIR=${EVENTLOG%/*}
-    if [ ! -d $EVENTLOG_DIR ]
-    then
-	echo "mkdir -p $EVENTLOG_DIR"
-        mkdir -p $EVENTLOG_DIR
-    fi
-
-    echo "klogd -c $level"
-    klogd -c $level    
-    if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "TG4482A" ]; then
-    	echo "syslogd -l $level"
-    	syslogd -l $level
-    fi
-}
-
 get_log_file()
 {
 #TEMP=`syscfg get $1`
@@ -416,13 +372,10 @@ fi
 
 if [ "$1" == "reset" ]
 then 
-    # kill syslog server, in case they are writting log file when delete
-    killall syslogd  >/dev/null 2>/dev/null  
-    killall klogd >/dev/null 2>/dev/null
     killall GenFWLog >/dev/null 2>/dev/null
-    #delete log file
-    remove_log $V_EVT_LOG_FILE
-    remove_log $V_SYS_LOG_FILE
+    #Empty the log file
+    echo -n "" > "$V_EVT_LOG_FILE"
+    echo -n "" > "$V_SYS_LOG_FILE"
     if [ ! -z $V_FW_LOG_FILE_PATH ]
     then
         remove_log $V_FW_LOG_FILE_PATH/*
@@ -445,7 +398,6 @@ then
         rm -rf /nvram/syslog_level
     fi
     
-    start_syslog 
 fi
 
 if [ "$1" == "compress_syslog" ]
