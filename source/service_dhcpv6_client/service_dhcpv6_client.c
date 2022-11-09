@@ -67,7 +67,7 @@ FILE* g_fArmConsoleLog = NULL;
 #endif
 
 #if defined(_COSA_INTEL_XB3_ARM_) || defined(INTEL_PUMA7)
-#define DHCPV6_BINARY   "/sbin/ti_dhcp6c"
+#define DHCPV6_BINARY   "ti_dhcp6c"
 #define DHCPV6_PID_FILE "/var/run/erouter_dhcp6c.pid"
 #else
 #define DHCPV6_BINARY   "dibbler-client"
@@ -220,7 +220,6 @@ void dhcpv6_client_service_start ()
             }
             fprintf(stderr, "SERVICE_DHCP6C : Starting dibbler client\n");
             v_secure_system("sh /lib/rdk/dibbler-init.sh");
-            sleep(1);
             v_secure_system("%s start",DHCPV6_BINARY);
 #endif
             remove_file(DHCP6C_PROGRESS_FILE);
@@ -245,6 +244,8 @@ void dhcpv6_client_service_stop ()
     {
         if (access(DHCPV6_PID_FILE, F_OK) == 0)
         {
+            int pid = -1;
+
             if (!strncmp(l_cDSLiteEnable, "1", 1))
             {
                 // We need to make sure the erouter0 interface is UP when the DHCPv6 client process plan to send
@@ -262,6 +263,12 @@ void dhcpv6_client_service_stop ()
                 }
             }
             fprintf(stderr, "SERVICE_DHCP6C : Sending SIGTERM to %s\n",DHCPV6_PID_FILE);
+
+            while (0 < (pid = pid_of(DHCPV6_BINARY, NULL)))
+            {
+                fprintf(stderr, "SERVICE_DHCP6C : Terminating ti_dhcp6c process with pid %d\n",pid);
+                kill(pid, SIGTERM);
+            }
             remove_file(DHCPV6_PID_FILE);
 
             if (!strncmp(l_cDSLiteEnable, "1", 1))
