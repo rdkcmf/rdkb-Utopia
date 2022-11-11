@@ -589,6 +589,12 @@ static int isFWTS_enable = 0;
 static int StaticIPSubnetNum = 0;
 staticip_subnet_t StaticIPSubnet[MAX_TS_ASN_COUNT]; 
 
+
+#define MAX_IP4_SIZE 20
+char PfRangeIP[MAX_TS_ASN_COUNT][MAX_IP4_SIZE];
+
+static int PfRangeCount = 0;
+
 #if defined(_BWG_PRODUCT_REQ_)
 staticip_subnet_t StaticClientIP[MAX_TS_ASN_COUNT];
 static int StaticNatCount = 0;
@@ -3506,7 +3512,10 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
    BOOL isFeatureDisabled = TRUE;
 #endif
 
+#ifdef CISCO_CONFIG_TRUE_STATIC_IP 
 
+   memset(PfRangeIP,0,sizeof(PfRangeIP));
+#endif
    query[0] = '\0';
            FIREWALL_DEBUG("Entering do_port_range_forwarding\n");       
    rc = syscfg_get(NULL, "PortRangeForwardCount", query, sizeof(query));
@@ -3567,7 +3576,10 @@ static int do_port_range_forwarding(FILE *nat_fp, FILE *filter_fp, int iptype, F
           if ( 0 != rc || '\0' == toip[0] || strcmp("255.255.255.255", toip) == 0 ) {
              continue;
           }
-
+#ifdef CISCO_CONFIG_TRUE_STATIC_IP 
+          strncpy(PfRangeIP[PfRangeCount],toip,MAX_IP4_SIZE-1);
+          PfRangeCount++ ;
+#endif
 #if defined (FEATURE_MAPT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
           FIREWALL_DEBUG("PortMapping:Internal Client %s\n" COMMA toip);
 #endif
@@ -3924,7 +3936,8 @@ PortRangeForwardNext:
           FIREWALL_DEBUG("PortMapping:Feature Enable %d\n" COMMA FALSE);
       }
 #endif
-          FIREWALL_DEBUG("Exiting do_port_range_forwarding\n");
+
+         FIREWALL_DEBUG("Exiting do_port_range_forwarding\n");
 
    return(0);
 }
@@ -10220,7 +10233,7 @@ static void do_wan2lan_staticip(FILE *filter_fp)
 #define PT_MGMT_PREFIX "tsip_pm_"
 static void do_wan2lan_tsip_pm(FILE *filter_fp)
 {
-    int rc, i, count;
+    int rc, i, count, j;
     char query[MAX_QUERY], countStr[16], utKey[64];
     char startIP[sizeof("255.255.255.255")], endIP[sizeof("255.255.255.255")];
     char startPort[sizeof("65535")], endPort[sizeof("65535")];
@@ -10276,15 +10289,32 @@ static void do_wan2lan_tsip_pm(FILE *filter_fp)
         syscfg_get(NULL, utKey, endPort, sizeof(endPort));
 
         if(strcmp("tcp", query) == 0 || strcmp("both", query) == 0)
+        {
             fprintf(filter_fp, "-A wan2lan_staticip_pm -p tcp -m tcp --dport %s:%s -m iprange --dst-range %s-%s -j %s\n", startPort, endPort, startIP, endIP, type == 0 ? "ACCEPT" : "DROP");
+            for(j = 0; j < PfRangeCount; j++) {
+                  fprintf(filter_fp, "-A wan2lan_staticip_pm -d %s -p tcp -m tcp --dport %s:%s -j %s\n",  PfRangeIP[j], startPort, endPort, type == 0 ? "ACCEPT" : "DROP");
+             }
+        }
         if(strcmp("udp", query) == 0 || strcmp("both", query) == 0)
+        {
             fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -m udp --dport %s:%s -m iprange --dst-range %s-%s -j %s\n", startPort, endPort, startIP, endIP, type == 0 ? "ACCEPT" : "DROP");
-    }
 
+            for(j = 0; j < PfRangeCount; j++) {
+                  fprintf(filter_fp, "-A wan2lan_staticip_pm -d %s -p udp -m udp --dport %s:%s -j %s\n",  PfRangeIP[j], startPort, endPort, type == 0 ? "ACCEPT" : "DROP");
+             }
+        }
+    }
+    
     for(i = 0; i < StaticIPSubnetNum; i++) {
         fprintf(filter_fp, "-A wan2lan_staticip_pm -p tcp -d %s/%s -j %s\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask, type == 0 ? "DROP" : "ACCEPT");
         fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -d %s/%s -j %s\n", StaticIPSubnet[i].ip, StaticIPSubnet[i].mask, type == 0 ? "DROP" : "ACCEPT");
     }
+
+   for(j = 0; j < PfRangeCount; j++) {
+        fprintf(filter_fp, "-A wan2lan_staticip_pm -p tcp -d %s -j %s\n",  PfRangeIP[j], type == 0 ? "DROP" : "ACCEPT");
+        fprintf(filter_fp, "-A wan2lan_staticip_pm -p udp -d %s -j %s\n", PfRangeIP[j], type == 0 ? "DROP" : "ACCEPT");
+    }
+
    FIREWALL_DEBUG("Exiting do_wan2lan_tsip_pm\n"); 	  
 }
 #endif
