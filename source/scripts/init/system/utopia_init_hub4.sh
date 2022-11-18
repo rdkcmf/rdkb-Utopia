@@ -378,6 +378,26 @@ if [ ! -f /nvram/.ovs_upgrade ]; then
     echo "OVS upgrade PSM configurations complete."
 fi
 
+#RDKB-43547 Add DATA if missing in PSM.
+wanifcount=`sed -n "/dmsb.wanmanager.wanifcount/p" $PSM_CUR_XML_CONFIG_FILE_NAME | awk -F"[><]" '{print $3}'`
+echo "No. of Interface:"$wanifcount >/tmp/debug_utopia
+c=1
+while [ $c -le $wanifcount ]
+do
+
+    preVal=`sed -n "/dmsb.wanmanager.if.$c.Marking.List/p" $PSM_CUR_XML_CONFIG_FILE_NAME | awk -F "[><]" '{print $3}'`
+
+    if [[ "$preVal" != *"DATA"* ]];
+    then
+           delCmd=`sed -i "/dmsb.wanmanager.if.$c.Marking.List/d" $PSM_CUR_XML_CONFIG_FILE_NAME`
+           insCmd=`sed -i '10 i   <Record name="dmsb.wanmanager.if.'$c'.Marking.List" type="astr">DATA-'$preVal'</Record>' $PSM_CUR_XML_CONFIG_FILE_NAME`
+    fi
+
+    newVal=`sed -n "/dmsb.wanmanager.if.$c.Marking.List/p" $PSM_CUR_XML_CONFIG_FILE_NAME | awk -F "[><]" '{print $3}'`
+    echo "BEFORE: "$preVal "AFTER: "$newVal >>/tmp/debug_utopia
+    (( c++ ))
+done
+
 # update max number of msg in queue based on system maximum queue memory.
 # This update will be used for presence detection feature.
 MSG_SIZE_MAX=`cat /proc/sys/fs/mqueue/msgsize_max`
