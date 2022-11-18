@@ -342,50 +342,55 @@ case "$1" in
    	fi
         ;;
     mesh_wan_linkstatus)
-        DEVICE_MODE=`syscfg get Device_Mode`
-        if [ "1" = "$DEVICE_MODE" ] ; then
-            sysevent set lan_status-dhcp "started"
-            sysevent set dhcp_server-restart
-        sleep 2
-        def_gateway=$(ip route show | grep default | grep "$mesh_bhaul_ifname" | cut -d " " -f 3)
-        if [ "x$def_gateway" = "x" ];then
-            def_gateway=$MESH_IFNAME_DEF_ROUTE
-        fi
-        echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
-        mesh_wan_ifname_ipaddr=$(ip -4 addr show dev "$mesh_wan_ifname" scope global | awk '/inet/{print $2}' | cut -d '/' -f1)
-        if [ "x$mesh_wan_ifname_ipaddr" = "x" ];then
-            mesh_wan_ifname_ipaddr="192.168.246.1"
-        fi
-            mesh_wan_ula_pref=$(sysevent get MeshWanInterface_UlaPref)
-            mesh_wan_ula_ipv6=$(sysevent get MeshWANInterface_UlaAddr)
-            mesh_remote_wan_ula_ipv6=$(sysevent get MeshRemoteWANInterface_UlaAddr)
-            if [ "$2" = "up" ];then
-            	ip rule add from all iif "$mesh_wan_ifname" lookup 12
-                ip route add default via "$mesh_wan_ifname_ipaddr" dev "$mesh_wan_ifname" table 11
-                ip -6 rule add from all iif "$mesh_wan_ifname" lookup 12
-                ip -6 addr add "$mesh_wan_ula_ipv6" dev "$mesh_wan_ifname" 
-                if [ "x$mesh_remote_wan_ula_ipv6" != "x" ];then
-                    mesh_remote_wan_ula_ipv6=$(echo $mesh_remote_wan_ula_ipv6 | cut -d "/" -f 1)
-                    ip -6 route add default via "$mesh_remote_wan_ula_ipv6" dev "$mesh_wan_ifname" table 11
-                fi
-                #ip -6 route add default dev "$mesh_wan_ifname" table 11
 
-                # we don't need zebra in ext mode, mesh bridges have static ula ip
-                #sysevent set ipv6_prefix "$mesh_wan_ula_pref"
-                #sysevent set zebra-restart
-            elif [ "$2" = "down" ];then
-                ip rule del from all iif "$mesh_wan_ifname" lookup 12
-                ip route del default via "$mesh_wan_ifname_ipaddr" dev "$mesh_wan_ifname" table 11
-                ip -6 rule del from all iif "$mesh_wan_ifname" lookup 12
-                if [ "x$mesh_remote_wan_ula_ipv6" != "x" ];then
-                    mesh_remote_wan_ula_ipv6=$(echo $mesh_remote_wan_ula_ipv6 | cut -d "/" -f 1)
-                    ip -6 route del default via "$mesh_remote_wan_ula_ipv6" dev "$mesh_wan_ifname" table 11
-                fi
-                ip -6 addr del "$mesh_wan_ula_ipv6" dev "$mesh_wan_ifname" 
-                #ip -6 route del default dev "$mesh_wan_ifname" table 11
-                sysevent set zebra-stop
+        if [ x"$(sysevent get last_known_mesh_wan_linkstatus)" != x"$2" ];then
+            DEVICE_MODE=`syscfg get Device_Mode`
+            if [ "1" = "$DEVICE_MODE" ] ; then
+                sysevent set lan_status-dhcp "started"
+                touch /var/tmp/lan_not_restart
+                sysevent set dhcp_server-restart
+            sleep 2
+            def_gateway=$(ip route show | grep default | grep "$mesh_bhaul_ifname" | cut -d " " -f 3)
+            if [ "x$def_gateway" = "x" ];then
+                def_gateway=$MESH_IFNAME_DEF_ROUTE
             fi
-            sysevent set firewall-restart
+            echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
+            mesh_wan_ifname_ipaddr=$(ip -4 addr show dev "$mesh_wan_ifname" scope global | awk '/inet/{print $2}' | cut -d '/' -f1)
+            if [ "x$mesh_wan_ifname_ipaddr" = "x" ];then
+                mesh_wan_ifname_ipaddr="192.168.246.1"
+            fi
+                mesh_wan_ula_pref=$(sysevent get MeshWanInterface_UlaPref)
+                mesh_wan_ula_ipv6=$(sysevent get MeshWANInterface_UlaAddr)
+                mesh_remote_wan_ula_ipv6=$(sysevent get MeshRemoteWANInterface_UlaAddr)
+                if [ "$2" = "up" ];then
+                	ip rule add from all iif "$mesh_wan_ifname" lookup 12
+                    ip route add default via "$mesh_wan_ifname_ipaddr" dev "$mesh_wan_ifname" table 11
+                    ip -6 rule add from all iif "$mesh_wan_ifname" lookup 12
+                    ip -6 addr add "$mesh_wan_ula_ipv6" dev "$mesh_wan_ifname" 
+                    if [ "x$mesh_remote_wan_ula_ipv6" != "x" ];then
+                        mesh_remote_wan_ula_ipv6=$(echo $mesh_remote_wan_ula_ipv6 | cut -d "/" -f 1)
+                        ip -6 route add default via "$mesh_remote_wan_ula_ipv6" dev "$mesh_wan_ifname" table 11
+                    fi
+                    #ip -6 route add default dev "$mesh_wan_ifname" table 11
+
+                    # we don't need zebra in ext mode, mesh bridges have static ula ip
+                    #sysevent set ipv6_prefix "$mesh_wan_ula_pref"
+                    #sysevent set zebra-restart
+                elif [ "$2" = "down" ];then
+                    ip rule del from all iif "$mesh_wan_ifname" lookup 12
+                    ip route del default via "$mesh_wan_ifname_ipaddr" dev "$mesh_wan_ifname" table 11
+                    ip -6 rule del from all iif "$mesh_wan_ifname" lookup 12
+                    if [ "x$mesh_remote_wan_ula_ipv6" != "x" ];then
+                        mesh_remote_wan_ula_ipv6=$(echo $mesh_remote_wan_ula_ipv6 | cut -d "/" -f 1)
+                        ip -6 route del default via "$mesh_remote_wan_ula_ipv6" dev "$mesh_wan_ifname" table 11
+                    fi
+                    ip -6 addr del "$mesh_wan_ula_ipv6" dev "$mesh_wan_ifname" 
+                    #ip -6 route del default dev "$mesh_wan_ifname" table 11
+                    sysevent set zebra-stop
+                fi
+                sysevent set firewall-restart
+            fi
+            sysevent set last_known_mesh_wan_linkstatus "$2"
         fi
         ;;
 

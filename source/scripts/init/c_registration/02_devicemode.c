@@ -42,7 +42,7 @@ const char* SERVICE_DEFAULT_HANDLER = "/etc/utopia/service.d/service_devicemode/
 const char* SERVICE_CUSTOM_EVENTS[] = { 
      "DeviceMode|/etc/utopia/service.d/service_devicemode/service_devicemode.sh|NULL|"TUPLE_FLAG_EVENT,
    //  "wan-status|/etc/utopia/service.d/service_devicemode/service_devicemode.sh|NULL|"TUPLE_FLAG_EVENT,
-     "mesh_wan_linkstatus|/etc/utopia/service.d/service_devicemode/service_devicemode.sh|NULL|"TUPLE_FLAG_EVENT,
+     "mesh_wan_linkstatus|/etc/utopia/service.d/service_devicemode/service_devicemode.sh",
      "ipv6_nameserver|/etc/utopia/service.d/service_devicemode/service_devicemode.sh|NULL|"TUPLE_FLAG_EVENT,
       "ipv4_nameserver|/etc/utopia/service.d/service_devicemode/service_devicemode.sh|NULL|"TUPLE_FLAG_EVENT,
      "cellular_wan_v4_ip|/etc/utopia/service.d/service_devicemode/service_devicemode.sh|NULL|"TUPLE_FLAG_EVENT,
