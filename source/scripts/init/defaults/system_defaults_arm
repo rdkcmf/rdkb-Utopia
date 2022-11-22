@@ -1426,3 +1426,4 @@ $ReqFailoverCloudAckEnable=false
 $ClearDeviceList=false
 $StationModeTimeOut=30
 $HealthCheckTimeout=60
+$RemDeviceDetectionTimeout=60
