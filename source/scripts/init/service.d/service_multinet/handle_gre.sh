@@ -650,6 +650,13 @@ hotspot_down() {
 #args: hotspot instance
 hotspot_up() {
     inst=$1
+    isMaptEnabled=$(syscfg get MAPT_Enable)
+    MaptMode=$(sysevent get map_transport_mode)
+    if [ "true" = "$isMaptEnabled" ] && [ "MAPT" = "$MaptMode" ]; then
+        echo "Handle_gre.sh : Do not enable Hotspot in Mapt mode"
+        set_ssids_enabled $inst false
+        exit 0;
+    fi
     #eval `psmcli get -e bridgeFQDM $HS_PSM_BASE.${inst}.$GRE_PSM_BRIDGES ENABLED $HS_PSM_BASE.${inst}.$HS_PSM_ENABLE GRE_ENABLED $GRE_PSM_BASE.${inst}.$GRE_PSM_ENABLE WECB_BRIDGES dmsb.wecb.hhs_extra_bridges`
 #TCCBR doesnot support BRIDGE_INST_3 and BRIDGE_INST_4, skip this after completing RDKB-20382
 	if [ "$BOX_TYPE" = "TCCBR" ]; then
@@ -788,7 +795,14 @@ case "$1" in
     #Args: netid, members
     create)
         echo "GRE CREATE: $3"
-        
+
+        isMaptEnabled=$(syscfg get MAPT_Enable)
+        MaptMode=$(sysevent get map_transport_mode)
+        if [ "true" = "$isMaptEnabled" ] && [ "MAPT" = "$MaptMode" ]; then
+            echo "Handle_gre.sh : GRE create. Do not enable Hotspot in Mapt mode"
+            set_ssids_enabled $inst false
+            exit 0;
+        fi
         read_init_params $3
         
         #Initialize
