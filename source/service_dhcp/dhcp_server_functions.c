@@ -81,6 +81,7 @@ extern void subnet(char *ipv4Addr, char *ipv4Subnet, char *subnet);
 extern void copy_file(char *, char *);
 extern void remove_file(char *);
 extern unsigned int mask2cidr(char *subnetMask);
+extern FILE* g_fArmConsoleLog; //Global file pointer declaration
 
 static unsigned int isValidSubnetMask(char *subnetMask);
 
@@ -189,11 +190,11 @@ int prepare_hostname()
 		l_iRes = sethostname(l_cHostName, sizeof(l_cHostName));
 		if (ERROR == l_iRes)
 		{
-			fprintf(stderr, "Un-Successful in setting hostname error is:%d\n", errno);
+			fprintf(g_fArmConsoleLog, "Un-Successful in setting hostname error is:%d\n", errno);
 		}
 		if (NULL == l_fHosts_Name_File)
 	    {
-    		fprintf(stderr, "Hosts Name file: %s creation failed \n", HOSTNAME_FILE);					
+    		fprintf(g_fArmConsoleLog, "Hosts Name file: %s creation failed \n", HOSTNAME_FILE);					
     	}
 		else
 		{
@@ -209,14 +210,14 @@ int prepare_hostname()
 			}
 			else
             {
-				fprintf(stderr, "Hosts file: %s creation failed \n", HOSTS_FILE);
+				fprintf(g_fArmConsoleLog, "Hosts file: %s creation failed \n", HOSTS_FILE);
 				return 0;
 			}
 		}	
     }
     else
 	{
-		fprintf(stderr, "Hostname is empty not writing to %s file\n", HOSTNAME_FILE);
+		fprintf(g_fArmConsoleLog, "Hostname is empty not writing to %s file\n", HOSTNAME_FILE);
 	}	
 	
    	if (NULL != l_fHosts_File) 
@@ -242,7 +243,7 @@ int prepare_hostname()
 	}
 	else
 	{
-		fprintf(stderr, "Hosts file: %s creation failed \n", HOSTS_FILE);
+		fprintf(g_fArmConsoleLog, "Hosts file: %s creation failed \n", HOSTS_FILE);
 	}
 	if (NULL != l_fHosts_Name_File) { /*RDKB-12965 & CID:-34535*/
 		fclose(l_fHosts_Name_File);
@@ -268,7 +269,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
     syscfg_get(NULL, "lan_netmask", l_cLanNetMask, sizeof(l_cLanNetMask));
         if (0 == isValidSubnetMask(l_cLanNetMask))
 	{
-		fprintf(stderr, "[DHCPCORRUPT_TRACE] DHCP Net Mask:%s is corrupted. Setting to default Net Mask\n",
+		fprintf(g_fArmConsoleLog, "[DHCPCORRUPT_TRACE] DHCP Net Mask:%s is corrupted. Setting to default Net Mask\n",
 				l_cLanNetMask);
 		//copy the default netmask
 		safec_rc = strcpy_s(l_cLanNetMask, sizeof(l_cLanNetMask),"255.255.255.0");
@@ -281,7 +282,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	sscanf(l_cLanNetMask, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
 
 	syscfg_get(NULL, "dhcp_start", l_cDhcp_Start, sizeof(l_cDhcp_Start));
-	fprintf(stderr, "dhcp_start:%s\n", l_cDhcp_Start);
+	fprintf(g_fArmConsoleLog, "dhcp_start:%s\n", l_cDhcp_Start);
 
 	// inet_pton validates whether IP has 4 octets and all octets are in between 0 and 255
 	l_iStartIpValid = inet_pton(AF_INET, l_cDhcp_Start, &(l_sSocAddr.sin_addr));
@@ -294,31 +295,31 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 		if ((l_iStartAddr_Last_Oct < 2 && l_iStartAddr_Last_Oct > 254) &&
             (strncmp(l_cIpSubnet, l_cLanSubnet, sizeof(l_cIpSubnet))))
 		{
-			fprintf(stderr, "Last Octet of DHCP Start Address:%d is not in range", l_iStartAddr_Last_Oct);
+			fprintf(g_fArmConsoleLog, "Last Octet of DHCP Start Address:%d is not in range", l_iStartAddr_Last_Oct);
 			l_iStartIpValid = 0;
 		}
 		else if (strncmp(l_cIpSubnet, l_cLanSubnet, sizeof(l_cIpSubnet)))
 		{
-			fprintf(stderr, "DHCP Start Address:%s is not in the same subnet as LAN IP:%s\n", 
+			fprintf(g_fArmConsoleLog, "DHCP Start Address:%s is not in the same subnet as LAN IP:%s\n", 
 					l_cDhcp_Start, l_cLanIPAddress);
 
             l_iStartIpValid = 0;	
 		}
 		else
 		{
-			fprintf(stderr, "DHCP_SERVER: Start address from syscfg_db :%s\n", l_cDhcp_Start);
+			fprintf(g_fArmConsoleLog, "DHCP_SERVER: Start address from syscfg_db :%s\n", l_cDhcp_Start);
 		}
 	}
 	else	
 	{
-		fprintf(stderr, "Start Address is not in valid format need a re-calculation\n");
+		fprintf(g_fArmConsoleLog, "Start Address is not in valid format need a re-calculation\n");
 		l_iStartIpValid = 0;
 	}
 
 	// Start Address is not valid lets calculate it
 	if (0 == l_iStartIpValid)
 	{
-        fprintf(stderr, "DHCP Start Address:%s is not valid re-calculating it\n", l_cDhcp_Start);
+        fprintf(g_fArmConsoleLog, "DHCP Start Address:%s is not valid re-calculating it\n", l_cDhcp_Start);
         sscanf(l_cLanSubnet, "%d.%d.%d.%d", &l_iFirstOct, &l_iSecOct, &l_iThirdOct, &l_iLastOct);
         l_iLastOct = 2;
         safec_rc = sprintf_s(l_cDhcp_Start, sizeof(l_cDhcp_Start),"%d.%d.%d.%d", l_iFirstOct, l_iSecOct, l_iThirdOct, l_iLastOct);
@@ -329,7 +330,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	}
  	
     syscfg_get(NULL, "dhcp_end", l_cDhcp_End, sizeof(l_cDhcp_End));
-    fprintf(stderr, "dhcp_end:%s\n", l_cDhcp_End);
+    fprintf(g_fArmConsoleLog, "dhcp_end:%s\n", l_cDhcp_End);
 
 	l_iEndIpValid = inet_pton(AF_INET, l_cDhcp_End, &(l_sSocAddr.sin_addr));
 	if (1 == l_iEndIpValid)
@@ -340,25 +341,25 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 		subnet(l_cDhcp_End, l_cLanNetMask, l_cIpSubnet);
         if (l_iEndAddr_Last_Oct < 2 && l_iEndAddr_Last_Oct > 254)
         {
-            fprintf(stderr, "Last Octet of DHCP End Address:%d is not in range", l_iEndAddr_Last_Oct);
+            fprintf(g_fArmConsoleLog, "Last Octet of DHCP End Address:%d is not in range", l_iEndAddr_Last_Oct);
             l_iEndIpValid = 0;
 			
         }
 		else if (strncmp(l_cIpSubnet, l_cLanSubnet, sizeof(l_cIpSubnet)))
         {
-            fprintf(stderr, "DHCP End Address:%s is not in the same subnet as LAN IP:%s\n", 
+            fprintf(g_fArmConsoleLog, "DHCP End Address:%s is not in the same subnet as LAN IP:%s\n", 
                     l_cDhcp_End, l_cLanIPAddress);
 
             l_iEndIpValid = 0;    
         }
         else
         {
-			fprintf(stderr, "DHCP_SERVER: End address from syscfg_db :%s\n", l_cDhcp_End);
+			fprintf(g_fArmConsoleLog, "DHCP_SERVER: End address from syscfg_db :%s\n", l_cDhcp_End);
         }
     }
 	else
 	{
-		fprintf(stderr, "End Address is not in valid format need a re-calculation\n");
+		fprintf(g_fArmConsoleLog, "End Address is not in valid format need a re-calculation\n");
 		l_iEndIpValid = 0;
 	}
 
@@ -367,9 +368,9 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
 	{
 		//DHCP_NUM is the number of available dhcp address for the lan
 		syscfg_get(NULL, "dhcp_num", l_cDhcp_Num, sizeof(l_cDhcp_Num));
-		fprintf(stderr, "dhcp_num is:%s\n", l_cDhcp_Num);
+		fprintf(g_fArmConsoleLog, "dhcp_num is:%s\n", l_cDhcp_Num);
 
-		fprintf(stderr, "DHCP END Address:%s is not valid re-calculating it\n", l_cDhcp_End);
+		fprintf(g_fArmConsoleLog, "DHCP END Address:%s is not valid re-calculating it\n", l_cDhcp_End);
         l_iCIDR = mask2cidr(l_cLanNetMask);
         //Extract 1st 3 octets of the lan subnet and 
         //set the last octet to 253 for the start address
@@ -411,7 +412,7 @@ void calculate_dhcp_range (FILE *local_dhcpconf_file, char *prefix)
         }
         else
         {
-            fprintf(stderr, "Invalid Subnet mask\n");
+            fprintf(g_fArmConsoleLog, "Invalid Subnet mask\n");
         }
         syscfg_set(NULL, "dhcp_end", l_cDhcp_End);
 	}
@@ -448,7 +449,7 @@ void prepare_dhcp_conf_static_hosts()
     l_fLocalStatHosts = fopen(l_cLocalStatHosts, "w+"); //It will create a file and open, re-write fresh RDK-B 12160
     if(NULL == l_fLocalStatHosts)
     {
-        fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalStatHosts, errno);
+        fprintf(g_fArmConsoleLog, "File: %s creation failed with error:%d\n", l_cLocalStatHosts, errno);
         return;
     }
     syscfg_get(NULL, "dhcp_num_static_hosts", l_cDhcpStatHosts, sizeof(l_cDhcpStatHosts));
@@ -486,7 +487,7 @@ void prepare_dhcp_options_wan_dns()
     l_fLocalDhcpOpt = fopen(l_cLocalDhcpOpt, "a+"); //It will create a file and open
     if(NULL == l_fLocalDhcpOpt) 
     {    
-        fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalDhcpOpt, errno);
+        fprintf(g_fArmConsoleLog, "File: %s creation failed with error:%d\n", l_cLocalDhcpOpt, errno);
         return;
     }    
 	syscfg_get(NULL, "dhcp_server_propagate_wan_nameserver", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
@@ -494,7 +495,7 @@ void prepare_dhcp_options_wan_dns()
 	if (strncmp(l_cPropagate_Ns, "1", 1))
 	{
     	syscfg_get(NULL, "block_nat_redirection", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
-	    fprintf(stderr, "Propagate NS is set from block_nat_redirection value is:%s\n", l_cPropagate_Ns);
+	    fprintf(g_fArmConsoleLog, "Propagate NS is set from block_nat_redirection value is:%s\n", l_cPropagate_Ns);
 	}		
 
 	if (!strncmp(l_cPropagate_Ns, "1", 1))	
@@ -523,12 +524,12 @@ void prepare_dhcp_options_wan_dns()
 				l_cToken = strtok(NULL, " ");
 			}
 			l_cNs[strlen(l_cNs)] = '\0';
-			fprintf(stderr, "l_cNs is:%s\n", l_cNs);
+			fprintf(g_fArmConsoleLog, "l_cNs is:%s\n", l_cNs);
 			fprintf(l_fLocalDhcpOpt, "option:dns-server, %s\n", l_cNs);	
 		}
 		else
 		{
-			fprintf(stderr, "wan_dhcp_dns is empty, so file:%s will be empty \n", DHCP_OPTIONS_FILE);
+			fprintf(g_fArmConsoleLog, "wan_dhcp_dns is empty, so file:%s will be empty \n", DHCP_OPTIONS_FILE);
 		}	
 	}
 	fclose(l_fLocalDhcpOpt);
@@ -563,14 +564,14 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
         }
   		else
 		{
-			fprintf(stderr, "redirection_url doesnt contain http / https tag\n");
+			fprintf(g_fArmConsoleLog, "redirection_url doesnt contain http / https tag\n");
 		}		   
 	}
-    fprintf(stderr, "redirection URL after stripping http / https is:%s\n", l_cRedirect_Url);
+    fprintf(g_fArmConsoleLog, "redirection URL after stripping http / https is:%s\n", l_cRedirect_Url);
 
     // CloudPersonalization URL can be get from DML  
 	syscfg_get(NULL, "CloudPersonalizationURL", l_cCloud_Personal_Url, sizeof(l_cCloud_Personal_Url));
-    fprintf(stderr, "CloudPersonalizationURL is:%s\n", l_cCloud_Personal_Url);
+    fprintf(g_fArmConsoleLog, "CloudPersonalizationURL is:%s\n", l_cCloud_Personal_Url);
 
 	if (0 != l_cCloud_Personal_Url[0])
 	{
@@ -590,7 +591,7 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 		}
 		else
 		{
-			fprintf(stderr, "CloudPersonalizationURL doesnt contain http / https tag\n");
+			fprintf(g_fArmConsoleLog, "CloudPersonalizationURL doesnt contain http / https tag\n");
 		}
 	}
 	iface_get_ipv4addr(l_cWan_IfName, l_cErouter0_Ipv4Addr, sizeof(l_cErouter0_Ipv4Addr));
@@ -618,16 +619,16 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
         }
         else
         {
-        	fprintf(stderr, "opening of %s file failed with error:%d\n", RESOLV_CONF, errno);
+        	fprintf(g_fArmConsoleLog, "opening of %s file failed with error:%d\n", RESOLV_CONF, errno);
         }
-        fprintf(stderr, "Nameserver IPv4 address is:%s", l_cNsServer4);
+        fprintf(g_fArmConsoleLog, "Nameserver IPv4 address is:%s", l_cNsServer4);
         //TODO move to function if possible
     }
     // erouter0 doesnt have IPv4 Address not doing anything
     // TODO: ipv6 DNS whitelisting in case of ipv6 only clients         
     else
     {
-    	fprintf(stderr, "erouter0 interface doesnt have IPv4 address\n");
+    	fprintf(g_fArmConsoleLog, "erouter0 interface doesnt have IPv4 address\n");
     }
 
 	if (0 != l_cNsServer4[0])
@@ -647,12 +648,12 @@ void prepare_whitelist_urls(FILE *fp_local_dhcp_conf)
 		}
 		else
 		{
-			fprintf(stderr, "opening of %s file failed with error:%d\n", STATIC_URLS_FILE, errno);
+			fprintf(g_fArmConsoleLog, "opening of %s file failed with error:%d\n", STATIC_URLS_FILE, errno);
 		}
 	}
 	else
 	{
-		fprintf(stderr, "IPv4 DNS server is not present in %s file not whitelisting URLs \n", RESOLV_CONF);
+		fprintf(g_fArmConsoleLog, "IPv4 DNS server is not present in %s file not whitelisting URLs \n", RESOLV_CONF);
 	}		
 }
 
@@ -744,7 +745,7 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix, unsigned char bDhc
 						fprintf(local_dhcpconf_file, "%sdhcp-range=set:%d,%s,%s,%s,%s\n", prefix, l_iPool,
 								l_cDhcp_Start_Addr, l_cDhcp_End_Addr, l_cLan_Subnet, l_cDhcp_Lease_Time);
 
-						fprintf(stderr, "DHCP_SERVER : [BRLAN1] %sdhcp-range=set:%d,%s,%s,%s,%s\n", 
+						fprintf(g_fArmConsoleLog, "DHCP_SERVER : [BRLAN1] %sdhcp-range=set:%d,%s,%s,%s,%s\n", 
 										prefix, l_iPool, l_cDhcp_Start_Addr, l_cDhcp_End_Addr, 
 										l_cLan_Subnet, l_cDhcp_Lease_Time);
 
@@ -755,23 +756,23 @@ void do_extra_pools (FILE *local_dhcpconf_file, char *prefix, unsigned char bDhc
 						   )
 						{
 							fprintf(local_dhcpconf_file, "%sdhcp-option=%s,6,%s\n", prefix, l_cIfName, pWan_Dhcp_Dns);
-							fprintf(stderr, "DHCP_SERVER : [%s] %sdhcp-option=%s,6,%s\n", l_cIfName, prefix, l_cIfName, pWan_Dhcp_Dns);
+							fprintf(g_fArmConsoleLog, "DHCP_SERVER : [%s] %sdhcp-option=%s,6,%s\n", l_cIfName, prefix, l_cIfName, pWan_Dhcp_Dns);
 						}
 					}
 				}
 				else
 				{
-					fprintf(stderr, "%s is not up go to next pool\n", l_cIpv4InstStatus);
+					fprintf(g_fArmConsoleLog, "%s is not up go to next pool\n", l_cIpv4InstStatus);
 				}	
 			}
 			else
 			{
-				fprintf(stderr, "%s is not TRUE continue to next pool\n", l_cDhcpEnabled);
+				fprintf(g_fArmConsoleLog, "%s is not TRUE continue to next pool\n", l_cDhcpEnabled);
 			}
 		}
 		else
 		{
-			fprintf(stderr, "pool is empty continue to next pool\n");
+			fprintf(g_fArmConsoleLog, "pool is empty continue to next pool\n");
 		}	
 		l_cToken = strtok(NULL, " ");
 	}
@@ -923,7 +924,7 @@ void UpdateDhcpConfChangeBasedOnEvent()
 //1st Input Lan IP Address and 2nd Input LAN Subnet Mask
 int prepare_dhcp_conf (char *input)
 {
-    fprintf(stderr, "DHCP SERVER : Prepare DHCP configuration\n");
+    fprintf(g_fArmConsoleLog, "DHCP SERVER : Prepare DHCP configuration\n");
     char l_cNetwork_Res[8] = {0}, l_cLocalDhcpConf[32] = {0};
     char l_cLanIPAddress[16] = {0}, l_cLanNetMask[16] = {0}, l_cLan_if_name[16] = {0};
     char l_cCaptivePortalEn[8] = {0}, l_cRedirect_Flag[8] = {0}, l_cMigCase[8] = {0};
@@ -970,7 +971,7 @@ int prepare_dhcp_conf (char *input)
 	l_fLocal_Dhcp_ConfFile = fopen(l_cLocalDhcpConf, "a+"); //It will create a file and open
     if(NULL == l_fLocal_Dhcp_ConfFile) 
     {   
-        fprintf(stderr, "File: %s creation failed with error:%d\n", l_cLocalDhcpConf, errno);
+        fprintf(g_fArmConsoleLog, "File: %s creation failed with error:%d\n", l_cLocalDhcpConf, errno);
 		return 0;
     }   
 
@@ -995,7 +996,7 @@ int prepare_dhcp_conf (char *input)
         if (CCSP_SUCCESS == ret_val && psmStrValue != NULL)
         {
                 strncpy(mesh_wan_ifname, psmStrValue, sizeof(mesh_wan_ifname));
-                fprintf(stderr, "mesh_wan_ifname is %s\n", mesh_wan_ifname);
+                fprintf(g_fArmConsoleLog, "mesh_wan_ifname is %s\n", mesh_wan_ifname);
                 Ansc_FreeMemory_Callback(psmStrValue);
                 psmStrValue = NULL;
         }
@@ -1140,7 +1141,7 @@ int prepare_dhcp_conf (char *input)
 
 	if ((NULL != input) && (!strncmp(input, "dns_only", 8)))
 	{
-		fprintf(stderr, "dns_only case prefix is #\n");
+		fprintf(g_fArmConsoleLog, "dns_only case prefix is #\n");
 		l_cDns_Only_Prefix[0] = '#';
 	}
 
@@ -1204,7 +1205,7 @@ int prepare_dhcp_conf (char *input)
         char result[128];
         char lanIP[16]={0}, lanNetMask[16]={0}, dhcpStart[16]={0}, dhcpEnd[16]={0};
 
-        fprintf(stderr, "LAN IP Address OR LAN net mask is not in valid format, setting to default lan_ipaddr:%s lan_netmask:%s\n",l_cLanIPAddress,l_cLanNetMask);
+        fprintf(g_fArmConsoleLog, "LAN IP Address OR LAN net mask is not in valid format, setting to default lan_ipaddr:%s lan_netmask:%s\n",l_cLanIPAddress,l_cLanNetMask);
         snprintf(cmd,sizeof(cmd),"grep '$lan_ipaddr\\|$lan_netmask\\|$dhcp_start\\|$dhcp_end' %s"
           " | awk '/\\$lan_ipaddr/ {split($1,ip, \"=\");}"
           " /\\$lan_netmask/ {split($1,mask, \"=\");}"
@@ -1212,16 +1213,16 @@ int prepare_dhcp_conf (char *input)
           " /\\$dhcp_end/ {split($1,end, \"=\");}"
           " END {print ip[2], mask[2], start[2], end[2]}'",DEFAULT_FILE);
 
-        fprintf(stderr,"Command = %s\n",cmd);
+        fprintf(g_fArmConsoleLog,"Command = %s\n",cmd);
 
         if ((fp = popen(cmd, "r")) == NULL)
         {
-                fprintf(stderr,"popen ERROR\n");
+                fprintf(g_fArmConsoleLog,"popen ERROR\n");
         }
         else if (fgets(result, sizeof(result), fp) == NULL)
         {
                 pclose(fp);
-                fprintf(stderr,"popen fgets ERROR\n");
+                fprintf(g_fArmConsoleLog,"popen fgets ERROR\n");
         }
         else
         {       sscanf(result, "%s %s %s %s",lanIP, lanNetMask, dhcpStart, dhcpEnd);
@@ -1262,14 +1263,14 @@ int prepare_dhcp_conf (char *input)
     l_fNetRes = fopen(NETWORK_RES_FILE, "r");
     if (NULL == l_fNetRes)
     {
-		fprintf(stderr, "%s file is not present \n", NETWORK_RES_FILE);
+		fprintf(g_fArmConsoleLog, "%s file is not present \n", NETWORK_RES_FILE);
     }
     else
 	{
                 /* CID 60600: Unchecked return value from library */
                 if ((ret = fscanf(l_fNetRes,"%s", l_cNetwork_Res)) != 1)
 	        {
-		   fprintf(stderr, "read error of %s \n",NETWORK_RES_FILE);
+		   fprintf(g_fArmConsoleLog, "read error of %s \n",NETWORK_RES_FILE);
 		}
 
 		fclose(l_fNetRes);
@@ -1285,30 +1286,30 @@ int prepare_dhcp_conf (char *input)
     if (CCSP_SUCCESS == l_iRet_Val && l_cpPsm_Get != NULL)
 	{
     		strncpy(l_cWifi_Not_Configured, l_cpPsm_Get, sizeof(l_cWifi_Not_Configured));
-			fprintf(stderr, "DHCP SERVER : NotifyWiFiChanges is %s\n", l_cWifi_Not_Configured);
+			fprintf(g_fArmConsoleLog, "DHCP SERVER : NotifyWiFiChanges is %s\n", l_cWifi_Not_Configured);
     	    Ansc_FreeMemory_Callback(l_cpPsm_Get);
         	l_cpPsm_Get = NULL;
 	}
 	else
 	{
-		fprintf(stderr, "DHCP SERVER : Error:%d while getting:%s or value is empty\n", 
+		fprintf(g_fArmConsoleLog, "DHCP SERVER : Error:%d while getting:%s or value is empty\n", 
 				l_iRet_Val, PSM_NAME_NOTIFY_WIFI_CHANGES);
 	}
-	fprintf(stderr, "DHCP SERVER : CaptivePortal_Enabled is %s\n", l_cCaptivePortalEn);
+	fprintf(g_fArmConsoleLog, "DHCP SERVER : CaptivePortal_Enabled is %s\n", l_cCaptivePortalEn);
 	
 	if (IS_MIG_CHECK_NEEDED(g_cMig_Check))
 	{
-		fprintf(stderr, "Wifi Migration checks are needed\n");
+		fprintf(g_fArmConsoleLog, "Wifi Migration checks are needed\n");
     	
 		syscfg_get(NULL, "migration_cp_handler", l_cMigCase, sizeof(l_cMigCase));
                 if(!strncmp(l_cMigCase, "true", 4))
                 {
-                    fprintf(stderr, "DHCP SERVER : Initialize migration case variable to true\n");
+                    fprintf(g_fArmConsoleLog, "DHCP SERVER : Initialize migration case variable to true\n");
                     l_bMig_Case = TRUE;
                 }
                 else
                 {
-                   fprintf(stderr, "DHCP SERVER : Initialize migration case variable to false\n");
+                   fprintf(g_fArmConsoleLog, "DHCP SERVER : Initialize migration case variable to false\n");
                    l_bMig_Case = FALSE;
                 }
 	    sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan_service-status", l_cWan_Service_Stat, sizeof(l_cWan_Service_Stat));
@@ -1331,25 +1332,25 @@ int prepare_dhcp_conf (char *input)
                         {
                            l_bWifi_Res_Mig = FALSE;
                         }
-			fprintf(stderr, "DHCP SERVER : WiFiRestored_AfterMigration is %d\n", l_bWifi_Res_Mig);
+			fprintf(g_fArmConsoleLog, "DHCP SERVER : WiFiRestored_AfterMigration is %d\n", l_bWifi_Res_Mig);
     	    Ansc_FreeMemory_Callback(l_cpPsm_Get);
 	    	l_cpPsm_Get = NULL;
 		}	
 		else
 		{
-			fprintf(stderr, "DHCP SERVER : Error:%d while getting:%s or value is empty\n", 
+			fprintf(g_fArmConsoleLog, "DHCP SERVER : Error:%d while getting:%s or value is empty\n", 
 					l_iRet_Val, PSM_NAME_WIFI_RES_MIG);
 		}
 	
 		if (l_bMig_Case && l_bWifi_Res_Mig)
 		{
-	    	    fprintf(stderr, "DHCP SERVER : WiFi restored case setting MIGRATION_CASE variable to false\n");
+	    	    fprintf(g_fArmConsoleLog, "DHCP SERVER : WiFi restored case setting MIGRATION_CASE variable to false\n");
 		    l_bMig_Case = FALSE;
 		}
 	}
 	else
 	{
-		fprintf(stderr, "Migration checks are not needed\n");
+		fprintf(g_fArmConsoleLog, "Migration checks are not needed\n");
 	}
 
 	if (IS_MIG_CHECK_NEEDED(g_cMig_Check))
@@ -1375,15 +1376,15 @@ int prepare_dhcp_conf (char *input)
               l_bCaptivePortal_Mode = TRUE;
               if (TRUE== l_bRfCp )
               {
-                 fprintf(stderr, "DHCP SERVER : NO RF CAPTIVE_PORTAL_MODE\n");
+                 fprintf(g_fArmConsoleLog, "DHCP SERVER : NO RF CAPTIVE_PORTAL_MODE\n");
               }
               else
               {    
-                     fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
+                     fprintf(g_fArmConsoleLog, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
                      t2_event_d("SYS_INFO_CaptivePortal", 1);
                      if (access("/nvram/reverted", F_OK) == 0) //If file is present
                      {
-                       fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");
+                       fprintf(g_fArmConsoleLog, "DHCP SERVER : Removing reverted flag\n");
                        remove_file("/nvram/reverted");
                      }
               }
@@ -1391,27 +1392,27 @@ int prepare_dhcp_conf (char *input)
            else
            {
               l_bCaptivePortal_Mode = FALSE;
-              fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
-              fprintf(stderr, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
+              fprintf(g_fArmConsoleLog, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
+              fprintf(g_fArmConsoleLog, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
            }
 #else
        if  ((!strncmp(l_cNetwork_Res, "204", 3)) && (!strncmp(l_cRedirect_Flag, "true", 4)) && 
 			 (!strncmp(l_cWifi_Not_Configured, "true", 4))) 
            {
               l_bCaptivePortal_Mode = TRUE;
-              fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
+              fprintf(g_fArmConsoleLog, "DHCP SERVER : WiFi SSID and Passphrase are not modified,set CAPTIVE_PORTAL_MODE\n");
               t2_event_d("SYS_INFO_CaptivePortal", 1);
               if (access("/nvram/reverted", F_OK) == 0) //If file is present
               {
-                 fprintf(stderr, "DHCP SERVER : Removing reverted flag\n");
+                 fprintf(g_fArmConsoleLog, "DHCP SERVER : Removing reverted flag\n");
                  remove_file("/nvram/reverted");
               }
            }
            else
            {
               l_bCaptivePortal_Mode = FALSE;
-              fprintf(stderr, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
-              fprintf(stderr, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
+              fprintf(g_fArmConsoleLog, "DHCP SERVER : WiFi SSID and Passphrase are already modified");
+              fprintf(g_fArmConsoleLog, " or no network response ,set CAPTIVE_PORTAL_MODE to false\n");
            }
 #endif
 	}
@@ -1442,7 +1443,7 @@ int prepare_dhcp_conf (char *input)
                 }
                 else
                 {
-                    fprintf(stderr, "%s file creation failed\n", DEFAULT_RESOLV_CONF);
+                    fprintf(g_fArmConsoleLog, "%s file creation failed\n", DEFAULT_RESOLV_CONF);
                 }
             }
         }
@@ -1528,7 +1529,7 @@ int prepare_dhcp_conf (char *input)
 	if ((NULL == input) || 
 		((NULL != input) && (strncmp(input, "dns_only", 8)))) //not dns_only case
 	{
-		fprintf(stderr, "not dns_only case calling other prepare functions\n");
+		fprintf(g_fArmConsoleLog, "not dns_only case calling other prepare functions\n");
 		prepare_dhcp_conf_static_hosts();
 		prepare_dhcp_options_wan_dns();
 	}
@@ -1576,12 +1577,12 @@ int prepare_dhcp_conf (char *input)
             }
             else
             {
-                fprintf(stderr, "DHCP_SERVER : Error in opening %s\n",DHCP_OPTIONS_FILE );
+                fprintf(g_fArmConsoleLog, "DHCP_SERVER : Error in opening %s\n",DHCP_OPTIONS_FILE );
             }
         }
         else
         {
-            fprintf(stderr, "DHCP_SERVER : Error in opening %s\n",RESOLV_CONF );
+            fprintf(g_fArmConsoleLog, "DHCP_SERVER : Error in opening %s\n",RESOLV_CONF );
         }
     }
 #endif
@@ -1608,7 +1609,7 @@ int prepare_dhcp_conf (char *input)
 		            fprintf(l_fLocal_Dhcp_ConfFile, "address=/%s/%s\n",l_clocFqdn,l_cCurLanIP );
 		            fprintf(l_fLocal_Dhcp_ConfFile, "server=/%s/%s\n",l_clocFqdn,l_cCurLanIP );	
                         }
-			fprintf(stderr, "DHCP_SERVER : [%s] %s\n", l_cLan_if_name, cDhcpNs_OptionString );
+			fprintf(g_fArmConsoleLog, "DHCP_SERVER : [%s] %s\n", l_cLan_if_name, cDhcpNs_OptionString );
 		}
 	}
    
@@ -1618,19 +1619,19 @@ int prepare_dhcp_conf (char *input)
 	// If the interface is not present then fecthing IPv4 address will fail with error ENODEV
 	if (is_iface_present(XHS_IF_NAME))
 	{
-		fprintf(stderr, "%s interface is present creating dnsmasq\n", XHS_IF_NAME);
+		fprintf(g_fArmConsoleLog, "%s interface is present creating dnsmasq\n", XHS_IF_NAME);
         do_extra_pools(l_fLocal_Dhcp_ConfFile, l_cDns_Only_Prefix, l_bDhcpNs_Enabled, l_cWan_Dhcp_Dns);
 	}
 	else
 	{
-		fprintf(stderr, "%s interface is not present, not adding dnsmasq entries\n", XHS_IF_NAME);
+		fprintf(g_fArmConsoleLog, "%s interface is not present, not adding dnsmasq entries\n", XHS_IF_NAME);
 	}
 
 	//Lost And Found Enable
     syscfg_get(NULL, "lost_and_found_enable", l_cIotEnabled, sizeof(l_cIotEnabled));
 	if (!strncmp(l_cIotEnabled, "true", 4))
 	{
-    	fprintf(stderr, "IOT_LOG : DHCP server configuring for IOT\n");
+    	fprintf(g_fArmConsoleLog, "IOT_LOG : DHCP server configuring for IOT\n");
 
 	    syscfg_get(NULL, "iot_ifname", l_cIotIfName, sizeof(l_cIotIfName));
             if( strstr( l_cIotIfName, "l2sd0.106")) {
@@ -1659,11 +1660,11 @@ int prepare_dhcp_conf (char *input)
 		if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 		{
 			fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=%s,6,%s\n", l_cIotIfName, l_cWan_Dhcp_Dns);
-			fprintf(stderr, "DHCP_SERVER : [%s] dhcp-option=%s,6,%s\n",l_cIotIfName, l_cIotIfName, l_cWan_Dhcp_Dns);
+			fprintf(g_fArmConsoleLog, "DHCP_SERVER : [%s] dhcp-option=%s,6,%s\n",l_cIotIfName, l_cIotIfName, l_cWan_Dhcp_Dns);
 		}
 	}
 
-	fprintf(stderr, "DHCP server configuring for Mesh network\n");
+	fprintf(g_fArmConsoleLog, "DHCP server configuring for Mesh network\n");
 #if defined (_COSA_INTEL_XB3_ARM_)
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.112\n");
 	fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-range=169.254.0.5,169.254.0.253,255.255.255.0,infinite\n"); 
@@ -1672,7 +1673,7 @@ int prepare_dhcp_conf (char *input)
 	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 	{
 		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.112,6,%s\n", l_cWan_Dhcp_Dns);
-		fprintf(stderr, "DHCP_SERVER : [l2sd0.112] dhcp-option=l2sd0.112,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(g_fArmConsoleLog, "DHCP_SERVER : [l2sd0.112] dhcp-option=l2sd0.112,6,%s\n", l_cWan_Dhcp_Dns);
 	}
 	
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.113\n");
@@ -1682,7 +1683,7 @@ int prepare_dhcp_conf (char *input)
 	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 	{
 		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.113,6,%s\n", l_cWan_Dhcp_Dns);
-		fprintf(stderr, "DHCP_SERVER : [l2sd0.113] dhcp-option=l2sd0.113,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(g_fArmConsoleLog, "DHCP_SERVER : [l2sd0.113] dhcp-option=l2sd0.113,6,%s\n", l_cWan_Dhcp_Dns);
 	}
         
         // RDKB-15951 Mesh Bhaul vlan address pool
@@ -1693,7 +1694,7 @@ int prepare_dhcp_conf (char *input)
 	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 	{
 		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
-		fprintf(stderr, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(g_fArmConsoleLog, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
 	}
 
    	fprintf(l_fLocal_Dhcp_ConfFile, "interface=l2sd0.4090\n");
@@ -1703,7 +1704,7 @@ int prepare_dhcp_conf (char *input)
 	if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 	{
 		fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=l2sd0.4090,6,%s\n", l_cWan_Dhcp_Dns);
-		fprintf(stderr, "DHCP_SERVER : [l2sd0.4090] dhcp-option=l2sd0.4090,6,%s\n", l_cWan_Dhcp_Dns);
+		fprintf(g_fArmConsoleLog, "DHCP_SERVER : [l2sd0.4090] dhcp-option=l2sd0.4090,6,%s\n", l_cWan_Dhcp_Dns);
 	}
  
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brebhaul\n");
@@ -1712,7 +1713,7 @@ int prepare_dhcp_conf (char *input)
         if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
         {
                 fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
-                fprintf(stderr, "DHCP_SERVER : [brebhaul] dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
+                fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brebhaul] dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
         }
 	
 #elif defined (INTEL_PUMA7) || (defined (_COSA_BCM_ARM_) && !defined(_CBR_PRODUCT_REQ_)) // ARRIS XB6 ATOM, TCXB6 
@@ -1723,7 +1724,7 @@ int prepare_dhcp_conf (char *input)
 		if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 		{
 			fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=ath12,6,%s\n", l_cWan_Dhcp_Dns);
-			fprintf(stderr, "DHCP_SERVER : [ath12] dhcp-option=ath12,6,%s\n", l_cWan_Dhcp_Dns);
+			fprintf(g_fArmConsoleLog, "DHCP_SERVER : [ath12] dhcp-option=ath12,6,%s\n", l_cWan_Dhcp_Dns);
 		}
 		
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=ath13\n");
@@ -1733,7 +1734,7 @@ int prepare_dhcp_conf (char *input)
 		if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
 		{
 			fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=ath13,6,%s\n", l_cWan_Dhcp_Dns);
-			fprintf(stderr, "DHCP_SERVER : [ath13] dhcp-option=ath13,6,%s\n", l_cWan_Dhcp_Dns);
+			fprintf(g_fArmConsoleLog, "DHCP_SERVER : [ath13] dhcp-option=ath13,6,%s\n", l_cWan_Dhcp_Dns);
 		}
      
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=br403\n");
@@ -1743,7 +1744,7 @@ int prepare_dhcp_conf (char *input)
         if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
         {
                 fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
-                fprintf(stderr, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
+                fprintf(g_fArmConsoleLog, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
         }
 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brebhaul\n");
@@ -1753,7 +1754,7 @@ int prepare_dhcp_conf (char *input)
         if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
         {
                 fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
-                fprintf(stderr, "DHCP_SERVER : [brebhaul] dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
+                fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brebhaul] dhcp-option=brebhaul,6,%s\n", l_cWan_Dhcp_Dns);
         }
 #endif
 
@@ -1766,7 +1767,7 @@ int prepare_dhcp_conf (char *input)
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
                 {
                         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan6,6,%s\n", l_cWan_Dhcp_Dns);
-                        fprintf(stderr, "DHCP_SERVER : [brlan6] dhcp-option=brlan6,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brlan6] dhcp-option=brlan6,6,%s\n", l_cWan_Dhcp_Dns);
                 }
 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan7\n");
@@ -1776,7 +1777,7 @@ int prepare_dhcp_conf (char *input)
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
                 {
                         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan7,6,%s\n", l_cWan_Dhcp_Dns);
-                        fprintf(stderr, "DHCP_SERVER : [brlan7] dhcp-option=brlan7,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brlan7] dhcp-option=brlan7,6,%s\n", l_cWan_Dhcp_Dns);
                 }
 
        fprintf(l_fLocal_Dhcp_ConfFile, "interface=br403\n");
@@ -1786,7 +1787,7 @@ int prepare_dhcp_conf (char *input)
         if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
         {
                 fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
-                fprintf(stderr, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
+                fprintf(g_fArmConsoleLog, "DHCP_SERVER : [br403] dhcp-option=br403,6,%s\n", l_cWan_Dhcp_Dns);
         }
 #endif
 
@@ -1799,7 +1800,7 @@ int prepare_dhcp_conf (char *input)
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
                 {
                         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
-                        fprintf(stderr, "DHCP_SERVER : [brlan112] dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brlan112] dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
                 }
 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan113\n");
@@ -1809,7 +1810,7 @@ int prepare_dhcp_conf (char *input)
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
                 {
                         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
-                        fprintf(stderr, "DHCP_SERVER : [brlan113] dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brlan113] dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
                 }
 #endif
 #if defined(_WNXL11BWL_PRODUCT_REQ_)
@@ -1821,7 +1822,7 @@ int prepare_dhcp_conf (char *input)
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
                 {
                         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
-                        fprintf(stderr, "DHCP_SERVER : [brlan112] dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brlan112] dhcp-option=brlan112,6,%s\n", l_cWan_Dhcp_Dns);
                 }
 
         fprintf(l_fLocal_Dhcp_ConfFile, "interface=brlan113\n");
@@ -1831,7 +1832,7 @@ int prepare_dhcp_conf (char *input)
                 if( l_bDhcpNs_Enabled && l_bIsValidWanDHCPNs )
                 {
                         fprintf(l_fLocal_Dhcp_ConfFile, "dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
-                        fprintf(stderr, "DHCP_SERVER : [brlan113] dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
+                        fprintf(g_fArmConsoleLog, "DHCP_SERVER : [brlan113] dhcp-option=brlan113,6,%s\n", l_cWan_Dhcp_Dns);
                 }
 #endif
 
@@ -1880,7 +1881,7 @@ int prepare_dhcp_conf (char *input)
 	fclose(l_fLocal_Dhcp_ConfFile);
     copy_file(l_cLocalDhcpConf, DHCP_CONF);
 	remove_file(l_cLocalDhcpConf);
-	fprintf(stderr, "DHCP SERVER : Completed preparing DHCP configuration\n");
+	fprintf(g_fArmConsoleLog, "DHCP SERVER : Completed preparing DHCP configuration\n");
 	return 0;
 }
 
@@ -1969,7 +1970,7 @@ void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns )
 
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "wan_dhcp_dns", l_cWan_Dhcp_Dns, sizeof(l_cWan_Dhcp_Dns));	
 
-	fprintf( stderr, "DHCP SERVER : wan_dhcp_dns:%s\n", l_cWan_Dhcp_Dns );
+	fprintf( g_fArmConsoleLog, "DHCP SERVER : wan_dhcp_dns:%s\n", l_cWan_Dhcp_Dns );
 
 	// Replace " "(space) charecter as ","(comma)
 	while( l_cWan_Dhcp_Dns[ charCounter ] != '\0' )
@@ -1985,7 +1986,7 @@ void check_and_get_wan_dhcp_dns( char *pl_cWan_Dhcp_Dns )
 	safec_rc = strcpy_s( pl_cWan_Dhcp_Dns, 256, l_cWan_Dhcp_Dns );
 	ERR_CHK(safec_rc);
 
-	fprintf( stderr, "DHCP SERVER : After conversion wan_dhcp_dns:%s \n", l_cWan_Dhcp_Dns );
+	fprintf( g_fArmConsoleLog, "DHCP SERVER : After conversion wan_dhcp_dns:%s \n", l_cWan_Dhcp_Dns );
 }
 
 void prepare_static_dns_urls(FILE *fp_local_dhcp_conf)
@@ -1993,7 +1994,7 @@ void prepare_static_dns_urls(FILE *fp_local_dhcp_conf)
 	char  l_cLine[ 128 ]  		= { 0 };
 	FILE *l_fStaticDns_Urls 	= NULL;
 	
-	fprintf( stderr, "%s\n", __FUNCTION__ );
+	fprintf( g_fArmConsoleLog, "%s\n", __FUNCTION__ );
 
 	l_fStaticDns_Urls = fopen( STATIC_DNS_URLS_FILE, "r" );
 	if (NULL != l_fStaticDns_Urls)
@@ -2006,9 +2007,9 @@ void prepare_static_dns_urls(FILE *fp_local_dhcp_conf)
 			if ( ( pos = strchr( l_cLine, '\n' ) ) != NULL )
 			 *pos = '\0';
 
-			fprintf( stderr, "url=/%s/\n", l_cLine );
+			fprintf( g_fArmConsoleLog, "url=/%s/\n", l_cLine );
 			fprintf( fp_local_dhcp_conf, "server=/%s/\n", l_cLine );
-			fprintf( stderr, "server=/%s/\n", l_cLine );
+			fprintf( g_fArmConsoleLog, "server=/%s/\n", l_cLine );
 			memset( l_cLine, 0, sizeof( l_cLine ) );			
 		}
 		
@@ -2016,6 +2017,6 @@ void prepare_static_dns_urls(FILE *fp_local_dhcp_conf)
 	}
 	else
 	{
-		fprintf(stderr, "opening of %s file failed with error:%d\n", STATIC_DNS_URLS_FILE, errno);
+		fprintf(g_fArmConsoleLog, "opening of %s file failed with error:%d\n", STATIC_DNS_URLS_FILE, errno);
 	}
 }

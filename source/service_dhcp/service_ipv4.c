@@ -71,13 +71,14 @@ extern void subnet(char *ipv4Addr,
                    char *ipv4Subnet, char *subnet);
 extern void get_device_props();
 extern void get_dateanduptime(char *buffer, int *uptime);
+extern FILE* g_fArmConsoleLog; //Global file pointer declaration
 
 //=======================
 //service_ipv4.sh conversion
 //======================
 void remove_config(int l3_inst)
 {
-    fprintf(stderr, "ipv4 remove_config called with arg %d\n", l3_inst);
+    fprintf(g_fArmConsoleLog, "ipv4 remove_config called with arg %d\n", l3_inst);
 
 	char l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0};
 	char l_cIfName[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cSubnet[16] = {0};
@@ -136,7 +137,7 @@ void remove_config(int l3_inst)
         {
             FILE *file;
             char start_upnp_service_script[64] = {0};
-            fprintf(stderr, "%s Stopping UPNP Service...\n",__FUNCTION__);
+            fprintf(g_fArmConsoleLog, "%s Stopping UPNP Service...\n",__FUNCTION__);
             snprintf(start_upnp_service_script, sizeof(start_upnp_service_script), "/lib/rdk/start-upnp-service");
             if ((file = fopen(start_upnp_service_script, "r")))
             {
@@ -177,13 +178,13 @@ void remove_config(int l3_inst)
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-status", l3_inst);    
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "down", 0);
 
-    fprintf(stderr, "ipv4 remove_config complete\n");
+    fprintf(g_fArmConsoleLog, "ipv4 remove_config complete\n");
 
 }
 
 void teardown_instance(int l3_inst)
 {
-    fprintf(stderr, "ipv4 teardown instance, instance is %d\n",l3_inst);
+    fprintf(g_fArmConsoleLog, "ipv4 teardown instance, instance is %d\n",l3_inst);
 
 	char l_cAsyncIDString[16] = {0}, l_cIpv4_Instances[8] = {0};
 	char l_cLower[8] = {0}, l_cActiveInstances[8] = {0};
@@ -232,7 +233,7 @@ void teardown_instance(int l3_inst)
 
 void remove_tsip_config()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
 	char l_cNvTsip_IpSubnet[16] = {0}, l_cNvTsip_Gateway[16] = {0};
@@ -260,12 +261,12 @@ void remove_tsip_config()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -282,12 +283,12 @@ void remove_tsip_config()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -306,12 +307,12 @@ void remove_tsip_config()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -332,19 +333,19 @@ void remove_tsip_config()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
-	fprintf(stderr, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n",
+	fprintf(g_fArmConsoleLog, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n",
 		   l_cNv_Tsip_Enable, l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cNvTsip_Gateway);
 
-    fprintf(stderr, "ipv4 remove_tsip_config\n");
+    fprintf(g_fArmConsoleLog, "ipv4 remove_tsip_config\n");
 #if defined(_CBR_PRODUCT_REQ_) || defined(_CBR2_PRODUCT_REQ_) || defined(_BWG_PRODUCT_REQ_)
     if (0 != l_cNv_Tsip_Enable[0])
 #else
@@ -372,7 +373,7 @@ void remove_tsip_config()
 
 void remove_tsip_asn_config()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char l_cNv_Tsip_Asn_Ip[16] = {0}, l_cNv_Tsip_Asn_Subnet[16] = {0}, l_cSubnet[16] = {0};
     char l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
@@ -389,7 +390,7 @@ void remove_tsip_asn_config()
 		{
     		if(MAX_TS_ASN_COUNT -1  < l_iTs_Asn_Count)
 			{
-	        	fprintf(stderr, "ERROR Too many Ture static subnet\n");
+	        	fprintf(g_fArmConsoleLog, "ERROR Too many Ture static subnet\n");
     	        l_iTs_Asn_Count = MAX_TS_ASN_COUNT -1;
 	        }
     	    for(l_iIter = 0; l_iIter < (int)l_iTs_Asn_Count ; l_iIter++)
@@ -414,15 +415,15 @@ void remove_tsip_asn_config()
 					}
 					else
 					{
-						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+						fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 					}
             	}
 				else
 				{
-        			fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        			fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
-                fprintf(stderr, "%s  Removing for instance: %d\n",__FUNCTION__,l_iIter);
+                fprintf(g_fArmConsoleLog, "%s  Removing for instance: %d\n",__FUNCTION__,l_iIter);
 	            snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),
 						 "%s%d.%s", IPV4_TSIP_ASNPREFIX,
 						 l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_IP);
@@ -440,12 +441,12 @@ void remove_tsip_asn_config()
 	            	}
 					else
 					{
-						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+						fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 					}
 				}
 				else
 				{
-        			fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        			fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
 
@@ -467,12 +468,12 @@ void remove_tsip_asn_config()
 					}
 					else
 					{
-						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+						fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 					}
 	            }
 				else
 				{
-        			fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        			fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
 
@@ -497,18 +498,18 @@ void remove_tsip_asn_config()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
 		}
     }
     else
     {
-        fprintf(stderr, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
+        fprintf(g_fArmConsoleLog, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
     }
 }
 
 void sync_tsip () 
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
 	char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
 	char l_cNvTsip_IpSubnet[16] = {0}, l_cNvTsip_Gateway[16] = {0};
@@ -536,15 +537,15 @@ void sync_tsip ()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 				l_iRet_Val, l_cPsm_Parameter);
     }
-    fprintf(stderr, "%s syncing TSIP for instance\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "%s syncing TSIP for instance\n",__FUNCTION__);
 	//psm get dmsb.truestaticip.Ipaddress
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "%s.%s", IPV4_TSIP_PREFIX, IPV4_TSIP_IP);
     l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
@@ -558,12 +559,12 @@ void sync_tsip ()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 				l_iRet_Val, l_cPsm_Parameter);
     } 
 
@@ -582,12 +583,12 @@ void sync_tsip ()
 		}
 		else
 		{	
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -608,16 +609,16 @@ void sync_tsip ()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
-	fprintf(stderr, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n", 
+	fprintf(g_fArmConsoleLog, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n", 
 		   l_cNv_Tsip_Enable, l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cNvTsip_Gateway);
 
     // apply the new original true static ip
@@ -629,7 +630,7 @@ void sync_tsip ()
 	{
 		l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
 		subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);
-        fprintf(stderr, "%s Adding IP routes\n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog, "%s Adding IP routes\n",__FUNCTION__);
 		addr_derive_broadcast(l_cNvTsip_IpAddr, l_iCIDR, bcast, INET_ADDRSTRLEN);
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
                  "%s/%d broadcast %s dev %s", 
@@ -653,7 +654,7 @@ void sync_tsip ()
 
 void sync_tsip_asn () 
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
 	char l_cNv_Tsip_Asn_Ip[16] = {0}, l_cNv_Tsip_Asn_Subnet[16] = {0}, l_cSubnet[16] = {0};
 	char l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
@@ -671,7 +672,7 @@ void sync_tsip_asn ()
 		{
     		if(MAX_TS_ASN_COUNT -1  < l_iTs_Asn_Count)
 			{
-	        	fprintf(stderr, "ERROR Too many Ture static subnet\n");
+	        	fprintf(g_fArmConsoleLog, "ERROR Too many Ture static subnet\n");
     	        l_iTs_Asn_Count = MAX_TS_ASN_COUNT -1;
 	        }
     	    for(l_iIter = 0; l_iIter < (int)l_iTs_Asn_Count ; l_iIter++)
@@ -696,16 +697,16 @@ void sync_tsip_asn ()
 					}
 					else
 					{
-						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+						fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 					}
             	}
 				else
 				{
-        			fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        			fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
 
-                fprintf(stderr, "%s Syncing for instance: %d\n",__FUNCTION__,l_iIter); 
+                fprintf(g_fArmConsoleLog, "%s Syncing for instance: %d\n",__FUNCTION__,l_iIter); 
 	            snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), 
 						 "%s%d.%s", IPV4_TSIP_ASNPREFIX, 
 						 l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_IP);
@@ -723,12 +724,12 @@ void sync_tsip_asn ()
 	            	}
 					else
 					{
-						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+						fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 					}
 				}
 				else
 				{
-        			fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        			fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
  	
@@ -750,12 +751,12 @@ void sync_tsip_asn ()
 					}
 					else
 					{
-						fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+						fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 					}
 	            }
 				else
 				{
-        			fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+        			fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 							l_iRet_Val, l_cPsm_Parameter);
 			    }
 
@@ -784,18 +785,18 @@ void sync_tsip_asn ()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
 		}
     }
 	else
 	{
-    	fprintf(stderr, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
+    	fprintf(g_fArmConsoleLog, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
     }
 }
 
 void resync_tsip()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char l_cNv_Tsip_Enable[8] = {0}, l_cNvTsip_IpAddr[16] = {0};
 	char l_cNvTsip_IpSubnet[16] = {0}, l_cNvTsip_Gateway[16] = {0};
@@ -823,12 +824,12 @@ void resync_tsip()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -845,12 +846,12 @@ void resync_tsip()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -869,12 +870,12 @@ void resync_tsip()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -895,16 +896,16 @@ void resync_tsip()
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
-	fprintf(stderr, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n",
+	fprintf(g_fArmConsoleLog, "Syncing from PSM True Static IP Enable:%s, IP:%s, SUBNET:%s, GATEWAY:%s\n",
 		   l_cNv_Tsip_Enable, l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cNvTsip_Gateway);
 
     if (atoi(l_cNv_Tsip_Enable) == 1)
@@ -919,7 +920,7 @@ void resync_tsip()
 	if (0 != l_cNv_Tsip_Enable[0] && 0 != l_iNv_Tsip_Enable)
 #endif
 	{
-        fprintf(stderr, "%s Deleting TSIP routes\n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog, "%s Deleting TSIP routes\n",__FUNCTION__);
         //delete the original true static ip first
         l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
 		subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);
@@ -940,7 +941,7 @@ void resync_tsip()
 
         if (atoi(l_cNv_Tsip_Enable) != 0)
         {
-            fprintf(stderr, "%s Adding TSIP routes\n",__FUNCTION__);
+            fprintf(g_fArmConsoleLog, "%s Adding TSIP routes\n",__FUNCTION__);
             //apply the new original true static ip
             l_iCIDR = mask2cidr(l_cNvTsip_IpSubnet);
 	    	subnet(l_cNvTsip_IpAddr, l_cNvTsip_IpSubnet, l_cSubnet);
@@ -964,7 +965,7 @@ void resync_tsip()
 
 void resync_tsip_asn()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char l_cNv_Tsip_asn_Enable[8] = {0},l_cNv_Tsip_Asn_Ip[16] = {0}, l_cNv_Tsip_Asn_Subnet[16] = {0}, l_cSubnet[16] = {0};
     char l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
@@ -987,12 +988,12 @@ void resync_tsip_asn()
         }
         else
         {
-            fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+            fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
         }
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+        fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
     }
 
     l_iRet_Val = PSM_VALUE_GET_INS(IPV4_TSIP_ASNPREFIX, &l_iTs_Asn_Count, &l_iTs_Asn_Ins);
@@ -1002,7 +1003,7 @@ void resync_tsip_asn()
         {
             if(MAX_TS_ASN_COUNT -1  < l_iTs_Asn_Count)
             {
-                fprintf(stderr, "ERROR Too many Ture static subnet\n");
+                fprintf(g_fArmConsoleLog, "ERROR Too many Ture static subnet\n");
                 l_iTs_Asn_Count = MAX_TS_ASN_COUNT -1;
             }
             for(l_iIter = 0; l_iIter < (int)l_iTs_Asn_Count ; l_iIter++)
@@ -1024,14 +1025,14 @@ void resync_tsip_asn()
                     }
                     else
                     {
-                        fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+                        fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
                     }
                 }
                 else
                 {
-                    fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+                    fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
                 }
-                fprintf(stderr, "%s Syncing for instance: %d\n",__FUNCTION__,l_iIter);
+                fprintf(g_fArmConsoleLog, "%s Syncing for instance: %d\n",__FUNCTION__,l_iIter);
                 snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s", IPV4_TSIP_ASNPREFIX, l_iTs_Asn_Ins[l_iIter], IPV4_TSIP_IP);
                 l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get) - CCSP_SUCCESS;
                 if (l_iRet_Val == 0)
@@ -1046,12 +1047,12 @@ void resync_tsip_asn()
                     }
                     else
                     {
-                        fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+                        fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
                     }
                 }
                 else
                 {
-                    fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+                    fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
                 }
 
                 safec_rc = sprintf_s(l_cPsm_Parameter, sizeof(l_cPsm_Parameter),"%s%d.%s",IPV4_TSIP_ASNPREFIX, l_iTs_Asn_Ins[l_iIter],IPV4_TSIP_SUBNET);
@@ -1069,15 +1070,15 @@ void resync_tsip_asn()
                     }
                     else
                     {
-                        fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+                        fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
                     }
                 }
                 else
                 {
-                    fprintf(stderr, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
+                    fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n",l_iRet_Val, l_cPsm_Parameter);
                 }
 
-                fprintf(stderr, "%s Deleting TSIP ASN routes\n",__FUNCTION__);
+                fprintf(g_fArmConsoleLog, "%s Deleting TSIP ASN routes\n",__FUNCTION__);
                 //delete the original additional subnet first
                 l_iCIDR = mask2cidr(l_cNv_Tsip_Asn_Subnet);
                 addr_derive_broadcast(l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, INET_ADDRSTRLEN);
@@ -1093,7 +1094,7 @@ void resync_tsip_asn()
                 //apply the new additional subnet
                 if (0 != atoi(l_cNv_Tsip_asn_Enable))
                 {
-                    fprintf(stderr, "%s Adding  TSIP ASN routes\n",__FUNCTION__);
+                    fprintf(g_fArmConsoleLog, "%s Adding  TSIP ASN routes\n",__FUNCTION__);
                     l_iCIDR = mask2cidr(l_cNv_Tsip_Asn_Subnet);
                     subnet(l_cNv_Tsip_Asn_Ip, l_cNv_Tsip_Asn_Subnet, l_cSubnet);
                     addr_derive_broadcast(l_cNv_Tsip_Asn_Ip, l_iCIDR, bcast, INET_ADDRSTRLEN);
@@ -1111,18 +1112,18 @@ void resync_tsip_asn()
         }
         else
         {
-            fprintf(stderr, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
+            fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", IPV4_TSIP_ASNPREFIX);
         }
     }
     else
     {
-        fprintf(stderr, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
+        fprintf(g_fArmConsoleLog, "Error while getting :%s\n", IPV4_TSIP_ASNPREFIX);
     }
 }
 
 BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 {
-    fprintf(stderr, "Inside %s called with args l3_inst %d, staticIpv4Addr %s and staticIpv4Subnet %s\n",__FUNCTION__, l3_inst, staticIpv4Addr, staticIpv4Subnet);
+    fprintf(g_fArmConsoleLog, "Inside %s called with args l3_inst %d, staticIpv4Addr %s and staticIpv4Subnet %s\n",__FUNCTION__, l3_inst, staticIpv4Addr, staticIpv4Subnet);
 	char l_cCur_Ipv4_Addr[16] = {0}, l_cCur_Ipv4_Subnet[16] = {0}; 
     char l_cIfName[16] = {0}, l_cSysevent_Cmd[255] = {0}, l_cSubnet[16] = {0}, l_cDsliteEnabled[8] = {0}; 
 	char l_cArp_Ignore_File[64] = {0};
@@ -1135,7 +1136,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	FILE *l_fArp_Ignore = NULL;
 	if (NULL == staticIpv4Addr || 0 == staticIpv4Addr[0])
 	{
-		fprintf(stderr, "Static IPv4 Address is empty get it from ipv4_%d-ipv4addr\n", 
+		fprintf(g_fArmConsoleLog, "Static IPv4 Address is empty get it from ipv4_%d-ipv4addr\n", 
 				l3_inst);
 
     	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4addr", l3_inst);    
@@ -1144,7 +1145,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	}
 	else
 	{
-		fprintf(stderr, "Static IPv4 Address is not empty treating:%s as current IP\n", 
+		fprintf(g_fArmConsoleLog, "Static IPv4 Address is not empty treating:%s as current IP\n", 
 				staticIpv4Addr);
 
 		strncpy(l_cCur_Ipv4_Addr, staticIpv4Addr, 16);
@@ -1152,14 +1153,14 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
     
 	if (NULL == staticIpv4Subnet || 0 == staticIpv4Subnet[0])
 	{
-		fprintf(stderr, "Static IPv4 Subnet is empty get it from ipv4_%d-ipv4subnet\n", l3_inst);
+		fprintf(g_fArmConsoleLog, "Static IPv4 Subnet is empty get it from ipv4_%d-ipv4subnet\n", l3_inst);
 	    snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4subnet", l3_inst);   
     	sysevent_get(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, 
 					 l_cCur_Ipv4_Subnet, sizeof(l_cCur_Ipv4_Subnet));
 	}
 	else
 	{
-		fprintf(stderr, "Static IPv4 Subnet is not empty treating:%s as current IP\n", 
+		fprintf(g_fArmConsoleLog, "Static IPv4 Subnet is not empty treating:%s as current IP\n", 
 				staticIpv4Subnet);
 
 		strncpy(l_cCur_Ipv4_Subnet, staticIpv4Subnet, 16);
@@ -1171,7 +1172,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 
 	if (0 == l_cCur_Ipv4_Addr[0] || 0 == l_cCur_Ipv4_Subnet[0])
 	{
-		fprintf(stderr, "Error during apply_config returning FALSE\n");
+		fprintf(g_fArmConsoleLog, "Error during apply_config returning FALSE\n");
     	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-status", l3_inst);
 	    sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "error", 0);
 
@@ -1192,7 +1193,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	}
 	else
 	{
-		fprintf(stderr, "Error while opening %s\n", l_cArp_Ignore_File);
+		fprintf(g_fArmConsoleLog, "Error while opening %s\n", l_cArp_Ignore_File);
 	}
     l_iRT_Table = l3_inst + 10;
     l_iCIDR = mask2cidr(l_cCur_Ipv4_Subnet);
@@ -1280,7 +1281,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 	char l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[8] = {0}, l_cLan_IpAddrv6[16] = {0};
 	if (!strncmp(l_cIfName, LAN_IF_NAME, 6))
 	{
-        fprintf(stderr, "%s Fetching primary lan IPv6 prefixes\n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog, "%s Fetching primary lan IPv6 prefixes\n",__FUNCTION__);
 	    sysevent_get(g_iSyseventfd, g_tSysevent_token, 
 					 "lan_ipaddr_v6_prev", l_cLan_IpAddrv6_prev, 
 					 sizeof(l_cLan_IpAddrv6_prev));
@@ -1295,7 +1296,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 
 		if (strncmp(l_cLan_IpAddrv6_prev, l_cLan_IpAddrv6, 64))
 	        {
-                  fprintf(stderr, "%s Assigning primary lan IPv6 address %s\n",__FUNCTION__, l_cLan_IpAddrv6);
+                  fprintf(g_fArmConsoleLog, "%s Assigning primary lan IPv6 address %s\n",__FUNCTION__, l_cLan_IpAddrv6);
                   if (l_cLan_IpAddrv6_prev != NULL)
                   {    
                      snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
@@ -1334,7 +1335,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
         {
             FILE *file;
             char start_upnp_service_script[64] = {0};
-            fprintf(stderr, "Starting UPNP service\n");
+            fprintf(g_fArmConsoleLog, "Starting UPNP service\n");
             snprintf(start_upnp_service_script, sizeof(start_upnp_service_script), "/lib/rdk/start-upnp-service");
             if ((file = fopen(start_upnp_service_script, "r")))
             {
@@ -1356,7 +1357,7 @@ BOOL apply_config(int l3_inst, char *staticIpv4Addr, char *staticIpv4Subnet)
 
 void load_static_l3 (int l3_inst) 
 {
-    fprintf(stderr, "Inside %s called with arg l3_inst %d\n",__FUNCTION__, l3_inst);
+    fprintf(g_fArmConsoleLog, "Inside %s called with arg l3_inst %d\n",__FUNCTION__, l3_inst);
 	char l_cStatic_V4_Addr[16] = {0}, l_cStatic_V4_Subnet[16] = {0};
 	char l_cPsm_Parameter[255] = {0};
 	char l_cSysevent_Cmd[255] = {0};
@@ -1380,12 +1381,12 @@ void load_static_l3 (int l3_inst)
 	}
 	else
 	{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 	}
     }    
     else 
     {    
-		fprintf(stderr, "Error:%d while getting parameter:%s\n", l_iRet_Val, l_cPsm_Parameter);
+		fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", l_iRet_Val, l_cPsm_Parameter);
     }
 
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.l3net.%d.V4SubnetMask", l3_inst);
@@ -1402,12 +1403,12 @@ void load_static_l3 (int l3_inst)
 		}
 		else
 		{
-			fprintf(stderr, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
+			fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", l_cPsm_Parameter);
 		}
     } 
     else
     { 
-		fprintf(stderr, "Error:%d while getting parameter:%s\n", 
+		fprintf(g_fArmConsoleLog, "Error:%d while getting parameter:%s\n", 
 				l_iRet_Val, l_cPsm_Parameter);
     }
 
@@ -1417,7 +1418,7 @@ void load_static_l3 (int l3_inst)
     	// Apply static config if exists
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-ipv4_static", l3_inst);
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "1", 0);
-                fprintf(stderr, "service_ipv4 : Triggering apply_config\n");
+                fprintf(g_fArmConsoleLog, "service_ipv4 : Triggering apply_config\n");
 		//Passing static IPv4 Address and IPv4 subnet to the apply_config
 		//This is different from shell script
 		l_bApplyConfig_Res = apply_config(l3_inst, l_cStatic_V4_Addr, l_cStatic_V4_Subnet);
@@ -1426,13 +1427,13 @@ void load_static_l3 (int l3_inst)
 			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-status", l3_inst);
 	     		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "up", 0);
 		
-		       fprintf(stderr, "service_ipv4 : Triggering RDKB_FIREWALL_RESTART\n");
+		       fprintf(g_fArmConsoleLog, "service_ipv4 : Triggering RDKB_FIREWALL_RESTART\n");
                        t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 		       sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
 #if (defined _COSA_INTEL_XB3_ARM_)
 		       if(XHS_INST == l3_inst)
 		       {
-			   fprintf(stderr, "service_ipv4 : ipv4_5-status,calling dhcp_server-restart lan_not_restart event\n");    
+			   fprintf(g_fArmConsoleLog, "service_ipv4 : ipv4_5-status,calling dhcp_server-restart lan_not_restart event\n");    
 		           sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_status-dhcp", "started", 0);
 			   sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-restart", "lan_not_restart", 0);
 		       }	
@@ -1442,7 +1443,7 @@ void load_static_l3 (int l3_inst)
 			OnboardLog("RDKB_FIREWALL_RESTART:%d\n",uptime);
 			if (4 == l3_inst)
 			{
-				fprintf(stderr, "IPv4 address is set for %s interface MOCA interface is UP\n",
+				fprintf(g_fArmConsoleLog, "IPv4 address is set for %s interface MOCA interface is UP\n",
 					    LAN_IF_NAME);
 
 				FILE *fp = fopen( "/tmp/moca_start", "r");
@@ -1451,7 +1452,7 @@ void load_static_l3 (int l3_inst)
 					fp = fopen( "/tmp/moca_start", "w+");
 					if ( NULL == fp)
 					{
-						fprintf(stderr, "File: /tmp/moca_start creation failed with error:%d\n", errno);
+						fprintf(g_fArmConsoleLog, "File: /tmp/moca_start creation failed with error:%d\n", errno);
 					}
 					else
 					{
@@ -1483,7 +1484,7 @@ void load_static_l3 (int l3_inst)
 
 void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input) 
 {
-    fprintf(stderr, "Inside %s called with arg l3_inst %d, l2_inst %d, net_status %s and input %d\n",__FUNCTION__, l3_inst, l2_inst, net_status, input);
+    fprintf(g_fArmConsoleLog, "Inside %s called with arg l3_inst %d, l2_inst %d, net_status %s and input %d\n",__FUNCTION__, l3_inst, l2_inst, net_status, input);
 
 	char l_cLocalReady[8] = {0}, l_cSysevent_Cmd[255] = {0}, l_cIpv4_Status[16] = {0};
 	char l_cIfName[16] = {0};
@@ -1502,7 +1503,7 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 	
 		if ((!strncmp(l_cIpv4_Status, "up", 2)) || (!strncmp(l_cIpv4_Status, "unconfigured", 12)))
 		{
-			fprintf(stderr, "IPv4 is already prepared so nothing needs to be done\n");
+			fprintf(g_fArmConsoleLog, "IPv4 is already prepared so nothing needs to be done\n");
 			return;
 		}
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "multinet_%d-name", l2_inst);
@@ -1516,7 +1517,7 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 	}
     else
 	{
-		fprintf(stderr, "Multinet status:%s is neither partial nor ready\n", net_status);
+		fprintf(g_fArmConsoleLog, "Multinet status:%s is neither partial nor ready\n", net_status);
     	// l2 down
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-status", l3_inst);
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, "pending", 0);
@@ -1524,7 +1525,7 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 		if (((0 == net_status[0]) || (!strncmp(net_status, "stopped", 7))) && (0 != input))
 		{
 			/* Changes made to improve XHome and wan uptime*/
-			fprintf(stderr, "Setting multinet-up event for %s and %s\n",LAN_IF_NAME, XHS_IF_NAME);
+			fprintf(g_fArmConsoleLog, "Setting multinet-up event for %s and %s\n",LAN_IF_NAME, XHS_IF_NAME);
 			snprintf(l_cL2Inst, sizeof(l_cL2Inst), "%d", l2_inst);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "multinet-up", l_cL2Inst, 0);
 		}
@@ -1535,7 +1536,7 @@ void handle_l2_status (int l3_inst, int l2_inst, char *net_status, int input)
 // args: l3 instance
 void resync_instance (int l3_inst)
 {
-    fprintf(stderr, "Inside %s called with arg l3_inst %d\n",__FUNCTION__, l3_inst);
+    fprintf(g_fArmConsoleLog, "Inside %s called with arg l3_inst %d\n",__FUNCTION__, l3_inst);
 
 	char l_cNv_EthLower[8] = {0}, l_cNv_Ip[16] = {0}, l_cNv_Subnet[16] = {0};
 	char l_cNv_Enabled[8] = {0}, l_cPsm_Parameter[255] = {0}, l_cSysevent_Cmd[255] = {0};
@@ -1551,28 +1552,28 @@ void resync_instance (int l3_inst)
 	int l_iRet_Val, l_iL2Inst;
 	async_id_t l_sAsyncID;
 
-	fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance\n");
+	fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : In resync_instance to bring up an instance\n");
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.l3net.%d.EthLink", l3_inst);
 	l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
     {    
-		fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER returned null, retrying\n");
+		fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER returned null, retrying\n");
 		l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
 		if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
 		{
-			fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER returned null ");
-			fprintf(stderr, "even after retry, no more retries\n");
+			fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER returned null ");
+			fprintf(g_fArmConsoleLog, "even after retry, no more retries\n");
 		}
 		else
 		{
 			strncpy(l_cNv_EthLower, l_cpPsm_Get, sizeof(l_cNv_EthLower));
-			fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER is:%s\n", l_cNv_EthLower);
+			fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER is:%s\n", l_cNv_EthLower);
 		}
     }    
 	else
 	{
 		strncpy(l_cNv_EthLower, l_cpPsm_Get, sizeof(l_cNv_EthLower));
-		fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER is:%s\n", l_cNv_EthLower);
+		fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER is:%s\n", l_cNv_EthLower);
 		
 	}
 
@@ -1580,73 +1581,73 @@ void resync_instance (int l3_inst)
     l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
     {    
-        fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP returned null, retrying\n");
+        fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP returned null, retrying\n");
         l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP returned null ");
-			fprintf(stderr, "even after retry, no more retries\n");
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP returned null ");
+			fprintf(g_fArmConsoleLog, "even after retry, no more retries\n");
         }
 		else
 		{
 			strncpy(l_cNv_Ip, l_cpPsm_Get, sizeof(l_cNv_Ip));
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP is:%s\n", l_cNv_Ip);
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP is:%s\n", l_cNv_Ip);
 		}
     }
 	else
 	{
 		strncpy(l_cNv_Ip, l_cpPsm_Get, sizeof(l_cNv_Ip));
-        fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP is:%s\n", l_cNv_Ip);
+        fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP is:%s\n", l_cNv_Ip);
 	}
 
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.l3net.%d.V4SubnetMask", l3_inst);
     l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
    	if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
     {    
-        fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET returned null, retrying\n");
+        fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET returned null, retrying\n");
         l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET returned null ");
-			fprintf(stderr, "even after retry, no more retries\n");
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET returned null ");
+			fprintf(g_fArmConsoleLog, "even after retry, no more retries\n");
         }
 		else
 		{
 			strncpy(l_cNv_Subnet, l_cpPsm_Get, sizeof(l_cNv_Subnet));
-			fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET is:%s\n", l_cNv_Subnet);
+			fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET is:%s\n", l_cNv_Subnet);
 		}
     }	
 	else
 	{
 		strncpy(l_cNv_Subnet, l_cpPsm_Get, sizeof(l_cNv_Subnet));
-		fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET is:%s\n", l_cNv_Subnet);
+		fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET is:%s\n", l_cNv_Subnet);
 	}	
 		
 	snprintf(l_cPsm_Parameter, sizeof(l_cPsm_Parameter), "dmsb.l3net.%d.Enable", l3_inst);
     l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
     {    
-        fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED returned null, retrying\n");
+        fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED returned null, retrying\n");
         l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED returned null even after retry, no more retries\n");
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED returned null even after retry, no more retries\n");
         }
 		else
 		{
 			strncpy(l_cNv_Enabled, l_cpPsm_Get, sizeof(l_cNv_Enabled));
-			fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED is:%s\n", l_cNv_Enabled);
+			fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED is:%s\n", l_cNv_Enabled);
 		}
     }
 	else
 	{
 		strncpy(l_cNv_Enabled, l_cpPsm_Get, sizeof(l_cNv_Enabled));
-		fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED is:%s\n", l_cNv_Enabled);
+		fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED is:%s\n", l_cNv_Enabled);
 	}	
 
 	if (0 == l_cNv_Enabled[0] || (!strcmp(l_cNv_Enabled, "false")) || (!strcmp(l_cNv_Enabled, "0")))
 	{
-		fprintf(stderr, "L3 Instance:%d is not enabled\n", l3_inst);
+		fprintf(g_fArmConsoleLog, "L3 Instance:%d is not enabled\n", l3_inst);
 		teardown_instance(l3_inst); //TODO teardown_instance
 		return;
 	}
@@ -1656,22 +1657,22 @@ void resync_instance (int l3_inst)
     l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
     {
-        fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER returned null, retrying\n");
+        fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER returned null, retrying\n");
         l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER returned null even after retry, no more retries\n");
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER returned null even after retry, no more retries\n");
         }
 		else
 		{
 			strncpy(l_cNv_Lower, l_cpPsm_Get, sizeof(l_cNv_Lower));
-			fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER is:%s\n", l_cNv_Lower);
+			fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER is:%s\n", l_cNv_Lower);
 		}
     }
 	else
 	{
 		strncpy(l_cNv_Lower, l_cpPsm_Get, sizeof(l_cNv_Lower));
-		fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER is:%s\n", l_cNv_Lower);
+		fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER is:%s\n", l_cNv_Lower);
 	}
 	
 	snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), "ipv4_%d-lower", l3_inst);	
@@ -1689,11 +1690,11 @@ void resync_instance (int l3_inst)
 				 l_cCur_Ipv4_Subnet, sizeof(l_cCur_Ipv4_Subnet));	
 
     //DEBUG
-	fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : Syncing l3 instance (%d), ", l3_inst);
-	fprintf(stderr, "NV_ETHLOWER:%s, NV_LOWER:%s, NV_ENABLED:%s, ", 
+	fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : Syncing l3 instance (%d), ", l3_inst);
+	fprintf(g_fArmConsoleLog, "NV_ETHLOWER:%s, NV_LOWER:%s, NV_ENABLED:%s, ", 
 			l_cNv_EthLower, l_cNv_Lower, l_cNv_Enabled);
 
-	fprintf(stderr, "NV_IP:%s, NV_SUBNET:%s, LOWER:%s, CUR_IPV4_ADDR:%s, CUR_IPV4_SUBNET:%s\n", 
+	fprintf(g_fArmConsoleLog, "NV_IP:%s, NV_SUBNET:%s, LOWER:%s, CUR_IPV4_ADDR:%s, CUR_IPV4_SUBNET:%s\n", 
 			l_cNv_Ip, l_cNv_Subnet, l_cLower, l_cCur_Ipv4_Addr, l_cCur_Ipv4_Subnet);
 
 	l_iL2Inst = atoi(l_cNv_Lower);
@@ -1710,7 +1711,7 @@ void resync_instance (int l3_inst)
     	sysevent_set(g_iSyseventfd, g_tSysevent_token, l_cSysevent_Cmd, l_cNv_Lower, 0);
 		if (0 != l_cNv_Lower[0])
 		{
-            fprintf(stderr,"%s setting callback for multinet_%c-status",__FUNCTION__,l_cNv_Lower[0]);
+            fprintf(g_fArmConsoleLog,"%s setting callback for multinet_%c-status",__FUNCTION__,l_cNv_Lower[0]);
 			int len;
 			int available;
 			char l_cIpv4_Instances[20];
@@ -1738,7 +1739,7 @@ void resync_instance (int l3_inst)
 				snprintf(&l_cIpv4_Instances[len], available, "%d", l3_inst);
 			}
 
-			fprintf(stderr, "IPv4 instances is:%s\n", l_cIpv4_Instances);
+			fprintf(g_fArmConsoleLog, "IPv4 instances is:%s\n", l_cIpv4_Instances);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, 
 						 "ipv4-instances", l_cIpv4_Instances, 0);
 
@@ -1796,7 +1797,7 @@ void resync_instance (int l3_inst)
 
 void resync_all_instance()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char *l_cToken = NULL;
     int ACTIVE_INST_CNT,NV_INST_CNT,iter=0,to_add_cnt=0,iter1=0,to_rem_cnt=0;
@@ -1825,7 +1826,7 @@ void resync_all_instance()
     memset(sg_buff,0,sizeof(sg_buff));
     while(fgets(sg_buff, sizeof(sg_buff), pipe) != NULL )
     {
-        fprintf(stderr,"%s - sg_buff=%s",__FUNCTION__,sg_buff);
+        fprintf(g_fArmConsoleLog,"%s - sg_buff=%s",__FUNCTION__,sg_buff);
         NV_INST[iter]=atoi(sg_buff);
         iter++;
     }
@@ -1873,7 +1874,7 @@ void resync_all_instance()
 
 void ipv4_up(char *l3_inst)
 {
-    fprintf(stderr, "Inside %s called with arg l3_inst %s\n",__FUNCTION__, l3_inst);
+    fprintf(g_fArmConsoleLog, "Inside %s called with arg l3_inst %s\n",__FUNCTION__, l3_inst);
 
 	char l_cLower[8] = {0}, l_cSysevent_Cmd[64] = {0}, l_cL3Net_Status[16] = {0};
 	int l_iL3Inst, l_iL2Inst;
@@ -1885,12 +1886,12 @@ void ipv4_up(char *l3_inst)
 
 	if (0 == l_cLower[0])
 	{
-		fprintf(stderr, "Lower is empty Calling resync instance with input:%d\n", l_iL3Inst);
+		fprintf(g_fArmConsoleLog, "Lower is empty Calling resync instance with input:%d\n", l_iL3Inst);
 		resync_instance(l_iL3Inst);
 	}	    
     else
 	{
-		fprintf(stderr, "Lower is not empty Calling handle_l2_status\n");
+		fprintf(g_fArmConsoleLog, "Lower is not empty Calling handle_l2_status\n");
 		snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd), 
 				 "multinet_%s-status", l_cLower);
 

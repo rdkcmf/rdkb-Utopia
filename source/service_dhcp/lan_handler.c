@@ -54,6 +54,7 @@ extern int g_iSyseventfd;
 extern token_t g_tSysevent_token;
 
 extern int executeCmd(char *);
+extern FILE* g_fArmConsoleLog; //Global file pointer declaration
 
 void get_dateanduptime(char *buffer, int *uptime)
 {
@@ -175,7 +176,7 @@ char * app_addr(char *ip, char *nm)
 
 void find_active_brg_instances()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char c_l3net_active_list[255] = {0},c_l3net_inst[32] = {0}, l_cPsmEth_inst[8] = {0}, l_cPsmBrg_inst[8] = {0}, l_cPsmisEnabled[8] = {0};
     char l_cPsm_Parameter[255] = {0}, *l_cpPsm_Get = NULL, c_l_iIter[8] = {0};
@@ -192,7 +193,7 @@ void find_active_brg_instances()
         {
             if(MAX_TS_ASN_COUNT -1  < l_iTs_Asn_Count)
             {
-                fprintf(stderr, "ERROR Too many Ture static subnet\n");
+                fprintf(g_fArmConsoleLog, "ERROR Too many Ture static subnet\n");
                 l_iTs_Asn_Count = MAX_TS_ASN_COUNT -1;
             }
             for(l_iIter = 0; l_iIter < (int)l_iTs_Asn_Count ; l_iIter++)
@@ -208,7 +209,7 @@ void find_active_brg_instances()
                 }
                 else
                 {
-                        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                        fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n",
                                 l_iRetVal, l_cPsm_Parameter);
                 }
 
@@ -223,7 +224,7 @@ void find_active_brg_instances()
                 }
                 else
                 {
-                        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                        fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n",
                         l_iRetVal, l_cPsm_Parameter);
                 }
 
@@ -238,7 +239,7 @@ void find_active_brg_instances()
                 }
                 else
                 {
-                        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+                        fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n",
                                 l_iRetVal, l_cPsm_Parameter);
                 }
 
@@ -255,14 +256,14 @@ void find_active_brg_instances()
     }
     else
     {
-        fprintf(stderr, "psmcli get of :%s is empty\n", c_l3net_inst);
+        fprintf(g_fArmConsoleLog, "psmcli get of :%s is empty\n", c_l3net_inst);
     }
     Ansc_FreeMemory_Callback(l_iTs_Asn_Ins);
 }
 
 void bring_lan_up()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
 	char l_cAsyncId[16] = {0}, l_cPsm_Parameter[255] = {0};
 	char l_cPrimaryLan_L3Net[8] = {0}, l_cL2Inst[8] = {0}, l_cLan_Brport[8] = {0};
@@ -287,22 +288,22 @@ void bring_lan_up()
 	    l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     	if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
 	    {    
-    	    fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null, retrying\n");
+    	    fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null, retrying\n");
 	        l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
     	    if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         	{
-	            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null even after retry, no more retries\n");
+	            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST returned null even after retry, no more retries\n");
     	    }
         	else
 	        {
     	        strncpy(l_cPrimaryLan_L3Net, l_cpPsm_Get, sizeof(l_cPrimaryLan_L3Net));
-        	    fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST is:%s\n", l_cPrimaryLan_L3Net);
+        	    fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST is:%s\n", l_cPrimaryLan_L3Net);
 	        }
     	}    
 	    else 
     	{    
 	        strncpy(l_cPrimaryLan_L3Net, l_cpPsm_Get, sizeof(l_cPrimaryLan_L3Net));
-    	    fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST is:%s\n", l_cPrimaryLan_L3Net);
+    	    fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L3INST is:%s\n", l_cPrimaryLan_L3Net);
 		}
 
 		// L2 Instance
@@ -310,22 +311,22 @@ void bring_lan_up()
 		l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null, retrying\n");
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null, retrying\n");
             l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
             if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
             {
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null even after retry, no more retries\n");
+                fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null even after retry, no more retries\n");
             }
             else
             {
                 strncpy(l_cL2Inst, l_cpPsm_Get, sizeof(l_cL2Inst));
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST is:%s\n", l_cL2Inst);
+                fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST is:%s\n", l_cL2Inst);
             }
         }
         else
         {
             strncpy(l_cL2Inst, l_cpPsm_Get, sizeof(l_cL2Inst));
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST is:%s\n", l_cL2Inst);
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : L2INST is:%s\n", l_cL2Inst);
         }		
 
 		// BRPORT
@@ -333,22 +334,22 @@ void bring_lan_up()
 		l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null, retrying\n");
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null, retrying\n");
             l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
             if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
             {
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null even after retry, no more retries\n");
+                fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null even after retry, no more retries\n");
             } 
             else
             {
                 strncpy(l_cLan_Brport, l_cpPsm_Get, sizeof(l_cLan_Brport));
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT is:%s\n", l_cLan_Brport);
+                fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT is:%s\n", l_cLan_Brport);
             }
         }
         else
         {
             strncpy(l_cLan_Brport, l_cpPsm_Get, sizeof(l_cLan_Brport));
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT is:%s\n", l_cLan_Brport);
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT is:%s\n", l_cLan_Brport);
         }
 
 		//HSINST
@@ -356,22 +357,22 @@ void bring_lan_up()
         l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
         if (CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
         {
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null, retrying\n");
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null, retrying\n");
             l_iRet_Val = PSM_VALUE_GET_STRING(l_cPsm_Parameter, l_cpPsm_Get);
             if(CCSP_SUCCESS != l_iRet_Val || l_cpPsm_Get == NULL)
             {
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null even after retry, no more retries\n");
+                fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null even after retry, no more retries\n");
             } 
             else
             {
                 strncpy(l_cHomeSecurity_L3net, l_cpPsm_Get, sizeof(l_cHomeSecurity_L3net));
-                fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST is:%s\n", l_cHomeSecurity_L3net);
+                fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST is:%s\n", l_cHomeSecurity_L3net);
             }
         }
         else
         {
             strncpy(l_cHomeSecurity_L3net, l_cpPsm_Get, sizeof(l_cHomeSecurity_L3net));
-            fprintf(stderr, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST is:%s\n", l_cHomeSecurity_L3net);
+            fprintf(g_fArmConsoleLog, "RDKB_SYSTEM_BOOT_UP_LOG : HSINST is:%s\n", l_cHomeSecurity_L3net);
         }
 		
 
@@ -380,7 +381,7 @@ void bring_lan_up()
 			snprintf(l_cEvent_Name, sizeof(l_cEvent_Name), "ipv4_%s-status", l_cPrimaryLan_L3Net);
 			sysevent_setcallback(g_iSyseventfd, g_tSysevent_token, ACTION_FLAG_NONE,
                              	 l_cEvent_Name, THIS, 1, l_cParam, &l_sAsyncID);
-            fprintf(stderr, "setting sysevent callback for %s\n",l_cEvent_Name);
+            fprintf(g_fArmConsoleLog, "setting sysevent callback for %s\n",l_cEvent_Name);
 
 			snprintf(l_cAsyncId, sizeof(l_cAsyncId), "%d %d", l_sAsyncID.action_id, l_sAsyncID.trigger_id);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_handler_async", l_cAsyncId, 0);
@@ -393,7 +394,7 @@ void bring_lan_up()
 	}
 	else
 	{
-		fprintf(stderr, "lan_handler_async is not empty returning from bring_lan_up\n");
+		fprintf(g_fArmConsoleLog, "lan_handler_async is not empty returning from bring_lan_up\n");
 	}
 
     syscfg_get(NULL, "MULTILAN_FEATURE", l_multilan_feature, sizeof(l_multilan_feature));
@@ -401,13 +402,13 @@ void bring_lan_up()
     if (!strncmp("1", l_multilan_feature, sizeof(l_multilan_feature)))
     {
         find_active_brg_instances();
-        fprintf(stderr, "Calling find_active_brg_instances\n");
+        fprintf(g_fArmConsoleLog, "Calling find_active_brg_instances\n");
     }
 }
 
 void ipv4_status(int l3_inst, char *status)
 {
-    fprintf(stderr, "Inside %s called with arg l3_inst %d and status %s\n",__FUNCTION__,l3_inst,status);
+    fprintf(g_fArmConsoleLog, "Inside %s called with arg l3_inst %d and status %s\n",__FUNCTION__,l3_inst,status);
 
 	char l_cSysevent_Cmd[255] = {0}, l_cLanIfName[16] = {0};
 	char l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[8] = {0}; 
@@ -456,7 +457,7 @@ void ipv4_status(int l3_inst, char *status)
     		}
     		else
     		{
-        		fprintf(stderr, "Error while opening %s\n", l_cFileName);
+        		fprintf(g_fArmConsoleLog, "Error while opening %s\n", l_cFileName);
     		}	
 		}
 		else
@@ -472,7 +473,7 @@ void ipv4_status(int l3_inst, char *status)
             }
             else
             {
-                fprintf(stderr, "Error while opening %s\n", l_cFileName);
+                fprintf(g_fArmConsoleLog, "Error while opening %s\n", l_cFileName);
             }
 
 			snprintf(l_cFileName, sizeof(l_cFileName),
@@ -487,7 +488,7 @@ void ipv4_status(int l3_inst, char *status)
             }    
             else 
             {    
-                fprintf(stderr, "Error while opening %s\n", l_cFileName);
+                fprintf(g_fArmConsoleLog, "Error while opening %s\n", l_cFileName);
             }    
 
             //overwriting it with 0
@@ -499,7 +500,7 @@ void ipv4_status(int l3_inst, char *status)
             }
             else
             {
-                fprintf(stderr, "Error while opening %s\n", l_cFileName);
+                fprintf(g_fArmConsoleLog, "Error while opening %s\n", l_cFileName);
             }
 
 			snprintf(l_cFileName, sizeof(l_cFileName),
@@ -513,7 +514,7 @@ void ipv4_status(int l3_inst, char *status)
             }
             else
             {
-                fprintf(stderr, "Error while opening %s\n", l_cFileName);
+                fprintf(g_fArmConsoleLog, "Error while opening %s\n", l_cFileName);
             }
 		}
 
@@ -571,14 +572,14 @@ void ipv4_status(int l3_inst, char *status)
 		{
             		if ( l3_inst == atoi(primary_l3net))
             		{
-                		fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2");
+                		fprintf(g_fArmConsoleLog, "LAN HANDLER : Triggering DHCP server using LAN status based on RG_MODE:2");
                 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
             		}
             		system("firewall");
 
             		if (access(POSTD_START_FILE, F_OK) != 0)
             		{
-                    		fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
+                    		fprintf(g_fArmConsoleLog, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
                     		system("touch " POSTD_START_FILE "; execute_dir /etc/utopia/post.d/");
             		}		
         	}
@@ -589,7 +590,7 @@ void ipv4_status(int l3_inst, char *status)
 
             		if ( l3_inst == atoi(primary_l3net))
             		{
-                		fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status based on start misc\n");
+                		fprintf(g_fArmConsoleLog, "LAN HANDLER : Triggering DHCP server using LAN status based on start misc\n");
                 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
             		}
 			if (strncmp(l_cParcon_Nfq_Status, "started", 7))
@@ -599,7 +600,7 @@ void ipv4_status(int l3_inst, char *status)
 
                 		if (!strncmp("started", l_nfq_status, sizeof(l_nfq_status)))
                 		{
-                    			fprintf(stderr, "Calling nfq_handler\n");
+                    			fprintf(g_fArmConsoleLog, "Calling nfq_handler\n");
                     			snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),
                                 	"( ( nfq_handler 4 & ) & )");
                     			executeCmd(l_cSysevent_Cmd);
@@ -614,27 +615,27 @@ void ipv4_status(int l3_inst, char *status)
 				l_iRes = iface_get_hwaddr(LAN_IF_NAME, l_cBrlan0_Mac, sizeof(l_cBrlan0_Mac));
 				if (0 == l_iRes)
 				{
-					fprintf(stderr, "Successful in getting %s MAC address:%s\n", 
+					fprintf(g_fArmConsoleLog, "Successful in getting %s MAC address:%s\n", 
 									LAN_IF_NAME, l_cBrlan0_Mac);
 				}
 				else
 				{
-					fprintf(stderr, "Un-Successful in getting %s MAC address\n", 
+					fprintf(g_fArmConsoleLog, "Un-Successful in getting %s MAC address\n", 
 									LAN_IF_NAME);
 				}
             		}
 
 			if (is_iface_present(XHS_IF_NAME))
 			{
-				fprintf(stderr, "%s interface is present call gw_lan_refresh\n", XHS_IF_NAME);
-                fprintf(stderr, "LAN HANDLER : Refreshing LAN from handler\n");
+				fprintf(g_fArmConsoleLog, "%s interface is present call gw_lan_refresh\n", XHS_IF_NAME);
+                fprintf(g_fArmConsoleLog, "LAN HANDLER : Refreshing LAN from handler\n");
                 system("gw_lan_refresh&");				
 			}
                 system("firewall");
 
                 if (access(POSTD_START_FILE, F_OK) != 0)
                 {
-                        fprintf(stderr, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
+                        fprintf(g_fArmConsoleLog, "[%s] Restarting post.d from ipv4_status\n", __FUNCTION__);
                         system("touch " POSTD_START_FILE "; execute_dir /etc/utopia/post.d/");
                 }   
             }
@@ -642,10 +643,10 @@ void ipv4_status(int l3_inst, char *status)
 	{
             if ( l3_inst == atoi(primary_l3net))
             {
-                fprintf(stderr, "LAN HANDLER : Triggering DHCP server using LAN status\n");
+                fprintf(g_fArmConsoleLog, "LAN HANDLER : Triggering DHCP server using LAN status\n");
                 sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "started", 0);
             }
-			fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART\n");
+			fprintf(g_fArmConsoleLog, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART\n");
                         t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
 			get_dateanduptime(buffer,&uptime);
@@ -672,7 +673,7 @@ void ipv4_status(int l3_inst, char *status)
 		sysevent_get(g_iSyseventfd, g_tSysevent_token, "ipv6_prefix",
                      l_cIpv6_Prefix, sizeof(l_cIpv6_Prefix));
 		
-		fprintf(stderr, "LAN HANDLER : DHCP configuration status got is:%s\n", l_cDhcp_Server_Prog);
+		fprintf(g_fArmConsoleLog, "LAN HANDLER : DHCP configuration status got is:%s\n", l_cDhcp_Server_Prog);
 		if (!strncmp(l_cLast_Erouter_Mode, "2", 1) && (strncmp(l_cDsLite_Enabled, "1", 1)))
 		{
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-stop", "", 0);
@@ -680,7 +681,7 @@ void ipv4_status(int l3_inst, char *status)
 		else if ((strncmp(l_cLast_Erouter_Mode, "0", 1)) && 
 				 (strncmp(l_cDhcp_Server_Prog, "inprogress", 10)))
 		{	
-			fprintf(stderr, "LAN HANDLER : Triggering dhcp start based on last erouter mode\n");
+			fprintf(g_fArmConsoleLog, "LAN HANDLER : Triggering dhcp start based on last erouter mode\n");
 			sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-start", "", 0);
 		}
 
@@ -708,11 +709,11 @@ void ipv4_status(int l3_inst, char *status)
                 isBridgeMode        = (0 == strcmp("0", bridge_mode)) ? 0 : 1;
                 if(!isBridgeMode)
                 {
-                    fprintf(stderr, "LAN HANDLER : Device in Router mode and lan-status: stopped\n");
+                    fprintf(g_fArmConsoleLog, "LAN HANDLER : Device in Router mode and lan-status: stopped\n");
                 }
                 else
                 {
-                    fprintf(stderr, "LAN HANDLER : Device in Bridge mode and lan-status: stopped\n");
+                    fprintf(g_fArmConsoleLog, "LAN HANDLER : Device in Bridge mode and lan-status: stopped\n");
                 }
 
                 sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan-status", "stopped", 0);
@@ -732,17 +733,17 @@ void ipv4_status(int l3_inst, char *status)
     }
     else
     {
-        fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+        fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n",
                 l_iRetVal, l_cPsm_Parameter);
     }
 
     if (!strncmp("1", l_cPsmGethome_lan_isolation, sizeof(l_cPsmGethome_lan_isolation)))
     {
-        fprintf(stderr, "Setting up brlan10 for HOME_LAN_ISOLATION\n");
+        fprintf(g_fArmConsoleLog, "Setting up brlan10 for HOME_LAN_ISOLATION\n");
         sysevent_set(g_iSyseventfd, g_tSysevent_token, "multinet-up", "9", 0);
     }
 
-    fprintf(stderr, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler\n");
+    fprintf(g_fArmConsoleLog, "LAN HANDLER : Triggering RDKB_FIREWALL_RESTART after nfqhandler\n");
     t2_event_d("SYS_SH_RDKB_FIREWALL_RESTART", 1);
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "firewall-restart", "", 0);
     get_dateanduptime(buffer,&uptime);
@@ -754,7 +755,7 @@ void ipv4_status(int l3_inst, char *status)
 
 void lan_restart()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
 	char l_cLanIpAddr[16] = {0}, l_cLanNetMask[16] = {0};
 	char l_cPsmGetLanIp[16] = {0}, l_cPsmGetLanSubNet[16] = {0};
@@ -788,7 +789,7 @@ void lan_restart()
 	}
 	else
 	{
-		fprintf(stderr, "Error:%d while getting:%s or value is empty\n", 
+		fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n", 
                 l_iRetVal, l_cPsm_Parameter);
 	}
 
@@ -804,7 +805,7 @@ void lan_restart()
 	}
 	else
 	{
-		fprintf(stderr, "Error:%d while getting:%s or value is empty\n", 
+		fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n", 
                 l_iRetVal, l_cPsm_Parameter);
 	}
 
@@ -817,12 +818,12 @@ void lan_restart()
     	l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, l_cLanIpAddr);
    		if (CCSP_SUCCESS == l_iRetVal)
 		{
-   	    	fprintf(stderr, "Successful in setting:%s\n", 
+   	    	fprintf(g_fArmConsoleLog, "Successful in setting:%s\n", 
 					l_cPsm_Parameter);
 		}
 		else
 		{
-			fprintf(stderr, "Error:%d while Setting:%s\n", 
+			fprintf(g_fArmConsoleLog, "Error:%d while Setting:%s\n", 
             	    l_iRetVal, l_cPsm_Parameter);
 		}
 
@@ -832,12 +833,12 @@ void lan_restart()
     	l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, l_cLanNetMask);
    		if (CCSP_SUCCESS == l_iRetVal)
 		{
-   	    	fprintf(stderr, "Successful in setting:%s\n", 
+   	    	fprintf(g_fArmConsoleLog, "Successful in setting:%s\n", 
 					l_cPsm_Parameter);
 		}
 		else
 		{
-			fprintf(stderr, "Error:%d while Setting:%s\n", 
+			fprintf(g_fArmConsoleLog, "Error:%d while Setting:%s\n", 
             	    l_iRetVal, l_cPsm_Parameter);
 		}
 
@@ -891,7 +892,7 @@ void lan_restart()
 
 void lan_stop()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char l_cL3Inst[8] = {0}, l_cLan_IpAddrv6_prev[64] = {0}, l_cLan_PrefixV6[32] = {0}, l_cLanIfName[16] = {0}, l_cSysevent_Cmd[255] = {0};
     int l_iL3Inst;
@@ -907,7 +908,7 @@ void lan_stop()
                  l_cLanIfName, sizeof(l_cLanIfName));
 
     sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-down", l_cL3Inst, 0);
-    fprintf(stderr, "Calling ipv4_down with L3 Instance:%d\n", l_iL3Inst);
+    fprintf(g_fArmConsoleLog, "Calling ipv4_down with L3 Instance:%d\n", l_iL3Inst);
 
     snprintf(l_cSysevent_Cmd, sizeof(l_cSysevent_Cmd),"/proc/sys/net/ipv6/conf/%s/disable_ipv6", l_cLanIfName);
     write_kernel_param(l_cSysevent_Cmd, "1");
@@ -932,7 +933,7 @@ void lan_stop()
 
 void erouter_mode_updated()
 {
-    fprintf(stderr, "Inside %s\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog, "Inside %s\n",__FUNCTION__);
 
     char l_clast_erouter_mode[8], l_cbridge_mode[16], l_ipv4_4_status_configured[8], l_cL3Inst[8] = {0},  l_cLanIfName[16] = {0}, l_cSysevent_Cmd[255] = {0};
     int l_iL3Inst;
@@ -957,17 +958,17 @@ void erouter_mode_updated()
                         l_cLanIfName, sizeof(l_cLanIfName));
 
             sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-down", l_cL3Inst, 0);
-            fprintf(stderr, "Calling ipv4_down with L3 Instance:%d\n", l_iL3Inst);
+            fprintf(g_fArmConsoleLog, "Calling ipv4_down with L3 Instance:%d\n", l_iL3Inst);
 
             sysevent_set(g_iSyseventfd, g_tSysevent_token, "ipv4-up", l_cL3Inst, 0);
-            fprintf(stderr, "Calling ipv4_up with L3 Instance:%d\n", l_iL3Inst);
+            fprintf(g_fArmConsoleLog, "Calling ipv4_up with L3 Instance:%d\n", l_iL3Inst);
         }
     }
 }
 
 void ipv4_resync(char *lan_inst)
 {
-    fprintf(stderr, "Inside %s called with arg lan_inst %s\n",__FUNCTION__,lan_inst);
+    fprintf(g_fArmConsoleLog, "Inside %s called with arg lan_inst %s\n",__FUNCTION__,lan_inst);
 
     char l_cLanInst[8] = {0}, l_cPsm_Parameter[255] = {0},l_cSysevent_Cmd[255] = {0}, l_cPsmGetLanIp[16] = {0}, l_cPsmGetLanSubNet[16] = {0}, ap_addr_out[32] = {0};
     char *l_cpPsm_Get = NULL;
@@ -987,7 +988,7 @@ void ipv4_resync(char *lan_inst)
         }
         else
         {
-            fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+            fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n",
                     l_iRetVal, l_cPsm_Parameter);
         }
 
@@ -1001,7 +1002,7 @@ void ipv4_resync(char *lan_inst)
         }
         else
         {
-            fprintf(stderr, "Error:%d while getting:%s or value is empty\n",
+            fprintf(g_fArmConsoleLog, "Error:%d while getting:%s or value is empty\n",
                     l_iRetVal, l_cPsm_Parameter);
         }
 
@@ -1012,12 +1013,12 @@ void ipv4_resync(char *lan_inst)
         l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, ap_addr_out);
         if (CCSP_SUCCESS == l_iRetVal)
         {
-            fprintf(stderr, "Successful in setting:%s\n",
+            fprintf(g_fArmConsoleLog, "Successful in setting:%s\n",
                     l_cPsm_Parameter);
         }
         else
         {
-            fprintf(stderr, "Error:%d while Setting:%s\n",
+            fprintf(g_fArmConsoleLog, "Error:%d while Setting:%s\n",
                     l_iRetVal, l_cPsm_Parameter);
         }
 
@@ -1027,12 +1028,12 @@ void ipv4_resync(char *lan_inst)
         l_iRetVal = PSM_VALUE_SET_STRING(l_cPsm_Parameter, l_cPsmGetLanSubNet);
         if (CCSP_SUCCESS == l_iRetVal)
         {
-            fprintf(stderr, "Successful in setting:%s\n",
+            fprintf(g_fArmConsoleLog, "Successful in setting:%s\n",
                     l_cPsm_Parameter);
         }
         else
         {
-            fprintf(stderr, "Error:%d while Setting:%s\n",
+            fprintf(g_fArmConsoleLog, "Error:%d while Setting:%s\n",
                     l_iRetVal, l_cPsm_Parameter);
         }
 

@@ -79,6 +79,7 @@ extern char g_cXdns_Enabled[8];
 #endif
 extern char g_cAtom_Arping_IP[16];
 extern int executeCmd(char *);
+extern FILE* g_fArmConsoleLog; //Global file pointer declaration
 
 #ifdef RDKB_EXTENDER_ENABLED
 unsigned int Get_Device_Mode()
@@ -139,13 +140,13 @@ static int getValueFromDevicePropsFile(char *str, char **value)
         }
         if( NULL == *value)
         {
-            fprintf(stderr,"\n%s is not present in device.properties file\n",str);
+            fprintf(g_fArmConsoleLog,"\n%s is not present in device.properties file\n",str);
             ret = -1;
         }
     }
     else
     {
-        fprintf(stderr,"\nFailed to open file:%s\n", DEVICE_PROPERTIES);
+        fprintf(g_fArmConsoleLog,"\nFailed to open file:%s\n", DEVICE_PROPERTIES);
         return -1;
     }
     if( fp )
@@ -157,34 +158,34 @@ static int getValueFromDevicePropsFile(char *str, char **value)
 
 int get_Pool_cnt(char arr[15][2],FILE *pipe)
 {
-    fprintf(stderr,"\nInside %s - \n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog,"\nInside %s - \n",__FUNCTION__);
     int iter=0;
     char sg_buff[2]={0};
     if (NULL == pipe)
     {
-        fprintf(stderr,"\n Unable to open pipe for get_Pool_cnt pipe\n");
+        fprintf(g_fArmConsoleLog,"\n Unable to open pipe for get_Pool_cnt pipe\n");
         return -1;
     }
     while(fgets(sg_buff, sizeof(sg_buff), pipe) != NULL )
     {
         if (atoi(sg_buff)!=0 && strncmp(sg_buff,"",1) != 0)
         {
-            fprintf(stderr,"\n%s - Value=%s\n",__FUNCTION__,sg_buff);
+            fprintf(g_fArmConsoleLog,"\n%s - Value=%s\n",__FUNCTION__,sg_buff);
             strncpy(arr[iter],sg_buff,2);
             iter++;
         }
     }
-    fprintf(stderr,"\n%s ENDS ..... with Pool_Count=%d\n",__FUNCTION__,iter);
+    fprintf(g_fArmConsoleLog,"\n%s ENDS ..... with Pool_Count=%d\n",__FUNCTION__,iter);
     return iter;
 }
 
 int get_PSM_VALUES_FOR_POOL(char *cmd,char *arr)
 {
-    fprintf(stderr,"\n%s - cmd=%s - ",__FUNCTION__,cmd); //NTR
+    fprintf(g_fArmConsoleLog,"\n%s - cmd=%s - ",__FUNCTION__,cmd); //NTR
     char* l_cpPsm_Get = NULL;
     int l_iRet_Val;
     l_iRet_Val = PSM_VALUE_GET_STRING(cmd, l_cpPsm_Get);
-    fprintf(stderr,"\n%s - l_iRet_Val=%d - ",__FUNCTION__,l_iRet_Val); //NTR
+    fprintf(g_fArmConsoleLog,"\n%s - l_iRet_Val=%d - ",__FUNCTION__,l_iRet_Val); //NTR
     if (CCSP_SUCCESS == l_iRet_Val)
     {
         if (l_cpPsm_Get != NULL)
@@ -195,13 +196,13 @@ int get_PSM_VALUES_FOR_POOL(char *cmd,char *arr)
         }
         else
         {
-            fprintf(stderr, "\npsmcli get of :%s is empty\n", cmd);
+            fprintf(g_fArmConsoleLog, "\npsmcli get of :%s is empty\n", cmd);
             return -1;
         }
     }
     else
     {
-        fprintf(stderr, "\nError:%d while getting parameter:%s\n",l_iRet_Val, cmd);
+        fprintf(g_fArmConsoleLog, "\nError:%d while getting parameter:%s\n",l_iRet_Val, cmd);
         return -1;
     }
     return 0;
@@ -219,11 +220,11 @@ void getRFC_Value(const char* dnsOption)
         if (result == 0){
             strncpy((char *)dnsOption,dnsSet, strlen(dnsSet));
             fprintf(stdout, "DNSMASQ getRFC_Value %s %s %d\n",status,l_DnsStrictOrderStatus,sizeof(l_DnsStrictOrderStatus));
-            fprintf(stderr, "Starting dnsmasq with additional dns strict order option: %s\n",l_DnsStrictOrderStatus);
+            fprintf(g_fArmConsoleLog, "Starting dnsmasq with additional dns strict order option: %s\n",l_DnsStrictOrderStatus);
         }
         else{
             fprintf(stdout, "FAILURE: DNSMASQ getRFC_Value syscfg_get %s %s %d\n",status,l_DnsStrictOrderStatus,sizeof(l_DnsStrictOrderStatus)); 
-            fprintf(stderr, "RFC DNSTRICT ORDER is not defined or Enabled %s\n", l_DnsStrictOrderStatus);
+            fprintf(g_fArmConsoleLog, "RFC DNSTRICT ORDER is not defined or Enabled %s\n", l_DnsStrictOrderStatus);
         }
 }
 int dnsmasq_server_start()
@@ -232,7 +233,7 @@ int dnsmasq_server_start()
     errno_t safec_rc = -1;
 
     getRFC_Value (dnsOption);
-    fprintf(stderr, "\n%s Adding DNSMASQ Option: %s\n",__FUNCTION__, dnsOption);
+    fprintf(g_fArmConsoleLog, "\n%s Adding DNSMASQ Option: %s\n",__FUNCTION__, dnsOption);
     strtok(dnsOption,"\n");
     char l_cXdnsRefacCodeEnable[8] = {0};
     char l_cXdnsEnable[8] = {0};
@@ -274,7 +275,7 @@ int dnsmasq_server_start()
     char *Box_Type=NULL;
     getValueFromDevicePropsFile("XDNS_ENABLE", &XDNS_Enable);
     getValueFromDevicePropsFile("MODEL_NUM", &Box_Type);
-    fprintf(stderr, "\n%s Inside non XB3 block  g_cXdns_Enabled=%s XDNS_Enable=%s Box_Type=%s.......\n",__FUNCTION__,g_cXdns_Enabled,XDNS_Enable,Box_Type);
+    fprintf(g_fArmConsoleLog, "\n%s Inside non XB3 block  g_cXdns_Enabled=%s XDNS_Enable=%s Box_Type=%s.......\n",__FUNCTION__,g_cXdns_Enabled,XDNS_Enable,Box_Type);
     if (!strncasecmp(g_cXdns_Enabled, "true", 4) || !strncasecmp(XDNS_Enable, "true", 4)) //If XDNS is ENABLED
     {
          char DNSSEC_FLAG[8]={0};
@@ -336,13 +337,13 @@ void dhcp_server_stop()
         char l_cDhcp_Status[16] = {0}, l_cSystemCmd[255] = {0};
         int l_iSystem_Res;
         errno_t safec_rc = -1;
-        fprintf(stderr,"\n%s Waiting for dhcp server end state\n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog,"\n%s Waiting for dhcp server end state\n",__FUNCTION__);
         wait_till_end_state("dhcp_server");
-        fprintf(stderr,"\n%s dhcp server ended\n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog,"\n%s dhcp server ended\n",__FUNCTION__);
    	sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", l_cDhcp_Status, sizeof(l_cDhcp_Status));	
 	if (!strncmp(l_cDhcp_Status, "stopped", 7))
 	{
-		fprintf(stderr, "DHCP SERVER is already stopped not doing anything\n");
+		fprintf(g_fArmConsoleLog, "DHCP SERVER is already stopped not doing anything\n");
 		return;
 	}
 
@@ -356,7 +357,7 @@ void dhcp_server_stop()
 
         if ( strncmp(l_cMeshWanLinkStatus, "up", 2) != 0 )
         {
-            fprintf(stderr, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
+            fprintf(g_fArmConsoleLog, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
             return;
         }
     }
@@ -373,7 +374,7 @@ void dhcp_server_stop()
 	l_iSystem_Res = v_secure_system("%s",l_cSystemCmd); //dnsmasq command
     if (0 != l_iSystem_Res)
 	{
-		fprintf(stderr, "%s command didnt execute successfully\n", l_cSystemCmd);
+		fprintf(g_fArmConsoleLog, "%s command didnt execute successfully\n", l_cSystemCmd);
 	}
 
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dns-status", "stopped", 0);
@@ -388,12 +389,12 @@ void dhcp_server_stop()
     l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
     if (0 == l_iSystem_Res)
     {
-        fprintf(stderr, "dns-server started successfully\n");
+        fprintf(g_fArmConsoleLog, "dns-server started successfully\n");
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "dns-status", "started", 0);
     }
 	else
 	{
-        fprintf(stderr, "dns-server didnt start\n");
+        fprintf(g_fArmConsoleLog, "dns-server didnt start\n");
 	}
 }
 #endif
@@ -419,14 +420,14 @@ BOOL IsDhcpConfHasInterface(void)
 	}    
     }
 
-    fprintf(stderr, "dnsmasq.conf does not have any interfaces\n");
+    fprintf(g_fArmConsoleLog, "dnsmasq.conf does not have any interfaces\n");
     fclose(fp); /* CID -43141 : Resource leak */
     return FALSE;
 }
 
 int syslog_restart_request()
 {
-    fprintf(stderr,"\n Inside %s function\n",__FUNCTION__);
+    fprintf(g_fArmConsoleLog,"\n Inside %s function\n",__FUNCTION__);
     char l_cSyscfg_get[16] = {0};
     int l_cRetVal=0;
     char Dhcp_server_status[10]={0};
@@ -436,7 +437,7 @@ int syslog_restart_request()
     sysevent_get(g_iSyseventfd, g_tSysevent_token,"dhcp_server-status", Dhcp_server_status, sizeof(Dhcp_server_status));
     if(strncmp(Dhcp_server_status,"started",7))
     {
-        fprintf(stderr, "SERVICE DHCP : Return from syslog_restart_request as the event status is not started \n");
+        fprintf(g_fArmConsoleLog, "SERVICE DHCP : Return from syslog_restart_request as the event status is not started \n");
         return 0;
     }
     
@@ -464,18 +465,18 @@ int syslog_restart_request()
         FILE *fp = NULL;
         if (FALSE == compare_files(DHCP_CONF, DHCP_TMP_CONF)) //Files are not identical
         {
-                fprintf(stderr, "files are not identical restart dnsmasq\n");
+                fprintf(g_fArmConsoleLog, "files are not identical restart dnsmasq\n");
                 l_crestart=1;
         }
         else
         {
-            fprintf(stderr, "files are identical not restarting dnsmasq\n");
+            fprintf(g_fArmConsoleLog, "files are identical not restarting dnsmasq\n");
         }
         fp = fopen(PID_FILE, "r");
 
         if (NULL == fp) //Mostly the error could be ENOENT(errno 2) 
         {
-            fprintf(stderr, "Error:%d while opening file:%s\n", errno, PID_FILE);
+            fprintf(g_fArmConsoleLog, "Error:%d while opening file:%s\n", errno, PID_FILE);
         }
         else
         {
@@ -494,7 +495,7 @@ int syslog_restart_request()
 	    fp1 = v_secure_popen("r","pidof dnsmasq");
 	    if(!fp1)
             {
-		    fprintf(stderr, "%s Failed in opening pipe \n", __FUNCTION__);
+		    fprintf(g_fArmConsoleLog, "%s Failed in opening pipe \n", __FUNCTION__);
 	    }
 	    else
 	    {
@@ -525,12 +526,12 @@ int syslog_restart_request()
                 }
                 if (0 == l_bPid_Present)
                 {
-                    fprintf(stderr, "PID:%d is not part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
+                    fprintf(g_fArmConsoleLog, "PID:%d is not part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
                     l_crestart = 1;
                 }
                 else
                 {
-                    fprintf(stderr, "PID:%d is part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
+                    fprintf(g_fArmConsoleLog, "PID:%d is part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
                 }
             }
         }
@@ -553,7 +554,7 @@ int syslog_restart_request()
         if(!strncmp(l_cSyscfg_get,"0",1))
         {
             l_cRetVal=dnsmasq_server_start();
-            fprintf(stderr, "\n%s dnsmasq_server_start returns %d\n", __FUNCTION__,l_cRetVal);
+            fprintf(g_fArmConsoleLog, "\n%s dnsmasq_server_start returns %d\n", __FUNCTION__,l_cRetVal);
             sysevent_set(g_iSyseventfd, g_tSysevent_token, "dns-status", "started", 0);
         }
         else
@@ -564,7 +565,7 @@ int syslog_restart_request()
             //that lease is not found in the dnsmasq.leases file
             //Get the DNS strict order option
             l_cRetVal=dnsmasq_server_start();
-            fprintf(stderr, "\n%s dnsmasq_server_start returns %d\n", __FUNCTION__,l_cRetVal);
+            fprintf(g_fArmConsoleLog, "\n%s dnsmasq_server_start returns %d\n", __FUNCTION__,l_cRetVal);
             //DHCP_SLOW_START_NEEDED is always false / set to false so below code is removed
             /*if [ "1" = "$DHCP_SLOW_START_NEEDED" ] && [ -n "$TIME_FILE" ]; then
             echo "#!/bin/sh" > $TIME_FILE
@@ -581,7 +582,7 @@ int syslog_restart_request()
 #if !defined (FEATURE_RDKB_DHCP_MANAGER)
 int dhcp_server_start (char *input)
 {
-        fprintf(stderr, "\nInside  %s function with arg %s\n", __FUNCTION__,input);
+        fprintf(g_fArmConsoleLog, "\nInside  %s function with arg %s\n", __FUNCTION__,input);
 	//Declarations
 	char l_cDhcpServerEnable[16] = {0}, l_cLanStatusDhcp[16] = {0};
 	char l_cSystemCmd[255] = {0}, l_cPsm_Mode[8] = {0}, l_cStart_Misc[8] = {0};
@@ -608,7 +609,7 @@ int dhcp_server_start (char *input)
 	{
       	//when disable dhcp server in gui, we need remove the corresponding process in backend, 
 		// or the dhcp server still work.
-		fprintf(stderr, "DHCP Server is disabled not proceeding further\n");
+		fprintf(g_fArmConsoleLog, "DHCP Server is disabled not proceeding further\n");
 		dhcp_server_stop();
 		remove_file("/var/tmp/lan_not_restart");
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, 
@@ -629,7 +630,7 @@ int dhcp_server_start (char *input)
     
         if ( strncmp(l_cMeshWanLinkStatus, "up", 2) != 0 )
         {
-            fprintf(stderr, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
+            fprintf(g_fArmConsoleLog, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
             return 1;
         }
     }
@@ -643,7 +644,7 @@ int dhcp_server_start (char *input)
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan_status-dhcp", l_cLanStatusDhcp, sizeof(l_cLanStatusDhcp));	
 	if (strncmp(l_cLanStatusDhcp, "started", 7) && ( 0 == atoi(l_cBridge_Mode) ) )
 	{
-		fprintf(stderr, "lan_status-dhcp is not started return without starting DHCP server\n");
+		fprintf(g_fArmConsoleLog, "lan_status-dhcp is not started return without starting DHCP server\n");
 		remove_file("/var/tmp/lan_not_restart");
 		return 0;
 	}
@@ -651,14 +652,14 @@ int dhcp_server_start (char *input)
     sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", l_cDhcp_Server_Prog, sizeof(l_cDhcp_Server_Prog));
     while((!(strncmp(l_cDhcp_Server_Prog, "inprogress", 10))) && (dhcp_server_progress_count < 5))
     {
-        fprintf(stderr, "SERVICE DHCP : dhcp_server-progress is inprogress , waiting... \n");
+        fprintf(g_fArmConsoleLog, "SERVICE DHCP : dhcp_server-progress is inprogress , waiting... \n");
         sleep(2);
         sysevent_get(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", l_cDhcp_Server_Prog, sizeof(l_cDhcp_Server_Prog));
         dhcp_server_progress_count++;
     }
 
     sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", "inprogress", 0);
-	fprintf(stderr, "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start \n");
+	fprintf(g_fArmConsoleLog, "SERVICE DHCP : dhcp_server-progress is set to inProgress from dhcp_server_start \n");
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-errinfo", "", 0);
    
 	strncpy(l_cDhcp_Tmp_Conf, "/tmp/dnsmasq.conf.orig", sizeof(l_cDhcp_Tmp_Conf));
@@ -678,18 +679,18 @@ int dhcp_server_start (char *input)
 	l_bFiles_Diff = compare_files(DHCP_CONF, l_cDhcp_Tmp_Conf);
 	if (FALSE == l_bFiles_Diff) //Files are not identical
 	{	
-		fprintf(stderr, "files are not identical restart dnsmasq\n");
+		fprintf(g_fArmConsoleLog, "files are not identical restart dnsmasq\n");
 		l_bRestart = TRUE;
 	}
 	else
 	{
-		fprintf(stderr, "files are identical not restarting dnsmasq\n");
+		fprintf(g_fArmConsoleLog, "files are identical not restarting dnsmasq\n");
 	}
 	
 	l_fFp = fopen(PID_FILE, "r");
 	if (NULL == l_fFp) //Mostly the error could be ENOENT(errno 2) 
 	{
-		fprintf(stderr, "Error:%d while opening file:%s\n", errno, PID_FILE); 
+		fprintf(g_fArmConsoleLog, "Error:%d while opening file:%s\n", errno, PID_FILE); 
 	}
 	else	
 	{
@@ -705,7 +706,7 @@ int dhcp_server_start (char *input)
 		fptr = v_secure_popen("r","pidof dnsmasq");
 		if(!fptr)
 	        {
-			fprintf(stderr, "%s Error in opening pipe\n",__FUNCTION__);
+			fprintf(g_fArmConsoleLog, "%s Error in opening pipe\n",__FUNCTION__);
 		}
 		else
 		{
@@ -733,12 +734,12 @@ int dhcp_server_start (char *input)
             }
             if (FALSE == l_bPid_Present)
             {
-                fprintf(stderr, "PID:%d is not part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
+                fprintf(g_fArmConsoleLog, "PID:%d is not part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
                 l_bRestart = TRUE;
             }
             else
             {
-                fprintf(stderr, "PID:%d is part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
+                fprintf(g_fArmConsoleLog, "PID:%d is part of PIDS of dnsmasq\n", atoi(l_cCurrent_PID));
             }
 		}
 	}
@@ -766,7 +767,7 @@ int dhcp_server_start (char *input)
         memset (l_cBuf, '\0',  sizeof(l_cBuf));
 	if(!fptr)
 	{
-		fprintf(stderr, "%s Error in opening pipe\n",__FUNCTION__);
+		fprintf(g_fArmConsoleLog, "%s Error in opening pipe\n",__FUNCTION__);
 	}
 	else
 	{
@@ -777,14 +778,14 @@ int dhcp_server_start (char *input)
 
 	if ('\0' != l_cBuf[0] && 0 != l_cBuf[0])
         {
-            fprintf(stderr, "kill dnsmasq with SIGKILL if its still running \n");
+            fprintf(g_fArmConsoleLog, "kill dnsmasq with SIGKILL if its still running \n");
             v_secure_system("kill -KILL `pidof dnsmasq`");
         }
 
     // TCCBR:4710- In Bridge mode, Dont run dnsmasq when there is no interface in dnsmasq.conf
     if ((strncmp(l_cBridge_Mode, "0", 1)) && (FALSE == IsDhcpConfHasInterface()))
     {
-        fprintf(stderr, "no interface present in dnsmasq.conf %s process not started\n", SERVER);
+        fprintf(g_fArmConsoleLog, "no interface present in dnsmasq.conf %s process not started\n", SERVER);
         safec_rc = sprintf_s(l_cSystemCmd, sizeof(l_cSystemCmd),"%s unsetproc dhcp_server", PMON);
         if(safec_rc < EOK){
             ERR_CHK(safec_rc);
@@ -792,7 +793,7 @@ int dhcp_server_start (char *input)
         l_iSystem_Res = v_secure_system("%s",l_cSystemCmd); //dnsmasq command
         if (0 != l_iSystem_Res)
         {
-            fprintf(stderr, "%s command didnt execute successfully\n", l_cSystemCmd);
+            fprintf(g_fArmConsoleLog, "%s command didnt execute successfully\n", l_cSystemCmd);
         }
 		sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", "stopped", 0);
         sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", "completed", 0);
@@ -813,7 +814,7 @@ int dhcp_server_start (char *input)
 	l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
 	if (0 == l_iSystem_Res)
 	{
-    	fprintf(stderr, "%s process started successfully\n", SERVER);
+    	fprintf(g_fArmConsoleLog, "%s process started successfully\n", SERVER);
 	}
 	else
 	{
@@ -822,18 +823,18 @@ int dhcp_server_start (char *input)
 		{
 			for (l_iDnamasq_Retry = 0; l_iDnamasq_Retry < 5; l_iDnamasq_Retry++)
 			{
-            	fprintf(stderr, "%s process failed to start sleep for 5 sec and restart it\n", SERVER);
+            	fprintf(g_fArmConsoleLog, "%s process failed to start sleep for 5 sec and restart it\n", SERVER);
 	            sleep(5);
 				l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
-                            fprintf(stderr, "\n%s dnsmasq_server_start returns %d .......\n", __FUNCTION__,l_iSystem_Res);
+                            fprintf(g_fArmConsoleLog, "\n%s dnsmasq_server_start returns %d .......\n", __FUNCTION__,l_iSystem_Res);
 			    if (0 == l_iSystem_Res)
 			    {
-    				fprintf(stderr, "%s process started successfully\n", SERVER);
+    				fprintf(g_fArmConsoleLog, "%s process started successfully\n", SERVER);
 					break;
 			    }
 				else
 				{
-    				fprintf(stderr, "%s process did not start successfully\n", SERVER);
+    				fprintf(g_fArmConsoleLog, "%s process did not start successfully\n", SERVER);
 					continue;
 				}
 			}
@@ -862,7 +863,7 @@ int dhcp_server_start (char *input)
 		}
      	else
 		{
-          	fprintf(stderr, "lan_not_restart found! Don't restart lan!\n");
+          	fprintf(g_fArmConsoleLog, "lan_not_restart found! Don't restart lan!\n");
 			remove_file("/var/tmp/lan_not_restart");	
 		}
 	}
@@ -874,7 +875,7 @@ int dhcp_server_start (char *input)
             fp = fopen( "/tmp/dhcp_server_start", "w+");
             if ( NULL == fp) // If file not present
             {
-                fprintf(stderr, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
+                fprintf(g_fArmConsoleLog, "File: /tmp/dhcp_server_start creation failed with error:%d\n", errno);
 
             }
             else
@@ -894,14 +895,14 @@ int dhcp_server_start (char *input)
     // If brlan1 is available then XHS service is available post all DHCP configuration   
     if (is_iface_present(XHS_IF_NAME))
     {   
-        fprintf(stderr, "Xfinityhome service is UP\n");
+        fprintf(g_fArmConsoleLog, "Xfinityhome service is UP\n");
         FILE *fp = fopen( "/tmp/xhome_start", "r");
         if( NULL == fp )
         {
             fp = fopen( "/tmp/xhome_start", "w+");
             if ( NULL == fp)
             {
-                fprintf(stderr, "File: /tmp/xhome_start creation failed with error:%d\n", errno);
+                fprintf(g_fArmConsoleLog, "File: /tmp/xhome_start creation failed with error:%d\n", errno);
             }
             else
             {
@@ -916,7 +917,7 @@ int dhcp_server_start (char *input)
     }
     else
     {   
-        fprintf(stderr, "Xfinityhome service is not UP yet\n");
+        fprintf(g_fArmConsoleLog, "Xfinityhome service is not UP yet\n");
     }
 
 	safec_rc = sprintf_s(l_cPmonCmd, sizeof(l_cPmonCmd),"%s setproc dhcp_server %s %s \"%s dhcp_server-restart\"", 
@@ -931,16 +932,16 @@ int dhcp_server_start (char *input)
     sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-status", "started", 0);
     sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server-progress", "completed", 0);
    	print_with_uptime("DHCP SERVICE :dhcp_server-progress_is_set_to_completed:");
-   	fprintf(stderr, "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------\n");
+   	fprintf(g_fArmConsoleLog, "RDKB_DNS_INFO is : -------  resolv_conf_dump  -------\n");
 	print_file(RESOLV_CONF);
-        fprintf(stderr,"\n %s function ENDS\n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog,"\n %s function ENDS\n",__FUNCTION__);
 	return 0;
 }
 #endif
 
 void resync_to_nonvol(char *RemPools)
 {
-    fprintf(stderr,"\nInside %s function with arg %s\n",__FUNCTION__,RemPools);
+    fprintf(g_fArmConsoleLog,"\nInside %s function with arg %s\n",__FUNCTION__,RemPools);
     char Pool_List[6][40]={"dmsb.dhcpv4.server.pool.%s.Enable",
                            "dmsb.dhcpv4.server.pool.%s.IPInterface",
                            "dmsb.dhcpv4.server.pool.%s.MinAddress",
@@ -963,7 +964,7 @@ void resync_to_nonvol(char *RemPools)
 	pipe = v_secure_popen("r","sysevent get dhcp_server_current_pools");
         if(!pipe)
         {
-            fprintf(stderr, "%s Failed in opening pipe \n", __FUNCTION__);
+            fprintf(g_fArmConsoleLog, "%s Failed in opening pipe \n", __FUNCTION__);
 	}
         else
         {  
@@ -973,7 +974,7 @@ void resync_to_nonvol(char *RemPools)
 	pipe = v_secure_popen("r","psmcli getallinst dmsb.dhcpv4.server.pool.");
         if(!pipe)
         {
-            fprintf(stderr, "%s Failed in opening pipe \n", __FUNCTION__);
+            fprintf(g_fArmConsoleLog, "%s Failed in opening pipe \n", __FUNCTION__);
 	}
         else
         {
@@ -994,11 +995,11 @@ void resync_to_nonvol(char *RemPools)
     else
     {
         //As of now none of the functions are using REM_POOLS as argument. Implementation will be done later if needed.
-        fprintf(stderr,"\nSince this function with rempools parameter is not used by anyone, depricated the implemenation");
+        fprintf(g_fArmConsoleLog,"\nSince this function with rempools parameter is not used by anyone, depricated the implemenation");
     }
     if(NV_INST_cnt ==0 && CURRENT_POOLS_cnt ==0 )
     {
-        fprintf(stderr,"\nNumber of pools available is 0");
+        fprintf(g_fArmConsoleLog,"\nNumber of pools available is 0");
         return;
     }
     for(iter=0;iter<CURRENT_POOLS_cnt;iter++)
@@ -1040,7 +1041,7 @@ void resync_to_nonvol(char *RemPools)
 			ret_val=get_PSM_VALUES_FOR_POOL(sg_buff,Pool_Values[iter1]);
 			if(ret_val != 0)
 			{
-				fprintf(stderr,"\nFailed to copy values if %s",sg_buff);
+				fprintf(g_fArmConsoleLog,"\nFailed to copy values if %s",sg_buff);
 			}
 		}
 
@@ -1094,7 +1095,7 @@ void resync_to_nonvol(char *RemPools)
 			    ret_val=get_PSM_VALUES_FOR_POOL(sg_buff,Pool_Values[iter1]);
 			    if(!ret_val)
 			    {
-				    fprintf(stderr,"Failed to copy values if %s",sg_buff);
+				    fprintf(g_fArmConsoleLog,"Failed to copy values if %s",sg_buff);
 			    }
 		    }
 
@@ -1197,12 +1198,12 @@ void resync_to_nonvol(char *RemPools)
 		ret_val=get_PSM_VALUES_FOR_POOL(sg_buff,psm_tmp_buff); // get the value for dmsb.dhcpv4.server.pool.%s.IPInterface
 		if(!ret_val)
 		{
-		    fprintf(stderr,"\n Failed to copy values for %s",sg_buff);
+		    fprintf(g_fArmConsoleLog,"\n Failed to copy values for %s",sg_buff);
 		}
 		if(strncmp(asyn,"",1) == 0)
 		{
 			#if (defined _COSA_INTEL_XB3_ARM_)
-			    fprintf(stderr,"\nSERVICE DHCP : skip ipv4async event for xhome in xb3");
+			    fprintf(g_fArmConsoleLog,"\nSERVICE DHCP : skip ipv4async event for xhome in xb3");
 		    #else
 				memset(l_cSystemCmd,0,sizeof(l_cSystemCmd));
                                 snprintf(l_cSystemCmd, sizeof(l_cSystemCmd), "ipv4_%s-status", psm_tmp_buff);
@@ -1234,12 +1235,12 @@ void resync_to_nonvol(char *RemPools)
 		iter++;
 	}
 	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dhcp_server_current_pools", sg_buff, 0);
-        fprintf(stderr,"\n%s function ENDS \n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog,"\n%s function ENDS \n",__FUNCTION__);
 }
 
 int service_dhcp_init()
 {
-        fprintf(stderr,"\nInside %s function\n",__FUNCTION__);
+        fprintf(g_fArmConsoleLog,"\nInside %s function\n",__FUNCTION__);
 	char l_cPropagate_Ns[8] = {0}, l_cPropagate_Dom[8] = {0};
 	char l_cSlow_Start[8] = {0}, l_cByoi_Enabled[8] = {0};
     char l_cWan_IpAddr[16] = {0}, l_cPrim_Temp_Ip_Prefix[16] = {0}, l_cCurrent_Hsd_Mode[16] = {0};
@@ -1249,7 +1250,7 @@ int service_dhcp_init()
 	syscfg_get(NULL, "dhcp_server_propagate_wan_nameserver", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
 	if (strncmp(l_cPropagate_Ns, "1", 1))
 	{
-	    fprintf(stderr, "Propagate NS is set from block_nat_redirection value is:%s\n", l_cPropagate_Ns);
+	    fprintf(g_fArmConsoleLog, "Propagate NS is set from block_nat_redirection value is:%s\n", l_cPropagate_Ns);
     	syscfg_get(NULL, "block_nat_redirection", l_cPropagate_Ns, sizeof(l_cPropagate_Ns));
 	}
 
@@ -1355,7 +1356,7 @@ int service_dhcp_init()
 	}
 	if(0 == g_cDhcp_Lease_Time[0])
 	{
-		fprintf(stderr, "DHCP Lease time is empty, set to default value 24h\n");
+		fprintf(g_fArmConsoleLog, "DHCP Lease time is empty, set to default value 24h\n");
 	    strncpy(g_cDhcp_Lease_Time, "24h", sizeof(g_cDhcp_Lease_Time));
 	}
 
@@ -1377,18 +1378,18 @@ void lan_status_change(char *input)
 
         if ( strncmp(l_cMeshWanLinkStatus, "up", 2) != 0 ) 
         {
-            fprintf(stderr, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
+            fprintf(g_fArmConsoleLog, "mesh_wan_linkstatus and ipv4_connection_state is not up\n");
             return;
         }
     }
 #endif 
-        fprintf(stderr,"\nInside %s function with arg=%s\n",__FUNCTION__,input);
+        fprintf(g_fArmConsoleLog,"\nInside %s function with arg=%s\n",__FUNCTION__,input);
 	char l_cLan_Status[16] = {0}, l_cDhcp_Server_Enabled[8] = {0};
 	int l_iSystem_Res;
 
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "lan-status", l_cLan_Status, sizeof(l_cLan_Status));
-	fprintf(stderr, "SERVICE DHCP : Inside lan status change with lan-status:%s\n", l_cLan_Status);
-   	fprintf(stderr, "SERVICE DHCP : Current lan status is:%s\n", l_cLan_Status);
+	fprintf(g_fArmConsoleLog, "SERVICE DHCP : Inside lan status change with lan-status:%s\n", l_cLan_Status);
+   	fprintf(g_fArmConsoleLog, "SERVICE DHCP : Current lan status is:%s\n", l_cLan_Status);
     
 	syscfg_get(NULL, "dhcp_server_enabled", l_cDhcp_Server_Enabled, sizeof(l_cDhcp_Server_Enabled));
 	if (!strncmp(l_cDhcp_Server_Enabled, "0", 1))
@@ -1399,16 +1400,16 @@ void lan_status_change(char *input)
         //also prepare dns part of dhcp conf cause we are the dhcp server too
         prepare_dhcp_conf("dns_only");
 
-        fprintf(stderr, "SERVICE DHCP : Start dhcp-server from lan status change");
+        fprintf(g_fArmConsoleLog, "SERVICE DHCP : Start dhcp-server from lan status change");
            
 	    l_iSystem_Res = dnsmasq_server_start(); //dnsmasq command
     	if (0 == l_iSystem_Res)
 	    {
-    	    fprintf(stderr, "%s process started successfully\n", SERVER);
+    	    fprintf(g_fArmConsoleLog, "%s process started successfully\n", SERVER);
 	    }
 		else
 		{
-			fprintf(stderr, "%s process didn't start successfully\n", SERVER);
+			fprintf(g_fArmConsoleLog, "%s process didn't start successfully\n", SERVER);
 		}
     	sysevent_set(g_iSyseventfd, g_tSysevent_token, "dns-status", "started", 0);
 	}
@@ -1417,12 +1418,12 @@ void lan_status_change(char *input)
     	sysevent_set(g_iSyseventfd, g_tSysevent_token, "lan_status-dhcp", "started", 0);
 		if (NULL == input)
 		{
-	        fprintf(stderr, "SERVICE DHCP :  Call start DHCP server from lan status change with NULL\n");
+	        fprintf(g_fArmConsoleLog, "SERVICE DHCP :  Call start DHCP server from lan status change with NULL\n");
 			dhcp_server_start(NULL);
 		}
 		else
 		{
-			fprintf(stderr, "SERVICE DHCP :  Call start DHCP server from lan status change with input:%s\n", input);
+			fprintf(g_fArmConsoleLog, "SERVICE DHCP :  Call start DHCP server from lan status change with input:%s\n", input);
             dhcp_server_start(input);
 		}
 	}
