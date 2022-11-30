@@ -63,6 +63,7 @@ TMP_RESOLV_CONF="/tmp/lte_resolv.conf"
 v6_dns_configured="/tmp/.v6dnsconfigured"
 v4_dns_configured="/tmp/.v4dnsconfigured"
 
+DEV_MODE_SWITCHED="/tmp/.deviceMode_switched"
 update_v4route()
 {
     backup_v4_dns1=$(sysevent get backup_cellular_wan_v4_dns1)
@@ -339,12 +340,14 @@ case "$1" in
                 fi
 
                 sysevent set routeset-ula
-   	fi
+   	    fi
+        touch "$DEV_MODE_SWITCHED" 
         ;;
     mesh_wan_linkstatus)
 
-        if [ x"$(sysevent get last_known_mesh_wan_linkstatus)" != x"$2" ];then
+        if [ x"$(sysevent get last_known_mesh_wan_linkstatus)" != x"$2" ] || [ -f  "$DEV_MODE_SWITCHED" ] ;then
             DEVICE_MODE=`syscfg get Device_Mode`
+            rm -rf $DEV_MODE_SWITCHED > /dev/null 
             if [ "1" = "$DEVICE_MODE" ] ; then
                 sysevent set lan_status-dhcp "started"
                 touch /var/tmp/lan_not_restart
