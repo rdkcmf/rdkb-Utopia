@@ -2298,7 +2298,12 @@ static int prepare_globals_from_configuration(void)
    sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
    if ('\0' == current_wan_ifname[0]) {
-      snprintf(current_wan_ifname, sizeof(current_wan_ifname), "%s", default_wan_ifname);
+      if ('\0' == default_wan_ifname[0]) {
+         snprintf(current_wan_ifname, sizeof(current_wan_ifname), "%s", "erouter0");
+      }
+      else {
+         snprintf(current_wan_ifname, sizeof(current_wan_ifname), "%s", default_wan_ifname);
+      }
    }
 
    sysevent_get(sysevent_fd, sysevent_token, "current_wan_ipaddr", current_wan_ipaddr, sizeof(current_wan_ipaddr));
