@@ -450,23 +450,29 @@ static int route_set(struct serv_routed *sr)
     vsystem("ip -6 rule del iif brlan0 table erouter");
 #endif
 
+    char wanIface[64] = {'\0'};
+    sysevent_get(sr->sefd, sr->setok, "current_wan_ifname", wanIface, sizeof(wanIface));
+    if(wanIface[0] == '\0'){
+        strcpy(wanIface,"erouter0"); // default wan interface
+    }
+
 #if defined (MULTILAN_FEATURE)
     /* Test to see if the default route for erouter0 is not empty and the default
        route for router table is missing before trying to add a new default route
        for erouter table via erouter0 to prevent vsystem returning error */
-    if (vsystem("gw=$(ip -6 route show default dev erouter0 | awk '/via/ {print $3}');"
-            "dr=$(ip -6 route show default dev erouter0 table erouter);"
+    if (vsystem("gw=$(ip -6 route show default dev %s | awk '/via/ {print $3}');"
+            "dr=$(ip -6 route show default dev %s table erouter);"
             "if [ \"$gw\" != \"\" -a \"$dr\" = \"\" ]; then"
-             "  ip -6 route add default via $gw dev erouter0 table erouter;"
-             "fi") != 0)
+             "  ip -6 route add default via $gw dev %s table erouter;"
+             "fi", wanIface, wanIface, wanIface) != 0)
          return -1;
     return 0;
 #else
     if (vsystem("ip -6 rule add iif brlan0 table erouter;"
-            "gw=$(ip -6 route show default dev erouter0 | awk '/via/ {print $3}');"
+            "gw=$(ip -6 route show default dev %s | awk '/via/ {print $3}');"
             "if [ \"$gw\" != \"\" ]; then"
-            "  ip -6 route add default via $gw dev erouter0 table erouter;"
-            "fi") != 0)
+            "  ip -6 route add default via $gw dev %s table erouter;"
+            "fi", wanIface, wanIface) != 0)
         return -1;
     return 0;
 #endif
@@ -475,6 +481,12 @@ static int route_set(struct serv_routed *sr)
 
 static int route_unset(struct serv_routed *sr)
 {
+    char wanIface[64] = {'\0'};
+    sysevent_get(sr->sefd, sr->setok, "current_wan_ifname", wanIface, sizeof(wanIface));
+    if(wanIface[0] == '\0'){
+        strcpy(wanIface,"erouter0"); // default wan interface
+    }
+
 #if defined(CISCO_CONFIG_DHCPV6_PREFIX_DELEGATION) || defined(MULTILAN_FEATURE)
     unsigned int l2_insts[4] = {0};
     unsigned int enabled_iface_num = 0;
@@ -493,12 +505,12 @@ static int route_unset(struct serv_routed *sr)
 
 #elif defined (_HUB4_PRODUCT_REQ_) && !defined (_WNXL11BWL_PRODUCT_REQ_)
     vsystem("ip -6 rule del iif brlan0 table erouter");
-    if (vsystem("ip -6 route del default dev erouter0 table erouter") != 0) {
+    if (vsystem("ip -6 route del default dev %s table erouter", wanIface) != 0) {
         return -1;
     }
 #else
-    if (vsystem("ip -6 route del default dev erouter0 table erouter"
-            " && ip -6 rule del iif brlan0 table erouter") != 0)
+    if (vsystem("ip -6 route del default dev %s table erouter"
+            " && ip -6 rule del iif brlan0 table erouter", wanIface) != 0)
         return -1;
 #endif
     return 0;
