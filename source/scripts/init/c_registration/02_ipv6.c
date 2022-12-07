@@ -74,7 +74,7 @@
 const char* SERVICE_CUSTOM_EVENTS[] = { 
     "ipv6_prefix|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
     "multinet-instances|/etc/utopia/service.d/service_ipv6.sh",
-    "multinet_1-status|/etc/utopia/service.d/service_ipv6.sh"
+    "multinet_1-status|/etc/utopia/service.d/service_ipv6.sh",
     "erouter_topology-mode|/etc/utopia/service.d/service_ipv6.sh",
     "wan-status|/etc/utopia/service.d/service_ipv6.sh",
     "dhcpv6s-start|/etc/utopia/service.d/service_ipv6.sh|NULL|"TUPLE_FLAG_EVENT,
