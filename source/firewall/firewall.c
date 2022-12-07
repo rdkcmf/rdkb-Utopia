@@ -5471,6 +5471,7 @@ static int do_multinet_lan2self_by_wanip (FILE *filter_fp)
         net_resp[0] = 0;
         sysevent_get(sysevent_fd, sysevent_token, net_query, net_resp, sizeof(net_resp));
         snprintf(net_query, sizeof(net_query), "ipv4_%s-ipv4subnet", tok);
+        net_subnet[0] = 0;
         sysevent_get(sysevent_fd, sysevent_token, net_query, net_subnet, sizeof(net_subnet));
 
         fprintf(filter_fp, "-A lan2self_by_wanip -s %s/%s -d %s -j RETURN\n", net_resp, net_subnet, net_resp);
@@ -6122,7 +6123,6 @@ static void do_container_allow(FILE *pFilter, FILE *pMangle, FILE *pNat, int fam
 	}
   }
   
-#define IPRANGE_UTKEY_PREFIX "mgmt_wan_iprange_"
 static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
 {
     int rc, ret;
