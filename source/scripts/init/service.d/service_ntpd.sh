@@ -324,6 +324,15 @@ service_start ()
 
    fi # if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
 
+   PARTNER_ID=$(syscfg get PartnerID)
+   if [[ "$PARTNER_ID" != sky-* ]]; then
+	MAPT_STATUS=$(sysevent get mapt_config_flag)
+	if [ "$MAPT_STATUS" = "set" ]; then
+		sed -i 's/^server/server -6/g' $NTP_CONF_TMP
+		echo_t "SERVICE_NTPD : Configuring ipv6 for NTP sync" >> $NTPD_LOG_NAME
+	fi
+   fi
+
    # Continue with Rest of NTP Config Creation
    if [ "x$SOURCE_PING_INTF" == "x" ]; then
        MASK=ifconfig $SOURCE_PING_INTF | sed -rn '2s/ .*:(.*)$/\1/p'
