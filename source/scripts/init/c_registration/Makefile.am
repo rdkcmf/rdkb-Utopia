@@ -65,7 +65,6 @@ bin_PROGRAMS += 02_devicemode
 endif
 
 
-01_init_SOURCES = 01_init.c
 01_system_SOURCES = 01_system.c
 02_bridge_SOURCES = 02_bridge.c
 02_forwarding_SOURCES = 02_forwarding.c
