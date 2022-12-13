@@ -158,14 +158,14 @@ typedef enum
    SE_MSG_SHOW_DATA_ELEMENTS          = 31,
    SE_MSG_ERRORED                     = 32,  /* msg corrupted */
    SE_MSG_DEBUG                       = 33,   /* change debug level */
-   SE_MSG_SET_DATA                    = 34,   
-   SE_MSG_GET_DATA                    = 35,   
+   SE_MSG_SET_DATA                    = 34,
+   SE_MSG_GET_DATA                    = 35,
    SE_MSG_GET_DATA_REPLY              = 36,
    SE_MSG_SEND_NOTIFICATION_DATA      = 37,
    SE_MSG_SET_ASYNC_MESSAGE_DATA      = 38,
    SE_MSG_NOTIFICATION_DATA           = 39,
    SE_MSG_RUN_EXTERNAL_EXECUTABLE_DATA = 40,
-   SE_MSG_OPEN_CONNECTION_DATA = 41
+   SE_MSG_OPEN_CONNECTION_DATA        = 41,
 } se_msg_type;
 
 typedef unsigned int token_t;
@@ -1333,6 +1333,7 @@ int sysevent_show (const int fd, const token_t token, const char *file);
 int sysevent_debug (char *ip, unsigned short port, int level);
 
 unsigned int sysevent_get_binmsg_maxsize();
+
 #ifdef __cplusplus
 }
 #endif
