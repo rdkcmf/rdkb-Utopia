@@ -852,13 +852,22 @@ int dhcp_server_start (char *input)
 	sysevent_get(g_iSyseventfd, g_tSysevent_token, "start-misc", l_cStart_Misc, sizeof(l_cStart_Misc));
 	if (strcmp(l_cPsm_Mode, "1")) //PSM Mode is Not 1
 	{
+
 		if ((access("/var/tmp/lan_not_restart", F_OK) == -1 && errno == ENOENT) && 
-			((NULL == input) || (NULL != input && strncmp(input, "lan_not_restart", 15))))
+                        ((NULL == input) || (NULL != input && strncmp(input, "lan_not_restart", 15))))
 		{
         	if (!strncmp(l_cStart_Misc, "ready", 5))
 			{
                 print_with_uptime("RDKB_SYSTEM_BOOT_UP_LOG : Call gw_lan_refresh_from_dhcpscript:");
-                v_secure_system("gw_lan_refresh &");
+		#ifdef RDKB_EXTENDER_ENABLED
+                   if (Get_Device_Mode() == ROUTER)
+                   {
+                      v_secure_system("gw_lan_refresh &");
+		   }
+                #else
+		    v_secure_system("gw_lan_refresh &");
+                #endif
+
         	}
 		}
      	else
