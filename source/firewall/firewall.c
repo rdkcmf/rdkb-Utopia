@@ -6485,17 +6485,6 @@ static int do_remote_access_control(FILE *nat_fp, FILE *filter_fp, int family)
                 fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 80 -j DROP\n", current_wan_ifname);
                 fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 443 -j DROP\n", current_wan_ifname);
         }
-        #if !defined(_CBR_PRODUCT_REQ_) && !defined (_BWG_PRODUCT_REQ_) && !defined (_CBR2_PRODUCT_REQ_)
-	    memset(iot_ifName, 0, sizeof(iot_ifName));
-            syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
-            if( strstr( iot_ifName, "l2sd0.106")) {
-                syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
-            }
-	    fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
-            fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
-	    fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
-            fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
-        #endif
     }
     else
 #endif
@@ -12062,6 +12051,43 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
 
    fprintf(filter_fp, "-A INPUT -i lo -m state --state NEW -j ACCEPT\n");
    fprintf(filter_fp, "-A INPUT -j general_input\n");
+   // Blocking webui access to unnecessary interfaces
+   fprintf(filter_fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",lan_ifname);
+   fprintf(filter_fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",ecm_wan_ifname);
+   if (isCmDiagEnabled)
+   {
+       fprintf(filter_fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",cmdiag_ifname);  
+   }
+   #if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_TURRIS_)
+       fprintf(filter_fp, "-A INPUT -p tcp -i privbr --match multiport  --dport 80,443 -j ACCEPT\n");
+   #endif
+   fprintf(filter_fp,"-A INPUT -p tcp --match multiport  --dport 80,443 -j DROP\n");
+   int ret = 0;
+   char tmpQuery[MAX_QUERY];
+   memset(tmpQuery, 0, sizeof(tmpQuery));
+   #if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
+       ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
+   #else
+       ret = syscfg_get(NULL, "mgmt_wan_httpaccess", tmpQuery, sizeof(tmpQuery));
+   #endif
+   if ((ret == 0) && atoi(tmpQuery) == 1)
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp ! -i %s --dport 8080 -j DROP\n",current_wan_ifname);
+   }
+   else
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp  --dport 8080 -j DROP\n");
+   }
+   memset(tmpQuery, 0, sizeof(tmpQuery));
+   ret =  syscfg_get(NULL, "mgmt_wan_httpsaccess", tmpQuery, sizeof(tmpQuery));
+   if ((ret == 0) && atoi(tmpQuery) == 1)
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp ! -i %s --dport 8181 -j DROP\n",current_wan_ifname);
+   }
+   else
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp --dport 8181 -j DROP\n");
+   }
 #if !defined(_HUB4_PRODUCT_REQ_)
    fprintf(filter_fp, "-A INPUT -i %s -j wan2self_mgmt\n", ecm_wan_ifname);
 #endif /*_HUB4_PRODUCT_REQ_*/
@@ -12279,12 +12305,6 @@ static int prepare_subtables(FILE *raw_fp, FILE *mangle_fp, FILE *nat_fp, FILE *
       }
       memset(iot_primaryAddress, 0, sizeof(iot_primaryAddress));
       syscfg_get(NULL, "iot_ipaddr", iot_primaryAddress, sizeof(iot_primaryAddress));
-      #if !defined(_CBR_PRODUCT_REQ_) && !defined (_BWG_PRODUCT_REQ_) && !defined (_CBR2_PRODUCT_REQ_)
-          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
-          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
-          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
-          fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
-      #endif
       fprintf(filter_fp,"-A INPUT -d %s/24 -i %s -j ACCEPT\n",iot_primaryAddress,iot_ifName);
       fprintf(filter_fp,"-A INPUT -i %s -m pkttype ! --pkt-type unicast -j ACCEPT\n",iot_ifName);
       //fprintf(filter_fp,"-A FORWARD -i %s -o %s -j ACCEPT\n",iot_ifName,iot_ifName);
@@ -13360,19 +13380,6 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 
    //DROP incoming 21515 port on erouter interface
    fprintf(filter_fp, "-A INPUT -i %s -p tcp -m tcp --dport 21515 -j DROP\n",get_current_wan_ifname());
-     
-   //DROP br106 admin requests
-   #if !defined(_CBR_PRODUCT_REQ_) && !defined (_BWG_PRODUCT_REQ_) && !defined (_CBR2_PRODUCT_REQ_)
-       memset(iot_ifName, 0, sizeof(iot_ifName));
-       syscfg_get(NULL, "iot_ifname", iot_ifName, sizeof(iot_ifName));
-       if( strstr( iot_ifName, "l2sd0.106")) {
-           syscfg_get( NULL, "iot_brname", iot_ifName, sizeof(iot_ifName));
-       }
-       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 80 -j DROP\n",iot_ifName);
-       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 443 -j DROP\n",iot_ifName);
-       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8080 -j DROP\n",iot_ifName);
-       fprintf(filter_fp,"-A INPUT -p tcp -i %s --dport 8181 -j DROP\n",iot_ifName);
-   #endif
 
    // Video Analytics Firewall rule to allow port 58081 only from LAN interface
    do_OpenVideoAnalyticsPort (filter_fp);
@@ -13452,6 +13459,44 @@ static int prepare_disabled_ipv4_firewall(FILE *raw_fp, FILE *mangle_fp, FILE *n
 #endif
    fprintf(filter_fp, "%s\n", ":FORWARD ACCEPT [0:0]");
    fprintf(filter_fp, "%s\n", ":OUTPUT ACCEPT [0:0]");
+   // Blocking webui access to unnecessary interfaces
+   fprintf(filter_fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",lan_ifname);
+   fprintf(filter_fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",ecm_wan_ifname);
+   if (isCmDiagEnabled)
+   {
+       fprintf(filter_fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",cmdiag_ifname);  
+   }
+   #if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_TURRIS_)
+       fprintf(filter_fp, "-A INPUT -p tcp -i privbr --match multiport  --dport 80,443 -j ACCEPT\n");
+   #endif
+   fprintf(filter_fp,"-A INPUT -p tcp --match multiport  --dport 80,443 -j DROP\n");
+   int ret = 0;
+   char tmpQuery[MAX_QUERY];
+   memset(tmpQuery, 0, sizeof(tmpQuery));
+   #if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
+       ret = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpQuery, sizeof(tmpQuery));
+   #else
+       ret = syscfg_get(NULL, "mgmt_wan_httpaccess", tmpQuery, sizeof(tmpQuery));
+   #endif
+   if ((ret == 0) && atoi(tmpQuery) == 1)
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp ! -i %s --dport 8080 -j DROP\n",current_wan_ifname);
+   }
+   else
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp --dport 8080 -j DROP\n");
+   }
+   memset(tmpQuery, 0, sizeof(tmpQuery));
+   ret =  syscfg_get(NULL, "mgmt_wan_httpsaccess", tmpQuery, sizeof(tmpQuery));
+   if ((ret == 0) && atoi(tmpQuery) == 1)
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp ! -i %s --dport 8181 -j DROP\n",current_wan_ifname);
+   }
+   else
+   {
+       fprintf(filter_fp,"-A INPUT -p tcp --dport 8181 -j DROP\n");
+   }
+   
    fprintf(filter_fp, "%s\n", "COMMIT");
  FIREWALL_DEBUG("Exiting prepare_disabled_ipv4_firewall \n"); 
    return(0);
@@ -14415,6 +14460,43 @@ static void do_ipv6_filter_table(FILE *fp){
 
    // Create iptable chain to ratelimit remote management packets
    do_webui_rate_limit(fp);
+   // Blocking webui access to unnecessary interfaces
+   fprintf(fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",lan_ifname);
+   fprintf(fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",ecm_wan_ifname);
+   if (isCmDiagEnabled)
+   {
+      fprintf(fp, "-A INPUT -p tcp -i %s --match multiport --dport 80,443 -j ACCEPT\n",cmdiag_ifname);
+   }
+   #if defined(_COSA_BCM_ARM_) || defined(_PLATFORM_TURRIS_)
+       fprintf(fp, "-A INPUT -p tcp -i privbr --match multiport  --dport 80,443 -j ACCEPT\n");
+   #endif
+   fprintf(fp,"-A INPUT -p tcp --match multiport  --dport 80,443 -j DROP\n");
+   int retval = 0;
+   char tmpsysQuery[MAX_QUERY];
+   memset(tmpsysQuery, 0, sizeof(tmpsysQuery));
+   #if defined(CONFIG_CCSP_WAN_MGMT_ACCESS)
+      retval = syscfg_get(NULL, "mgmt_wan_httpaccess_ert", tmpsysQuery, sizeof(tmpsysQuery));
+   #else
+      retval = syscfg_get(NULL, "mgmt_wan_httpaccess", tmpsysQuery, sizeof(tmpsysQuery));
+   #endif
+   if ((retval == 0) && atoi(tmpsysQuery) == 1)
+   {
+      fprintf(fp,"-A INPUT -p tcp ! -i %s --dport 8080 -j DROP\n",current_wan_ifname);
+   }
+   else
+   {
+      fprintf(fp,"-A INPUT -p tcp  --dport 8080 -j DROP\n");
+   }
+   memset(tmpsysQuery, 0, sizeof(tmpsysQuery));
+   retval =  syscfg_get(NULL, "mgmt_wan_httpsaccess", tmpsysQuery, sizeof(tmpsysQuery));
+   if ((retval == 0) && atoi(tmpsysQuery) == 1)
+   {
+      fprintf(fp,"-A INPUT -p tcp ! -i %s --dport 8181 -j DROP\n",current_wan_ifname);
+   }
+   else
+   {
+      fprintf(fp,"-A INPUT -p tcp --dport 8181 -j DROP\n");
+   }
 
    if (!isFirewallEnabled || isBridgeMode || !isWanServiceReady) {
        if(isBridgeMode || isWanServiceReady)
