@@ -2,7 +2,7 @@
 
 source /etc/device.properties
 
-if [ "$BOX_TYPE" == "HUB4" ]; then
+if [ "$BOX_TYPE" == "HUB4" ] || [ "$BOX_TYPE" == "SR213" ]; then
 source /etc/utopia/service.d/log_capture_path.sh
 VARLOG_DIR_THRESHOLD=3000
 VAR_TMP_FILE_THRESHOLD=1000
@@ -86,7 +86,7 @@ if [ $dir -gt $VARLOG_DIR_THRESHOLD ]; then
 fi
 
 # If any file reaches 1MB inside /var/tmp, empty the file.
-if [ "$BOX_TYPE" == "HUB4" ]; then
+if [ "$BOX_TYPE" == "HUB4" ] || [ "$BOX_TYPE" == "SR213" ]; then
     var_tmp_files=`ls /var/tmp/`
     for tmp_file in $var_tmp_files; do
         tmp_file_size=`du /var/tmp/$tmp_file | awk -v sum=0 '{print sum+=$1}' | tail -1`
