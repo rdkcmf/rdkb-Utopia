@@ -1246,9 +1246,9 @@ $XconfSelector=prod
 $XconfUrl=
 
 #Defaults for Telemetry T2 Enable
-$T2Enable=false
+$T2Enable=true
 $T2Version=2.0.1
-$T2ConfigURL=
+$T2ConfigURL=https://xconf.xcal.tv/loguploader/getT2Settings
 
 #Defaults for mTLS in T2
 $T2mTLSEnable=true
