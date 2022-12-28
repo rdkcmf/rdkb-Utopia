@@ -917,8 +917,7 @@ static int gen_zebra_conf(int sefd, token_t setok)
         else {
             syscfg_set(NULL, "router_managed_flag", "0");
         }
-        syscfg_set(NULL, "router_other_flag", "1");
-        syscfg_commit();
+        syscfg_set_commit(NULL, "router_other_flag", "1");
 #endif
         fprintf(fp, "interface %s\n", lan_if);
         fprintf(fp, "   no ipv6 nd suppress-ra\n");
