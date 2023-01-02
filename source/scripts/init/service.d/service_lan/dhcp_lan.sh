@@ -311,7 +311,7 @@ case "$1" in
       OLDIP=`/sbin/ip addr show dev "$interface"  | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
       if [ "$OLDIP" != "$ip" ] ; then
          RESULT=`arping -q -c 2 -w 3 -D -I "$interface" "$ip"`
-         if [ "" != "$RESULT" ] &&  [ "0" != "$RESULT" ] ; then
+         if [ -n "$RESULT" ] &&  [ "0" != "$RESULT" ] ; then
             echo "[utopia][lan dhcp client script] duplicate address detected $ip on $interface." > /dev/console
             echo "[utopia][lan dhcp client script] ignoring duplicate ... hoping for the best" > /dev/console
          fi

@@ -95,14 +95,14 @@ get_listen_params() {
     if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
         CM_IP6=`ip -6 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1 | head -1`
     fi
-    if [ "$CM_IP4" != "" ] ; then
+    if [ -n "$CM_IP4" ] ; then
         LISTEN_PARAMS="-p [${CM_IP4}]:22"
     fi
-    if [ "$CM_IP6" != "" ] ; then
+    if [ -n "$CM_IP6" ] ; then
         LISTEN_PARAMS="$LISTEN_PARAMS -p [${CM_IP6}]:22"
     fi
     #If there is no ipv4 or ipv6 address to listen on, bind to local address only
-    if [ "$LISTEN_PARAMS" = "" ] ; then
+    if [ -z "$LISTEN_PARAMS" ] ; then
         LISTEN_PARAMS="-p [127.0.0.1]:22"
         if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ]); then
             echo_t "utopia: dropbear not started with valid erouter0 IPv4 or IPv6 address $LISTEN_PARAMS"
@@ -189,7 +189,7 @@ do_start() {
    #dropbear -r /etc/rsa_key.priv
    #dropbear -E -s -b /etc/sshbanner.txt -s -a -p [$CM_IP]:22
    if  [ "$MANUFACTURE" != "Technicolor" ]; then
-       if [ "$CM_IP" = "" ]
+       if [ -z "$CM_IP" ]
        then
           #wan0 should be in v4
           CM_IP=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`
@@ -202,7 +202,7 @@ do_start() {
 
    if ([ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ]) ;then
    	dropbear -E -s -b /etc/sshbanner.txt -a -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 $LISTEN_PARAMS -P $PID_FILE 2>/dev/null
-    if [ "$LISTEN_PARAMS" = "" ] ; then
+    if [ -z "$LISTEN_PARAMS" ] ; then
         echo_t "[utopia]: dropbear was not started for erouter0 interface with valid params."
     fi
     CM_IP4=`ip -4 addr show dev $CMINTERFACE scope global | awk '/inet/{print $2}' | cut -d '/' -f1`

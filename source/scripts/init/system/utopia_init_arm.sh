@@ -202,7 +202,7 @@ HOTSPOT_BLOB="/nvram/hotspot_blob"
 CheckAndReCreateDB()
 {
 	NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-	if [ "$NVRAMFullStatus" != "" ]; then
+	if [ -n "$NVRAMFullStatus" ]; then
 		if [ -f "/rdklogger/rdkbLogMonitor.sh" ]
 		then
 			  #Remove Old backup files if there	
@@ -212,7 +212,7 @@ CheckAndReCreateDB()
 			  syscfg_create -f $SYSCFG_FILE
 			  if [ $? != 0 ]; then
 				  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-				  if [ "$NVRAMFullStatus" != "" ]; then
+				  if [ -n "$NVRAMFullStatus" ]; then
 					 echo_t "[utopia][init] NVRAM Full(100%) and below is the dump"
 					 du -h $SYSCFG_MOUNT 
 					 ls -al $SYSCFG_MOUNT	 
@@ -283,7 +283,7 @@ fi
 
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
-if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
+if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
    echo "[utopia][init] Performing factory reset"
    
 SYSCFG_PARTNER_FR="`syscfg get PartnerID_FR`"
@@ -345,7 +345,7 @@ fi
 	 CheckAndReCreateDB
    fi
 #>>zqiu
-elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
+elif [ "$FACTORY_RESET_WIFI" = "$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
     create_wifi_default
     syscfg unset $FACTORY_RESET_KEY
@@ -381,7 +381,7 @@ fi
 MSG_SIZE_MAX=`cat /proc/sys/fs/mqueue/msgsize_max`
 MSG_MAX_SYS=`ulimit -q`
 TOT_MSG_MAX=50
-if [ "x$MSG_MAX_SYS" = "x" ]; then
+if [ -z "$MSG_MAX_SYS" ]; then
 echo "ulimit cmd not avail assign mq msg_max :$TOT_MSG_MAX"
 else
 TOT_MSG_MAX=$((MSG_MAX_SYS/MSG_SIZE_MAX))

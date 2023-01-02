@@ -77,7 +77,7 @@ journal_log="/rdklogs/logs/journal_logs.txt.0"
 #	LOG_SYNC_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_PATH  | cut -f2 -d=`
 #	LOG_SYNC_BACK_UP_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_PATH  | cut -f2 -d=`
 #	LOG_SYNC_BACK_UP_REBOOT_PATH_override=`cat /etc/device.properties | grep LOG_SYNC_BACK_UP_REBOOT_PATH  | cut -f2 -d=`
-#	if [ "$LOG_SYNC_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_PATH_override" != "" ] && [ "$LOG_SYNC_BACK_UP_REBOOT_PATH_override" != "" ]
+#	if [ -n "$LOG_SYNC_PATH_override" ] && [ -n "$LOG_SYNC_BACK_UP_PATH_override" ] && [ -n "$LOG_SYNC_BACK_UP_REBOOT_PATH_override" ]
 #	then
 #		LOG_SYNC_PATH=$LOG_SYNC_PATH_override
 #		LOG_SYNC_BACK_UP_PATH=$LOG_SYNC_BACK_UP_PATH_override
@@ -88,7 +88,7 @@ journal_log="/rdklogs/logs/journal_logs.txt.0"
 #This change is needed for ArrisXB6 to choose sync location dynamically.
 if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ];then
 	isNvram2Mounted=`grep nvram2 /proc/mounts`
-	if [ "$isNvram2Mounted" == "" ];then
+	if [ -z "$isNvram2Mounted" ];then
 		LOG_SYNC_PATH="/nvram/logs/"
 		LOG_SYNC_BACK_UP_PATH="/nvram/logs/"
 		LOG_SYNC_BACK_UP_REBOOT_PATH="/nvram/logs/"
@@ -129,7 +129,7 @@ fi
 MAXLINESIZE=2
 
 #Devices that have more nvram size can override default upload threshold (1.5MB) through device.properties
-if [ "$LOG_UPLOAD_THRESHOLD" != "" ]
+if [ -n "$LOG_UPLOAD_THRESHOLD" ]
 then
 	MAXSIZE=$LOG_UPLOAD_THRESHOLD
 fi    

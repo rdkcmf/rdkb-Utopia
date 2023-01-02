@@ -117,7 +117,7 @@ case "$1" in
   ntp_time_sync)
       CURRENT_NTPD_STATUS=`sysevent get ntp_time_sync`
 
-      if [ "x1" = "x$CURRENT_NTPD_STATUS" ] ; then
+      if [ "1" = "$CURRENT_NTPD_STATUS" ] ; then
          echo_t "RDKB_SYSTEM_BOOT_UP_LOG : service_time_sync_peer.sh called after ntp time sync" >> "$NTPD_LOG_NAME"
          service_init
          service_start

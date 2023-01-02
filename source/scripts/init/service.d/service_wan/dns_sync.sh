@@ -39,7 +39,7 @@ if [ ! -f /usr/bin/GetConfigFile ];then
 fi
 
 #If we don't have an IP to copy the DNS settings to, there is no need to proceed
-if [ "$ATOM_INTERFACE_IP" = "" ] ; then
+if [ -z "$ATOM_INTERFACE_IP" ] ; then
     echo "DNS sync not needed"
     exit  0
 fi
@@ -63,19 +63,19 @@ done
 DNS_STR_IPV4=`cat $RESOLV_CONF | grep nameserver | grep -v 127.0.0.1 | grep "\."`
 DNS_STR_IPV6=`cat $RESOLV_CONF  | grep nameserver | grep -v 127.0.0.1 | grep "\:"`
 
-if [ "$DNS_STR_IPV4" != "" ];then
+if [ -n "$DNS_STR_IPV4" ];then
     echo "$DNS_STR_IPV4" > $TMP_RESOLV_FILE
 else
     > $TMP_RESOLV_FILE
 fi
 
-if [ "$DNS_STR_IPV6" != "" ];then
+if [ -n "$DNS_STR_IPV6" ];then
     echo "$DNS_STR_IPV6" >> $TMP_RESOLV_FILE
 fi
 
 
 DNS_STR_V4=`echo "$DNS_STR_IPV4" | cut -d" " -f2`
-if [ "$DNS_STR_V4" == "" ]
+if [ -z "$DNS_STR_V4" ]
 then
 	echo "No IPv4 DNS entries available add default as lan IP"
 	echo "$LAN_IP" >> $TMP_RESOLV_FILE

@@ -261,7 +261,7 @@ fi
 CheckAndReCreateDB()
 {
 	NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-	if [ "$NVRAMFullStatus" != "" ]; then
+	if [ -n "$NVRAMFullStatus" ]; then
 		if [ -f "/rdklogger/rdkbLogMonitor.sh" ]
 		then
 			  #Remove Old backup files if there	
@@ -272,7 +272,7 @@ CheckAndReCreateDB()
 			  syscfg_oldDB=$?
 			  if [ $syscfg_oldDB -ne 0 ]; then
 				  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-				  if [ "$NVRAMFullStatus" != "" ]; then
+				  if [ -n "$NVRAMFullStatus" ]; then
 					 echo "[utopia][init] NVRAM Full(100%) and below is the dump"
 					 du -h $SYSCFG_MOUNT 
 					 ls -al $SYSCFG_MOUNT	 
@@ -396,7 +396,7 @@ fi
 
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
-if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
+if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
    echo "[utopia][init] Performing factory reset"
    
 SYSCFG_PARTNER_FR="`syscfg get PartnerID_FR`"
@@ -491,7 +491,7 @@ fi
    echo 204 > /var/tmp/networkresponse.txt
     
 
-elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
+elif [ "$FACTORY_RESET_WIFI" = "$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
     create_wifi_default
     syscfg unset $FACTORY_RESET_KEY
@@ -520,7 +520,7 @@ fi
 MSG_SIZE_MAX=`cat /proc/sys/fs/mqueue/msgsize_max`
 MSG_MAX_SYS=`ulimit -q`
 TOT_MSG_MAX=50
-if [ "x$MSG_MAX_SYS" = "x" ]; then
+if [ -z "$MSG_MAX_SYS" ]; then
 echo "ulimit cmd not avail assign mq msg_max :$TOT_MSG_MAX"
 else
 TOT_MSG_MAX=$((MSG_MAX_SYS/MSG_SIZE_MAX))
@@ -624,20 +624,20 @@ ip6tables -t mangle -A PREROUTING -i "$wan_ifname" -d ff00::/8 -p ipv6-icmp -m i
 
 echo "[utopia][init] Processing registration"
 
-if [ "x$rdkb_extender" = "xtrue" ];then
+if [ "$rdkb_extender" = "true" ];then
     device_mode=`syscfg get Device_Mode`
-    if [ "x$device_mode" = "x" ]; then
+    if [ -z "$device_mode" ]; then
         device_mode=`cat PSM_BAK_XML_CONFIG_FILE_NAME | grep dmsb.device.NetworkingMode | cut -d ">" -f 2 | cut -d "<" -f 1`
-        if [ "x$device_mode" = "x" ]; then
+        if [ -z "$device_mode" ]; then
         device_mode=`cat /usr/ccsp/config/bbhm_def_cfg.xml | grep dmsb.device.NetworkingMode | cut -d ">" -f 2 | cut -d "<" -f 1`
         fi
-        if [ "x$device_mode" != "x" ]; then
+        if [ -n "$device_mode" ]; then
             syscfg set Device_Mode $device_mode
             syscfg commit
         fi
     fi
 
-    if [ "x$device_mode" = "x1" ]; then
+    if [ "$device_mode" = "1" ]; then
         INIT_DIR=/etc/utopia/extender
     else
         INIT_DIR=/etc/utopia/registration.d

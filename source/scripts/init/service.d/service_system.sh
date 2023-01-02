@@ -82,7 +82,7 @@ service_start ()
       # This script is a reasonable place to figure out the name of our wan interface
       # It should be done earlier than starting lan or wan, and this is plenty early
       # It depends on whether we are using a physical interface, or a vlan interface
-      if [ "" = "$SYSCFG_wan_virtual_ifnum" ] ; then
+      if [ -z "$SYSCFG_wan_virtual_ifnum" ] ; then
          WAN_IFNAME=$SYSCFG_wan_physical_ifname
       else
          WAN_IFNAME=vlan${SYSCFG_wan_virtual_ifnum}

@@ -48,7 +48,7 @@ overwrite_wandomain () {
 
    #append wan_domain to resolv.conf
    #The search keywords are mutually exclusive. If more than one instance of these keywords is present, the last instance wins
-   if [ "" != "$WAN_STATIC_DOMAIN " ]; then
+   if [ -n "$WAN_STATIC_DOMAIN " ]; then
        echo "#overwrite domain name start" >> $RESOLV_CONF
        echo "search $WAN_STATIC_DOMAIN" >> $RESOLV_CONF
        echo "#overwrite domain name end" >> $RESOLV_CONF

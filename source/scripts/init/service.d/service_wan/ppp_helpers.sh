@@ -279,12 +279,12 @@ prepare_pppd_secrets() {
    SECRET=`syscfg get wan_proto_password`
    REMOTE_NAME=`syscfg get wan_proto_remote_name`
 
-   if [ "" = "$REMOTE_NAME" ] ; then
+   if [ -z "$REMOTE_NAME" ] ; then
       REMOTE_NAME=*
    fi
 
    DOMAIN=`syscfg get wan_domain`
-   if [ "" = "$DOMAIN" ] ; then
+   if [ -z "$DOMAIN" ] ; then
       # client   server   secret   IP addresses
       LINE="$CLIENT $REMOTE_NAME $SECRET *"
    else

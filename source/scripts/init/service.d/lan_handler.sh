@@ -188,9 +188,9 @@ case "$1" in
         SYSEVT_lan_ipaddr_v6=`sysevent get lan_ipaddr_v6`
         SYSEVT_lan_prefix_v6=`sysevent get lan_prefix_v6`
 
-        if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] && [ "$SYSEVT_lan_ipaddr_v6" != "" ]
+        if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] && [ -n "$SYSEVT_lan_ipaddr_v6" ]
 	 then
-            if [ "$SYSEVT_lan_ipaddr_v6_prev" != "" ]; then
+            if [ -n "$SYSEVT_lan_ipaddr_v6_prev" ]; then
                 ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             fi
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
@@ -227,7 +227,7 @@ case "$1" in
                     sysevent set parcon_nfq_status started
                 fi
                 isAvailablebrlan1=`ifconfig | grep brlan1`
-                if [ "$isAvailablebrlan1" != "" ]
+                if [ -n "$isAvailablebrlan1" ]
                 then
                     echo_t "LAN HANDLER : Refreshing LAN from handler"
                     gw_lan_refresh&
@@ -278,7 +278,7 @@ case "$1" in
             fi
 
             LAN_IPV6_PREFIX=`sysevent get ipv6_prefix`
-            if [ "$LAN_IPV6_PREFIX" != "" ] ; then
+            if [ -n "$LAN_IPV6_PREFIX" ] ; then
                     ip -6 route add $LAN_IPV6_PREFIX dev $LAN_IFNAME
             fi
         else
@@ -338,7 +338,7 @@ case "$1" in
 	fi
    	if [ x = x"`sysevent get lan_handler_async`" ]; then
         eval `psmcli get -e INST dmsb.MultiLAN.PrimaryLAN_l3net L2INST dmsb.MultiLAN.PrimaryLAN_l2net BRPORT dmsb.MultiLAN.PrimaryLAN_brport HSINST dmsb.MultiLAN.HomeSecurity_l3net`
-	if [ "$INST" = "" ]
+	if [ -z "$INST" ]
 	    then
 		echo_t "THE INSTANT=$INST"
 		echo_t "THE INSTANT=$INST"
@@ -363,17 +363,17 @@ case "$1" in
 		fi
 		
 	fi
-	if [ "$L2INST" = "" ]
+	if [ -z "$L2INST" ]
 	    then
 		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : L2INST returned null, retrying"
 		L2INST=`psmcli get dmsb.MultiLAN.PrimaryLAN_l2net`
 	fi
-	if [ "$BRPORT" = "" ]
+	if [ -z "$BRPORT" ]
 	    then
 		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : BRPORT returned null, retrying"
 		BRPORT=`psmcli get dmsb.MultiLAN.PrimaryLAN_brport`
 	fi
-	if [ "$HSINST" = "" ]
+	if [ -z "$HSINST" ]
 	    then
 		echo_t "RDKB_SYSTEM_BOOT_UP_LOG : HSINST returned null, retrying"
 		HSINST=`psmcli get dmsb.MultiLAN.HomeSecurity_l3net`
@@ -390,13 +390,13 @@ case "$1" in
 	   	if [ "$RPI_SPECIFIC" = "rpi" ]; then
         		        sleep 2
                                 L3NET=`sysevent get primary_lan_l3net`
-                                if [ "$L3NET" = "" ]; then
+                                if [ -z "$L3NET" ]; then
                                      L3NET=4
                                      sysevent set primary_lan_l3net $L3NET
                                 fi
                 fi
 	elif [ "$BOX_TYPE" = "TCCBR" ]; then
-		if [ "$INST" = "" ]; then
+		if [ -z "$INST" ]; then
 			echo "*****SET THE PRIMARY LAN ******" > /dev/null
   			syseven set primary_lan_l3net 4
 		fi
@@ -453,7 +453,7 @@ case "$1" in
             echo_t "LAN_RESTART : Check Lan Restart Status"
 
         if [ x$SYSEVT_lan_ipaddr_v6_prev != x$SYSEVT_lan_ipaddr_v6 ] || [ x"true" = x$LAN_RESTARTED ]; then
-            if [ "$SYSEVT_lan_ipaddr_v6_prev" != "" ]; then
+            if [ -n "$SYSEVT_lan_ipaddr_v6_prev" ]; then
                 ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             fi
             ip -6 addr add $SYSEVT_lan_ipaddr_v6/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
@@ -482,7 +482,7 @@ case "$1" in
    lan-start)
         if [ "$RPI_SPECIFIC" = "rpi" ]; then
              L3Net=`sysevent get primary_lan_l3net`
-             if [ "$L3Net" = "" ]; then
+             if [ -z "$L3Net" ]; then
                   echo_t "RDKB_SYSTEM_BOOT_UP_LOG : L3Net is null \n"
                   L3Net=4
                   sysevent set primary_lan_l3net $L3Net

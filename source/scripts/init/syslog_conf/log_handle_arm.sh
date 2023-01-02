@@ -203,10 +203,10 @@ get_log_file()
 {
 #TEMP=`syscfg get $1`
 TEMP=`sysevent get $1`
-if [ "$TEMP" == "" ]
+if [ -z "$TEMP" ]
 then
     TEMP=$(grep -e $2 /etc/syslog.conf | awk '{print $2}')
-    if [ "$TEMP" != "" ]
+    if [ -n "$TEMP" ]
     then
         #syscfg set $1 $TEMP
         #syscfg commit

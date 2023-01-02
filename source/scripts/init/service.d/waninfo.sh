@@ -24,18 +24,18 @@ source /etc/device.properties
 getWanInterfaceName()
 {
   interface_name=`sysevent get current_wan_ifname`
-  if [ "$interface_name" = "" ];then
+  if [ -z "$interface_name" ];then
       interface_name="erouter0"
   fi
   echo "$interface_name"
 }
 getWanMacInterfaceName()
 {
-  if [ "x$rdkb_extender" = "xtrue" ];then
+  if [ "$rdkb_extender" = "true" ];then
         mac_interface="eth0"
   else
     mac_interface=`syscfg get wan_physical_ifname`
-    if [ "$mac_interface" = "" ];then
+    if [ -z "$mac_interface" ];then
         mac_interface="erouter0"
     fi  
   fi

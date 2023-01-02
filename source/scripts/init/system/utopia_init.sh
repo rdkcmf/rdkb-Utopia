@@ -161,7 +161,7 @@ changeFilePermissions() {
 CheckAndReCreateDB()
 {
 	NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-	if [ "$NVRAMFullStatus" != "" ]; then
+	if [ -n "$NVRAMFullStatus" ]; then
 		if [ -f "/rdklogger/rdkbLogMonitor.sh" ]
 		then
 			  #Remove Old backup files if there	
@@ -171,7 +171,7 @@ CheckAndReCreateDB()
 			  syscfg_create -f $SYSCFG_FILE
 			  if [ $? != 0 ]; then
 				  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-				  if [ "$NVRAMFullStatus" != "" ]; then
+				  if [ -n "$NVRAMFullStatus" ]; then
 					 echo_t "[utopia][init] NVRAM Full(100%) and below is the dump"
 					 du -h $SYSCFG_MOUNT 
 					 ls -al $SYSCFG_MOUNT	 
@@ -373,7 +373,7 @@ fi
 MSG_SIZE_MAX=`cat /proc/sys/fs/mqueue/msgsize_max`
 MSG_MAX_SYS=`ulimit -q`
 TOT_MSG_MAX=50
-if [ "x$MSG_MAX_SYS" = "x" ]; then
+if [ -z "$MSG_MAX_SYS" ]; then
 echo "ulimit cmd not avail assign mq msg_max :$TOT_MSG_MAX"
 else
 TOT_MSG_MAX=$((MSG_MAX_SYS/MSG_SIZE_MAX))
@@ -601,7 +601,7 @@ else
       else
          RESET_DURATION=`cat /proc/P-UNIT/status|grep "Last reset duration"|awk '{ print $7 }'`
          result=`echo "$RESET_DURATION $BUTTON_THRESHOLD"| awk '{if ($1 > 0 && $1 < $2) print $1}'`
-         if [ "$result" != "" ]; then
+         if [ -n "$result" ]; then
             syscfg set X_RDKCENTRAL-COM_LastRebootReason "pin-reset"
             syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 	    if [ -e "/usr/bin/onboarding_log" ]; then

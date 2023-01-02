@@ -195,7 +195,7 @@ apply_config () {
     DSLITE_ENABLED=`sysevent get dslite_enabled`
 
     ISIPV4NEEDED="TRUE"
-    if [ "x$rdkb_extender" = "xtrue" ];then
+    if [ "$rdkb_extender" = "true" ];then
 
       	DEVICE_MODE=`syscfg get Device_Mode`
         XHS_L3INST=5
@@ -271,7 +271,7 @@ apply_config () {
 
 
         if [ "$SYSEVT_lan_ipaddr_v6_prev" != "$SYSEVT_lan_ipaddr_v6" ]; then
-            if [ "$SYSEVT_lan_ipaddr_v6_prev" != "" ]; then
+            if [ -n "$SYSEVT_lan_ipaddr_v6_prev" ]; then
                 ip -6 addr del $SYSEVT_lan_ipaddr_v6_prev/64 dev $LAN_IFNAME valid_lft forever preferred_lft forever
             fi
 
@@ -292,7 +292,7 @@ apply_config () {
     sysevent set ${SERVICE_NAME}_${1}-ipv4subnet $CUR_IPV4_SUBNET       
     if [ xbrlan0 == x${IFNAME} ]; then
 	UPNP_STATUS=`syscfg get start_upnp_service`     
-        if [ "xtrue" == "x$UPNP_STATUS" ] ;
+        if [ "true" = "$UPNP_STATUS" ] ;
         then
             if [ -f /lib/rdk/start-upnp-service ] ;
             then
@@ -343,7 +343,7 @@ remove_config () {
 	fi
    
 	UPNP_STATUS=`syscfg get start_upnp_service`     
-        if [ "xtrue" == "x$UPNP_STATUS" ] ;
+        if [ "true" = "$UPNP_STATUS" ] ;
         then
             if [ -f /lib/rdk/start-upnp-service ] ;
             then
@@ -441,22 +441,22 @@ resync_instance () {
         eval `psmcli get -e NV_ETHLOWER ${IPV4_NV_PREFIX}.${1}.EthLink NV_IP ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP} NV_SUBNET ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET} NV_ENABLED ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
     fi
 
-    if [ "$NV_ETHLOWER" = "" ]
+    if [ -z "$NV_ETHLOWER" ]
     then
 	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_ETHLOWER returned null, retrying"
 	NV_ETHLOWER=`psmcli get ${IPV4_NV_PREFIX}.${1}.EthLink`
     fi
-    if [ "$NV_IP" = "" ]
+    if [ -z "$NV_IP" ]
     then
 	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_IP returned null, retrying"
 	NV_IP=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_IP}`
     fi
-     if [ "$NV_SUBNET" = "" ]
+     if [ -z "$NV_SUBNET" ]
     then
         echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_SUBNET returned null, retrying"
         NV_SUBNET=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_SUBNET}`
     fi
-    if [ "$NV_ENABLED" = "" ]
+    if [ -z "$NV_ENABLED" ]
     then
         echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_ENABLED returned null, retrying"
         NV_ENABLED=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_ENABLED}`
@@ -464,7 +464,7 @@ resync_instance () {
     
     if [ "$BOX_TYPE" = "XB6" ] && [ "$MANUFACTURE" = "Arris" ]
     then
-         if [ "$NV_MTU" = "" ]
+         if [ -z "$NV_MTU" ]
          then
              echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_MTU returned null, retrying"
              NV_ENABLED=`psmcli get ${IPV4_NV_PREFIX}.${1}.${IPV4_NV_MTU}`
@@ -479,7 +479,7 @@ resync_instance () {
     #Find l2net instance from EthLink instance.
     NV_LOWER=`psmcli get ${ETH_DM_PREFIX}.${NV_ETHLOWER}.l2net`
 
-    if [ "$NV_LOWER" = "" ]
+    if [ -z "$NV_LOWER" ]
     then
 	echo_t "RDKB_SYSTEM_BOOT_UP_LOG : NV_LOWER returned null, retrying"
 	NV_LOWER=`psmcli get ${ETH_DM_PREFIX}.${NV_ETHLOWER}.l2net`

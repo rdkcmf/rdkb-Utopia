@@ -48,7 +48,7 @@ prepare_hostname () {
    LOCDOMAIN_NAME=`syscfg get SecureWebUI_LocalFqdn`
    SECUREWEBUI_ENABLED=`syscfg get SecureWebUI_Enable`
 
-   if [ "" != "$HOSTNAME" ] ; then
+   if [ -n "$HOSTNAME" ] ; then
       if [ "$MODEL_NUM" == "PX5001B" ] && [ "$SECUREWEBUI_ENABLED" == "true" ]; then
           if [[ $HOSTNAME != *-bci* ]] ; then
               HOSTNAME=$HOSTNAME"-bci"
@@ -60,7 +60,7 @@ prepare_hostname () {
       hostname "$HOSTNAME"
    fi
        
-   if [ "" != "$HOSTNAME" ] ; then
+   if [ -n "$HOSTNAME" ] ; then
       echo "$LAN_IPADDR     $HOSTNAME" > $HOSTS_FILE
    else
       echo -n > $HOSTS_FILE

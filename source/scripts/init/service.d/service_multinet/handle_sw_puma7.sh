@@ -76,7 +76,7 @@ PORT_IF_OFFSET=0
 find_add_syscfg_entry(){
     EXISTING=`syscfg get CosaEthIntIDs::${1}`
     #Add only if it doesn't already exist
-    if [ "$EXISTING" = "" ] ; then
+    if [ -z "$EXISTING" ] ; then
         #Find the next available interface ID to use
         MAX_INDEX=1
         EXISTING_LIST=`syscfg show|egrep -e "^CosaEthIntIDs::"|cut -d "," -f 2`
@@ -158,7 +158,7 @@ case "$1" in
          swctl -l 3 -c 4 -p 0
 
          #Iterate through switch mapping file and configure every port
-         if [ "$USE_BACK_COMPABILITY" = "" ]; then
+         if [ -z "$USE_BACK_COMPABILITY" ]; then
              cat $SWITCH_MAP_FILE | while read LINE; do
                  LINE_SWPORT=`echo $LINE | egrep Type=SW`
                  if [ ! -z "$LINE_SWPORT" ]; then
@@ -180,7 +180,7 @@ case "$1" in
          swctl -l 3 -c 4 -p 0
 
          #Iterate through switch mapping file and configure every port
-         if [ "$USE_BACK_COMPABILITY" = "" ]; then
+         if [ -z "$USE_BACK_COMPABILITY" ]; then
              cat $SWITCH_MAP_FILE | while read LINE; do
                  if [[ "$LINE" =~ .*"#".* ]]; then
                      continue;

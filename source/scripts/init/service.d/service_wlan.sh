@@ -51,7 +51,7 @@ service_stop ()
       sysevent set ${SERVICE_NAME}-errinfo
       sysevent set ${SERVICE_NAME}-status stopping
 
-      if [ "" != "$SYSCFG_lan_wl_physical_ifnames" ] ; then
+      if [ -n "$SYSCFG_lan_wl_physical_ifnames" ] ; then
          for loop in $SYSCFG_lan_wl_physical_ifnames
          do
             ulog lan status "wlancfg $loop down"
@@ -83,7 +83,7 @@ service_restart ()
       sysevent set ${SERVICE_NAME}-errinfo
       sysevent set ${SERVICE_NAME}-status starting
 
-      if [ "" != "$SYSCFG_lan_wl_physical_ifnames" ] ; then
+      if [ -n "$SYSCFG_lan_wl_physical_ifnames" ] ; then
          WIFI_IF_INDEX=1
          for loop in $SYSCFG_lan_wl_physical_ifnames
          do

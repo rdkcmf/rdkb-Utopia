@@ -104,7 +104,7 @@ service_start()
       # WAN LINK is Down
      echo_t "SERVICE_DHCP6C : WAN LINK is Down, service_stop"
       service_stop
-   elif [ "$WAN_INTERFACE_NAME" = "" ]
+   elif [ -z "$WAN_INTERFACE_NAME" ]
    then
       # WAN Interface not configured
      echo_t "SERVICE_DHCP6C : WAN Interface not configured, service_stop"

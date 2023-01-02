@@ -422,13 +422,13 @@ case "$1" in
       OLDIP=`ip addr show dev $interface label $interface | grep "inet " | awk '{split($2,foo, "/"); print(foo[1]);}'`
       if [ "$OLDIP" != "$ip" ] ; then
          RESULT=`arping -q -c 2 -w 3 -D -I $interface $ip`
-         if [ "" != "$RESULT" ] &&  [ "0" != "$RESULT" ] ; then
+         if [ -n "$RESULT" ] &&  [ "0" != "$RESULT" ] ; then
             echo "[utopia][dhcp client script] duplicate address detected $ip on $interface." > /dev/console
             echo "[utopia][dhcp client script] ignoring duplicate ... hoping for the best" > /dev/console
          fi
 
          # remove "erouter" routing table for packet from old erouter WAN IP
-         if [ "" != "$OLDIP" ]; then
+         if [ -n "$OLDIP" ]; then
             ip -4 rule del from $OLDIP lookup erouter
             ip -4 rule del from $OLDIP lookup all_lans
          fi
@@ -500,7 +500,7 @@ case "$1" in
 	   get_dns_number=`sysevent get ipv4_${interface}_dns_number`
            sed -i '/domain/d' "$RESOLV_CONF_TMP"
            sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
-           	if [ "$get_dns_number" != "" ]; then
+           	if [ -n "$get_dns_number" ]; then
         		echo "Removing old DNS IPV4 SERVER configuration from resolv.conf " >> $LOG_FILE
         		counter=0;
         		while [ $counter -lt $get_dns_number ]; do
@@ -532,15 +532,15 @@ case "$1" in
              NAMESERVER1=`syscfg get nameserver1`
              NAMESERVER2=`syscfg get nameserver2`
              NAMESERVER3=`syscfg get nameserver3`
-             if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
+             if [ "0.0.0.0" != "$NAMESERVER1" ] && [ -n "$NAMESERVER1" ] ; then
                  echo nameserver $NAMESERVER1 >> $RESOLV_CONF
                  WAN_DNS=`echo $WAN_DNS $NAMESERVER1`
              fi
-             if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
+             if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ -n "$NAMESERVER2" ]; then
                  echo nameserver $NAMESERVER2 >> $RESOLV_CONF
                  WAN_DNS=`echo $WAN_DNS $NAMESERVER2`
              fi
-             if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
+             if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ -n "$NAMESERVER3" ]; then
                  echo nameserver $NAMESERVER3 >> $RESOLV_CONF
                  WAN_DNS=`echo $WAN_DNS $NAMESERVER3`
              fi
@@ -556,7 +556,7 @@ case "$1" in
              fi
              if [ "1" = "$PROPAGATE" ] ; then
                  TEST_NS=` sysevent get wan_dhcp_dns | grep $i`
-                 if [ "" = "$TEST_NS" ] ; then
+                 if [ -z "$TEST_NS" ] ; then
                      RESTART_DHCP_SERVER=1
                  fi
              fi
@@ -567,7 +567,7 @@ case "$1" in
       fi
 
       WAN_STATIC_DOMAIN=`syscfg get wan_domain`
-      if [ "" != "$WAN_STATIC_DOMAIN" ]; then
+      if [ -n "$WAN_STATIC_DOMAIN" ]; then
           echo "#overwrite domain name start" >> $RESOLV_CONF
           echo "search $WAN_STATIC_DOMAIN" >> $RESOLV_CONF
           echo "#overwrite domain name end" >> $RESOLV_CONF
@@ -579,10 +579,10 @@ case "$1" in
       NTPSERVER1=
       NTPSERVER2=
       for ii in $ntpsrv ; do
-         if [ "" = "$NTPSERVER1" ] ; then
+         if [ -z "$NTPSERVER1" ] ; then
             NTPSERVER1=$ii
             `sysevent set dhcpc_ntp_server1 $NTPSERVER1`
-         elif [ "" = "$NTPSERVER2" ] ; then
+         elif [ -z "$NTPSERVER2" ] ; then
             NTPSERVER2=$ii
             `sysevent set dhcpc_ntp_server2 $NTPSERVER2`
          else

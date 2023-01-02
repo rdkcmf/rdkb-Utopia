@@ -159,7 +159,7 @@ service_start ()
 #      fi
 
       # RDKB-23651
-      if [ "x$THERMALCTRL_ENABLE" == "xtrue" ]; then
+      if [ "$THERMALCTRL_ENABLE" = "true" ]; then
          echo "*/15 * * * * /usr/ccsp/tad/check_fan.sh" >> $CRONTAB_FILE
       fi
 
@@ -239,10 +239,10 @@ service_start ()
 	#RFC ETHWAN should be false/null and WAN_TYPE should be DOCSIS
 	#RF WANLinkHeal should be true and BOX_TYPE should be plaftorm specfic
 	#In CISCOXB3 platform, does not have WAN_TYPE paramenter in /etc/device.properties file, So added MODEL_NUM Check along with WAN_TYPE.
-	if [ "x$rfc_ethwan_status" == "xfalse" ] || [ "$rfc_ethwan_status" == "" ]; then
-		if [ "x$WAN_TYPE" == "xDOCSIS" ] || [ "x$MODEL_NUM" == "xDPC3941" ] || [ "x$MODEL_NUM" == "xDPC3941B" ] || [ "x$MODEL_NUM" == "xDPC3939B" ]; then
-			if [ "x$rfc_wanlinkheal_status" == "xtrue" ]; then
-				if [ "x$BOX_TYPE" == "xXB3" ] || [ "x$BOX_TYPE" == "xXB6" ] || [ "x$BOX_TYPE" == "xTCCBR" ]; then
+	if [ "$rfc_ethwan_status" = "false" ] || [ -z "$rfc_ethwan_status" ]; then
+		if [ "$WAN_TYPE" = "DOCSIS" ] || [ "$MODEL_NUM" = "DPC3941" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "DPC3939B" ]; then
+			if [ "$rfc_wanlinkheal_status" = "true" ]; then
+				if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "TCCBR" ]; then
 					echo_t "RFC WANLinkHeal Feature is Enabled"
                                         addCron "2,12,22,32,42,52 * * * * /usr/ccsp/tad/start_gw_heath.sh"
 				else

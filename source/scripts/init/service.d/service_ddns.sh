@@ -57,7 +57,7 @@ CACHE_FILE=${CACHE_FILE_PREFIX}${WAN_IFNAME}
 #--------------------------------------------------------------
 prepare_ddns_config_file() {
    LOCAL_CONF_FILE=/tmp/ez-ipupdate.conf$$
-   if [ "" = "$SYSCFG_ddns_service" ] ; then
+   if [ -z "$SYSCFG_ddns_service" ] ; then
       SYSCFG_ddns_service=dyndns
    fi
 
@@ -80,7 +80,7 @@ retrys=1
 #daemon
 EOM
 
-   if [ "" != "$SYSCFG_ddns_mx" ]; then
+   if [ -n "$SYSCFG_ddns_mx" ]; then
       echo "mx=$SYSCFG_ddns_mx" >> $LOCAL_CONF_FILE
       if [ "1" = "$SYSCFG_ddns_mx_backup" ] ; then
          echo "backmx=YES" >> $LOCAL_CONF_FILE
@@ -99,7 +99,7 @@ EOM
 #--------------------------------------------------------------
 prepare_extra_commandline_params () {
    EXTRA_PARAMS=""
-   if [ "" != "$SYSCFG_ddns_server" ] ; then
+   if [ -n "$SYSCFG_ddns_server" ] ; then
       EXTRA_PARAMS="$EXTRA_PARAMS --server $SYSCFG_ddns_server"
    fi
 
@@ -138,7 +138,7 @@ update_ddns_server() {
        DnsIdx=`expr $DnsIdx + 1`
    done
            
-   if [ "" != "${EXTRA_PARAMS}" ]; then
+   if [ -n "${EXTRA_PARAMS}" ]; then
        echo "/usr/bin/ez-ipupdate ${EXTRA_PARAMS} " 
        /usr/bin/ez-ipupdate ${EXTRA_PARAMS} 
        RET_CODE=$?
@@ -222,7 +222,7 @@ do_start() {
 
    # 2. Its been a long time since our last update
    if [ "0" = "$UPDATE_NEEDED" ] ; then
-      if [ "" = "$SYSCFG_ddns_last_update" ] || [ "0" = "$SYSCFG_ddns_last_update" ] ; then
+      if [ -z "$SYSCFG_ddns_last_update" ] || [ "0" = "$SYSCFG_ddns_last_update" ] ; then
          UPDATE_NEEDED=1
          ulog ddns status "$PID ddns update required due to no previous update on record"
       else
@@ -241,7 +241,7 @@ do_start() {
    
    ulog ddns status "$PID ddns update required status is $UPDATE_NEEDED"
    LAST_FAIL_TIME=`sysevent get ddns_failure_time`
-   if [ "" != "$LAST_FAIL_TIME" ] ; then
+   if [ -n "$LAST_FAIL_TIME" ] ; then
       NOW=`get_current_time`
       DELTA=`delta_mins "$LAST_FAIL_TIME" "$NOW"`
       if [ -n "$DELTA" ] ; then
@@ -296,7 +296,7 @@ update_ddns_if_needed () {
    *)
       PRIORERROR=`sysevent get ddns_return_status`
       if [ "0" != "$SYSCFG_ddns_enable" ] ; then
-         if [ "" = "$PRIORERROR" ] || [ "success" = "$PRIORERROR" ] ; then
+         if [ -z "$PRIORERROR" ] || [ "success" = "$PRIORERROR" ] ; then
             # if the wan ip address changed, then the system requires a few secs to stabilize
             # eg. firewall needs to be reset. Give it a few secs to do so
             sleep 5 

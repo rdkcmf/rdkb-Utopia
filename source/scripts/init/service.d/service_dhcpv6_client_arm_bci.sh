@@ -90,7 +90,7 @@ service_start()
    then
       # WAN LINK is Down
       service_stop
-   elif [ "$WAN_INTERFACE_NAME" = "" ]
+   elif [ -z "$WAN_INTERFACE_NAME" ]
    then
       # WAN Interface not configured
       service_stop

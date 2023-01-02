@@ -81,7 +81,7 @@ do_start_static() {
 
    cp $RESOLV_CONF $RESOLV_CONF_TMP
 
-   if [ "" != "$WAN_DOMAIN" ] ; then
+   if [ -n "$WAN_DOMAIN" ] ; then
        sed -i '/domain/d' "$RESOLV_CONF_TMP"
    fi
 
@@ -91,7 +91,7 @@ do_start_static() {
            get_dns_number=`sysevent get ipv4_"${interface}"_dns_number`
            sed -i '/domain/d' "$RESOLV_CONF_TMP"
            sed -i '/nameserver 127.0.0.1/d' "$RESOLV_CONF_TMP"
-                if [ "$get_dns_number" != "" ]; then
+                if [ -n "$get_dns_number" ]; then
                         echo "Removing old DNS IPV4 SERVER configuration from resolv.conf " >> "$CONSOLEFILE"
                         counter=0;
                         while [ $counter -lt "$get_dns_number" ]; do
@@ -103,10 +103,10 @@ do_start_static() {
                 fi
    fi
 
-   if [ "0.0.0.0" != "$NAMESERVER_V6" ]  && [ "" != "$NAMESERVER_V6" ]; then
+   if [ "0.0.0.0" != "$NAMESERVER_V6" ]  && [ -n "$NAMESERVER_V6" ]; then
            #Removing IPV6 old DNS Config.
            dns=`sysevent get wan6_ns`
-           if [ "$dns" != "" ]; then
+           if [ -n "$dns" ]; then
                 echo "Removing old DNS IPV6 SERVER configuration from resolv.conf " >> "$CONSOLEFILE"
                         for i in $dns; do
                                 dns_server="nameserver $i"
@@ -123,21 +123,21 @@ do_start_static() {
    echo -n "$N" > "$RESOLV_CONF"
    rm -rf $RESOLV_CONF_TMP
 
-   if [ "" != "$WAN_DOMAIN" ] ; then
+   if [ -n "$WAN_DOMAIN" ] ; then
       echo "search $WAN_DOMAIN" >> $RESOLV_CONF
       sysevent set dhcp_domain "$WAN_DOMAIN"
    fi
 
-   if [ "0.0.0.0" != "$NAMESERVER1" ] && [ "" != "$NAMESERVER1" ] ; then
+   if [ "0.0.0.0" != "$NAMESERVER1" ] && [ -n "$NAMESERVER1" ] ; then
       echo "nameserver $NAMESERVER1" >> $RESOLV_CONF
    fi
-   if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ "" != "$NAMESERVER2" ]; then
+   if [ "0.0.0.0" != "$NAMESERVER2" ]  && [ -n "$NAMESERVER2" ]; then
       echo "nameserver $NAMESERVER2" >> $RESOLV_CONF
    fi
-   if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ "" != "$NAMESERVER3" ]; then
+   if [ "0.0.0.0" != "$NAMESERVER3" ]  && [ -n "$NAMESERVER3" ]; then
       echo "nameserver $NAMESERVER3" >> $RESOLV_CONF
    fi
-   if [ "0.0.0.0" != "$NAMESERVER_V6" ]  && [ "" != "$NAMESERVER_V6" ]; then
+   if [ "0.0.0.0" != "$NAMESERVER_V6" ]  && [ -n "$NAMESERVER_V6" ]; then
       echo "nameserver $NAMESERVER_V6" >> $RESOLV_CONF
    fi
 

@@ -73,7 +73,7 @@ update_v4route()
     cellular_manager_gw=$(sysevent get cellular_wan_v4_gw)
     cellular_manager_dns1=$(sysevent get cellular_wan_v4_dns1)
     cellular_manager_dns2=$(sysevent get cellular_wan_v4_dns2)
-    if [ "$cellular_manager_gw" = "0.0.0.0" ] || [ "x$cellular_manager_gw" = "x" ] ;then
+    if [ "$cellular_manager_gw" = "0.0.0.0" ] || [ -z "$cellular_manager_gw" ] ;then
         # delete route
         echo "Deleting rule to resolve dns packets"
         ip route del "$backup_v4_dns1" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
@@ -92,20 +92,20 @@ update_v4route()
         dns1_missing=$(echo "$route_table" | grep $cellular_manager_dns1)
         dns2_missing=$(echo "$route_table" | grep $cellular_manager_dns2)
 
-        if [ "x$cellular_manager_gw" != "x$backup_wan_v4_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v4_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v4_dns2" ];
+        if [ "$cellular_manager_gw" != "$backup_wan_v4_gw" ] || [ "$cellular_manager_dns1" != "$backup_v4_dns1" ] || [ "$cellular_manager_dns2" != "$backup_v4_dns2" ];
         then
-            if [ "x$backup_wan_v4_gw" != "x" ] || [ "x$backup_wan_v4_gw" != "x0.0.0.0" ];then
+            if [ -n "$backup_wan_v4_gw" ] || [ "$backup_wan_v4_gw" != "0.0.0.0" ];then
 
-                if [ "$backup_v4_dns1" != "" ];then
+                if [ -n "$backup_v4_dns1" ];then
                     ip route del "$backup_v4_dns1" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
                 fi
-                if [ "$backup_v4_dns2" != "" ];then
+                if [ -n "$backup_v4_dns2" ];then
                     ip route del "$backup_v4_dns2" via "$backup_wan_v4_gw" dev "$cellular_ifname" proto static metric 100
                 fi
             fi
             ip route add "$cellular_manager_dns1" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
             ip route add "$cellular_manager_dns2" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
-        elif [ "$dns1_missing" = "" ] || [ "$dns2_missing" = "" ] ;then
+        elif [ -z "$dns1_missing" ] || [ -z "$dns2_missing" ] ;then
             ip route add "$cellular_manager_dns1" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
             ip route add "$cellular_manager_dns2" via "$cellular_manager_gw" dev "$cellular_ifname" proto static metric 100
         fi
@@ -134,7 +134,7 @@ update_v6route()
     cellular_manager_dns1=$(sysevent get cellular_wan_v6_dns1)
     cellular_manager_dns2=$(sysevent get cellular_wan_v6_dns2)
 
-    if [ "$cellular_manager_v6_gw" = "::" ] || [ "x$cellular_manager_v6_gw" = "x" ] ;then
+    if [ "$cellular_manager_v6_gw" = "::" ] || [ -z "$cellular_manager_v6_gw" ] ;then
         # delete route
         ip -6 route del "$backup_v6_dns1" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
         ip -6 route del "$backup_v6_dns2" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
@@ -150,20 +150,20 @@ update_v6route()
 
         echo "Adding v6 rule to resolve dns packets"
 
-        if [ "x$cellular_manager_v6_gw" != "x$backup_wan_v6_gw" ] || [ "x$cellular_manager_dns1" != "x$backup_v6_dns1" ] || [ "x$cellular_manager_dns2" != "x$backup_v6_dns2" ];
+        if [ "$cellular_manager_v6_gw" != "$backup_wan_v6_gw" ] || [ "$cellular_manager_dns1" != "$backup_v6_dns1" ] || [ "$cellular_manager_dns2" != "$backup_v6_dns2" ];
         then
-            if [ "x$backup_wan_v6_gw" != "x" ] || [ "x$backup_wan_v6_gw" != "x0.0.0.0" ];then
+            if [ -n "$backup_wan_v6_gw" ] || [ "$backup_wan_v6_gw" != "0.0.0.0" ];then
 
-                if [ "$backup_v6_dns1" != "" ];then
+                if [ -n "$backup_v6_dns1" ];then
                     ip -6 route del "$backup_v6_dns1" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
                 fi
-                if [ "$backup_v6_dns2" != "" ];then
+                if [ -n "$backup_v6_dns2" ];then
                     ip -6 route del "$backup_v6_dns2" via "$backup_wan_v6_gw" dev "$cellular_ifname" proto static metric 100
                 fi
             fi
             ip -6 route add "$cellular_manager_dns1" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
             ip -6 route add "$cellular_manager_dns2" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
-        elif [ "$dns1_missing" = "" ] || [ "$dns2_missing" = "" ] ;then
+        elif [ -z "$dns1_missing" ] || [ -z "$dns2_missing" ] ;then
             ip -6 route add "$cellular_manager_dns1" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
             ip -6 route add "$cellular_manager_dns2" via "$cellular_manager_v6_gw" dev "$cellular_ifname" proto static metric 100
         fi
@@ -200,7 +200,7 @@ update_dns_conf()
      do
         new_ipv6_dns_server="nameserver $i"
         dns_matched=`grep "$new_ipv6_dns_server" "$RESOLV_CONF_TMP"`
-        if [ "$dns_matched" = "" ]; then
+        if [ -z "$dns_matched" ]; then
                 echo "$new_ipv6_dns_server is not present in old dns config so resolv_conf file overide is required " 
                 RESOLV_CONF_override_needed=1
                 break
@@ -217,7 +217,7 @@ update_dns_conf()
         return
      fi
 
-     if [ "$dns" != "" ]; then
+     if [ -n "$dns" ]; then
         echo "Removing old DNS IPV6 SERVER configuration from resolv.conf " 
         for i in $dns; do
                 dns_server="nameserver $i"
@@ -256,11 +256,11 @@ sync_dns()
 {
     echo "Syncing v4 and v6 dns"
     ipv4_dns=$(sysevent get ipv4_nameserver)
-    if [ "$ipv4_dns" != "" ];then
+    if [ -n "$ipv4_dns" ];then
         update_dns_conf "ipv4" "$ipv4_dns"
     fi
     ipv6_dns=$(sysevent get ipv6_nameserver)
-    if [ "$ipv6_dns" != "" ];then
+    if [ -n "$ipv6_dns" ];then
         update_dns_conf "ipv6" "$ipv6_dns"
     fi
 }
@@ -292,21 +292,21 @@ case "$1" in
             # write null to DEF RESOLV CONF
             > "$DEF_RESOLV_CONF"
             mesh_wan_status=$(sysevent get mesh_wan_linkstatus)
-            if [ "x$mesh_wan_status" = "xup" ];then
+            if [ "$mesh_wan_status" = "up" ];then
                 def_gateway=$(ip route show | grep default | grep "$mesh_bhaul_ifname" | cut -d " " -f 3)
-                if [ "x$def_gateway" = "x" ];then
+                if [ -z "$def_gateway" ];then
                     def_gateway=$MESH_IFNAME_DEF_ROUTE
                 fi
                 echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
             fi
             echo "Adding rule to resolve dns packets"
         	if_status=`ifconfig "$cellular_ifname" | grep UP`
-                if [ "x$if_status" != "x" ];then
+                if [ -n "$if_status" ];then
                	    #ip rule add from all dport 53 lookup 12
                     ip rule add iif "$cellular_ifname" lookup 11
 
                    	Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
-                   	if [ "x$Ipv4_Gateway_Addr" != "x" ];then
+                   	if [ -n "$Ipv4_Gateway_Addr" ];then
                             ip route del default dev "$cellular_ifname" table 12 > /dev/null
                         	ip route add default via $Ipv4_Gateway_Addr dev "$cellular_ifname" table 12
                    	else
@@ -317,7 +317,7 @@ case "$1" in
                         ip -6 rule add iif "$cellular_ifname" lookup 11
 
                    	Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
-                   	if [ "x$Ipv6_Gateway_Addr" != "x" ];then
+                   	if [ -n "$Ipv6_Gateway_Addr" ];then
                         	Ipv6_Gateway_Addr=$(echo $Ipv6_Gateway_Addr | cut -d "/" -f 1)
                             ip -6 route del default dev "$cellular_ifname" table 12 > /dev/null
                         	ip -6 route add default via $Ipv6_Gateway_Addr dev "$cellular_ifname" table 12
@@ -330,7 +330,7 @@ case "$1" in
                 #ip rule del from all dport 53 lookup 12
                 ip rule del iif "$cellular_ifname" lookup 11
                 Ipv4_Gateway_Addr=$(sysevent get cellular_wan_v4_gw)
-                if [ "x$Ipv4_Gateway_Addr" != "x" ];then
+                if [ -n "$Ipv4_Gateway_Addr" ];then
                         ip route del default via $Ipv4_Gateway_Addr dev "$cellular_ifname" table 12
                 else
              		ip route del default dev "$cellular_ifname" table 12
@@ -342,7 +342,7 @@ case "$1" in
                 #ip -6 rule del from all dport 53 lookup 12
                 ip -6 rule del iif "$cellular_ifname" lookup 11
                 Ipv6_Gateway_Addr=$(sysevent get cellular_wan_v6_gw)
-                if [ "x$Ipv6_Gateway_Addr" != "x" ];then
+                if [ -n "$Ipv6_Gateway_Addr" ];then
                 	Ipv6_Gateway_Addr=$(echo $Ipv6_Gateway_Addr | cut -d "/" -f 1)
                         ip -6 route del default via $Ipv6_Gateway_Addr dev "$cellular_ifname" table 12
                 else
@@ -372,12 +372,12 @@ case "$1" in
                 sysevent set dhcp_server-restart
             sleep 2
             def_gateway=$(ip route show | grep default | grep "$mesh_bhaul_ifname" | cut -d " " -f 3)
-            if [ "x$def_gateway" = "x" ];then
+            if [ -z "$def_gateway" ];then
                 def_gateway=$MESH_IFNAME_DEF_ROUTE
             fi
             echo "nameserver $def_gateway" > "$DEF_RESOLV_CONF"
             mesh_wan_ifname_ipaddr=$(ip -4 addr show dev "$mesh_wan_ifname" scope global | awk '/inet/{print $2}' | cut -d '/' -f1)
-            if [ "x$mesh_wan_ifname_ipaddr" = "x" ];then
+            if [ -z "$mesh_wan_ifname_ipaddr" ];then
                 mesh_wan_ifname_ipaddr="192.168.246.1"
             fi
                 mesh_wan_ula_pref=$(sysevent get MeshWanInterface_UlaPref)
@@ -388,7 +388,7 @@ case "$1" in
                     ip route add default via "$mesh_wan_ifname_ipaddr" dev "$mesh_wan_ifname" table 11
                     ip -6 rule add from all iif "$mesh_wan_ifname" lookup 12
                     ip -6 addr add "$mesh_wan_ula_ipv6" dev "$mesh_wan_ifname" 
-                    if [ "x$mesh_remote_wan_ula_ipv6" != "x" ];then
+                    if [ -n "$mesh_remote_wan_ula_ipv6" ];then
                         mesh_remote_wan_ula_ipv6=$(echo $mesh_remote_wan_ula_ipv6 | cut -d "/" -f 1)
                         ip -6 route add default via "$mesh_remote_wan_ula_ipv6" dev "$mesh_wan_ifname" table 11
                     fi
@@ -401,7 +401,7 @@ case "$1" in
                     ip rule del from all iif "$mesh_wan_ifname" lookup 12
                     ip route del default via "$mesh_wan_ifname_ipaddr" dev "$mesh_wan_ifname" table 11
                     ip -6 rule del from all iif "$mesh_wan_ifname" lookup 12
-                    if [ "x$mesh_remote_wan_ula_ipv6" != "x" ];then
+                    if [ -n "$mesh_remote_wan_ula_ipv6" ];then
                         mesh_remote_wan_ula_ipv6=$(echo $mesh_remote_wan_ula_ipv6 | cut -d "/" -f 1)
                         ip -6 route del default via "$mesh_remote_wan_ula_ipv6" dev "$mesh_wan_ifname" table 11
                     fi
@@ -416,12 +416,12 @@ case "$1" in
         ;;
 
     ipv6_nameserver)
-        if [ "$2" != "" ] && [ "$2" != "NULL" ] ;then
+        if [ -n "$2" ] && [ "$2" != "NULL" ] ;then
             update_dns_conf "ipv6" "$2"
         fi
     ;;
     ipv4_nameserver)
-        if [ "$2" != "" ] && [ "$2" != "NULL" ] ;then
+        if [ -n "$2" ] && [ "$2" != "NULL" ] ;then
             update_dns_conf "ipv4" "$2"
         fi
     ;;

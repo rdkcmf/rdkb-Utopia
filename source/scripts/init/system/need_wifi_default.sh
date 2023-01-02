@@ -57,10 +57,10 @@ fi
 
 #software reset
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
-if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
+if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
    echo 1;
    exit 0;
-elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
+elif [ "$FACTORY_RESET_WIFI" = "$SYSCFG_FR_VAL" ]; then
    echo 1;
    exit 0;
 fi

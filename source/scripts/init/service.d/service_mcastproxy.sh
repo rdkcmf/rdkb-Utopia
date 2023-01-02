@@ -129,7 +129,7 @@ service_init ()
    DSLite_Enabled=`syscfg get dslite_enable`
    if [ "$DSLITE_DHCP_OPTION_ENABLED" = "true" ] && [ "$DSLite_Enabled" = "1" ] ; then
        WAN_TUNNEL_IFNAME=`syscfg get dslite_tunnel_interface_1`
-       if [ "" != "$WAN_TUNNEL_IFNAME" ] ; then
+       if [ -n "$WAN_TUNNEL_IFNAME" ] ; then
             WAN_IFNAME=$WAN_TUNNEL_IFNAME
        fi
    fi
@@ -141,7 +141,7 @@ service_start ()
 {
    ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
 
-   if [ "" != "$WAN_IFNAME" ] && [ "1" = "$SYSCFG_igmpproxy_enabled" ] ; then
+   if [ -n "$WAN_IFNAME" ] && [ "1" = "$SYSCFG_igmpproxy_enabled" ] ; then
       do_start_igmpproxy
       sysevent set ${SERVICE_NAME}-errinfo
       sysevent set ${SERVICE_NAME}-status "started"

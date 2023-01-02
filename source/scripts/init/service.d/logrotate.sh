@@ -50,10 +50,10 @@ if [ $ksize -gt $VARLOG_DIR_THRESHOLD ]; then
     #Needs to clear all the kernel files
     for i in "${kfile[@]}"
     do
-       if [ "$i" != "" ]; then
+       if [ -n "$i" ]; then
           if [ "$BOX_TYPE" == "HUB4" ]; then
              #tail last 100lines of log from biggest size file
-             if [ "$bfile" != "" ] && [ $bsize -gt 0 ] && [ "$i" == "$bfile" ]; then
+             if [ -n "$bfile" ] && [ $bsize -gt 0 ] && [ "$i" == "$bfile" ]; then
                 echo_t "************* RDKB_VAR_LOG_FILE_NULLIFY ***********************"
                 echo "File:$bfile Size:$bsize"
                 echo_t "*********************** File Content **************************"

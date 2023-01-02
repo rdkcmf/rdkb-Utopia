@@ -99,13 +99,13 @@ service_start ()
 
    # every time we start we want to cycle through our pool of ntp servers
    INDEX=`sysevent get ntp_pool_index`
-   if [ "" = "$INDEX" ] || [ "3" -lt "$INDEX" ] ; then
+   if [ -z "$INDEX" ] || [ "3" -lt "$INDEX" ] ; then
       INDEX=0
    fi
 
    # also, if we got ntp servers through dhcp, then we use those
    NTP_SERVER=`sysevent get dhcpc_ntp_server1`
-   if [ "" != "$NTP_SERVER" ] ; then
+   if [ -n "$NTP_SERVER" ] ; then
       USE_DHCP=1
    else
       USE_DHCP=0
@@ -120,7 +120,7 @@ service_start ()
    fi
 
 
-   if [ "" = "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
+   if [ -z "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
       INDEX=1
       if [ "1" = "$USE_DHCP" ] ; then
          NTP_SERVER=`sysevent get dhcpc_ntp_server$INDEX`
@@ -130,16 +130,16 @@ service_start ()
    fi
 
    # failsafe in case we still havent got an ntp server
-   if [ "" = "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
+   if [ -z "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
       # we did not get any ntp server lets check sanity
       # we KNOW that there are a maximum of 3 ntp servers provisioned in 
       # syscfg. So check all 3
       NTP_SERVER=$SYSCFG_ntp_server1
-      if [ "" = "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
+      if [ -z "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
          NTP_SERVER=$SYSCFG_ntp_server2 
-         if [ "" = "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
+         if [ -z "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
             NTP_SERVER=$SYSCFG_ntp_server3 
-            if [ "" = "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
+            if [ -z "$NTP_SERVER" ] || [ "0.0.0.0" = "$NTP_SERVER" ] ; then
                exit 0
             else
                INDEX=3
@@ -154,7 +154,7 @@ service_start ()
 
    `sysevent set ntp_pool_index $INDEX`
 
-   if [ "" != "$SYSCFG_TZ" ] ; then
+   if [ -n "$SYSCFG_TZ" ] ; then
       echo "$SYSCFG_TZ" > $TZ_FILE
    fi
 
@@ -166,14 +166,14 @@ service_start ()
    RESULT=`ntpclient -h "$NTP_SERVER" -i 60 -s`
 
    # if there is a transient failure we try again
-   if [ "" = "$RESULT" ] ; then
+   if [ -z "$RESULT" ] ; then
       sleep 10
       RESULT=`ntpclient -h "$NTP_SERVER" -i 60 -s`
    fi
 
    # if we dont get a result we should force system to try again soon because
    # otherwise we only try 1/hr.
-   if [ "" = "$RESULT" ] && [ ! grep 'sysevent set ntpclient-start' $CRONTAB_FILE ] ; then
+   if [ -z "$RESULT" ] && [ ! grep 'sysevent set ntpclient-start' $CRONTAB_FILE ] ; then
       prepare_retry_soon_file
       sysevent set ${SERVICE_NAME}-status "error"
       sysevent set ${SERVICE_NAME}-errinfo "No result from NTP Server"

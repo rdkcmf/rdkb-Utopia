@@ -71,11 +71,11 @@ service_start()
 #   killall syslogd
 
 
-   if [ "" = "$SYSCFG_log_level" ] ; then
+   if [ -z "$SYSCFG_log_level" ] ; then
        SYSCFG_log_level=1
    fi
 
-   if [ "" = "$SYSCFG_log_remote" ] ; then
+   if [ -z "$SYSCFG_log_remote" ] ; then
        SYSCFG_log_remote=0
    fi
 

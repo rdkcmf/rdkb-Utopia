@@ -139,7 +139,7 @@ bringup_ethernet_interfaces() {
    # if we are using virtual ethernet interfaces then
    # create them now
 #   echo "[lan] bringup_ethernet_interfaces called" > /dev/console
-   if [ "" != "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
+   if [ -n "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
        for loop in $SYSCFG_lan_ethernet_physical_ifnames
        do
          config_vlan "$loop" "$SYSCFG_lan_ethernet_virtual_ifnums"
@@ -158,7 +158,7 @@ bringup_ethernet_interfaces() {
 #--------------------------------------------------------------
 teardown_ethernet_interfaces() {
 #   echo "[lan] teardown_ethernet_interfaces called" > /dev/console
-   if [ "" = "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
+   if [ -z "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
       for loop in $SYSCFG_lan_ethernet_physical_ifnames
       do
          ip link set "$loop" down
@@ -180,7 +180,7 @@ bringup_wireless_interfaces() {
 
     WIFI_IF_INDEX=1
 
-    if [ "" != "$SYSCFG_lan_wl_physical_ifnames" ] ; then
+    if [ -n "$SYSCFG_lan_wl_physical_ifnames" ] ; then
         for loop in $SYSCFG_lan_wl_physical_ifnames
         do
             ### Set the main interface (eth*) ###
@@ -188,7 +188,7 @@ bringup_wireless_interfaces() {
             MAC=`syscfg get macwifi0${WIFI_IF_INDEX}bssid1`
             OUI=`cat /sys/class/net/"$loop"/address|awk -F: '{print $1 $2 $3}'`
             NIC=`cat /sys/class/net/"$loop"/address|awk -F: '{print $4 $5 $6}'`
-            if [ "$MAC" != "" ]; then
+            if [ -n "$MAC" ]; then
                 ulog lan status "setting $loop hw address to $MAC"
             else
                 MAC=$OUI$NIC
@@ -202,14 +202,14 @@ bringup_wireless_interfaces() {
             WIFI_VIF_INDEX=1
             VIFS=`syscfg get wl$(($WIFI_IF_INDEX-1))_virtual_ifnames`
 
-            if [ "$VIFS" != "" ]; then
+            if [ -n "$VIFS" ]; then
                 for vif in $VIFS
                 do
                     # Create a virtual interface in prompt first 
                     wl -i "$loop" ssid -C $WIFI_VIF_INDEX "" 
 
                     MAC=`syscfg get macwifi0${WIFI_IF_INDEX}bssid$(($WIFI_VIF_INDEX+1))`
-                    if [ "$MAC" != "" ]; then
+                    if [ -n "$MAC" ]; then
                         ulog lan status "setting $vif hw address to $MAC"
                     else
                         MAC=$OUI`printf "%06x" $((0x$NIC+$WIFI_VIF_INDEX))`
@@ -228,7 +228,7 @@ bringup_wireless_interfaces() {
             wlancfg "$loop" up
 
             ip link set "$loop" up
-            if [ "$VIFS" != "" ] ; then
+            if [ -n "$VIFS" ] ; then
                 for vif in $VIFS
                 do
                     ip link set "$vif" up
@@ -247,11 +247,11 @@ teardown_wireless_interfaces() {
 
     WIFI_IF_INDEX=1
 
-    if [ "" != "$SYSCFG_lan_wl_physical_ifnames" ] ; then
+    if [ -n "$SYSCFG_lan_wl_physical_ifnames" ] ; then
         for loop in $SYSCFG_lan_wl_physical_ifnames
         do
             VIFS=`syscfg get wl$(($WIFI_IF_INDEX-1))_virtual_ifnames`
-            if [ "$VIFS" != "" ] ; then
+            if [ -n "$VIFS" ] ; then
                 for vif in $VIFS
                 do
                     ip link set "$vif" down
@@ -348,7 +348,7 @@ do_start()
    
    #to add ipv6 prefix for this interface
    LAN_IPV6_PREFIX=`sysevent get ipv6_prefix`
-   if [ "$LAN_IPV6_PREFIX" != "" ] ; then
+   if [ -n "$LAN_IPV6_PREFIX" ] ; then
         ip -6 route add "$LAN_IPV6_PREFIX" dev "$SYSCFG_lan_ifname"
    fi
 #song:add	
@@ -623,7 +623,7 @@ service_init ()
    #figure out the interfaces that are part of the lan
    # if we are not using virtual ethernet interfaces then
    # use the physical ethernet names
-   if [ "" = "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
+   if [ -z "$SYSCFG_lan_ethernet_virtual_ifnums" ] ; then
       LAN_IFNAMES="$SYSCFG_lan_ethernet_physical_ifnames"
     else
        # in this architecture, vlans are used to separate the physical
@@ -635,22 +635,22 @@ service_init ()
    fi
 
    # if we are using wireless interfafes then add them
-   if [ "" != "$SYSCFG_lan_wl_physical_ifnames" ] ; then
+   if [ -n "$SYSCFG_lan_wl_physical_ifnames" ] ; then
       LAN_IFNAMES="$LAN_IFNAMES $SYSCFG_lan_wl_physical_ifnames"
    fi
 
    # TODO: have to create additional bridges and move vifs to them
    VIFS0=`syscfg get "wl0_virtual_ifnames"`
-   if [ "" != "$VIFS0" ] ; then
+   if [ -n "$VIFS0" ] ; then
       LAN_IFNAMES="$LAN_IFNAMES $VIFS0"
    fi
    VIFS1=`syscfg get "wl1_virtual_ifnames"`
-   if [ "" != "$VIFS1" ] ; then
+   if [ -n "$VIFS1" ] ; then
       LAN_IFNAMES="$LAN_IFNAMES $VIFS1"
    fi
    
   LAN_CREATED=`sysevent get lan_created`
-	 if [ "$LAN_CREATED" = "" ] ; then
+	 if [ -z "$LAN_CREATED" ] ; then
 	 		lan_create
 	 		sysevent set lan_created 1
 	 fi
@@ -670,7 +670,7 @@ service_start ()
    if [ "started" != "$STATUS" ] ; then
       sysevent set ${SERVICE_NAME}-errinfo
       sysevent set ${SERVICE_NAME}-status starting
-      if [ "" != "$LAN_IFNAMES" ]; then
+      if [ -n "$LAN_IFNAMES" ]; then
          do_start
       else
          do_start_no_bridge
@@ -712,7 +712,7 @@ service_stop ()
    if [ "stopped" != "$STATUS" ] ; then
       sysevent set ${SERVICE_NAME}-errinfo
       sysevent set ${SERVICE_NAME}-status stopping
-      if [ "" != "$LAN_IFNAMES" ]; then
+      if [ -n "$LAN_IFNAMES" ]; then
          do_stop
       else
          do_stop_no_bridge
@@ -736,7 +736,7 @@ service_stop ()
 add_docsis_bridge () 
 {
 	 VAR=`sysevent get lan_created`
-	 if [ "$VAR" != "" ] ; then
+	 if [ -n "$VAR" ] ; then
 	 		exit
 	 fi
 

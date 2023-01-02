@@ -82,7 +82,7 @@ service_start ()
 {
    ulog ${SERVICE_NAME} status "starting ${SERVICE_NAME} service" 
 
-   if [ "" != "$WAN_IFNAME" ] && [ "1" == "$SYSCFG_mldproxy_enabled" ] ; then
+   if [ -n "$WAN_IFNAME" ] && [ "1" == "$SYSCFG_mldproxy_enabled" ] ; then
       do_start_mldproxy
       sysevent set ${SERVICE_NAME}-errinfo
       sysevent set ${SERVICE_NAME}-status "started"

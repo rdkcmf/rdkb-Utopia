@@ -51,7 +51,7 @@ service_restart ()
 {
    echo "restarting CcspXdnsSsp, on WAN re/start"
    t2CountNotify "SYS_ERROR_Xdns_restart"
-   if [ "x$BOX_TYPE" = "xXB3" ]; then
+   if [ "$BOX_TYPE" = "XB3" ]; then
           kill -9 `pidof $SERVICE_NAME` > /dev/null 2>&1
 	  cd /usr/ccsp/xdns
           /usr/bin/$SERVICE_NAME -subsys eRT.

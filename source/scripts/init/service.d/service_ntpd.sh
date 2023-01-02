@@ -60,7 +60,7 @@ QUICK_SYNC_DONE=0
 STATIC_INTERFACE=$NTPD_INTERFACE
 WAN_INTERFACE=$(getWanInterfaceName)
 
-if [ "x$NTPD_LOG_NAME" == "x" ];then
+if [ -z "$NTPD_LOG_NAME" ];then
 NTPD_LOG_NAME=/rdklogs/logs/ntpLog.log
 fi
 
@@ -79,9 +79,9 @@ wan_wait ()
        #Make sure WAN interface has an IPv4 or IPv6 address before telling NTP to listen on Interface
        WAN_IPv4=`ifconfig -a "$WAN_INTERFACE" | grep inet | grep -v inet6 | tr -s " " | cut -d ":" -f2 | cut -d " " -f1 | head -n1`
 
-       if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
+       if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
            CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
-           if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
+           if [ "up" = "$CURRENT_WAN_IPV6_STATUS" ] ; then
                WAN_IPv6=`ifconfig "$NTPD_IPV6_INTERFACE" | grep inet6 | grep Global | awk '/inet6/{print $3}' | grep -v 'fdd7' | cut -d '/' -f1 | head -n1`
                WAN_IPv6_UP=1
            fi
@@ -90,9 +90,9 @@ wan_wait ()
        fi
 
        if [ -n "$WAN_IPv4" ] || [ -n "$WAN_IPv6" ]; then
-          if [ "x$2" = "xquickSync" ];then
+          if [ "$2" = "quickSync" ];then
           	# Quick Sync Needs an IP and Not Interface As changes in Interface as Quick Sync Runs Causes Errors
-          	if [ "x$WAN_IPv6" != "x" ];then
+          	if [ -n "$WAN_IPv6" ];then
           		WAN_UP=$WAN_IPv6
           	else
           		WAN_UP=$WAN_IPv4
@@ -133,7 +133,7 @@ set_ntp_quicksync_status ()
              syscfg set ntp_status 3
              #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
              DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
-             if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
+             if [ -z "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
                 FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
                 syscfg set device_first_use_date "$FIRSTUSEDATE"
              fi
@@ -157,19 +157,19 @@ set_ntp_driftsync_status ()
   ####in worst case if we are not synced with server, break the loop after 20 mins
   #### Note we can't wait more than 300 secs in sysevent context, this supposed to be run
   #### in background
-   if [ "x$(which ntpq)" != "x" ];then
+   if [ -n "$(which ntpq)" ];then
       retry=1
       while true
       do
         sync_status=`ntpq -c rv | grep "stratum=16"`
-        if [ "x$sync_status" = "x" ]; then
+        if [ -z "$sync_status" ]; then
            echo_t "SERVICE_NTPD : ntpd time synced , setting the status" >> $NTPD_LOG_NAME
            syscfg set ntp_status 3
            sysevent set ntp_time_sync 1
 	   touch /tmp/clock-event
            #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
            DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
-           if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
+           if [ -z "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
               FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
               syscfg set device_first_use_date "$FIRSTUSEDATE"
            fi
@@ -197,14 +197,14 @@ service_start ()
 # RDKB-37275 setting status as unsynchronised.
       syscfg set ntp_status 2
       sysevent set ${SERVICE_NAME}-status "stopped"
-      if [ "x`pidof $BIN`" = "x" ]; then
-          if [ "x$MULTI_CORE" = "xyes" ] && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
+      if [ -z "`pidof $BIN`" ]; then
+          if [ "$MULTI_CORE" = "yes" ] && [ "$NTPD_IMMED_PEER_SYNC" != "true" ]; then
              echo_t "SERVICE_NTPD : NTPD is not running, starting in Server mode" >> $NTPD_LOG_NAME
              cp $NTP_CONF $NTP_CONF_TMP
              echo "interface ignore wildcard" >> $NTP_CONF_TMP
              echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
 
-             if [ "x$BOX_TYPE" = "xXB3" ]; then
+             if [ "$BOX_TYPE" = "XB3" ]; then
                 ntpd -c $NTP_CONF_TMP -l $NTPD_LOG_NAME
              else
                 systemctl start ntpd.service
@@ -218,9 +218,9 @@ service_start ()
 # Setting Time status as Unsynchronized
    syscfg set ntp_status 2
 
-   if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ] ||  [ "x$BOX_TYPE" = "xSR213" ]; then
+   if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "WNXL11BWL" ] ||  [ "$BOX_TYPE" = "SR213" ]; then
        WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
-       if [ "xstarted" != "x$CURRENT_WAN_STATUS" ] && [ "xup" != "x$WAN_IPV6_STATUS" ] ; then
+       if [ "started" != "$CURRENT_WAN_STATUS" ] && [ "up" != "$WAN_IPV6_STATUS" ] ; then
            syscfg set ntp_status 2
            sysevent set ${SERVICE_NAME}-status "wan-down"
            return 0
@@ -243,7 +243,7 @@ service_start ()
    echo "restrict -6 ::1" >> $NTP_CONF_TMP
 
    if [ "$SYSCFG_new_ntp_enabled" = "true" ]; then
-       if [ "x$BOX_TYPE" = "xSR300" ]; then
+       if [ "$BOX_TYPE" = "SR300" ]; then
             IPV4_CONN_STATE=$(sysevent get ipv4_connection_state)
             if [ "$IPV4_CONN_STATE" != "up" ]; then
                 SYSCFG_ntp_server1="time.google.com"
@@ -253,33 +253,33 @@ service_start ()
         fi
        # Start NTP Config Creation with Multiple Server Setup
        echo_t "SERVICE_NTPD : Creating NTP config with New NTP Enabled" >> $NTPD_LOG_NAME
-       if [ "x$SYSCFG_ntp_server1" != "x" ] && [ "x$SYSCFG_ntp_server1" != "xno_ntp_address" ]; then
+       if [ -n "$SYSCFG_ntp_server1" ] && [ "$SYSCFG_ntp_server1" != "no_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server1 true" >> $NTP_CONF_TMP
            echo "restrict $SYSCFG_ntp_server1 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
-       if [ "x$SYSCFG_ntp_server2" != "x" ] && [ "x$SYSCFG_ntp_server2" != "xno_ntp_address" ]; then
+       if [ -n "$SYSCFG_ntp_server2" ] && [ "$SYSCFG_ntp_server2" != "no_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server2" >> $NTP_CONF_TMP
            echo "restrict $SYSCFG_ntp_server2 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
-       if [ "x$SYSCFG_ntp_server3" != "x" ] && [ "x$SYSCFG_ntp_server3" != "xno_ntp_address" ]; then
+       if [ -n "$SYSCFG_ntp_server3" ] && [ "$SYSCFG_ntp_server3" != "no_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server3" >> $NTP_CONF_TMP
            echo "restrict $SYSCFG_ntp_server3 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
-       if [ "x$SYSCFG_ntp_server4" != "x" ] && [ "x$SYSCFG_ntp_server4" != "xno_ntp_address" ]; then
+       if [ -n "$SYSCFG_ntp_server4" ] && [ "$SYSCFG_ntp_server4" != "no_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server4" >> $NTP_CONF_TMP
            echo "restrict $SYSCFG_ntp_server4 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
-       if [ "x$SYSCFG_ntp_server5" != "x" ] && [ "x$SYSCFG_ntp_server5" != "xno_ntp_address" ]; then
+       if [ -n "$SYSCFG_ntp_server5" ] && [ "$SYSCFG_ntp_server5" != "no_ntp_address" ]; then
            echo "server $SYSCFG_ntp_server5" >> $NTP_CONF_TMP
            echo "restrict $SYSCFG_ntp_server5 nomodify notrap noquery" >> $NTP_CONF_TMP
            VALID_SERVER="true"
        fi
 
-       if [ "x$VALID_SERVER" = "x" ]; then
+       if [ -z "$VALID_SERVER" ]; then
            if [ -f "/nvram/ETHWAN_ENABLE" ]; then
               echo_t "SERVICE_NTPD : NTP SERVERS 1-5 not available, using the default ntp server." >> $NTPD_LOG_NAME
               SYSCFG_ntp_server1="time1.google.com"
@@ -292,8 +292,8 @@ service_start ()
 
        PARTNER_ID=`syscfg get PartnerID`
 
-       if [ "x$SYSCFG_ntp_server1" = "x" ] || [ "x$SYSCFG_ntp_server1" = "xno_ntp_address" ]; then
-           if [ "x$PARTNER_ID" = "x" ]; then
+       if [ -z "$SYSCFG_ntp_server1" ] || [ "$SYSCFG_ntp_server1" = "no_ntp_address" ]; then
+           if [ -z "$PARTNER_ID" ]; then
                echo_t "SERVICE_NTPD : NTP SERVER 1 not available & PARTNER_ID is null, using the default ntp server." >> $NTPD_LOG_NAME
                SYSCFG_ntp_server1="time1.google.com"
            else
@@ -307,7 +307,7 @@ service_start ()
            fi
        fi
 
-        if [ "x$BOX_TYPE" = "xSR300" ]; then
+        if [ "$BOX_TYPE" = "SR300" ]; then
             IPV4_CONN_STATE=$(sysevent get ipv4_connection_state)           
             if [ "$IPV4_CONN_STATE" != "up" ]; then
                 SYSCFG_ntp_server1="time.google.com"
@@ -334,7 +334,7 @@ service_start ()
    fi
 
    # Continue with Rest of NTP Config Creation
-   if [ "x$SOURCE_PING_INTF" == "x" ]; then
+   if [ -z "$SOURCE_PING_INTF" ]; then
        MASK=ifconfig $SOURCE_PING_INTF | sed -rn '2s/ .*:(.*)$/\1/p'
    else
        MASK="255.255.255.0"
@@ -351,7 +351,7 @@ service_start ()
    wan_wait WAN_IP
 
    # If WAN_IP is still empty potentially Database of WAN Interface Failed. As one last ditch effort try legacy device.properties interface
-   if [ "$WAN_IP" = "" ]; then
+   if [ -z "$WAN_IP" ]; then
        PROVISIONED_TYPE=""
        PROVISIONED_TYPE=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '/value/{print $5}')
 
@@ -364,13 +364,13 @@ service_start ()
        fi
    fi
 
-   if [ "$QUICK_SYNC_WAN_IP" != "" ]; then
+   if [ -n "$QUICK_SYNC_WAN_IP" ]; then
        # Quick Sync doesn't allow NIC Rules in Configuration File So create Quick Sync Version Prior to writing NIC rules.
        echo_t "SERVICE_NTPD : Creating NTP Quick Sync Conf file: $NTP_CONF_QUICK_SYNC" >> $NTPD_LOG_NAME
        cp $NTP_CONF_TMP $NTP_CONF_QUICK_SYNC  
-   fi #if [ "$QUICK_SYNC_WAN_IP" != "" ]; then
+   fi #if [ -n "$QUICK_SYNC_WAN_IP" ]; then
 
-   if [ "x$BOX_TYPE" != "xHUB4" ]  && [ "x$BOX_TYPE" != "xSR300" ] && [ "x$BOX_TYPE" != "xSE501" ] && [ "x$BOX_TYPE" != "xSR213" ] && [ "x$BOX_TYPE" != "xWNXL11BWL" ] && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
+   if [ "$BOX_TYPE" != "HUB4" ]  && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$NTPD_IMMED_PEER_SYNC" != "true" ]; then
        echo "restrict $PEER_INTERFACE_IP mask $MASK nomodify notrap" >> $NTP_CONF_TMP
    fi
 
@@ -379,17 +379,17 @@ service_start ()
    echo "interface listen 127.0.0.1" >> $NTP_CONF_TMP
    echo "interface listen ::1" >> $NTP_CONF_TMP
 
-   if [ "$WAN_IP" != "" ]; then
+   if [ -n "$WAN_IP" ]; then
        echo "interface listen $WAN_IP" >> $NTP_CONF_TMP
    fi  
 
-   if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
+   if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
        # SKYH4-2006: To listen v6 server, update the conf file after getting valid v6 IP(CURRENT_WAN_V6_PREFIX)
        CURRENT_WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
 
-       if [ "xup" = "x$CURRENT_WAN_IPV6_STATUS" ] ; then
+       if [ "up" = "$CURRENT_WAN_IPV6_STATUS" ] ; then
            CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
-           if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ]; then
+           if [ -n "$CURRENT_WAN_V6_PREFIX" ]; then
                echo "interface listen $CURRENT_WAN_V6_PREFIX" >> $NTP_CONF_TMP
                sysevent set ntp_ipv6_listen "set"
            else
@@ -398,11 +398,11 @@ service_start ()
        fi
    fi
 
-   if [ "x$MULTI_CORE" = "xyes" ]  && [ "x$NTPD_IMMED_PEER_SYNC" != "xtrue" ]; then
+   if [ "$MULTI_CORE" = "yes" ]  && [ "$NTPD_IMMED_PEER_SYNC" != "true" ]; then
        echo "interface listen $HOST_INTERFACE_IP" >> $NTP_CONF_TMP
    fi
 
-   if [ "x$BOX_TYPE" = "xXB3" ]; then
+   if [ "$BOX_TYPE" = "XB3" ]; then
        kill -9 "`pidof $BIN`" > /dev/null 2>&1
        echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
        $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -g
@@ -416,7 +416,7 @@ service_start ()
        if [ -n "$QUICK_SYNC_WAN_IP" ]; then
            # Try and Force Quick Sync to Run on a single interface
            echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
-           if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
+           if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
                if [ $WAN_IPv6_UP -eq 1 ]; then
                    $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME & 
                    QUICK_SYNC_PID=$!
@@ -428,7 +428,7 @@ service_start ()
                $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME &
                QUICK_SYNC_PID=$!
            fi
-           if [ "x$QUICK_SYNC_PID" != "x" ];then
+           if [ -n "$QUICK_SYNC_PID" ];then
               set_ntp_quicksync_status
            fi
        else
@@ -441,7 +441,7 @@ service_start ()
        echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
        systemctl start $BIN
 
-       if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
+       if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
            sysevent set firewall-restart
        fi
    fi
@@ -449,7 +449,7 @@ service_start ()
    ret_val=$?
    if [ "$ret_val" -ne 0 ]; then
        echo_t "SERVICE_NTPD : NTP failed to start, retrying" >> $NTPD_LOG_NAME
-       if [ "x$BOX_TYPE" = "xXB3" ]; then
+       if [ "$BOX_TYPE" = "XB3" ]; then
            echo_t "SERVICE_NTPD : Starting NTP Daemon" >> $NTPD_LOG_NAME
            $BIN -c $NTP_CONF_TMP -l $NTPD_LOG_NAME -g
        else
@@ -462,7 +462,7 @@ service_start ()
                echo_t "SERVICE_NTPD : Starting NTP Quick Sync" >> $NTPD_LOG_NAME
                $BIN -c $NTP_CONF_QUICK_SYNC --interface "$QUICK_SYNC_WAN_IP" -x -gq -l $NTPD_LOG_NAME &
 	       QUICK_SYNC_PID=$!
-	       if [ "x$QUICK_SYNC_PID" != "x" ];then
+	       if [ -n "$QUICK_SYNC_PID" ];then
                   set_ntp_quicksync_status
                fi
            else
@@ -477,13 +477,13 @@ service_start ()
        fi
    fi
 
-   if [ "x$BOX_TYPE" = "xXB3" ]; then
+   if [ "$BOX_TYPE" = "XB3" ]; then
        # Setting Time status as synchronized
        syscfg set ntp_status 3
 
        #Set FirstUseDate in Syscfg if this is the first time we are doing a successful NTP Sych
        DEVICEFIRSTUSEDATE=`syscfg get device_first_use_date`
-       if [ "" = "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
+       if [ -z "$DEVICEFIRSTUSEDATE" ] || [ "0" = "$DEVICEFIRSTUSEDATE" ]; then
            FIRSTUSEDATE=`date +%Y-%m-%dT%H:%M:%S`
            syscfg set device_first_use_date "$FIRSTUSEDATE"
        fi
@@ -500,7 +500,7 @@ service_start ()
 
 service_stop ()
 {
-   if [ "x$BOX_TYPE" = "xXB3" ]; then
+   if [ "$BOX_TYPE" = "XB3" ]; then
    	kill -9 "`pidof $BIN`" > /dev/null 2>&1
    else
    	systemctl stop $BIN
@@ -552,9 +552,9 @@ case "$1" in
       ;;
   wan-status)
       if [ "started" = "$CURRENT_WAN_STATUS" ] ; then
-         if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xSR213" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ]; then
+         if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]; then
             NTPD_PROCESS=`pidof $BIN`
-            if [ "x$NTPD_PROCESS" != "x" ];then
+            if [ -n "$NTPD_PROCESS" ];then
                echo_t "SERVICE_NTPD : ntp process is already running and pid is = $NTPD_PROCESS" >> $NTPD_LOG_NAME
             else
                echo_t "SERVICE_NTPD : wan-status calling service_start" >> $NTPD_LOG_NAME
@@ -567,13 +567,13 @@ case "$1" in
       fi
       ;;
   ipv6_connection_state)
-      if [ "x$BOX_TYPE" = "xHUB4" ] || [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSE501" ] || [ "x$BOX_TYPE" = "xWNXL11BWL" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+      if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "WNXL11BWL" ] || [ "$BOX_TYPE" = "SR213" ]; then
           WAN_IPV6_STATUS=`sysevent get ipv6_connection_state`
-          if [ "xup" = "x$WAN_IPV6_STATUS" ] ; then
+          if [ "up" = "$WAN_IPV6_STATUS" ] ; then
               CURRENT_WAN_V6_PREFIX=`syscfg get ipv6_prefix_address`
               NTP_PREFIX=`sysevent get ntp_prefix`
               NTP_IPV6_LISTEN=`sysevent get ntp_ipv6_listen`
-              if [ "x$CURRENT_WAN_V6_PREFIX" != "x" ] && ([ "x$NTP_PREFIX" != "x$CURRENT_WAN_V6_PREFIX" ] || [ "xset" != "x$NTP_IPV6_LISTEN" ]) ; then
+              if [ -n "$CURRENT_WAN_V6_PREFIX" ] && ([ "$NTP_PREFIX" != "$CURRENT_WAN_V6_PREFIX" ] || [ "set" != "$NTP_IPV6_LISTEN" ]) ; then
                   echo_t "SERVICE_NTPD : ipv6_connection_state calling service_start" >> $NTPD_LOG_NAME
                   sysevent set ntp_prefix $CURRENT_WAN_V6_PREFIX
                   service_start

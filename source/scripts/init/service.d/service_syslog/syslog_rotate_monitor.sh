@@ -45,7 +45,7 @@ SYSEVENT_TUPLE="logsize_size"
 SIZE=`ls -l /var/log/messages | awk '{print $5}'`
 OLDSIZE=`sysevent get $SYSEVENT_TUPLE`
 
-if [ "" = "$OLDSIZE" ] ; then
+if [ -z "$OLDSIZE" ] ; then
    OLDSIZE=0
 fi
 

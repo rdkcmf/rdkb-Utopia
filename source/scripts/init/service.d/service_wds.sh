@@ -110,7 +110,7 @@ setup_wds()
   fi
 
   CHANNEL=$SYSCFG_wifi_bridge_chan
-  if [ "" = "$CHANNEL" ]; then
+  if [ -z "$CHANNEL" ]; then
       CHANNEL=36
   fi
 

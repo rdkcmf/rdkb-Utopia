@@ -380,7 +380,7 @@ setup_gretap(){
     if [ "$GRE_MODE" = "start" ]
     then
      isgretap=`ip link show | grep ${LAN_GRE_TUNNEL}.$LAN_VLAN`  
-     if [ "$isgretap" == "" ]; then   
+     if [ -z "$isgretap" ]; then   
 
         #Wait until gre got created
         wait_for_gre_ready
@@ -414,7 +414,7 @@ update_instances(){
             fi
         done
         if [ $FOUND -eq 0 ] ; then
-            if [ "$NEWINST" = "" ] ; then
+            if [ -z "$NEWINST" ] ; then
                 NEWINST="$INSTANCE"
             else
                 NEWINST="$NEWINST $INSTANCE"
@@ -426,7 +426,7 @@ update_instances(){
         for MYINST in $INSTANCES
         do
             if [ "$MYINST" != "$INSTANCE" ] ; then
-                if [ "$NEWINST" = "" ] ; then
+                if [ -z "$NEWINST" ] ; then
                     NEWINST="$MYINST"
                 else
                     NEWINST="$NEWINST $MYINST"
@@ -450,7 +450,7 @@ get_current_if_list() {
         echo_t "$0 error: couldn't get interface list for group $BRIDGE_VLAN"
     else
         for LINE in $CURRENT_IF_NAMES; do
-            if [ "$CURRENT_IF_LIST" = "" ]
+            if [ -z "$CURRENT_IF_LIST" ]
             then
                 CURRENT_IF_LIST="$LINE"
             else
@@ -487,7 +487,7 @@ check_port_2(){
         PORT_CHECK=`$PORT_CMD`
         PORT_ERR=`echo "$PORT_CHECK"|grep "Can't find"`
         
-        if [ "$PORT_ERR" != "" ] ; then
+        if [ -n "$PORT_ERR" ] ; then
             echo_t "Waiting for dmcli port 2 configuration to be available..."
             COUNTER=`expr $COUNTER + 1`
             isport2enable="false"
@@ -794,7 +794,7 @@ sync_group_settings() {
     ##bridge is down. for brlan0 as part of setting the hw mac we already brought
     ##up the bridge. handling for other bridges here.
     check_if_bridge_up=$(ip address show $BRIDGE_NAME up)
-    if [ "$check_if_bridge_up" = "" ]; then
+    if [ -z "$check_if_bridge_up" ]; then
         echo_t "################Bring up bridge:$BRIDGE_NAME###########"
         $IP link set $BRIDGE_NAME up
     fi

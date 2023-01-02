@@ -74,9 +74,9 @@ flush_connection_info(){
 
 get_wan_if_name(){
     WAN_IF=""
-    while [ "$WAN_IF" = "" ] ; do
+    while [ -z "$WAN_IF" ] ; do
         WAN_IF=`sysevent get wan_ifname`
-        if [ "$WAN_IF" = "" ] ; then
+        if [ -z "$WAN_IF" ] ; then
             echo "Waiting for wan_ifname value..."
             sleep 1
         fi
@@ -126,7 +126,7 @@ cmdiag_ebtables_rules()
         ebtables -I FORWARD -j BRIDGE_FORWARD_FILTER
         ebtables -A BRIDGE_FORWARD_FILTER -s "$CMDIAG_MAC" -o lbr0 -j DROP
         ebtables -A BRIDGE_FORWARD_FILTER -s "$MUX_MAC" -o lbr0 -j DROP
-        if [ "x$ETHWAN_ENABLED" = "xtrue" ];then
+        if [ "$ETHWAN_ENABLED" = "true" ];then
             ebtables -A BRIDGE_FORWARD_FILTER -s "$CMDIAG_MAC" -o nsgmii0 -j DROP
         fi
         ebtables -A BRIDGE_FORWARD_FILTER -j RETURN
@@ -248,7 +248,7 @@ forward_wan_lan_traffic()
 
                    if [ "`sysevent get multinet_$INSTANCE-status`" = "ready" ];then
                         check_iface_exists_in_bridge=`brctl show brlan0  | grep lbr1`
-                        if [ "$check_iface_exists_in_bridge" = "" ];then
+                        if [ -z "$check_iface_exists_in_bridge" ];then
                             echo_t "multinet_$INSTANCE-status status is ready...,adding lbr1 to brlan0 and breaking the loop"  
                             brctl addif brlan0 lbr1
                         fi
@@ -324,7 +324,7 @@ service_start(){
         
         routing_rules enable
        
-        if [ "x$ETHWAN_ENABLED" = "xtrue" ];then
+        if [ "$ETHWAN_ENABLED" = "true" ];then
             forward_wan_lan_traffic enable &
         fi
         #Sync bridge ports
@@ -386,7 +386,7 @@ service_stop(){
         
         #Flush connection tracking and packet processor sessions to avoid stale information
         flush_connection_info
-        if [ "x$ETHWAN_ENABLED" = "xtrue" ];then
+        if [ "$ETHWAN_ENABLED" = "true" ];then
             forward_wan_lan_traffic disable &
         fi
         sysevent set ${SERVICE_NAME}-errinfo
@@ -425,7 +425,7 @@ service_init ()
     LAN_IFNAMES="$SYSCFG_lan_ethernet_physical_ifnames"
     
     # if we are using wireless interfafes then add them
-    if [ "" != "$SYSCFG_lan_wl_physical_ifnames" ] ; then
+    if [ -n "$SYSCFG_lan_wl_physical_ifnames" ] ; then
         LAN_IFNAMES="$LAN_IFNAMES $SYSCFG_lan_wl_physical_ifnames"
     fi
 }
@@ -438,7 +438,7 @@ BRIDGE_NAME="$SYSCFG_lan_ifname"
 CMDIAG_IF=`syscfg get cmdiag_ifname`
 CMDIAG_MAC=`ncpu_exec -ep service_bridge.sh get_cmdiag_mac`
 INSTANCE=`sysevent get primary_lan_l2net`
-if [ "$INSTANCE" = "" ];then
+if [ -z "$INSTANCE" ];then
 	INSTANCE=`psmcli get dmsb.MultiLAN.PrimaryLAN_l2net`
 fi
 LAN_NETMASK=`syscfg get lan_netmask`

@@ -137,7 +137,7 @@ fi
 CheckAndReCreateDB()
 {
 	NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-	if [ "$NVRAMFullStatus" != "" ]; then
+	if [ -n "$NVRAMFullStatus" ]; then
 		if [ -f "/rdklogger/rdkbLogMonitor.sh" ]
 		then
 			  #Remove Old backup files if there	
@@ -148,7 +148,7 @@ CheckAndReCreateDB()
 			  syscfg_oldDB=$?
 			  if [ $syscfg_oldDB -ne 0 ]; then
 				  NVRAMFullStatus=`df -h $SYSCFG_MOUNT | grep "100%"`
-				  if [ "$NVRAMFullStatus" != "" ]; then
+				  if [ -n "$NVRAMFullStatus" ]; then
 					 echo "[utopia][init] NVRAM Full(100%) and below is the dump"
 					 du -h $SYSCFG_MOUNT 
 					 ls -al $SYSCFG_MOUNT	 
@@ -212,7 +212,7 @@ fi
 
 SYSCFG_FR_VAL="`syscfg get $FACTORY_RESET_KEY`"
 
-if [ "x$FACTORY_RESET_RGWIFI" = "x$SYSCFG_FR_VAL" ]; then
+if [ "$FACTORY_RESET_RGWIFI" = "$SYSCFG_FR_VAL" ]; then
    echo "[utopia][init] Performing factory reset"
 
 rebReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`   
@@ -322,7 +322,7 @@ fi
    echo 204 > /var/tmp/networkresponse.txt
     
 
-elif [ "x$FACTORY_RESET_WIFI" = "x$SYSCFG_FR_VAL" ]; then
+elif [ "$FACTORY_RESET_WIFI" = "$SYSCFG_FR_VAL" ]; then
     echo "[utopia][init] Performing wifi reset"
     syscfg unset $FACTORY_RESET_KEY
 #<<zqiu
@@ -403,7 +403,7 @@ done
 MSG_SIZE_MAX=`cat /proc/sys/fs/mqueue/msgsize_max`
 MSG_MAX_SYS=`ulimit -q`
 TOT_MSG_MAX=50
-if [ "x$MSG_MAX_SYS" = "x" ]; then
+if [ -z "$MSG_MAX_SYS" ]; then
 echo "ulimit cmd not avail assign mq msg_max :$TOT_MSG_MAX"
 else
 TOT_MSG_MAX=$((MSG_MAX_SYS/MSG_SIZE_MAX))
@@ -604,7 +604,7 @@ if [ "$FACTORY_RESET_REASON" = "true" ]; then
 
    echo "[utopia][init] After FR - LAN_IF_NAME:$LAN_IF_NAME Current LAN_IP:$LAN_CURRENT_IP Default LAN_IP:$LAN_DEFAULT_IP"
 
-   if [ "$LAN_IF_NAME" != "" ] && [ "$LAN_CURRENT_IP" != "" ] && [ "$LAN_DEFAULT_IP" != "" ] && [ "$LAN_DEFAULT_IP" != "$LAN_CURRENT_IP" ]; then
+   if [ -n "$LAN_IF_NAME" ] && [ -n "$LAN_CURRENT_IP" ] && [ -n "$LAN_DEFAULT_IP" ] && [ "$LAN_DEFAULT_IP" != "$LAN_CURRENT_IP" ]; then
        echo "[utopia][init] Current and Default LAN IP mismatch. so needs to change LAN IP as $LAN_DEFAULT_IP"
 
        LAN_DEFAULT_NETMASK=`cat /usr/ccsp/config/bbhm_def_cfg.xml | grep dmsb.l3net.4.V4SubnetMask | cut -d ">" -f 2 | cut -d "<" -f 1`

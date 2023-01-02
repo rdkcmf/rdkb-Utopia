@@ -96,7 +96,7 @@ resync_upnp() {
 	then
 			curr_ipv4_proc_status=`sysevent get ipv4_status_process`
 			curr_resync_proc_status=`sysevent get resync_upnp_process`
-			if [ "$curr_ipv4_proc_status" = "" ] || [ "$curr_ipv4_proc_status" = "completed" ] || [ "$curr_resync_proc_status" = "completed" ]; then
+			if [ -z "$curr_ipv4_proc_status" ] || [ "$curr_ipv4_proc_status" = "completed" ] || [ "$curr_resync_proc_status" = "completed" ]; then
 	    	    handle_ipv4_status ${i} `sysevent get ipv4_${i}-status`
 			fi
 			
@@ -136,7 +136,7 @@ handle_ipv4_status() {
             IGD `sysevent get ipv4_${1}-ifname` &
             sysevent set ${SERVICE_NAME}_${1}-pid $!
             #RDKB-44364:To avoid IGD process init failure due to UPNP_E_SOCKET_BIND [-203] error
-	    if [ "x$BOX_TYPE" = "xSR300" ] || [ "x$BOX_TYPE" = "xSR213" ]; then
+	    if [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SR213" ]; then
                check_IGD_is_up ${1}
             fi
         fi
@@ -232,7 +232,7 @@ case "$1" in
     snmp_subagent-status)
         init_once
         #SKYH4-5296 - IGD process running by default after reboot and FR eventhough upnp is disabled.
-        if [ "x$BOX_TYPE" != "xHUB4" ] && [ "x$BOX_TYPE" != "xSR300" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
             resync_upnp
         fi
    ;;
@@ -245,7 +245,7 @@ case "$1" in
 
 		curr_resync_proc_status=`sysevent get resync_upnp_process`
 		curr_ipv4_igd=`sysevent get ipv4_status_process`
-		if [ "$curr_resync_proc_status" = "" ] || [ "$curr_resync_proc_status" = "completed" ] || [ "$curr_ipv4_igd" = "completed" ]; then
+		if [ -z "$curr_resync_proc_status" ] || [ "$curr_resync_proc_status" = "completed" ] || [ "$curr_ipv4_igd" = "completed" ]; then
 			sysevent set ipv4_status_process started	  
 	        handle_ipv4_status $INST $2
 			sysevent set ipv4_status_process completed	  

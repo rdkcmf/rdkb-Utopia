@@ -124,7 +124,7 @@ dnsmasq_server_start ()
                 SYSCFG_XDNS_FLAG=`syscfg get X_RDKCENTRAL-COM_XDNS`
                 SYSCFG_DNSSEC_FLAG=`syscfg get XDNS_DNSSecEnable`
                 SYSCFG_XDNSREFAC_FLAG=`syscfg get XDNS_RefacCodeEnable`
-                if ([ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]) && [ "$SYSCFG_XDNS_FLAG" != "" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
+                if ([ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGA4332COM" ]) && [ -n "$SYSCFG_XDNS_FLAG" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] && [ "$SYSCFG_DNSSEC_FLAG" = "1" ] ; then
                         if [ "$SYSCFG_XDNSREFAC_FLAG" = "1" ] && [ "$SYSCFG_XDNS_FLAG" = "1" ] ; then
                                 $SERVER -q --clear-on-reload --bind-dynamic --add-mac --add-cpe-id=abcdefgh -P 4096 -C $DHCP_CONF $DNS_ADDITIONAL_OPTION --proxy-dnssec --cache-size=0 --xdns-refac-code  #--enable-dbus
                         else
@@ -185,7 +185,7 @@ lan_status_change ()
 
          DNS_ADDITIONAL_OPTION=""
          # Check for RFC Enable for DNS STRICT ORDER
-         if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+         if [ "$DNSSTRICT_ORDER_ENABLE" = "true" ]; then
               DNS_ADDITIONAL_OPTION=" -o "
               DNS_ADDITIONAL_OPTION=" $DNS_ADDITIONAL_OPTION --dhcp-authoritative "
               echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
@@ -296,7 +296,7 @@ restart_request ()
 
    DNS_ADDITIONAL_OPTION=""
    # Check for RFC Enable for DNS STRICT ORDER
-   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+   if [ "$DNSSTRICT_ORDER_ENABLE" = "true" ]; then
          DNS_ADDITIONAL_OPTION=" -o "
          echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
    else
@@ -533,7 +533,7 @@ dhcp_server_start ()
 
    InterfaceInConf=`grep "interface=" $DHCP_CONF`
 
-   if [ "x$InterfaceInConf" = "x" ] && [ "0" != "$Bridge_Mode_t" ] ; then
+   if [ -z "$InterfaceInConf" ] && [ "0" != "$Bridge_Mode_t" ] ; then
         echo "dnsmasq.conf interface info not found"
         $PMON unsetproc dhcp_server
         sysevent set dhcp_server-status stopped
@@ -556,7 +556,7 @@ dhcp_server_start ()
 
    DNS_ADDITIONAL_OPTION=""
    # Check for RFC Enable for DNS STRICT ORDER
-   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+   if [ "$DNSSTRICT_ORDER_ENABLE" = "true" ]; then
          DNS_ADDITIONAL_OPTION=" -o "
          echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
    else
@@ -630,7 +630,7 @@ dhcp_server_start ()
        isAvailableXHS=`ifconfig | grep $XHS_INTERFACE`
    fi
 
-   if [ "$isAvailableXHS" != "" ]; then
+   if [ -n "$isAvailableXHS" ]; then
        echo_t "Xfinityhome service is UP"
        if [ ! -f "/tmp/xhome_start" ]; then
            print_uptime "boot_to_XHOME_uptime"
@@ -660,7 +660,7 @@ dhcp_server_start ()
    then
        has_dns_127=`grep 127.0.0.1 $RESOLV_CONF`
        had_dns_127=`sysevent get clients-have-dns-127`
-       if [ "$has_dns_127" != "" ]
+       if [ -n "$has_dns_127" ]
        then
            echo_t "clients have DNS 127"
            sysevent set clients-have-dns-127 true
@@ -707,7 +707,7 @@ dhcp_server_stop ()
 
    DNS_ADDITIONAL_OPTION=""
    # Check for RFC Enable for DNS STRICT ORDER
-   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+   if [ "$DNSSTRICT_ORDER_ENABLE" = "true" ]; then
          DNS_ADDITIONAL_OPTION=" -o "
          echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
    else
@@ -774,7 +774,7 @@ dns_start ()
 
    DNS_ADDITIONAL_OPTION=""
    # Check for RFC Enable for DNS STRICT ORDER
-   if [ "x$DNSSTRICT_ORDER_ENABLE" == "xtrue" ]; then
+   if [ "$DNSSTRICT_ORDER_ENABLE" = "true" ]; then
          DNS_ADDITIONAL_OPTION=" -o "
          echo "Starting dnsmasq with additional dns strict order option: $DNS_ADDITIONAL_OPTION"
    else
@@ -867,7 +867,7 @@ case "$1" in
       dns_start
       ;;
    dhcp_conf_change)
-   if [ "x$rdkb_extender" = "xtrue" ];then
+   if [ "$rdkb_extender" = "true" ];then
       echo_t "SERVICE DHCP : Got restart with $2.. Call dhcp_server_start"
       UpdateDhcpConfChangeBasedOnEvent
       dhcp_server_start $2

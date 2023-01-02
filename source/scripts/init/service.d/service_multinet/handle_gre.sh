@@ -149,7 +149,7 @@ read_greInst()
         
        echo "BRIDGE_INSTS === $BRIDGE_INSTS"
        
-      if [ "$BRIDGE_INSTS" == "" ]
+      if [ -z "$BRIDGE_INSTS" ]
       then
           touch "/tmp/tunnel_destroy_flag"
       else
@@ -224,7 +224,7 @@ create_tunnel () {
         LOCAL_IP=`ip a l $WAN_IF | awk '/inet6/ {print $2}' | cut -d/ -f1 >&1 | sed '1q;d'`
     fi
 
-    if [ "$isgretap0Present" != "" ]; then
+    if [ -n "$isgretap0Present" ]; then
         echo "gretap0 is already present rename it before creating"
         ip link set dev $GRE_IFNAME name $GRE_IFNAME_DUMMY
     fi
@@ -403,12 +403,12 @@ read_init_params () {
         echo "WARNING: handle_gre.sh read_init_params: psmcli return $status"
     fi
     echo "PRIMARY $PRIMARY SECONDARY $SECONDARY"
-    if [ "$PRIMARY" = "" ] || [ "$SECONDARY" = "" ]
+    if [ -z "$PRIMARY" ] || [ -z "$SECONDARY" ]
     then
         echo "WARNING: handle_gre.sh read_init_params: PRIMARY/SECONDARY NULL"
     fi
     echo "KA_INTERVAL $KA_INTERVAL KA_FAIL_INTERVAL $KA_FAIL_INTERVAL KA_POLICY $KA_POLICY"
-    if [ "$KA_INTERVAL" = "" ]
+    if [ -z "$KA_INTERVAL" ]
     then
         echo "WARNING: handle_gre.sh read_init_params: KA_INTERVAL NULL"
     fi
@@ -678,7 +678,7 @@ hotspot_up() {
                     done      
 	fi
         
-        if [ "$bridgeFQDM" == "" ]
+        if [ -z "$bridgeFQDM" ]
         then
           touch "/tmp/tunnel_destroy_flag"
         else
@@ -807,7 +807,7 @@ case "$1" in
             init_snooper_sysevents
             sysevent set snooper-log-enable 1
             HOTSPOT_PID=`pidof CcspHotspot`
-            if [ "$HOTSPOT_PID" = "" ]; then
+            if [ -z "$HOTSPOT_PID" ]; then
                echo_t "Starting hotspot component"
                $HOTSPOT_COMP -subsys eRT. > /dev/null &
             fi
@@ -829,7 +829,7 @@ case "$1" in
             if [ "$BOX_TYPE" = "XF3" ] ; then
                sleep 15
                brctl1=`brctl show | grep wl0.2`
-               if [ "$brctl1" == "" ]; then           
+               if [ -z "$brctl1" ]; then           
                        brctl addif brlan2 wl0.2     
                        brctl addif brlan2 wl1.2  
                         ifconfig wl0.2 up
@@ -837,14 +837,14 @@ case "$1" in
                fi                                   
                                                     
                brctl2=`brctl show | grep gretap0.102` 
-               if [ "$brctl2" == "" ]; then                         
+               if [ -z "$brctl2" ]; then                         
                        vconfig add gretap0 102      
                        ip link set gretap0.102 master brlan2
                        vconfig add gretap0 103      
                        ip link set gretap0.103 master brlan3
                fi                 
                brctl3=`ifconfig gretap0 | grep UP`         
-               if [ "$brctl3" == "" ]; then
+               if [ -z "$brctl3" ]; then
                        ifconfig gretap0 up
                fi
             fi
@@ -907,7 +907,7 @@ case "$1" in
         if [ "$BOX_TYPE" = "XF3" ] ; then 
                sleep 15
                brctl1=`brctl show | grep wl0.2`
-               if [ "$brctl1" == "" ]; then           
+               if [ -z "$brctl1" ]; then           
                        brctl addif brlan2 wl0.2     
                        brctl addif brlan3 wl1.2  
                         ifconfig wl0.2 up
@@ -915,14 +915,14 @@ case "$1" in
                fi                                   
                                                     
                brctl2=`brctl show | grep gretap0.102` 
-               if [ "$brctl2" == "" ]; then                         
+               if [ -z "$brctl2" ]; then                         
                        vconfig add gretap0 102      
                        ip link set gretap0.102 master brlan2
                        vconfig add gretap0 103      
                        ip link set gretap0.103 master brlan3
                fi                 
                brctl3=`ifconfig gretap0 | grep UP`         
-               if [ "$brctl3" == "" ]; then
+               if [ -z "$brctl3" ]; then
                        ifconfig gretap0 up
                fi
          fi

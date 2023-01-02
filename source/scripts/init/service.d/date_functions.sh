@@ -119,9 +119,9 @@ get_hour() {
    IFS=_
    for p in $TIMESTAMP
    do
-      if [ "" = "$STRING1" ] ; then
+      if [ -z "$STRING1" ] ; then
          STRING1=$p
-      elif [ "" = "$STRING2" ] ; then
+      elif [ -z "$STRING2" ] ; then
          STRING2=$p
       fi
    done
@@ -152,9 +152,9 @@ get_min() {
    IFS=_
    for p in $TIMESTAMP
    do
-      if [ "" = "$STRING1" ] ; then
+      if [ -z "$STRING1" ] ; then
          STRING1=$p
-      elif [ "" = "$STRING2" ] ; then
+      elif [ -z "$STRING2" ] ; then
          STRING2=$p
       fi
    done
@@ -185,9 +185,9 @@ get_sec() {
    IFS=_
    for p in $TIMESTAMP
    do
-      if [ "" = "$STRING1" ] ; then
+      if [ -z "$STRING1" ] ; then
          STRING1=$p
-      elif [ "" = "$STRING2" ] ; then
+      elif [ -z "$STRING2" ] ; then
          STRING2=$p
       fi
    done

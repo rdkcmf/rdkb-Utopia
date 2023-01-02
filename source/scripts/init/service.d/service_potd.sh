@@ -64,7 +64,7 @@ service_start() {
     fi
 
     #MSO_PASSWD=`$POTD`
-    #if [ "$MSO_PASSWD" != "" ]; then
+    #if [ -n "$MSO_PASSWD" ]; then
     #  syscfg set user_password_1 $MSO_PASSWD
     #fi
     
