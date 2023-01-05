@@ -165,6 +165,42 @@ old_fwlog_handle(){
         fi
     fi
 }
+createSystemAndEventLogFolder(){
+    if [ -e $SYSLOG_CONF_FILE ]
+    then
+        rm $SYSLOG_CONF_FILE
+    fi
+
+    if [ -e $LOG_CONF_FILE ]
+    then
+        ln -s $LOG_CONF_FILE $SYSLOG_CONF_FILE
+    else
+        ln -s $SYSLOG_DEFAULT_CONF_FILE $SYSLOG_CONF_FILE
+    fi
+
+    if [ -e $LOG_LEVEL_FILE ]
+    then
+        level=`awk '$1 <= 8 && $1 >= 1' $LOG_LEVEL_FILE`
+    else
+        level=6
+    fi
+
+    SYSTEMLOG=$(grep -e "systemlog" /etc/syslog.conf | awk '{print $2}')
+    EVENTLOG=$(grep -e "eventlog" /etc/syslog.conf | awk '{print $2}')
+
+    SYSTEMLOG_DIR=${SYSTEMLOG%/*}
+    if [ ! -d $SYSTEMLOG_DIR ]
+    then
+        mkdir -p $SYSTEMLOG_DIR
+    fi
+
+    EVENTLOG_DIR=${EVENTLOG%/*}
+    if [ ! -d $EVENTLOG_DIR ]
+    then
+        echo "mkdir -p $EVENTLOG_DIR"
+        mkdir -p $EVENTLOG_DIR
+    fi
+}
 
 get_log_file()
 {
@@ -367,11 +403,11 @@ then
         old_fwlog_handle $DPC3939_OLD_FWLOG_FILE_PATH "$V_FW_LOG_FILE_PATH"
     fi
     sysevent set R13_LOG_HANDLE_FLG 1
-fi 
+fi
 
 
 if [ "$1" == "reset" ]
-then 
+then
     killall GenFWLog >/dev/null 2>/dev/null
     #Empty the log file
     echo -n "" > "$V_EVT_LOG_FILE"
@@ -397,12 +433,12 @@ then
         echo "remove syslog_level file"
         rm -rf /nvram/syslog_level
     fi
-    
+    createSystemAndEventLogFolder
 fi
 
 if [ "$1" == "compress_syslog" ]
 then
-    compress syslog    
+    compress syslog
 fi
 
 if [ "$1" == "uncompress_syslog" ]
